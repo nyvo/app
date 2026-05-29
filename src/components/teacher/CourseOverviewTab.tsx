@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react';
 import { Clock } from '@/lib/icons';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { MappedCourse } from '@/hooks/use-course-detail';
+import type { CourseDisplayStatus } from '@/lib/course-status';
 import {
   PublishChecklist,
   type ChecklistItemKey,
@@ -13,6 +13,12 @@ import {
 
 interface CourseOverviewTabProps {
   course: MappedCourse;
+  /**
+   * Derived visual lifecycle (upcoming/active/completed), computed by the page
+   * from sessions + dates. Used for at-a-glance state only — `draft`/`cancelled`
+   * pass through unchanged. Never use for permissions or write logic.
+   */
+  displayStatus: CourseDisplayStatus;
   /** Raw Dintero onboarding status (PENDING | WAITING_FOR_DECLARATION |
    *  WAITING_FOR_SIGNATURE | ACTIVE | DECLINED | TERMINATED | null) */
   dinteroOnboardingStatus: string | null;
@@ -51,6 +57,7 @@ function formatNorwegianDate(input: string | null | undefined): string {
 
 export function CourseOverviewTab({
   course,
+  displayStatus,
   dinteroOnboardingStatus,
   dinteroOnboardingComplete,
   allowsDropIn,
@@ -64,7 +71,10 @@ export function CourseOverviewTab({
   onJumpToField,
 }: CourseOverviewTabProps) {
   const isSeries = course.format === 'series';
-  const status = course.status;
+  // Lifecycle decisions read the derived display status (so a finished course
+  // reaches the `completed` branch). `draft`/`cancelled` are preserved by the
+  // derivation, so the workflow-gated branches below still behave correctly.
+  const status = displayStatus;
 
   const isWaitingForDintero =
     status === 'draft' &&
@@ -81,88 +91,87 @@ export function CourseOverviewTab({
       : `${course.totalWeeks} timer · pågår`;
 
   return (
-    <div className="space-y-4">
+    <div>
       {isWaitingForDintero && (
-        <InfoBanner
-          title="Venter på godkjenning fra Dintero."
-          sub="Vi varsler deg på e-post når den er godkjent. Det tar vanligvis 1–2 virkedager."
-          action={{ label: 'Se status', onClick: onSetupDinteroClick }}
-        />
+        <div className="mb-6">
+          <InfoBanner
+            title="Venter på godkjenning fra Dintero."
+            sub="Vi varsler deg på e-post når den er godkjent. Det tar vanligvis 1–2 virkedager."
+            action={{ label: 'Se status', onClick: onSetupDinteroClick }}
+          />
+        </div>
       )}
 
       {status === 'draft' && (
-        <PublishChecklist
-          items={[
-            {
-              key: 'image',
-              title: 'Legg til et bilde',
-              description: 'Anbefalt, men ikke påkrevd for publisering.',
-              done: !!course.imageUrl,
-              required: false,
-            },
-            {
-              key: 'description',
-              title: 'Skriv en kort beskrivelse',
-              description: 'Hva får deltakerne ut av kurset?',
-              done: !!course.description,
-            },
-            {
-              key: 'location',
-              title: 'Velg sted',
-              description: 'Adressen vises på kurssiden og i bekreftelsen.',
-              done: !!course.location,
-            },
-            {
-              key: 'dintero',
-              title: 'Sett opp utbetaling',
-              description: 'Påkrevd for å ta imot påmeldinger.',
-              done: dinteroOnboardingComplete,
-            },
-          ]}
-          onItemClick={onJumpToField}
-        />
-      )}
-
-      {showKursplanCard && (
-        <KursplanSection sub={kursplanSub} onOpen={onOpenKursplan} />
-      )}
-
-      {status === 'completed' && (
-        <EndStateSection
-          title={
-            course.endDate
-              ? `Siste time var ${formatNorwegianDate(course.endDate)}`
-              : 'Kurset er ferdig'
-          }
-          sub={`${course.enrolled} deltakere fullførte kursrekken.`}
-          action={isSeries ? { label: 'Se kursplan', onClick: onOpenKursplan } : undefined}
-        />
-      )}
-
-      {status === 'cancelled' && (
-        <EndStateSection
-          title="Kurset er avlyst"
-          sub="Påmeldte er varslet og refundert."
-        />
-      )}
-
-      {showTogglesCard && (
-        <Card className="p-0 gap-0">
-          <DropInToggleRow
-            checked={allowsDropIn}
-            onChange={onAllowsDropInChange}
-            price={dropInPrice}
-            onPriceChange={onDropInPriceChange}
+        <div className="mb-6">
+          <PublishChecklist
+            items={[
+              {
+                key: 'image',
+                title: 'Legg til et bilde',
+                description: 'Anbefalt, men ikke påkrevd for publisering.',
+                done: !!course.imageUrl,
+                required: false,
+              },
+              {
+                key: 'description',
+                title: 'Skriv en kort beskrivelse',
+                description: 'Hva får deltakerne ut av kurset?',
+                done: !!course.description,
+              },
+              {
+                key: 'location',
+                title: 'Velg sted',
+                description: 'Adressen vises på kurssiden og i bekreftelsen.',
+                done: !!course.location,
+              },
+              {
+                key: 'dintero',
+                title: 'Sett opp utbetaling',
+                description: 'Påkrevd for å ta imot påmeldinger.',
+                done: dinteroOnboardingComplete,
+              },
+            ]}
+            onItemClick={onJumpToField}
           />
-          <ToggleRow
-            label="Tillat påmelding etter oppstart"
-            help="Prisen blir justert automatisk etter antall uker igjen."
-            checked={acceptsLateSignups}
-            onChange={onAcceptsLateSignupsChange}
-            isLast
-          />
-        </Card>
+        </div>
       )}
+
+      <div className="divide-y divide-border">
+        {showKursplanCard && (
+          <KursplanSection sub={kursplanSub} onOpen={onOpenKursplan} />
+        )}
+
+        {status === 'completed' && (
+          <EndStateSection
+            title={
+              course.endDate
+                ? `Siste time var ${formatNorwegianDate(course.endDate)}`
+                : 'Kurset er ferdig'
+            }
+            sub={`${course.enrolled} deltakere fullførte kursrekken.`}
+            action={isSeries ? { label: 'Se kursplan', onClick: onOpenKursplan } : undefined}
+          />
+        )}
+
+        {status === 'cancelled' && (
+          <EndStateSection
+            title="Kurset er avlyst"
+            sub="Påmeldte er varslet og refundert."
+          />
+        )}
+
+        {showTogglesCard && (
+          <TogglesSection
+            allowsDropIn={allowsDropIn}
+            onAllowsDropInChange={onAllowsDropInChange}
+            dropInPrice={dropInPrice}
+            onDropInPriceChange={onDropInPriceChange}
+            acceptsLateSignups={acceptsLateSignups}
+            onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -209,11 +218,11 @@ function BaseBanner({
         {icon}
       </div>
       <div className="flex-1 min-w-0 text-foreground">
-        <p className="text-sm font-medium">{title}</p>
-        <p className="text-sm text-foreground-muted mt-0.5">{sub}</p>
+        <p className="text-base font-medium">{title}</p>
+        <p className="text-base text-foreground-muted mt-0.5">{sub}</p>
       </div>
       {action && (
-        <Button variant="outline" size="sm" onClick={action.onClick} className="shrink-0">
+        <Button variant="secondary" onClick={action.onClick} className="shrink-0">
           {action.label}
         </Button>
       )}
@@ -221,21 +230,21 @@ function BaseBanner({
   );
 }
 
-// ─── Section row (compact card: title + sub + action) ─────────────────
+// ─── Section row (title + sub + action, sits directly on canvas) ──────
 
 function KursplanSection({ sub, onOpen }: { sub: string; onOpen: () => void }) {
   return (
-    <Card className="px-6 py-5">
+    <section className="py-5 first:pt-0 last:pb-0">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="text-base font-medium text-foreground">Kursplan</p>
-          <p className="text-sm text-foreground-muted mt-0.5">{sub}</p>
+          <p className="text-base text-foreground-muted mt-0.5">{sub}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={onOpen}>
+        <Button variant="secondary" onClick={onOpen}>
           Se kursplan
         </Button>
       </div>
-    </Card>
+    </section>
   );
 }
 
@@ -249,19 +258,58 @@ function EndStateSection({
   action?: { label: string; onClick: () => void };
 }) {
   return (
-    <Card className="px-6 py-5">
+    <section className="py-5 first:pt-0 last:pb-0">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="text-base font-medium text-foreground">{title}</p>
-          <p className="text-sm text-foreground-muted mt-0.5">{sub}</p>
+          <p className="text-base text-foreground-muted mt-0.5">{sub}</p>
         </div>
         {action && (
-          <Button variant="outline" size="sm" onClick={action.onClick}>
+          <Button variant="secondary" onClick={action.onClick}>
             {action.label}
           </Button>
         )}
       </div>
-    </Card>
+    </section>
+  );
+}
+
+// ─── Toggles section (drop-in + late signups, lives on canvas) ────────
+
+interface TogglesSectionProps {
+  allowsDropIn: boolean;
+  onAllowsDropInChange: (next: boolean) => void;
+  dropInPrice: number;
+  onDropInPriceChange: (next: number) => void;
+  acceptsLateSignups: boolean;
+  onAcceptsLateSignupsChange: (next: boolean) => void;
+}
+
+function TogglesSection({
+  allowsDropIn,
+  onAllowsDropInChange,
+  dropInPrice,
+  onDropInPriceChange,
+  acceptsLateSignups,
+  onAcceptsLateSignupsChange,
+}: TogglesSectionProps) {
+  return (
+    <section className="py-5 first:pt-0 last:pb-0">
+      <div className="divide-y divide-border-subtle">
+        <DropInToggleRow
+          checked={allowsDropIn}
+          onChange={onAllowsDropInChange}
+          price={dropInPrice}
+          onPriceChange={onDropInPriceChange}
+        />
+        <ToggleRow
+          label="Tillat påmelding etter oppstart"
+          help="Prisen blir justert automatisk etter antall uker igjen."
+          checked={acceptsLateSignups}
+          onChange={onAcceptsLateSignupsChange}
+        />
+      </div>
+    </section>
   );
 }
 
@@ -272,22 +320,16 @@ interface ToggleRowProps {
   help?: string;
   checked: boolean;
   onChange: (next: boolean) => void;
-  isLast?: boolean;
   children?: React.ReactNode;
 }
 
-function ToggleRow({ label, help, checked, onChange, isLast, children }: ToggleRowProps) {
+function ToggleRow({ label, help, checked, onChange, children }: ToggleRowProps) {
   return (
-    <div
-      className={cn(
-        'flex items-start justify-between gap-6 px-6 py-5',
-        !isLast && 'border-b border-border-subtle',
-      )}
-    >
+    <div className="flex items-start justify-between gap-6 py-5 first:pt-0 last:pb-0">
       <div className="flex-1 min-w-0">
         <p className="text-base font-medium text-foreground">{label}</p>
         {help && (
-          <p className="text-sm text-foreground-muted mt-1">{help}</p>
+          <p className="text-base text-foreground-muted mt-1">{help}</p>
         )}
         {children}
       </div>
@@ -326,11 +368,11 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange }: DropInTogg
   }
 
   return (
-    <div className="flex items-start justify-between gap-6 px-6 py-5 border-b border-border-subtle">
+    <div className="flex items-start justify-between gap-6 py-5 first:pt-0 last:pb-0">
       <div className="flex-1 min-w-0">
         <p className="text-base font-medium text-foreground">Tillat drop-in</p>
         <div className="mt-2.5 flex items-center gap-2.5">
-          <label htmlFor="overview-drop-in-price" className="text-sm text-foreground-muted">
+          <label htmlFor="overview-drop-in-price" className="text-base text-foreground-muted">
             Pris per time
           </label>
           <div className="relative inline-flex items-center">

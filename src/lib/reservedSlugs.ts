@@ -29,6 +29,7 @@ export const RESERVED_SLUGS = new Set<string>([
   'dev',
   'studio',
   'studios',
+  'collaboration',
   'space',
   'spaces',
   'team',
@@ -102,6 +103,7 @@ export const RESERVED_SLUGS = new Set<string>([
   'priser',
   'kontakt',
   'hjelp',
+  'samarbeid',
   'personvern',
   'vilkar',
   'vilkaar',
@@ -157,4 +159,3 @@ export const RESERVED_SLUGS = new Set<string>([
   '__internal',
   '__data',
 ])
-

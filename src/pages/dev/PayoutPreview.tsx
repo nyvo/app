@@ -85,11 +85,11 @@ const PayoutPreview = () => {
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost">
                 <Share2 data-icon="inline-start" />
                 Del
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost">
                 Se detaljer <ArrowRight data-icon="inline-end" />
               </Button>
             </div>

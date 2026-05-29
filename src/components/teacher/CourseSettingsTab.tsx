@@ -1,10 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
-import {
-  Info,
-} from '@/lib/icons';
 import { cn, formatKroner } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { Input } from '@/components/ui/input';
 import { FieldError } from '@/components/ui/field-error';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
@@ -13,6 +10,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { LocationCombobox } from '@/components/ui/location-combobox';
 import { useLocations } from '@/hooks/use-locations';
 import { useAuth } from '@/contexts/AuthContext';
+import type { CourseDisplayStatus } from '@/lib/course-status';
 import {
   Select,
   SelectContent,
@@ -72,7 +70,14 @@ interface CourseSettingsTabProps {
 
   // Destructive zone — gated by status. "Gjør til utkast" lives in the page
   // header's kebab menu (state change, not destructive), not here.
+  // `courseStatus` is the PERSISTED workflow status (draft/upcoming/cancelled);
+  // `displayStatus` is the derived lifecycle, used to tell a finished course
+  // apart from a live one (both persist as `upcoming`).
   courseStatus: string;
+  displayStatus: CourseDisplayStatus;
+  /** True when the course has ANY signup rows (confirmed or cancelled) — i.e.
+   *  payment records exist that a hard delete would cascade-destroy. */
+  hasSignupRecords: boolean;
   onRequestCancel: () => void;
   onRequestDelete: () => void;
 }
@@ -106,6 +111,8 @@ export const CourseSettingsTab = ({
   onSave,
   onCancel,
   courseStatus,
+  displayStatus,
+  hasSignupRecords,
   onRequestCancel,
   onRequestDelete,
 }: CourseSettingsTabProps) => {
@@ -227,195 +234,203 @@ export const CourseSettingsTab = ({
     participantsTypedValue < currentEnrolled;
 
   return (
-    <div className="max-w-3xl">
-      {/* The form lives in a single bounded surface so dividers and the right-
-          side whitespace feel intentional rather than floating on an open
-          canvas. The destructive Faresone below sits outside this card. */}
-      <Card>
-        <CardContent className="space-y-8">
-      <div id="course-edit-image" className="scroll-mt-24">
-        <FieldLabel>Bilde</FieldLabel>
-        <ImageField
-          value={settingsImageUrl}
-          onChange={(file) => {
-            onImageFileChange(file);
-          }}
-          onRemove={() => {
-            if (settingsImageUrl) {
-              onImageRemove();
-            }
-          }}
-          disabled={isSaving}
-          className="max-w-xs"
-        />
-      </div>
-
-      {/* Tittel */}
-      <div>
-        <FieldLabel htmlFor="settings-title">Tittel</FieldLabel>
-        <Input
-          id="settings-title"
-          type="text"
-          value={settingsTitle}
-          onChange={(e) => onTitleChange(e.target.value)}
-          className="text-base"
-        />
-      </div>
-
-      {/* Beskrivelse */}
-      <div id="course-edit-description" className="scroll-mt-24">
-        <FieldLabel id="settings-description-label">Beskrivelse</FieldLabel>
-        <RichTextEditor
-          id="settings-description"
-          aria-labelledby="settings-description-label"
-          value={settingsDescription}
-          onChange={onDescriptionChange}
-        />
-      </div>
-
-      {/* Sted */}
-      <div id="course-edit-location" className="scroll-mt-24">
-        <FieldLabel>Sted</FieldLabel>
-        <LocationCombobox
-          value={settingsLocation}
-          onChange={onLocationChange}
-          locations={locations}
-          placeholder="Velg sted"
-          aria-label="Sted"
-        />
-      </div>
-
-      {/* Dato + Tidspunkt — paired (when is it) */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <FieldLabel id="settings-date-label">Dato</FieldLabel>
-          <DatePicker
-            aria-labelledby="settings-date-label"
-            value={settingsDate}
-            onChange={onDateChange}
-            placeholder="Velg dato"
+    <div className="w-full">
+      <div className="divide-y divide-border">
+        <SettingsSection title="Bilde" id="course-edit-image">
+          <ImageField
+            value={settingsImageUrl}
+            onChange={(file) => {
+              onImageFileChange(file);
+            }}
+            onRemove={() => {
+              if (settingsImageUrl) {
+                onImageRemove();
+              }
+            }}
+            disabled={isSaving}
+            className="max-w-sm"
           />
-        </div>
-        <div>
-          <FieldLabel id="settings-time-label">Tidspunkt</FieldLabel>
-          <div className="flex items-center gap-2">
-            <Select
-              value={settingsTime}
-              onValueChange={(val) => {
-                onTimeChange(val);
-                // If current end time is now invalid, clear duration
-                if (endTime && timeToMin(endTime) <= timeToMin(val)) {
-                  onDurationChange(null);
-                }
-              }}
-            >
-              <SelectTrigger className="w-full" aria-label="Starttid">
-                <SelectValue placeholder="Start" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                <SelectGroup>
-                  {allTimeSlots.map((slot) => (
-                    <SelectItem key={slot} value={slot}>{slot}</SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <span className="text-base font-medium shrink-0 text-foreground-muted">–</span>
-            <Select
-              value={endTime}
-              onValueChange={handleEndTimeChange}
-            >
-              <SelectTrigger className="w-full" aria-label="Sluttid">
-                <SelectValue placeholder="Slutt" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                <SelectGroup>
-                  {endTimeSlots.map((slot) => (
-                    <SelectItem key={slot} value={slot}>{slot}</SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+        </SettingsSection>
+
+        <SettingsSection title="Detaljer">
+          <div className="space-y-6">
+            <div>
+              <FieldLabel htmlFor="settings-title">Tittel</FieldLabel>
+              <Input
+                id="settings-title"
+                type="text"
+                value={settingsTitle}
+                onChange={(e) => onTitleChange(e.target.value)}
+                className="text-base"
+              />
+            </div>
+
+            <div id="course-edit-description" className="scroll-mt-24">
+              <FieldLabel id="settings-description-label">Beskrivelse</FieldLabel>
+              <RichTextEditor
+                id="settings-description"
+                aria-labelledby="settings-description-label"
+                value={settingsDescription}
+                onChange={onDescriptionChange}
+              />
+            </div>
           </div>
-        </div>
+        </SettingsSection>
+
+        <SettingsSection title="Sted og tid" id="course-edit-location">
+          <div className="space-y-6">
+            <div>
+              <FieldLabel>Sted</FieldLabel>
+              <LocationCombobox
+                value={settingsLocation}
+                onChange={onLocationChange}
+                locations={locations}
+                placeholder="Velg sted"
+                aria-label="Sted"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <FieldLabel id="settings-date-label">Dato</FieldLabel>
+                <DatePicker
+                  aria-labelledby="settings-date-label"
+                  value={settingsDate}
+                  onChange={onDateChange}
+                  placeholder="Velg dato"
+                />
+              </div>
+              <div>
+                <FieldLabel id="settings-time-label">Tidspunkt</FieldLabel>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={settingsTime}
+                    onValueChange={(val) => {
+                      onTimeChange(val);
+                      // If current end time is now invalid, clear duration
+                      if (endTime && timeToMin(endTime) <= timeToMin(val)) {
+                        onDurationChange(null);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-full" aria-label="Starttid">
+                      <SelectValue placeholder="Start" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      <SelectGroup>
+                        {allTimeSlots.map((slot) => (
+                          <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-base font-medium shrink-0 text-foreground-muted">–</span>
+                  <Select
+                    value={endTime}
+                    onValueChange={handleEndTimeChange}
+                  >
+                    <SelectTrigger className="w-full" aria-label="Sluttid">
+                      <SelectValue placeholder="Slutt" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      <SelectGroup>
+                        {endTimeSlots.map((slot) => (
+                          <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </SettingsSection>
+
+        <SettingsSection title="Påmelding">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <FieldLabel htmlFor="settings-capacity" error={isBelowEnrolled}>
+                Plasser
+              </FieldLabel>
+              <Input
+                id="settings-capacity"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={participantsInput}
+                onChange={(e) => {
+                  const nextValue = e.target.value.replace(/[^\d]/g, '');
+                  setParticipantsInput(nextValue);
+                }}
+                onBlur={commitParticipantsInput}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    commitParticipantsInput();
+                  }
+                }}
+                aria-invalid={isBelowEnrolled ? 'true' : undefined}
+                className="text-left"
+              />
+              {isBelowEnrolled && (
+                <FieldError className="mt-2 tabular-nums">
+                  {currentEnrolled} er allerede påmeldt — kan ikke være lavere.
+                </FieldError>
+              )}
+            </div>
+            <div>
+              <FieldLabel htmlFor="settings-price">
+                {courseFormat === 'series' ? 'Pris per gang' : 'Pris'}
+              </FieldLabel>
+              <Input
+                id="settings-price"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={priceInput}
+                onChange={(e) => setPriceInput(e.target.value.replace(/[^\d]/g, ''))}
+                onBlur={commitPriceInput}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    commitPriceInput();
+                  }
+                }}
+              />
+              {courseFormat === 'series' && priceInput !== '' && totalWeeks > 0 && (
+                <p className="mt-2 text-sm text-foreground-muted">
+                  Totalt {formatKroner((parseInt(priceInput, 10) || 0) * totalWeeks)} for {totalWeeks} uker
+                </p>
+              )}
+            </div>
+          </div>
+        </SettingsSection>
       </div>
 
-      {/* Plasser + Pris — paired (capacity & cost; both short numerics) */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <FieldLabel htmlFor="settings-capacity" error={isBelowEnrolled}>
-            Plasser
-          </FieldLabel>
-          <Input
-            id="settings-capacity"
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={participantsInput}
-            onChange={(e) => {
-              const nextValue = e.target.value.replace(/[^\d]/g, '');
-              setParticipantsInput(nextValue);
-            }}
-            onBlur={commitParticipantsInput}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                commitParticipantsInput();
-              }
-            }}
-            aria-invalid={isBelowEnrolled ? 'true' : undefined}
-            className="text-left"
-          />
-          {isBelowEnrolled && (
-            <FieldError className="mt-2 tabular-nums">
-              {currentEnrolled} er allerede påmeldt — kan ikke være lavere.
-            </FieldError>
-          )}
-        </div>
-        <div>
-          <FieldLabel htmlFor="settings-price">
-            {courseFormat === 'series' ? 'Pris per gang' : 'Pris'}
-          </FieldLabel>
-          <Input
-            id="settings-price"
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={priceInput}
-            onChange={(e) => setPriceInput(e.target.value.replace(/[^\d]/g, ''))}
-            onBlur={commitPriceInput}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                commitPriceInput();
-              }
-            }}
-          />
-          {courseFormat === 'series' && priceInput !== '' && totalWeeks > 0 && (
-            <p className="mt-2 text-sm text-foreground-muted">
-              Totalt {formatKroner((parseInt(priceInput, 10) || 0) * totalWeeks)} for {totalWeeks} uker
-            </p>
-          )}
-        </div>
-      </div>
-        </CardContent>
-      </Card>
-
-      {/* Destructive zone — gated by status. "Gjør til utkast" lives in the
-          header kebab menu (state change, not destructive). This zone is
-          danger-tinted surface for actions that destroy or invalidate data:
+      {/* Destructive zone. "Gjør til utkast" lives in the header kebab menu
+          (state change, not destructive). Danger-tinted surface for actions
+          that destroy or invalidate data:
           - draft → just Slett (no signups to refund)
-          - upcoming/active → Avlys (refund + notify; signup rows survive)
-          - cancelled → just Slett (final cleanup) */}
+          - live (upcoming/active, not yet ended) → Avlys (refund + notify)
+          - finished (completed) → Slett only when empty; a finished course with
+            participants offers nothing here — Avlys would refund a delivered
+            course, and deleting would cascade-destroy retained payment records.
+          - cancelled → just Slett (final cleanup)
+          `isFinished` uses the derived displayStatus because a published course
+          persists as `upcoming` forever. */}
       {(() => {
         const isDraft = courseStatus === 'draft';
-        const isActive = courseStatus === 'upcoming' || courseStatus === 'active';
         const isCancelled = courseStatus === 'cancelled';
-        const showCancel = isActive;
-        const showDelete = isDraft || isCancelled;
+        const isFinished = displayStatus === 'completed';
+        // Live = published and still running (not draft, cancelled, or ended).
+        const isLive = !isDraft && !isCancelled && !isFinished;
+        const showCancel = isLive;
+        // A finished course is only safe to hard-delete when it has no signup
+        // records at all — cancelled signups still carry retained payment data.
+        const showDelete = isDraft || isCancelled || (isFinished && !hasSignupRecords);
         if (!showCancel && !showDelete) return null;
         return (
-          <section className="mt-16 rounded-lg border border-danger/20 bg-danger-subtle/40 p-6">
+          <section className="mt-12 rounded-lg border border-danger/20 bg-danger-subtle/40 p-6">
             <div className="divide-y divide-danger/15">
               {showCancel && (
                 <ActionRow
@@ -440,52 +455,36 @@ export const CourseSettingsTab = ({
         );
       })()}
 
-      {/* Sticky save bar — only visible when there are unsaved changes.
-          Sits at the bottom of the scrollable parent. */}
-      {(isDirty || saveError) && (
-        <div className="sticky bottom-0 mt-4 py-3 bg-background border-t border-border z-20">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              {saveError ? (
-                <span className="inline-flex items-center gap-2 text-base text-danger" role="alert">
-                  <Info className="size-4 shrink-0" aria-hidden />
-                  {saveError}
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-2 text-base text-foreground-muted">
-                  <span className="size-2 rounded-full bg-foreground" aria-hidden />
-                  Du har ulagrede endringer
-                </span>
-              )}
-            </div>
-            <div className="flex gap-2 shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onCancel}
-                disabled={isSaving}
-              >
-                Avbryt
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  commitParticipantsInput();
-                  onSave();
-                }}
-                disabled={!isDirty}
-                loading={isSaving}
-                loadingText="Lagrer"
-              >
-                Lagre endringer
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DirtyFormBar
+        visible={isDirty || !!saveError}
+        error={saveError}
+        isSaving={isSaving}
+        onSave={() => {
+          commitParticipantsInput();
+          onSave();
+        }}
+        onCancel={onCancel}
+      />
     </div>
   );
 };
+
+function SettingsSection({
+  id,
+  title,
+  children,
+}: {
+  id?: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={id} className="grid scroll-mt-24 gap-4 py-8 md:grid-cols-[180px_minmax(0,1fr)] md:gap-10 first:pt-0">
+      <h2 className="text-lg font-medium tracking-tight text-foreground">{title}</h2>
+      <div className="min-w-0">{children}</div>
+    </section>
+  );
+}
 
 interface ActionRowProps {
   title: string;
@@ -528,8 +527,7 @@ function ActionRow({ title, sub, buttonLabel, onClick, tone = 'default' }: Actio
         <p className="text-sm text-foreground-muted mt-0.5">{sub}</p>
       </div>
       <Button
-        variant={tone === 'danger' ? 'destructive' : 'outline'}
-        size="sm"
+        variant={tone === 'danger' ? 'destructive' : 'secondary'}
         onClick={onClick}
         className="shrink-0"
       >

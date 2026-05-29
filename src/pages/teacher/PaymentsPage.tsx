@@ -160,7 +160,7 @@ const PaymentsPage = () => {
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
       <MobileTeacherHeader title="Betalingskonto" />
 
-      <PageShell width="form" title="Betalingskonto">
+      <PageShell narrow="centered" title="Betalingskonto">
         <div className="space-y-8">
           {/* ─── State 1: Not started — minimal onboarding form ─── */}
           {!hasApproval && !isConnected && (
@@ -230,7 +230,6 @@ const PaymentsPage = () => {
                       <div className="flex items-center gap-2 shrink-0">
                         <Button
                           variant="ghost"
-                          size="sm"
                           onClick={handleCheckStatus}
                           loading={checkingStatus}
                           loadingText="Sjekker"
@@ -238,7 +237,7 @@ const PaymentsPage = () => {
                           Sjekk status
                         </Button>
                         {contractUrl && (
-                          <Button size="sm" onClick={handleOpenContract}>
+                          <Button onClick={handleOpenContract}>
                             Åpne hos Dintero
                           </Button>
                         )}

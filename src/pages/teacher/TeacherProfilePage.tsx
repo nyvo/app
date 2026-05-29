@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -158,160 +159,128 @@ const TeacherProfilePage = () => {
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
         <MobileTeacherHeader title="Innstillinger" />
 
-        <PageShell width="form" title="Innstillinger">
-          <div className="space-y-8">
+        <PageShell narrow="centered" title="Innstillinger">
+          <div className="divide-y divide-border">
             {/* Personlig informasjon */}
-            <section>
+            <section className="py-10 first:pt-0">
               <h2 className="mb-6 text-lg font-medium tracking-tight text-foreground">
                 Personlig informasjon
               </h2>
-              <Card>
-                <CardContent>
-                  <div className="grid grid-cols-1 gap-6">
-                    <div className="grid gap-2">
-                      <label
-                        htmlFor="profile-name"
-                        className="text-base font-medium text-foreground"
-                      >
-                        Navn
-                      </label>
-                      <Input
-                        id="profile-name"
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                      />
-                    </div>
+              <div className="grid grid-cols-1 gap-6">
+                <div className="grid gap-2">
+                  <label
+                    htmlFor="profile-name"
+                    className="text-base font-medium text-foreground"
+                  >
+                    Navn
+                  </label>
+                  <Input
+                    id="profile-name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
 
-                    <div className="grid gap-2">
-                      <label
-                        htmlFor="profile-email"
-                        data-error={(errors.email && touched.email) || undefined}
-                        className="text-base font-medium text-foreground data-[error=true]:text-danger"
-                      >
-                        E-post
-                      </label>
-                      <Input
-                        id="profile-email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
-                        onBlur={() => handleBlur('email')}
-                        aria-invalid={!!(errors.email && touched.email) || undefined}
-                        aria-describedby={errors.email && touched.email ? 'profile-email-error' : undefined}
-                      />
-                      {errors.email && touched.email && (
-                        <FieldError id="profile-email-error" className="mt-0">{errors.email}</FieldError>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                <div className="grid gap-2">
+                  <label
+                    htmlFor="profile-email"
+                    data-error={(errors.email && touched.email) || undefined}
+                    className="text-base font-medium text-foreground data-[error=true]:text-danger"
+                  >
+                    E-post
+                  </label>
+                  <Input
+                    id="profile-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                    onBlur={() => handleBlur('email')}
+                    aria-invalid={!!(errors.email && touched.email) || undefined}
+                    aria-describedby={errors.email && touched.email ? 'profile-email-error' : undefined}
+                  />
+                  {errors.email && touched.email && (
+                    <FieldError id="profile-email-error" className="mt-0">{errors.email}</FieldError>
+                  )}
+                </div>
+              </div>
             </section>
 
             {/* Konto og sikkerhet */}
-            <section>
+            <section className="py-10">
               <h2 className="mb-6 text-lg font-medium tracking-tight text-foreground">
                 Konto og sikkerhet
               </h2>
-              <Card>
-                <CardContent>
-                  <div className="divide-y divide-border">
-                    {/* Logg ut alle enheter */}
-                    <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
-                      <div>
-                        <span className="text-base font-medium block text-foreground">Logg ut alle enheter</span>
-                        <span className="text-base block text-foreground-muted">Logger deg ut overalt.</span>
-                      </div>
+              <div className="space-y-4">
+                {/* Logg ut alle enheter */}
+                <Card size="sm">
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-medium block text-foreground">Logg ut alle enheter</span>
                       <Button
-                        variant="outline-soft"
-                        size="sm"
+                        variant="secondary"
                         className="ml-4 shrink-0"
                         onClick={() => setLogoutAllOpen(true)}
                       >
                         Logg ut alle
                       </Button>
-                      <ConfirmDialog
-                        open={logoutAllOpen}
-                        onOpenChange={setLogoutAllOpen}
-                        ariaLabel="Logg ut alle enheter"
-                        headline="Logg ut fra alle enheter?"
-                        actionLabel="Logg ut alle"
-                        onConfirm={handleLogoutAllDevices}
-                        loading={isLoggingOutAll}
-                        loadingText="Logger ut"
-                      >
-                        <p className="text-base text-foreground-muted">
-                          Du blir logget ut fra alle nettlesere og enheter, inkludert denne.
-                        </p>
-                      </ConfirmDialog>
                     </div>
+                  </CardContent>
+                  <ConfirmDialog
+                    open={logoutAllOpen}
+                    onOpenChange={setLogoutAllOpen}
+                    ariaLabel="Logg ut alle enheter"
+                    title="Logg ut alle enheter"
+                    body="Du blir logget ut fra alle nettlesere og enheter, inkludert denne."
+                    actionLabel="Logg ut alle"
+                    onConfirm={handleLogoutAllDevices}
+                    loading={isLoggingOutAll}
+                    loadingText="Logger ut"
+                  />
+                </Card>
 
-                    {/* Slett konto */}
-                    <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
-                      <div>
-                        <span className="text-base font-medium block text-foreground">Slett kontoen din</span>
-                        <span className="text-base block text-foreground-muted">All data slettes permanent.</span>
-                      </div>
+                {/* Slett konto */}
+                <Card size="sm">
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-medium block text-foreground">Slett kontoen din</span>
                       <Button
                         variant="destructive"
-                        size="sm"
                         className="ml-4 shrink-0"
                         onClick={() => setDeleteOpen(true)}
                       >
                         Slett konto
                       </Button>
-                      <ConfirmDialog
-                        open={deleteOpen}
-                        onOpenChange={(open) => {
-                          setDeleteOpen(open);
-                          if (!open) setDeleteConfirmText('');
-                        }}
-                        ariaLabel="Slett kontoen din"
-                        headline="Slett kontoen din?"
-                        actionLabel="Slett konto"
-                        onConfirm={handleDeleteAccount}
-                        disabled={deleteConfirmText !== 'SLETT'}
-                        loading={isDeletingAccount}
-                        loadingText="Sletter"
-                      >
-                        <p className="text-base text-foreground-muted">
-                          Alle kurs, påmeldinger og meldinger slettes permanent. Dette kan ikke angres.
-                        </p>
-                        <div className="grid gap-2">
-                          <label htmlFor="delete-confirm" className="text-base text-foreground-muted">
-                            Skriv <span className="font-medium text-foreground">SLETT</span> for å bekrefte
-                          </label>
-                          <Input
-                            id="delete-confirm"
-                            value={deleteConfirmText}
-                            onChange={(e) => setDeleteConfirmText(e.target.value)}
-                            autoComplete="off"
-                          />
-                        </div>
-                      </ConfirmDialog>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                  <ConfirmDialog
+                    open={deleteOpen}
+                    onOpenChange={(open) => {
+                      setDeleteOpen(open);
+                      if (!open) setDeleteConfirmText('');
+                    }}
+                    ariaLabel="Slett kontoen din"
+                    title="Slett konto"
+                    body={<>Kontoen <strong>{profile?.email}</strong> og all tilhørende data slettes permanent.</>}
+                    actionLabel="Slett konto"
+                    onConfirm={handleDeleteAccount}
+                    loading={isDeletingAccount}
+                    loadingText="Sletter"
+                    typeToConfirm="SLETT"
+                    typeToConfirmValue={deleteConfirmText}
+                    onTypeToConfirmChange={setDeleteConfirmText}
+                  />
+                </Card>
+              </div>
             </section>
           </div>
 
-            {/* Global Footer Save (Sticky on Mobile, Static on Desktop) */}
-            {isDirty && (
-              <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-end gap-2 border-t border-border bg-surface p-4 md:static md:mt-8 md:border-none md:bg-transparent md:p-0">
-                  <Button variant="ghost" size="sm" className="hidden md:inline-flex" onClick={handleCancel}>Avbryt</Button>
-                  <Button
-                    size="sm"
-                    className="flex-1 justify-center md:flex-none"
-                    onClick={handleSave}
-                    loading={isSaving}
-                    loadingText="Lagrer"
-                  >
-                      Lagre endringer
-                  </Button>
-              </div>
-            )}
+            <DirtyFormBar
+              visible={isDirty}
+              isSaving={isSaving}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
 
         </PageShell>
     </main>

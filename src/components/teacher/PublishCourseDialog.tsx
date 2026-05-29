@@ -29,7 +29,7 @@ export function PublishCourseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Sett opp betalinger for å publisere</DialogTitle>
           <DialogDescription>
@@ -39,13 +39,13 @@ export function PublishCourseDialog({
         </DialogHeader>
         <DialogFooter>
           <Button
-            variant="outline-soft"
-            size="sm"
+            variant="secondary"
+            size="lg"
             onClick={() => onOpenChange(false)}
           >
             Ikke nå
           </Button>
-          <Button size="sm" onClick={handleGoToPayments}>
+          <Button size="lg" onClick={handleGoToPayments}>
             Sett opp betalinger
           </Button>
         </DialogFooter>

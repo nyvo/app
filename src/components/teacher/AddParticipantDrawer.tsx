@@ -357,7 +357,7 @@ export function AddParticipantDrawer({
             </div>
 
             <SheetFooter className="flex-row justify-end">
-              <Button type="submit" size="sm" disabled={isFull} loading={isSubmitting} loadingText="Legger til">
+              <Button type="submit" disabled={isFull} loading={isSubmitting} loadingText="Legger til">
                 Legg til deltaker
               </Button>
             </SheetFooter>

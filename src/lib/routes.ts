@@ -41,6 +41,7 @@ export const routes = {
 
   // Studio (seller's storefront management)
   studio: '/studio',
+  collaboration: '/collaboration',
 
   // Settings
   settingsProfile: '/settings/profile',

@@ -170,13 +170,13 @@ export function SessionsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg" showCloseButton>
+      <DialogContent className="sm:max-w-lg" showCloseButton={view === 'list'}>
         <DialogHeader>
           <div className="flex items-center gap-2">
             {view !== 'list' && (
               <Button
-                variant="ghost"
-                size="icon-sm"
+                variant="soft"
+                size="icon"
                 onClick={backToList}
                 aria-label="Tilbake"
                 className="-ml-2"
@@ -228,8 +228,7 @@ export function SessionsModal({
                     </div>
                   </div>
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="secondary"
                     onClick={() => startReschedule(s)}
                     disabled={editDisabled}
                     className="shrink-0"
@@ -249,10 +248,10 @@ export function SessionsModal({
               {shortTime(editing.start_time)}
             </p>
 
-            <div className="space-y-1.5">
+            <div>
               <label
                 htmlFor="reschedule-date"
-                className="text-sm font-medium text-foreground"
+                className="mb-2 block text-sm font-medium text-foreground"
               >
                 Dato
               </label>
@@ -263,8 +262,8 @@ export function SessionsModal({
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">Tidspunkt</label>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground">Tidspunkt</label>
               <div className="flex items-center gap-2">
                 <Select
                   value={newStart}
@@ -314,12 +313,19 @@ export function SessionsModal({
               Påmeldte får automatisk beskjed om den nye tiden.
             </p>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline-soft" size="sm" onClick={backToList} disabled={submitting}>
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex-1"
+                onClick={() => onOpenChange(false)}
+                disabled={submitting}
+              >
                 Avbryt
               </Button>
               <Button
-                size="sm"
+                size="lg"
+                className="flex-1"
                 onClick={submitReschedule}
                 loading={submitting}
                 loadingText="Lagrer"

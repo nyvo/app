@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { VariantProps } from 'class-variance-authority';
-import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatKroner, cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
@@ -395,8 +395,7 @@ export function ParticipantDetailDrawer({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="secondary"
                   className="w-full"
                   disabled={loading}
                 >
@@ -468,17 +467,14 @@ export function ParticipantDetailDrawer({
         open={confirmKind === 'cancel-no-refund'}
         onOpenChange={(o) => !o && setConfirmKind(null)}
         ariaLabel="Avbestill påmelding"
-        headline={
-          isPaid ? 'Avbestill påmeldingen uten refusjon?' : 'Avbestill påmeldingen?'
-        }
-        scope={
-          <ConfirmScopeItem
-            name={name}
-            meta={email}
-            trailing={isPaid && signup.amount_paid != null ? formatKroner(signup.amount_paid) : undefined}
-          />
+        title="Avbestill påmelding"
+        body={
+          isPaid
+            ? <><strong>{name}</strong> avbestilles uten refusjon.</>
+            : <><strong>{name}</strong> avbestilles og plassen frigjøres.</>
         }
         actionLabel="Avbestill"
+        cancelLabel="Behold"
         onConfirm={() => {
           setConfirmKind(null);
           runAction(() => onCancelEnrollment(signup.id, false));
@@ -489,15 +485,10 @@ export function ParticipantDetailDrawer({
         open={confirmKind === 'cancel-with-refund'}
         onOpenChange={(o) => !o && setConfirmKind(null)}
         ariaLabel="Avbestill og refunder"
-        headline="Avbestill og refunder?"
-        scope={
-          <ConfirmScopeItem
-            name={name}
-            meta={email}
-            trailing={signup.amount_paid != null ? formatKroner(signup.amount_paid) : undefined}
-          />
-        }
+        title="Avbestill og refunder"
+        body={<><strong>{name}</strong> avbestilles og refunderes <strong>{formatKroner(signup.amount_paid ?? 0)}</strong>.</>}
         actionLabel="Avbestill og refunder"
+        cancelLabel="Behold"
         onConfirm={() => {
           setConfirmKind(null);
           runAction(() => onCancelEnrollment(signup.id, true));
@@ -508,14 +499,8 @@ export function ParticipantDetailDrawer({
         open={confirmKind === 'refund-only'}
         onOpenChange={(o) => !o && setConfirmKind(null)}
         ariaLabel="Refunder beløp"
-        headline="Refunder beløpet?"
-        scope={
-          <ConfirmScopeItem
-            name={name}
-            meta={email}
-            trailing={signup.amount_paid != null ? formatKroner(signup.amount_paid) : undefined}
-          />
-        }
+        title="Refunder beløp"
+        body={<><strong>{name}</strong> refunderes <strong>{formatKroner(signup.amount_paid ?? 0)}</strong>.</>}
         actionLabel="Refunder"
         onConfirm={() => {
           setConfirmKind(null);
@@ -530,8 +515,8 @@ export function ParticipantDetailDrawer({
         open={confirmKind === 'resolve'}
         onOpenChange={(o) => !o && setConfirmKind(null)}
         ariaLabel="Merk som betalt"
-        headline="Merk påmeldingen som betalt?"
-        scope={<ConfirmScopeItem name={name} meta={`${email} · ${courseTitle}`} />}
+        title="Merk som betalt"
+        body={<><strong>{name}</strong> markeres som betalt for <strong>{courseTitle}</strong>.</>}
         actionLabel="Merk som betalt"
         onConfirm={() => {
           setConfirmKind(null);

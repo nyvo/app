@@ -24,6 +24,7 @@ import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCourseDetail } from '@/hooks/use-course-detail';
+import { deriveCourseDisplayStatus } from '@/lib/course-status';
 import { publishCourse, unpublishCourse } from '@/services/courses';
 import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
@@ -261,6 +262,12 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
       ? `${window.location.origin}/${currentTeam.slug}/${courseData.slug}`
       : '';
   const isMultiDay = sessions.length > 1;
+  const displayStatus = deriveCourseDisplayStatus({
+    status: courseData.status,
+    startDate: courseData.startDate,
+    endDate: courseData.endDate,
+    sessions,
+  });
 
   const whenLine = courseData.timeSchedule
     ? courseData.durationMinutes
@@ -283,7 +290,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
     <>
       <DrawerHeader
         title={courseData.title}
-        status={courseData.status}
+        status={displayStatus}
         description={headerDescription}
       />
 
@@ -306,8 +313,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
                 </AlertDescription>
                 <div className="mt-3">
                   <Button
-                    variant="outline"
-                    size="xs"
+                    variant="secondary"
                     onClick={() => navigate(routes.settingsPayouts)}
                   >
                     Fullfør oppsettet
@@ -322,7 +328,6 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
         <section className="px-6 py-6 flex flex-wrap items-center gap-2 border-b border-border">
           {courseData.status === 'draft' ? (
             <Button
-              size="sm"
               onClick={handlePublish}
               loading={isPublishing}
               loadingText="Publiserer"
@@ -336,8 +341,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
                 courseTitle={courseData.title}
               />
               <Button
-                variant="outline-soft"
-                size="sm"
+                variant="secondary"
                 onClick={() => courseUrl && window.open(courseUrl, '_blank')}
                 disabled={!courseUrl}
               >
@@ -345,7 +349,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline-soft" size="sm" className="px-2">
+                  <Button variant="soft" size="icon" aria-label="Mer">
                     <MoreHorizontal className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -431,7 +435,6 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
       <div className="border-t border-border px-6 py-4 bg-background">
         <Button
           variant="ghost"
-          size="sm"
           asChild
           className="-ml-2 text-foreground-muted hover:text-foreground"
         >
@@ -546,12 +549,18 @@ function ScheduleQuickView({
   const confirmedCount = confirmedParticipants.length;
   const visibleParticipants = confirmedParticipants.slice(0, 5);
   const extraCount = Math.max(0, confirmedCount - visibleParticipants.length);
+  const displayStatus = deriveCourseDisplayStatus({
+    status: courseData.status,
+    startDate: courseData.startDate,
+    endDate: courseData.endDate,
+    sessions,
+  });
 
   return (
     <>
       <DrawerHeader
         title={courseData.title}
-        status={courseData.status}
+        status={displayStatus}
         description={headerDescription}
       />
 
@@ -587,7 +596,7 @@ function ScheduleQuickView({
       </div>
 
       <div className="border-t border-border px-6 py-4 bg-background">
-        <Button asChild size="sm" className="w-full">
+        <Button asChild className="w-full">
           <Link to={routes.course(courseId)} onClick={onClose}>
             Åpne kursside
           </Link>

@@ -79,7 +79,7 @@ export default function DashboardPreview() {
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <section className="flex flex-col">
-              <h2 className="mb-6 text-xl font-medium tracking-tight text-foreground">
+              <h2 className="mb-3 text-xl font-medium tracking-tight text-foreground">
                 Neste kurs
               </h2>
               <div className="flex min-h-56 flex-1 flex-col rounded-xl border border-border bg-background p-3">
@@ -92,10 +92,10 @@ export default function DashboardPreview() {
                     >
                       <DateBadge dateStr={course.dateStr} size="sm" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">{course.title}</p>
-                        <p className="truncate text-sm text-foreground-muted">{course.when}</p>
+                        <p className="truncate text-base font-medium text-foreground">{course.title}</p>
+                        <p className="truncate text-base text-foreground-muted">{course.when}</p>
                       </div>
-                      <span className="shrink-0 text-xs tabular-nums text-foreground-muted">
+                      <span className="shrink-0 text-base tabular-nums text-foreground-muted">
                         {course.capacity}
                       </span>
                     </Link>
@@ -105,7 +105,7 @@ export default function DashboardPreview() {
             </section>
 
             <section className="flex flex-col">
-              <h2 className="mb-6 text-xl font-medium tracking-tight text-foreground">
+              <h2 className="mb-3 text-xl font-medium tracking-tight text-foreground">
                 Siste påmeldinger
               </h2>
               <div className="flex min-h-56 flex-1 flex-col rounded-xl border border-border bg-background p-3">
@@ -117,12 +117,12 @@ export default function DashboardPreview() {
                     >
                       <UserAvatar name={signup.name} size="lg" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">{signup.name}</p>
-                        <p className="truncate text-sm text-foreground-muted">
+                        <p className="truncate text-base font-medium text-foreground">{signup.name}</p>
+                        <p className="truncate text-base text-foreground-muted">
                           Meldte seg på {signup.course}
                         </p>
                       </div>
-                      <span className="shrink-0 text-xs tabular-nums text-foreground-muted">
+                      <span className="shrink-0 text-base tabular-nums text-foreground-muted">
                         {signup.when}
                       </span>
                     </div>

@@ -1,20 +1,57 @@
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CheckCircle2, Info, AlertTriangle, XCircle, Loader2 } from "lucide-react"
+import { AlertCircle, Check, Info, Loader2, TriangleAlert } from "@/lib/icons"
 import { cn } from "@/lib/utils"
 
+// Action / cancel render as right-aligned inline text links — same type
+// scale as the title so they sit on the same optical line; no button chrome.
 const toastActionClassName =
-  "!h-auto !min-h-0 !border-0 !bg-transparent !p-0 !shadow-none " +
-  "!font-inherit !font-medium !text-foreground underline underline-offset-2 " +
-  "hover:!text-foreground-muted"
+  "!ml-auto !shrink-0 !h-auto !min-h-0 !rounded-none !border-0 !bg-transparent " +
+  "!p-0 !text-sm !font-medium !text-background !underline !underline-offset-2 " +
+  "!shadow-none hover:!bg-transparent hover:!opacity-90"
+
+const toastClassName =
+  "flex w-[calc(100vw-2rem)] items-start gap-3 rounded-2xl " +
+  "bg-[var(--toast-surface)] px-5 py-4 text-background " +
+  "shadow-[0_10px_30px_-6px_rgb(0_0_0/0.22)] ring-1 ring-background/10 " +
+  "sm:w-[380px]"
+
+const toastIconClassName =
+  "flex size-5 shrink-0 items-center justify-center rounded-full " +
+  "bg-background/15 text-background [&_svg]:size-3.5 [&_svg]:stroke-[2.5]"
+
+const errorToastIconClassName =
+  "flex size-5 shrink-0 items-center justify-center rounded-full " +
+  "bg-danger/30 text-background [&_svg]:size-3.5 [&_svg]:stroke-[2.5]"
 
 const Toaster = ({ toastOptions, ...props }: ToasterProps) => {
   return (
     <Sonner
       className="toaster group"
+      position="bottom-center"
+      expand={false}
+      visibleToasts={3}
+      duration={4000}
+      gap={8}
+      offset={16}
       toastOptions={{
+        unstyled: true,
         ...toastOptions,
         classNames: {
           ...toastOptions?.classNames,
+          toast: cn(toastClassName, toastOptions?.classNames?.toast),
+          title: cn(
+            "text-sm font-medium leading-snug text-background",
+            toastOptions?.classNames?.title,
+          ),
+          description: cn(
+            "mt-0.5 text-xs leading-5 text-background/70",
+            toastOptions?.classNames?.description,
+          ),
+          icon: cn(toastIconClassName, toastOptions?.classNames?.icon),
+          success: cn(toastClassName, toastOptions?.classNames?.success),
+          info: cn(toastClassName, toastOptions?.classNames?.info),
+          warning: cn(toastClassName, toastOptions?.classNames?.warning),
+          error: cn(toastClassName, toastOptions?.classNames?.error),
           actionButton: cn(
             toastActionClassName,
             toastOptions?.classNames?.actionButton,
@@ -26,20 +63,38 @@ const Toaster = ({ toastOptions, ...props }: ToasterProps) => {
         },
       }}
       icons={{
-        success: <CheckCircle2 className="size-4" />,
-        info: <Info className="size-4" />,
-        warning: <AlertTriangle className="size-4" />,
-        error: <XCircle className="size-4" />,
-        loading: <Loader2 className="size-4 animate-spin" />,
+        success: (
+          <span className={toastIconClassName}>
+            <Check aria-hidden="true" />
+          </span>
+        ),
+        info: (
+          <span className={toastIconClassName}>
+            <Info aria-hidden="true" />
+          </span>
+        ),
+        warning: (
+          <span className={errorToastIconClassName}>
+            <TriangleAlert aria-hidden="true" />
+          </span>
+        ),
+        error: (
+          <span className={errorToastIconClassName}>
+            <AlertCircle aria-hidden="true" />
+          </span>
+        ),
+        loading: (
+          <span className={toastIconClassName}>
+            <Loader2 className="animate-spin" aria-hidden="true" />
+          </span>
+        ),
       }}
       style={
         {
-          // Studio tokens — popover/popover-foreground don't exist in this
-          // design system, so the previous values resolved to transparent.
-          "--normal-bg": "var(--surface)",
-          "--normal-text": "var(--foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          "--normal-bg": "var(--toast-surface)",
+          "--normal-text": "var(--background)",
+          "--normal-border": "transparent",
+          "--border-radius": "var(--radius-2xl)",
         } as React.CSSProperties
       }
       {...props}

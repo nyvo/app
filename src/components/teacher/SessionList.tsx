@@ -117,7 +117,6 @@ export const SessionList: React.FC<SessionListProps> = ({
           <Button
             type="button"
             variant="plain"
-            size="xs"
             onClick={() => setShowAll((current) => !current)}
             className="font-medium"
           >
@@ -230,7 +229,6 @@ export const SessionList: React.FC<SessionListProps> = ({
                       <div className="flex gap-2">
                         <Button
                           variant="ghost"
-                          size="sm"
                           className="flex-1"
                           onClick={() => handleCancel(session.id)}
                           disabled={savingSessionId === session.id}
@@ -238,7 +236,6 @@ export const SessionList: React.FC<SessionListProps> = ({
                           Avbryt
                         </Button>
                         <Button
-                          size="sm"
                           className="flex-1"
                           onClick={() => handleSave(session.id)}
                           disabled={!hasRealSessions || !sessionEdits[session.id]}

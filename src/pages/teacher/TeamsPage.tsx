@@ -1,100 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { X } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { PageTabs, PageTab } from '@/components/ui/page-tabs';
-import { ExternalLink } from '@/lib/icons';
+import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { FieldError } from '@/components/ui/field-error';
+import { ImageField } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { ImageField } from '@/components/ui/image-upload';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
-import { LocationsSection } from '@/components/teacher/studio/LocationsSection';
-import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocations } from '@/hooks/use-locations';
+import { friendlyError } from '@/lib/error-messages';
+import { logger } from '@/lib/logger';
+import { createLocation, updateLocation } from '@/services/locations';
 import { updateSeller } from '@/services/sellers';
 import { renameTeamSlug, updateTeam } from '@/services/teams';
 import { uploadSellerLogo } from '@/services/storage';
-import { friendlyError } from '@/lib/error-messages';
-import { logger } from '@/lib/logger';
 import type { Seller, Team } from '@/types/database';
 
-// ---------------------------------------------------------------------------
-// "Min studio" — the seller's public storefront page (their team) plus the
-// supporting concerns: affiliations (other instructors syndicated here) and
-// locations (where they teach). Each seller has exactly ONE team auto-created
-// on signup. All editing is inline — no modals.
-// ---------------------------------------------------------------------------
-
-type StudioTab = 'studio' | 'addresses' | 'team';
-
-const STUDIO_TABS: { key: StudioTab; label: string }[] = [
-  { key: 'studio', label: 'Studiosiden' },
-  { key: 'addresses', label: 'Adresser' },
-  { key: 'team', label: 'Team' },
-];
+const DEFAULT_PLACE_NAME = 'Studio';
 
 const TeamsPage = () => {
   const { currentTeam, currentSeller, refreshSellers } = useAuth();
-  const [activeTab, setActiveTab] = useState<StudioTab>('studio');
-
-  const publicUrl = currentTeam?.slug
-    ? `${window.location.origin}/${currentTeam.slug}`
-    : null;
-  const collaborationTabLabel =
-    currentSeller?.seller_type === 'business' ? 'Instruktører' : 'Studioside';
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
       <MobileTeacherHeader title="Studio" />
 
-      <PageShell
-        title="Studio"
-        action={
-          publicUrl && (
-            <Button asChild size="sm">
-              <a href={publicUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink data-icon="inline-start" />
-                Vis min side
-              </a>
-            </Button>
-          )
-        }
-        tabs={
-          currentTeam && (
-            <PageTabs ariaLabel="Studio-seksjoner">
-              {STUDIO_TABS.map(({ key, label }) => (
-                <PageTab
-                  key={key}
-                  active={activeTab === key}
-                  onClick={() => setActiveTab(key)}
-                >
-                  {key === 'team' ? collaborationTabLabel : label}
-                </PageTab>
-              ))}
-            </PageTabs>
-          )
-        }
-      >
-        {currentTeam ? (
-          <div className="max-w-3xl">
-              {activeTab === 'studio' && currentSeller && (
-                <StudioSidenForm
-                  team={currentTeam}
-                  seller={currentSeller}
-                  onSaved={refreshSellers}
-                />
-              )}
-
-              {activeTab === 'addresses' && <LocationsSection />}
-
-              {activeTab === 'team' && <AffiliationsSection />}
-          </div>
+      <PageShell title="Studio">
+        {currentTeam && currentSeller ? (
+          <StudioPublicSettings
+            team={currentTeam}
+            seller={currentSeller}
+            onSaved={refreshSellers}
+          />
         ) : (
           <p className="text-base text-foreground-muted">
-            Fant ingen studio. Logg ut og inn igjen, eller kontakt
-            brukerstøtte hvis problemet vedvarer.
+            Fant ingen studio. Logg ut og inn igjen, eller kontakt brukerstøtte hvis problemet vedvarer.
           </p>
         )}
       </PageShell>
@@ -102,7 +45,7 @@ const TeamsPage = () => {
   );
 };
 
-function StudioSidenForm({
+function StudioPublicSettings({
   team,
   seller,
   onSaved,
@@ -111,110 +54,161 @@ function StudioSidenForm({
   seller: Seller;
   onSaved: () => Promise<void> | void;
 }) {
+  const { locations, isLoading: loadingLocations, refetch } = useLocations(seller.id);
+  const primaryLocation = locations[0] ?? null;
+  const additionalLocations = locations.slice(1);
+
   const [savingPhoto, setSavingPhoto] = useState(false);
   const [logoUrl, setLogoUrl] = useState(seller.logo_url);
   useEffect(() => {
     setLogoUrl(seller.logo_url);
   }, [seller.logo_url]);
 
-  // Local state for the editable identity fields. Inputs re-sync from props
-  // whenever the parent refreshes after a successful save.
   const [name, setName] = useState(seller.name);
   const [nameError, setNameError] = useState<string | null>(null);
-  const [savingName, setSavingName] = useState(false);
   useEffect(() => {
     setName(seller.name);
   }, [seller.name]);
 
   const [slug, setSlug] = useState(team.slug);
   const [slugError, setSlugError] = useState<string | null>(null);
-  const [savingSlug, setSavingSlug] = useState(false);
   useEffect(() => {
     setSlug(team.slug);
   }, [team.slug]);
 
-  const isNameDirty = name !== seller.name;
-  const isSlugDirty = slug !== team.slug;
+  const [placeName, setPlaceName] = useState(DEFAULT_PLACE_NAME);
+  const [address, setAddress] = useState('');
+  const [rooms, setRooms] = useState<string[]>([]);
+  const [newRoom, setNewRoom] = useState('');
+  const [placeError, setPlaceError] = useState<string | null>(null);
 
-  const handleNameCancel = () => {
+  useEffect(() => {
+    setPlaceName(primaryLocation?.name ?? DEFAULT_PLACE_NAME);
+    setAddress(primaryLocation?.address ?? '');
+    setRooms(primaryLocation?.rooms ?? []);
+    setNewRoom('');
+    setPlaceError(null);
+  }, [primaryLocation?.id, primaryLocation?.name, primaryLocation?.address, primaryLocation?.rooms]);
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  const isDirty = useMemo(() => {
+    const locationDirty = primaryLocation
+      ? placeName.trim() !== primaryLocation.name ||
+        address.trim() !== (primaryLocation.address ?? '') ||
+        !sameStringArray(rooms, primaryLocation.rooms ?? [])
+      : placeName.trim() !== DEFAULT_PLACE_NAME || address.trim() !== '' || rooms.length > 0;
+
+    return name.trim() !== seller.name || slug.trim() !== team.slug || locationDirty;
+  }, [address, name, placeName, primaryLocation, rooms, seller.name, slug, team.slug]);
+
+  const handleCancel = () => {
     setName(seller.name);
-    setNameError(null);
-  };
-
-  const handleSlugCancel = () => {
     setSlug(team.slug);
-    setSlugError(null);
-  };
-
-  const handleNameSave = async () => {
-    if (savingName) return;
-    const trimmed = name.trim();
-    if (trimmed === seller.name) {
-      setName(seller.name);
-      setNameError(null);
-      return;
-    }
-    if (!trimmed) {
-      setNameError('Skriv inn et navn.');
-      return;
-    }
     setNameError(null);
-    setSavingName(true);
-
-    try {
-      const { error } = await updateSeller(seller.id, { name: trimmed });
-      if (error) {
-        setNameError(friendlyError(error, 'Kunne ikke lagre navnet.'));
-        return;
-      }
-      // Keep teams.name aligned. Best-effort: the seller name is the source of
-      // truth for public rendering; a transient team-row lag is harmless.
-      void updateTeam(team.id, { name: trimmed }).catch((err) => {
-        logger.warn('Failed to mirror seller name onto team row:', err);
-      });
-      setName(trimmed);
-      await onSaved();
-      toast.success('Navnet er oppdatert.');
-    } finally {
-      setSavingName(false);
-    }
+    setSlugError(null);
+    setPlaceName(primaryLocation?.name ?? DEFAULT_PLACE_NAME);
+    setAddress(primaryLocation?.address ?? '');
+    setRooms(primaryLocation?.rooms ?? []);
+    setNewRoom('');
+    setPlaceError(null);
   };
 
-  const handleSlugSave = async () => {
-    if (savingSlug) return;
-    const trimmed = slug.trim();
-    if (trimmed === team.slug) {
-      setSlug(team.slug);
-      setSlugError(null);
+  const addRoom = () => {
+    const trimmed = newRoom.trim();
+    if (!trimmed || rooms.includes(trimmed)) {
+      setNewRoom('');
       return;
     }
-    if (!trimmed) {
-      setSlugError('Skriv inn en adresse.');
-      return;
-    }
-    setSlugError(null);
-    setSavingSlug(true);
+    setRooms((prev) => [...prev, trimmed]);
+    setNewRoom('');
+  };
 
+  const removeRoom = (room: string) => {
+    setRooms((prev) => prev.filter((value) => value !== room));
+  };
+
+  const handleSave = async () => {
+    if (isSaving) return;
+
+    const trimmedName = name.trim();
+    const trimmedSlug = slug.trim();
+    const trimmedPlaceName = placeName.trim();
+    const trimmedAddress = address.trim();
+
+    let blocked = false;
+    if (!trimmedName) {
+      setNameError('Skriv inn et navn.');
+      blocked = true;
+    } else {
+      setNameError(null);
+    }
+
+    if (!trimmedSlug) {
+      setSlugError('Skriv inn en adresse.');
+      blocked = true;
+    } else {
+      setSlugError(null);
+    }
+
+    if ((trimmedAddress || rooms.length > 0) && !trimmedPlaceName) {
+      setPlaceError('Skriv inn et navn på stedet.');
+      blocked = true;
+    } else {
+      setPlaceError(null);
+    }
+
+    if (blocked) return;
+
+    setIsSaving(true);
     try {
-      const { slug: nextSlug, error } = await renameTeamSlug(team.id, trimmed);
-      if (error || !nextSlug) {
-        const msg = error?.message ?? '';
-        if (msg.includes('already taken')) {
-          setSlugError('Denne adressen er opptatt. Velg en annen.');
-        } else if (msg.includes('reserved')) {
-          setSlugError('Denne adressen er reservert. Velg en annen.');
-        } else if (msg.includes('at least 3')) {
-          setSlugError('Bruk minst 3 tegn.');
-        } else {
-          setSlugError(friendlyError(error, 'Kunne ikke endre adressen.'));
+      if (trimmedName !== seller.name) {
+        const { error } = await updateSeller(seller.id, { name: trimmedName });
+        if (error) {
+          setNameError(friendlyError(error, 'Kunne ikke lagre navnet.'));
+          return;
         }
-        return;
+        void updateTeam(team.id, { name: trimmedName }).catch((err) => {
+          logger.warn('Failed to mirror seller name onto team row:', err);
+        });
+        setName(trimmedName);
       }
-      setSlug(nextSlug);
+
+      if (trimmedSlug !== team.slug) {
+        const { slug: nextSlug, error } = await renameTeamSlug(team.id, trimmedSlug);
+        if (error || !nextSlug) {
+          const msg = error?.message ?? '';
+          if (msg.includes('already taken')) setSlugError('Denne adressen er opptatt. Velg en annen.');
+          else if (msg.includes('reserved')) setSlugError('Denne adressen er reservert. Velg en annen.');
+          else if (msg.includes('at least 3')) setSlugError('Bruk minst 3 tegn.');
+          else setSlugError(friendlyError(error, 'Kunne ikke endre adressen.'));
+          return;
+        }
+        setSlug(nextSlug);
+      }
+
+      const shouldPersistLocation = !!primaryLocation || !!trimmedAddress || rooms.length > 0;
+      if (shouldPersistLocation) {
+        const payload = {
+          name: trimmedPlaceName || DEFAULT_PLACE_NAME,
+          address: trimmedAddress || null,
+          rooms,
+        };
+        const result = primaryLocation
+          ? await updateLocation(primaryLocation.id, payload)
+          : await createLocation({ seller_id: seller.id, ...payload });
+
+        if (result.error) {
+          setPlaceError(friendlyError(result.error, 'Kunne ikke lagre sted og rom.'));
+          return;
+        }
+        await refetch();
+      }
+
       await onSaved();
-      toast.success('Adressen er oppdatert. Den gamle lenken videresender automatisk.');
+      toast.success('Studio er oppdatert.');
     } finally {
-      setSavingSlug(false);
+      setIsSaving(false);
     }
   };
 
@@ -224,21 +218,18 @@ function StudioSidenForm({
     setSavingPhoto(true);
     try {
       const { url, error: uploadError } = await uploadSellerLogo(seller.id, file);
-      if (uploadError || !url) {
-        throw uploadError ?? new Error('Kunne ikke laste opp bildet.');
-      }
+      if (uploadError || !url) throw uploadError ?? new Error('Kunne ikke laste opp bildet.');
+
       const { error } = await updateSeller(seller.id, { logo_url: url });
       if (error) throw error;
+
       setLogoUrl(url);
       await onSaved();
     } catch (err) {
-      // Local validation errors (file size / type) carry friendly Norwegian
-      // copy already; storage-layer errors go through friendlyError to avoid
-      // leaking raw Supabase strings.
       const isLocalValidation =
         err instanceof Error &&
         (err.message.startsWith('Ugyldig filtype') || err.message.startsWith('Bildet er for stort'));
-      toast.error(isLocalValidation ? (err as Error).message : friendlyError(err, 'Kunne ikke laste opp bildet.'));
+      toast.error(isLocalValidation ? err.message : friendlyError(err, 'Kunne ikke laste opp bildet.'));
     } finally {
       setSavingPhoto(false);
     }
@@ -256,130 +247,214 @@ function StudioSidenForm({
     await onSaved();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void handleSave();
+    }
+    if (e.key === 'Escape') {
+      handleCancel();
+    }
+  };
+
   return (
-    <Card>
-      <CardContent className="space-y-4">
-      <div className="grid gap-3">
-        <span className="text-base font-medium text-foreground">Profilbilde</span>
-        <ImageField
-          variant="avatar"
-          value={logoUrl}
-          onChange={handlePhotoSelected}
-          onRemove={handlePhotoRemove}
-          loading={savingPhoto}
-          ariaLabel="Last opp profilbilde"
-          description="Bildet vises på studiosiden."
-        />
-      </div>
+    <>
+      <div className="max-w-3xl space-y-10">
+          <section>
+            <div className="space-y-6">
+              <div className="grid gap-3">
+                <div>
+                  <span className="text-base font-medium text-foreground">Profilbilde</span>
+                  <p className="mt-1 text-base text-foreground-muted">
+                    Bildet vises på den offentlige siden.
+                  </p>
+                </div>
+                <ImageField
+                  variant="avatar"
+                  value={logoUrl}
+                  onChange={handlePhotoSelected}
+                  onRemove={handlePhotoRemove}
+                  loading={savingPhoto}
+                  ariaLabel="Last opp profilbilde"
+                />
+              </div>
 
-      <div className="grid gap-2">
-        <label htmlFor="studio-name" className="text-base font-medium text-foreground">
-          Navn
-        </label>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
-          <Input
-            id="studio-name"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              if (nameError) setNameError(null);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                void handleNameSave();
-              }
-              if (e.key === 'Escape') {
-                handleNameCancel();
-              }
-            }}
-            disabled={savingName}
-            aria-invalid={!!nameError || undefined}
-            aria-describedby={nameError ? 'studio-name-error' : undefined}
-          />
-          {isNameDirty && (
-            <div className="flex shrink-0 justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleNameCancel}
-                disabled={savingName}
-              >
-                Avbryt
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleNameSave}
-                loading={savingName}
-                loadingText="Lagrer"
-              >
-                Lagre
-              </Button>
+              <div className="grid gap-2">
+                <label htmlFor="studio-name" className="text-base font-medium text-foreground">
+                  Navn
+                </label>
+                <Input
+                  id="studio-name"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (nameError) setNameError(null);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  disabled={isSaving}
+                  aria-invalid={!!nameError || undefined}
+                  aria-describedby={nameError ? 'studio-name-error' : undefined}
+                />
+                {nameError && <FieldError id="studio-name-error">{nameError}</FieldError>}
+              </div>
+
+              <div className="grid gap-2">
+                <label htmlFor="studio-slug" className="text-base font-medium text-foreground">
+                  URL
+                </label>
+                <InputGroup data-disabled={isSaving || undefined}>
+                  <InputGroupAddon align="inline-start">openspot.no/</InputGroupAddon>
+                  <InputGroupInput
+                    id="studio-slug"
+                    type="text"
+                    value={slug}
+                    onChange={(e) => {
+                      setSlug(e.target.value);
+                      if (slugError) setSlugError(null);
+                    }}
+                    onKeyDown={handleKeyDown}
+                    disabled={isSaving}
+                    aria-invalid={!!slugError || undefined}
+                    aria-describedby={slugError ? 'studio-slug-error' : undefined}
+                  />
+                </InputGroup>
+                {slugError && <FieldError id="studio-slug-error">{slugError}</FieldError>}
+              </div>
             </div>
-          )}
-        </div>
-        {nameError && <FieldError id="studio-name-error">{nameError}</FieldError>}
-      </div>
+          </section>
 
-      <div className="grid gap-2">
-        <label htmlFor="studio-slug" className="text-base font-medium text-foreground">
-          URL
-        </label>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
-          <InputGroup data-disabled={savingSlug || undefined}>
-            <InputGroupAddon align="inline-start">openspot.no/</InputGroupAddon>
-            <InputGroupInput
-              id="studio-slug"
-              type="text"
-              value={slug}
-              onChange={(e) => {
-                setSlug(e.target.value);
-                if (slugError) setSlugError(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  void handleSlugSave();
-                }
-                if (e.key === 'Escape') {
-                  handleSlugCancel();
-                }
-              }}
-              disabled={savingSlug}
-              aria-invalid={!!slugError || undefined}
-              aria-describedby={slugError ? 'studio-slug-error' : undefined}
+          <section className="border-t border-border pt-8">
+            <SectionHeader
+              title="Sted og rom"
+              description="Brukes når du lager kurs og når studentene ser hvor de skal møte opp."
             />
-          </InputGroup>
-          {isSlugDirty && (
-            <div className="flex shrink-0 justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleSlugCancel}
-                disabled={savingSlug}
-              >
-                Avbryt
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleSlugSave}
-                loading={savingSlug}
-                loadingText="Lagrer"
-              >
-                Lagre
-              </Button>
+
+            <div className="mt-6 space-y-6">
+              <div className="grid gap-2">
+                <label
+                  htmlFor="studio-place-name"
+                  data-error={!!placeError || undefined}
+                  className="text-base font-medium text-foreground data-[error=true]:text-danger"
+                >
+                  Stedsnavn
+                </label>
+                <Input
+                  id="studio-place-name"
+                  value={placeName}
+                  onChange={(e) => {
+                    setPlaceName(e.target.value);
+                    if (placeError) setPlaceError(null);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  disabled={isSaving || loadingLocations}
+                  aria-invalid={!!placeError || undefined}
+                  aria-describedby={placeError ? 'studio-place-error' : undefined}
+                />
+                {placeError && <FieldError id="studio-place-error">{placeError}</FieldError>}
+              </div>
+
+              <div className="grid gap-2">
+                <label htmlFor="studio-address" className="text-base font-medium text-foreground">
+                  Adresse
+                </label>
+                <Input
+                  id="studio-address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isSaving || loadingLocations}
+                  placeholder="Gateadresse, by"
+                />
+              </div>
+
+              <div className="grid gap-3">
+                <span className="text-base font-medium text-foreground">Rom</span>
+                {rooms.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {rooms.map((room) => (
+                      <span
+                        key={room}
+                        className="inline-flex h-8 items-center gap-1 rounded-full bg-muted pl-3 pr-1 text-base font-medium text-foreground"
+                      >
+                        {room}
+                        <button
+                          type="button"
+                          onClick={() => removeRoom(room)}
+                          className="flex size-6 items-center justify-center rounded-full text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
+                          aria-label={`Fjern ${room}`}
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    value={newRoom}
+                    onChange={(e) => setNewRoom(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addRoom();
+                      }
+                    }}
+                    disabled={isSaving || loadingLocations}
+                  placeholder="Sal 1, behandlingsrom, ute..."
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={addRoom}
+                    disabled={!newRoom.trim()}
+                    className="sm:w-auto"
+                  >
+                    Legg til rom
+                  </Button>
+                </div>
+              </div>
+
+              {additionalLocations.length > 0 && (
+                <div className="border-t border-border pt-6">
+                  <p className="text-base font-medium text-foreground">Andre lagrede steder</p>
+                  <div className="mt-3 divide-y divide-border rounded-xl border border-border bg-surface">
+                    {additionalLocations.map((location) => (
+                      <div key={location.id} className="px-4 py-3">
+                        <p className="truncate text-base font-medium text-foreground">{location.name}</p>
+                        {location.address && (
+                          <p className="truncate text-base text-foreground-muted">{location.address}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        {slugError && <FieldError id="studio-slug-error">{slugError}</FieldError>}
+          </section>
       </div>
-      </CardContent>
-    </Card>
+
+      <DirtyFormBar
+        visible={isDirty}
+        isSaving={isSaving}
+        onSave={handleSave}
+        onCancel={handleCancel}
+      />
+    </>
   );
+}
+
+function SectionHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <div>
+      <h2 className="text-lg font-medium tracking-tight text-foreground">{title}</h2>
+      <p className="mt-1 max-w-2xl text-base text-foreground-muted">{description}</p>
+    </div>
+  );
+}
+
+function sameStringArray(a: string[], b: string[]) {
+  if (a.length !== b.length) return false;
+  return a.every((value, index) => value === b[index]);
 }
 
 export default TeamsPage;

@@ -17,6 +17,7 @@ import { foldNorwegian } from '@/lib/utils';
 import { fetchCourses } from '@/services/courses';
 import type { SessionScheduleRow } from '@/services/courses';
 import type { Course } from '@/types/database';
+import { deriveCourseDisplayStatus } from '@/lib/course-status';
 import { typedFrom } from '@/lib/supabase';
 
 /**
@@ -55,7 +56,14 @@ function mapCourseToRow(
     price: course.price,
     signupsCount,
     maxParticipants: course.max_participants,
-    courseStatus: course.status,
+    // Display lifecycle for the list badge (so ended courses read "Fullført").
+    // Sessions aren't loaded per row here, so this falls back to course dates.
+    // Persisted `course.status` still drives the active/past tab filter below.
+    courseStatus: deriveCourseDisplayStatus({
+      status: course.status,
+      startDate: course.start_date,
+      endDate: course.end_date,
+    }),
     courseStartDate: course.start_date,
     courseEndDate: course.end_date,
     totalWeeks: course.total_weeks,
@@ -286,7 +294,6 @@ const CoursesPage = () => {
           action={
             !showCoursesEmptyState && (
               <Button
-                size="sm"
                 onClick={() =>
                   setSearchParams(
                     (prev) => {
@@ -358,7 +365,7 @@ const CoursesPage = () => {
                         title={`Fant ingen kurs for «${searchQuery}»`}
                         description="Prøv et annet søkeord."
                         action={
-                          <Button variant="outline-soft" size="sm" onClick={() => setSearchQuery('')}>
+                          <Button variant="secondary" onClick={() => setSearchQuery('')}>
                             Tøm søk
                           </Button>
                         }

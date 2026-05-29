@@ -9,21 +9,25 @@ import { cn } from '@/lib/utils';
  * (title + optional description / status badge / primary action), and the
  * spacing between header → tabs → content.
  *
- * Width tiers (decided 2026-05-27):
- *  - `data`: full shell width — list pages, dashboards, tables, grids
- *  - `form`: max-w-3xl inner content — settings, profile, single-column forms
+ * Layout doctrine (per studio-design `patterns.md` § 17.2):
  *
- * The outer shell always uses the same max-w-7xl dashboard rail so page
- * titles/tabs do not jump horizontally between dense and sparse pages.
- * Pages with wide tabs but narrow tab content (e.g. Studio · Profil) keep
- * `width="data"` and constrain the inner tab content separately.
+ *  - **Outer shell is always `max-w-6xl`** (1152px). No second outer tier.
+ *    Pages do not jump horizontally between dense and sparse routes.
+ *
+ *  - **Inner shell** is opt-in via the `narrow` prop. The inner wrapper
+ *    contains EVERYTHING — header, tabs, and children — so the title and
+ *    action stay visually attached to the narrow content (rather than the
+ *    header sprawling to the outer shell while the form sits centered).
+ *
+ *      - `narrow` omitted → `w-full` (default for data/list pages)
+ *      - `narrow="centered"` → `mx-auto max-w-3xl` (self-contained form/help/
+ *        payment pages with no adjacent context)
+ *      - `narrow="left"` → `max-w-3xl` (narrow content alongside tabs / preview
+ *        / supporting context — rarely needed at the PageShell level since most
+ *        such cases handle the inner constraint inside their tab component)
  */
 
-type Width = 'data' | 'form';
-
 interface PageShellProps {
-  /** Inner content cap. `data` = full shell width, `form` = max-w-3xl. */
-  width?: Width;
   /** Required page title — renders as h1. */
   title: string;
   /** Optional one-line subtitle below the title. */
@@ -34,6 +38,13 @@ interface PageShellProps {
   action?: ReactNode;
   /** Optional tab strip (e.g. <PageTabs>) — rendered between header and content. */
   tabs?: ReactNode;
+  /**
+   * Optional inner-width constraint inside the canonical outer max-w-6xl shell.
+   *  - omitted   → full width (data/list pages)
+   *  - 'centered'→ self-contained form/help/payment pages
+   *  - 'left'    → narrow content adjacent to tabs/preview/context
+   */
+  narrow?: 'centered' | 'left';
   /** Set to false to skip motion wrapper (rare). */
   animate?: boolean;
   /** Override outer className if a page needs custom bottom padding etc. */
@@ -41,18 +52,18 @@ interface PageShellProps {
   children: ReactNode;
 }
 
-const contentWidthClass: Record<Width, string> = {
-  data: 'w-full',
-  form: 'max-w-3xl',
-};
+const narrowClass = {
+  centered: 'mx-auto max-w-3xl',
+  left: 'max-w-3xl',
+} as const;
 
 export function PageShell({
-  width = 'data',
   title,
   description,
   badge,
   action,
   tabs,
+  narrow,
   animate = true,
   className,
   children,
@@ -71,11 +82,11 @@ export function PageShell({
     <Container
       {...motionProps}
       className={cn(
-        'mx-auto w-full max-w-7xl px-4 pb-24 pt-6 sm:px-6 md:pb-12 lg:px-8 lg:pt-12',
+        'mx-auto w-full max-w-6xl px-4 pb-24 pt-6 sm:px-6 md:pb-12 lg:px-8 lg:pt-12',
         className,
       )}
     >
-      <div className={cn('w-full', contentWidthClass[width])}>
+      <div className={cn('w-full', narrow && narrowClass[narrow])}>
         <header className={cn('mb-8', description && 'mb-10')}>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-baseline gap-3 flex-wrap min-w-0">

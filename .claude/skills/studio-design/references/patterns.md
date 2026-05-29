@@ -30,7 +30,7 @@ These eight patterns replace power-user defaults with non-power-user friendlier 
       <p class="mt-0.5 text-sm text-foreground-muted">12 av 14 plasser fylt</p>
     </div>
 
-    <button class="mt-5 btn btn-primary btn-sm">Åpne dagsplan</button>
+    <button class="mt-5 btn btn-primary">Åpne dagsplan</button>
   </div>
 
   <!-- The supporters — quieter, fewer, also chromeless -->
@@ -134,49 +134,23 @@ These eight patterns replace power-user defaults with non-power-user friendlier 
 
 ---
 
-## 4. Multi-step wizard — replaces long forms
+## 4. Long forms — sectioned form, not wizard
 
-**The trap:** "Create new course" → a single form with 18 fields. User scrolls forever, doesn't know what's required, abandons.
+**The trap:** "Create new course" → a single 18-field form. User scrolls forever, doesn't know what's required, abandons.
 
-**The fix:** Break it into 3–5 steps, 3–5 fields per step. Each step has a clear focus. Progress indicator shows where you are. "Back" lets users revise.
+**The fix is NOT a wizard.** Studio does not ship multi-step flows with Back/Next buttons and progress indicators — see § 16 for the full doctrine and § 3 anti-patterns ("No wizards. No step indicators. No Back/Next button progression."). Splitting a long task into 5 hidden screens makes the work *feel* infinite — the user can't see the shape of what's left until they're inside step 4.
 
-**Step boundaries that work for booking apps:**
-1. **Basics** — name, type, description (3 fields)
-2. **Schedule** — when, how often, duration (3 fields)
-3. **Capacity & pricing** — max participants, price, payment terms (3–4 fields)
-4. **Review & publish** — summary + confirm
+**Use one of these three patterns instead:**
 
-**Implementation:**
-```html
-<div class="max-w-xl mx-auto">
-  <!-- Progress -->
-  <div class="flex items-center justify-between mb-8 text-sm">
-    <div class="flex items-center gap-2">
-      <span class="size-6 rounded-full bg-foreground text-white grid place-items-center text-xs">1</span>
-      <span class="font-medium">Grunnlag</span>
-    </div>
-    <span class="flex-1 mx-3 h-px bg-border"></span>
-    <div class="flex items-center gap-2 text-foreground-muted">
-      <span class="size-6 rounded-full bg-muted grid place-items-center text-xs">2</span>
-      <span>Timeplan</span>
-    </div>
-    <!-- ... -->
-  </div>
+| Pattern | When | Reference |
+|---|---|---|
+| **Sectioned form** (single scroll, grouped by spacing + dividers + headings) | The default for any long form. The user sees the whole shape at once and can jump to any section. | `components.md` § Sectioned form + § 16 |
+| **Quick-create drawer → detail page** | Capture the minimum-viable record (name + type + 1-2 must-haves) in a 6-field drawer, then land on the detail page where the rest of the configuration lives. | `components.md` § Drawer (quick-create variant) + § 15 |
+| **Setup checklist** (3-5 onboarding tasks, each linking to its own surface) | First-run / empty-account onboarding. Each task lives on its own existing page. | `components.md` § Setup checklist + § 16.3 |
 
-  <!-- Step content -->
-  <h2 class="text-xl font-semibold mb-1">Hva heter kurset ditt?</h2>
-  <p class="text-sm text-foreground-muted mb-6">Vi viser dette navnet til alle som booker.</p>
-  <!-- 2-3 fields max -->
+For vendor flows that legitimately need multi-step (Stripe Connect, Dintero onboarding, payment SCA), **embed the vendor's own UI** — don't reimplement.
 
-  <!-- Footer -->
-  <div class="mt-8 flex justify-between">
-    <button class="btn btn-ghost">Tilbake</button>
-    <button class="btn btn-primary">Neste</button>
-  </div>
-</div>
-```
-
-**Rule:** Max 5 steps. More than that, and users feel like the task will never end. If your task needs 8 steps, the task itself is too big — split it into two flows.
+Full rationale, examples, and anti-patterns: § 16 — *No wizards — sectioned forms + setup checklists instead*.
 
 ---
 
@@ -257,7 +231,7 @@ Pill-shaped (`rounded-full`) — matches Studio's button language, soft/calm aes
   <p class="mt-1 text-sm text-foreground-muted">
     Når noen booker en plass, vises de her — med betalingsstatus og kontaktinfo.
   </p>
-  <button class="mt-6 btn btn-primary btn-sm">Del booking-lenke</button>
+  <button class="mt-6 btn btn-primary">Del booking-lenke</button>
   <a class="mt-3 text-sm text-foreground-muted underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground-muted">
     Opprett første kurs i stedet →
   </a>
@@ -491,32 +465,39 @@ const [optimisticBookings, addOptimistic] = useOptimistic(
 
 Most toast systems ship 5+ variants (default / success / info / warning / error). For non-technical users this is noise. Studio collapses to:
 
-| Variant | Stripe | When | Auto-dismiss |
+| Variant | Icon | When | Auto-dismiss |
 |---|---|---|---|
-| **Default** | none | Silent confirmation: `Lagret.`, `Kopiert.`, `Sendt.` | 4s |
-| **Action** | blue (`#0090ff`) | Reversible action with undo: `Påmelding er avbestilt.` + Angre | 8s |
-| **Error** | red (`#e5484d`) | Something failed: `Kunne ikke laste påmeldinger.` + Prøv igjen | manual dismiss |
+| **Default** | small `Check` on muted circle | Silent confirmation: `Lagret`, `Kopiert`, `Sendt` | 4s |
+| **Action** | small `Check` on muted circle | Reversible action with undo: `Påmelding avbestilt` + Angre | 8s |
+| **Error** | small `AlertCircle` on red-tinted circle | Something failed: `Kunne ikke laste påmeldinger` + Prøv igjen | manual dismiss |
 
-No "success" variant — a green-striped `Lagret.` over-celebrates a routine save. Default (no stripe) is enough. No "warning" variant — Studio has no persistent alert surface; if something needs warning about, state it as plain prose on the relevant page (§13.1 decision tree).
+No green "success" variant — a green-tinted toast over-celebrates a routine save. The past-tense verb IS the success signal. No "warning" variant — Studio has no persistent alert surface; if something needs warning about, state it as plain prose on the relevant page (§13.1 decision tree).
 
-### Visual
+### Visual — dark small-card
 
-White surface, foreground text, **inset accent stripe at the left** (4px wide, full-height, rounded). NEVER filled-color backgrounds. The destructive button (where present) is the loud anchor; the toast surface stays calm.
+**Dark surface** (`--toast-surface`, ~5% lighter than sand-12 to soften the near-black), white text, **small icon on a circle** as the leading element. Card-like padding (`px-5 py-4`), `rounded-2xl`. Supports an optional 2nd line of description for context (`text-xs text-background/70 mt-0.5`).
+
+NEVER filled-color backgrounds across the whole surface. Status appears in the small icon circle only — `bg-background/15` for default/success, `bg-danger/30` for error. The action button (where present) is the loud anchor; the toast surface stays calm.
+
+The old "4px accent stripe on white surface" pattern is **deprecated** — it was a light-surface convention and reads low-contrast on the calm canvas. Dark surface + small icon replaces it everywhere.
 
 ### Code
 
 ```ts
-// 1. Default — silent confirmation
-toast("Lagret.");
+// 1. Default — silent confirmation, single-line
+toast("Lagret");
 
 // 2. Action — with undo (THE pattern for destructive actions, see #12)
-toast("Påmelding er avbestilt.", {
+//    Two-line for context: title + supporting description
+toast("Påmelding avbestilt", {
+  description: "Joe Smith har fått varsel om refusjon.",
   action: { label: "Angre", onClick: () => undoCancel(id) },
   duration: 8000,
 });
 
-// 3. Error — manual dismiss, retry
-toast.error("Kunne ikke sende melding.", {
+// 3. Error — manual dismiss, retry, with recovery hint
+toast.error("Kunne ikke sende melding", {
+  description: "Sjekk nettforbindelsen og prøv igjen.",
   action: { label: "Prøv igjen", onClick: () => retry() },
   duration: Infinity,
 });
@@ -524,10 +505,12 @@ toast.error("Kunne ikke sende melding.", {
 // 4. Promise-bound (auto loading → success/error)
 toast.promise(cancelBooking(id), {
   loading: "Avbestiller…",
-  success: "Påmelding er avbestilt.",
-  error: "Kunne ikke avbestille.",
+  success: "Påmelding avbestilt",
+  error: "Kunne ikke avbestille",
 });
 ```
+
+**Verb pairing:** the toast title mirrors the trigger button's verb root, in past tense. `Avlys kurs` → `Kurs avlyst`. `Slett konto` → `Konto slettet`. Same verb, swapped tense. No `Suksess!` / `Vellykket!` prefix — the past-tense verb IS the success signal.
 
 ### Rules
 
@@ -535,10 +518,11 @@ toast.promise(cancelBooking(id), {
 - **Skip toasts for create/update inside a wizard or form** — the form's own success state (redirect, confirmation screen, button feedback) does the job. Toasts are for *background* actions ("send reminder", "cancel signup", "duplicate course") where the page itself doesn't change.
 - **Position bottom-center on desktop AND mobile.** Override Sonner's `bottom-right` default — bottom-right has IDE/dev-tool connotations and reads peripheral. Bottom-center reads neutral and app-wide, which fits a non-technical wellness audience.
 - **Duration: 4s default**, 8s for action toasts (undo needs reading time), `Infinity` for errors (manual dismiss).
-- **Wording: imperative past tense.** "Påmelding er avbestilt." — short, declarative. Not "Din påmelding ble avbestilt" (too formal). Not "Avbestilt!" (too cute). For errors, state what failed — `Kunne ikke laste påmeldinger.` — never `Noe gikk galt.`
-- **Action button: ghost pill, single verb.** `Angre`, `Prøv igjen`, `Vis`. Not "OK". Not two buttons — if the toast needs two buttons, it's a dialog.
-- **No icons in the body.** The stripe is the visual signal. An icon next to a stripe is doubled signaling — the AI-default look.
-- **No emoji in copy.** No `✓ Lagret`, no `⚠️ Advarsel`. The stripe communicates status.
+- **Wording: past-tense verb.** `Påmelding avbestilt` — short, declarative, no trailing period. Not `Din påmelding ble avbestilt` (formal). Not `Avbestilt!` (cute). For errors, state what failed — `Kunne ikke laste påmeldinger` — never `Noe gikk galt`.
+- **Title-first, description optional.** Single-line for routine confirmations (`Lagret`). Two-line when context helps (`Påmelding avbestilt` + `Joe Smith har fått varsel om refusjon.`). Description is `text-xs text-background/70` muted below the title.
+- **Action button: pill, single verb, light-on-dark.** `Angre`, `Prøv igjen`, `Vis`. Right-aligned. Not "OK". Not two buttons — if the toast needs two buttons, it's a dialog.
+- **Leading icon-on-circle, not body icons.** The small circle to the left of the title is the variant signal. No additional inline icons in the body text.
+- **No emoji in copy.** No `✓ Lagret`, no `⚠️ Advarsel`.
 - **No progress bar showing auto-dismiss countdown.** Power-user detail; not for this audience.
 
 ### Optional — translucent variant (iOS 26 Liquid Glass family)
@@ -547,12 +531,14 @@ For surfaces where toasts overlay rich content (image-heavy public pages, custom
 
 ### Anti-patterns
 
-- ❌ **Filled-color backgrounds** (`bg-success-subtle` or `bg-jade-3` for the whole toast). The most recognizable AI-default in the system. Dated; reads heavy on a calm canvas.
+- ❌ **White surface with a 4px stripe.** Deprecated 2026-05-29 — dark small-card replaces it system-wide.
+- ❌ **Filled-color backgrounds** (`bg-success-subtle` or `bg-jade-3` for the whole toast). The most recognizable AI-default in the system. Dated.
 - ❌ **Sonner `richColors` mode.** Same problem — turns variants into colored cards.
 - ❌ **Generic copy:** `Suksess!` / `Feil!` / `Noe gikk galt`. Always say WHAT happened.
-- ❌ **Multi-line explanations.** If it needs explaining, state it inline on the page instead.
+- ❌ **Long explanations in the description.** Cap at one short supporting sentence. Anything longer belongs inline on the page.
 - ❌ **Auto-dismissing errors.** Errors are rare; require manual dismiss to confirm read.
-- ❌ **Title-as-question** (`Did this work?`). Always a statement.
+- ❌ **Title-as-question** (`Did this work?`). Always a past-tense statement.
+- ❌ **Trailing period on the title.** `Lagret`, not `Lagret.` — the title isn't a sentence.
 
 ---
 
@@ -611,20 +597,19 @@ runWithUndo({
 
 ### Tier 2 — monochrome AlertDialog (`ConfirmDialog`)
 
-Use `ConfirmDialog` from `@/components/ui/confirm-dialog`. Compound headline (verb + object) above an outlined scope card. **Destructive button is sand-12 dark (`variant="default"`) — not red.** The destructive signal is carried by the copy ("Avlys kurs"), the scope card showing what's affected, and the right-side button position.
+Use `ConfirmDialog` from `@/components/ui/confirm-dialog`. **Short verb-noun title** + **single-sentence body with inline-bold entities** + **full-width split footer** (both filled, no borders). Destructive button is sand-12 dark (`variant="default"`) — not red. The destructive signal is carried by the verb ("Avlys kurs"), the bolded entity names in the body, and the right-side button position.
 
 ```tsx
 <ConfirmDialog
   open={open}
   onOpenChange={setOpen}
-  ariaLabel="Avlyse kurset"
-  headline={`Kurset avlyses og ${count} deltakere refunderes. Det kan ikke angres.`}
-  scope={
-    <ConfirmScopeItem
-      name={courseData.title}
-      meta={`${count} deltakere refunderes`}
-      trailing={formatKroner(totalAmount)}
-    />
+  ariaLabel="Avlys kurs"
+  title="Avlys kurs"
+  body={
+    <>
+      <strong>{courseData.title}</strong> avlyses — {count} deltakere refunderes{' '}
+      <strong>{formatKroner(totalAmount)}</strong> og varsles.
+    </>
   }
   actionLabel="Avlys kurs"
   onConfirm={handleCancelCourse}
@@ -634,55 +619,67 @@ Use `ConfirmDialog` from `@/components/ui/confirm-dialog`. Compound headline (ve
 ```
 
 **Rules:**
-- **Restate the action** in the headline. Not "Er du sikker?" — "Avlyse timen?" / "Avbestille påmeldingen?"
-- **State the consequences** in one sentence. Number of items, money moved, notifications sent, reversibility.
-- **Scope card** shows the specific thing (course title, participant name + amount). Visual confirmation the user is acting on the right object.
-- **Button labels are verbs** mirroring the action: "Slett sted" / "Avbestill og refunder" / "Avlys kurs". Never "OK" or "Bekreft".
-- **Cancel verb is positive** when the destructive verb is itself "Cancel": pair "Avlys" with "Avbryt" (default) — never "Avlys" with "Avlys". Likewise "Avbestill" pairs with "Avbryt".
+- **Short verb-noun title.** `Avlys kurs`, not `Avlyse kurset?` (question), not `Kurset avlyses og X refunderes…` (compound sentence). Norwegian sentence case.
+- **Body = ONE sentence** with inline `<strong>` for affected entities (course name, person, amount, date). Norwegian destructive verbs already carry finality — drop `Det kan ikke angres` unless the action is genuinely irreversible AND has no Tier 3 typing gate. Hard cap: max 2 sentences / ~140 chars.
+- **No scope card by default.** The bolded entity in the body replaces it. Reach for a scope card only when there's a real list of N items to scan (refund preview with 3+ participants).
+- **Button labels are verbs** mirroring the action: `Slett sted` / `Avbestill og refunder` / `Avlys kurs`. Never `OK` or `Bekreft`.
+- **Cancel verb is positive** when the destructive verb is itself "Avbryt-ish": pair `Avbestill` ↔ `Behold`, never `Avbestill` ↔ `Avbryt`.
 - **No red.** `variant="default"` on the destructive button. Red is reserved for `toast.error` and input validation borders.
-- **No warning icons** in the headline (no `AlertTriangle`, no `XCircle`). Dated.
-- **Cancel left, destructive right.** On mobile they stack with destructive on top — the `AlertDialogFooter` handles this automatically.
-- **Focus defaults to cancel.** Radix `AlertDialog` does this for free — do not override.
+- **No warning icons** in the title. No `AlertTriangle`, no `XCircle`. Dated.
+- **No acknowledgement checkbox.** The button + the specific verb label are the gate. (Removed from spec 2026-05-29.)
+- **Full-width split footer.** Avbryt LEFT (filled `bg-muted`, no border), destructive RIGHT (filled `bg-foreground`). Both `flex-1`, `size="lg"` (40px). Default focus on Cancel — Radix handles this.
 - **ESC closes, outside-click does NOT.** Radix `AlertDialog` default.
-- **Add a checkbox gate** when the action sends notifications or moves money in bulk: `disabled={!acknowledged}` paired with a `<label>` + `<Checkbox>` between the scope card and the footer (e.g. cancel-course-with-refunds). Single-item refunds don't need the checkbox — the scope card already shows the specific person + amount.
+- **Backdrop = flat dim, no blur.** `bg-foreground/40`. Wrapper handles.
 
 ### Tier 3 — type-to-confirm (catastrophic only)
 
-Reserve for cascade-and-irreversible actions where the user types the resource name verbatim to enable the destructive button. **At most two flows in Studio**: delete studio (organisation), delete account. Refunds alone do NOT trigger Tier 3 — refunds are Tier 2 with a checkbox gate.
+Reserve for cascade-and-irreversible actions where the user types the resource name verbatim to enable the destructive button. **At most two flows in Studio**: delete studio (organisation), delete account. Refunds alone do NOT trigger Tier 3 — refunds are Tier 2.
 
 ```tsx
 <ConfirmDialog
   open={open}
   onOpenChange={setOpen}
   ariaLabel="Slett konto"
-  headline="All data, inkludert kurs, påmeldinger og meldinger, slettes permanent. Dette kan ikke angres."
-  scope={<ConfirmScopeItem name={email} meta="Permanent sletting" />}
+  title="Slett konto"
+  body={
+    <>
+      Kontoen <strong>{email}</strong> og all tilhørende data slettes permanent.
+    </>
+  }
   actionLabel="Slett konto"
   onConfirm={handleDelete}
-  disabled={confirmText !== 'SLETT'}
->
-  <label className="mt-1 flex flex-col gap-2 text-sm text-foreground-muted">
-    Skriv <span className="font-mono font-medium text-foreground">SLETT</span> for å bekrefte
-    <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
-  </label>
-</ConfirmDialog>
+  typeToConfirm="SLETT"
+  typeToConfirmValue={confirmText}
+  onTypeToConfirmChange={setConfirmText}
+/>
 ```
 
-For org-name confirmation (delete studio), show the literal name as a non-selectable label and disable until exact match — case-sensitive, accent-sensitive, trim whitespace.
+The wrapper renders a single-line label (`Skriv SLETT for å bekrefte`) and an input below the body, and disables the destructive button until exact match — case-sensitive, accent-sensitive, trim whitespace.
+
+For org-name confirmation (delete studio), show the literal name as the typed token: `typeToConfirm={studioName}`.
+
+**No tinted band when type-to-confirm is present.** The typing requirement IS the friction. The optional band is reserved for the rare Tier 2 case where the action is genuinely irreversible AND has no typing gate.
 
 ### Anti-patterns
 
 - ❌ **Confirmation dialog as default.** Use Tier 1 for reversible operations.
-- ❌ **Red destructive button.** Sand-12 dark fill. The verb + scope card + position carry the signal.
-- ❌ **"Er du sikker?" / "Slette?"** Compound headline only — verb + object.
-- ❌ **Warning-triangle icons** in dialog headlines. Dated.
-- ❌ **OK / Avbryt** as button labels. Buttons describe the action: "Slett sted" / "Avlys kurs".
-- ❌ **"Avbryt" left and "Avbryt" right** when the destructive action is itself "Avbryt" — collision. Use a positive verb on the safe side ("Behold").
+- ❌ **Red destructive button.** Sand-12 dark fill. The verb + bolded entity + position carry the signal.
+- ❌ **Question titles** (`Er du sikker?`, `Slette?`, `Avlyse kurset?`). Use a short verb-noun statement — `Slett konto`, `Avlys kurs`.
+- ❌ **Compound multi-clause headlines** (`Kurset avlyses og 12 deltakere refunderes. Det kan ikke angres.`). The title is the verb; the consequence belongs in the body.
+- ❌ **Two-sentence bodies separated by a period** (`Kontoen X slettes permanent. Det kan ikke angres.`). The Norwegian verb already carries finality — drop the second sentence.
+- ❌ **Scope card by default.** Use inline-bold body text. Scope card is opt-in for actual lists of N items.
+- ❌ **Acknowledgement checkbox.** Removed — the button label + the verb are the gate.
+- ❌ **Outline cancel + filled destructive footer.** Both filled, no borders, full-width split, equal weight.
+- ❌ **Warning-triangle icons** in dialog titles. Dated.
+- ❌ **OK / Avbryt** as button labels. Buttons describe the action: `Slett sted` / `Avlys kurs`.
+- ❌ **`Avbryt` left and `Avbryt` right** when the destructive action is itself "Avbryt" — collision. Use a positive verb on the safe side (`Behold`).
 - ❌ **Outside-click dismisses** a destructive dialog. Use `AlertDialog` (Radix), not `Dialog`.
 - ❌ **Default focus on the destructive button.** Always cancel. Radix `AlertDialog` does this — don't override.
+- ❌ **Backdrop blur** on the dialog overlay. Flat `bg-foreground/40` only.
 - ❌ **`tone="danger"` / red-themed destructive prop.** Removed from the system. Every destructive dialog is monochrome.
+- ❌ **Tinted irreversibility band combined with type-to-confirm.** Double-gating. Band is for Tier 2 without typing; Tier 3 doesn't need it.
 - ❌ **Soft-delete migrations for Tier 1.** Use `runWithUndo` (delay-commit). No `deleted_at` columns needed.
-- ❌ **Multiple destructive buttons in one dialog.** Split into two flows or use a checkbox + single action.
+- ❌ **Multiple destructive buttons in one dialog.** Split into two flows.
 
 ---
 
@@ -753,7 +750,7 @@ The trigger is `aria-invalid="true"` — set by your form library (React Hook Fo
 | Scope | Primitive |
 |---|---|
 | Per-field validation | `<FieldError>` |
-| Form-level submit failure | `<Alert variant="error" size="sm">` |
+| Form-level submit failure | `<Alert variant="error">` |
 | Section data load failure | `<ErrorState onRetry={…}>` (see § 13.4) |
 | Transient post-action failure | `toast.error(friendlyError(err))` |
 
@@ -786,7 +783,7 @@ When a single card or list fails to load, that section should error gracefully w
   <p class="mt-1 text-sm text-foreground-muted max-w-sm">
     Sjekk forbindelsen og prøv igjen. Hvis problemet vedvarer, ta kontakt.
   </p>
-  <button class="mt-4 btn btn-secondary btn-sm">Prøv igjen</button>
+  <button class="mt-4 btn btn-secondary">Prøv igjen</button>
 </div>
 ```
 
@@ -1214,7 +1211,7 @@ The footer contains exactly one thing: the **"Åpne X-side"** ghost link to the 
 
 ```html
 <div class="border-t border-border px-6 py-4 bg-background">
-  <button class="btn btn-ghost btn-sm -ml-2 text-foreground-muted hover:text-foreground">
+  <button class="btn btn-ghost -ml-2 text-foreground-muted hover:text-foreground">
     Åpne kursside
   </button>
 </div>
@@ -1222,7 +1219,7 @@ The footer contains exactly one thing: the **"Åpne X-side"** ghost link to the 
 
 **Rules:**
 - **Label:** `Åpne <ressurs>-side` (Norwegian; "Åpne kursside", "Åpne påmeldingsdetaljer"). Neutral — doesn't commit to view-vs-edit. No trailing arrow icon — text alone is enough (see SKILL.md § 3 anti-patterns: no icons in text-bearing buttons).
-- **Variant:** ghost link, `size="sm"`, left-aligned. Not a primary button — the escape is *secondary*; the drawer's real value is the quick view above it.
+- **Variant:** plain text link / ghost link, left-aligned. Not a primary button — the escape is *secondary*; the drawer's real value is the quick view above it.
 - **Position:** bottom-left of the footer. Right-of-footer is reserved for nothing — leave it blank.
 - **Behavior:** clicking closes the drawer and navigates to `/resource/:id`. The page mounts in place of the drawer (Notion-style); no overlay over the drawer.
 
@@ -1326,8 +1323,8 @@ A single form with visible section headings, divided by spacing and (optionally)
 
   <!-- Footer — sticky -->
   <div class="border-t border-border px-6 py-3 flex justify-end gap-2 bg-surface">
-    <Button variant="secondary" size="sm">Avbryt</Button>
-    <Button size="sm">Opprett kurs</Button>
+    <Button variant="secondary">Avbryt</Button>
+    <Button>Opprett kurs</Button>
   </div>
 </form>
 ```
@@ -1446,31 +1443,36 @@ This is a Studio-specific choice. Both centered and left-aligned dashboards ship
 2. **Ultrawide feel.** With a 280px sidebar pinned left + 1024px content also pinned left, a 1920px+ display reads as lopsided (two left-anchored columns + one big empty right). Centering halves the void into balanced margins on both sides.
 3. **Consistency cost.** When some pages are `max-w-4xl mx-auto` and some are `max-w-6xl` left-aligned, content jumps between pages — that inconsistency is a bigger UX problem than the alignment choice itself. Studio collapses both decisions into one rule: `mx-auto max-w-6xl` everywhere.
 
-### 17.2 Max-widths by surface — four values, each with a clear job
+### 17.2 One outer shell — narrower inner blocks live inside it
 
-| Surface | Token | Alignment | When |
-|---------|-------|-----------|------|
-| **Dashboard pages** | `mx-auto max-w-6xl` (1024px) | Centered | Every admin page |
-| **Public content** | `mx-auto max-w-6xl` (1024px) | Centered | Landing, booking listing — public non-prose, non-form. |
-| **Course detail body** | `mx-auto max-w-[1100px]` (1100px) | Centered | Course detail page body. Hero is full-bleed; body is a 2-col grid (main + 360px sticky rail). See §18.2. |
-| **Long-form prose** | `mx-auto max-w-3xl` (768px) | Centered | Legal, privacy, terms, FAQ |
-| **Centered forms** | `mx-auto max-w-md` (~448px) | Centered | Login, signup, password reset |
+Studio uses **a single outer shell at `mx-auto max-w-6xl`** (1152px outer / ~1088px content after `lg:px-8`) for every page. There is no "data-tier" / "form-tier" split at the outer container — narrower content (forms, prose, compact panels) is constrained *inside* the same outer shell, not by swapping the shell itself.
 
-**The rule, simplified:**
-1. Dashboard or public content? → `mx-auto max-w-6xl`
-2. Heavy reading? → `mx-auto max-w-3xl`
-3. Compact form? → `mx-auto max-w-md`
+| Container | Token | Where it sits | When |
+|---|---|---|---|
+| **Page outer shell** | `mx-auto max-w-6xl` (1152px outer) | Always at the top of the page | Every dashboard and public page — no exceptions |
+| **Long-form prose block** | `max-w-3xl` (768px) | Inside the outer shell | Legal, privacy, terms, FAQ |
+| **Centered form block** | `max-w-md` (448px) | Inside the outer shell | Login, signup, password reset |
+| **Course detail body** | 2-col grid inside the shell (main + 360px sticky rail) | Inside the outer shell | Course detail page only |
 
-If you can't tell which one a page is, it's probably (1) — that covers ~90% of pages. Everything is centered; only the width changes.
+**Why one outer shell, not two width tiers:** the outer container width is the single rhythm signal users feel when they navigate between routes. If `/courses` is 1280px wide and `/innstillinger` is 768px wide, the page rail visibly jumps — content reads as "the layout is broken" even when each individual page is internally fine. Narrower content STILL belongs inside a 1152px shell; it just doesn't have to fill it. The shell is the stable anchor; the inner block widens or narrows as the content demands.
 
-**Reading-width constraint:** body text within all of these respects the 50-75 character line length (~66 ch sweet spot, per Baymard / NN/g). This isn't just convention — **WCAG 2.1 SC 1.4.8** specifies "no more than 80 characters" for AA-conformant prose. Long-form prose narrows to 3xl for that reason. The 4xl-tier surfaces mix cards / forms / lists — body text within them is bounded by component widths, not the page itself.
+**The decision, simplified:**
+1. Dashboard or public page → outer shell is `mx-auto max-w-6xl`. Always.
+2. Heavy reading inside? → wrap the prose in `max-w-3xl`.
+3. Compact form inside? → wrap the form in `max-w-md` or `max-w-3xl`.
+4. Course detail body? → 2-col grid inside the shell (§ 18.2).
 
-**Note on the 6xl choice:** industry consensus for dashboard max-widths trends 1140-1280px (Carbon, Material, several SaaS dashboards). Studio uses `max-w-6xl` (1152px outer), squarely in the lower range. **The math that matters:** with `lg:px-8` internal padding (32px each side), effective content width on desktop = 1152 - 64 = **~1088px**. We tested narrower options:
+**Don't introduce a second outer width tier.** A `max-w-7xl` "data shell" or a `max-w-4xl` "settings shell" alongside the canonical 6xl is the failure mode. Pick once; live with it.
+
+**Reading-width constraint:** body text respects 50-75 character line length (~66 ch sweet spot — Baymard / NN/g). **WCAG 2.1 SC 1.4.8** specifies "no more than 80 characters" for AA-conformant prose. The inner `max-w-3xl` block enforces this for long prose; the 6xl shell holds cards / forms / lists where body text is naturally bounded by component widths.
+
+**Note on the 6xl choice:** industry consensus for dashboard max-widths trends 1140-1280px (Carbon, Material, several SaaS dashboards). Studio sits squarely in that range at 1152px outer / ~1088px content. Tested alternatives:
 
 - `max-w-4xl` (896 outer / 832 effective) — read as a tablet view; unoptimized for desktop
 - `max-w-5xl` (1024 outer / 960 effective) — too narrow once padding eats the budget; gutters were barely visible at 1366px–1440px viewports
+- `max-w-7xl` (1280 outer) — crosses into power-user-dashboard density; conflicts with Studio's calm canvas
 
-`max-w-6xl` is the floor for "feels designed for desktop" while staying within Studio's calm-canvas philosophy. Don't widen further (`max-w-7xl` = 1280) without a clear reason — that crosses into power-user-dashboard density. Don't narrow either; we already proved 5xl is too tight after padding.
+`max-w-6xl` is the chosen floor. Don't change it; don't add a wider sibling.
 
 ### 17.3 Container padding — three tiers
 
@@ -1568,8 +1570,8 @@ Every dashboard page starts with the same anchor: title left, optional actions r
     <p class="mt-1 text-sm text-foreground-muted">12 aktive · 3 venter</p>
   </div>
   <div class="flex gap-2">
-    <Button variant="secondary" size="sm">Eksporter</Button>
-    <Button size="sm">Ny påmelding</Button>
+    <Button variant="secondary">Eksporter</Button>
+    <Button>Ny påmelding</Button>
   </div>
 </header>
 ```
@@ -2031,7 +2033,7 @@ The page is structured: heading → booked-item card → cancellation policy lin
 
 ## 20. Search & results
 
-Search in Studio is a *filter*, not a discovery primitive. The audience doesn't need a `cmd+k` palette or fuzzy global search across 50 entity types — they need to narrow lists they're already looking at.
+Search in Studio is a *filter*, not a discovery primitive — for now. The audience narrows lists they're already looking at; they don't memorize keyboard shortcuts and don't have hundreds of destinations to jump to. So the default is no global command palette. That default is conditional, not absolute.
 
 ### 20.1 Two patterns, choose one
 
@@ -2040,7 +2042,25 @@ Search in Studio is a *filter*, not a discovery primitive. The audience doesn't 
 | **List filter** | Filtering a list the user is already on | Top of every list page (Påmeldinger, Kurs, Kunder). Live filtering with `onChange` debounced ~200ms. |
 | **Page-scoped search** | Looking for something the user *can name* on a specific page | Public studio page (search across that studio's courses) |
 
-**No global command palette.** `cmd+k`-style fuzzy search across the whole app is a power-user pattern. The UX-patterns consensus: command palettes are for "complex apps with many features (dashboards, dev tools, productivity apps) where power users want to move fast" — and explicitly *not* for "simple apps or consumer apps where users rarely learn keyboard shortcuts." Studio's audience is yoga teachers and wellness customers; they don't memorize keyboard shortcuts and don't have 200+ destinations to jump to. Adding `cmd+k` adds chrome and a feature surface no one uses. If the user can't find something via the sidebar + page filter, the navigation is wrong, not the search.
+### 20.1a Global command palette (`cmd+k`) — conditional, not banned
+
+**Default: no command palette.** Sidebar nav + per-page filter covers Studio's current scale. `cmd+k` adds chrome and a feature surface most of today's audience won't use.
+
+**Consider adding `cmd+k`** when at least one of the following becomes true:
+
+- **Destinations outgrow the sidebar.** Studio has > ~15 top-level routes and users start saying "I can't find X".
+- **Searchable records cross domains.** A single keystroke needs to jump between courses, participants, payments, messages — not just narrow one list.
+- **Frequent power-user actions emerge.** A subset of users (multi-studio operators, support staff) repeatedly trigger the same actions and would benefit from typed shortcuts.
+
+If/when those conditions hit, the implementation rules:
+
+- Trigger: `cmd/ctrl+k`. Sonner pattern — Radix `<Dialog>` over the dim, no decorative chrome.
+- Scope: a single results list mixing all entity types, ranked by recency + relevance.
+- Empty state: action-first ("Opprett kurs", "Inviter deltaker") — not "no results".
+- Keyboard-only by design. Mouse use is fine but never the documented affordance.
+- Discoverable by visible `cmd+k` hint in the sidebar, not by lore.
+
+Until those conditions hit, ship list filter + page-scoped search and skip the palette.
 
 ### 20.2 List filter — anatomy
 
@@ -2115,7 +2135,7 @@ For the public studio page where customers can search across that studio's cours
 
 ### 20.5 Anti-patterns
 
-- ❌ **Global command palette** for the audience. Power-user feature; not for this app.
+- ❌ **Global command palette added preemptively** before the conditions in § 20.1a are met. Power-user chrome with no audience to use it.
 - ❌ **Server-side search with submit button** when the data is already in the page. Live-filter the array.
 - ❌ **Search across entity types** (courses + customers + signups in one search). Each list filters itself.
 - ❌ **Highlighted match terms** in search results. Useful in IDE search; over-engineered for a 30-row list.

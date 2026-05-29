@@ -100,8 +100,8 @@
 
   /* ── Type scale (Studio canonical, per design-model.yaml) ────
        xs   12 / 16 / +0.0025em    — captions, KPI labels, chips
-       sm   14 / 20 / 0            — dashboard body (DEFAULT)
-       base 16 / 24 / 0            — public/landing body (DEFAULT)
+       sm   14 / 20 / 0            — meta, labels, controls, dense UI
+       base 16 / 24 / 0            — app body (DEFAULT)
        xl   20 / 28 / -0.005em     — h3 / large card titles
        2xl  24 / 30 / -0.01em      — h2 / page titles
        3xl  30 / 36 / -0.015em     — h1 / hero on dashboard
@@ -186,6 +186,7 @@
   /* Brand / interaction */
   --primary: var(--sand-12);
   --primary-foreground: var(--sand-1);
+  --toast-surface: oklch(0.255 0.005 89);
   --primary-muted-foreground: oklch(1 0 0 / 0.7);
   --brand: oklch(0.546 0.245 262.881);
   --brand-foreground: oklch(1 0 0);
@@ -274,6 +275,7 @@
   /* Brand / interaction */
   --primary: var(--sand-12);
   --primary-foreground: var(--sand-1);
+  --toast-surface: oklch(0.235 0.003 264);
   --primary-muted-foreground: oklch(0.205 0 0 / 0.7);
   --brand: oklch(0.623 0.214 259.815);
   --brand-foreground: oklch(0.985 0 0);

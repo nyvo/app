@@ -96,15 +96,14 @@ export function EntityCard({
           <div className="mt-6 flex items-center gap-2">
             {actions?.map((action) =>
             action.to ? (
-              <Button key={action.key} asChild variant="outline" size="sm">
+              <Button key={action.key} asChild variant="secondary">
                 <Link to={action.to}>{action.label}</Link>
               </Button>
             ) : (
               <Button
                 key={action.key}
                 type="button"
-                variant="outline"
-                size="sm"
+                variant="secondary"
                 onClick={action.onClick}
               >
                 {action.label}

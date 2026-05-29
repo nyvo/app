@@ -243,7 +243,6 @@ function DrawerBody({
             <Button
               type="button"
               variant="ghost"
-              size="sm"
               onClick={addDay}
               className="mt-3 w-full justify-center text-foreground-muted hover:text-foreground"
             >
@@ -352,7 +351,7 @@ function DrawerBody({
 
       {/* Sticky footer — primary only, ×/Esc/backdrop already close */}
       <div className="border-t border-border px-6 py-3 flex items-center justify-end bg-surface">
-        <Button size="sm">Opprett</Button>
+        <Button>Opprett</Button>
       </div>
     </div>
   )

@@ -135,7 +135,7 @@ export default function HelpPage() {
       <MobileTeacherHeader title="Hjelp" />
 
       <PageShell
-        width="form"
+        narrow="centered"
         title="Hjelp"
         description="Send oss en melding, så hjelper vi deg videre."
       >

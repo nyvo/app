@@ -6,6 +6,7 @@ import {
   Calendar03Icon,
   BookOpen02Icon,
   Building03Icon,
+  UserGroupIcon,
   CreditCardIcon,
   UserCircleIcon,
   HelpCircleIcon,
@@ -52,6 +53,7 @@ const SELLER_NAV_ITEMS: NavItem[] = [
   { icon: Calendar03Icon, label: 'Timeplan', href: routes.schedule },
   { icon: BookOpen02Icon, label: 'Kurs', href: routes.courses },
   { icon: Building03Icon, label: 'Studio', href: routes.studio },
+  { icon: UserGroupIcon, label: 'Samarbeid', href: routes.collaboration },
   { icon: CreditCardIcon, label: 'Betalingskonto', href: routes.settingsPayouts },
   { icon: UserCircleIcon, label: 'Innstillinger', href: routes.settingsProfile },
 ];

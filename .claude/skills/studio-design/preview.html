@@ -9,24 +9,60 @@
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* ── neutral ── */
-    --background:           #ffffff;
-    --surface:              #ffffff;
-    --muted:                #f0f0f3;
-    --active:               #e8e8ec;
-    --border:               #d9d9e0;
-    --foreground-disabled:  #b9bbc6;
-    --foreground-muted:     #60646c;
-    --foreground:           #1c2024;
-    --ring:                 #1c2024;
+    /* Token block copied from src/index.css (light mode).
+       Keep this preview standalone, but update this block in the same commit
+       whenever app primitives / semantic tokens change. */
 
-    /* ── status ── */
-    --success-subtle:  #e6f7ed;
-    --success-fg:      #208368;
-    --warning-subtle:  #fff7c2;
-    --warning-fg:      #ab6400;
-    --danger-subtle:   #feebec;
-    --danger-fg:       #ce2c31;
+    /* ── primitives: Radix Sand in OKLCH ── */
+    --sand-1:  oklch(0.992 0.002 89);
+    --sand-2:  oklch(0.983 0.003 89);
+    --sand-3:  oklch(0.953 0.005 89);
+    --sand-4:  oklch(0.929 0.006 86);
+    --sand-5:  oklch(0.906 0.007 80);
+    --sand-6:  oklch(0.881 0.008 80);
+    --sand-7:  oklch(0.848 0.010 80);
+    --sand-8:  oklch(0.776 0.013 86);
+    --sand-9:  oklch(0.612 0.010 86);
+    --sand-10: oklch(0.569 0.010 86);
+    --sand-11: oklch(0.453 0.012 86);
+    --sand-12: oklch(0.231 0.008 88);
+
+    --jade-3:   oklch(0.953 0.034 158);
+    --jade-11:  oklch(0.516 0.081 165);
+    --amber-3:  oklch(0.972 0.067 100);
+    --amber-11: oklch(0.557 0.131 65);
+    --red-3:    oklch(0.946 0.024 17);
+    --red-11:   oklch(0.563 0.226 25);
+
+    /* ── semantic tokens ── */
+    --background:           oklch(1 0 0);
+    --surface:              oklch(1 0 0);
+    --surface-elevated:     oklch(1 0 0 / 0.8);
+    --surface-tinted:       oklch(0.97 0.03 258);
+    --surface-tinted-border: oklch(0.9 0.04 258);
+
+    --foreground:           var(--sand-12);
+    --foreground-muted:     var(--sand-11);
+    --foreground-disabled:  var(--sand-8);
+
+    --primary:              var(--sand-12);
+    --primary-foreground:   var(--sand-1);
+    --secondary:            var(--sand-3);
+    --secondary-foreground: var(--sand-12);
+    --muted:                var(--sand-3);
+    --active:               var(--sand-4);
+
+    --success-subtle:       var(--jade-3);
+    --success-fg:           var(--jade-11);
+    --warning-subtle:       var(--amber-3);
+    --warning-fg:           var(--amber-11);
+    --danger-subtle:        var(--red-3);
+    --danger-fg:            var(--red-11);
+
+    --border:               var(--sand-6);
+    --border-subtle:        var(--sand-5);
+    --input:                var(--sand-6);
+    --ring:                 var(--sand-12);
 
 
     /* ── radius ── */
@@ -75,7 +111,7 @@
   .h3      { font-size: 20px; line-height: 28px; letter-spacing: -0.005em; font-weight: 600; }
   .h4      { font-size: 16px; line-height: 24px; font-weight: 600; }
   .body-lg { font-size: 16px; line-height: 24px; }
-  .body    { font-size: 14px; line-height: 20px; }
+  .body    { font-size: 16px; line-height: 24px; }
   .caption { font-size: 12px; line-height: 16px; letter-spacing: 0.0025em; }
 
   .muted { color: var(--foreground-muted); }
@@ -150,7 +186,7 @@
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     padding: 24px;
   }
   .card-tight { padding: 16px; }
@@ -227,14 +263,17 @@
   .btn-primary { background: var(--foreground); color: #fff; }
   /* Primary stays solid — no hover fill change on near-black */
 
+  /* Secondary — filled muted, no border, no shadow.
+     System is filled-only (decided 2026-05-29). Hierarchy comes from
+     fill darkness, not borders: primary (sand-12) > secondary (sand-3)
+     > ghost (transparent). See SKILL.md §3 anti-patterns. */
   .btn-secondary {
-    background: var(--surface);
-    border-color: var(--border);
+    background: var(--muted);
+    border-color: transparent;
     color: var(--foreground);
-    transition: background-color var(--duration-fast) var(--ease-out),
-                border-color     var(--duration-fast) var(--ease-out);
+    transition: background-color var(--duration-fast) var(--ease-out);
   }
-  .btn-secondary:hover { background: var(--muted); }
+  .btn-secondary:hover { background: var(--active); }
 
   .btn-ghost {
     background: transparent;
@@ -243,10 +282,34 @@
   }
   .btn-ghost:hover { background: var(--muted); }
 
+  /* Soft — dedicated icon controls (close ×, kebab, share, etc.).
+     Persistent muted fill at rest reads as "tappable target"; hover deepens
+     to active. Pair with .btn-icon (square pill → circle). */
+  .btn-soft {
+    background: var(--muted);
+    color: var(--foreground);
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+  .btn-soft:hover { background: var(--active); }
+
   .btn-destructive { background: var(--danger-fg); color: #fff; }
 
-  .btn-sm  { height: 32px; padding: 0 14px; font-size: 14px; }
-  .btn-xs  { height: 24px; padding: 0 10px; font-size: 12px; }
+  /* Size scale matches components.md § Button.
+     xs (24px) — inline chips / dense filters
+     sm (32px) — table-row actions, toolbars
+     default (36px, base) — page header CTAs, drawer footer primary
+     lg (40px) — modal footer actions
+     cta (44px) — public/marketing primary */
+  .btn-xs  { height: 24px; padding: 0 8px;  font-size: 12px; gap: 4px; }
+  .btn-sm  { height: 32px; padding: 0 12px; font-size: 14px; }
+  .btn-lg  { height: 40px; padding: 0 20px; font-size: 14px; }
+  .btn-cta { height: 44px; padding: 0 24px; font-size: 16px; }
+  .btn-icon {
+    width: 36px;
+    padding: 0;
+    display: inline-grid;
+    place-items: center;
+  }
 
   .btn[disabled] { opacity: 0.5; pointer-events: none; }
 
@@ -255,11 +318,11 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: var(--radius-full);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
-    line-height: 16px;
+    line-height: 18px;
     background: var(--muted);
     color: var(--foreground);
   }
@@ -267,7 +330,6 @@
   .badge-success { background: var(--success-subtle); color: var(--success-fg); }
   .badge-warning { background: var(--warning-subtle); color: var(--warning-fg); }
   .badge-danger  { background: var(--danger-subtle);  color: var(--danger-fg); }
-  .badge-outline { background: transparent; border: 1px solid var(--border); color: var(--foreground); }
 
   /* input */
   .input {
@@ -298,16 +360,18 @@
     margin-bottom: 6px;
   }
 
-  /* course card — borderless, the tint IS the card */
+  /* course card — monochrome bordered card, no chromatic tints */
   .course-card {
     display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 24px;
-    transition: transform var(--duration-normal) var(--ease-out);
+    transition: border-color var(--duration-normal) var(--ease-out);
     cursor: pointer;
     text-decoration: none;
   }
-  .course-card:hover { transform: translateY(-1px); }
+  .course-card:hover { border-color: color-mix(in srgb, var(--foreground) 15%, var(--border)); }
   .course-card .pill {
     display: inline-block;
     font-size: 12px;
@@ -328,9 +392,6 @@
     color: var(--foreground-muted);
     text-decoration: none;
   }
-  .course-sky  { background: var(--muted); }
-  .course-mint { background: var(--muted); }
-  .course-iris { background: var(--muted); }
   .course-sky  .pill, .course-sky-fg  { color: var(--foreground-muted); }
   .course-mint .pill, .course-mint-fg { color: var(--foreground-muted); }
   .course-iris .pill, .course-iris-fg { color: var(--foreground-muted); }
@@ -521,19 +582,18 @@
     border-radius: var(--radius-md);
     font-size: 14px;
     background: var(--muted);
-  }
-  .ap-bad {
-    color: var(--foreground-muted);
-  }
-  .ap-good {
+    /* sand-12 ink (~14.5:1 on sand-3) — was sand-11 / muted which failed AA */
     color: var(--foreground);
   }
   .ap-label {
     font-size: 12px;
     font-weight: 500;
-    color: var(--foreground-muted);
     margin-bottom: 6px;
   }
+  /* Semantic label colors — red for "don't", green for "instead".
+     Red-11 on sand-3 ~5:1, jade-11 on sand-3 ~4.7:1 — both pass AA. */
+  .ap-bad .ap-label  { color: var(--danger-fg); }
+  .ap-good .ap-label { color: var(--success-fg); }
 
   /* small chrome */
   .footer {
@@ -609,7 +669,8 @@
     box-shadow: var(--shadow-xs);
   }
 
-  /* Preview category tabs — sticky underline tabs at the top of the page */
+  /* Preview category tabs — sticky underline tabs at the top of the page.
+     Solid surface, no backdrop-filter (per PRODUCT.md "no glassmorphism"). */
   .preview-tabs {
     display: flex;
     gap: 28px;
@@ -621,8 +682,6 @@
     top: 0;
     background: var(--background);
     z-index: 10;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
   }
   .preview-tabs button {
     background: transparent;
@@ -643,6 +702,21 @@
   .preview-tabs button.active {
     color: var(--foreground);
     border-bottom-color: var(--foreground);
+  }
+
+  /* Reduced motion — non-optional per PRODUCT.md § Accessibility.
+     Collapses every transition/animation to near-instant for users who
+     have set `prefers-reduced-motion: reduce`. Covers the .btn / .input
+     transitions, the .pulse + .spin keyframes, and any future motion. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 </style>
 </head>
@@ -676,16 +750,16 @@
       <!-- Neutral -->
       <div class="card">
         <h3 class="h4" style="margin-bottom: 4px;">Neutral</h3>
-        <p class="body muted" style="margin-bottom: 24px;">Radix sand. Cool gray. Carries the entire structural surface system.</p>
+        <p class="body muted" style="margin-bottom: 24px;">Radix Sand in OKLCH. Warm-neutral. Carries the entire structural surface system.</p>
         <div class="swatch-list">
-          <div class="swatch"><div class="swatch-chip" style="background:#ffffff"></div><div class="swatch-meta"><span class="swatch-name">background</span><span class="swatch-value">#ffffff · page canvas</span></div></div>
-          <div class="swatch"><div class="swatch-chip" style="background:#ffffff"></div><div class="swatch-meta"><span class="swatch-name">surface</span><span class="swatch-value">#ffffff · cards (same value, different role)</span></div></div>
-          <div class="swatch"><div class="swatch-chip" style="background:#f0f0f3"></div><div class="swatch-meta"><span class="swatch-name">muted</span><span class="swatch-value">#f0f0f3 · sand-3</span></div></div>
-          <div class="swatch"><div class="swatch-chip" style="background:#e8e8ec"></div><div class="swatch-meta"><span class="swatch-name">active</span><span class="swatch-value">#e8e8ec · sand-4</span></div></div>
-          <div class="swatch"><div class="swatch-chip" style="background:#d9d9e0"></div><div class="swatch-meta"><span class="swatch-name">border</span><span class="swatch-value">#d9d9e0 · sand-6</span></div></div>
-          <div class="swatch"><div class="swatch-chip" style="background:#b9bbc6"></div><div class="swatch-meta"><span class="swatch-name">foreground-disabled</span><span class="swatch-value">#b9bbc6 · sand-8</span></div></div>
-          <div class="swatch"><div class="swatch-chip" style="background:#60646c"></div><div class="swatch-meta"><span class="swatch-name">foreground-muted</span><span class="swatch-value">#60646c · sand-11</span></div></div>
-          <div class="swatch"><div class="swatch-chip" style="background:#1c2024"></div><div class="swatch-meta"><span class="swatch-name">foreground</span><span class="swatch-value">#1c2024 · sand-12</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background: var(--background)"></div><div class="swatch-meta"><span class="swatch-name">background</span><span class="swatch-value">oklch(1 0 0) · page canvas</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background: var(--surface)"></div><div class="swatch-meta"><span class="swatch-name">surface</span><span class="swatch-value">oklch(1 0 0) · cards (same value, different role)</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background: var(--muted)"></div><div class="swatch-meta"><span class="swatch-name">muted</span><span class="swatch-value">sand-3 · hover / secondary fill</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background: var(--active)"></div><div class="swatch-meta"><span class="swatch-name">active</span><span class="swatch-value">sand-4 · active / hover next step</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background: var(--border)"></div><div class="swatch-meta"><span class="swatch-name">border</span><span class="swatch-value">sand-6 · inputs, dividers, deliberate cards</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background: var(--foreground-disabled)"></div><div class="swatch-meta"><span class="swatch-name">foreground-disabled</span><span class="swatch-value">sand-8 · disabled / very-muted meta</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background: var(--foreground-muted)"></div><div class="swatch-meta"><span class="swatch-name">foreground-muted</span><span class="swatch-value">sand-11 · AA muted text</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background: var(--foreground)"></div><div class="swatch-meta"><span class="swatch-name">foreground</span><span class="swatch-value">sand-12 · primary text / primary fill</span></div></div>
         </div>
       </div>
 
@@ -697,22 +771,22 @@
           <p class="body muted" style="margin-bottom: 24px;">Three signals. Subtle background + foreground only — no solid 9-step needed.</p>
           <div class="swatch-list">
             <div class="swatch">
-              <div class="swatch-chip" style="background: var(--success-subtle); border-color: rgb(32 131 104 / 0.15);">
+              <div class="swatch-chip" style="background: var(--success-subtle); border-color: color-mix(in srgb, var(--success-fg) 15%, transparent);">
                 <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--success-fg);">Aa</div>
               </div>
-              <div class="swatch-meta"><span class="swatch-name">success · jade</span><span class="swatch-value">#e6f7ed / #208368</span></div>
+              <div class="swatch-meta"><span class="swatch-name">success · jade</span><span class="swatch-value">jade-3 / jade-11</span></div>
             </div>
             <div class="swatch">
               <div class="swatch-chip" style="background: var(--warning-subtle);">
                 <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--warning-fg);">Aa</div>
               </div>
-              <div class="swatch-meta"><span class="swatch-name">warning · amber</span><span class="swatch-value">#fff7c2 / #ab6400</span></div>
+              <div class="swatch-meta"><span class="swatch-name">warning · amber</span><span class="swatch-value">amber-3 / amber-11</span></div>
             </div>
             <div class="swatch">
               <div class="swatch-chip" style="background: var(--danger-subtle);">
                 <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--danger-fg);">Aa</div>
               </div>
-              <div class="swatch-meta"><span class="swatch-name">destructive · red</span><span class="swatch-value">#feebec / #ce2c31</span></div>
+              <div class="swatch-meta"><span class="swatch-name">destructive · red</span><span class="swatch-value">red-3 / red-11</span></div>
             </div>
           </div>
         </div>
@@ -759,12 +833,12 @@
           <div class="type-row">
             <span class="label">base</span>
             <span class="preview" style="font-size: 16px; line-height: 24px; font-weight: 400;">Aa</span>
-            <span class="spec">16 / 24 · landing body · 400</span>
+            <span class="spec">16 / 24 · app body · 400</span>
           </div>
           <div class="type-row">
             <span class="label">sm</span>
             <span class="preview" style="font-size: 14px; line-height: 20px; font-weight: 400;">Aa</span>
-            <span class="spec">14 / 20 · dashboard body · 400</span>
+            <span class="spec">14 / 20 · meta / dense UI · 400 / 500</span>
           </div>
           <div class="type-row">
             <span class="label">xs</span>
@@ -780,11 +854,11 @@
 
         <div style="padding: 20px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 16px;">
           <h4 class="h1" style="margin-bottom: 4px;">Påmeldinger</h4>
-          <p style="font-size: 14px; color: var(--foreground-muted); margin-bottom: 24px;">Aktive kurs og deltakeroversikt for denne måneden.</p>
+          <p style="font-size: 16px; line-height: 24px; color: var(--foreground-muted); margin-bottom: 24px;">Aktive kurs og deltakeroversikt for denne måneden.</p>
           <h5 style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">Vinyasa Flow</h5>
-          <p style="font-size: 14px; color: var(--foreground); margin-bottom: 4px;">12 av 14 plasser fylt</p>
+          <p style="font-size: 16px; line-height: 24px; color: var(--foreground); margin-bottom: 4px;">12 av 14 plasser fylt</p>
           <p style="font-size: 12px; color: var(--foreground-muted); margin-bottom: 4px;">Sist oppdatert kl. 14:32</p>
-          <p style="font-size: 12px; color: var(--foreground-muted); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">Dashboard surface · 14px body</p>
+          <p style="font-size: 12px; color: var(--foreground-muted); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">Dashboard surface · 16px body, 14px meta</p>
         </div>
 
         <div style="padding: 24px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md);">
@@ -808,35 +882,62 @@
   <section class="section">
     <div class="section-head">
       <h2>Controls</h2>
-      <span class="meta">36px default · 6px radius · 14px sm body</span>
+      <span class="meta">filled-only · 36px default · 40px modal · 44px public CTA</span>
     </div>
 
     <div class="grid-2">
       <div class="card">
         <h3 class="h4" style="margin-bottom: 4px;">Buttons</h3>
-        <p class="body muted" style="margin-bottom: 24px;">One primary per group. Black is the only fill. Hover at 90% opacity.</p>
+        <p class="body muted" style="margin-bottom: 24px;">Filled-only. Two filled variants — <code style="font-family: inherit; font-weight: 500;">primary</code> (sand-12) and <code style="font-family: inherit; font-weight: 500;">secondary</code> (sand-3 / bg-muted, no border). <code style="font-family: inherit; font-weight: 500;">ghost</code> is the transparent low-emphasis option (inline row actions, sidebar nav). <code style="font-family: inherit; font-weight: 500;">soft</code> is the persistent muted-circle for dedicated icon controls (close ×, kebab). <code style="font-family: inherit; font-weight: 500;">outline</code> is deprecated — migrate when you touch the file.</p>
 
         <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 12px;">Variants</div>
         <div class="row" style="margin-bottom: 24px;">
           <button class="btn btn-primary">Lagre endringer</button>
           <button class="btn btn-secondary">Avbryt</button>
-          <button class="btn btn-ghost">Hopp over</button>
-          <button class="btn btn-destructive">Slett</button>
+          <button class="btn btn-ghost">Ghost</button>
+          <button class="btn btn-destructive">Reserved</button>
         </div>
+        <p style="margin-top: -12px; margin-bottom: 24px; font-size: 12px; color: var(--foreground-muted);">Destructive exists as a reserved variant. Confirmation dialogs use the monochrome primary button instead — the verb carries the destructive signal.</p>
+
+        <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 12px;">Icon controls — soft variant</div>
+        <div class="row" style="margin-bottom: 12px;">
+          <button class="btn btn-soft btn-icon" aria-label="Lukk" title="Lukk">
+            <svg viewBox="0 0 16 16" style="width: 16px; height: 16px;" aria-hidden="true">
+              <path d="M4 4 L12 12 M12 4 L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button class="btn btn-soft btn-icon" aria-label="Mer" title="Mer">
+            <svg viewBox="0 0 16 16" style="width: 16px; height: 16px;" aria-hidden="true">
+              <circle cx="3" cy="8" r="1.2" fill="currentColor"></circle>
+              <circle cx="8" cy="8" r="1.2" fill="currentColor"></circle>
+              <circle cx="13" cy="8" r="1.2" fill="currentColor"></circle>
+            </svg>
+          </button>
+          <button class="btn btn-soft btn-icon" aria-label="Del" title="Del">
+            <svg viewBox="0 0 16 16" style="width: 14px; height: 14px;" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="3.5" r="2"/>
+              <circle cx="4" cy="8" r="2"/>
+              <circle cx="12" cy="12.5" r="2"/>
+              <path d="M5.7 7 L10.3 4.5 M5.7 9 L10.3 11.5"/>
+            </svg>
+          </button>
+        </div>
+        <p style="margin-top: 0; margin-bottom: 24px; font-size: 12px; color: var(--foreground-muted);">Dedicated icon controls — close × in dialog/sheet/drawer headers, kebab menu triggers, share — use <code style="font-family: inherit; font-weight: 500;">soft</code> + <code style="font-family: inherit; font-weight: 500;">size="icon"</code>. The persistent muted circle reads as "tappable target" without competing with primary actions. For dense inline row controls (table action columns where a 36px circle would crowd the layout) keep <code style="font-family: inherit; font-weight: 500;">ghost</code> — transparent at rest, hover-fills.</p>
 
         <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 12px;">Sizes</div>
         <div class="row" style="margin-bottom: 24px;">
-          <button class="btn btn-primary btn-xs">xs</button>
-          <button class="btn btn-primary btn-sm">sm</button>
           <button class="btn btn-primary">default</button>
+          <button class="btn btn-primary btn-lg">lg</button>
+          <button class="btn btn-primary btn-cta">cta</button>
         </div>
+        <p style="margin-top: -12px; margin-bottom: 24px; font-size: 12px; color: var(--foreground-muted);">Default to default. Use lg inside modals. Use cta for public/mobile primary actions. If an action feels too small for a button, make it plain text, icon-only, or put it in a menu.</p>
 
         <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 12px;">States</div>
         <div class="row" style="margin-bottom: 24px;">
           <button class="btn btn-primary">Default</button>
           <button class="btn btn-primary" disabled>Disabled</button>
           <button class="btn btn-secondary">Default</button>
-          <button class="btn btn-secondary" style="background: var(--muted);">Hover</button>
+          <button class="btn btn-secondary" style="background: var(--active);">Hover</button>
         </div>
 
         <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 12px;">Loading — async submit / save / payment</div>
@@ -934,7 +1035,7 @@
   <section class="section">
     <div class="section-head">
       <h2>Badges</h2>
-      <span class="meta">12px / 500 · pill (decorative) · rect (status)</span>
+      <span class="meta">12px / 500 · pill shape across meta and status</span>
     </div>
 
     <div class="card">
@@ -943,27 +1044,27 @@
         <span class="badge">Denne måneden</span>
         <span class="badge">Siste 7 dager</span>
         <span class="badge">12 av 14 påmeldte</span>
-        <span class="badge badge-outline">Valgfritt</span>
-        <span class="badge badge-outline">per person</span>
+        <span class="badge">Valgfritt</span>
+        <span class="badge">per person</span>
       </div>
 
-      <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 12px;">Rect — status in tables/rows</div>
+      <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 12px;">Status — still pill-shaped, color carries meaning</div>
       <div class="badge-row" style="margin-bottom: 24px;">
-        <span class="badge badge-rect badge-success">Betalt</span>
-        <span class="badge badge-rect badge-warning">Venter</span>
-        <span class="badge badge-rect badge-danger">Avbrutt</span>
-        <span class="badge badge-rect badge-success">Aktiv</span>
-        <span class="badge badge-rect" style="background: var(--muted);">Utkast</span>
+        <span class="badge badge-success">Betalt</span>
+        <span class="badge badge-warning">Venter</span>
+        <span class="badge badge-danger">Avbrutt</span>
+        <span class="badge badge-success">Aktiv</span>
+        <span class="badge" style="background: var(--muted);">Utkast</span>
       </div>
 
     </div>
   </section>
 
-  <!-- COURSE CARDS (THE POP) -->
+  <!-- COURSE CARDS -->
   <section class="section">
     <div class="section-head">
-      <h2>Course cards — the pop</h2>
-      <span class="meta">3 cool tints rotating · one tint per card</span>
+      <h2>Course cards</h2>
+      <span class="meta">monochrome bordered cards · no chromatic pop tints</span>
     </div>
 
     <div class="grid-3">
@@ -1032,7 +1133,7 @@
             <p style="margin-top: 2px; font-size: 14px; color: var(--foreground-muted);">12 av 14 plasser fylt</p>
           </div>
 
-          <button class="btn btn-primary btn-sm" style="margin-top: 18px;">Åpne dagsplan</button>
+          <button class="btn btn-primary" style="margin-top: 18px;">Åpne dagsplan</button>
         </div>
 
         <!-- Quiet supporters — 2 metrics, no card chrome -->
@@ -1153,18 +1254,18 @@
   <section class="section">
     <div class="section-head">
       <h2>Timeplan</h2>
-      <span class="meta">day-grouped card list · bordered monochrome cards · no calendar grid</span>
+      <span class="meta">day-grouped card list · monochrome rows · no calendar grid</span>
     </div>
 
-    <p class="body muted" style="margin-bottom: 24px;">List view, not grid — calendar grids are power-user territory and choke on busy days. Cards are monochrome bordered sand surfaces. Type (engangstime / kursrekke / online) reads as a text label in the meta line — Studio is monochrome, color is never used to encode type.</p>
+    <p class="body muted" style="margin-bottom: 24px;">List view, not grid — calendar grids are power-user territory and choke on busy days. Timeplan rows are monochrome, with spacing and quiet filled surfaces doing the grouping. Type (engangstime / kursrekke / online) reads as a text label in the meta line — Studio is monochrome, color is never used to encode type.</p>
 
     <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 32px; max-width: 720px;">
 
       <!-- Day group: I dag -->
-      <div style="font-size: 11px; font-weight: 600; color: var(--foreground-muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px;">I dag, 12. mai</div>
+      <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 12px;">I dag, 12. mai</div>
       <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
         <!-- Today's card — slightly bumped padding -->
-        <a href="#" style="display: block; background: var(--muted); border-radius: var(--radius-lg); padding: 20px; text-decoration: none; color: var(--foreground);">
+        <a href="#" style="display: block; background: var(--muted); border-radius: var(--radius-lg); padding: 24px; text-decoration: none; color: var(--foreground);">
           <p style="font-size: 16px; font-weight: 500;">Online Vinyasa Flow</p>
           <p style="margin-top: 4px; font-size: 14px; color: var(--foreground); font-feature-settings: 'tnum';">kl. 18:00 — 19:00 · 8 / 15 påmeldt</p>
           <p style="margin-top: 4px; font-size: 12px; color: var(--foreground-muted);">Online</p>
@@ -1172,7 +1273,7 @@
       </div>
 
       <!-- Day group: I morgen -->
-      <div style="font-size: 11px; font-weight: 600; color: var(--foreground-muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px;">I morgen, 13. mai</div>
+      <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 12px;">I morgen, 13. mai</div>
       <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
 
         <!-- Engangstime: mint -->
@@ -1191,7 +1292,7 @@
       </div>
 
       <!-- Day group: Onsdag -->
-      <div style="font-size: 11px; font-weight: 600; color: var(--foreground-muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px;">Onsdag, 14. mai</div>
+      <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 12px;">Onsdag, 14. mai</div>
       <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
         <!-- Same kursrekke, future day — capacity reduced detail -->
         <a href="#" style="display: block; background: var(--muted); border-radius: var(--radius-lg); padding: 16px 20px; text-decoration: none; color: var(--foreground);">
@@ -1210,7 +1311,7 @@
       </div>
     </div>
 
-    <p style="margin-top: 16px; font-size: 12px; color: var(--foreground-muted);">Today's card has bumped padding (`p-5` vs `p-4`). Future days reduce detail (drop capacity 7+ days out). Empty days don't render. Past classes collapse to a single row. Click any card → detail drawer (§15), not a separate page.</p>
+    <p style="margin-top: 16px; font-size: 12px; color: var(--foreground-muted);">Today's card uses the default roomy row padding (`p-6`); future rows use the dense row tier. Future days reduce detail (drop capacity 7+ days out). Empty days don't render. Past classes collapse to a single row. Click any card → detail drawer (§15), not a separate page.</p>
   </section>
 
   <!-- PRICING DISPLAY -->
@@ -1295,7 +1396,7 @@
               <li>10 kurs</li>
               <li>Ingen oppstartsavgift</li>
             </ul>
-            <button class="btn btn-secondary btn-sm" style="margin-top: auto; align-self: flex-start;">Velg Gratis</button>
+            <button class="btn btn-secondary" style="margin-top: auto; align-self: flex-start;">Velg Gratis</button>
           </article>
 
           <!-- Tier 2: Pro — RECOMMENDED. No box, no shadow. Just the primary CTA below. -->
@@ -1312,7 +1413,7 @@
               <li>Vipps og kort</li>
               <li>Egen bookinglenke</li>
             </ul>
-            <button class="btn btn-primary btn-sm" style="margin-top: auto; align-self: flex-start;">Velg Pro</button>
+            <button class="btn btn-primary" style="margin-top: auto; align-self: flex-start;">Velg Pro</button>
           </article>
 
           <!-- Tier 3: Premium -->
@@ -1329,7 +1430,7 @@
               <li>API-tilgang</li>
               <li>Prioritert support</li>
             </ul>
-            <button class="btn btn-secondary btn-sm" style="margin-top: auto; align-self: flex-start;">Kontakt salg</button>
+            <button class="btn btn-secondary" style="margin-top: auto; align-self: flex-start;">Kontakt salg</button>
           </article>
         </div>
       </div>
@@ -1352,9 +1453,9 @@
     <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden;">
 
       <!-- HERO — photo-led, full-bleed -->
-      <div style="aspect-ratio: 16/7; background: linear-gradient(135deg, #e8e8ec 0%, #d9d9e0 50%, #cdced6 100%); position: relative; display: flex; align-items: flex-end; padding: 28px 32px;">
+      <div style="aspect-ratio: 16/7; background: linear-gradient(135deg, var(--sand-4) 0%, var(--sand-6) 50%, var(--sand-7) 100%); position: relative; display: flex; align-items: flex-end; padding: 28px 32px;">
         <span aria-hidden="true" style="position: absolute; top: 16px; right: 16px; padding: 4px 10px; background: var(--surface); border-radius: 9999px; font-size: 11px; font-weight: 500; color: var(--foreground-muted); letter-spacing: 0.04em;">Photo placeholder · studio's own image goes here</span>
-        <span style="font-size: 11px; font-weight: 500; color: var(--foreground-muted); letter-spacing: 0.06em; text-transform: uppercase;">Inspire Yogastudio</span>
+        <span style="font-size: 12px; font-weight: 500; color: var(--foreground-muted);">Inspire Yogastudio</span>
       </div>
 
       <!-- 2-col body: main + sticky rail -->
@@ -1371,7 +1472,12 @@
 
           <!-- Instructor — bracketed by hairlines, immediately under the title -->
           <section style="display: flex; align-items: center; gap: 16px; padding: 16px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
-            <div style="width: 56px; height: 56px; border-radius: 9999px; background: var(--muted); display: grid; place-items: center; font-size: 20px; font-weight: 500; color: var(--foreground); flex: none;">A</div>
+            <div style="width: 56px; height: 56px; border-radius: 9999px; background: var(--muted); display: grid; place-items: center; color: var(--foreground-muted); flex: none;">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 21a8 8 0 0 0-16 0" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
             <div style="flex: 1; min-width: 0;">
               <p style="font-size: 16px; font-weight: 500;">Anna Berg</p>
               <p style="margin-top: 2px; font-size: 14px; color: var(--foreground-muted); line-height: 20px;">Yogalærer i 12 år. Vinyasa og yin-spesialist.</p>
@@ -1437,10 +1543,10 @@
           <section>
             <h2 style="font-size: 20px; line-height: 28px; letter-spacing: -0.005em; font-weight: 600; margin-bottom: 12px;">Sted</h2>
             <div style="display: grid; grid-template-columns: 160px 1fr; gap: 16px; align-items: start;">
-              <div style="aspect-ratio: 1; border-radius: var(--radius-md); background: linear-gradient(135deg, #f0f0f3 0%, #e0e1e6 100%); position: relative; overflow: hidden;">
+              <div style="aspect-ratio: 1; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--sand-3) 0%, var(--sand-5) 100%); position: relative; overflow: hidden;">
                 <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.5;">
-                  <path d="M0 30 L100 30 M0 60 L100 60 M30 0 L30 100 M70 0 L70 100" stroke="#cdced6" stroke-width="0.6" fill="none"/>
-                  <path d="M15 0 L25 100 M85 0 L80 100 M0 75 L100 80" stroke="#d9d9e0" stroke-width="0.4" fill="none"/>
+                  <path d="M0 30 L100 30 M0 60 L100 60 M30 0 L30 100 M70 0 L70 100" stroke="var(--sand-7)" stroke-width="0.6" fill="none"/>
+                  <path d="M15 0 L25 100 M85 0 L80 100 M0 75 L100 80" stroke="var(--sand-6)" stroke-width="0.4" fill="none"/>
                 </svg>
                 <span aria-hidden="true" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -100%); width: 18px; height: 18px; border-radius: 9999px 9999px 9999px 2px; background: var(--foreground); transform-origin: bottom; rotate: -45deg; box-shadow: 0 2px 4px rgb(0 0 0 / 0.15);"></span>
               </div>
@@ -1580,7 +1686,7 @@
         <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 24px;">
           <p style="font-size: 14px; font-weight: 500;">Lagre detaljer for raskere booking neste gang</p>
           <p style="margin-top: 2px; font-size: 13px; color: var(--foreground-muted); line-height: 18px;">Sett et passord nå for å logge inn senere — du kan også hoppe over.</p>
-          <button class="btn btn-secondary btn-sm" style="margin-top: 10px;">Lag konto</button>
+          <button class="btn btn-secondary" style="margin-top: 10px;">Lag konto</button>
         </div>
 
         <!-- Single CTA back to studio -->
@@ -1624,7 +1730,7 @@
                 <circle cx="7" cy="7" r="4.5"/>
                 <path d="M11 11l3 3" stroke-linecap="round"/>
               </svg>
-              <input type="search" placeholder="Søk i påmeldinger…" style="height: 32px; width: 220px; padding: 0 10px 0 30px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 13px; color: var(--foreground); outline: none;" />
+              <input type="search" aria-label="Søk i påmeldinger" placeholder="Søk i påmeldinger…" style="height: 32px; width: 220px; padding: 0 10px 0 30px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 13px; color: var(--foreground); outline: none;" />
             </div>
           </div>
 
@@ -1660,27 +1766,23 @@
         <h3 class="h4" style="margin-bottom: 4px;">Cancel booking — policy + confirm</h3>
         <p class="body muted" style="margin-bottom: 24px;">Self-service. Policy is stated plainly inside the dialog (never linked out). Refund timing in plain Norwegian. After confirm: toast with <code style="font-family: inherit; font-weight: 500;">Angre</code> for 8s before the API call fires.</p>
 
-        <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 40px 16px; display: flex; justify-content: center; align-items: center; min-height: 360px; position: relative;">
-          <div style="position: absolute; inset: 0; background: rgb(28 32 36 / 0.3); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: var(--radius-md); pointer-events: none;"></div>
+        <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 40px 16px; display: flex; justify-content: center; align-items: center; min-height: 320px; position: relative;">
+          <!-- Flat dim, no blur — matches the locked-in ConfirmDialog spec -->
+          <div style="position: absolute; inset: 0; background: rgb(28 32 36 / 0.40); border-radius: var(--radius-md); pointer-events: none;"></div>
 
-          <div role="dialog" aria-label="Avbestille påmeldingen" style="position: relative; z-index: 1; width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.16);">
+          <div role="dialog" aria-label="Avbestill påmelding" style="position: relative; z-index: 1; width: 100%; max-width: 480px; background: var(--surface); border-radius: var(--radius-lg); padding: 24px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.16);">
 
-            <!-- Headline -->
-            <p style="font-size: 14px; font-weight: 500; color: var(--foreground); margin-bottom: 16px;">Avbestille påmeldingen?</p>
+            <!-- Title: short verb-noun, sentence case -->
+            <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 500; letter-spacing: -0.005em; color: var(--foreground);">Avbestill påmelding</h3>
+            <!-- Body: single sentence with inline-bold entities + policy folded into the consequence -->
+            <p style="margin: 0; font-size: 14px; line-height: 1.5; color: var(--foreground-muted);">
+              Påmeldingen til <strong style="font-weight: 500; color: var(--foreground);">Vinyasa Flow</strong> tirsdag <strong style="font-weight: 500; color: var(--foreground);">13. mai kl. 18:00</strong> avbestilles. Full refusjon innen 2-3 dager (mer enn 24 t før timen).
+            </p>
 
-            <!-- Booking summary -->
-            <div style="padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 16px;">
-              <p style="font-size: 14px; font-weight: 500;">Vinyasa Flow</p>
-              <p style="margin-top: 2px; font-size: 12px; color: var(--foreground-muted); font-feature-settings: 'tnum';">Tirsdag 13. mai · kl. 18:00</p>
-            </div>
-
-            <!-- Policy in plain Norwegian -->
-            <p style="font-size: 14px; line-height: 20px; color: var(--foreground-muted);">Du får full refusjon innen 2-3 dager når du avbestiller mer enn 24 timer før timen.</p>
-
-            <!-- Actions -->
-            <div style="margin-top: 28px; display: flex; justify-content: end; gap: 8px;">
-              <button class="btn btn-secondary btn-sm">Behold</button>
-              <button class="btn btn-destructive btn-sm">Avbestill påmelding</button>
+            <!-- Footer: full-width split, both filled, no borders, size lg (40px) -->
+            <div style="margin-top: 24px; display: flex; gap: 8px;">
+              <button style="flex: 1; height: 40px; padding: 0 20px; border: 0; background: var(--muted); color: var(--foreground); border-radius: 9999px; font-size: 14px; font-weight: 500; cursor: pointer;">Behold</button>
+              <button style="flex: 1; height: 40px; padding: 0 20px; border: 0; background: var(--foreground); color: #fff; border-radius: 9999px; font-size: 14px; font-weight: 500; cursor: pointer;">Avbestill påmelding</button>
             </div>
           </div>
         </div>
@@ -1732,7 +1834,7 @@
             <span>Form field stack</span><span style="color: var(--foreground-muted); font-feature-settings: 'tnum';">space-y-4 · 16 px</span>
           </div>
           <div style="display: grid; grid-template-columns: 1fr auto; gap: 16px; padding: 8px 0; font-size: 14px;">
-            <span>Inside button</span><span style="color: var(--foreground-muted); font-feature-settings: 'tnum';">px-3 sm:px-4 · 12–16 px</span>
+            <span>Inside button</span><span style="color: var(--foreground-muted); font-feature-settings: 'tnum';">px-4 · 16 px</span>
           </div>
         </div>
 
@@ -1967,8 +2069,8 @@
           <div style="border-top: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; background: var(--surface);">
             <span style="font-size: 12px; color: var(--foreground-muted); font-feature-settings: 'tnum';">Lagret kl. 14:32</span>
             <div style="display: flex; gap: 8px;">
-              <button class="btn btn-secondary btn-sm">Avbryt</button>
-              <button class="btn btn-primary btn-sm">Opprett kurs</button>
+              <button class="btn btn-secondary">Avbryt</button>
+              <button class="btn btn-primary">Opprett kurs</button>
             </div>
           </div>
         </div>
@@ -2164,15 +2266,15 @@
 
             <!-- Action shortcuts inline (non-destructive) -->
             <div style="display: flex; gap: 8px; flex-wrap: wrap; padding-top: 12px;">
-              <button class="btn btn-secondary btn-xs">Send påminnelse</button>
-              <button class="btn btn-secondary btn-xs">Send melding</button>
+              <button class="btn btn-secondary">Send påminnelse</button>
+              <button class="btn btn-secondary">Send melding</button>
             </div>
           </div>
 
           <!-- Footer — sticky -->
           <div style="border-top: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: end; gap: 8px; background: var(--surface);">
-            <button class="btn btn-secondary btn-sm">Avbryt</button>
-            <button class="btn btn-primary btn-sm">Lagre endringer</button>
+            <button class="btn btn-secondary">Avbryt</button>
+            <button class="btn btn-primary">Lagre endringer</button>
           </div>
         </div>
 
@@ -2464,7 +2566,7 @@
           <div style="display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 320px; margin: 0 auto;">
             <p style="font-size: 14px; font-weight: 500; color: var(--foreground); margin-bottom: 6px;">Kunne ikke laste påmeldinger</p>
             <p style="font-size: 14px; color: var(--foreground-muted); margin-bottom: 20px; line-height: 20px;">Sjekk forbindelsen og prøv igjen. Hvis problemet vedvarer, ta kontakt.</p>
-            <button class="btn btn-secondary btn-sm">Prøv igjen</button>
+            <button class="btn btn-secondary">Prøv igjen</button>
           </div>
         </div>
       </div>
@@ -2479,7 +2581,7 @@
         <div style="background: var(--background); min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 48px 24px;">
           <h3 style="font-size: 24px; line-height: 30px; letter-spacing: -0.01em; font-weight: 600; max-width: 400px;">Vi finner ikke den siden du leter etter</h3>
           <p style="margin-top: 12px; font-size: 14px; color: var(--foreground-muted); max-width: 360px;">Lenken er kanskje utdatert, eller siden er flyttet.</p>
-          <button class="btn btn-primary btn-sm" style="margin-top: 28px;">Gå tilbake</button>
+          <button class="btn btn-primary" style="margin-top: 28px;">Gå tilbake</button>
           <a href="#" style="margin-top: 12px; font-size: 14px; color: var(--foreground-muted); text-decoration: underline; text-decoration-color: rgb(96 100 108 / 0.4); text-underline-offset: 2px;">eller gå til startsiden →</a>
         </div>
 
@@ -2487,7 +2589,7 @@
         <div style="background: var(--background); min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 48px 24px;">
           <h3 style="font-size: 24px; line-height: 30px; letter-spacing: -0.01em; font-weight: 600; max-width: 400px;">Noe gikk galt</h3>
           <p style="margin-top: 12px; font-size: 14px; color: var(--foreground-muted); max-width: 360px;">Prøv igjen om noen sekunder. Hvis problemet vedvarer, ta kontakt.</p>
-          <button class="btn btn-primary btn-sm" style="margin-top: 28px;">Last på nytt</button>
+          <button class="btn btn-primary" style="margin-top: 28px;">Last på nytt</button>
           <a href="#" style="margin-top: 12px; font-size: 14px; color: var(--foreground-muted); text-decoration: underline; text-decoration-color: rgb(96 100 108 / 0.4); text-underline-offset: 2px;">eller gå til startsiden →</a>
         </div>
 
@@ -2495,7 +2597,7 @@
         <div style="background: var(--background); min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 48px 24px;">
           <h3 style="font-size: 24px; line-height: 30px; letter-spacing: -0.01em; font-weight: 600; max-width: 400px;">Du har ikke tilgang til denne siden</h3>
           <p style="margin-top: 12px; font-size: 14px; color: var(--foreground-muted); max-width: 360px;">Logg inn med en konto som har tilgang, eller be eieren invitere deg.</p>
-          <button class="btn btn-primary btn-sm" style="margin-top: 28px;">Logg inn</button>
+          <button class="btn btn-primary" style="margin-top: 28px;">Logg inn</button>
           <a href="#" style="margin-top: 12px; font-size: 14px; color: var(--foreground-muted); text-decoration: underline; text-decoration-color: rgb(96 100 108 / 0.4); text-underline-offset: 2px;">eller gå til startsiden →</a>
         </div>
 
@@ -2536,7 +2638,7 @@
           <div style="display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 360px; margin: 0 auto;">
             <p style="font-size: 16px; font-weight: 600; color: var(--foreground);">Ingen påmeldinger ennå</p>
             <p style="margin-top: 6px; font-size: 14px; color: var(--foreground-muted); line-height: 20px;">Når noen booker en plass, vises de her — med betalingsstatus og kontaktinfo.</p>
-            <button class="btn btn-primary btn-sm" style="margin-top: 24px;">Del bookinglenke</button>
+            <button class="btn btn-primary" style="margin-top: 24px;">Del bookinglenke</button>
             <a href="#" style="margin-top: 12px; font-size: 14px; color: var(--foreground-muted); text-decoration: underline; text-decoration-color: rgb(96 100 108 / 0.4); text-underline-offset: 2px;">Opprett første kurs i stedet →</a>
           </div>
         </div>
@@ -2544,31 +2646,46 @@
 
       <div class="card">
         <h3 class="h4" style="margin-bottom: 4px;">Toast — feedback after action</h3>
-        <p class="body muted" style="margin-bottom: 24px;">Sonner under the hood (with <code style="font-family: inherit; font-weight: 500;">unstyled: true</code>); inset accent stripe, white surface, foreground text. No filled-color backgrounds. Three variants only. Position bottom-center.</p>
+        <p class="body muted" style="margin-bottom: 24px;">Sonner under the hood (with <code style="font-family: inherit; font-weight: 500;">unstyled: true</code>); dark small-card surface ~5% lighter than sand-12, white text, small leading icon-on-circle for variant. Optional 2nd line for context. Three variants only. Position bottom-center. Verb-paired with the trigger.</p>
 
         <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 32px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
 
-          <!-- Default — silent confirmation, no stripe -->
-          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 12px 16px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -4px rgb(0 0 0 / 0.12); display: flex; align-items: center; gap: 12px; width: 100%; max-width: 360px;">
-            <p style="flex: 1; font-size: 14px; font-weight: 500; color: var(--foreground); margin: 0;">Lagret.</p>
+          <!-- Default — silent confirmation, single-line -->
+          <div style="background: rgb(28 32 36 / 0.95); box-shadow: 0 10px 30px -6px rgb(0 0 0 / 0.22), 0 0 0 1px rgb(255 255 255 / 0.10) inset; border-radius: 16px; padding: 16px 20px; display: flex; align-items: flex-start; gap: 12px; width: 100%; max-width: 380px;">
+            <span style="margin-top: 2px; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; flex: none; border-radius: 9999px; background: rgb(255 255 255 / 0.15); color: #fff;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <div style="flex: 1; min-width: 0;">
+              <p style="font-size: 14px; font-weight: 500; color: #fff; margin: 0;">Lagret</p>
+            </div>
           </div>
 
-          <!-- Action — blue stripe, with undo, 8s duration -->
-          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 12px 16px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -4px rgb(0 0 0 / 0.12); display: flex; align-items: center; gap: 12px; width: 100%; max-width: 360px;">
-            <span style="width: 4px; height: 20px; align-self: center; border-radius: 9999px; background: #0090ff; flex: none;"></span>
-            <p style="flex: 1; font-size: 14px; font-weight: 500; color: var(--foreground); margin: 0;">Påmelding er avbestilt.</p>
-            <button class="btn btn-secondary btn-sm">Angre</button>
+          <!-- Action — two-line title + description + Angre, 8s -->
+          <div style="background: rgb(28 32 36 / 0.95); box-shadow: 0 10px 30px -6px rgb(0 0 0 / 0.22), 0 0 0 1px rgb(255 255 255 / 0.10) inset; border-radius: 16px; padding: 16px 20px; display: flex; align-items: flex-start; gap: 12px; width: 100%; max-width: 380px;">
+            <span style="margin-top: 2px; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; flex: none; border-radius: 9999px; background: rgb(255 255 255 / 0.15); color: #fff;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <div style="flex: 1; min-width: 0;">
+              <p style="font-size: 14px; font-weight: 500; color: #fff; margin: 0;">Påmelding avbestilt</p>
+              <p style="margin: 2px 0 0; font-size: 12px; color: rgb(255 255 255 / 0.70);">Joe Smith har fått varsel om refusjon.</p>
+            </div>
+            <button style="margin: -4px -4px 0 0; flex: none; padding: 4px 12px; border: 0; background: transparent; color: rgb(255 255 255 / 0.90); border-radius: 9999px; font-size: 12px; font-weight: 500; cursor: pointer;">Angre</button>
           </div>
 
-          <!-- Error — red stripe, manual dismiss, retry -->
-          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 12px 16px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -4px rgb(0 0 0 / 0.12); display: flex; align-items: center; gap: 12px; width: 100%; max-width: 360px;">
-            <span style="width: 4px; height: 20px; align-self: center; border-radius: 9999px; background: #e5484d; flex: none;"></span>
-            <p style="flex: 1; font-size: 14px; font-weight: 500; color: var(--foreground); margin: 0;">Kunne ikke sende melding.</p>
-            <button class="btn btn-secondary btn-sm">Prøv igjen</button>
+          <!-- Error — two-line title + recovery hint, manual dismiss -->
+          <div style="background: rgb(28 32 36 / 0.95); box-shadow: 0 10px 30px -6px rgb(0 0 0 / 0.22), 0 0 0 1px rgb(255 255 255 / 0.10) inset; border-radius: 16px; padding: 16px 20px; display: flex; align-items: flex-start; gap: 12px; width: 100%; max-width: 380px;">
+            <span style="margin-top: 2px; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; flex: none; border-radius: 9999px; background: rgb(229 72 77 / 0.30); color: #fff;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </span>
+            <div style="flex: 1; min-width: 0;">
+              <p style="font-size: 14px; font-weight: 500; color: #fff; margin: 0;">Kunne ikke sende melding</p>
+              <p style="margin: 2px 0 0; font-size: 12px; color: rgb(255 255 255 / 0.70);">Sjekk nettforbindelsen og prøv igjen.</p>
+            </div>
+            <button style="margin: -4px -4px 0 0; flex: none; padding: 4px 12px; border: 0; background: transparent; color: rgb(255 255 255 / 0.90); border-radius: 9999px; font-size: 12px; font-weight: 500; cursor: pointer;">Prøv igjen</button>
           </div>
         </div>
 
-        <p style="margin-top: 16px; font-size: 12px; color: var(--foreground-muted);">Default (no stripe, 4s) · Action (blue stripe + Angre, 8s) · Error (red stripe + Prøv igjen, manual dismiss). No "success" or "warning" variants.</p>
+        <p style="margin-top: 16px; font-size: 12px; color: var(--foreground-muted);">Default (single-line, 4s) · Action (two-line + Angre, 8s) · Error (two-line + Prøv igjen, manual dismiss). Verb-pairs the trigger: <code style="font-family: inherit;">Avlys kurs</code> → <code style="font-family: inherit;">Kurs avlyst</code>. No "success" or "warning" variants. No trailing period on title.</p>
       </div>
     </div>
   </section>
@@ -2581,80 +2698,73 @@
     </div>
 
     <div class="grid-2">
-      <!-- Standard confirm — refined typography + scope visualization + backdrop blur -->
+      <!-- Standard confirm — short verb-noun title + inline-bold body + full-width split footer -->
       <div class="card">
         <h3 class="h4" style="margin-bottom: 4px;">Standard confirm — when undo isn't enough</h3>
-        <p class="body muted" style="margin-bottom: 24px;">For irreversible-but-not-catastrophic actions. Title at <code style="font-family: inherit; font-weight: 500;">text-xl</code> establishes hierarchy; mini scope card shows what's being deleted; description states consequences.</p>
+        <p class="body muted" style="margin-bottom: 24px;">For irreversible-but-not-catastrophic actions. Short verb-noun title + single-sentence body with inline <code style="font-family: inherit; font-weight: 500;">&lt;strong&gt;</code> for entities. No scope card by default. Full-width split footer, both filled, no borders.</p>
 
         <!-- Mock dialog overlay -->
-        <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 40px 16px; display: flex; justify-content: center; min-height: 360px; align-items: center; position: relative;">
-          <!-- Faux backdrop with blur -->
-          <div style="position: absolute; inset: 0; background: rgb(28 32 36 / 0.3); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: var(--radius-md); pointer-events: none;"></div>
+        <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 40px 16px; display: flex; justify-content: center; min-height: 320px; align-items: center; position: relative;">
+          <!-- Flat dim, no blur (Linear 2026 refresh: blur is going out of fashion) -->
+          <div style="position: absolute; inset: 0; background: rgb(28 32 36 / 0.40); border-radius: var(--radius-md); pointer-events: none;"></div>
 
           <!-- Dialog — no visible title, aria-label handles accessibility -->
-          <div role="dialog" aria-label="Slette kurset" style="position: relative; z-index: 1; width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.16);">
+          <div role="dialog" aria-label="Avlys kurs" style="position: relative; z-index: 1; width: 100%; max-width: 480px; background: var(--surface); border-radius: var(--radius-lg); padding: 24px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.16);">
 
-            <!-- Headline — dialog's voice, not a card label -->
-            <div style="font-size: 14px; font-weight: 500; color: var(--foreground); margin-bottom: 16px;">Dette slettes og kan ikke angres</div>
-            <div style="padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
-              <div style="font-size: 14px; font-weight: 500; color: var(--foreground);">Vinyasa Flow</div>
-              <div style="margin-top: 2px; font-size: 12px; color: var(--foreground-muted); font-feature-settings: 'tnum';">Tirsdag 18:00 · 12 påmeldinger</div>
-            </div>
+            <!-- Title: short verb-noun, sentence case -->
+            <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 500; letter-spacing: -0.005em; color: var(--foreground);">Avlys kurs</h3>
+            <!-- Body: single sentence with inline-bold entities -->
+            <p style="margin: 0; font-size: 14px; line-height: 1.5; color: var(--foreground-muted);">
+              <strong style="font-weight: 500; color: var(--foreground);">Vinyasa Flow</strong> avlyses — 12 deltakere refunderes <strong style="font-weight: 500; color: var(--foreground);">5 400 kr</strong> og varsles.
+            </p>
 
-            <div style="margin-top: 28px; display: flex; justify-content: end; gap: 8px;">
-              <button class="btn btn-secondary btn-sm">Avbryt</button>
-              <button class="btn btn-destructive btn-sm">Slett kurs</button>
+            <!-- Footer: full-width split, both filled, no borders, size lg (40px) -->
+            <div style="margin-top: 24px; display: flex; gap: 8px;">
+              <button style="flex: 1; height: 40px; padding: 0 20px; border: 0; background: var(--muted); color: var(--foreground); border-radius: 9999px; font-size: 14px; font-weight: 500; cursor: pointer;">Avbryt</button>
+              <button style="flex: 1; height: 40px; padding: 0 20px; border: 0; background: var(--foreground); color: #fff; border-radius: 9999px; font-size: 14px; font-weight: 500; cursor: pointer;">Avlys kurs</button>
             </div>
           </div>
         </div>
 
         <p style="margin-top: 16px; font-size: 12px; color: var(--foreground-muted);">
-          No visible title (aria-label for accessibility) · scope shown with horizontal dividers — no outline box, content sits on the dialog surface · description states reversibility · button uses action verb · default focus on Cancel · backdrop-blur(4px) for soft recession
+          Title is the verb-noun · body is one sentence with bolded entities · no scope card (use inline bold instead) · full-width split footer, both filled · destructive is monochrome sand-12, never red · flat dim backdrop, no blur · default focus on the left (safe) button
         </p>
       </div>
 
-      <!-- Type-to-confirm — refined visual + scope as bullet list -->
+      <!-- Type-to-confirm — same title + body pattern, single-line typed-confirmation gate -->
       <div class="card">
         <h3 class="h4" style="margin-bottom: 4px;">Type-to-confirm — for catastrophic actions</h3>
-        <p class="body muted" style="margin-bottom: 24px;">For genuinely irreversible, broad-scope deletions. User types the resource name; destructive button stays disabled until exact match.</p>
+        <p class="body muted" style="margin-bottom: 24px;">For genuinely irreversible cascade actions (delete account, delete studio). User types the resource name verbatim — the typing IS the friction, so no tinted band or scope card.</p>
 
         <!-- Mock dialog overlay -->
-        <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 40px 16px; display: flex; justify-content: center; min-height: 360px; align-items: center; position: relative;">
-          <div style="position: absolute; inset: 0; background: rgb(28 32 36 / 0.3); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: var(--radius-md); pointer-events: none;"></div>
+        <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 40px 16px; display: flex; justify-content: center; min-height: 320px; align-items: center; position: relative;">
+          <div style="position: absolute; inset: 0; background: rgb(28 32 36 / 0.40); border-radius: var(--radius-md); pointer-events: none;"></div>
 
-          <div role="dialog" aria-label="Slette studioet" style="position: relative; z-index: 1; width: 100%; max-width: 460px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.16);">
+          <div role="dialog" aria-label="Slett studio" style="position: relative; z-index: 1; width: 100%; max-width: 480px; background: var(--surface); border-radius: var(--radius-lg); padding: 24px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.16);">
 
-            <!-- Headline — dialog's voice, not a card label -->
-            <div style="font-size: 14px; font-weight: 500; color: var(--foreground); margin-bottom: 16px;">Dette slettes og kan ikke angres</div>
-            <div style="border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; color: var(--foreground); font-feature-settings: 'tnum';">
-              <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 10px 14px;">
-                <span>kurs</span>
-                <span>47</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 10px 14px; border-top: 1px solid var(--border);">
-                <span>påmeldinger</span>
-                <span>312</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 10px 14px; border-top: 1px solid var(--border);">
-                <span>betalingshistorikk</span>
-                <span>All</span>
-              </div>
-            </div>
+            <!-- Title -->
+            <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 500; letter-spacing: -0.005em; color: var(--foreground);">Slett studio</h3>
+            <!-- Body: single sentence with bolded entity -->
+            <p style="margin: 0; font-size: 14px; line-height: 1.5; color: var(--foreground-muted);">
+              Studioet <strong style="font-weight: 500; color: var(--foreground);">Inspire Yogastudio</strong> og all tilhørende data slettes permanent.
+            </p>
 
-            <div style="margin-top: 20px; display: grid; gap: 8px;">
-              <label style="font-size: 14px; font-weight: 500; color: var(--foreground);">Skriv <strong style="font-weight: 600;">«Inspire Yogastudio»</strong> for å bekrefte</label>
-              <input class="input" placeholder="Inspire Yogastudio" />
-            </div>
+            <!-- Type-to-confirm: single-line label + input (NOT a multi-line stack) -->
+            <label style="margin: 20px 0 0; display: grid; gap: 8px; font-size: 14px; color: var(--foreground-muted);">
+              <span>Skriv <strong style="font-weight: 500; color: var(--foreground);">Inspire Yogastudio</strong> for å bekrefte</span>
+              <input class="input" placeholder="" />
+            </label>
 
-            <div style="margin-top: 24px; display: flex; justify-content: end; gap: 8px;">
-              <button class="btn btn-secondary btn-sm">Avbryt</button>
-              <button class="btn btn-destructive btn-sm" disabled>Slett studio</button>
+            <!-- Footer: full-width split, destructive disabled until exact match -->
+            <div style="margin-top: 24px; display: flex; gap: 8px;">
+              <button style="flex: 1; height: 40px; padding: 0 20px; border: 0; background: var(--muted); color: var(--foreground); border-radius: 9999px; font-size: 14px; font-weight: 500; cursor: pointer;">Avbryt</button>
+              <button disabled style="flex: 1; height: 40px; padding: 0 20px; border: 0; background: var(--foreground); color: #fff; border-radius: 9999px; font-size: 14px; font-weight: 500; cursor: not-allowed; opacity: 0.5;">Slett studio</button>
             </div>
           </div>
         </div>
 
         <p style="margin-top: 16px; font-size: 12px; color: var(--foreground-muted);">
-          Scope as divided list (each row separated by border, no outer container) · no visible title · user types the resource name (not "DELETE") · button disabled until exact match
+          Same title + body pattern as Tier 2 · single-line typed label (never a multi-line <code style="font-family: inherit;">flex-col</code> that fragments the prose) · button disabled until exact match · no tinted band — typing IS the friction · reserved for delete-studio and delete-account only
         </p>
       </div>
     </div>
@@ -2685,18 +2795,18 @@
   <section class="section">
     <div class="section-head">
       <h2>Page layout &amp; responsiveness</h2>
-      <span class="meta">Sidebar present → left-align · No sidebar → center · Never stretch past max-width</span>
+      <span class="meta">single centered outer shell · narrow inner blocks · never stretch on ultrawide</span>
     </div>
 
-    <!-- The core rule: dashboard vs public alignment -->
+    <!-- The core rule: one centered outer shell -->
     <div class="card">
-      <h3 class="h4" style="margin-bottom: 4px;">The rule — sidebar present vs absent</h3>
-      <p class="body muted" style="margin-bottom: 24px;">Two layouts, one difference: <code style="font-family: inherit; font-weight: 500;">mx-auto</code> on public, omitted on dashboard. Both have <code style="font-family: inherit; font-weight: 500;">max-w-5xl</code> caps.</p>
+      <h3 class="h4" style="margin-bottom: 4px;">The rule — one outer shell</h3>
+      <p class="body muted" style="margin-bottom: 24px;">Dashboard and public pages share the same centered <code style="font-family: inherit; font-weight: 500;">mx-auto max-w-6xl</code> rail. Narrower content is an inner block, not a different page width.</p>
 
       <div class="grid-2" style="gap: 24px;">
         <!-- Dashboard layout diagram -->
         <div>
-          <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 8px;">Dashboard — left-aligned</div>
+          <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 8px;">Dashboard — centered shell after sidebar</div>
           <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; aspect-ratio: 16/9; position: relative; overflow: hidden;">
             <!-- Mock: full-width container with sidebar + content -->
             <div style="display: grid; grid-template-columns: 60px 1fr; gap: 0; height: 100%;">
@@ -2707,8 +2817,11 @@
                 <div style="height: 4px; width: 80%; background: var(--muted); border-radius: 2px; margin-bottom: 4px;"></div>
                 <div style="height: 4px; width: 60%; background: var(--muted); border-radius: 2px;"></div>
               </div>
-              <!-- Content area with empty space on right -->
+              <!-- Content area with balanced empty space -->
               <div style="display: flex; padding-left: 12px;">
+                <div style="flex: 1; position: relative; margin-right: 8px;">
+                  <div style="position: absolute; inset: 0; background: repeating-linear-gradient(45deg, var(--muted), var(--muted) 4px, transparent 4px, transparent 8px); opacity: 0.4; border-radius: var(--radius-sm);"></div>
+                </div>
                 <!-- Content (max-width capped) -->
                 <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; width: 65%; flex: none;">
                   <div style="height: 8px; width: 50%; background: var(--muted); border-radius: 2px; margin-bottom: 8px;"></div>
@@ -2724,8 +2837,8 @@
             </div>
           </div>
           <p style="margin-top: 12px; font-size: 12px; color: var(--foreground-muted);">
-            <code style="font-family: inherit; font-weight: 500;">max-w-5xl px-4 sm:px-6 lg:px-8</code><br>
-            (no <code style="font-family: inherit; font-weight: 500;">mx-auto</code>) — left-anchored to sidebar
+            <code style="font-family: inherit; font-weight: 500;">mx-auto max-w-6xl px-4 sm:px-6 lg:px-8</code><br>
+            centered inside the post-sidebar area
           </p>
         </div>
 
@@ -2751,52 +2864,52 @@
             </div>
           </div>
           <p style="margin-top: 12px; font-size: 12px; color: var(--foreground-muted);">
-            <code style="font-family: inherit; font-weight: 500;">mx-auto max-w-5xl px-4 sm:px-6 lg:px-8</code><br>
+            <code style="font-family: inherit; font-weight: 500;">mx-auto max-w-6xl px-4 sm:px-6 lg:px-8</code><br>
             symmetric margins on both sides
           </p>
         </div>
       </div>
 
-      <!-- Research callout -->
+      <!-- Layout doctrine callout -->
       <div style="margin-top: 20px; padding: 12px 16px; background: var(--muted); border-radius: var(--radius-md); font-size: 13px; color: var(--foreground);">
-        <strong style="font-weight: 500;">Why not center the dashboard?</strong>
-        <span style="color: var(--foreground-muted);">NN/g eye-tracking research: 80% of fixations occur on the left half of pages. Centering content next to a left-anchored sidebar fights this natural reading pattern. Linear, Notion, Stripe, Vercel, and Cal.com all left-align their dashboard content.</span>
+        <strong style="font-weight: 500;">Why center the dashboard shell?</strong>
+        <span style="color: var(--foreground-muted);">Studio is not a dense power-user console. A single centered 1152px rail keeps pages stable across routes and splits ultrawide empty space evenly. Narrow forms live inside that rail; the outer shell does not change.</span>
       </div>
     </div>
 
-    <!-- Max-widths by surface — trimmed to 4 -->
+    <!-- Outer shell + inner blocks -->
     <div class="card" style="margin-top: 24px;">
-      <h3 class="h4" style="margin-bottom: 4px;">Max-widths by surface — four values</h3>
-      <p class="body muted" style="margin-bottom: 24px;">Each with a clear job. Most pages fall into the first two; the others are edge cases.</p>
+      <h3 class="h4" style="margin-bottom: 4px;">One outer shell — narrower blocks inside</h3>
+      <p class="body muted" style="margin-bottom: 24px;">Every page uses the same centered outer rail. Forms and prose can narrow inside it without creating a second page width.</p>
 
       <div style="display: flex; flex-direction: column; gap: 0;">
         <div style="display: grid; grid-template-columns: 1fr 170px 100px; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px;">
           <div>
-            <div style="font-weight: 500;">Dashboard pages</div>
-            <div style="font-size: 12px; color: var(--foreground-muted); margin-top: 2px;">Every admin page</div>
+            <div style="font-weight: 500;">Page outer shell</div>
+            <div style="font-size: 12px; color: var(--foreground-muted); margin-top: 2px;">Every dashboard and public page</div>
           </div>
-          <code style="font-family: inherit; font-weight: 500; color: var(--foreground); align-self: center;">max-w-5xl</code>
-          <span style="color: var(--foreground-muted); align-self: center; font-feature-settings: 'tnum';">1024px</span>
+          <code style="font-family: inherit; font-weight: 500; color: var(--foreground); align-self: center;">mx-auto max-w-6xl</code>
+          <span style="color: var(--foreground-muted); align-self: center; font-feature-settings: 'tnum';">1152px</span>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 170px 100px; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px;">
           <div>
-            <div style="font-weight: 500;">Public content</div>
-            <div style="font-size: 12px; color: var(--foreground-muted); margin-top: 2px;">Landing, booking, course detail</div>
-          </div>
-          <code style="font-family: inherit; font-weight: 500; color: var(--foreground); align-self: center;">mx-auto max-w-5xl</code>
-          <span style="color: var(--foreground-muted); align-self: center; font-feature-settings: 'tnum';">1024px</span>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 170px 100px; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px;">
-          <div>
-            <div style="font-weight: 500;">Long-form prose</div>
-            <div style="font-size: 12px; color: var(--foreground-muted); margin-top: 2px;">Legal, privacy, FAQ (~66 ch/line)</div>
+            <div style="font-weight: 500;">Centered form block</div>
+            <div style="font-size: 12px; color: var(--foreground-muted); margin-top: 2px;">Self-contained settings, payment, support flows</div>
           </div>
           <code style="font-family: inherit; font-weight: 500; color: var(--foreground); align-self: center;">mx-auto max-w-3xl</code>
           <span style="color: var(--foreground-muted); align-self: center; font-feature-settings: 'tnum';">768px</span>
         </div>
+        <div style="display: grid; grid-template-columns: 1fr 170px 100px; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px;">
+          <div>
+            <div style="font-weight: 500;">Left narrow block</div>
+            <div style="font-size: 12px; color: var(--foreground-muted); margin-top: 2px;">Inside tabs, previews, or adjacent dashboard context</div>
+          </div>
+          <code style="font-family: inherit; font-weight: 500; color: var(--foreground); align-self: center;">max-w-3xl</code>
+          <span style="color: var(--foreground-muted); align-self: center; font-feature-settings: 'tnum';">768px</span>
+        </div>
         <div style="display: grid; grid-template-columns: 1fr 170px 100px; gap: 16px; padding: 12px 0; font-size: 14px;">
           <div>
-            <div style="font-weight: 500;">Centered forms</div>
+            <div style="font-weight: 500;">Compact auth form</div>
             <div style="font-size: 12px; color: var(--foreground-muted); margin-top: 2px;">Login, signup, password reset</div>
           </div>
           <code style="font-family: inherit; font-weight: 500; color: var(--foreground); align-self: center;">mx-auto max-w-md</code>
@@ -2806,7 +2919,7 @@
 
       <div style="margin-top: 20px; padding: 12px 16px; background: var(--muted); border-radius: var(--radius-md); font-size: 13px; color: var(--foreground);">
         <strong style="font-weight: 500;">The rule:</strong>
-        <span style="color: var(--foreground-muted);">Dashboard → 5xl left. Public → 5xl centered. Heavy reading → 3xl. Compact form → md. If you can't tell which, it's probably one of the first two.</span>
+        <span style="color: var(--foreground-muted);">Outer shell is always max-w-6xl. Narrow content is an inner block (`narrow="centered"` or `narrow="left"`), not a different page rail.</span>
       </div>
     </div>
 

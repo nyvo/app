@@ -44,7 +44,7 @@ const VARIANTS: Record<
     title: 'Vi finner ikke dette kurset',
     description: 'Det kan være slettet, eller lenken er utdatert.',
     action: (
-      <Button size="sm" asChild>
+      <Button asChild>
         <Link to={routes.courses}>Til kursoversikten</Link>
       </Button>
     ),
@@ -63,7 +63,7 @@ const VARIANTS: Record<
     title: 'Du har ikke tilgang til denne siden',
     description: 'Logg inn med en konto som har tilgang, eller be eieren invitere deg.',
     action: (
-      <Button size="sm" asChild>
+      <Button asChild>
         <Link to={routes.auth}>Logg inn</Link>
       </Button>
     ),
@@ -72,7 +72,7 @@ const VARIANTS: Record<
     title: 'Noe gikk galt',
     description: 'Prøv igjen om noen sekunder.',
     action: (
-      <Button size="sm" onClick={() => window.location.reload()}>
+      <Button onClick={() => window.location.reload()}>
         Last på nytt
       </Button>
     ),

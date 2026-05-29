@@ -19,28 +19,27 @@ The single source of truth is `design-model.yaml`. Token references in this file
 
 | If the task involves… | Read this file FIRST |
 |----------------------|---------------------|
-| **Building any screen, page, or layout** (dashboard, listing, form, settings, detail view) | `references/patterns.md` — pick the right layout pattern before writing markup. Most layout decisions are pattern decisions. |
-| **Adding or modifying a primitive** (button, card, KPI tile, input, suffix input, date picker, time picker, select, textarea, checkbox/radio, phone, search input, file upload, badge, sidebar nav, course card, status pill, avatar, tabs, segmented control, page state shell, form field group, **pricing display**) | `references/components.md` |
-| **Form validation / field errors / aria-invalid / validation timing** | `references/patterns.md` § 13.2 + § 13.3 + `references/components.md` (Form field group + Input states) |
-| **Placeholder text rules / when to use a placeholder / placeholder color** | `references/components.md` (Input → "Placeholder text — rules"). Default = no placeholder; allowed only for format examples (email format, manual date entry without picker), search scope (`Søk i kurs…`), or textarea instructions. **Phone is NOT an exception** — never use `9xx xx xxx`; the auto-format mask conveys shape on first keystroke. Color must be `text-foreground-muted` (sand-11), NOT `text-foreground-disabled` (sand-8 fails WCAG 1.4.3). |
-| **Section error with retry / "couldn't load this card"** | `references/patterns.md` § 13.4 |
-| **404 / 500 / permission denied / page-loading skeleton** | `references/patterns.md` § 13.5 + `references/components.md` (Page state shell) |
-| **Date / time / duration form fields (admin-side, course creation, scheduling)** | `references/patterns.md` § 14 + `references/components.md` (DateField, TimeField, DurationField + Date picker / Time picker / Date+time combo). Mobile date picker: Vaul drawer with Calendar, not a popover. |
-| **Pricing display, currency formatting, discount strikethrough, fee breakdown, subscription tiers** | `references/components.md` (Pricing display). Always `formatKroner()`. EU Omnibus / FTC May-2025 fee transparency rules apply. |
-| **Drawer / detail panel (click row → quick view)** | `references/patterns.md` § 15 + `references/components.md` (Drawer). **Quick-glance only**: read-only body, ≤2 sections, ≤8 fields (and only in a quick-create drawer). Footer is one ghost link: `Åpne <ressurs>-side →` that navigates to `/resource/:id`. **No drawer-from-drawer.** Editing is a page concern. shadcn `<Sheet>` 480px on desktop; Vaul `<Drawer>` bottom sheet on mobile. |
-| **Multi-step form / wizard / "Create X" flow** | `references/patterns.md` § 16. **Studio does NOT use wizards.** Use a sectioned form (in drawer or page) instead. Onboarding uses a setup checklist page (3-5 items, time estimates, first-value emphasis). Vendor flows (Stripe, Dintero) embed the vendor's own UI. See `references/components.md` (Sectioned form, Setup checklist). |
-| **Onboarding / setup checklist / first-time experience / empty-states-as-onboarding** | `references/components.md` (Setup checklist). 3-5 items max, time estimate per row, first-value task highlighted, empty states ARE the onboarding surface. |
-| **Page layout / max-width / responsiveness / ultrawide / page header / breadcrumbs** | `references/patterns.md` § 17. Every page → `mx-auto max-w-6xl` (centered, 1152px outer, ~1088px content with `lg:px-8`). Padding: `px-4 sm:px-6 lg:px-8`. Sidebar appears at `lg` (1024px). Sidebar width 256px. Never stretch content past max-width on ultrawide. |
-| **Course detail page (public, customer-facing)** | `references/patterns.md` § 18. **Exception to the public max-width rule** — uses `max-w-6xl` for the main + 380px BookingPanel rail. Sticky rail on desktop. MobilePriceBar fixed bottom on mobile. |
-| **Customer booking flow / payment / checkout / confirmation page** | `references/patterns.md` § 19. Single-page (not wizard). Guest checkout always. Embedded payment (Dintero/Stripe Elements). Vipps + card. Service fee inline. Form fields ≤ 6. Email = receipt. |
-| **Customer account / "my bookings" / cancel booking / customer profile** | `references/patterns.md` § 23. Two surfaces (`Mine påmeldinger` + `Profil`), no more. `max-w-3xl` centered, no sidebar (avatar menu in PublicNav). Self-service cancel with policy stated plainly inline (never link out). Single `.ics` download for add-to-calendar. No streaks, no upsells, no "rate this." |
-| **Authentication / sign-in / sign-up / forgot password / passkey** | `references/patterns.md` § 21. Login universal — role decided in onboarding step (§ 21.3a), not at the form. Magic link primary. Vipps + Google SSO. NIST length-over-complexity (12+, no composition rules). No confirm-password field. Identifier-first. |
-| **Schedule / timeplan view (teacher's "what's coming up" view)** | `references/patterns.md` § 22. **Day-grouped card list, NOT a calendar grid.** Cards are bordered + monochrome — no pop tints. Type label as text on every card (WCAG 1.4.1). |
-| **Search / list filter / autocomplete** | `references/patterns.md` § 20. List filter is the primary pattern. **No global cmd+k palette.** Diacritic + case-insensitive matching mandatory for Norwegian names. |
-| **Loading / pending / empty / toast / destructive-action patterns** | `references/patterns.md` § 6 (empty), § 10 (loading nuances — skeleton flash threshold, stale-while-revalidate, threshold gradient, optimistic), § 11 (toast — Sonner unstyled, 3 variants, bottom-center), § 12 (destructive — undo first, confirm only when needed). |
-| **Destructive confirmation dialogs (delete, refund, terminate)** | `references/patterns.md` § 12 + `references/components.md` (Confirmation dialog). Three tiers: toast+undo (default), standard confirm dialog (when undo isn't enough), type-to-confirm (catastrophic). Use shadcn `<AlertDialog>`. No visible title (aria-label only). Compound headline above scope card. |
-| **Choosing a color, font size, spacing, radius, motion duration** | `references/tokens.md` |
-| **Wiring up CSS / Tailwind / SwiftUI** (config files, `:root`, design tokens) | `references/platform-mapping.md` |
+| **Building any screen, page, or layout** | `patterns.md` — pick the layout pattern before writing markup |
+| **Adding or modifying a primitive** (button, card, input, dialog, drawer, toast, etc.) | `components.md` |
+| **Form validation, field errors, validation timing** | `patterns.md` § 13.2–13.3 + `components.md` (Form field group, Input) |
+| **Placeholder text rules** | `components.md` (Input → Placeholder rules) |
+| **Section / page error states, retry, 404 / 500 / loading skeleton** | `patterns.md` § 13.4–13.5 + `components.md` (Page state shell) |
+| **Date / time / duration fields (admin)** | `patterns.md` § 14 + `components.md` (DateField, TimeField, DurationField) |
+| **Pricing display, currency, fee breakdown, subscription tiers** | `components.md` (Pricing display) |
+| **Drawer / detail panel for clickable rows** | `patterns.md` § 15 + `components.md` (Drawer) |
+| **Long forms, "Create X" flows** | `patterns.md` § 16 — **no wizards**, use sectioned form / drawer / setup checklist |
+| **Onboarding / setup checklist / first-run** | `components.md` (Setup checklist) + `patterns.md` § 16.3 |
+| **Page layout, max-width, responsiveness, ultrawide** | `patterns.md` § 17 — single outer shell `mx-auto max-w-6xl` for every page |
+| **Course detail page (public)** | `patterns.md` § 18 |
+| **Customer booking flow / checkout / confirmation** | `patterns.md` § 19 |
+| **Customer account (`Mine påmeldinger`, profile)** | `patterns.md` § 23 |
+| **Authentication / sign-in / sign-up / passkey** | `patterns.md` § 21 |
+| **Schedule / timeplan view (teacher)** | `patterns.md` § 22 — day-grouped card list, not a calendar grid |
+| **Search / list filter / autocomplete / command palette** | `patterns.md` § 20 |
+| **Loading, pending, empty, toast, destructive patterns** | `patterns.md` § 6 (empty) · § 10 (loading) · § 11 (toast) · § 12 (destructive) |
+| **Destructive confirmation dialogs (delete, refund, cancel)** | `patterns.md` § 12 + `components.md` (Confirmation dialog) |
+| **Choosing a color, font size, spacing, radius, motion** | `tokens.md` |
+| **Wiring up CSS / Tailwind / SwiftUI** | `platform-mapping.md` |
 
 **Routing rules:**
 - A screen task = patterns + components + tokens (read in that order). Layout decisions come first.
@@ -60,9 +59,9 @@ Studio is built on four convictions.
 
 **Restraint reads as care.** Three weights (400 / 500 / 600). No `font-bold`. No uppercase tracked labels. No `font-mono` token. Six neutral tokens carry the entire system; three pastel tints exist only to keep course content from blending together. Banned values exist on purpose — `p-5`, `p-7`, `space-y-5`, `space-y-7`, `space-y-9` are temptations to hand-tune, and hand-tuning fails as the system grows.
 
-**Surface dictates rhythm.** The dashboard runs at 14px body and caps at `text-3xl` (30px). The public/booking surface runs at 16px body and unlocks `text-5xl` (48px) for one hero per page. Same canonical scale; different usage map. Display tops out at 48px — no 60px or 72px hero text in this system. Restraint over spectacle, after Time2book's "measured boldness".
+**Surface dictates rhythm.** Studio uses a 16px body baseline across dashboard and public surfaces because the primary audience benefits from readability over density. The dashboard stays restrained by capping page titles at `text-3xl` (30px). Section descriptions, helper copy, empty-state descriptions, row subtitles, and normal page content are `text-base` (16px). Reserve `text-sm` (14px) for genuinely dense UI: page tabs, table headers, compact control labels, tooltips, timestamps inside activity logs, tiny count chips, and drawer/modal internals where space is constrained. The public/booking surface also runs at 16px body and unlocks `text-5xl` (48px) for one hero per page. Same canonical scale; different usage map. Display tops out at 48px — no 60px or 72px hero text in this system. Restraint over spectacle, after Time2book's "measured boldness".
 
-**Designed for everyone, not power users.** The audience is yoga teachers, small studio owners, and operators without technical backgrounds. They open the app to do *one thing* — see what's happening today, confirm a signup, message a student, create a course. Studio screens optimize for *that one thing*, not for a hypothetical power user who manages 50 studios. Density is the enemy. Long data tables, faceted filters, customizable dashboards, bulk-action toolbars — all banned by default. See `references/patterns.md` for the eight UX patterns this conviction produces (Today hero, card grid, detail drawer, multi-step wizard, tabs to slice, empty state with action, inline help, single opinionated layout).
+**Designed for everyone, not power users.** The audience is yoga teachers, small studio owners, and operators without technical backgrounds. They open the app to do *one thing* — see what's happening today, confirm a signup, message a student, create a course. Studio screens optimize for *that one thing*, not for a hypothetical power user who manages 50 studios. Density is the enemy. Long data tables, faceted filters, customizable dashboards, bulk-action toolbars — all banned by default. See `references/patterns.md` for the eight UX patterns this conviction produces (Today hero, card grid, detail drawer, sectioned form / no wizard, tabs to slice, empty state with action, inline help, single opinionated layout).
 
 ---
 
@@ -103,6 +102,7 @@ Use the canonical scale only — `1, 2, 3, 4, 6, 8, 10, 12, 16` (all multiples o
 
 - **Cards are deliberate, not default.** Don't wrap every section in `<Card>`. Start with a heading + content directly on the white canvas. Reach for a card when you need explicit grouping — KPI tiles, modals/dialogs, course-card pop, pricing callouts, occasional grouped form sections. If you can't articulate why a section needs a card, it doesn't.
 - **Hierarchy ladder when not using cards:** typography → spacing → horizontal divider → finally a border or card. Reach for the leftmost tool that works.
+- **White page stays. No tinted canvas everywhere.** Studio's background is white; structure comes from spacing, headings, dividers, rows, and hierarchy first. Tinted / filled panels (`bg-muted`, danger-subtle) are appropriate only when containment is genuinely needed — destructive zones, contextual callouts. They are NOT the default page-structure mechanism. Border-only boxes likewise are not the default — see `components.md` § Card for the card-vs-no-card decision table.
 - **Border, not shadow.** When a `<Card>` is used, it's `bg-surface border border-border rounded-xl`. Shadow only appears on overlays that genuinely float (dialogs, popovers, hover-tooltips).
 - **Buttons pill, inputs don't.** Every button (primary, secondary, ghost, destructive) is `rounded-full`. Inputs stay `rounded-md` (6px). The shape difference is intentional — buttons are committed actions, inputs are containers for text. **Cards, panels, list containers, dialogs all share `rounded-xl` (12px)** — one surface radius. `rounded-lg` (8px) is for tight sub-surfaces only (list rows inside a card, badges, image thumbs). No `rounded-[Npx]` arbitrary values.
 - **Course cards have no underline on the title** even when the whole card is an `<a>`. The card itself is the affordance — `text-decoration: none` on the link.
@@ -135,39 +135,68 @@ Full pattern catalog: `references/patterns.md`.
 
 ## 3. Anti-patterns
 
-These are bans. Every one of them ships in generic AI-generated UIs and breaks the system.
+These are bans. Every one of them ships in generic AI-generated UIs and breaks the system. Grouped into five buckets for scanning.
 
-- **No `font-bold` (700).** Anywhere. Reads marketing-heavy at dashboard sizes. Hierarchy comes from size, not weight.
-- **No uppercase tracked labels.** `uppercase tracking-wider` on KPI labels, table headers, eyebrow text — banned. Use `text-xs font-medium text-foreground-muted` sentence case instead. This is what shadcn, Vercel, Linear, and Notion all do in 2026.
-- **No `font-mono`.** Studio has no monospace token. For tabular alignment, use `tabular-nums` on Geist sans.
-- **No raw Tailwind color utilities.** `bg-green-100`, `text-red-700`, `text-blue-500` — banned. Use semantic tokens (`bg-success-subtle`, `text-danger`, `bg-muted`).
-- **No `p-5`, `p-7`, `space-y-5`, `space-y-7`, `space-y-9`.** Hand-tuning temptation. Pick a tier and live with it.
-- **No `rounded-[Npx]` arbitrary values.** Always use the four named tokens.
-- **No shadow on plain cards.** Cards use `border`, not `shadow`. Shadow is reserved for things that genuinely float (dialogs, popovers).
-- **No `opacity-50` on inactive items.** Use `bg-muted/50 text-foreground-muted` to dim — opacity reads as a loading skeleton and breaks contrast for screen readers.
-- **No rect buttons.** Every button is a pill. There is no rect button variant in the system.
-- **No icons in text-bearing buttons.** Leading icons (`<Plus> Opprett kurs`), trailing icons (`Lagre <ArrowRight>`, `Åpne kursside →`), and decorative chevrons/sparkles next to a label are banned across every variant (primary, secondary, outline, ghost, destructive, link). The label is the action — adding an icon doubles the signal, fragments the calm typographic surface, and reads as generic SaaS template. **Carve-outs:** (1) icon-only buttons where the icon IS the button (close `×`, kebab menu, sidebar nav-rail items) — `aria-label` required; (2) `Loader2` spinner that *replaces* the label during in-flight async actions; (3) form-input-shaped triggers (date picker, time picker, select) where the chevron/calendar signals the field type, not an action; (4) **the page's primary header CTA** (single top-right primary button on a page like `Opprett kurs`, `Publiser kurs`, `Del kurs`) — gets ONE leading icon (`data-icon="inline-start"`) to mark it as the page-level intent anchor. Toolbar buttons, in-card buttons, footer buttons, secondary header buttons stay text-only — the carve-out is specifically the *one* primary CTA most pages have in the top right. All icons MUST come from `@/lib/icons` (which re-exports lucide-react). No other icon packs. No emoji as icons. Pick the most literal lucide icon for the verb (`Opprett` → `Plus`, `Publiser` → `Send`, `Del` → `Share2`).
-- **No chromatic pop tints on course cards or schedule entries.** Studio is monochrome — use a bordered sand card. Type/format gets a text label, not a colored fill.
-- **No underlines on course-card titles.** Even when the whole card is an `<a>`. The card itself is the affordance.
-- **No hover fill change on primary buttons.** Sand-12 hover-darkened reads as noise, not feedback.
-- **No `<Card>` wrapping every section by default.** If a heading + content + spacing is enough to communicate hierarchy, use that. Cards are for explicit grouping, not for visual organization-by-rote.
-- **No persistent system alerts.** Studio has no banner system, no sidebar attention dots, no notifications inbox. If the user needs to know something is broken, state it in plain prose on the page where they'd fix it — not as an alarm box, not as a count badge in the nav, not as a top-of-app banner. Transient feedback uses toasts (§11); errors that block a flow use inline form/page state.
-- **No wizards. No step indicators. No Back/Next button progression.** Studio replaces wizards with sectioned forms (in drawer or page) + setup checklists for onboarding + embedded vendor UIs for compliance. See `patterns.md` § 16.
-- **No inconsistent max-widths across dashboard pages.** Every page (dashboard and public) uses `mx-auto max-w-6xl`. Don't mix `max-w-4xl` / `max-w-6xl` / `max-w-6xl` across pages — content jumps between routes, which reads as broken layout. Narrower inner blocks (centered auth at `max-w-md`, long-form prose at `max-w-3xl`) are still allowed, but the page shell is always 5xl centered.
-- **No stretching content past max-width to fill ultrawide screens.** Cards become too wide, line-lengths exceed readable range. Embrace the empty space on ultrawide.
-- **No sidebar on public/booking pages.** Public surfaces are sidebar-less. Adding nav chrome there muddies the public/private distinction.
-- **No KPI walls.** A row of 6–8 KPI tiles is a power-user pattern. Studio screens have one "today" hero card and 2–3 quiet supporters. If you need to show more metrics, they belong in a deep-dive view, not the primary dashboard.
-- **No long data tables on browse pages.** If users will scan it, use a card grid. Tables are for genuine comparison/sort use cases. Default to cards.
-- **No "click row → new page" for detail views.** Use a drawer. Users keep the list visible; no navigation overhead.
-- **No filter UIs as the primary slicer.** Use 3–4 tabs ("Upcoming · Today · Past") instead. Most users never use filters; tabs make the slices visible.
-- **No customizable dashboards.** One opinionated layout. Users open the app and see what you intended.
-- **No dot-glue between different subjects.** `3 klasser · 32 påmeldte` is two different facts pretending to be one statement. Dot separators are for *attributes of one subject* (`kl. 18:00 · Sal 1`), not for joining unrelated facts. Group by subject, give each subject its own block with eyebrow → hero → support hierarchy. See `references/patterns.md` § 9.
-- **No multi-line subtitles with multiple dots.** `Første: Vinyasa Flow · kl. 18:00 · 12 av 14 plasser` crams a name, a time, and a capacity ratio into one horizontal soup. That's three different aspects, not one. Break them apart vertically. Use natural language (`Først kl. 18:00 i Sal 1`) when a connector reads better than a dot.
-- **Public surface defaults to 16px body.** `text-base` is the public body default; the dashboard's signature is 14px. `text-sm` is allowed on the public surface for meta lines, labels, captions, and dense secondary content — just not as the default body text size.
-- **No "TRUSTED BY" eyebrow labels.** That's marketing-template kitsch. If you need a section preface, use sentence case at `text-sm`.
-- **No colored-dot eyebrow labels.** The "● Brand Name · Location" pattern (small dot + accent-colored text above a hero) is generic SaaS theater. Lead with the headline. If brand or location matters, put it in the header nav, not floating above the h1.
-- **No initials as image placeholder.** When a user/participant doesn't have an avatar image, render a neutral User icon (silhouette or `UserCircleIcon`) inside `bg-muted text-foreground-muted` — never initials. Reasons: (1) hash-based per-user tints fragment the calm palette and add chromatic noise; (2) reading initials adds cognitive load when scanning lists; (3) the User icon reads as "anonymous user" cleanly without imposing identity. The `<UserAvatar>` primitive uses this fallback by default — use the primitive, don't hand-roll initial avatars.
-- **No eyebrow labels above content that already speaks for itself.** Eyebrows are for *disambiguating peer items at the same level* (e.g., metadata fields stacked in a drawer body — `Dato / Metode / Beløp` makes sense because each value is different and similar in shape). They are NOT for labeling things the surrounding context already names. Examples that should be removed: `Med` above an instructor avatar + name (the avatar IS "with this person"); `Påmeldt til` above the booked-course title on a confirmation page where the page heading is `Du er påmeldt`; `I dag` above an h2 that says `3 klasser i dag`. The principle: if the eyebrow repeats a word in the value below, or labels something the title/heading/structure already conveys, drop it.
+### Typography
+
+- **No `font-bold` (700).** Reads marketing-heavy at dashboard sizes. Hierarchy comes from size, not weight.
+- **No uppercase tracked labels.** `uppercase tracking-wider` on KPI labels, table headers, eyebrows — banned. Use `text-xs font-medium text-foreground-muted` sentence case (matches shadcn / Vercel / Linear / Notion).
+- **No `font-mono`.** Studio has no monospace token. For tabular alignment use `tabular-nums` on Geist sans.
+
+### Composition
+
+- **No raw Tailwind color utilities.** `bg-green-100`, `text-red-700`, `text-blue-500` — use semantic tokens (`bg-success-subtle`, `text-danger`, `bg-muted`).
+- **No `p-5`, `p-7`, `space-y-5`, `space-y-7`, `space-y-9`.** Hand-tuning temptation; pick a tier.
+- **No `rounded-[Npx]` arbitrary values.** Use the four named tokens.
+- **No shadow on plain cards.** Cards use `border`; shadow is for things that float (dialogs, popovers).
+- **No `opacity-50` on inactive items.** Use `bg-muted/50 text-foreground-muted` — opacity reads as a loading skeleton.
+- **No `<Card>` wrapping every section by default.** Heading + content + spacing first. See `components.md` § Card decision table.
+- **No tinted canvas everywhere.** Page background stays white. Tinted / filled panels (`bg-muted`, danger-subtle) only when containment is genuinely needed.
+- **No chromatic pop tints on course cards or schedule entries.** Studio is monochrome; type/format gets a text label, not a colored fill.
+- **No initials as avatar placeholder.** Neutral User icon in `bg-muted text-foreground-muted`. Use the `<UserAvatar>` primitive.
+
+### Layout
+
+- **No inconsistent max-widths.** Every page uses a single outer shell `mx-auto max-w-6xl` (1152px). Narrower form / prose blocks (`max-w-md`, `max-w-3xl`) live INSIDE the shell, not as a separate outer tier. See `patterns.md` § 17.2.
+- **No stretching content past max-width on ultrawide.** Embrace the empty space.
+- **No sidebar on public / booking pages.** Public surfaces are sidebar-less.
+- **No KPI walls.** A row of 6-8 tiles is a power-user pattern. One hero + 2-3 supporters max.
+- **No long data tables on browse pages.** Card grid for browsing; table for genuine comparison/sort.
+- **No customizable dashboards.** One opinionated layout.
+- **Body copy defaults to 16px.** `text-base` is the readable baseline on both dashboard and public surfaces. Helper copy under section headings is body copy, not metadata. `text-sm` is for dense controls, tooltips, table headers, tiny counters, and constrained drawer/modal details — not normal dashboard page content.
+
+### Interaction
+
+- **No rect buttons.** Every button is a pill (`rounded-full`).
+- **No icons in text-bearing buttons.** Label is the action. **Carve-outs:** (1) icon-only buttons where the icon IS the button (close `×`, kebab, sidebar nav-rail) — `aria-label` required; (2) `Loader2` spinner replacing the label during async; (3) form-shaped triggers (date / time / select) where the chevron signals field type; (4) the page's *single primary header CTA* (e.g. `Opprett kurs`) gets one leading icon via `data-icon="inline-start"`. All icons from `@/lib/icons` only. No emoji as icons.
+- **No outline buttons in new code.** System is filled-only. `default` (sand-12) + `secondary` (filled muted, no border). `ghost` for inline / dense row icon actions; `soft` for dedicated icon controls (dialog/sheet/drawer close ×, kebab triggers, share) — persistent muted-fill circle that reads as a discoverable tappable target. `outline` deprecated — migrate when touching the file. See `components.md` § Button.
+- **No hover fill change on primary buttons.** Sand-12 hover-darkened reads as noise. Hover feedback lives on secondary/ghost.
+- **No underlines on course-card titles.** The card is the affordance.
+- **No "click row → new page" for detail views.** Use a drawer.
+- **No filter UIs as the primary slicer.** Use 3-4 tabs.
+- **No wizards. No step indicators. No Back / Next progression.** Sectioned form + setup checklist + embedded vendor UI. See `patterns.md` § 16.
+- **No global command palette by default.** Conditional rule (see `patterns.md` § 20.1a) — consider `cmd+k` only when destinations / records / frequent actions clearly outgrow sidebar + page filter.
+- **No persistent system alerts.** No banner system, no sidebar attention dots, no notifications inbox. Transient feedback = toast (§ 11); blocking errors = inline page/form state.
+
+### Confirmation dialogs + toasts
+
+- **No question-form dialog titles.** `Slett konto`, not `Slette kontoen?`. Verb-noun statement.
+- **No two-sentence period-separated body in dialogs.** Norwegian destructive verbs carry finality — drop `Det kan ikke angres` unless the action is genuinely irreversible. 1 paragraph, max 2 sentences, ~140 chars.
+- **No scope card in dialogs by default.** Inline `<strong>` for entities. Scope card is opt-in for lists of 3+ items.
+- **No acknowledgement checkbox.** The button label + verb are the gate.
+- **No backdrop blur on dialogs.** Flat `bg-foreground/40` dim only.
+- **No right-aligned cancel-cluster footer in `ConfirmDialog`.** Full-width split, both filled, no borders. Avbryt LEFT (filled muted), destructive RIGHT (filled dark).
+- **No red destructive button.** Monochrome sand-12. The verb + position carry the signal.
+- **No white-surface toasts with a 4px stripe.** Dark small-card surface (`bg-foreground/95`) + small leading icon-on-circle. See `components.md` § Toast.
+- **No toast title with trailing period.** `Lagret`, not `Lagret.` — the title isn't a sentence.
+
+### Copy
+
+- **No dot-glue between different subjects.** `3 klasser · 32 påmeldte` joins two unrelated facts. Dot separators are for *attributes of one subject* (`kl. 18:00 · Sal 1`). Group by subject; give each its own block. See `patterns.md` § 9.
+- **No multi-line subtitles with multiple dots.** `Vinyasa Flow · kl. 18:00 · 12 av 14 plasser` is three different aspects pretending to be one. Break vertically or use natural language.
+- **No "TRUSTED BY" eyebrow labels.** Marketing kitsch. Sentence case at `text-sm` if a preface is needed.
+- **No colored-dot eyebrow labels.** `● Brand Name · Location` reads as generic SaaS theater. Lead with the headline.
+- **No eyebrow labels above self-explaining content.** Eyebrows disambiguate peer items at the same level (drawer metadata: `Dato / Metode / Beløp`). They are NOT for labeling something the title/heading already conveys. Examples to remove: `Med` above an instructor avatar+name; `Påmeldt til` above the booked-course title on a confirmation page titled `Du er påmeldt`; `I dag` above an h2 that says `3 klasser i dag`.
 
 ---
 
@@ -175,7 +204,7 @@ These are bans. Every one of them ships in generic AI-generated UIs and breaks t
 
 When using this skill on a real component or page:
 
-1. **Identify the surface from the file path.** `pages/teacher/**` and `components/teacher/**` are dashboard (14px body, no display tier, max heading is `text-3xl`). `pages/public/**` and `components/public/**` are public (16px body, display tier unlocked).
+1. **Identify the surface from the file path.** `pages/teacher/**` and `components/teacher/**` are dashboard (16px body baseline, no display tier, max heading is `text-3xl`; use 14px for meta/dense UI). `pages/public/**` and `components/public/**` are public (16px body, display tier unlocked).
 2. **Read `design-model.yaml`** to get the exact token values. Never hardcode hex.
 3. **Pick the tier, not the value.** Decide "card padding default" (`p-6`) before picking 24px.
 4. **Squint test before commit.** Four visual layers, max.
@@ -187,6 +216,6 @@ When using this skill on a real component or page:
 
 - Full token reference → `references/tokens.md`
 - Component patterns (button, card, input, badge, status) → `references/components.md`
-- **Layout & UX patterns (Today hero, card grid, drawer, wizard, tabs, empty states, inline help, single layout)** → `references/patterns.md`
+- **Layout & UX patterns (Today hero, card grid, drawer, sectioned form / no wizard, tabs, empty states, inline help, single layout)** → `references/patterns.md`
 - CSS variable + Tailwind config drop-in → `references/platform-mapping.md`
 - Visual preview → `preview.html` (open in browser)

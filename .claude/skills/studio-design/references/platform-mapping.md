@@ -68,8 +68,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: 14px;       /* dashboard default — public surfaces override to 16px */
-  line-height: 20px;
+  font-size: 16px;       /* app body default; use 14px only for meta/dense UI */
+  line-height: 24px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;

@@ -50,7 +50,7 @@ export function SegmentedTabs<T extends string>({
             aria-selected={active}
             onClick={() => onChange(t.key)}
             className={cn(
-              'inline-flex h-7 items-center justify-center gap-2 rounded-full px-3 text-base font-medium transition-colors',
+              'inline-flex h-7 items-center justify-center gap-2 rounded-full px-3 text-sm font-medium transition-colors',
               'outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
               stretch && 'flex-1',
               active

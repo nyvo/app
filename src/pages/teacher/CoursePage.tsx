@@ -11,8 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
@@ -29,6 +28,7 @@ import { PageState } from '@/components/page-state/page-state';
 import { AddParticipantDrawer } from '@/components/teacher/AddParticipantDrawer';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { useCourseDetail } from '@/hooks/use-course-detail';
+import { deriveCourseDisplayStatus } from '@/lib/course-status';
 import {
   updateCourse,
   cancelCourse,
@@ -75,7 +75,7 @@ function CourseNotFound({ description }: { description?: string }) {
  * The drawer's "Åpne kursside →" escape target. Three underline tabs slice
  * the course into its three concerns: Oversikt (at-a-glance + ops), Rediger (editable form),
  * Priser (ticket tiers), and Påmeldte (the participants list). Page shell
- * follows the dashboard convention (max-w-7xl centered, lg:px-8 padding).
+ * follows the dashboard convention (max-w-6xl centered, lg:px-8 padding).
  */
 const CoursePage = () => {
   const navigate = useNavigate();
@@ -86,6 +86,7 @@ const CoursePage = () => {
     course: courseData,
     sessions,
     participants,
+    participantsLoading,
     loading: isLoading,
     error,
     setCourse: setCourseData,
@@ -120,7 +121,6 @@ const CoursePage = () => {
   const [showCancelPreview, setShowCancelPreview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingCourse, setIsDeletingCourse] = useState(false);
-  const [cancelAcknowledged, setCancelAcknowledged] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
@@ -499,7 +499,7 @@ const CoursePage = () => {
     return (
       <div className="flex-1 overflow-y-auto bg-background h-full">
         <MobileTeacherHeader title="Kurs" />
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 lg:pt-12 space-y-6">
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 lg:pt-12 space-y-6">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-7 w-64" />
           <Skeleton className="h-10 w-full max-w-md" />
@@ -519,6 +519,22 @@ const CoursePage = () => {
     { key: 'rediger', label: 'Rediger' },
   ];
 
+  // Visual lifecycle for display surfaces (header badge + Oversikt). Prefers
+  // sessions over coarse dates. Persisted `courseData.status` stays the source
+  // of truth for publish/cancel/share gating below.
+  const displayStatus = deriveCourseDisplayStatus({
+    status: courseData.status,
+    startDate: courseData.startDate,
+    endDate: courseData.endDate,
+    sessions,
+  });
+
+  // Whether the course has ANY signup rows (confirmed OR cancelled). Cancelled
+  // signups still carry payment records under retention, so a finished course
+  // is only safe to hard-delete when there are none at all. Treat the
+  // not-yet-loaded state as "has records" so we never offer delete prematurely.
+  const hasSignupRecords = participantsLoading || participants.length > 0;
+
   const courseUrl =
     currentTeam?.slug && courseData.slug
       ? `${window.location.origin}/${currentTeam.slug}/${courseData.slug}`
@@ -537,15 +553,12 @@ const CoursePage = () => {
               Avlyst
             </span>
           ) : (
-            <StatusBadge
-              status={courseData.status as 'draft' | 'active' | 'upcoming' | 'completed'}
-            />
+            <StatusBadge status={displayStatus} />
           )
         }
         action={
           courseData.status === 'draft' ? (
             <Button
-              size="sm"
               onClick={handlePublish}
               loading={isPublishing}
               loadingText="Publiserer"
@@ -570,8 +583,8 @@ const CoursePage = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    variant="ghost"
-                    size="icon-sm"
+                    variant="soft"
+                    size="icon"
                     aria-label="Mer"
                     title="Mer"
                   >
@@ -617,6 +630,7 @@ const CoursePage = () => {
           {activeTab === 'oversikt' && (
             <CourseOverviewTab
               course={courseData}
+              displayStatus={displayStatus}
               dinteroOnboardingStatus={currentSeller?.dintero_onboarding_status ?? null}
               dinteroOnboardingComplete={currentSeller?.dintero_onboarding_complete ?? false}
               allowsDropIn={settingsAllowsDropIn}
@@ -696,6 +710,8 @@ const CoursePage = () => {
               onSave={handleSave}
               onCancel={handleDiscard}
               courseStatus={courseData.status}
+              displayStatus={displayStatus}
+              hasSignupRecords={hasSignupRecords}
               onRequestCancel={() => setShowCancelPreview(true)}
               onRequestDelete={() => setShowDeleteConfirm(true)}
             />
@@ -729,19 +745,18 @@ const CoursePage = () => {
 
                 return (
                   <>
-                    {/* Section header card — count on the left, actions on the
-                        right. Sits above the table card with breathing room so
-                        the summary reads as its own anchored surface, separate
-                        from the table data. */}
-                    <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3">
-                      <span className="text-sm font-medium text-foreground tabular-nums mr-auto">
+                    {/* Section toolbar — count on the left, actions on the
+                        right. Borderless row sitting directly above the table;
+                        the buttons carry their own weight, so the summary reads
+                        as a heading rather than a boxed surface. */}
+                    <div className="mb-4 flex flex-wrap items-center gap-3">
+                      <span className="text-lg font-medium text-foreground tabular-nums mr-auto">
                         {courseData.capacity > 0
                           ? `${participantKpis.confirmed} av ${courseData.capacity} plasser fylt`
                           : `${participantKpis.confirmed} påmeldt`}
                       </span>
                       <Button
                         variant="secondary"
-                        size="sm"
                         onClick={handleMessageAllParticipants}
                         disabled={participantEmails.length === 0}
                       >
@@ -749,7 +764,6 @@ const CoursePage = () => {
                       </Button>
                       <Button
                         variant="secondary"
-                        size="sm"
                         onClick={() => setIsAddParticipantOpen(true)}
                         disabled={isFull}
                         title={isFull ? 'Kurset er fullt. Øk kapasiteten i fanen Rediger for å legge til flere.' : undefined}
@@ -894,38 +908,31 @@ const CoursePage = () => {
 
       <ConfirmDialog
         open={showCancelPreview}
-        onOpenChange={(open) => {
-          setShowCancelPreview(open);
-          if (!open) setCancelAcknowledged(false);
-        }}
+        onOpenChange={setShowCancelPreview}
         ariaLabel="Avlyse kurset"
-        headline="Avlys kurset?"
-        scope={
+        title="Avlys kurs"
+        body={
           refundPreview.count > 0 ? (
             <>
-              <ConfirmScopeItem
-                name={courseData.title}
-                meta={`${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} refunderes`}
-                trailing={formatKroner(refundPreview.totalAmount)}
-              />
-              <div className="max-h-[180px] overflow-y-auto border-t border-border/60">
-                {refundPreview.participants.map((p) => (
-                  <div
-                    key={p.id}
-                    className="flex items-center justify-between border-t border-border/60 px-4 py-2.5 first:border-t-0 text-base text-foreground tabular-nums sm:px-5"
-                  >
-                    <span className="truncate">{p.participant_name || p.participant_email}</span>
-                    <span className="shrink-0">{formatKroner(p.amount_paid)}</span>
-                  </div>
-                ))}
-              </div>
+              <strong>{courseData.title}</strong> avlyses — {refundPreview.count} deltaker
+              {refundPreview.count !== 1 ? 'e' : ''} refunderes{' '}
+              <strong>{formatKroner(refundPreview.totalAmount)}</strong> og varsles.
             </>
           ) : (
-            <ConfirmScopeItem name={courseData.title} meta="Ingen betalte påmeldinger" />
+            <><strong>{courseData.title}</strong> avlyses uten refusjoner.</>
           )
         }
+        scopeList={
+          refundPreview.count > 0
+            ? refundPreview.participants.map((p) => ({
+                id: p.id,
+                name: p.participant_name || p.participant_email,
+                meta: p.participant_email,
+                trailing: formatKroner(p.amount_paid),
+              }))
+            : undefined
+        }
         actionLabel="Avlys kurs"
-        disabled={refundPreview.count > 0 && !cancelAcknowledged}
         onConfirm={(e) => {
           e.preventDefault();
           handleCancelCourse();
@@ -936,37 +943,19 @@ const CoursePage = () => {
             ? `Behandler ${refundPreview.count} refusjon${refundPreview.count !== 1 ? 'er' : ''}`
             : 'Avlyser'
         }
-      >
-        {refundPreview.count > 0 ? (
-          <label className="mt-1 flex cursor-pointer items-start gap-3 rounded-lg border border-border/60 bg-muted/40 p-4 text-base text-foreground sm:p-5">
-            <Checkbox
-              checked={cancelAcknowledged}
-              onCheckedChange={(v) => setCancelAcknowledged(v === true)}
-              className="mt-0.5"
-            />
-            <span className="leading-snug">
-              Jeg forstår at {refundPreview.count} deltaker
-              {refundPreview.count !== 1 ? 'e' : ''} får e-post og at{' '}
-              {formatKroner(refundPreview.totalAmount)} refunderes.
-            </span>
-          </label>
-        ) : null}
-      </ConfirmDialog>
+      />
 
       <ConfirmDialog
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
         ariaLabel="Slette kurset"
-        headline="Slett kurset permanent?"
+        title="Slett kurs"
+        body={<><strong>{courseData.title}</strong> og all tilhørende data slettes permanent.</>}
         actionLabel="Slett kurs"
         loading={isDeletingCourse}
         loadingText="Sletter"
         onConfirm={handleDeleteCourse}
-      >
-        <p className="text-base text-foreground-muted">
-          {courseData.title} og all tilhørende data blir fjernet. Dette kan ikke angres.
-        </p>
-      </ConfirmDialog>
+      />
     </div>
   );
 };

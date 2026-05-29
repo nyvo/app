@@ -230,7 +230,7 @@ function UpcomingCoursesSection({
 
   return (
     <section className="flex flex-col">
-      <h2 className="mb-6 text-lg font-medium tracking-tight text-foreground">Neste kurs</h2>
+      <h2 className="mb-3 text-lg font-medium tracking-tight text-foreground">Neste kurs</h2>
       <div className="flex min-h-56 flex-1 flex-col rounded-xl border border-border bg-background p-3">
         {showSkeleton ? (
           <RowsSkeleton variant="course" />
@@ -274,7 +274,7 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
         <p className="truncate text-base text-foreground-muted">{when || '—'}</p>
       </div>
       {hasCapacity && (
-        <span className="shrink-0 text-sm tabular-nums text-foreground-muted">
+        <span className="shrink-0 text-base tabular-nums text-foreground-muted">
           {course.signups} / {course.capacity}
         </span>
       )}
@@ -296,7 +296,7 @@ function RecentSignupsSection({
 
   return (
     <section className="flex flex-col">
-      <h2 className="mb-6 text-lg font-medium tracking-tight text-foreground">
+      <h2 className="mb-3 text-lg font-medium tracking-tight text-foreground">
         Siste påmeldinger
       </h2>
       <div className="flex min-h-56 flex-1 flex-col rounded-xl border border-border bg-background p-3">
@@ -337,7 +337,7 @@ function SignupRow({ signup }: { signup: SignupWithDetails }) {
           {courseTitle ?? 'Ny påmelding'}
         </p>
       </div>
-      <span className="shrink-0 text-sm tabular-nums text-foreground-muted">{when}</span>
+      <span className="shrink-0 text-base tabular-nums text-foreground-muted">{when}</span>
     </>
   );
 

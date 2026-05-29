@@ -173,12 +173,11 @@ const CheckoutFormReworkPreview = () => {
             </p>
           </div>
           {isFree ? (
-            <Button disabled={!formValid} size="sm">
+            <Button disabled={!formValid}>
               {ctaLabel}
             </Button>
           ) : (
             <Button
-              size="sm"
               disabled={!formValid}
               onClick={() => {
                 document.getElementById('payment')?.scrollIntoView({ behavior: 'smooth', block: 'start' });

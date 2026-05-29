@@ -6,6 +6,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
+import { isCourseEnded } from '../_shared/course-status.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -40,7 +41,7 @@ Deno.serve(async (req: Request) => {
     // Fetch course to verify it's actually free and bookable
     const { data: course, error: courseError } = await supabase
       .from('courses')
-      .select('id, title, seller_id, status, price, start_date, time_schedule, location')
+      .select('id, title, seller_id, status, price, start_date, end_date, time_schedule, location, course_sessions(session_date, status)')
       .eq('id', courseId)
       .single()
 
@@ -50,6 +51,20 @@ Deno.serve(async (req: Request) => {
 
     if (course.status === 'draft' || course.status === 'cancelled') {
       return errorResponse('Course is not available for booking', 400, req)
+    }
+
+    // Reject signups for a course whose last session is already in the past.
+    // Persisted status stays `upcoming` forever, so this date gate is the only
+    // thing stopping a finished course from being booked.
+    if (
+      isCourseEnded({
+        status: course.status,
+        startDate: course.start_date,
+        endDate: course.end_date,
+        sessions: course.course_sessions as { session_date: string; status: string | null }[] | null,
+      })
+    ) {
+      return errorResponse('Dette kurset er avsluttet.', 400, req)
     }
 
     // Enforce "free" server-side: price must be null or <= 0

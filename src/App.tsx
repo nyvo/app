@@ -22,6 +22,7 @@ const CoursePage = lazy(() => import('./pages/teacher/CoursePage'));
 const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage'));
 const PaymentsPage = lazy(() => import('./pages/teacher/PaymentsPage'));
 const TeamsPage = lazy(() => import('./pages/teacher/TeamsPage'));
+const CollaborationPage = lazy(() => import('./pages/teacher/CollaborationPage'));
 const PublicCoursesPage = lazy(() => import('./pages/public/PublicCoursesPage'));
 const PublicCourseDetailPage = lazy(() => import('./pages/public/PublicCourseDetailPage'));
 const CheckoutPage = lazy(() => import('./pages/public/CheckoutPage'));
@@ -49,6 +50,7 @@ const CoursesListPreview = lazy(() => import('./pages/dev/CoursesListPreview'));
 const CheckoutReworkPreview = lazy(() => import('./pages/dev/CheckoutReworkPreview'));
 const CheckoutFormReworkPreview = lazy(() => import('./pages/dev/CheckoutFormReworkPreview'));
 const DetailReworkPreview = lazy(() => import('./pages/dev/DetailReworkPreview'));
+const ModalsButtonsToastsPreview = lazy(() => import('./pages/dev/ModalsButtonsToastsPreview'));
 
 // Public team page at root: only renders if the slug is NOT a reserved word.
 // Reserved words 404 (since they should hit a literal route higher in the
@@ -115,6 +117,7 @@ function AppRoutes() {
             <Route path="courses" element={<CoursesPage />} />
             <Route path="courses/:id" element={<CoursePage />} />
             <Route path="studio" element={<TeamsPage />} />
+            <Route path="collaboration" element={<CollaborationPage />} />
             <Route path="settings/payouts" element={<PaymentsPage />} />
           </Route>
         </Route>
@@ -133,6 +136,7 @@ function AppRoutes() {
         <Route path="/dev/checkout-rework" element={<CheckoutReworkPreview />} />
         <Route path="/dev/checkout-form-rework" element={<CheckoutFormReworkPreview />} />
         <Route path="/dev/detail-rework" element={<DetailReworkPreview />} />
+        <Route path="/dev/modals-buttons-toasts" element={<ModalsButtonsToastsPreview />} />
 
         {/* Flat-slug team pages at root — `ourapp.no/<team-slug>[/courseId]`.
             FlatTeamRoute checks the slug against the reserved-words list and
@@ -174,10 +178,7 @@ const App = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Toaster
-          position="bottom-center"
-          theme="light"
-        />
+        <Toaster />
         <ErrorBoundary>
           <Suspense fallback={<DelayedFallback><PageSkeleton /></DelayedFallback>}>
             <AppRoutes />

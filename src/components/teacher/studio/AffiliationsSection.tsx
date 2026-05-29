@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Check, Copy, ExternalLink, ImageIcon, MoreVertical, UserPlus } from '@/lib/icons';
+import { MoreVertical } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Badge } from '@/components/ui/badge';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -98,44 +101,29 @@ function BusinessView({ teamId }: { teamId: string }) {
     ) ?? null;
 
   return (
-    <section className="space-y-6">
-      <div>
-        <h2 className="text-base font-semibold text-foreground">Instruktører</h2>
-        <p className="mt-1 text-sm text-foreground-muted">
-          Legg til instruktører hvis kurs skal vises på studiosiden din.
-        </p>
-      </div>
+    <div className="space-y-10">
+      <InviteLinkPanel teamId={teamId} />
 
-      <div className="space-y-8">
-        <section>
-          <div className="mb-3">
-            <h3 className="text-sm font-medium text-foreground">Invitasjonslenke</h3>
-            <p className="mt-1 text-sm text-foreground-muted">
-              Send denne til instruktøren.
-            </p>
-          </div>
-          <InviteLinkPanel teamId={teamId} />
-        </section>
-
-        <section className="border-t border-border pt-6">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h3 className="text-sm font-medium text-foreground">Instruktører på studiosiden</h3>
-            {visibleAffiliates === null ? (
-              <Skeleton className="h-5 w-16" aria-hidden="true" />
-            ) : (
-              <span className="text-sm text-foreground-muted">
-                {formatInstructorCount(visibleAffiliates.length)}
-              </span>
-            )}
-          </div>
-          <AffiliatesList
-            affiliates={visibleAffiliates}
-            loading={loadingAffiliates}
-            onRevoke={handleRevoke}
-          />
-        </section>
-      </div>
-    </section>
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-medium tracking-tight text-foreground">
+            Instruktører
+          </h2>
+          {visibleAffiliates === null ? (
+            <Skeleton className="h-6 w-20 rounded-full" aria-hidden="true" />
+          ) : visibleAffiliates.length > 0 ? (
+            <Badge variant="neutral" shape="pill" size="md">
+              {formatInstructorCount(visibleAffiliates.length)}
+            </Badge>
+          ) : null}
+        </div>
+        <AffiliatesList
+          affiliates={visibleAffiliates}
+          loading={loadingAffiliates}
+          onRevoke={handleRevoke}
+        />
+      </section>
+    </div>
   );
 }
 
@@ -183,7 +171,7 @@ function IndividualView({ sellerId }: { sellerId: string }) {
     setLeaving(false);
     setConfirmLeave(false);
     if (error) {
-      toast.error(friendlyError(error, 'Kunne ikke stoppe visning.'));
+      toast.error(friendlyError(error, 'Kunne ikke stoppe visning'));
       return;
     }
     toast.success('Kursene dine vises ikke lenger på studioet');
@@ -191,105 +179,67 @@ function IndividualView({ sellerId }: { sellerId: string }) {
   };
 
   const hostUrl = host ? `${window.location.origin}/${host.slug}` : null;
-  const hostDisplayUrl = host ? `${window.location.host}/${host.slug}` : null;
 
   return (
     <section className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Studioside</h2>
-          <p className="mt-1 text-sm text-foreground-muted">
-            Her ser du om kursene dine vises på en studioside.
-          </p>
-        </div>
-        {host && hostUrl && (
-          <div className="shrink-0">
-            <Button asChild variant="secondary" size="sm">
-              <a href={hostUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink data-icon="inline-start" />
-                Vis studiosiden
-              </a>
-            </Button>
-          </div>
-        )}
-      </div>
-
       {host === undefined ? (
-        <div className="rounded-md border border-border bg-surface p-4">
-          <div className="flex items-center gap-3">
-            <Skeleton className="size-10 rounded-md" />
-            <div className="min-w-0 space-y-1.5">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-3 w-56 max-w-full" />
-            </div>
-            <Skeleton className="ml-auto h-5 w-14 rounded-full" />
-          </div>
-        </div>
+        <ConnectionSkeleton />
       ) : host === null ? (
-        <div className="rounded-md border border-dashed border-border p-8 text-center">
-          <p className="text-base font-medium text-foreground">Kursene dine vises ikke på en studioside</p>
-          <p className="text-base text-foreground-muted mt-1 max-w-xs mx-auto">
-            Åpne en invitasjonslenke fra et studio for å vise kursene dine der.
+        <div className="rounded-xl border border-border bg-surface p-6">
+          <p className="text-base font-medium text-foreground">Ingen aktive samarbeid</p>
+          <p className="mt-1 max-w-md text-base text-foreground-muted">
+            Be studioet sende deg en invitasjonslenke.
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
-          <div className="overflow-hidden rounded-md border border-border bg-surface">
-            <div className="flex items-center gap-3 p-4">
-              <HostCover url={host.cover_image_url} />
-              <div className="min-w-0">
-                <p className="text-base font-medium text-foreground truncate">{host.name}</p>
-                <p className="text-sm text-foreground-muted truncate">{hostDisplayUrl}</p>
-              </div>
-            </div>
-            <div className="border-t border-border px-4 py-3">
-              <p className="text-sm text-foreground-muted">
-                Alle aktive kurs vises på denne studiosiden.
-              </p>
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-6">
-            <Button
-              variant="plain"
-              className="text-danger hover:text-danger"
-              onClick={() => setConfirmLeave(true)}
-            >
+        <section>
+          <h2 className="text-lg font-medium tracking-tight text-foreground">
+            Kursene dine vises på {host.name}
+          </h2>
+          <p className="mt-2 max-w-2xl text-base text-foreground-muted">
+            Du kan stoppe visningen når som helst.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Button variant="secondary" onClick={() => setConfirmLeave(true)}>
               Stopp visning
             </Button>
+            {hostUrl && (
+              <Button asChild>
+                <a href={hostUrl} target="_blank" rel="noopener noreferrer">
+                  Vis studiosiden
+                </a>
+              </Button>
+            )}
           </div>
-
-          <ConfirmDialog
-            open={confirmLeave}
-            onOpenChange={setConfirmLeave}
-            ariaLabel="Stopp visning"
-            headline={`Stopp visning på ${host.name}?`}
-            actionLabel="Stopp visning"
-            onConfirm={handleLeave}
-            loading={leaving}
-            loadingText="Stopper"
-          >
-            <p className="text-base text-foreground-muted">
-              Kursene dine fjernes fra studiosiden. Du kan koble deg til igjen med en ny invitasjonslenke.
-            </p>
-          </ConfirmDialog>
-        </div>
+        </section>
+      )}
+      {host && (
+        <ConfirmDialog
+          open={confirmLeave}
+          onOpenChange={setConfirmLeave}
+          ariaLabel="Stopp visning"
+          title="Stopp visning"
+          body={<><strong>{host.name}</strong> fjernes fra studiosiden.</>}
+          actionLabel="Stopp visning"
+          onConfirm={handleLeave}
+          loading={leaving}
+          loadingText="Stopper"
+        />
       )}
     </section>
   );
 }
 
-function HostCover({ url }: { url: string | null }) {
-  if (url) {
-    return (
-      <div className="size-10 shrink-0 overflow-hidden rounded-md bg-muted">
-        <img src={url} alt="" className="size-full object-cover" />
-      </div>
-    );
-  }
+function ConnectionSkeleton() {
   return (
-    <div className="size-10 shrink-0 rounded-md bg-muted flex items-center justify-center">
-      <ImageIcon className="size-5 text-foreground-muted" aria-hidden="true" />
+    <div className="rounded-xl border border-border bg-surface p-6" role="status" aria-live="polite">
+      <span className="sr-only">Laster samarbeid</span>
+      <Skeleton className="h-5 w-64 max-w-full" />
+      <Skeleton className="mt-2 h-5 w-80 max-w-full" />
+      <div className="mt-4 flex gap-2">
+        <Skeleton className="h-9 w-32 rounded-full" />
+        <Skeleton className="h-9 w-32 rounded-full" />
+      </div>
     </div>
   );
 }
@@ -313,10 +263,9 @@ function AffiliatesList({
 
   if (affiliates.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-border p-6 text-center">
-        <UserPlus className="mx-auto mb-3 size-5 text-foreground-muted" aria-hidden="true" />
+      <div className="rounded-xl border border-border bg-surface p-6">
         <p className="text-base font-medium text-foreground">Ingen instruktører tilknyttet ennå</p>
-        <p className="mx-auto mt-1 max-w-sm text-sm text-foreground-muted">
+        <p className="mt-1 max-w-md text-base text-foreground-muted">
           Send invitasjonslenken til en instruktør for å vise kursene deres her.
         </p>
       </div>
@@ -335,12 +284,9 @@ function AffiliatesList({
         >
           <div className="flex min-w-0 items-center gap-3">
             <InstructorAvatar name={affiliate.seller.name} url={affiliate.seller.logo_url} />
-            <div className="min-w-0">
-              <p className="text-base font-medium text-foreground truncate">{affiliate.seller.name}</p>
-              <p className="text-sm text-foreground-muted truncate">
-                Kurs vises på studiosiden
-              </p>
-            </div>
+            <p className="min-w-0 truncate text-base font-medium text-foreground">
+              {affiliate.seller.name}
+            </p>
           </div>
           <InstructorActionsMenu onRevoke={() => onRevoke(affiliate)} />
         </li>
@@ -350,35 +296,11 @@ function AffiliatesList({
 }
 
 function InstructorAvatar({ name, url }: { name: string; url: string | null }) {
-  if (url) {
-    return (
-      <div className="size-10 shrink-0 overflow-hidden rounded-full bg-muted">
-        <img src={url} alt="" className="size-full object-cover" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground">
-      {initialsForName(name)}
-    </div>
-  );
+  return <UserAvatar name={name} src={url} size="lg" />;
 }
 
 function formatInstructorCount(count: number) {
   return count === 1 ? '1 instruktør' : `${count} instruktører`;
-}
-
-function initialsForName(name: string) {
-  const parts = name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
 function InstructorActionsMenu({
@@ -389,7 +311,7 @@ function InstructorActionsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Handlinger">
+        <Button variant="soft" size="icon" aria-label="Handlinger">
           <MoreVertical className="size-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -464,49 +386,52 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
   };
 
   if (link === undefined) {
-    return <div className="h-9 rounded-md border border-border bg-muted" />;
+    return (
+      <div>
+        <Skeleton className="h-9 w-full rounded-md" />
+        <Skeleton className="mt-3 h-5 w-24" />
+      </div>
+    );
   }
 
   if (!link) {
     return (
       <div>
-        <p className="text-base text-foreground-muted mb-2">
-          Kunne ikke opprette invitasjonslenke.
+        <p className="mb-3 text-base text-foreground-muted">
+          Kunne ikke lage invitasjonslenke.
         </p>
-        <button
+        <Button
           type="button"
-          className="text-base text-foreground underline-offset-4 hover:underline disabled:opacity-50"
+          variant="secondary"
           disabled={creating}
           onClick={() => void handleRegenerate()}
         >
-          {creating ? 'Prøver igjen…' : 'Prøv på nytt'}
-        </button>
+          {creating ? 'Prøver igjen…' : 'Prøv igjen'}
+        </Button>
       </div>
     );
   }
 
   return (
     <div>
-      <div className="relative">
-        <input
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <Input
           readOnly
           value={fullUrl}
           onFocus={(e) => e.currentTarget.select()}
-          className="h-9 w-full rounded-md border border-border bg-surface pl-3 pr-10 text-base text-foreground outline-none focus:border-foreground"
           aria-label="Invitasjonslenke"
         />
-        <button
+        <Button
           type="button"
           onClick={() => void handleCopy()}
-          aria-label="Kopier lenke"
-          className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-foreground-muted hover:text-foreground"
+          variant="secondary"
         >
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-        </button>
+          {copied ? 'Kopiert' : 'Kopier lenke'}
+        </Button>
       </div>
       <button
         type="button"
-        className="mt-2 text-sm text-foreground-muted underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
+        className="mt-3 text-base text-foreground-muted underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
         disabled={creating}
         onClick={() => void handleRegenerate()}
       >

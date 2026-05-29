@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import type { ExceptionType, PaymentStatus } from '@/types/database';
 
 /** Minimal shape the action menu needs — satisfied by both SignupDisplay and DisplayParticipant */
@@ -58,8 +58,8 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
   if (signup.status === 'cancelled' || signup.status === 'course_cancelled') {
     return (
       <Button
-        variant="ghost"
-        size="icon-sm"
+        variant="soft"
+        size="icon"
         className="shrink-0"
         aria-label="Ingen handlinger tilgjengelig"
         disabled
@@ -74,8 +74,8 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            variant="ghost"
-            size="icon-sm"
+            variant="soft"
+            size="icon"
             className="shrink-0"
             aria-label="Handlinger"
             disabled={loading}
@@ -140,23 +140,14 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
         open={confirmDialog === 'cancel-no-refund'}
         onOpenChange={(open) => !open && setConfirmDialog(null)}
         ariaLabel="Avbestill påmelding"
-        headline={
+        title="Avbestill påmelding"
+        body={
           signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
-            ? 'Avbestill påmeldingen uten refusjon?'
-            : 'Avbestill påmeldingen?'
-        }
-        scope={
-          <ConfirmScopeItem
-            name={signup.participantName}
-            meta={signup.participantEmail}
-            trailing={
-              signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
-                ? formatKroner(signup.amountPaid)
-                : undefined
-            }
-          />
+            ? <><strong>{signup.participantName}</strong> avbestilles uten refusjon.</>
+            : <><strong>{signup.participantName}</strong> avbestilles og plassen frigjøres.</>
         }
         actionLabel="Avbestill"
+        cancelLabel="Behold"
         onConfirm={() => {
           setConfirmDialog(null);
           runAction(() => handlers.onCancelEnrollment(signup.id, false));
@@ -168,19 +159,12 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
         open={confirmDialog === 'cancel-with-refund'}
         onOpenChange={(open) => !open && setConfirmDialog(null)}
         ariaLabel="Avbestill og refunder"
-        headline="Avbestill og refunder?"
-        scope={
-          <ConfirmScopeItem
-            name={signup.participantName}
-            meta={signup.participantEmail}
-            trailing={
-              signup.amountPaid != null && signup.amountPaid > 0
-                ? formatKroner(signup.amountPaid)
-                : undefined
-            }
-          />
+        title="Avbestill og refunder"
+        body={
+          <><strong>{signup.participantName}</strong> avbestilles og refunderes <strong>{formatKroner(signup.amountPaid ?? 0)}</strong>.</>
         }
         actionLabel="Avbestill og refunder"
+        cancelLabel="Behold"
         onConfirm={() => {
           setConfirmDialog(null);
           runAction(() => handlers.onCancelEnrollment(signup.id, true));
@@ -192,17 +176,9 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
         open={confirmDialog === 'resolve'}
         onOpenChange={(open) => !open && setConfirmDialog(null)}
         ariaLabel="Merk som betalt"
-        headline="Merk som betalt?"
-        scope={
-          <ConfirmScopeItem
-            name={signup.participantName}
-            meta={signup.participantEmail}
-            trailing={
-              signup.amountPaid != null && signup.amountPaid > 0
-                ? formatKroner(signup.amountPaid)
-                : undefined
-            }
-          />
+        title="Merk som betalt"
+        body={
+          <><strong>{signup.participantName}</strong> markeres som betalt{signup.amountPaid != null && signup.amountPaid > 0 ? <> med beløpet <strong>{formatKroner(signup.amountPaid)}</strong></> : null}.</>
         }
         actionLabel="Merk som betalt"
         onConfirm={() => {

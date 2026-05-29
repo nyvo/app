@@ -69,7 +69,7 @@ There is no monospace token. For tabular alignment, use `tabular-nums` on Geist 
 
 **Restraint over spectacle.** Display tops out at 48px — no hero text bigger than that. Reference: Time2book's "measured boldness, confident without being aggressive." The system has no 60px or 72px tier on purpose.
 
-### Dashboard usage map (14px body)
+### Dashboard usage map (16px body)
 
 | Role | Token | Weight |
 |------|-------|--------|
@@ -77,7 +77,8 @@ There is no monospace token. For tabular alignment, use `tabular-nums` on Geist 
 | Section heading (h2) | `text-2xl` (24px) | 600 |
 | Subsection (h3) | `text-xl` (20px) | 600 |
 | Card title (h4) | `text-base` (16px) | 600 |
-| **Body** | **`text-sm` (14px)** | **400** |
+| **Body / helper copy / row subtitles** | **`text-base` (16px)** | **400 / 500** |
+| Dense UI / page tabs / table headers / controls / tooltips | `text-sm` (14px) | 400 / 500 |
 | Caption / KPI label / chip | `text-xs` (12px) | 400 / 500 |
 
 `text-6xl` is **banned** on dashboard. Max heading is `text-3xl`.
@@ -137,7 +138,7 @@ Sentence case. 500 weight. Muted color. **Never** `uppercase` or `tracking-wider
 | Section-to-section (dashboard) | `space-y-8` (32px) |
 | Section-to-section (landing) | `space-y-12 sm:space-y-16` (48–64px) |
 | Form field stack | `space-y-4` (16px) |
-| Inside button | `px-3 sm:px-4` (12–16px) |
+| Inside button | `px-4` (16px default) |
 | Page container side padding | `px-6 sm:px-8` (24–32px) |
 
 ---

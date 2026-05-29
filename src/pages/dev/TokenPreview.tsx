@@ -134,7 +134,7 @@ function Samples() {
       <div className="flex flex-wrap items-center gap-2">
         <Button>Opprett kurs</Button>
         <Button variant="secondary">Avbryt</Button>
-        <Button variant="outline">Filtrer</Button>
+        <Button variant="secondary">Filtrer</Button>
         <Button variant="ghost">Mer</Button>
         <Button variant="destructive">Slett</Button>
       </div>

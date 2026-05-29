@@ -93,7 +93,7 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
           <p className="text-base font-medium text-foreground truncate">{customerName}</p>
           <p className="text-base text-foreground-muted truncate mt-0.5">{customerEmail}</p>
         </div>
-        <Button variant="plain" size="xs" type="button" onClick={onBack}>
+        <Button variant="plain" type="button" onClick={onBack}>
           Endre
         </Button>
       </div>

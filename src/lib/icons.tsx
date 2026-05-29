@@ -132,6 +132,7 @@ export {
   Trash2,
   TriangleAlert,
   Undo2,
+  Upload,
   User,
   UserCheck,
   UserMinus,

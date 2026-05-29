@@ -74,14 +74,13 @@ export function LocationsSection() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-base font-semibold text-foreground">Adresser</h2>
-          <p className="mt-1 text-sm text-foreground-muted">
+          <p className="mt-1 text-base text-foreground-muted">
             Steder du bruker ofte, så du kan velge dem raskt når du oppretter kurs.
           </p>
         </div>
         <div className="shrink-0">
           <Button
             variant="secondary"
-            size="sm"
             onClick={openCreate}
           >
             Legg til sted
@@ -353,7 +352,6 @@ function LocationDrawer({
           {isEdit ? (
             <Button
               variant="ghost"
-              size="sm"
               className="text-foreground-muted hover:text-foreground"
               onClick={handleDelete}
             >
@@ -362,7 +360,7 @@ function LocationDrawer({
           ) : (
             <span />
           )}
-          <Button size="sm" onClick={handleSave} loading={saving} loadingText="Lagrer">
+          <Button onClick={handleSave} loading={saving} loadingText="Lagrer">
             {isEdit ? 'Lagre' : 'Lagre sted'}
           </Button>
         </div>

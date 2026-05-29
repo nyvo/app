@@ -58,7 +58,7 @@ const LandingPage = () => {
               Pris
             </a>
             {!PRELAUNCH && (
-              <Button asChild size="sm" variant="secondary">
+              <Button asChild variant="secondary">
                 <Link to="/auth">Logg inn</Link>
               </Button>
             )}

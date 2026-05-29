@@ -26,6 +26,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
 import { calculatePricing } from '../_shared/pricing.ts'
+import { isCourseEnded } from '../_shared/course-status.ts'
 import {
   createSession,
   getProfileId,
@@ -125,7 +126,8 @@ Deno.serve(async (req: Request) => {
     const { data: course, error: courseError } = await supabase
       .from('courses')
       .select(`
-        id, title, status, max_participants,
+        id, title, status, max_participants, start_date, end_date,
+        course_sessions(session_date, status),
         seller:sellers(
           id,
           name,
@@ -155,6 +157,20 @@ Deno.serve(async (req: Request) => {
 
     if (course.status === 'draft' || course.status === 'cancelled') {
       return errorResponse('Course is not available for booking', 400, req)
+    }
+
+    // Reject checkout for a course whose last session is already in the past.
+    // Persisted status stays `upcoming` forever, so this date gate is the only
+    // thing stopping a finished course from being booked.
+    if (
+      isCourseEnded({
+        status: course.status,
+        startDate: course.start_date,
+        endDate: course.end_date,
+        sessions: course.course_sessions as { session_date: string; status: string | null }[] | null,
+      })
+    ) {
+      return errorResponse('Dette kurset er avsluttet.', 400, req)
     }
 
     if (!seller.dintero_seller_id || !seller.dintero_onboarding_complete) {

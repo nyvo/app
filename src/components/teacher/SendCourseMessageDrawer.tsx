@@ -119,7 +119,6 @@ export function SendCourseMessageDrawer({
 
           <SheetFooter className="flex-row justify-end">
             <Button
-              size="sm"
               onClick={handleSend}
               disabled={!canSend}
               loading={submitting}

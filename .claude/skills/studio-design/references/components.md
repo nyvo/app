@@ -6,33 +6,42 @@ Patterns for the core primitives. Every value sourced from `design-model.yaml`.
 
 ## Button
 
-### Variants
+### Variants — filled-only
+
+The system is filled-only. Outline variants are **deprecated** — `outline` and `outline-soft` still exist in `button.tsx` for legacy reasons but should not appear in new code. Migrate existing usages on touch.
 
 | Variant | Use | Surface |
 |---------|-----|---------|
 | `default` (primary) | The main action on a screen — "Save", "Book", "Confirm" | `bg-foreground text-white` |
-| `secondary` | Paired alternative | `bg-surface border border-border text-foreground` |
-| `outline` | Toolbar / filter bar buttons | Same as secondary, hover-emphasized |
-| `ghost` | Icon-only, nav, low-emphasis row actions | `bg-transparent text-foreground` |
-| `destructive` | Confirm-delete inside menus and dialogs | `bg-danger text-white` |
+| `secondary` (filled muted) | Paired alternative, modal "Avbryt", filled secondary actions | `bg-muted text-foreground` (no border, no shadow) |
+| `ghost` | Sidebar nav, low-emphasis inline row actions, dense table action columns | `bg-transparent text-foreground hover:bg-muted` |
+| `soft` | Dedicated icon controls — close × in dialog/sheet/drawer headers, kebab triggers, share | `bg-muted text-foreground hover:bg-active` (filled muted circle when paired with `size="icon"`) |
+| `destructive` | Reserved — current monochrome rule is to use `default` for destructive confirms instead | `bg-danger text-white` |
 | `link` | Inline text action | `bg-transparent text-foreground underline` |
+| `plain` | Text-as-link inside cards/lists (no shell, no padding) | `bg-transparent text-foreground-muted hover:text-foreground` |
+
+**Hierarchy is by fill darkness, not by border.** Primary (sand-12 dark) > Secondary (sand-3 muted) > Ghost (transparent). Three weights, no borders required to distinguish them. This is the Linear / Vercel / Notion 2025–2026 convention.
+
+> **Secondary surface =** the muted token (`bg-muted`, sand-3). Same fill as the canvas-tint pattern, which keeps the system coherent. No border. No shadow. Hover lifts to `bg-active` (sand-4).
+
+> **Cards** on tinted canvas can be borderless; on pure white canvas they keep a 1px border for edge definition. **Inputs** keep their 1px border — input affordance can't be expressed by fill alone without confusing users.
 
 ### Sizes
 
-| Size | Height | Padding | Text | WCAG conformance |
-|------|--------|---------|------|------------------|
-| `xs` | 24px | `px-2` | `text-xs` | 2.5.8 AA only with **≥24px spacing** to adjacent targets — never use unspaced |
-| `sm` | 32px | `px-3` | `text-sm` | Meets 2.5.8 AA |
-| `default` | 36px | `px-4` | `text-sm` | Meets 2.5.8 AA |
-| `lg` | 40px | `px-5` | `text-sm` | Meets 2.5.8 AA |
-| `cta` | 44px | full-width often | `text-base` | Meets 2.5.5 AAA + Apple HIG 44pt |
-| `icon`* | 36px square | — | — | Same row as default — `icon-xs` requires spacing |
+| Size | Height | Padding | Text | Default use |
+|------|--------|---------|------|-------------|
+| `default` | 36px | `px-4` | `text-sm` | **The app default** — page header CTAs, drawer footer actions, normal committed actions |
+| `lg` | 40px | `px-5` | `text-sm` | **Modal footer actions** (`ConfirmDialog` buttons) |
+| `cta` | 44px | `px-6`, often full-width | `text-base` | Public/booking/mobile primary CTAs |
+| `icon`* | 36px square | — | — | Icon-only controls (close, kebab, share) |
 
-\* Use `icon-xs` (24px), `icon-sm` (32px), `icon-lg` (40px) for size variants.
+\* Use `icon-lg` (40px) only when the icon control must visually match modal-scale actions. Prefer `icon` by default.
 
-**Touch-surface override.** On any *touch-primary* surface (mobile booking flow, customer-facing public pages, MobilePriceBar), the **minimum size is `default` (36px)**, and primary CTAs use `cta` (44px) to hit WCAG 2.5.5 AAA + Apple HIG. Never use `xs` or `sm` on touch surfaces — they only meet AA via the spacing exception, which is fragile (one design tweak puts adjacent targets within 24px and you fail the criterion).
+**Size doctrine.** Default to `default`. Use `lg` inside modals. Use `cta` for public/mobile primary actions. If an action feels too small for a button, make it a text action (`plain` / link), an icon-only affordance, or move it into a menu.
 
-The desktop dashboard can use `sm` and `xs` (toolbars, dense filters, mouse-driven chrome) — the WCAG 24px floor is met, mouse precision absorbs the rest.
+**Touch-surface override.** On any *touch-primary* surface (mobile booking flow, customer-facing public pages, MobilePriceBar), the **minimum size is `default` (36px)**, and primary CTAs use `cta` (44px) to hit WCAG 2.5.5 AAA + Apple HIG.
+
+**Default-size rule.** Page-level primary CTAs (`Opprett kurs`, `Publiser kurs`, `Lagre endringer`) are `size="default"` (36px). Modal footer actions are `size="lg"` (40px). Public/booking primary actions are `size="cta"` (44px).
 
 **Research basis:** WCAG 2.2 SC 2.5.8 (Target Size, Minimum, Level AA). MIT Touch Lab: average fingertip 16-20mm; targets <44px have 3× higher error rates and up to 75% higher error rates for users with motor impairments.
 
@@ -61,7 +70,7 @@ The desktop dashboard can use `sm` and `xs` (toolbars, dense filters, mouse-driv
 - **Never use `font-bold`** — `font-medium` (500) is the rule. Buttons read as confident at 500 + the pill shape.
 - **No icons in text-bearing buttons.** No leading `<Plus>`, no trailing `<ArrowRight>`, no decorative `<Sparkles>`. The label carries the action; an icon next to it doubles the signal and reads as generic SaaS template. Applies to every variant (primary, secondary, outline, ghost, destructive, link). **Three carve-outs:** (1) icon-only buttons where the icon IS the button (close `×`, kebab menu, sidebar nav-rail) — see § Icon-only buttons below; (2) `Loader2` spinner that *replaces* the label during in-flight async actions (see § Loading state above); (3) form-input-shaped triggers (date picker, time picker, select) where the chevron/calendar signals field type, not an action. Otherwise: text only.
 
-> **Note: `secondary` and `outline` variants overlap.** Currently both use `bg-surface border border-border`; "outline" only differs by hover-emphasis. This is redundant — pick one. Recommendation: keep `secondary`, drop `outline` (one less variant for consumers to choose from). If kept, give `outline` a genuinely different look (e.g., transparent bg with stronger border) so the choice is meaningful.
+> **Resolved (2026-05-29):** the system is now filled-only. `secondary` is the filled muted variant (`bg-muted`, no border). `outline` and `outline-soft` are deprecated and should not be used in new code. Migrate existing usages on touch.
 
 ### Loading state
 
@@ -89,17 +98,40 @@ import { Loader2 } from "@/lib/icons";
 - **Screen-reader announcement.** Use `aria-busy="true"` on the button while loading, plus `<span class="sr-only">` to announce the action text. Sonner toast on success/failure carries the result feedback (see #11).
 - **No checkmark-on-success animation in the button.** That's an AI-default flourish. The toast is the success surface; the button just returns to its rest state.
 
-### Icon-only buttons — accessibility
+### Icon-only buttons — soft vs. ghost
 
-Buttons containing only an icon (close × in a dialog header, kebab menu trigger, etc.) MUST carry an `aria-label`:
+Two variants share the icon-only territory; the choice is about *visual weight at rest*:
 
-```html
-<button aria-label="Lukk dialog" class="size-8 grid place-items-center rounded-md hover:bg-muted">
-  <XIcon class="size-4" aria-hidden="true" />
-</button>
+| Variant | When | Visual |
+|---------|------|--------|
+| `soft` + `size="icon"` | **Dedicated icon controls** — dialog/sheet/drawer close ×, kebab menu triggers (`MoreHorizontal` / `MoreVertical`), share, copy-link. The control stands alone and deserves a discoverable tappable target. | 36px filled muted circle (`bg-muted`), hover deepens to `bg-active`. |
+| `ghost` + `size="icon"` | **Inline / dense row actions** — table action columns, toolbar icons next to other content, sidebar nav rail items. A persistent circle would crowd the layout. | 36px transparent, hover fills to `bg-muted`. |
+
+The pill base (`rounded-full`) makes both render as a circle at icon size; only the resting fill differs.
+
+```tsx
+// Close × in a sheet/dialog header
+<Button variant="soft" size="icon" aria-label="Lukk" title="Lukk">
+  <X aria-hidden="true" />
+</Button>
+
+// Kebab trigger on a detail page
+<DropdownMenuTrigger asChild>
+  <Button variant="soft" size="icon" aria-label="Mer" title="Mer">
+    <MoreHorizontal aria-hidden="true" />
+  </Button>
+</DropdownMenuTrigger>
+
+// Inline row action in a dense table — keep ghost
+<Button variant="ghost" size="icon" aria-label="Rediger">
+  <Pencil aria-hidden="true" />
+</Button>
 ```
 
-**Rules:**
+### Icon-only buttons — accessibility
+
+Both variants share the same accessibility rules:
+
 - `aria-label` is **required**. Without it, a screen reader announces only "button" — useless.
 - **Norwegian copy** in the label: `Lukk`, `Mer`, `Slett rad`, `Filtre` — match the rest of the UI.
 - **`aria-hidden="true"` on the icon** — the label IS the accessible name; the icon shouldn't double-read.
@@ -141,7 +173,7 @@ The default container for content is **not a card — it's a `<section>` directl
 
 ## Card
 
-A deliberate tool for explicit grouping. The default tier is **airy** (`p-6`).
+A deliberate tool for explicit grouping — **not the default page-structure mechanism**. Reach for spacing → headings → dividers → rows first. Only when those don't communicate the grouping does a card belong. The white page canvas + structural rhythm is the baseline; cards are a tool of last resort.
 
 ```html
 <div class="
@@ -151,6 +183,17 @@ A deliberate tool for explicit grouping. The default tier is **airy** (`p-6`).
   <!-- card content -->
 </div>
 ```
+
+**Card vs no-card decision:**
+
+| Reach for a card when… | Use spacing/headings/dividers when… |
+|---|---|
+| The section is a distinct surface that floats above the canvas (KPI tile, modal/dialog/popover, course card) | A heading + content + bottom margin already communicates the grouping |
+| Form fields must be bounded as one save unit (sectioned form group) | The form is short and the page title is the only heading needed |
+| The content is a hover-able / clickable tile (cards-on-grid) | The content is a list row that lives inside another container |
+| A destructive zone needs to feel set-apart (the danger-tinted Faresone) | The action is alongside the rest of the page flow |
+
+**Tinted / filled panels are NOT the default.** A `bg-muted` filled panel is appropriate when containment is genuinely needed — destructive zones, contextual callouts, banded info — and inappropriate as a page-structure replacement. **Studio does not adopt "tinted canvas everywhere"** — the white page background stays. Inputs always keep their border (input affordance can't be expressed by fill alone).
 
 ### Padding tiers
 
@@ -518,7 +561,7 @@ Two different error scopes, two different primitives:
 | Scope | Primitive | Example |
 |---|---|---|
 | **Per-field validation** ("Fyll inn navn", "E-postadressen er ikke gyldig") | `<FieldError>` | Inline under the offending input |
-| **Form-level submission** ("Kunne ikke opprette kurset. Prøv igjen.") | `<Alert variant="error" size="sm">` | Below the last field, above the submit button |
+| **Form-level submission** ("Kunne ikke opprette kurset. Prøv igjen.") | `<Alert variant="error">` | Below the last field, above the submit button |
 | **Section-level data load** ("Kunne ikke laste kursene") | `<ErrorState onRetry={...}>` | Replaces the card body or list |
 | **Transient post-action** ("Kunne ikke lagre — prøv igjen") | `toast.error()` | Bottom-center, auto-dismiss |
 
@@ -947,7 +990,7 @@ import { Link } from "react-router-dom";
 
     {/* Footer — single escape link, nothing else */}
     <div className="border-t border-border px-6 py-4 bg-background">
-      <Button variant="ghost" size="sm" asChild
+      <Button variant="ghost" asChild
         className="-ml-2 text-foreground-muted hover:text-foreground"
       >
         <Link to={`/courses/${id}`} onClick={() => setOpen(false)}>
@@ -975,8 +1018,8 @@ For "Create X" flows the entity doesn't exist yet, so an "Åpne X-side" link mak
     {/* 6–8 essential fields, no advanced options */}
   </div>
   <div className="border-t border-border px-6 py-4 flex justify-end gap-2 bg-background">
-    <Button variant="ghost" size="sm" onClick={onCancel}>Avbryt</Button>
-    <Button size="sm" onClick={onCreate}>Opprett</Button>
+    <Button variant="ghost" onClick={onCancel}>Avbryt</Button>
+    <Button onClick={onCreate}>Opprett</Button>
   </div>
 </SheetContent>
 ```
@@ -1109,8 +1152,8 @@ Pattern observed in Linear's issue detail right rail.
 **Footer** — sticky, right-aligned actions:
 ```html
 <div class="border-t border-border px-6 py-3 flex justify-end gap-2 bg-surface">
-  <Button variant="secondary" size="sm">Avbryt</Button>
-  <Button size="sm">Lagre endringer</Button>
+  <Button variant="secondary">Avbryt</Button>
+  <Button>Lagre endringer</Button>
 </div>
 ```
 
@@ -1131,7 +1174,7 @@ If the drawer has unsaved form changes, intercept dismiss and confirm via dialog
 | Pure view | No footer |
 | Detail with destructive actions | Primary footer + kebab menu in header for "Refunder", "Slett", etc. |
 
-**Drop `[Avbryt]` from all drawer footers.** The drawer already has three close affordances (× button, Esc, backdrop tap when clean) per `patterns.md` §15.4. A fourth Cancel button in the footer is visual noise that fights the primary action for attention. Modern reference apps — Linear new-issue, Notion add-page, Stripe checkout — all drop it. Primary action only, right-aligned, `size="sm"` (32px).
+**Drop `[Avbryt]` from all drawer footers.** The drawer already has three close affordances (× button, Esc, backdrop tap when clean) per `patterns.md` §15.4. A fourth Cancel button in the footer is visual noise that fights the primary action for attention. Modern reference apps — Linear new-issue, Notion add-page, Stripe checkout — all drop it. Primary action only, right-aligned, default button size.
 
 For drawers with form input, pair this footer with the **silent backdrop block** when dirty (see `patterns.md` §15.4) — that's the safety mechanism that replaces a Cancel button's "let me back out" affordance.
 
@@ -1383,7 +1426,7 @@ The selected day is a **filled circle** (`rounded-full`), not a square. Matches 
 ### Calendar header
 
 - Month + year label centered (e.g., `mai 2026`)
-- Prev/next month arrows (chevron icons), `btn-ghost icon-sm`
+- Prev/next month arrows (chevron icons), `btn-ghost icon`
 - Day-of-week row: Norwegian Bokmål — `M T O T F L S` (Mon-first)
 
 ---
@@ -1494,7 +1537,7 @@ Import from `@/components/page-state/page-state`. The primitive renders the shel
 - **No status-code eyebrow** ("404", "500", "Error"). Eyebrows are developer-speak.
 - **No dual button.** The earlier shell paired a primary pill with an inline arrow link below. That's still two-decision UI. Render one action (when the variant has a useful destination) or none.
 - **Illustration slot above the headline.** Default: empty. Pass a line-art SVG via `illustration` prop when available; the slot just gives it consistent spacing (`mb-8`).
-- **`text-sm` description, `text-2xl font-semibold` headline.** Same scale on dashboard and public surface — the shell is meta-content, not page body, so it doesn't follow the 14px/16px split.
+- **`text-sm` description, `text-2xl font-semibold` headline.** Same scale on dashboard and public surface — the shell is meta-content, not page body, so it intentionally uses secondary text for the description.
 
 ```html
 <!-- Output of <PageState /> -->
@@ -1746,19 +1789,18 @@ See `patterns.md` § 12 for the full doctrine — undo-first by default; standar
 ### Standard confirm — Tier 2
 
 ```tsx
-import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 <ConfirmDialog
   open={open}
   onOpenChange={setOpen}
-  ariaLabel="Avlyse kurset"
-  headline="Kurset avlyses og 12 deltakere refunderes. Det kan ikke angres."
-  scope={
-    <ConfirmScopeItem
-      name="Vinyasa Flow"
-      meta="12 deltakere refunderes"
-      trailing={formatKroner(5400)}
-    />
+  ariaLabel="Avlys kurs"
+  title="Avlys kurs"
+  body={
+    <>
+      <strong>Vinyasa nivå 1</strong> avlyses — 12 deltakere refunderes{' '}
+      <strong>{formatKroner(5400)}</strong> og varsles.
+    </>
   }
   actionLabel="Avlys kurs"
   onConfirm={handleCancelCourse}
@@ -1768,20 +1810,42 @@ import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog'
 ```
 
 **Rules:**
-- **No visible title.** `ariaLabel` is announced by screen readers; sighted users see the compound headline + scope card below. The headline does what a title would, with specifics.
-- **Compound headline** — one sentence stating action + consequence + reversibility: "Påmeldingen avbestilles og hele beløpet refunderes (5–10 virkedager)." Foreground color, `text-sm font-semibold leading-snug`, `mb-5` breathing room before the scope card. **Wrapper handles this — don't override.**
-- **Scope card is tonal, not just outlined.** `bg-muted/40` + soft border (`border-border/60`), `rounded-lg`. The tonal lift gives the card real presence on the dialog surface. Wrapper handles this.
-- **Card content is left-aligned.** Item name on line 1 (`text-sm font-medium`), meta on line 2 (`text-xs text-foreground-muted tabular-nums`), optional trailing amount on the right (`text-sm font-medium tabular-nums`). Use `<ConfirmScopeItem>` — don't hand-roll.
-- **Multi-item scope** (e.g., refund preview with N participants): use `<ConfirmScopeRow>` for each row, with `flex justify-between` and soft dividers (`border-border/60`). Wrap in `<>` after a primary `<ConfirmScopeItem>` summary row. Cap height at `180–240px` with `overflow-y-auto` for long lists.
-- **No description paragraph below the card.** The headline absorbs the consequence note. Card → optional checkbox / type-to-confirm input → footer. Don't add explanatory `<p>` blocks.
-- **Destructive button is monochrome.** `variant="default"` (sand-12 dark fill) — never red. The verb ("Avlys kurs" / "Slett sted" / "Avbestill og refunder") + the scope card + right-side position carry the destructive signal. Red is reserved for `toast.error` and input validation borders. **Wrapper enforces this — there is no `tone` / `actionVariant` prop.**
-- **Cancel left, destructive right** on desktop; stacked with destructive on top on mobile. `AlertDialogFooter` handles this automatically.
-- **Default focus on Cancel.** Radix `AlertDialog` does this for free — never override.
+
+#### Title + body (replaces compound headline + scope card)
+- **Short verb-noun title.** Sentence case Norwegian. `Avlys kurs`, not `Avlyse kurset?` (question), not `Kurset avlyses og 12 deltakere refunderes…` (compound sentence). `text-base font-medium tracking-tight`, `mb-2`.
+- **Body: ONE sentence with inline `<strong>` for entities.** Norwegian destructive verbs (`avlyse`, `slette permanent`, `avbestille`) already carry finality — drop the English crutch `Det kan ikke angres`. Hard cap: 1 paragraph, max 2 sentences, ~140 chars total. `text-sm text-foreground-muted leading-relaxed`.
+- **Inline-bold entities, not scope cards.** Wrap the affected name, date, amount in `<strong className="text-foreground">`. This replaces the old tonal scope card by default. The reader scans bold tokens for the answer to "what's affected?".
+- **No `<p>` description below body.** Body → optional input/list → footer. Don't stack explanatory paragraphs.
+
+#### Scope card — opt-in only, for actual lists
+- **Default: no scope card.** Use inline-bold body text instead.
+- **Use a scope card only for lists of N items** (refund preview with 3+ participants, multi-resource delete). Pass `scopeList` with rows; render with `divide-y` inside the card.
+- Card style when used: `bg-muted/40` + `rounded-lg` + `p-3`. No border. The tonal lift is enough.
+
+#### Footer — full-width split, both filled, no borders
+- **Two equal-width buttons stretched across the footer.** `flex gap-2` with `flex-1` on each button.
+- **Avbryt LEFT, destructive RIGHT.** Norwegian/web convention; default focus lands on the safe (left) button per `AlertDialog` default.
+- **Both filled, no borders.** Cancel: `bg-muted text-foreground border-0 shadow-none hover:bg-active`. Destructive: `variant="default"` (sand-12 fill).
+- **Destructive button is monochrome.** Never red. The verb + position carry the destructive signal. Red is reserved for `toast.error` and input validation borders.
+- **Button size: `lg`** (40px) inside dialogs. Dialog buttons are the room's focal point — should match the body text's visual weight.
+- **Cancel label is positive when the action is itself "Avbryt".** Pair `Avbestill` ↔ `Behold`, not `Avbestill` ↔ `Avbryt`. Likewise `Avlys` ↔ `Behold`.
+
+#### Type-to-confirm gate (Tier 3 only)
+- Pass `typeToConfirm` prop with the literal word/resource name. Wrapper renders a single-line label + input below the body and disables the action button until exact match (case-sensitive, accent-sensitive, trim whitespace).
+- Label is one line: `<span>Skriv <strong>SLETT</strong> for å bekrefte</span>` — never a multi-line `flex flex-col` that fragments the prose.
+
+#### What we don't add
+- **No acknowledgement checkbox.** The button is the gate. (Removed from spec — the verb-noun action label + the typing requirement on Tier 3 carry the weight.)
+- **No tinted "irreversibility band" when type-to-confirm is present.** Type-to-confirm IS the friction; double-gating is redundant. The optional band is reserved for the rare Tier 2 case where the action is genuinely irreversible AND has no typing gate.
+- **No backdrop blur.** Flat `bg-foreground/40` dim. Blur is going out of fashion (Linear 2026 calmer refresh) and fights the calm aesthetic.
+
+#### Wrapper-handled defaults
+- **Width: `max-w-lg`** (~512px) on desktop, `w-[calc(100vw-2rem)]` on mobile.
+- **Padding: `p-6`.**
 - **ESC closes; outside-click does NOT.** Radix `AlertDialog` default.
+- **Default focus on the left/safe button.** Radix `AlertDialog` default.
 - **Loading state on the destructive button** while the network call is in flight. Pass `loading` + `loadingText` props. Cancel button auto-disables.
-- **Width: `max-w-md`** (~448px) on desktop, `w-[calc(100vw-2rem)]` on mobile. Wrapper handles this.
-- **Backdrop: `bg-foreground/40 backdrop-blur-sm`** — 40 % black with blur, slightly weightier than a dim overlay. Wrapper handles this.
-- **Acknowledgement checkbox** when the action sends emails / moves money in bulk: pass a `<label>` + `<Checkbox>` as `children` between the scope card and the footer, gate the destructive button via the `disabled` prop. Example: cancel-course-with-refunds. Single-participant refunds don't need it — the scope card already shows the specific person + amount.
+- **Backdrop: `bg-foreground/40`** — 40% sand-12, flat dim, no blur.
 
 ### Type-to-confirm — Tier 3, catastrophic only
 
@@ -1793,17 +1857,18 @@ function DeleteAccountDialog() {
       open={open}
       onOpenChange={setOpen}
       ariaLabel="Slett konto"
-      headline="All data, inkludert kurs, påmeldinger og meldinger, slettes permanent. Dette kan ikke angres."
-      scope={<ConfirmScopeItem name={email} meta="Permanent sletting" />}
+      title="Slett konto"
+      body={
+        <>
+          Kontoen <strong>{email}</strong> og all tilhørende data slettes permanent.
+        </>
+      }
       actionLabel="Slett konto"
       onConfirm={handleDelete}
-      disabled={confirmText !== 'SLETT'}
-    >
-      <label className="mt-1 flex flex-col gap-2 text-sm text-foreground-muted">
-        Skriv <span className="font-mono font-medium text-foreground">SLETT</span> for å bekrefte
-        <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
-      </label>
-    </ConfirmDialog>
+      typeToConfirm="SLETT"
+      typeToConfirmValue={confirmText}
+      onTypeToConfirmChange={setConfirmText}
+    />
   )
 }
 ```
@@ -1812,6 +1877,7 @@ function DeleteAccountDialog() {
 - **Type the resource name** for org-scoped actions (delete studio: type the studio name). Use a literal word (`SLETT`) only for account-level actions where there's no specific resource name to type.
 - **Disabled until exact match** — case-sensitive, accent-sensitive, trim whitespace.
 - **Reserved for catastrophic cascading actions only.** Studio: delete account (`SLETT`), delete studio (studio name). Refunds, cancel-course, delete-anything-else are Tier 2 — do not use type-to-confirm for them.
+- **No tinted band when type-to-confirm is present.** The typing requirement is the friction.
 
 ### When to use what
 
@@ -1827,48 +1893,49 @@ function DeleteAccountDialog() {
 
 For doctrine — when to use, variants, copy — see `patterns.md` § 11. This section covers the visual spec only.
 
-### Anatomy
+### Anatomy — small card on a dark surface
 
 ```
-┌──────────────────────────────────────────────────┐
-│ ┃  Påmelding er avbestilt.            [Angre]    │
-└──────────────────────────────────────────────────┘
-  ↑                                          ↑
-  4px stripe (rounded, full-height,         ghost pill,
-  inset by flex gap, color = variant)       btn-sm
+┌──────────────────────────────────────────────────────┐
+│ ●  Påmelding avbestilt                    [Angre]    │
+│    Joe Smith har fått varsel om refusjon.            │
+└──────────────────────────────────────────────────────┘
+  ↑                                              ↑
+  Small icon (size-5) on circle bg,             Action pill
+  top-aligned to title, color = variant         (light-on-dark)
 ```
+
+Two layouts in one component — single-line (title only) or two-line (title + description). Padding is generous so the toast reads as a small card, not a slim pill.
 
 ### Tokens
 
 | Property | Value |
 |---|---|
-| Width | `360px` desktop, `calc(100% - 32px)` mobile |
-| Padding | `12px 16px` |
-| Background | `var(--surface)` (#ffffff) — never filled-color tints |
-| Border | `1px solid var(--border)` |
-| Border-radius | `var(--radius-lg)` (12px) — same as dialogs, NOT pill |
-| Shadow | `0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -4px rgb(0 0 0 / 0.12)` (two-layer; floating element) |
-| Stripe | `4px` wide × `20px` tall (matches body line-height), `border-radius: 9999px`, `align-self: center`. Never stretch — see universal stripe rule below. |
-| Stripe color | none (default) · `#0090ff` (action) · `#e5484d` (error) |
-| Title | `text-sm font-medium text-foreground` (14px / 500 / `#1c2024`) |
-| Description (rare) | `text-xs text-foreground-muted` (12px / 400 / `#60646c`) |
-| Action button | ghost pill, `btn-sm` — `Angre`, `Prøv igjen`, `Vis` |
+| Width | `380px` desktop, `calc(100% - 32px)` mobile |
+| Padding | `20px 20px` (`px-5 py-4`) |
+| Background | `--toast-surface` ≈ `#26241f` (~5-6% lighter than sand-12) — softer than pure foreground. Stand-in: `bg-foreground/95` until token lands. |
+| Border / ring | `ring-1 ring-background/10` — subtle inverse-tone edge so the dark surface separates from light canvases |
+| Border-radius | `var(--radius-2xl)` (16px) — softer than dialog `rounded-xl`, signals "floating notification card" |
+| Shadow | `0 10px 30px -6px rgb(0 0 0 / 0.22)` — single layer, more lift than the old pill |
+| Icon | `size-5` circle, `bg-background/15` for default/success, `bg-danger/30` for error. Lucide `Check` or `AlertCircle` inside at `size-3.5`. Top-aligned to title (`mt-0.5`). |
+| Title | `text-sm font-medium text-background` |
+| Description (optional) | `text-xs text-background/70 mt-0.5` |
+| Action button | Right-aligned, `rounded-full px-3 py-1 text-xs font-medium text-background/90 hover:text-background hover:bg-background/10` |
+
+**No 4px variant stripe.** The icon-on-circle carries the variant signal on a dark surface; the old stripe was a light-surface convention.
 
 ### Position & motion
 
-- **Position: `bottom-center`** on desktop AND mobile. Override Sonner's default. Stack vertically; max 3 visible; replace by `id` on rapid repeats.
-- **Motion**: 200ms slide-up + fade in (`--ease-out`); 150ms slide-down + fade out. No spring/bounce — too playful for the audience. No rotated-fan stack on hover (Sonner default — disable via `expand={false}`).
+- **Position: `bottom-center`** on desktop AND mobile. Stack vertically; max 3 visible; replace by `id` on rapid repeats.
+- **Motion**: 200ms slide-up + fade in (`--ease-out`); 150ms slide-down + fade out. No spring/bounce. No rotated-fan stack on hover (`expand={false}`).
 
 ### Sonner config
-
-Treat Sonner as a queue manager — turn off its visual defaults entirely.
 
 ```tsx
 import { Toaster } from "sonner";
 
 <Toaster
   position="bottom-center"
-  theme="light"
   expand={false}
   visibleToasts={3}
   duration={4000}
@@ -1878,49 +1945,56 @@ import { Toaster } from "sonner";
     unstyled: true,
     classNames: {
       toast:
-        "relative flex items-center gap-3 w-[360px] bg-surface border border-border " +
-        "rounded-xl px-4 py-3 shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_24px_-4px_rgb(0_0_0/0.12)]",
-      title: "text-sm font-medium text-foreground",
-      description: "text-xs text-foreground-muted mt-0.5",
+        "flex items-start gap-3 w-[380px] bg-foreground/95 ring-1 ring-background/10 " +
+        "rounded-2xl px-5 py-4 shadow-[0_10px_30px_-6px_rgb(0_0_0/0.22)]",
+      title: "text-sm font-medium text-background",
+      description: "text-xs text-background/70 mt-0.5",
       actionButton:
-        "ml-auto rounded-full px-3 py-1 text-xs font-medium text-foreground hover:bg-muted",
+        "ml-auto -mr-1 shrink-0 rounded-full px-3 py-1 text-xs font-medium " +
+        "text-background/90 hover:text-background hover:bg-background/10",
     },
   }}
 />
 ```
 
-For variants with the stripe, use `toast.custom()`:
+For variants with the leading icon, use `toast.custom()`:
 
 ```tsx
-toast.custom((t) => (
-  <div className="relative flex items-center gap-3 w-[360px] bg-surface border border-border rounded-xl px-4 py-3 shadow-[...]">
-    <span className="w-1 h-5 self-center rounded-full bg-[#0090ff]" />
-    <p className="flex-1 text-sm font-medium">Påmelding er avbestilt.</p>
-    <button onClick={() => undoCancel(id)} className="rounded-full px-3 py-1 text-xs font-medium hover:bg-muted">
+toast.custom(() => (
+  <div className="flex w-[380px] items-start gap-3 rounded-2xl bg-foreground/95 px-5 py-4 shadow-[0_10px_30px_-6px_rgb(0_0_0/0.22)] ring-1 ring-background/10">
+    <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-background/15 text-background">
+      <Check className="size-3.5" strokeWidth={2.5} />
+    </span>
+    <div className="flex-1 min-w-0">
+      <p className="text-sm font-medium text-background">Påmelding avbestilt</p>
+      <p className="mt-0.5 text-xs text-background/70">Joe Smith har fått varsel om refusjon.</p>
+    </div>
+    <button className="-mr-1 shrink-0 rounded-full px-3 py-1 text-xs font-medium text-background/90 hover:text-background hover:bg-background/10">
       Angre
     </button>
   </div>
 ));
 ```
 
-### Optional — translucent variant
+### Verb pairing with the trigger
 
-For toasts overlaying rich content (image-heavy public pages, customer flow over photos) only:
+Toast copy mirrors the trigger button's verb root, swapped to past tense. The pairing is a hard rule:
 
-```css
-background: rgba(255, 255, 255, 0.92);
-backdrop-filter: blur(8px) saturate(120%);
--webkit-backdrop-filter: blur(8px) saturate(120%);
-```
+| Trigger button | Toast title |
+|---|---|
+| `Avlys kurs` | `Kurs avlyst` |
+| `Avbestill` | `Påmelding avbestilt` |
+| `Slett konto` | `Konto slettet` |
+| `Lagre endringer` | `Endringer lagret` |
 
-Solid `var(--surface)` remains the default on dashboard surfaces — translucency hurts legibility on dense content (Apple themselves shipped iOS 26.4 "ultra-light" mode for this reason). Opt in per-surface, not globally.
+No "Suksess!" / "Vellykket!" prefixes — the past-tense verb IS the success signal.
 
 ### Accessibility
 
-- Sonner provides `role="status"` (default) and `role="alert"` (errors) automatically — don't override.
-- Action button must be reachable via keyboard; Sonner handles focus trap.
-- Stripe color alone never conveys meaning — copy carries semantics. (`Kunne ikke sende melding.` is meaningful without the red stripe.)
-- 4.5:1 contrast: `#1c2024` text on `#ffffff` surface = 14.85:1 ✓.
+- Sonner provides `role="status"` (default) and `role="alert"` (errors) automatically.
+- Action button reachable via keyboard; Sonner handles focus trap.
+- Icon color alone never conveys meaning — title carries semantics (`Kunne ikke sende melding`).
+- Contrast: `#fdfdfc` text on `#26241f` surface ≈ 16:1 — AAA on small text.
 
 ---
 
@@ -1934,7 +2008,7 @@ Single CTA, optional inline link below. **No card wrapper, no icon, no dual-butt
   <p class="mt-1 text-sm text-foreground-muted">
     Når noen booker en plass, vises de her — med betalingsstatus og kontaktinfo.
   </p>
-  <button class="mt-6 btn btn-primary btn-sm">Del booking-lenke</button>
+  <button class="mt-6 btn btn-primary">Del booking-lenke</button>
   <a class="mt-3 text-sm text-foreground-muted underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground-muted">
     Opprett første kurs i stedet →
   </a>

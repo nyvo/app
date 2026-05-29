@@ -23,7 +23,7 @@ export default function GetStartedPage() {
     <div className="flex-1 overflow-y-auto bg-background h-full">
       <MobileTeacherHeader title="Kom i gang" />
       <PageShell
-        width="form"
+        narrow="centered"
         title="Kom i gang"
         action={
           <p className="text-base text-foreground-muted tabular-nums">

@@ -102,7 +102,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
           <Button
             type="button"
             variant="ghost"
-            size="icon-sm"
+            size="icon"
             disabled={disabled}
             className={cn(
               "absolute right-1 top-1/2 -translate-y-1/2 rounded-md text-foreground-muted hover:bg-transparent hover:text-foreground",
@@ -127,7 +127,6 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
             <Button
               type="button"
               variant="plain"
-              size="sm"
               onClick={() => onChange?.("")}
             >
               Nullstill

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
-import { ImagePlus } from '@/lib/icons'
+import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
+import { Upload } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
@@ -26,6 +26,7 @@ interface ImageFieldProps {
   uploadLabel?: string
   changeLabel?: string
   removeLabel?: string
+  loadingLabel?: string
   emptyLabel?: string
   ariaLabel?: string
   className?: string
@@ -54,14 +55,17 @@ export function ImageField({
   uploadLabel = 'Last opp bilde',
   changeLabel = 'Bytt bilde',
   removeLabel = 'Fjern',
-  emptyLabel,
+  loadingLabel = 'Laster opp',
+  emptyLabel = 'Dra inn bildet her, eller klikk for å laste opp.',
   ariaLabel,
   className,
 }: ImageFieldProps) {
+  const id = useId()
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const pickerRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     return () => {
@@ -73,6 +77,12 @@ export function ImageField({
   const displayUrl = previewUrl || value || null
   const displayError = validationError || error
   const isDisabled = disabled || loading
+  const descriptionId = `${id}-description`
+  const errorId = `${id}-error`
+  const describedBy = [
+    description && descriptionId,
+    displayError && errorId,
+  ].filter(Boolean).join(' ') || undefined
 
   const openPicker = useCallback(() => {
     if (!isDisabled) inputRef.current?.click()
@@ -110,6 +120,7 @@ export function ImageField({
     setValidationError(null)
     onChange(null)
     onRemove?.()
+    window.setTimeout(() => pickerRef.current?.focus(), 0)
   }
 
   const handleDrop = useCallback(
@@ -145,12 +156,14 @@ export function ImageField({
       onChange={handleInputChange}
       disabled={isDisabled}
       aria-label={ariaLabel ?? uploadLabel}
+      aria-describedby={describedBy}
       className="hidden"
     />
   )
 
   const pickerButton = (
     <button
+      ref={pickerRef}
       type="button"
       onClick={openPicker}
       onDrop={handleDrop}
@@ -159,12 +172,16 @@ export function ImageField({
       disabled={isDisabled}
       aria-label={ariaLabel ?? (displayUrl ? changeLabel : uploadLabel)}
       aria-invalid={displayError ? true : undefined}
+      aria-describedby={describedBy}
       className={cn(
-        'group relative shrink-0 overflow-hidden bg-muted transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed disabled:opacity-50',
+        'group relative shrink-0 cursor-pointer overflow-hidden transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed',
         isAvatar ? 'size-24 rounded-full' : 'aspect-[16/10] w-full rounded-lg',
+        displayUrl
+          ? 'bg-muted'
+          : 'border border-dashed border-border bg-surface hover:border-foreground/30 hover:bg-muted/40',
         displayError && 'ring-2 ring-danger/20',
-        dragActive && 'bg-active',
-        !displayUrl && 'hover:bg-active',
+        dragActive && !displayUrl && 'border-foreground/40 bg-muted',
+        isDisabled && !loading && 'opacity-50',
       )}
     >
       {displayUrl ? (
@@ -173,13 +190,25 @@ export function ImageField({
           <span className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
         </>
       ) : (
-        <span className="flex size-full flex-col items-center justify-center gap-2 px-4 text-center text-foreground-muted">
-          <ImagePlus className={isAvatar ? 'size-7' : 'size-6'} aria-hidden="true" />
+        <span className="flex size-full flex-col items-center justify-center gap-2 px-4 text-center">
+          <span
+            className={cn(
+              'flex size-10 items-center justify-center text-foreground',
+              !isAvatar && 'rounded-full bg-muted',
+            )}
+          >
+            <Upload className="size-5" aria-hidden="true" />
+          </span>
           {!isAvatar && (
-            <span className="text-sm font-medium text-foreground">
-              {dragActive ? 'Slipp for å laste opp' : emptyLabel ?? uploadLabel}
+            <span className="max-w-64 text-sm text-foreground-muted">
+              {dragActive ? 'Slipp for å laste opp' : emptyLabel}
             </span>
           )}
+        </span>
+      )}
+      {loading && (
+        <span className="absolute inset-0 flex items-center justify-center bg-background/75 text-sm font-medium text-foreground">
+          {loadingLabel}
         </span>
       )}
     </button>
@@ -201,7 +230,6 @@ export function ImageField({
           <Button
             type="button"
             variant="plain"
-            size="sm"
             onClick={openPicker}
             disabled={isDisabled}
           >
@@ -211,7 +239,6 @@ export function ImageField({
           <Button
             type="button"
             variant="plain"
-            size="sm"
             onClick={handleRemove}
             disabled={isDisabled}
             className="hover:text-danger"
@@ -221,10 +248,12 @@ export function ImageField({
         </div>
       )}
       {description && (
-        <p className="text-sm text-foreground-muted">{description}</p>
+        <p id={descriptionId} className="text-sm text-foreground-muted">
+          {description}
+        </p>
       )}
       {displayError && (
-        <p role="alert" className="text-sm text-danger">
+        <p id={errorId} role="alert" className="text-sm text-danger">
           {displayError}
         </p>
       )}

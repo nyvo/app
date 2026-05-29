@@ -224,7 +224,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
         <SheetHeader className="px-6 py-4 border-b border-border">
           <SheetTitle>Opprett kurs</SheetTitle>
           <SheetDescription className="text-base text-foreground-muted">
-            Bare det viktigste – du kan endre alle detaljer på kurssiden etterpå.
+            Du kan legge til mer på kurssiden.
           </SheetDescription>
         </SheetHeader>
 
@@ -299,11 +299,6 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
                   aria-required="true"
                   className={cn(showError('days') && 'border-danger focus-visible:ring-danger')}
                 />
-                {!showError('days') && (parseInt(days, 10) || 1) > 1 && (
-                  <p className="mt-2 text-base text-foreground-muted">
-                    Går over {parseInt(days, 10)} sammenhengende dager.
-                  </p>
-                )}
                 {showError('days') && <FieldError>{errors.days}</FieldError>}
               </div>
             )}
@@ -444,7 +439,6 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
         {/* Sticky footer — primary action only; the sheet's X closes. */}
         <div className="border-t border-border px-6 py-4 flex items-center justify-end bg-background">
           <Button
-            size="sm"
             onClick={handleSubmit}
             loading={isSubmitting}
             loadingText="Oppretter"

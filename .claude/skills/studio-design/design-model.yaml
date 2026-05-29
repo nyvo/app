@@ -91,7 +91,8 @@ tokens:
       h2:        "2xl"      # 24px / 600
       h3:        "xl"       # 20px / 600
       card_title: "base"    # 16px / 600
-      body:      "sm"       # 14px / 400 ← DEFAULT
+      body:      "base"     # 16px / 400 ← DEFAULT; includes helper copy and row subtitles
+      meta:      "sm"       # 14px / 400 — page tabs, dense controls, table headers, tooltips, tiny counters
       caption:   "xs"       # 12px / 400 or 500
     landing_usage:
       display:    "5xl"     # 48px / 600 — hero only, 1 per page (Time2book reference)
@@ -182,23 +183,37 @@ components:
 
   button_secondary:
     source: "derived"
-    background: "{colors.surface}"
-    color: "{sand.12}"
-    border: "1px solid {sand.6}"
+    doctrine: "Filled-only — no border, no shadow. Studio uses two filled button variants: primary (sand-12) and secondary (sand-3 / bg-muted). Hierarchy comes from fill darkness, not borders. The deprecated `outline` variant still exists in code for migration but should not appear in new work. See SKILL.md §3 anti-patterns + components.md § Button."
+    background: "{sand.3}"          # bg-muted — filled, no surface border
+    color: "{sand.12}"              # foreground
+    border: "none"
+    shadow: "none"
     padding: "10px 18px"
-    radius: "{radii.full}"   # PILL
-    hover: { background: "{sand.3}" }
+    radius: "{radii.full}"          # PILL
+    hover: { background: "{sand.4}" } # bg-active — next tonal step
 
   button_ghost:
     source: "derived"
+    doctrine: "Low-emphasis transparent variant. Use for sidebar nav, inline row actions, and dense table action columns where a persistent fill would crowd the layout. For dedicated icon controls (close ×, kebab triggers, share) use `button_soft` instead — the resting muted circle reads as a discoverable tappable target."
     background: "transparent"
     color: "{sand.12}"
     padding: "10px 18px"
     radius: "{radii.full}"   # PILL
     hover: { background: "{sand.3}" }
 
+  button_soft:
+    source: "derived"
+    doctrine: "Dedicated icon controls — close × in dialog/sheet/drawer headers, kebab menu triggers (MoreHorizontal/MoreVertical), share, copy-link. The persistent muted-fill circle (bg-muted at rest, bg-active on hover) makes the control feel like a discoverable tappable target without competing with primary actions. Pair with `size=\"icon\"` for the standard 36px circle. For inline/dense row controls use `button_ghost` instead."
+    background: "{sand.3}"          # bg-muted — filled circle at rest
+    color: "{sand.12}"              # foreground
+    border: "none"
+    shadow: "none"
+    radius: "{radii.full}"          # PILL → circle when size="icon"
+    hover: { background: "{sand.4}" } # bg-active
+
   card:
     source: "derived"
+    doctrine: "A deliberate tool for explicit grouping — NOT the default page-structure mechanism. Reach for spacing → headings → dividers → rows first; only when those don't communicate the grouping does a card belong. White page canvas + structural rhythm is the baseline. Bordered cards are still the correct visual when a card has a clear job (KPI tile, modal, course card, grouped form section, hover-able tile). Tinted/filled panels (bg-muted, danger-subtle) are appropriate only when containment is genuinely needed (destructive zones, contextual callouts) — not as a page-structure replacement. Studio does NOT adopt 'tinted canvas everywhere'. See SKILL.md §2 + components.md § Card."
     background: "{colors.surface}"
     border: "1px solid {sand.6}"
     radius: "{radii.md}"   # 8px

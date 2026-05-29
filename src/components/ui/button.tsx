@@ -14,25 +14,27 @@ import { Spinner } from "./spinner"
  *                shift: sand-12 is already near-black, hover-darken reads
  *                as noise.
  *   secondary  — paired alternative (e.g. "Avbryt" next to a default).
- *   outline    — toolbar / filter-bar buttons; secondary with stronger chrome.
- *                NOTE: overlaps with `secondary` — Studio recommends collapsing
- *                to one. Kept for now.
- *   outline-soft — softer outline; cancel button in dialogs.
- *   ghost      — icon buttons, nav items, close buttons. Hover lifts to bg-muted.
+ *   outline    — deprecated legacy. Use secondary or plain/link instead.
+ *   outline-soft — deprecated legacy.
+ *   ghost      — low-emphasis row actions, sidebar nav, inline icon actions in
+ *                dense lists. Transparent at rest, lifts to bg-muted on hover.
+ *   soft       — dedicated icon controls (close × in dialog/sheet/drawer
+ *                headers, kebab menu triggers, share, etc.). Persistent
+ *                muted-fill circle at rest, deepens to bg-active on hover.
+ *                Use with `size="icon"` for the standard circle affordance.
  *   destructive — destructive action; do not pair two destructive buttons.
  *   link       — inline text link styled as button.
  *   plain      — inline text action with button semantics. No chrome.
  *
  * Size axis (height / horizontal padding / text-size):
- *   xs       24px   px-2     text-xs    Spaced from neighbors per WCAG 2.5.8
- *   sm       32px   px-3     text-sm
- *   default  36px   px-4     text-sm    Most cases
- *   lg       40px   px-5     text-sm
- *   cta      44px   px-6     text-base  Full-width hero CTAs (auth, modals)
- *   icon-*   square — — —    Square pill (becomes a circle via rounded-full)
+ *   default  36px   px-4     text-sm    Normal app buttons
+ *   lg       40px   px-5     text-sm    Modal footer actions
+ *   cta      44px   px-6     text-base  Public/mobile primary CTAs
+ *   icon     36px square              Icon-only controls
+ *   icon-lg  40px square              Larger icon-only controls
  *
  * Touch surfaces (mobile booking, public pages, MobilePriceBar): minimum
- * `default` (36px); CTAs use `cta` (44px). Don't `xs`/`sm` on touch.
+ * `default` (36px); CTAs use `cta` (44px).
  */
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-colors duration-150 ease-out outline-none select-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 dark:aria-invalid:border-danger/50 dark:aria-invalid:ring-danger/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 cursor-pointer",
@@ -46,9 +48,11 @@ const buttonVariants = cva(
         "outline-soft":
           "border-border bg-background text-foreground-muted hover:border-ring hover:bg-muted hover:text-foreground dark:border-border dark:bg-surface-on-dark dark:hover:bg-surface-on-dark",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-secondary text-secondary-foreground hover:bg-active aria-expanded:bg-active aria-expanded:text-secondary-foreground",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted",
+        soft:
+          "bg-muted text-foreground hover:bg-active aria-expanded:bg-active",
         destructive:
           "bg-danger text-danger-foreground hover:bg-danger/90 focus-visible:border-danger/40 focus-visible:ring-danger/20",
         link: "text-primary underline-offset-4 hover:underline",
@@ -56,22 +60,16 @@ const buttonVariants = cva(
           "bg-transparent border-transparent text-foreground-muted hover:bg-transparent hover:text-foreground",
       },
       size: {
-        xs: "h-6 gap-1 px-2 text-xs has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 gap-1.5 px-3 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
         default: "h-9 gap-1.5 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
         lg: "h-10 gap-1.5 px-5 has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
         cta: "h-11 gap-2 px-6 text-base has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5",
         icon: "size-9",
-        "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8",
         "icon-lg": "size-10",
       },
     },
     compoundVariants: [
       // Plain variant strips chrome (height + padding) at every size.
       // Size still controls font-size; `plain` is "text inline, no button shell".
-      { variant: "plain", size: "xs", className: "h-auto p-0" },
-      { variant: "plain", size: "sm", className: "h-auto p-0" },
       { variant: "plain", size: "default", className: "h-auto p-0" },
       { variant: "plain", size: "lg", className: "h-auto p-0" },
       { variant: "plain", size: "cta", className: "h-auto p-0" },
@@ -102,10 +100,7 @@ function Button({
   ...props
 }: ButtonProps) {
   const Comp = asChild ? Slot.Root : "button"
-  const spinnerSize =
-    size === "sm" || size === "xs" || size === "icon-sm" || size === "icon-xs"
-      ? "sm"
-      : "md"
+  const spinnerSize = "md"
 
   return (
     <Comp
