@@ -36,7 +36,7 @@ function BackLink({ onClick, disabled }: { onClick: () => void; disabled?: boole
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="mb-8 inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+      className="mb-7 -ml-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm text-foreground-muted transition-colors duration-150 ease-out cursor-pointer hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
     >
       <ChevronLeft className="size-4" strokeWidth={1.75} />
       Tilbake
@@ -143,8 +143,8 @@ function RoleChooser() {
   return (
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-2xl">
-        <h1 className="mb-8 text-3xl font-medium tracking-tight text-foreground">
-          Velg det som passer best
+        <h1 className="mb-8 text-2xl font-medium tracking-tight text-foreground">
+          Velg kontotype
         </h1>
 
         <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -152,12 +152,12 @@ function RoleChooser() {
           {([
             {
               value: 'buyer' as const,
-              title: 'Booke klasser',
+              title: 'Delta på klasser',
               body: 'Finn klasser hos studioer i nærheten.',
             },
             {
               value: 'seller' as const,
-              title: 'Drive et studio',
+              title: 'Hold kurs',
               body: 'Lag kurs og ta imot påmeldinger.',
             },
           ]).map((opt) => {
@@ -166,7 +166,7 @@ function RoleChooser() {
               <label
                 key={opt.value}
                 className={cn(
-                  'flex items-start gap-3 rounded-lg bg-muted p-4 cursor-pointer transition-shadow duration-150 hover:bg-muted/70 focus-within:ring-2 focus-within:ring-ring',
+                  'flex items-start gap-3 min-h-[7.5rem] rounded-xl bg-muted p-6 cursor-pointer transition-shadow duration-150 hover:bg-muted/70 focus-within:ring-2 focus-within:ring-ring',
                   isSelected && 'ring-2 ring-foreground',
                 )}
               >
@@ -179,8 +179,8 @@ function RoleChooser() {
                   className="sr-only"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-base font-medium text-foreground">{opt.title}</p>
-                  <p className="mt-1 text-base text-foreground-muted leading-relaxed">{opt.body}</p>
+                  <p className="text-sm font-medium text-foreground">{opt.title}</p>
+                  <p className="mt-1 text-sm text-foreground-muted leading-relaxed">{opt.body}</p>
                 </div>
                 {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
               </label>
@@ -251,7 +251,7 @@ function BuyerSetup() {
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
         <BackLink onClick={() => { void handleBack() }} disabled={saving} />
-        <h1 className="mb-8 text-3xl font-medium tracking-tight text-foreground">
+        <h1 className="mb-8 text-2xl font-medium tracking-tight text-foreground">
           Litt om deg
         </h1>
 
@@ -371,22 +371,22 @@ function SellerType({
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={(e) => { e.preventDefault(); onContinue() }} className="w-full max-w-2xl">
         <BackLink onClick={onBack} />
-        <h1 className="mb-8 text-3xl font-medium tracking-tight text-foreground">
-          Hvordan jobber du?
+        <h1 className="mb-8 text-2xl font-medium tracking-tight text-foreground">
+          Velg profiltype
         </h1>
 
         <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <legend className="sr-only">Type virksomhet</legend>
+          <legend className="sr-only">Velg profiltype</legend>
           {([
             {
               value: 'individual' as const,
               title: 'Individuell lærer',
-              body: 'Jeg holder kurs i eget navn. Frilans eller ENK.',
+              body: 'Egen profil med dine kurs.',
             },
             {
               value: 'studio' as const,
               title: 'Studio',
-              body: 'Jeg representerer et studio eller en bedrift.',
+              body: 'Studioprofil med en eller flere lærere.',
             },
           ]).map((opt) => {
             const isSelected = kind === opt.value
@@ -394,7 +394,7 @@ function SellerType({
               <label
                 key={opt.value}
                 className={cn(
-                  'flex items-start gap-3 rounded-lg bg-muted p-4 cursor-pointer transition-shadow duration-150 hover:bg-muted/70 focus-within:ring-2 focus-within:ring-ring',
+                  'flex items-start gap-3 min-h-[7.5rem] rounded-xl bg-muted p-6 cursor-pointer transition-shadow duration-150 hover:bg-muted/70 focus-within:ring-2 focus-within:ring-ring',
                   isSelected && 'ring-2 ring-foreground',
                 )}
               >
@@ -407,8 +407,8 @@ function SellerType({
                   className="sr-only"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-base font-medium text-foreground">{opt.title}</p>
-                  <p className="mt-1 text-base text-foreground-muted leading-relaxed">{opt.body}</p>
+                  <p className="text-sm font-medium text-foreground">{opt.title}</p>
+                  <p className="mt-1 text-sm text-foreground-muted leading-relaxed">{opt.body}</p>
                 </div>
                 {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
               </label>
@@ -427,10 +427,10 @@ function SellerType({
 function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void }) {
   const { profile, ensureSeller, markOnboardingComplete } = useAuth()
   const navigate = useNavigate()
-  const nameLabel = kind === 'studio' ? 'Studionavn' : 'Navn på profilen'
+  const nameLabel = kind === 'studio' ? 'Studionavn' : 'Profilnavn'
   const nameHint =
     kind === 'studio'
-      ? 'Vises offentlig på profilen og kursene dine.'
+      ? 'Kan endres senere.'
       : 'Bruk navnet deltakerne kjenner deg som.'
 
   const [name, setName] = useState(() =>
@@ -444,7 +444,7 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
     const trimmed = name.trim()
     const slug = generateSlug(trimmed)
     if (!trimmed) {
-      setErrors({ name: kind === 'studio' ? 'Skriv inn studionavn' : 'Skriv inn navn på profilen' })
+      setErrors({ name: kind === 'studio' ? 'Skriv inn studionavn' : 'Skriv inn profilnavn' })
       return
     }
     if (slug.length < 3) {
@@ -481,8 +481,8 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
         <BackLink onClick={onBack} disabled={saving} />
-        <h1 className="mb-8 text-3xl font-medium tracking-tight text-foreground">
-          {kind === 'studio' ? 'Sett opp studioet' : 'Sett opp profilen'}
+        <h1 className="mb-8 text-2xl font-medium tracking-tight text-foreground">
+          Sett opp profilen
         </h1>
 
         <div className="grid gap-2">
@@ -500,7 +500,7 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
             aria-invalid={!!errors.name || undefined}
             aria-describedby={`seller-name-hint${errors.name ? ' seller-name-error' : ''}`}
           />
-          <p id="seller-name-hint" className="text-base text-foreground-muted">
+          <p id="seller-name-hint" className="text-sm text-foreground-muted">
             {nameHint}
           </p>
           {errors.name && (
