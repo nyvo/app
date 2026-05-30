@@ -32,6 +32,14 @@ dist-ssr
 # Claude Code MCP config (contains secrets)
 .claude/mcp.json
 
+# Per-developer Claude / Cursor / agent tooling (local-only)
+.claude/settings.local.json
+.claude/skills/impeccable/
+.agents/
+.cursor/
+.github/skills/
+.impeccable/
+
 # Playwright
 test-results/
 playwright-report/
