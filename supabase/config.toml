@@ -18,3 +18,6 @@ verify_jwt = false
 
 [functions.send-pending-confirmations]
 verify_jwt = false
+
+[functions.team-actions]
+verify_jwt = false

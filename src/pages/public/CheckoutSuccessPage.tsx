@@ -63,7 +63,7 @@ const CheckoutSuccessPage = () => {
   const merchantReference = searchParams.get('ref');
   const orgSlugFromUrl = searchParams.get('org');
   const isFreeSignup = searchParams.get('free') === 'true';
-  const lookupId = transactionId || merchantReference;
+  const hasReceiptLookupIds = Boolean(transactionId && merchantReference);
 
   const [loading, setLoading] = useState(true);
   const [signup, setSignup] = useState<SignupDetails | null>(null);
@@ -73,8 +73,14 @@ const CheckoutSuccessPage = () => {
 
   useEffect(() => {
     async function fetchSignupDetails() {
-      if (!lookupId) {
-        // No identifier — free signup or generic success
+      if (!hasReceiptLookupIds) {
+        if (!isFreeSignup && (transactionId || merchantReference)) {
+          logger.warn('Missing paired Dintero identifiers for receipt lookup', {
+            hasTransactionId: Boolean(transactionId),
+            hasMerchantReference: Boolean(merchantReference),
+          });
+          setBookingFailed(true);
+        }
         setLoading(false);
         return;
       }
@@ -123,7 +129,8 @@ const CheckoutSuccessPage = () => {
         // If last attempt failed, show softer message
         if (attempt === maxRetries - 1) {
           logger.warn('Signup not found after max retries:', {
-            lookupId,
+            transactionId,
+            merchantReference,
             attempts: maxRetries,
             lastError: fetchError?.message || 'No data returned',
           });
@@ -137,7 +144,7 @@ const CheckoutSuccessPage = () => {
     }
 
     fetchSignupDetails();
-  }, [lookupId, transactionId, merchantReference, isFreeSignup]);
+  }, [hasReceiptLookupIds, transactionId, merchantReference, isFreeSignup]);
 
   // Format a YYYY-MM-DD date as "Mandag 2. februar". Returns null on bad input
   // so callers can fall back gracefully instead of rendering "Ikke angitt".

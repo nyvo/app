@@ -475,7 +475,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       cover_image_url: null,
       default_course_image_url: null,
       owner_seller_id: row.seller_id,
-      invite_code: '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }

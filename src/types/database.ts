@@ -1,18 +1,3 @@
-/**
- * Auto-generated Supabase types + convenience aliases.
- *
- * Regenerate with: supabase gen types typescript --project-id nollnnkksgicsvuthnjq
- * Last generated: 2026-05-19 (post-M1-final: dropped payment_audit_log.changed_by + idx_signups_package_end_date)
- *
- * Caveat: generated Row types describe the table SCHEMA, not your role's
- * column-level grants. A `select('phone')` against `sellers` compiles here
- * but fails at runtime with 42501. Private seller columns (phone,
- * organization_number, dintero_approval_id, dintero_contract_url, settings)
- * are only readable by members via get_seller_private(). Operational
- * fields (dintero_seller_id, dintero_onboarding_status, seller_type,
- * updated_at) flow through get_seller_operational().
- */
-
 export type Json =
   | string
   | number
@@ -20,61 +5,6 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
-
-// Enum types matching the database
-export type CourseFormat = 'single' | 'series'
-export type DeliveryMode = 'in_person' | 'online'
-export type CourseStatus = 'draft' | 'upcoming' | 'active' | 'completed' | 'cancelled'
-export type SignupStatus = 'confirmed' | 'cancelled' | 'course_cancelled'
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
-export type SellerMemberRole = 'owner' | 'admin'
-export type SessionStatus = 'upcoming' | 'completed' | 'cancelled'
-export type ExceptionType = 'payment_failed' | 'pending_payment'
-// Ticket-type model — every priced unit (course, package, drop-in) is a row in
-// course_signup_packages, distinguished by ticket_kind.
-export type TicketKind = 'package' | 'drop_in' | 'pass'
-export type TicketAudience = 'standard' | 'student' | 'senior' | 'staff'
-
-// Seller's legal entity model.
-export type SellerType = 'individual' | 'business'
-export type UserRole = 'buyer' | 'seller'
-
-// Storefront syndication: a venue/studio team invites a freelancer seller to
-// advertise their courses. 'pending' = awaiting freelancer response.
-export type TeamAffiliationStatus = 'pending' | 'active' | 'declined'
-
-// Display type for signup rows (participant-first view)
-export interface SignupDisplay {
-  id: string;
-  courseId: string;
-  participantName: string;
-  participantEmail: string;
-  className: string;
-  classDate: string;
-  classTime: string;
-  classDateTime: Date;
-  registeredAt: string;
-  registeredAtDate: Date;
-  status: SignupStatus;
-  paymentStatus: PaymentStatus;
-  note?: string;
-  amountPaid?: number | null;
-  dinteroTransactionId?: string | null;
-  sellerId?: string;
-  exceptionType?: ExceptionType | null;
-  courseEnded?: boolean;
-  courseEndDate?: string | null;
-  courseCapacity?: number | null;
-  // Ticket-type info — what the participant actually bought.
-  ticketLabel?: string;
-  ticketKind?: TicketKind;
-  ticketAudience?: TicketAudience;
-  // Course shape, used for the meta line.
-  courseFormat?: CourseFormat;
-  deliveryMode?: DeliveryMode;
-  courseStartDate?: string | null;
-  courseTotalWeeks?: number | null;
-}
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -401,7 +331,6 @@ export type Database = {
           dintero_transaction_id: string | null
           existing_signup_id: string | null
           id: string
-          note: string | null
           participant_email: string
           participant_name: string
           participant_phone: string | null
@@ -429,7 +358,6 @@ export type Database = {
           dintero_transaction_id?: string | null
           existing_signup_id?: string | null
           id?: string
-          note?: string | null
           participant_email: string
           participant_name: string
           participant_phone?: string | null
@@ -457,7 +385,6 @@ export type Database = {
           dintero_transaction_id?: string | null
           existing_signup_id?: string | null
           id?: string
-          note?: string | null
           participant_email?: string
           participant_name?: string
           participant_phone?: string | null
@@ -959,19 +886,19 @@ export type Database = {
       }
       team_slug_aliases: {
         Row: {
+          archived_at: string
           old_slug: string
           team_id: string
-          archived_at: string
         }
         Insert: {
+          archived_at?: string
           old_slug: string
           team_id: string
-          archived_at?: string
         }
         Update: {
+          archived_at?: string
           old_slug?: string
           team_id?: string
-          archived_at?: string
         }
         Relationships: [
           {
@@ -989,7 +916,6 @@ export type Database = {
           created_at: string
           default_course_image_url: string | null
           id: string
-          invite_code: string
           name: string
           owner_seller_id: string
           slug: string
@@ -1000,7 +926,6 @@ export type Database = {
           created_at?: string
           default_course_image_url?: string | null
           id?: string
-          invite_code: string
           name: string
           owner_seller_id: string
           slug: string
@@ -1011,7 +936,6 @@ export type Database = {
           created_at?: string
           default_course_image_url?: string | null
           id?: string
-          invite_code?: string
           name?: string
           owner_seller_id?: string
           slug?: string
@@ -1053,6 +977,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _normalize_team_slug: { Args: { p_input: string }; Returns: string }
       available_ticket_types: {
         Args: { p_course_id: string }
         Returns: {
@@ -1109,8 +1034,25 @@ export type Database = {
       }
       cleanup_old_webhook_events: { Args: never; Returns: number }
       complete_buyer_onboarding: {
-        Args: { p_name: string; p_phone?: string | null }
-        Returns: Database["public"]["Tables"]["profiles"]["Row"]
+        Args: { p_name: string; p_phone?: string }
+        Returns: {
+          created_at: string | null
+          email: string
+          id: string
+          is_platform_admin: boolean | null
+          name: string | null
+          onboarding_completed_at: string | null
+          phone: string | null
+          role: string | null
+          setup_complete_seen_at: string | null
+          updated_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       count_signups_by_ticket_type: {
         Args: { p_course_id: string; p_ticket_type_id: string }
@@ -1144,23 +1086,43 @@ export type Database = {
         }
         Returns: Json
       }
-      create_signup_if_available: {
-        Args: {
-          p_amount_paid: number
-          p_buyer_id?: string
-          p_course_id: string
-          p_course_session_id?: string
-          p_dintero_merchant_reference: string
-          p_dintero_session_id: string
-          p_dintero_transaction_id: string
-          p_participant_email: string
-          p_participant_name: string
-          p_participant_phone: string
-          p_seller_id: string
-          p_ticket_type_id: string
-        }
-        Returns: Json
-      }
+      create_signup_if_available:
+        | {
+            Args: {
+              p_amount_paid: number
+              p_buyer_id?: string
+              p_course_id: string
+              p_course_session_id?: string
+              p_dintero_merchant_reference: string
+              p_dintero_session_id: string
+              p_dintero_transaction_id: string
+              p_participant_email: string
+              p_participant_name: string
+              p_participant_phone: string
+              p_seller_id: string
+              p_ticket_type_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_amount_paid: number
+              p_buyer_id?: string
+              p_course_id: string
+              p_course_session_id?: string
+              p_dintero_merchant_reference: string
+              p_dintero_session_id: string
+              p_dintero_transaction_id: string
+              p_note?: string
+              p_participant_email: string
+              p_participant_name: string
+              p_participant_phone: string
+              p_payment_product?: string
+              p_seller_id: string
+              p_ticket_type_id: string
+            }
+            Returns: Json
+          }
       create_team_invite_link: {
         Args: { p_team_id: string }
         Returns: {
@@ -1232,14 +1194,6 @@ export type Database = {
         Args: { p_team_id: string; p_user_id: string }
         Returns: boolean
       }
-      mark_seller_onboarding_complete: {
-        Args: never
-        Returns: Database["public"]["Tables"]["profiles"]["Row"]
-      }
-      set_user_role: {
-        Args: { p_role: string | null }
-        Returns: Database["public"]["Tables"]["profiles"]["Row"]
-      }
       lookup_team_invite_link: {
         Args: { p_code: string }
         Returns: {
@@ -1250,6 +1204,27 @@ export type Database = {
           team_slug: string
         }[]
       }
+      mark_seller_onboarding_complete: {
+        Args: never
+        Returns: {
+          created_at: string | null
+          email: string
+          id: string
+          is_platform_admin: boolean | null
+          name: string | null
+          onboarding_completed_at: string | null
+          phone: string | null
+          role: string | null
+          setup_complete_seen_at: string | null
+          updated_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       public_signup_counts: {
         Args: { p_course_ids: string[] }
         Returns: {
@@ -1257,6 +1232,15 @@ export type Database = {
           course_id: string
         }[]
       }
+      public_storefront_seller_ids: {
+        Args: { p_team_slug: string }
+        Returns: {
+          owner_seller_id: string
+          seller_id: string
+          team_id: string
+        }[]
+      }
+      reconcile_course_lifecycle: { Args: never; Returns: number }
       redeem_team_invite_link: {
         Args: { p_code: string; p_force_leave?: boolean }
         Returns: {
@@ -1266,8 +1250,37 @@ export type Database = {
         }[]
       }
       rename_team_slug: {
-        Args: { p_team_id: string; p_new_slug: string }
+        Args: { p_new_slug: string; p_team_id: string }
         Returns: string
+      }
+      set_user_role: {
+        Args: { p_role: string }
+        Returns: {
+          created_at: string | null
+          email: string
+          id: string
+          is_platform_admin: boolean | null
+          name: string | null
+          onboarding_completed_at: string | null
+          phone: string | null
+          role: string | null
+          setup_complete_seen_at: string | null
+          updated_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      storage_can_write_course_image: {
+        Args: { p_object_name: string }
+        Returns: boolean
+      }
+      storage_can_write_seller_logo: {
+        Args: { p_object_name: string }
+        Returns: boolean
       }
     }
     Enums: {
@@ -1418,108 +1431,54 @@ export const Constants = {
   },
 } as const
 
-// ============================================================================
-// Convenience aliases
-// ============================================================================
+// Local convenience aliases used throughout the app. Supabase regenerates the
+// schema shape above; keep these lightweight exports in sync with it.
+export type Profile = Tables<"profiles">
+export type Seller = Tables<"sellers">
+export type SellerUpdate = TablesUpdate<"sellers">
+export type Team = Tables<"teams">
+export type Course = Tables<"courses">
+export type CourseInsert = TablesInsert<"courses">
+export type CourseUpdate = TablesUpdate<"courses">
+export type CourseSession = Tables<"course_sessions">
+export type CourseSessionInsert = TablesInsert<"course_sessions">
+export type CourseSessionUpdate = TablesUpdate<"course_sessions">
+export type Signup = Tables<"signups">
+export type SignupInsert = TablesInsert<"signups">
+export type TeacherLocation = Tables<"teacher_locations">
+export type TeacherLocationInsert = TablesInsert<"teacher_locations">
+export type TeacherLocationUpdate = TablesUpdate<"teacher_locations">
+export type TeamAffiliation = Tables<"team_affiliations">
+export type TeamInviteLink = Tables<"team_invite_links">
+export type Notification = Tables<"notifications">
 
-export type Seller = Database['public']['Tables']['sellers']['Row']
-export type SellerInsert = Database['public']['Tables']['sellers']['Insert']
-export type SellerUpdate = Database['public']['Tables']['sellers']['Update']
+export type CourseFormat = Enums<"course_format">
+export type CourseStatus = Enums<"course_status">
+export type DeliveryMode = Enums<"delivery_mode">
+export type PaymentStatus = Enums<"payment_status">
+export type SellerMemberRole = Enums<"seller_member_role">
+export type SignupStatus = Enums<"signup_status">
+export type TicketAudience = Enums<"ticket_audience_t">
+export type TicketKind = Enums<"ticket_kind_t">
 
-export type Profile = Database['public']['Tables']['profiles']['Row']
-export type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
-export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
-
-export type SellerMember = Database['public']['Tables']['seller_members']['Row']
-export type SellerMemberInsert = Database['public']['Tables']['seller_members']['Insert']
-export type SellerMemberUpdate = Database['public']['Tables']['seller_members']['Update']
-
-export type Course = Database['public']['Tables']['courses']['Row']
-export type CourseInsert = Database['public']['Tables']['courses']['Insert']
-export type CourseUpdate = Database['public']['Tables']['courses']['Update']
-
-export type Signup = Database['public']['Tables']['signups']['Row']
-export type SignupInsert = Database['public']['Tables']['signups']['Insert']
-export type SignupUpdate = Database['public']['Tables']['signups']['Update']
-
-export type CourseSession = Database['public']['Tables']['course_sessions']['Row']
-export type CourseSessionInsert = Database['public']['Tables']['course_sessions']['Insert']
-export type CourseSessionUpdate = Database['public']['Tables']['course_sessions']['Update']
-
-export type CourseSignupPackage = Database['public']['Tables']['course_signup_packages']['Row']
-export type CourseSignupPackageInsert = Database['public']['Tables']['course_signup_packages']['Insert']
-export type CourseSignupPackageUpdate = Database['public']['Tables']['course_signup_packages']['Update']
-
-// Friendlier alias — the schema is `course_signup_packages`, but the mental
-// model is ticket types. Prefer TicketType in new code.
-export type TicketType = CourseSignupPackage
-export type TicketTypeInsert = CourseSignupPackageInsert
-export type TicketTypeUpdate = CourseSignupPackageUpdate
-
-// What `available_ticket_types(course_id)` returns — adds seats_remaining.
-export type AvailableTicketType =
-  Database['public']['Functions']['available_ticket_types']['Returns'][number]
-
-export type PaymentAttempt = Database['public']['Tables']['payment_attempts']['Row']
-export type PaymentAttemptInsert = Database['public']['Tables']['payment_attempts']['Insert']
-export type PaymentAttemptUpdate = Database['public']['Tables']['payment_attempts']['Update']
-
-export type TeacherLocation = Database['public']['Tables']['teacher_locations']['Row']
-export type TeacherLocationInsert = Database['public']['Tables']['teacher_locations']['Insert']
-export type TeacherLocationUpdate = Database['public']['Tables']['teacher_locations']['Update']
-
-export type Team = Database['public']['Tables']['teams']['Row']
-export type TeamInsert = Database['public']['Tables']['teams']['Insert']
-export type TeamUpdate = Database['public']['Tables']['teams']['Update']
-
-// Storefront syndication. team_affiliations: studio invites freelancer seller.
-// course_team_listings: per-course opt-in once affiliation is active.
-// See migration 20260429_team_affiliations_and_course_listings.sql.
-export type TeamAffiliation = Database['public']['Tables']['team_affiliations']['Row']
-export type TeamAffiliationInsert = Database['public']['Tables']['team_affiliations']['Insert']
-export type TeamAffiliationUpdate = Database['public']['Tables']['team_affiliations']['Update']
-
-export type CourseTeamListing = Database['public']['Tables']['course_team_listings']['Row']
-export type CourseTeamListingInsert = Database['public']['Tables']['course_team_listings']['Insert']
-export type CourseTeamListingUpdate = Database['public']['Tables']['course_team_listings']['Update']
-
-export type TeamInviteLink = Database['public']['Tables']['team_invite_links']['Row']
-export type TeamInviteLinkInsert = Database['public']['Tables']['team_invite_links']['Insert']
-export type TeamInviteLinkUpdate = Database['public']['Tables']['team_invite_links']['Update']
-
-export type Notification = Database['public']['Tables']['notifications']['Row']
-export type NotificationInsert = Database['public']['Tables']['notifications']['Insert']
-export type NotificationUpdate = Database['public']['Tables']['notifications']['Update']
-
-// In-app notification event taxonomy — mirrors the Deno-side renderer in
-// supabase/functions/_shared/notifications.ts. Use this union when narrowing
-// on `notification.type` to ensure exhaustive matching.
+export type SessionStatus = "upcoming" | "completed" | "cancelled"
+export type TeamAffiliationStatus = "pending" | "active" | "declined"
+export type UserRole = "buyer" | "seller"
+export type ExceptionType = "payment_failed" | "pending_payment"
 export type NotificationType =
-  | 'booking.created'
-  | 'booking.waitlist_promoted'
-  | 'payment.failed'
-  | 'refund.completed'
-  | 'payout.sent'
-  | 'dintero_seller.action_required'
-  | 'dintero_seller.approved'
-  | 'dintero_seller.rejected'
-  | 'team.invite_accepted'
+  | "booking.created"
+  | "booking.waitlist_promoted"
+  | "payment.failed"
+  | "refund.completed"
+  | "payout.sent"
+  | "dintero_seller.action_required"
+  | "dintero_seller.approved"
+  | "dintero_seller.rejected"
+  | "team.invite_accepted"
 
-// RPC payload shapes — kept narrow so the discriminated unions in callers
-// stay exhaustive.
+export type AvailableTicketType =
+  Database["public"]["Functions"]["available_ticket_types"]["Returns"][number]
 export type LookupTeamInviteLinkResult =
-  Database['public']['Functions']['lookup_team_invite_link']['Returns'][number]
+  Database["public"]["Functions"]["lookup_team_invite_link"]["Returns"][number]
 export type RedeemTeamInviteLinkResult =
-  Database['public']['Functions']['redeem_team_invite_link']['Returns'][number]
-
-// Notification preferences stored in sellers.settings JSONB.
-// The 'messages' field is gone along with the messaging subsystem.
-export interface NotificationSettings {
-  newSignups: boolean
-  cancellations: boolean
-  marketing: boolean
-}
-
-export interface SellerSettings {
-  notifications?: NotificationSettings
-}
+  Database["public"]["Functions"]["redeem_team_invite_link"]["Returns"][number]

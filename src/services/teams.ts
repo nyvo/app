@@ -26,9 +26,8 @@ export interface PublicTeam {
 
 /**
  * Update a team's display fields (name, cover). Address + city live on the
- * owning seller — edit those via `updateSeller` instead. Slug and
- * invite_code are deliberately not editable. RLS gates the write through
- * `is_team_admin`.
+ * owning seller — edit those via `updateSeller` instead. Slug is deliberately
+ * not editable. RLS gates the write through `is_team_admin`.
  */
 export async function updateTeam(
   teamId: string,
