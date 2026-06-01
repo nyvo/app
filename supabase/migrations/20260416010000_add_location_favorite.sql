@@ -1,8 +1,3 @@
--- Add is_favorite column to teacher_locations
-alter table teacher_locations
-  add column is_favorite boolean not null default false;
-
--- Ensure at most one favorite per organization
-create unique index teacher_locations_one_favorite_per_org
-  on teacher_locations (organization_id)
-  where (is_favorite = true);
+-- No-op placeholder for migration 20260416010000_add_location_favorite.
+-- The pre-baseline SQL is archived in supabase/migrations_archive/20260601_prebaseline/.
+-- Production already has this migration recorded in supabase_migrations.schema_migrations.

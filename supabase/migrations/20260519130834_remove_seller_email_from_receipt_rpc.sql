@@ -1,0 +1,3 @@
+-- No-op placeholder for migration 20260519130834_remove_seller_email_from_receipt_rpc.
+-- The pre-baseline SQL is archived in supabase/migrations_archive/20260601_prebaseline/.
+-- Production already has this migration recorded in supabase_migrations.schema_migrations.

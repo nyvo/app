@@ -1,0 +1,3 @@
+-- No-op placeholder for migration 20260512143602_drop_team_members_table.
+-- The pre-baseline SQL is archived in supabase/migrations_archive/20260601_prebaseline/.
+-- Production already has this migration recorded in supabase_migrations.schema_migrations.

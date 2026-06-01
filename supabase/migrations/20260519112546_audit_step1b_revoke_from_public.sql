@@ -1,0 +1,3 @@
+-- No-op placeholder for migration 20260519112546_audit_step1b_revoke_from_public.
+-- The pre-baseline SQL is archived in supabase/migrations_archive/20260601_prebaseline/.
+-- Production already has this migration recorded in supabase_migrations.schema_migrations.

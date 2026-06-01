@@ -1,0 +1,3 @@
+-- No-op placeholder for migration 20260531142651_20260531123000_prelaunch_rls_private_surfaces.
+-- The pre-baseline SQL is archived in supabase/migrations_archive/20260601_prebaseline/.
+-- Production already has this migration recorded in supabase_migrations.schema_migrations.

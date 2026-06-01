@@ -1,0 +1,3 @@
+-- No-op placeholder for migration 20260513134820_refund_implies_cancel.
+-- The pre-baseline SQL is archived in supabase/migrations_archive/20260601_prebaseline/.
+-- Production already has this migration recorded in supabase_migrations.schema_migrations.

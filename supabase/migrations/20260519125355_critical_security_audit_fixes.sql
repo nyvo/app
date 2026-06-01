@@ -1,0 +1,3 @@
+-- No-op placeholder for migration 20260519125355_critical_security_audit_fixes.
+-- The pre-baseline SQL is archived in supabase/migrations_archive/20260601_prebaseline/.
+-- Production already has this migration recorded in supabase_migrations.schema_migrations.

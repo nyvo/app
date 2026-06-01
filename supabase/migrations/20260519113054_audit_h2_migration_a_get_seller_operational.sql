@@ -1,0 +1,3 @@
+-- No-op placeholder for migration 20260519113054_audit_h2_migration_a_get_seller_operational.
+-- The pre-baseline SQL is archived in supabase/migrations_archive/20260601_prebaseline/.
+-- Production already has this migration recorded in supabase_migrations.schema_migrations.

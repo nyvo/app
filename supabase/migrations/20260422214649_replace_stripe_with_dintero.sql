@@ -1,0 +1,3 @@
+-- No-op placeholder for migration 20260422214649_replace_stripe_with_dintero.
+-- The pre-baseline SQL is archived in supabase/migrations_archive/20260601_prebaseline/.
+-- Production already has this migration recorded in supabase_migrations.schema_migrations.

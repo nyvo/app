@@ -1,0 +1,3 @@
+-- No-op placeholder for migration 20260426162321_extend_signup_lookup_with_studio_assets.
+-- The pre-baseline SQL is archived in supabase/migrations_archive/20260601_prebaseline/.
+-- Production already has this migration recorded in supabase_migrations.schema_migrations.

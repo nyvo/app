@@ -1,13 +1,3 @@
--- H2 Variant A: after the app now hydrates operational seller fields through
--- get_seller_operational(), narrow direct sellers reads to public columns only.
-
-REVOKE SELECT ON public.sellers FROM anon, authenticated;
-
-GRANT SELECT (
-  id,
-  name,
-  logo_url,
-  email,
-  dintero_onboarding_complete,
-  created_at
-) ON public.sellers TO anon, authenticated;
+-- No-op placeholder for migration 20260519120204_narrow_sellers_select_grants.
+-- The pre-baseline SQL is archived in supabase/migrations_archive/20260601_prebaseline/.
+-- Production already has this migration recorded in supabase_migrations.schema_migrations.

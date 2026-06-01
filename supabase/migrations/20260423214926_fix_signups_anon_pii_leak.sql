@@ -1,0 +1,3 @@
+-- No-op placeholder for migration 20260423214926_fix_signups_anon_pii_leak.
+-- The pre-baseline SQL is archived in supabase/migrations_archive/20260601_prebaseline/.
+-- Production already has this migration recorded in supabase_migrations.schema_migrations.
