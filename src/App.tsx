@@ -122,21 +122,27 @@ function AppRoutes() {
           </Route>
         </Route>
 
-        {/* Dev preview (no auth, direct-URL only) */}
-        <Route path="/dev/token-preview" element={<TokenPreview />} />
-        <Route path="/dev/onboarding-preview" element={<OnboardingPreview />} />
-        <Route path="/dev/create-course-preview" element={<CreateCoursePreview />} />
-        <Route path="/dev/courses-grid-preview" element={<CoursesGridPreview />} />
-        <Route path="/dev/month-grid-preview" element={<MonthGridPreview />} />
-        <Route path="/dev/payout-preview" element={<PayoutPreview />} />
-        <Route path="/dev/income-chart-preview" element={<IncomeChartPreview />} />
-        <Route path="/dev/entity-card-preview" element={<EntityCardPreview />} />
-        <Route path="/dev/dashboard-preview" element={<DashboardPreview />} />
-        <Route path="/dev/courses-list-preview" element={<CoursesListPreview />} />
-        <Route path="/dev/checkout-rework" element={<CheckoutReworkPreview />} />
-        <Route path="/dev/checkout-form-rework" element={<CheckoutFormReworkPreview />} />
-        <Route path="/dev/detail-rework" element={<DetailReworkPreview />} />
-        <Route path="/dev/modals-buttons-toasts" element={<ModalsButtonsToastsPreview />} />
+        {/* Dev preview (no auth, direct-URL only). DEV-only: tree-shaken out
+            of production builds so these half-finished galleries never ship
+            or get indexed. */}
+        {import.meta.env.DEV && (
+          <>
+            <Route path="/dev/token-preview" element={<TokenPreview />} />
+            <Route path="/dev/onboarding-preview" element={<OnboardingPreview />} />
+            <Route path="/dev/create-course-preview" element={<CreateCoursePreview />} />
+            <Route path="/dev/courses-grid-preview" element={<CoursesGridPreview />} />
+            <Route path="/dev/month-grid-preview" element={<MonthGridPreview />} />
+            <Route path="/dev/payout-preview" element={<PayoutPreview />} />
+            <Route path="/dev/income-chart-preview" element={<IncomeChartPreview />} />
+            <Route path="/dev/entity-card-preview" element={<EntityCardPreview />} />
+            <Route path="/dev/dashboard-preview" element={<DashboardPreview />} />
+            <Route path="/dev/courses-list-preview" element={<CoursesListPreview />} />
+            <Route path="/dev/checkout-rework" element={<CheckoutReworkPreview />} />
+            <Route path="/dev/checkout-form-rework" element={<CheckoutFormReworkPreview />} />
+            <Route path="/dev/detail-rework" element={<DetailReworkPreview />} />
+            <Route path="/dev/modals-buttons-toasts" element={<ModalsButtonsToastsPreview />} />
+          </>
+        )}
 
         {/* Flat-slug team pages at root — `ourapp.no/<team-slug>[/courseId]`.
             FlatTeamRoute checks the slug against the reserved-words list and
