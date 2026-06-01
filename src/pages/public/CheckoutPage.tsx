@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageState } from '@/components/page-state/page-state';
 import { embedDinteroCheckout, type DinteroCheckoutInstance } from '@/lib/dintero';
 import { ChevronLeft } from '@/lib/icons';
-import { formatKroner, isValidEmail } from '@/lib/utils';
+import { formatKroner, isValidEmail, isValidPhone } from '@/lib/utils';
 import { calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
 import { fetchPublicCourseBySlug, type PublicCourseWithDetails } from '@/services/publicCourses';
@@ -181,7 +181,7 @@ const CheckoutPage = () => {
   const formValid =
     form.name.trim().length > 0
     && isValidEmail(form.email)
-    && form.phone.trim().length > 0
+    && isValidPhone(form.phone)
     && form.terms
     && !!selectedTier;
 

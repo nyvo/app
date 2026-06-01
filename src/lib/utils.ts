@@ -25,6 +25,20 @@ export function isValidEmail(email: string): boolean {
   return EMAIL_REGEX.test(email);
 }
 
+const PHONE_REGEX = /^\+?\d{8,15}$/;
+
+/**
+ * Lenient phone check for booking forms. Strips spaces, dashes, and
+ * parentheses, then requires 8–15 digits with an optional leading `+`.
+ * Norwegian numbers are 8 digits; the upper bound leaves room for the
+ * occasional foreign student booking with a country code. Deliberately
+ * permissive — the goal is to catch typos and junk, not to reject valid
+ * international numbers.
+ */
+export function isValidPhone(phone: string): boolean {
+  return PHONE_REGEX.test(phone.replace(/[\s\-()]/g, ''));
+}
+
 /**
  * Lowercase + diacritic-strip for Norwegian-name list filters.
  *
