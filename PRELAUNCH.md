@@ -4,6 +4,79 @@ Deferred items from the 2026-05-19 DB audit. Everything in this list is
 non-blocking — the live DB is materially hardened. Order is rough priority,
 not strict dependency.
 
+---
+
+## 2026-06-01 soft-launch readiness review
+
+A code + DB sweep ahead of the soft launch. Findings below; the DB-hygiene
+sections further down were re-checked against the live database on this date
+and are **all still open** (nothing has been applied since 2026-05-19).
+
+### Done (committed this review)
+
+- **Checkout phone validation** — `isValidPhone()` in `src/lib/utils.ts`, wired
+  into `CheckoutPage.tsx` `formValid`. Was `phone.trim().length > 0` (accepted
+  any junk). Covers paid + free flows.
+- **`/dev/*` preview routes gated behind `import.meta.env.DEV`** —
+  `src/App.tsx`. They were public + direct-URL reachable in prod builds.
+- **`VITE_PRELAUNCH` documented in `.env.example`** — flag defaults to
+  signup-LIVE when unset. **ACTION: confirm `VITE_PRELAUNCH=true` is set in the
+  Vercel production environment before deploy.** (Only thing here not closeable
+  from the repo.)
+
+### Real, deferred to post-launch (low risk at soft-launch traffic)
+
+- **Capture-amount defense-in-depth** — `finalize-dintero-transaction` captures
+  `transaction.amount` from Dintero without asserting it equals the expected
+  `payment_attempt` total. Low risk: the amount was set by our own
+  `create-dintero-session` and the customer can't alter it in the embedded flow.
+  Optional hardening, not a blocker.
+- **Rate limiting** on `create-free-signup` and the email functions — a spam
+  vector, but negligible at soft-launch volume. Add if abuse appears.
+
+### Investigated and dismissed — do NOT re-open
+
+These were flagged by an automated review and **verified false** by reading the
+actual code. Recorded so nobody re-investigates:
+
+- **"HTML injection in emails"** — FALSE. `course-message`/`support-message`
+  templates render user text as JSX children (`{...}`), which React escapes.
+  No `dangerouslySetInnerHTML`.
+- **"send-support-message leaks other users' PII"** — FALSE. `signupId` is only
+  honored when the caller is a verified member of the seller that owns the
+  course, and the signup lookup is scoped to both. Sender identity comes from
+  the authenticated profile, not user input.
+- **"delete-account doesn't verify ownership"** — FALSE. Operates only on
+  `auth.userId`; deletes sellers only where the caller is the *sole* `owner`.
+- **"teachers can cancel courses / refund"** — NOT a bug, a product decision.
+  `cancel-course` / `teacher-cancel-signup` allow `owner/admin/teacher`, all
+  verified members of that seller. Fine for solo studios; revisit only when
+  low-trust staff roles exist.
+
+### Manual smoke-test runbook (run before launch — money path has no e2e coverage)
+
+The public booking + payment flow has zero automated tests and Dintero is new
+(April 2026). Run these by hand against sandbox/live before opening signups:
+
+1. **Full paid booking on a real phone** — browse → course detail → checkout →
+   fill form → Dintero embed → success page → confirmation email arrives.
+   Watch the checkout layout on a 390px-wide screen.
+2. **Free signup** — separate path (`window.location` redirect); confirm success
+   page + email.
+3. **Webhook-down → sweep recovery** (most important): start a paid checkout,
+   authorize, then **close the tab before the redirect**. Wait ~3 min for the
+   `sweep-pending-payments` cron. Confirm the signup appears `confirmed` with the
+   correct `amount_paid`, and the Dintero transaction is captured exactly once.
+4. **Seller-onboarding gate** — an un-approved seller must NOT be able to take
+   payment (checkout button blocked).
+5. **Refund / cancel-course as owner** — confirm the buyer is actually refunded
+   in the Dintero backoffice, not just marked refunded in the DB.
+6. **Teacher onboarding incl. a taken studio slug** — the error path must leave
+   the user able to recover, not stuck.
+
+Defer the automated Dintero e2e test to post-launch — sandbox e2e is flaky and
+wouldn't cover the real webhook/capture/refund money movement anyway.
+
 ## Database hygiene
 
 ### M2 — Drop duplicate slug indexes
