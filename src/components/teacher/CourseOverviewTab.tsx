@@ -80,11 +80,26 @@ export function CourseOverviewTab({
   const showTogglesCard =
     isSeries && (status === 'draft' || status === 'upcoming' || status === 'active');
   const showKursplanCard = isSeries && (status === 'upcoming' || status === 'active');
+  const showSingleSessionCard = !isSeries && (status === 'upcoming' || status === 'active');
 
   const kursplanSub =
     status === 'upcoming'
       ? `${course.totalWeeks} timer · starter ${formatNorwegianDate(course.startDate)}`
       : `${course.totalWeeks} timer · pågår`;
+
+  // Single (enkelttime) courses have no kursplan and no series-only toggles, so
+  // surface the one session's date/time + fill rate to keep the Oversikt tab
+  // useful instead of empty.
+  const singleSessionTime = course.timeSchedule.includes(',')
+    ? course.timeSchedule.split(',').pop()!.trim()
+    : course.timeSchedule;
+  const singleSessionSub = [
+    course.startDate ? formatNorwegianDate(course.startDate) : null,
+    singleSessionTime || null,
+    course.capacity > 0 ? `${course.enrolled} av ${course.capacity} påmeldt` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <div>
@@ -137,6 +152,8 @@ export function CourseOverviewTab({
         {showKursplanCard && (
           <KursplanSection sub={kursplanSub} onOpen={onOpenKursplan} />
         )}
+
+        {showSingleSessionCard && <SingleSessionSection sub={singleSessionSub} />}
 
         {status === 'completed' && (
           <EndStateSection
@@ -240,6 +257,17 @@ function KursplanSection({ sub, onOpen }: { sub: string; onOpen: () => void }) {
         <Button variant="secondary" onClick={onOpen}>
           Se kursplan
         </Button>
+      </div>
+    </section>
+  );
+}
+
+function SingleSessionSection({ sub }: { sub: string }) {
+  return (
+    <section className="py-5 first:pt-0 last:pb-0">
+      <div className="min-w-0">
+        <p className="text-base font-medium text-foreground">Timen</p>
+        <p className="text-base text-foreground-muted mt-0.5">{sub}</p>
       </div>
     </section>
   );
