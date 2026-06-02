@@ -331,6 +331,7 @@ export type Database = {
           dintero_transaction_id: string | null
           existing_signup_id: string | null
           id: string
+          note: string | null
           participant_email: string
           participant_name: string
           participant_phone: string | null
@@ -358,6 +359,7 @@ export type Database = {
           dintero_transaction_id?: string | null
           existing_signup_id?: string | null
           id?: string
+          note?: string | null
           participant_email: string
           participant_name: string
           participant_phone?: string | null
@@ -385,6 +387,7 @@ export type Database = {
           dintero_transaction_id?: string | null
           existing_signup_id?: string | null
           id?: string
+          note?: string | null
           participant_email?: string
           participant_name?: string
           participant_phone?: string | null
