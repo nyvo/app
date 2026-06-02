@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { FieldError } from '@/components/ui/field-error';
 import { PageState } from '@/components/page-state/page-state';
 import { embedDinteroCheckout, type DinteroCheckoutInstance } from '@/lib/dintero';
 import { ChevronLeft } from '@/lib/icons';
@@ -51,6 +52,8 @@ const CheckoutPage = () => {
 
   const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({ name: '', email: '', phone: '', note: '', terms: false });
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [emailMessage, setEmailMessage] = useState<string | null>(null);
   // Two-step in-place flow: 'contact' shows the kontaktinfo form, 'payment'
@@ -184,6 +187,23 @@ const CheckoutPage = () => {
     && isValidPhone(form.phone)
     && form.terms
     && !!selectedTier;
+
+  // Inline phone error, shown only after blur and only when the field holds
+  // something that isn't a valid number — an empty field just keeps the
+  // submit button disabled (matches the app's field-error pattern).
+  const phoneError =
+    phoneTouched && form.phone.trim().length > 0 && !isValidPhone(form.phone)
+      ? 'Skriv inn et gyldig telefonnummer.'
+      : null;
+
+  // Client-side email format error (mirrors phone). The server-side
+  // emailMessage (e.g. "already signed up") shares the same slot — the two
+  // can't co-occur, since a malformed email never reaches the server.
+  const emailFormatError =
+    emailTouched && form.email.trim().length > 0 && !isValidEmail(form.email)
+      ? 'Skriv inn en gyldig e-postadresse.'
+      : null;
+  const emailError = emailFormatError || emailMessage;
 
   // ── Dintero session creation, triggered by the "Fortsett til betaling"
   //    click handler below. Living in a handler (vs useEffect on step change)
@@ -338,11 +358,12 @@ const CheckoutPage = () => {
                             setSessionError(null);
                           }
                         }}
-                        aria-invalid={!!emailMessage}
+                        onBlur={() => setEmailTouched(true)}
+                        aria-invalid={!!emailError}
+                        aria-describedby={emailError ? 'email-error' : undefined}
+                        className={emailError ? 'border-danger bg-danger-subtle' : undefined}
                       />
-                      {emailMessage && (
-                        <p className="text-sm text-danger mt-1">{emailMessage}</p>
-                      )}
+                      {emailError && <FieldError id="email-error">{emailError}</FieldError>}
                     </Field>
                     <Field label="Telefon" htmlFor="phone">
                       <Input
@@ -351,9 +372,14 @@ const CheckoutPage = () => {
                         autoComplete="tel"
                         value={form.phone}
                         onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                        onBlur={() => setPhoneTouched(true)}
+                        aria-invalid={!!phoneError}
+                        aria-describedby={phoneError ? 'phone-error' : undefined}
+                        className={phoneError ? 'border-danger bg-danger-subtle' : undefined}
                       />
+                      {phoneError && <FieldError id="phone-error">{phoneError}</FieldError>}
                     </Field>
-                    <Field label="Notat til studioet" htmlFor="note">
+                    <Field label="Melding (valgfritt)" htmlFor="note">
                       <Textarea
                         id="note"
                         value={form.note}
@@ -362,7 +388,7 @@ const CheckoutPage = () => {
                         rows={4}
                       />
                     </Field>
-                    <label className="flex items-start gap-3 cursor-pointer text-base text-foreground pt-1">
+                    <label className="flex items-start gap-3 cursor-pointer text-sm text-foreground pt-1">
                       <Checkbox
                         checked={form.terms}
                         onCheckedChange={(v) =>
@@ -471,7 +497,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <label htmlFor={htmlFor} className="text-base font-medium text-foreground">
+      <label htmlFor={htmlFor} className="text-sm font-medium text-foreground">
         {label}
       </label>
       {children}
