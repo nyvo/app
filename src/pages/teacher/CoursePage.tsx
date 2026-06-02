@@ -52,7 +52,7 @@ import type {
   SignupStatus,
 } from '@/types/database';
 
-type TabKey = 'oversikt' | 'pameldte' | 'rediger';
+type TabKey = 'oversikt' | 'rediger';
 
 /**
  * Course not-found shell — wraps the canonical NotFoundState in the
@@ -514,9 +514,35 @@ const CoursePage = () => {
 
   const tabs: { key: TabKey; label: string; count?: number }[] = [
     { key: 'oversikt', label: 'Oversikt' },
-    { key: 'pameldte', label: 'Påmeldte', count: participantKpis.confirmed },
     { key: 'rediger', label: 'Rediger' },
   ];
+
+  // Session meta for the page header — date/time/place at a glance, since the
+  // Oversikt no longer carries a session card. Series show their weekly
+  // schedule string; single courses show the specific date + start time.
+  const sessionTimeOnly = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/)?.[1] ?? '';
+  const headerMetaRaw = [
+    courseData.format === 'series'
+      ? courseData.timeSchedule
+      : [
+          courseData.startDate
+            ? new Intl.DateTimeFormat('nb-NO', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              }).format(new Date(courseData.startDate))
+            : null,
+          sessionTimeOnly || null,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+    courseData.location || null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const headerMeta = headerMetaRaw
+    ? headerMetaRaw.charAt(0).toUpperCase() + headerMetaRaw.slice(1)
+    : undefined;
 
   // Whether the course has ANY signup rows (confirmed OR cancelled). Cancelled
   // signups still carry payment records under retention, so a finished course
@@ -540,6 +566,7 @@ const CoursePage = () => {
 
       <PageShell
         title={courseData.title}
+        description={headerMeta}
         badge={
           courseData.status === 'cancelled' ? (
             <span className="inline-flex items-center px-2 h-6 rounded-md text-sm font-medium bg-muted text-foreground-muted line-through">
@@ -623,34 +650,155 @@ const CoursePage = () => {
           hidden={activeTab !== 'oversikt'}
         >
           {activeTab === 'oversikt' && (
-            <CourseOverviewTab
-              course={courseData}
-              dinteroOnboardingStatus={currentSeller?.dintero_onboarding_status ?? null}
-              dinteroOnboardingComplete={currentSeller?.dintero_onboarding_complete ?? false}
-              allowsDropIn={settingsAllowsDropIn}
-              onAllowsDropInChange={handleToggleDropIn}
-              dropInPrice={settingsDropInPrice}
-              onDropInPriceChange={setSettingsDropInPrice}
-              acceptsLateSignups={settingsAcceptsLateSignups}
-              onAcceptsLateSignupsChange={handleToggleAcceptsLateSignups}
-              onOpenKursplan={() => setSessionsModalOpen(true)}
-              onSetupDinteroClick={() => navigate(routes.settingsPayouts)}
-              onJumpToField={(field) => {
-                if (field === 'dintero') {
-                  navigate(routes.settingsPayouts);
-                  return;
-                }
-                setActiveTab('rediger');
-                // Scroll after the tab actually mounts. Section ids live on
-                // CourseSettingsTab (Phase 5: course-edit-{image,description,
-                // location}).
-                requestAnimationFrame(() => {
-                  const el = document.getElementById(`course-edit-${field}`);
-                  if (!el) return;
-                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                });
-              }}
-            />
+            <div className="space-y-8">
+              <CourseOverviewTab
+                course={courseData}
+                dinteroOnboardingStatus={currentSeller?.dintero_onboarding_status ?? null}
+                dinteroOnboardingComplete={currentSeller?.dintero_onboarding_complete ?? false}
+                allowsDropIn={settingsAllowsDropIn}
+                onAllowsDropInChange={handleToggleDropIn}
+                dropInPrice={settingsDropInPrice}
+                onDropInPriceChange={setSettingsDropInPrice}
+                acceptsLateSignups={settingsAcceptsLateSignups}
+                onAcceptsLateSignupsChange={handleToggleAcceptsLateSignups}
+                onOpenKursplan={() => setSessionsModalOpen(true)}
+                onSetupDinteroClick={() => navigate(routes.settingsPayouts)}
+                onJumpToField={(field) => {
+                  if (field === 'dintero') {
+                    navigate(routes.settingsPayouts);
+                    return;
+                  }
+                  setActiveTab('rediger');
+                  // Scroll after the tab actually mounts. Section ids live on
+                  // CourseSettingsTab (Phase 5: course-edit-{image,description,
+                  // location}).
+                  requestAnimationFrame(() => {
+                    const el = document.getElementById(`course-edit-${field}`);
+                    if (!el) return;
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  });
+                }}
+              />
+
+              {/* Participant roster — merged in from the former Påmeldte tab so
+                  the Oversikt always has content. Minimal table + drawer; click a
+                  row to open the participant drawer. */}
+              <section>
+                {(() => {
+                  const isFull =
+                    courseData.capacity > 0 && participantKpis.confirmed >= courseData.capacity;
+                  const visible = sortedParticipants;
+                  const PARTICIPANT_COLS =
+                    'grid grid-cols-[minmax(0,1fr)_24px] items-center gap-4 ' +
+                    'md:grid-cols-[minmax(0,1fr)_80px_160px_20px] md:gap-8';
+
+                  return (
+                    <>
+                      <div className="mb-4 flex flex-wrap items-center gap-3">
+                        <span className="text-lg font-medium text-foreground tabular-nums mr-auto">
+                          {courseData.capacity > 0
+                            ? `${participantKpis.confirmed} av ${courseData.capacity} plasser fylt`
+                            : `${participantKpis.confirmed} påmeldt`}
+                        </span>
+                        <Button
+                          variant="secondary"
+                          onClick={handleMessageAllParticipants}
+                          disabled={participantEmails.length === 0}
+                        >
+                          Send melding
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() => setIsAddParticipantOpen(true)}
+                          disabled={isFull}
+                          title={isFull ? 'Kurset er fullt. Øk kapasiteten i fanen Rediger for å legge til flere.' : undefined}
+                        >
+                          Legg til deltaker
+                        </Button>
+                      </div>
+
+                      <div className="rounded-lg border border-border overflow-hidden">
+                        {visible.length === 0 ? (
+                          <EmptyState
+                            title={
+                              sortedParticipants.length === 0
+                                ? 'Ingen påmeldte ennå'
+                                : 'Ingen treff'
+                            }
+                            description={
+                              sortedParticipants.length === 0
+                                ? 'Deltakere som melder seg på, dukker opp her.'
+                                : 'Prøv et annet filter.'
+                            }
+                            className="py-12"
+                          />
+                        ) : (
+                          <div>
+                            <div className={cn(PARTICIPANT_COLS, 'hidden md:grid px-4 py-3 border-b border-border bg-surface text-sm text-foreground-muted')}>
+                              <span>Navn</span>
+                              <span>Notat</span>
+                              <span>Status</span>
+                              <span aria-hidden />
+                            </div>
+
+                            <div className="divide-y divide-border">
+                              {visible.map((p) => {
+                                const name = p.participant_name || p.profile?.name || 'Ukjent';
+                                const email = p.participant_email || p.profile?.email || '';
+                                const status = p.status as SignupStatus;
+                                const paymentStatus = p.payment_status as PaymentStatus;
+                                const isCancelled = status === 'cancelled' || status === 'course_cancelled';
+                                const isHappyPath = paymentStatus === 'paid' && status === 'confirmed';
+                                return (
+                                  <button
+                                    key={p.id}
+                                    type="button"
+                                    onClick={() => setSelectedParticipantId(p.id)}
+                                    className={cn(
+                                      PARTICIPANT_COLS,
+                                      'w-full text-left px-4 py-3 transition-colors cursor-pointer',
+                                      'hover:bg-muted focus-visible:bg-muted outline-none',
+                                      isCancelled && 'opacity-60',
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <UserAvatar name={name} email={email} size="sm" />
+                                      <div className="min-w-0">
+                                        <p
+                                          className={cn(
+                                            'text-base font-medium truncate',
+                                            isCancelled ? 'text-foreground-muted' : 'text-foreground',
+                                          )}
+                                        >
+                                          {name}
+                                        </p>
+                                        <p className="text-sm text-foreground-muted truncate mt-0.5">{email}</p>
+                                      </div>
+                                    </div>
+                                    <div className="hidden md:flex items-center justify-start text-foreground">
+                                      {p.note && <FileText className="size-4" aria-label="Har notat" />}
+                                    </div>
+                                    <div className="hidden md:flex min-w-0">
+                                      {!isHappyPath && (
+                                        <SignupStatusBadge status={status} paymentStatus={paymentStatus} />
+                                      )}
+                                    </div>
+                                    <ChevronRight
+                                      className="size-4 text-foreground-muted shrink-0"
+                                      aria-hidden="true"
+                                    />
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
+              </section>
+            </div>
           )}
         </div>
 
@@ -711,149 +859,6 @@ const CoursePage = () => {
           )}
         </div>
 
-        {/* Påmeldte panel */}
-        <div
-          role="tabpanel"
-          id="course-tab-pameldte"
-          aria-labelledby="course-tab-trigger-pameldte"
-          hidden={activeTab !== 'pameldte'}
-        >
-          {activeTab === 'pameldte' && (
-            <section>
-              {/* Minimal table + drawer pattern. Rows show only identity +
-                  flags (note icon, status badge). Click a row to open the
-                  participant drawer with full details + actions. */}
-              {(() => {
-                const isFull =
-                  courseData.capacity > 0 && participantKpis.confirmed >= courseData.capacity;
-
-                // Filter chips — derive counts from participants. 'attention'
-                // groups everything that needs a teacher action (failed/pending
-                // payments, waitlist). 'cancelled' is its own bucket.
-                const visible = sortedParticipants;
-
-                const PARTICIPANT_COLS =
-                  'grid grid-cols-[minmax(0,1fr)_24px] items-center gap-4 ' +
-                  'md:grid-cols-[minmax(0,1fr)_80px_160px_20px] md:gap-8';
-
-                return (
-                  <>
-                    {/* Section toolbar — count on the left, actions on the
-                        right. Borderless row sitting directly above the table;
-                        the buttons carry their own weight, so the summary reads
-                        as a heading rather than a boxed surface. */}
-                    <div className="mb-4 flex flex-wrap items-center gap-3">
-                      <span className="text-lg font-medium text-foreground tabular-nums mr-auto">
-                        {courseData.capacity > 0
-                          ? `${participantKpis.confirmed} av ${courseData.capacity} plasser fylt`
-                          : `${participantKpis.confirmed} påmeldt`}
-                      </span>
-                      <Button
-                        variant="secondary"
-                        onClick={handleMessageAllParticipants}
-                        disabled={participantEmails.length === 0}
-                      >
-                        Send melding
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={() => setIsAddParticipantOpen(true)}
-                        disabled={isFull}
-                        title={isFull ? 'Kurset er fullt. Øk kapasiteten i fanen Rediger for å legge til flere.' : undefined}
-                      >
-                        Legg til deltaker
-                      </Button>
-                    </div>
-
-                    <div className="rounded-lg border border-border overflow-hidden">
-                      {visible.length === 0 ? (
-                      <EmptyState
-                        title={
-                          sortedParticipants.length === 0
-                            ? 'Ingen påmeldte ennå'
-                            : 'Ingen treff'
-                        }
-                        description={
-                          sortedParticipants.length === 0
-                            ? 'Deltakere som melder seg på, dukker opp her.'
-                            : 'Prøv et annet filter.'
-                        }
-                        className="py-12"
-                      />
-                    ) : (
-                      <div>
-                        {/* Column header — anchored at the leading edge so the
-                            "Navn" label sits above the avatar+name unit. */}
-                        <div className={cn(PARTICIPANT_COLS, 'hidden md:grid px-4 py-3 border-b border-border bg-surface text-sm text-foreground-muted')}>
-                          <span>Navn</span>
-                          <span>Notat</span>
-                          <span>Status</span>
-                          <span aria-hidden />
-                        </div>
-
-                        <div className="divide-y divide-border">
-                          {visible.map((p) => {
-                            const name = p.participant_name || p.profile?.name || 'Ukjent';
-                            const email = p.participant_email || p.profile?.email || '';
-                            const status = p.status as SignupStatus;
-                            const paymentStatus = p.payment_status as PaymentStatus;
-                            const isCancelled = status === 'cancelled' || status === 'course_cancelled';
-                            const isHappyPath = paymentStatus === 'paid' && status === 'confirmed';
-                            return (
-                              <button
-                                key={p.id}
-                                type="button"
-                                onClick={() => setSelectedParticipantId(p.id)}
-                                className={cn(
-                                  PARTICIPANT_COLS,
-                                  'w-full text-left px-4 py-3 transition-colors cursor-pointer',
-                                  'hover:bg-muted focus-visible:bg-muted outline-none',
-                                  isCancelled && 'opacity-60',
-                                )}
-                              >
-                                {/* Identity — avatar + name + email as one unit */}
-                                <div className="flex items-center gap-3 min-w-0">
-                                  <UserAvatar name={name} email={email} size="sm" />
-                                  <div className="min-w-0">
-                                    <p
-                                      className={cn(
-                                        'text-base font-medium truncate',
-                                        isCancelled ? 'text-foreground-muted' : 'text-foreground',
-                                      )}
-                                    >
-                                      {name}
-                                    </p>
-                                    <p className="text-sm text-foreground-muted truncate mt-0.5">{email}</p>
-                                  </div>
-                                </div>
-                                {/* Notat — icon only when a note exists, aligned to start to sit under the header. */}
-                                <div className="hidden md:flex items-center justify-start text-foreground">
-                                  {p.note && <FileText className="size-4" aria-label="Har notat" />}
-                                </div>
-                                {/* Status — empty when healthy, badge otherwise */}
-                                <div className="hidden md:flex min-w-0">
-                                  {!isHappyPath && (
-                                    <SignupStatusBadge status={status} paymentStatus={paymentStatus} />
-                                  )}
-                                </div>
-                                {/* Chevron — indicates the row opens a drawer */}
-                                <ChevronRight
-                                  className="size-4 text-foreground-muted shrink-0"
-                                  aria-hidden="true"
-                                />
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                    </div>
-                  </>
-                );
-              })()}
-            </section>
-          )}
-        </div>
       </PageShell>
 
       {currentSeller?.id && (
