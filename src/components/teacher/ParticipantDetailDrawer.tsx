@@ -250,6 +250,7 @@ export function ParticipantDetailDrawer({
     setLoading(true);
     try {
       await fn();
+      setConfirmKind(null);
       onOpenChange(false);
     } finally {
       setLoading(false);
@@ -465,7 +466,7 @@ export function ParticipantDetailDrawer({
 
       <ConfirmDialog
         open={confirmKind === 'cancel-no-refund'}
-        onOpenChange={(o) => !o && setConfirmKind(null)}
+        onOpenChange={(o) => !o && !loading && setConfirmKind(null)}
         ariaLabel="Avbestill påmelding"
         title="Avbestill påmelding"
         body={
@@ -475,53 +476,49 @@ export function ParticipantDetailDrawer({
         }
         actionLabel="Avbestill"
         cancelLabel="Behold"
-        onConfirm={() => {
-          setConfirmKind(null);
-          runAction(() => onCancelEnrollment(signup.id, false));
-        }}
+        loading={loading}
+        loadingText="Avbestiller…"
+        onConfirm={() => runAction(() => onCancelEnrollment(signup.id, false))}
       />
 
       <ConfirmDialog
         open={confirmKind === 'cancel-with-refund'}
-        onOpenChange={(o) => !o && setConfirmKind(null)}
+        onOpenChange={(o) => !o && !loading && setConfirmKind(null)}
         ariaLabel="Avbestill og refunder"
         title="Avbestill og refunder"
         body={<><strong>{name}</strong> avbestilles og refunderes <strong>{formatKroner(signup.amount_paid ?? 0)}</strong>.</>}
         actionLabel="Avbestill og refunder"
         cancelLabel="Behold"
-        onConfirm={() => {
-          setConfirmKind(null);
-          runAction(() => onCancelEnrollment(signup.id, true));
-        }}
+        loading={loading}
+        loadingText="Refunderer…"
+        onConfirm={() => runAction(() => onCancelEnrollment(signup.id, true))}
       />
 
       <ConfirmDialog
         open={confirmKind === 'refund-only'}
-        onOpenChange={(o) => !o && setConfirmKind(null)}
+        onOpenChange={(o) => !o && !loading && setConfirmKind(null)}
         ariaLabel="Refunder beløp"
         title="Refunder beløp"
         body={<><strong>{name}</strong> refunderes <strong>{formatKroner(signup.amount_paid ?? 0)}</strong>.</>}
         actionLabel="Refunder"
-        onConfirm={() => {
-          setConfirmKind(null);
-          // Reuse cancel-enrollment with refund=true; the edge function
-          // detects the already-cancelled state and processes refund-only
-          // without changing the signup status.
-          runAction(() => onCancelEnrollment(signup.id, true));
-        }}
+        loading={loading}
+        loadingText="Refunderer…"
+        // Reuse cancel-enrollment with refund=true; the edge function detects
+        // the already-cancelled state and processes refund-only without
+        // changing the signup status.
+        onConfirm={() => runAction(() => onCancelEnrollment(signup.id, true))}
       />
 
       <ConfirmDialog
         open={confirmKind === 'resolve'}
-        onOpenChange={(o) => !o && setConfirmKind(null)}
+        onOpenChange={(o) => !o && !loading && setConfirmKind(null)}
         ariaLabel="Merk som betalt"
         title="Merk som betalt"
         body={<><strong>{name}</strong> markeres som betalt for <strong>{courseTitle}</strong>.</>}
         actionLabel="Merk som betalt"
-        onConfirm={() => {
-          setConfirmKind(null);
-          runAction(() => onMarkResolved(signup.id));
-        }}
+        loading={loading}
+        loadingText="Lagrer…"
+        onConfirm={() => runAction(() => onMarkResolved(signup.id))}
       />
     </>
   );
