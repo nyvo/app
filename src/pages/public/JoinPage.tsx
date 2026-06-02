@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { authPageVariants, authPageTransition } from '@/lib/motion';
 import { supabase } from '@/lib/supabase';
 import { lookupInviteLink, redeemInviteLink } from '@/services/invite-links';
+import { PageState } from '@/components/page-state/page-state';
 import { friendlyError } from '@/lib/error-messages';
 import type { LookupTeamInviteLinkResult } from '@/types/database';
 
@@ -39,7 +40,8 @@ type JoinPhase =
   | { kind: 'need_force_leave'; existingTeamName: string | null }
   | { kind: 'joined' }
   | { kind: 'already_member' }
-  | { kind: 'own_team' };
+  | { kind: 'own_team' }
+  | { kind: 'no_access' };
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -83,7 +85,7 @@ export default function JoinPage() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isInitialized } = useAuth();
+  const { user, profile, isInitialized } = useAuth();
 
   const [lookup, setLookup] = useState<LookupState>({ status: 'loading' });
   const [phase, setPhase] = useState<JoinPhase>({ kind: 'idle' });
@@ -128,6 +130,12 @@ export default function JoinPage() {
         return;
       case 'own_team':
         setPhase({ kind: 'own_team' });
+        return;
+      case 'no_seller':
+        // Authoritative fallback: account isn't an instructor, so it can't
+        // affiliate with a studio. The render below pre-empts this for known
+        // buyers, but a role-less / lagging-profile user lands here.
+        setPhase({ kind: 'no_access' });
         return;
       case 'in_other_team': {
         // Fetch the leaving team's name for the confirm copy.
@@ -223,6 +231,15 @@ export default function JoinPage() {
         </Button>
       </Shell>
     );
+  }
+
+  // No access — studio invites are for instructors. A participant (buyer)
+  // account can't affiliate with a studio, so show a plain no-access state
+  // instead of offering a join it can't complete. We know the account is a
+  // non-instructor when its profile is loaded and the role isn't 'seller';
+  // the 'no_access' phase is the server-authoritative fallback (no_seller).
+  if (phase.kind === 'no_access' || (profile !== null && profile.role !== 'seller')) {
+    return <PageState variant="generic" />;
   }
 
   // Already a member (either checked on redeem or pre-flight could check)
