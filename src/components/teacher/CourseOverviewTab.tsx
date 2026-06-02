@@ -307,8 +307,8 @@ function KursplanSection({
             {isSeries
               ? 'Kursplan'
               : sessionCount > 1
-                ? `Enkeltkurs (${sessionCount} dager)`
-                : 'Enkeltkurs'}
+                ? `Enkelttime (${sessionCount} dager)`
+                : 'Enkelttime'}
           </p>
           {isSeries ? (
             <p className="text-base text-foreground-muted">{sub}</p>
