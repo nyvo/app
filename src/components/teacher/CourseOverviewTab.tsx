@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Clock } from '@/lib/icons';
+import { Calendar, Clock, MapPin } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -48,6 +48,17 @@ function formatNorwegianDate(input: string | null | undefined): string {
   }).format(date);
 }
 
+// "12:00" + 60 min → "12:00–13:00". Falls back to the raw start if it isn't a
+// parseable HH:MM.
+function buildTimeRange(startTime: string, durationMinutes: number): string {
+  const [h, m] = startTime.split(':').map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return startTime;
+  const end = (h * 60 + m + durationMinutes) % 1440;
+  const eh = String(Math.floor(end / 60)).padStart(2, '0');
+  const em = String(end % 60).padStart(2, '0');
+  return `${startTime}–${eh}:${em}`;
+}
+
 export function CourseOverviewTab({
   course,
   dinteroOnboardingStatus,
@@ -88,18 +99,15 @@ export function CourseOverviewTab({
       : `${course.totalWeeks} timer · pågår`;
 
   // Single (enkelttime) courses have no kursplan and no series-only toggles, so
-  // surface the one session's date/time + fill rate to keep the Oversikt tab
-  // useful instead of empty.
-  const singleSessionTime = course.timeSchedule.includes(',')
+  // surface the one session's date / time / place + fill rate to keep the
+  // Oversikt tab useful instead of empty.
+  const rawSessionTime = course.timeSchedule.includes(',')
     ? course.timeSchedule.split(',').pop()!.trim()
-    : course.timeSchedule;
-  const singleSessionSub = [
-    course.startDate ? formatNorwegianDate(course.startDate) : null,
-    singleSessionTime || null,
-    course.capacity > 0 ? `${course.enrolled} av ${course.capacity} påmeldt` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+    : course.timeSchedule.trim();
+  const singleSessionDate = course.startDate ? formatNorwegianDate(course.startDate) : null;
+  const singleSessionTime = rawSessionTime
+    ? buildTimeRange(rawSessionTime, course.durationMinutes)
+    : null;
 
   return (
     <div>
@@ -153,7 +161,15 @@ export function CourseOverviewTab({
           <KursplanSection sub={kursplanSub} onOpen={onOpenKursplan} />
         )}
 
-        {showSingleSessionCard && <SingleSessionSection sub={singleSessionSub} />}
+        {showSingleSessionCard && (
+          <SingleSessionSection
+            dateLabel={singleSessionDate}
+            timeLabel={singleSessionTime}
+            location={course.location ?? null}
+            enrolled={course.enrolled}
+            capacity={course.capacity}
+          />
+        )}
 
         {status === 'completed' && (
           <EndStateSection
@@ -262,12 +278,53 @@ function KursplanSection({ sub, onOpen }: { sub: string; onOpen: () => void }) {
   );
 }
 
-function SingleSessionSection({ sub }: { sub: string }) {
+function SingleSessionSection({
+  dateLabel,
+  timeLabel,
+  location,
+  enrolled,
+  capacity,
+}: {
+  dateLabel: string | null;
+  timeLabel: string | null;
+  location: string | null;
+  enrolled: number;
+  capacity: number;
+}) {
   return (
     <section className="py-5 first:pt-0 last:pb-0">
-      <div className="min-w-0">
-        <p className="text-base font-medium text-foreground">Timen</p>
-        <p className="text-base text-foreground-muted mt-0.5">{sub}</p>
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+        <div className="min-w-0 space-y-2">
+          <p className="text-base font-medium text-foreground">Enkelttime</p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-base text-foreground-muted">
+            {dateLabel && (
+              <span className="inline-flex items-center gap-1.5 first-letter:uppercase">
+                <Calendar className="size-3.5 shrink-0" strokeWidth={1.75} />
+                {dateLabel}
+              </span>
+            )}
+            {timeLabel && (
+              <span className="inline-flex items-center gap-1.5 tabular-nums">
+                <Clock className="size-3.5 shrink-0" strokeWidth={1.75} />
+                {timeLabel}
+              </span>
+            )}
+            {location && (
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <MapPin className="size-3.5 shrink-0" strokeWidth={1.75} />
+                <span className="truncate">{location}</span>
+              </span>
+            )}
+          </div>
+        </div>
+        {capacity > 0 && (
+          <div className="shrink-0 text-right">
+            <p className="text-base font-medium text-foreground tabular-nums">
+              {enrolled} / {capacity}
+            </p>
+            <p className="text-sm text-foreground-muted">påmeldte</p>
+          </div>
+        )}
       </div>
     </section>
   );
