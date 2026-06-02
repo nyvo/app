@@ -651,39 +651,11 @@ const CoursePage = () => {
         >
           {activeTab === 'oversikt' && (
             <div className="space-y-8">
-              <CourseOverviewTab
-                course={courseData}
-                dinteroOnboardingStatus={currentSeller?.dintero_onboarding_status ?? null}
-                dinteroOnboardingComplete={currentSeller?.dintero_onboarding_complete ?? false}
-                allowsDropIn={settingsAllowsDropIn}
-                onAllowsDropInChange={handleToggleDropIn}
-                dropInPrice={settingsDropInPrice}
-                onDropInPriceChange={setSettingsDropInPrice}
-                acceptsLateSignups={settingsAcceptsLateSignups}
-                onAcceptsLateSignupsChange={handleToggleAcceptsLateSignups}
-                onOpenKursplan={() => setSessionsModalOpen(true)}
-                onSetupDinteroClick={() => navigate(routes.settingsPayouts)}
-                onJumpToField={(field) => {
-                  if (field === 'dintero') {
-                    navigate(routes.settingsPayouts);
-                    return;
-                  }
-                  setActiveTab('rediger');
-                  // Scroll after the tab actually mounts. Section ids live on
-                  // CourseSettingsTab (Phase 5: course-edit-{image,description,
-                  // location}).
-                  requestAnimationFrame(() => {
-                    const el = document.getElementById(`course-edit-${field}`);
-                    if (!el) return;
-                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  });
-                }}
-              />
-
-              {/* Participant roster — merged in from the former Påmeldte tab so
-                  the Oversikt always has content. Minimal table + drawer; click a
-                  row to open the participant drawer. */}
-              <section>
+              {/* Participant roster at the top — its header carries the KPI
+                  count + actions, so it leads. Hidden until the course is
+                  published; a draft can't take signups yet. */}
+              {courseData.status !== 'draft' && (
+                <section>
                 {(() => {
                   const isFull =
                     courseData.capacity > 0 && participantKpis.confirmed >= courseData.capacity;
@@ -798,6 +770,36 @@ const CoursePage = () => {
                   );
                 })()}
               </section>
+              )}
+
+              <CourseOverviewTab
+                course={courseData}
+                dinteroOnboardingStatus={currentSeller?.dintero_onboarding_status ?? null}
+                dinteroOnboardingComplete={currentSeller?.dintero_onboarding_complete ?? false}
+                allowsDropIn={settingsAllowsDropIn}
+                onAllowsDropInChange={handleToggleDropIn}
+                dropInPrice={settingsDropInPrice}
+                onDropInPriceChange={setSettingsDropInPrice}
+                acceptsLateSignups={settingsAcceptsLateSignups}
+                onAcceptsLateSignupsChange={handleToggleAcceptsLateSignups}
+                onOpenKursplan={() => setSessionsModalOpen(true)}
+                onSetupDinteroClick={() => navigate(routes.settingsPayouts)}
+                onJumpToField={(field) => {
+                  if (field === 'dintero') {
+                    navigate(routes.settingsPayouts);
+                    return;
+                  }
+                  setActiveTab('rediger');
+                  // Scroll after the tab actually mounts. Section ids live on
+                  // CourseSettingsTab (Phase 5: course-edit-{image,description,
+                  // location}).
+                  requestAnimationFrame(() => {
+                    const el = document.getElementById(`course-edit-${field}`);
+                    if (!el) return;
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  });
+                }}
+              />
             </div>
           )}
         </div>

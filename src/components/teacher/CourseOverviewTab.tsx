@@ -100,88 +100,90 @@ export function CourseOverviewTab({
   if (!hasContent) return null;
 
   return (
-    <div>
+    <div className="space-y-6">
       {isWaitingForDintero && (
-        <div className="mb-6">
-          <InfoBanner
-            title="Venter på godkjenning fra Dintero."
-            sub="Vi varsler deg på e-post når den er godkjent. Det tar vanligvis 1–2 virkedager."
-            action={{ label: 'Se status', onClick: onSetupDinteroClick }}
-          />
-        </div>
+        <InfoBanner
+          title="Venter på godkjenning fra Dintero."
+          sub="Vi varsler deg på e-post når den er godkjent. Det tar vanligvis 1–2 virkedager."
+          action={{ label: 'Se status', onClick: onSetupDinteroClick }}
+        />
       )}
 
       {status === 'draft' && (
-        <div className="mb-6">
-          <PublishChecklist
-            items={[
-              {
-                key: 'image',
-                title: 'Legg til et bilde',
-                description: 'Anbefalt, men ikke påkrevd for publisering.',
-                done: !!course.imageUrl,
-                required: false,
-              },
-              {
-                key: 'description',
-                title: 'Skriv en kort beskrivelse',
-                description: 'Hva får deltakerne ut av kurset?',
-                done: !!course.description,
-              },
-              {
-                key: 'location',
-                title: 'Velg sted',
-                description: 'Adressen vises på kurssiden og i bekreftelsen.',
-                done: !!course.location,
-              },
-              {
-                key: 'dintero',
-                title: 'Sett opp utbetaling',
-                description: 'Påkrevd for å ta imot påmeldinger.',
-                done: dinteroOnboardingComplete,
-              },
-            ]}
-            onItemClick={onJumpToField}
-          />
-        </div>
+        <PublishChecklist
+          items={[
+            {
+              key: 'image',
+              title: 'Legg til et bilde',
+              description: 'Anbefalt, men ikke påkrevd for publisering.',
+              done: !!course.imageUrl,
+              required: false,
+            },
+            {
+              key: 'description',
+              title: 'Skriv en kort beskrivelse',
+              description: 'Hva får deltakerne ut av kurset?',
+              done: !!course.description,
+            },
+            {
+              key: 'location',
+              title: 'Velg sted',
+              description: 'Adressen vises på kurssiden og i bekreftelsen.',
+              done: !!course.location,
+            },
+            {
+              key: 'dintero',
+              title: 'Sett opp utbetaling',
+              description: 'Påkrevd for å ta imot påmeldinger.',
+              done: dinteroOnboardingComplete,
+            },
+          ]}
+          onItemClick={onJumpToField}
+        />
       )}
 
-      <div className="divide-y divide-border">
-        {showKursplanCard && (
-          <KursplanSection sub={kursplanSub} onOpen={onOpenKursplan} />
-        )}
+      {status === 'completed' && (
+        <EndStateSection
+          title={
+            course.endDate
+              ? `Siste time var ${formatNorwegianDate(course.endDate)}`
+              : 'Kurset er ferdig'
+          }
+          sub={`${course.enrolled} deltakere fullførte kursrekken.`}
+          action={isSeries ? { label: 'Se kursplan', onClick: onOpenKursplan } : undefined}
+        />
+      )}
 
-        {status === 'completed' && (
-          <EndStateSection
-            title={
-              course.endDate
-                ? `Siste time var ${formatNorwegianDate(course.endDate)}`
-                : 'Kurset er ferdig'
-            }
-            sub={`${course.enrolled} deltakere fullførte kursrekken.`}
-            action={isSeries ? { label: 'Se kursplan', onClick: onOpenKursplan } : undefined}
-          />
-        )}
+      {status === 'cancelled' && (
+        <EndStateSection
+          title="Kurset er avlyst"
+          sub="Påmeldte er varslet og refundert."
+        />
+      )}
 
-        {status === 'cancelled' && (
-          <EndStateSection
-            title="Kurset er avlyst"
-            sub="Påmeldte er varslet og refundert."
-          />
-        )}
+      {/* Course options (kursplan + drop-in/late-signups) collected in one
+          bordered container so they read as a single settings group. */}
+      {(showKursplanCard || showTogglesCard) && (
+        <div className="rounded-lg border border-border px-5">
+          <div className="divide-y divide-border">
+            {showKursplanCard && (
+              <KursplanSection sub={kursplanSub} onOpen={onOpenKursplan} />
+            )}
 
-        {showTogglesCard && (
-          <TogglesSection
-            isFree={isFree}
-            allowsDropIn={allowsDropIn}
-            onAllowsDropInChange={onAllowsDropInChange}
-            dropInPrice={dropInPrice}
-            onDropInPriceChange={onDropInPriceChange}
-            acceptsLateSignups={acceptsLateSignups}
-            onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
-          />
-        )}
-      </div>
+            {showTogglesCard && (
+              <TogglesSection
+                isFree={isFree}
+                allowsDropIn={allowsDropIn}
+                onAllowsDropInChange={onAllowsDropInChange}
+                dropInPrice={dropInPrice}
+                onDropInPriceChange={onDropInPriceChange}
+                acceptsLateSignups={acceptsLateSignups}
+                onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -244,7 +246,7 @@ function BaseBanner({
 
 function KursplanSection({ sub, onOpen }: { sub: string; onOpen: () => void }) {
   return (
-    <section className="py-5 first:pt-0 last:pb-0">
+    <section className="py-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="text-base font-medium text-foreground">Kursplan</p>
@@ -306,7 +308,7 @@ function TogglesSection({
   onAcceptsLateSignupsChange,
 }: TogglesSectionProps) {
   return (
-    <section className="py-5 first:pt-0 last:pb-0">
+    <section className="py-5">
       <div className="divide-y divide-border-subtle">
         <DropInToggleRow
           checked={allowsDropIn}
