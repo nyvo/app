@@ -166,7 +166,7 @@ export function CourseOverviewTab({
           mirroring the roster section above. */}
       {(showKursplanCard || showTogglesCard) && (
         <section>
-          <h2 className="mb-4 text-lg font-medium text-foreground">Kursoppsett</h2>
+          <h2 className="mb-4 text-lg font-medium text-foreground">Innstillinger</h2>
           <div className="rounded-lg border border-border px-5">
             <div className="divide-y divide-border">
               {showKursplanCard && (
