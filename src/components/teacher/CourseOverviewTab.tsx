@@ -161,28 +161,32 @@ export function CourseOverviewTab({
         />
       )}
 
-      {/* Course options (kursplan + drop-in/late-signups) collected in one
-          bordered container so they read as a single settings group. */}
+      {/* Course options (kursplan + drop-in/late-signups) collected under one
+          heading + bordered container so they read as a single settings group,
+          mirroring the roster section above. */}
       {(showKursplanCard || showTogglesCard) && (
-        <div className="rounded-lg border border-border px-5">
-          <div className="divide-y divide-border">
-            {showKursplanCard && (
-              <KursplanSection sub={kursplanSub} onOpen={onOpenKursplan} />
-            )}
+        <section>
+          <h2 className="mb-4 text-lg font-medium text-foreground">Kursoppsett</h2>
+          <div className="rounded-lg border border-border px-5">
+            <div className="divide-y divide-border">
+              {showKursplanCard && (
+                <KursplanSection sub={kursplanSub} onOpen={onOpenKursplan} />
+              )}
 
-            {showTogglesCard && (
-              <TogglesSection
-                isFree={isFree}
-                allowsDropIn={allowsDropIn}
-                onAllowsDropInChange={onAllowsDropInChange}
-                dropInPrice={dropInPrice}
-                onDropInPriceChange={onDropInPriceChange}
-                acceptsLateSignups={acceptsLateSignups}
-                onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
-              />
-            )}
+              {showTogglesCard && (
+                <TogglesSection
+                  isFree={isFree}
+                  allowsDropIn={allowsDropIn}
+                  onAllowsDropInChange={onAllowsDropInChange}
+                  dropInPrice={dropInPrice}
+                  onDropInPriceChange={onDropInPriceChange}
+                  acceptsLateSignups={acceptsLateSignups}
+                  onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
+                />
+              )}
+            </div>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
