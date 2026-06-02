@@ -303,7 +303,13 @@ function KursplanSection({
     <section className="py-5 first:pt-0 last:pb-0">
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="min-w-0 space-y-2">
-          <p className="text-base font-medium text-foreground">Kursplan</p>
+          <p className="text-base font-medium text-foreground">
+            {isSeries
+              ? 'Kursplan'
+              : sessionCount > 1
+                ? `Enkeltkurs (${sessionCount} dager)`
+                : 'Enkeltkurs'}
+          </p>
           {isSeries ? (
             <p className="text-base text-foreground-muted">{sub}</p>
           ) : (
