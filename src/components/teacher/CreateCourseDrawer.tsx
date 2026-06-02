@@ -437,9 +437,10 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
         </div>
 
         {/* Sticky footer — primary action only; the sheet's X closes. */}
-        <div className="border-t border-border px-6 py-4 flex items-center justify-end bg-background">
+        <div className="border-t border-border px-6 py-4 bg-background">
           <Button
             onClick={handleSubmit}
+            className="w-full"
             loading={isSubmitting}
             loadingText="Oppretter"
           >
