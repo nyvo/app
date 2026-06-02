@@ -182,8 +182,14 @@ export function CourseOverviewTab({
         />
       )}
 
-      {showSingleSessionCard && (
-        <SingleSessionSection
+      {/* Unified Kursplan section — renders on single + series, "Kursplan"
+          heading either way. Series gets a "Se kursplan" button; single shows
+          the session's date / time / place + fill rate. */}
+      {(showKursplanCard || showSingleSessionCard) && (
+        <KursplanSection
+          isSeries={isSeries}
+          sub={kursplanSub}
+          onOpen={onOpenKursplan}
           dateLabel={singleSessionDate}
           timeLabel={singleSessionTime}
           location={course.location ?? null}
@@ -192,32 +198,16 @@ export function CourseOverviewTab({
         />
       )}
 
-      {/* Course options (kursplan + drop-in/late-signups) collected under one
-          heading + bordered container so they read as a single settings group,
-          mirroring the roster section above. */}
-      {(showKursplanCard || showTogglesCard) && (
-        <section>
-          <h2 className="mb-4 text-lg font-medium text-foreground">Innstillinger</h2>
-          <div className="rounded-lg border border-border px-5">
-            <div className="divide-y divide-border">
-              {showKursplanCard && (
-                <KursplanSection sub={kursplanSub} onOpen={onOpenKursplan} />
-              )}
-
-              {showTogglesCard && (
-                <TogglesSection
-                  isFree={isFree}
-                  allowsDropIn={allowsDropIn}
-                  onAllowsDropInChange={onAllowsDropInChange}
-                  dropInPrice={dropInPrice}
-                  onDropInPriceChange={onDropInPriceChange}
-                  acceptsLateSignups={acceptsLateSignups}
-                  onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
-                />
-              )}
-            </div>
-          </div>
-        </section>
+      {showTogglesCard && (
+        <TogglesSection
+          isFree={isFree}
+          allowsDropIn={allowsDropIn}
+          onAllowsDropInChange={onAllowsDropInChange}
+          dropInPrice={dropInPrice}
+          onDropInPriceChange={onDropInPriceChange}
+          acceptsLateSignups={acceptsLateSignups}
+          onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
+        />
       )}
     </div>
   );
@@ -279,29 +269,19 @@ function BaseBanner({
 
 // ─── Section row (title + sub + action, sits directly on canvas) ──────
 
-function KursplanSection({ sub, onOpen }: { sub: string; onOpen: () => void }) {
-  return (
-    <section className="py-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-base font-medium text-foreground">Kursplan</p>
-          <p className="text-base text-foreground-muted mt-0.5">{sub}</p>
-        </div>
-        <Button variant="secondary" onClick={onOpen}>
-          Se kursplan
-        </Button>
-      </div>
-    </section>
-  );
-}
-
-function SingleSessionSection({
+function KursplanSection({
+  isSeries,
+  sub,
+  onOpen,
   dateLabel,
   timeLabel,
   location,
   enrolled,
   capacity,
 }: {
+  isSeries: boolean;
+  sub: string;
+  onOpen: () => void;
   dateLabel: string | null;
   timeLabel: string | null;
   location: string | null;
@@ -309,38 +289,48 @@ function SingleSessionSection({
   capacity: number;
 }) {
   return (
-    <section className="py-5 first:pt-0 last:pb-0">
+    <section>
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="min-w-0 space-y-2">
-          <p className="text-base font-medium text-foreground">Enkelttime</p>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-base text-foreground-muted">
-            {dateLabel && (
-              <span className="inline-flex items-center gap-1.5 first-letter:uppercase">
-                <Calendar className="size-3.5 shrink-0" strokeWidth={1.75} />
-                {dateLabel}
-              </span>
-            )}
-            {timeLabel && (
-              <span className="inline-flex items-center gap-1.5 tabular-nums">
-                <Clock className="size-3.5 shrink-0" strokeWidth={1.75} />
-                {timeLabel}
-              </span>
-            )}
-            {location && (
-              <span className="inline-flex min-w-0 items-center gap-1.5">
-                <MapPin className="size-3.5 shrink-0" strokeWidth={1.75} />
-                <span className="truncate">{location}</span>
-              </span>
-            )}
-          </div>
+          <p className="text-lg font-medium text-foreground">Kursplan</p>
+          {isSeries ? (
+            <p className="text-base text-foreground-muted">{sub}</p>
+          ) : (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-base text-foreground-muted">
+              {dateLabel && (
+                <span className="inline-flex items-center gap-1.5 first-letter:uppercase">
+                  <Calendar className="size-3.5 shrink-0" strokeWidth={1.75} />
+                  {dateLabel}
+                </span>
+              )}
+              {timeLabel && (
+                <span className="inline-flex items-center gap-1.5 tabular-nums">
+                  <Clock className="size-3.5 shrink-0" strokeWidth={1.75} />
+                  {timeLabel}
+                </span>
+              )}
+              {location && (
+                <span className="inline-flex min-w-0 items-center gap-1.5">
+                  <MapPin className="size-3.5 shrink-0" strokeWidth={1.75} />
+                  <span className="truncate">{location}</span>
+                </span>
+              )}
+            </div>
+          )}
         </div>
-        {capacity > 0 && (
-          <div className="shrink-0 text-right">
-            <p className="text-base font-medium text-foreground tabular-nums">
-              {enrolled} / {capacity}
-            </p>
-            <p className="text-sm text-foreground-muted">påmeldte</p>
-          </div>
+        {isSeries ? (
+          <Button variant="secondary" onClick={onOpen}>
+            Se kursplan
+          </Button>
+        ) : (
+          capacity > 0 && (
+            <div className="shrink-0 text-right">
+              <p className="text-base font-medium text-foreground tabular-nums">
+                {enrolled} / {capacity}
+              </p>
+              <p className="text-sm text-foreground-muted">påmeldte</p>
+            </div>
+          )
         )}
       </div>
     </section>
