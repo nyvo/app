@@ -63,6 +63,7 @@ export function CourseOverviewTab({
   onJumpToField,
 }: CourseOverviewTabProps) {
   const isSeries = course.format === 'series';
+  const isFree = course.price <= 0;
   // Persisted status is the source of truth — reconcile_course_lifecycle keeps
   // it honest (upcoming/active/completed), so the lifecycle branches below
   // (incl. the `completed` end-state) work directly off it.
@@ -74,7 +75,10 @@ export function CourseOverviewTab({
     dinteroOnboardingStatus !== null &&
     WAITING_STATUSES.has(dinteroOnboardingStatus);
 
-  const showTogglesCard = status === 'draft' || status === 'upcoming' || status === 'active';
+  // Drop-in and late-signups are both series-only concepts (the RPC ignores
+  // them for single courses), so the whole section is hidden on enkelttime.
+  const showTogglesCard =
+    isSeries && (status === 'draft' || status === 'upcoming' || status === 'active');
   const showKursplanCard = isSeries && (status === 'upcoming' || status === 'active');
 
   const kursplanSub =
@@ -155,6 +159,7 @@ export function CourseOverviewTab({
 
         {showTogglesCard && (
           <TogglesSection
+            isFree={isFree}
             allowsDropIn={allowsDropIn}
             onAllowsDropInChange={onAllowsDropInChange}
             dropInPrice={dropInPrice}
@@ -269,6 +274,7 @@ function EndStateSection({
 // ─── Toggles section (drop-in + late signups, lives on canvas) ────────
 
 interface TogglesSectionProps {
+  isFree: boolean;
   allowsDropIn: boolean;
   onAllowsDropInChange: (next: boolean) => void;
   dropInPrice: number;
@@ -278,6 +284,7 @@ interface TogglesSectionProps {
 }
 
 function TogglesSection({
+  isFree,
   allowsDropIn,
   onAllowsDropInChange,
   dropInPrice,
@@ -296,7 +303,11 @@ function TogglesSection({
         />
         <ToggleRow
           label="Tillat påmelding etter oppstart"
-          help="Prisen blir justert automatisk etter antall uker igjen."
+          help={
+            isFree
+              ? 'Lar deltakere melde seg på etter at kurset har startet.'
+              : 'Prisen blir justert automatisk etter antall uker igjen.'
+          }
           checked={acceptsLateSignups}
           onChange={onAcceptsLateSignupsChange}
         />
