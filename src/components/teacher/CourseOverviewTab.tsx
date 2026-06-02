@@ -182,32 +182,36 @@ export function CourseOverviewTab({
         />
       )}
 
-      {/* Unified Kursplan section — renders on single + series, "Kursplan"
-          heading either way. Series gets a "Se kursplan" button; single shows
-          the session's date / time / place + fill rate. */}
-      {(showKursplanCard || showSingleSessionCard) && (
-        <KursplanSection
-          isSeries={isSeries}
-          sub={kursplanSub}
-          onOpen={onOpenKursplan}
-          dateLabel={singleSessionDate}
-          timeLabel={singleSessionTime}
-          location={course.location ?? null}
-          enrolled={course.enrolled}
-          capacity={course.capacity}
-        />
-      )}
+      {/* Kursplan + drop-in/late-signups sit together as borderless peer rows
+          (same hierarchy), Kursplan first. Series Kursplan gets a "Se kursplan"
+          button; single shows the session row. */}
+      {(showKursplanCard || showSingleSessionCard || showTogglesCard) && (
+        <div className="divide-y divide-border">
+          {(showKursplanCard || showSingleSessionCard) && (
+            <KursplanSection
+              isSeries={isSeries}
+              sub={kursplanSub}
+              onOpen={onOpenKursplan}
+              dateLabel={singleSessionDate}
+              timeLabel={singleSessionTime}
+              location={course.location ?? null}
+              enrolled={course.enrolled}
+              capacity={course.capacity}
+            />
+          )}
 
-      {showTogglesCard && (
-        <TogglesSection
-          isFree={isFree}
-          allowsDropIn={allowsDropIn}
-          onAllowsDropInChange={onAllowsDropInChange}
-          dropInPrice={dropInPrice}
-          onDropInPriceChange={onDropInPriceChange}
-          acceptsLateSignups={acceptsLateSignups}
-          onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
-        />
+          {showTogglesCard && (
+            <TogglesSection
+              isFree={isFree}
+              allowsDropIn={allowsDropIn}
+              onAllowsDropInChange={onAllowsDropInChange}
+              dropInPrice={dropInPrice}
+              onDropInPriceChange={onDropInPriceChange}
+              acceptsLateSignups={acceptsLateSignups}
+              onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
+            />
+          )}
+        </div>
       )}
     </div>
   );
@@ -289,10 +293,10 @@ function KursplanSection({
   capacity: number;
 }) {
   return (
-    <section>
+    <section className="py-5 first:pt-0 last:pb-0">
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="min-w-0 space-y-2">
-          <p className="text-lg font-medium text-foreground">Kursplan</p>
+          <p className="text-base font-medium text-foreground">Kursplan</p>
           {isSeries ? (
             <p className="text-base text-foreground-muted">{sub}</p>
           ) : (
@@ -385,7 +389,7 @@ function TogglesSection({
   onAcceptsLateSignupsChange,
 }: TogglesSectionProps) {
   return (
-    <section className="py-5">
+    <section className="py-5 first:pt-0 last:pb-0">
       <div className="divide-y divide-border-subtle">
         <DropInToggleRow
           checked={allowsDropIn}
