@@ -650,6 +650,7 @@ const CoursePage = () => {
                   el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
               }}
+              sessionCount={sessions.length}
             />
           )}
         </div>

@@ -29,6 +29,9 @@ interface CourseOverviewTabProps {
   /** Caller decides what each checklist row navigates to (image/description/
    *  location → Rediger tab; dintero → onSetupDinteroClick). */
   onJumpToField: (key: ChecklistItemKey) => void;
+  /** Total session rows on the course — drives whether the "Se kursplan"
+   *  button shows (multi-session: a series, or a multi-day single). */
+  sessionCount: number;
 }
 
 const WAITING_STATUSES = new Set([
@@ -72,6 +75,7 @@ export function CourseOverviewTab({
   onOpenKursplan,
   onSetupDinteroClick,
   onJumpToField,
+  sessionCount,
 }: CourseOverviewTabProps) {
   const isSeries = course.format === 'series';
   const isFree = course.price <= 0;
@@ -190,6 +194,7 @@ export function CourseOverviewTab({
           {(showKursplanCard || showSingleSessionCard) && (
             <KursplanSection
               isSeries={isSeries}
+              sessionCount={sessionCount}
               sub={kursplanSub}
               onOpen={onOpenKursplan}
               dateLabel={singleSessionDate}
@@ -275,6 +280,7 @@ function BaseBanner({
 
 function KursplanSection({
   isSeries,
+  sessionCount,
   sub,
   onOpen,
   dateLabel,
@@ -284,6 +290,7 @@ function KursplanSection({
   capacity,
 }: {
   isSeries: boolean;
+  sessionCount: number;
   sub: string;
   onOpen: () => void;
   dateLabel: string | null;
@@ -322,7 +329,7 @@ function KursplanSection({
             </div>
           )}
         </div>
-        {isSeries ? (
+        {sessionCount > 1 ? (
           <Button variant="secondary" onClick={onOpen}>
             Se kursplan
           </Button>
