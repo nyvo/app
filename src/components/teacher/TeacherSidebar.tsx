@@ -150,10 +150,10 @@ export const TeacherSidebar = () => {
                       className="text-foreground-muted shrink-0 mt-px"
                     />
                     <div className="grid flex-1 leading-tight">
-                      <span className="text-base font-medium truncate text-foreground">
+                      <span className="text-sm font-medium truncate text-foreground">
                         {profile?.name || currentSeller?.name}
                       </span>
-                      <span className="text-base truncate text-foreground-muted">
+                      <span className="text-sm truncate text-foreground-muted">
                         {profile?.email}
                       </span>
                     </div>
