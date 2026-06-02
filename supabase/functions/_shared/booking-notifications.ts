@@ -32,7 +32,8 @@ export async function deliverBookingConfirmations(
   attempt: BookingAttempt,
   amountNok: number,
 ): Promise<void> {
-  if (amountNok <= 0) return
+  // Free signups (amountNok === 0) still get a confirmation — a free trial
+  // class is a real booking the buyer + studio want to know about.
   if (!attempt.participant_name) return
 
   await notifyBookingCreated(supabase, signupId, attempt, amountNok)
@@ -45,7 +46,6 @@ async function notifyBookingCreated(
   attempt: BookingAttempt,
   amountNok: number,
 ): Promise<void> {
-  if (amountNok <= 0) return
   if (!attempt.participant_name) return
 
   const { data: course } = await supabase
@@ -106,7 +106,7 @@ async function sendOrderConfirmEmail(
       courseTitle: course.title,
       courseStart: formatCourseStart(course.start_date, course.time_schedule),
       courseLocation: course.location ?? undefined,
-      amount: formatKroner(amountNok),
+      amount: amountNok > 0 ? formatKroner(amountNok) : 'Gratis',
       bookingId: shortBookingId(signupId),
     },
   })

@@ -7,6 +7,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
 import { isCourseEnded } from '../_shared/course-status.ts'
+import { deliverBookingConfirmations } from '../_shared/booking-notifications.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -115,6 +116,25 @@ Deno.serve(async (req: Request) => {
         : rpcResult.error === 'course_not_found' ? 404
         : 400
       return errorResponse(rpcResult.message || 'Kunne ikke fullføre påmelding', status, req)
+    }
+
+    // Fire the buyer confirmation + studio notification inline, mirroring the
+    // paid flow. Best-effort: the signup is already committed, so never fail it
+    // on an email hiccup — the send-pending-confirmations cron is the retry net.
+    try {
+      await deliverBookingConfirmations(
+        supabase,
+        rpcResult.signup_id!,
+        {
+          seller_id: course.seller_id,
+          course_id: course.id,
+          participant_name: participantName.trim(),
+          participant_email: participantEmail.trim(),
+        },
+        0,
+      )
+    } catch (_) {
+      // swallowed — cron retries
     }
 
     return successResponse({ signupId: rpcResult.signup_id }, 200, req)
