@@ -15,19 +15,21 @@ import { verifyAuth, handleCors, errorResponse, successResponse } from '../_shar
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
+interface Studio { seller_id: string; name: string | null }
 interface Blockers {
-  sole_owner_of: { seller_id: string; name: string | null }[]
+  blocking_studios: Studio[]
+  dormant_studios: Studio[]
   active_instructor_courses: { course_id: string; title: string | null }[]
   owned_storage_objects: number
   deletable: boolean
 }
 
 function blockerMessage(b: Blockers): string {
-  if (b.sole_owner_of.length > 0) {
-    const name = b.sole_owner_of[0]?.name?.trim()
+  if (b.blocking_studios.length > 0) {
+    const name = b.blocking_studios[0]?.name?.trim()
     return name
-      ? `Du er eneste eier av ${name}. Overfør eierskapet til en annen eier eller kontakt support før du kan slette kontoen.`
-      : 'Du er eneste eier av et studio. Overfør eierskapet eller kontakt support før du kan slette kontoen.'
+      ? `Studioet «${name}» har aktive kurs eller betalinger som ikke er fullført. Fullfør eller avlys disse før du kan slette kontoen.`
+      : 'Du har et studio med aktive kurs eller uavsluttede betalinger. Fullfør eller avlys disse før du kan slette kontoen.'
   }
   if (b.active_instructor_courses.length > 0) {
     return 'Du er satt som instruktør på aktive eller kommende kurs. Fjern deg fra disse kursene før du sletter kontoen.'
@@ -62,6 +64,19 @@ Deno.serve(async (req: Request) => {
     const blockers = data as Blockers
     if (!blockers.deletable) {
       return errorResponse(blockerMessage(blockers), 409, req)
+    }
+
+    // Dormant studios this user solely owns are closed + anonymized first — their
+    // financial records are kept, the studio becomes an ownerless tombstone. (A
+    // studio with unfinished business would have blocked above.)
+    for (const studio of blockers.dormant_studios) {
+      const { error: closeErr } = await supabase.rpc('close_and_anonymize_seller', {
+        p_seller_id: studio.seller_id,
+      })
+      if (closeErr) {
+        console.error('close_and_anonymize_seller failed:', studio.seller_id, closeErr)
+        return errorResponse('Kunne ikke avslutte studioet automatisk. Kontakt support.', 500, req)
+      }
     }
 
     // Delete the auth user → cascades to the profile. The BEFORE DELETE guard

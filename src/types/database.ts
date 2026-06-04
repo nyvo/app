@@ -630,6 +630,7 @@ export type Database = {
       }
       sellers: {
         Row: {
+          closed_at: string | null
           created_at: string | null
           dintero_approval_id: string | null
           dintero_contract_url: string | null
@@ -647,6 +648,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          closed_at?: string | null
           created_at?: string | null
           dintero_approval_id?: string | null
           dintero_contract_url?: string | null
@@ -664,6 +666,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          closed_at?: string | null
           created_at?: string | null
           dintero_approval_id?: string | null
           dintero_contract_url?: string | null
@@ -1024,7 +1027,15 @@ export type Database = {
     }
     Functions: {
       _account_deletion_blockers: { Args: { p_user_id: string }; Returns: Json }
+      _course_runs_today_or_later: {
+        Args: { p_course_id: string }
+        Returns: boolean
+      }
       _normalize_team_slug: { Args: { p_input: string }; Returns: string }
+      _seller_has_unfinished_business: {
+        Args: { p_seller_id: string }
+        Returns: boolean
+      }
       account_deletion_preflight: { Args: never; Returns: Json }
       available_ticket_types: {
         Args: { p_course_id: string }
@@ -1086,6 +1097,10 @@ export type Database = {
       }
       cleanup_old_webhook_events: { Args: never; Returns: number }
       cleanup_rate_limit_buckets: { Args: never; Returns: undefined }
+      close_and_anonymize_seller: {
+        Args: { p_seller_id: string }
+        Returns: undefined
+      }
       complete_buyer_onboarding: {
         Args: { p_name: string; p_phone?: string }
         Returns: {

@@ -121,6 +121,7 @@ export async function updateSeller(
   return {
     data: {
       ...row,
+      closed_at: null,
       email: null,
       phone: null,
       dintero_seller_id: operational?.dintero_seller_id ?? null,
