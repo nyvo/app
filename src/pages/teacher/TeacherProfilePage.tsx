@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase, typedFrom } from '@/lib/supabase';
 import { isValidEmail, resolveDisplayName } from '@/lib/utils';
 import { AUTH_VALIDATION } from '@/lib/auth-messages';
+import { extractEdgeError } from '@/lib/edge-errors';
 import { toast } from 'sonner';
 
 const TeacherProfilePage = () => {
@@ -141,13 +142,17 @@ const TeacherProfilePage = () => {
     await supabase.auth.signOut({ scope: 'global' });
   };
 
-  // Delete account handler — calls edge function that anonymizes payment
-  // records (bokføringsloven 5-yr retention) and deletes everything else.
+  // Delete account handler — self-service deletion is currently disabled
+  // server-side (the edge function returns 409 before any mutation) because
+  // hard-deleting would destroy payment records we must retain (bokføringsloven)
+  // and anonymization isn't built yet. Surface the server's "contact support"
+  // message via the toast.
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true);
     const { error } = await supabase.functions.invoke('delete-account');
     if (error) {
-      toast.error('Kunne ikke slette kontoen. Prøv igjen.');
+      const { message } = await extractEdgeError(error);
+      toast.error(message || 'Kunne ikke slette kontoen. Prøv igjen.');
       setIsDeletingAccount(false);
       return;
     }
@@ -261,11 +266,11 @@ const TeacherProfilePage = () => {
                     }}
                     ariaLabel="Slett kontoen din"
                     title="Slett konto"
-                    body={<>Kontoen <strong>{profile?.email}</strong> og all tilhørende data slettes permanent.</>}
-                    actionLabel="Slett konto"
+                    body={<>Kontosletting behandles nå manuelt av hensyn til lovpålagt oppbevaring av betalingsdata. Bekreft for å se hvordan du går frem med å slette og anonymisere <strong>{profile?.email}</strong> via support.</>}
+                    actionLabel="Vis fremgangsmåte"
                     onConfirm={handleDeleteAccount}
                     loading={isDeletingAccount}
-                    loadingText="Sletter"
+                    loadingText="Henter"
                     typeToConfirm="SLETT"
                     typeToConfirmValue={deleteConfirmText}
                     onTypeToConfirmChange={setDeleteConfirmText}

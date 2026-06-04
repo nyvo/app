@@ -40,16 +40,20 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // Abuse protection: per-IP + per-email fixed-window rate limit. This path is
-    // unauthenticated and fires a confirmation email, so cap both axes. Fail
-    // open (only block on an explicit `false`) so a limiter hiccup never wedges
-    // legitimate signups.
+    // unauthenticated and fires a confirmation email, so cap both axes. Check IP
+    // FIRST and return on block, so a rate-limited IP can't keep incrementing /
+    // creating arbitrary email buckets. Fail open (only block on an explicit
+    // `false`) so a limiter hiccup never wedges legitimate signups.
     const clientIp = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown'
+    const { data: ipAllowed, error: ipLimitErr } = await supabase.rpc('check_rate_limit', { p_key: `free-signup:ip:${clientIp}`, p_limit: 10, p_window_seconds: 3600 })
+    if (ipLimitErr) console.error('check_rate_limit (ip) failed:', ipLimitErr)
+    if (ipAllowed === false) {
+      return errorResponse('For mange forsøk. Prøv igjen om litt.', 429, req)
+    }
     const emailKey = participantEmail.trim().toLowerCase()
-    const [{ data: ipAllowed }, { data: emailAllowed }] = await Promise.all([
-      supabase.rpc('check_rate_limit', { p_key: `free-signup:ip:${clientIp}`, p_limit: 10, p_window_seconds: 3600 }),
-      supabase.rpc('check_rate_limit', { p_key: `free-signup:email:${emailKey}`, p_limit: 5, p_window_seconds: 3600 }),
-    ])
-    if (ipAllowed === false || emailAllowed === false) {
+    const { data: emailAllowed, error: emailLimitErr } = await supabase.rpc('check_rate_limit', { p_key: `free-signup:email:${emailKey}`, p_limit: 5, p_window_seconds: 3600 })
+    if (emailLimitErr) console.error('check_rate_limit (email) failed:', emailLimitErr)
+    if (emailAllowed === false) {
       return errorResponse('For mange forsøk. Prøv igjen om litt.', 429, req)
     }
 

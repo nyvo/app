@@ -122,14 +122,19 @@ Deno.serve(async (req: Request) => {
 
     // Abuse protection: per-IP + per-email fixed-window rate limit. Each call
     // opens a Dintero checkout session and writes a payment_attempts row, so cap
-    // it to stop session spam. Fail open — only block on an explicit `false`.
+    // it to stop session spam. Check IP FIRST and return on block, so a
+    // rate-limited IP can't keep incrementing / creating arbitrary email
+    // buckets. Fail open — only block on an explicit `false`.
     const clientIp = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown'
+    const { data: ipAllowed, error: ipLimitErr } = await supabase.rpc('check_rate_limit', { p_key: `checkout:ip:${clientIp}`, p_limit: 20, p_window_seconds: 3600 })
+    if (ipLimitErr) console.error('check_rate_limit (ip) failed:', ipLimitErr)
+    if (ipAllowed === false) {
+      return errorResponse('For mange forsøk. Prøv igjen om litt.', 429, req)
+    }
     const emailKey = customerEmail.trim().toLowerCase()
-    const [{ data: ipAllowed }, { data: emailAllowed }] = await Promise.all([
-      supabase.rpc('check_rate_limit', { p_key: `checkout:ip:${clientIp}`, p_limit: 20, p_window_seconds: 3600 }),
-      supabase.rpc('check_rate_limit', { p_key: `checkout:email:${emailKey}`, p_limit: 10, p_window_seconds: 3600 }),
-    ])
-    if (ipAllowed === false || emailAllowed === false) {
+    const { data: emailAllowed, error: emailLimitErr } = await supabase.rpc('check_rate_limit', { p_key: `checkout:email:${emailKey}`, p_limit: 10, p_window_seconds: 3600 })
+    if (emailLimitErr) console.error('check_rate_limit (email) failed:', emailLimitErr)
+    if (emailAllowed === false) {
       return errorResponse('For mange forsøk. Prøv igjen om litt.', 429, req)
     }
 
@@ -381,10 +386,17 @@ Deno.serve(async (req: Request) => {
     const session = await createSession(sessionRequest)
 
     // Backlink the Dintero session id to the attempt for later reconciliation.
-    await supabase
+    const { error: backlinkError } = await supabase
       .from('payment_attempts')
       .update({ dintero_session_id: session.id })
       .eq('id', merchantReference)
+    if (backlinkError) {
+      // Non-fatal: the Dintero session is already live and the buyer can pay.
+      // The attempt stays pending without a session id, but delete_course_cascade
+      // and the courses retention trigger treat any non-failed/voided attempt as
+      // material, so the course can't be deleted out from under this checkout.
+      console.error('Failed to backlink dintero_session_id for attempt', merchantReference, backlinkError)
+    }
 
     return successResponse(
       {
