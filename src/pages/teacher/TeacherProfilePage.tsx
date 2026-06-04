@@ -142,11 +142,11 @@ const TeacherProfilePage = () => {
     await supabase.auth.signOut({ scope: 'global' });
   };
 
-  // Delete account handler — self-service deletion is currently disabled
-  // server-side (the edge function returns 409 before any mutation) because
-  // hard-deleting would destroy payment records we must retain (bokføringsloven)
-  // and anonymization isn't built yet. Surface the server's "contact support"
-  // message via the toast.
+  // Delete account handler — deletes the caller's login + profile via the
+  // delete-account edge function. It refuses (with a specific reason surfaced
+  // via extractEdgeError) when the account still owns a studio, is an active
+  // instructor, or owns uploaded files; otherwise the account is deleted and the
+  // session cleared. Paid bookings/payments are retained, anonymized of the link.
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true);
     const { error } = await supabase.functions.invoke('delete-account');
@@ -266,11 +266,11 @@ const TeacherProfilePage = () => {
                     }}
                     ariaLabel="Slett kontoen din"
                     title="Slett konto"
-                    body={<>Kontosletting behandles nå manuelt av hensyn til lovpålagt oppbevaring av betalingsdata. Bekreft for å se hvordan du går frem med å slette og anonymisere <strong>{profile?.email}</strong> via support.</>}
-                    actionLabel="Vis fremgangsmåte"
+                    body={<>Kontoen <strong>{profile?.email}</strong> slettes permanent. Betalingsdokumentasjon vi er lovpålagt å oppbevare, beholdes.</>}
+                    actionLabel="Slett konto"
                     onConfirm={handleDeleteAccount}
                     loading={isDeletingAccount}
-                    loadingText="Henter"
+                    loadingText="Sletter"
                     typeToConfirm="SLETT"
                     typeToConfirmValue={deleteConfirmText}
                     onTypeToConfirmChange={setDeleteConfirmText}

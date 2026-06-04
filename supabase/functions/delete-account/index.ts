@@ -1,19 +1,42 @@
-// Delete account — TEMPORARILY DISABLED for self-service.
+// Delete account — removes the caller's login + profile only.
 //
-// The previous implementation performed several separately-committed mutations
-// (anonymize signups, anonymize payment_attempts, null FK refs) and then a hard
-// seller delete that cascades through courses → signups → payment_attempts →
-// payment_audit_log. That destroys financial records the law requires us to
-// retain (bokføringsloven, 5 yrs). It was also buggy: the PII anonymization set
-// participant_name/participant_email to NULL on NOT NULL columns, so the update
-// failed silently and PII could survive a "successful" deletion. And with the
-// new BEFORE DELETE retention trigger on courses, the seller delete now aborts
-// for any owner of paid courses — leaving the earlier steps partially applied.
-//
-// Until a proper anonymization / tombstoning workflow exists, refuse up front —
-// before any mutation — and route users to support for assisted deletion.
+// Safety model (see docs/account-deletion-design.md): this NEVER deletes or
+// alters business content. It deletes the auth user, which cascades to the
+// profile; FK rules clear the profile's own references (instructor_id,
+// invited_by, buyer_id -> NULL) and memberships, while paid bookings/payments
+// are retained. The BEFORE DELETE guard on profiles is the atomic backstop: it
+// refuses if the user is a sole seller owner, an active-course instructor, or
+// owns Storage objects. We re-check those here first so the user gets a clear,
+// specific reason instead of a generic failure.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
-import { verifyAuth, handleCors, errorResponse } from '../_shared/auth.ts'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { verifyAuth, handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+
+interface Blockers {
+  sole_owner_of: { seller_id: string; name: string | null }[]
+  active_instructor_courses: { course_id: string; title: string | null }[]
+  owned_storage_objects: number
+  deletable: boolean
+}
+
+function blockerMessage(b: Blockers): string {
+  if (b.sole_owner_of.length > 0) {
+    const name = b.sole_owner_of[0]?.name?.trim()
+    return name
+      ? `Du er eneste eier av ${name}. Overfør eierskapet til en annen eier eller kontakt support før du kan slette kontoen.`
+      : 'Du er eneste eier av et studio. Overfør eierskapet eller kontakt support før du kan slette kontoen.'
+  }
+  if (b.active_instructor_courses.length > 0) {
+    return 'Du er satt som instruktør på aktive eller kommende kurs. Fjern deg fra disse kursene før du sletter kontoen.'
+  }
+  if (b.owned_storage_objects > 0) {
+    return 'Du har opplastede bilder knyttet til kontoen. Kontakt support, så hjelper vi deg med å slette kontoen.'
+  }
+  return 'Kontoen kan ikke slettes automatisk akkurat nå. Kontakt support.'
+}
 
 Deno.serve(async (req: Request) => {
   const corsResponse = handleCors(req)
@@ -24,13 +47,36 @@ Deno.serve(async (req: Request) => {
     if (!auth.authenticated || !auth.userId) {
       return errorResponse(auth.error || 'Unauthorized', 401, req)
     }
+    const userId = auth.userId
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Fail closed, before touching any data.
-    return errorResponse(
-      'Kontoen kan ikke slettes automatisk akkurat nå. Kontakt support, så hjelper vi deg med sletting og anonymisering.',
-      409,
-      req,
-    )
+    // Pre-check blockers (service-role helper). The DB guard is still the
+    // ultimate, atomic backstop — this just produces a friendly reason.
+    const { data, error: blockerErr } = await supabase.rpc('_account_deletion_blockers', {
+      p_user_id: userId,
+    })
+    if (blockerErr) {
+      console.error('blocker check failed:', blockerErr)
+      return errorResponse('Kunne ikke kontrollere kontoen. Prøv igjen.', 500, req)
+    }
+    const blockers = data as Blockers
+    if (!blockers.deletable) {
+      return errorResponse(blockerMessage(blockers), 409, req)
+    }
+
+    // Delete the auth user → cascades to the profile. The BEFORE DELETE guard
+    // re-evaluates atomically and aborts if a blocker appeared in between.
+    const { error: delErr } = await supabase.auth.admin.deleteUser(userId)
+    if (delErr) {
+      console.error('auth.admin.deleteUser failed:', delErr)
+      return errorResponse(
+        'Kontoen kan ikke slettes akkurat nå. Kontakt support hvis det vedvarer.',
+        409,
+        req,
+      )
+    }
+
+    return successResponse({ ok: true }, 200, req)
   } catch (err) {
     console.error('delete-account error:', err)
     return errorResponse('Noe gikk galt', 500, req)
