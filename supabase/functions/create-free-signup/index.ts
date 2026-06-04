@@ -39,6 +39,20 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Abuse protection: per-IP + per-email fixed-window rate limit. This path is
+    // unauthenticated and fires a confirmation email, so cap both axes. Fail
+    // open (only block on an explicit `false`) so a limiter hiccup never wedges
+    // legitimate signups.
+    const clientIp = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown'
+    const emailKey = participantEmail.trim().toLowerCase()
+    const [{ data: ipAllowed }, { data: emailAllowed }] = await Promise.all([
+      supabase.rpc('check_rate_limit', { p_key: `free-signup:ip:${clientIp}`, p_limit: 10, p_window_seconds: 3600 }),
+      supabase.rpc('check_rate_limit', { p_key: `free-signup:email:${emailKey}`, p_limit: 5, p_window_seconds: 3600 }),
+    ])
+    if (ipAllowed === false || emailAllowed === false) {
+      return errorResponse('For mange forsøk. Prøv igjen om litt.', 429, req)
+    }
+
     // Fetch course to verify it's actually free and bookable
     const { data: course, error: courseError } = await supabase
       .from('courses')
@@ -74,11 +88,13 @@ Deno.serve(async (req: Request) => {
     }
 
     // Resolve the course's default ticket tier — every course has exactly one
-    // (created in the 20260426020000 migration). For free courses, the default
-    // tier price will be 0, matching course.price.
+    // (created in the 20260426020000 migration). Don't trust course.price alone:
+    // validate the exact tier we're about to enrol on is itself free, active,
+    // and not a drop-in. This closes the gap where a free-priced course could
+    // carry a priced/inactive/drop-in default tier and still be booked at 0 kr.
     const { data: defaultTier, error: tierError } = await supabase
       .from('course_signup_packages')
-      .select('id')
+      .select('id, price, is_active, ticket_kind')
       .eq('course_id', course.id)
       .eq('is_default', true)
       .maybeSingle()
@@ -87,12 +103,23 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Course has no default ticket type', 500, req)
     }
 
+    const tier = defaultTier as { id: string; price: number | null; is_active: boolean; ticket_kind: string }
+    if ((tier.price ?? 0) > 0) {
+      return errorResponse('Course is not free — use the paid checkout flow', 400, req)
+    }
+    if (!tier.is_active) {
+      return errorResponse('Denne billetten er ikke tilgjengelig', 400, req)
+    }
+    if (tier.ticket_kind === 'drop_in') {
+      return errorResponse('Gratis påmelding støtter ikke drop-in', 400, req)
+    }
+
     // Call the atomic capacity RPC. The advisory lock inside it serialises
     // concurrent free signups so the capacity check + insert can't oversell.
     const { data: result, error: rpcError } = await supabase.rpc('create_signup_if_available', {
       p_seller_id: course.seller_id,
       p_course_id: course.id,
-      p_ticket_type_id: (defaultTier as { id: string }).id,
+      p_ticket_type_id: tier.id,
       p_participant_name: participantName.trim(),
       p_participant_email: participantEmail.trim(),
       p_participant_phone: participantPhone.trim(),

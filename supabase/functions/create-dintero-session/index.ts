@@ -120,6 +120,19 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Invalid email format', 400, req)
     }
 
+    // Abuse protection: per-IP + per-email fixed-window rate limit. Each call
+    // opens a Dintero checkout session and writes a payment_attempts row, so cap
+    // it to stop session spam. Fail open — only block on an explicit `false`.
+    const clientIp = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown'
+    const emailKey = customerEmail.trim().toLowerCase()
+    const [{ data: ipAllowed }, { data: emailAllowed }] = await Promise.all([
+      supabase.rpc('check_rate_limit', { p_key: `checkout:ip:${clientIp}`, p_limit: 20, p_window_seconds: 3600 }),
+      supabase.rpc('check_rate_limit', { p_key: `checkout:email:${emailKey}`, p_limit: 10, p_window_seconds: 3600 }),
+    ])
+    if (ipAllowed === false || emailAllowed === false) {
+      return errorResponse('For mange forsøk. Prøv igjen om litt.', 429, req)
+    }
+
     // Load course + seller. The slug now lives on the seller's owning team
     // (teams.owner_seller_id), not on the seller itself — pull it through the
     // nested team relation.
