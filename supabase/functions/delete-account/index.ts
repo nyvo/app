@@ -20,7 +20,6 @@ interface Blockers {
   blocking_studios: Studio[]
   dormant_studios: Studio[]
   active_instructor_courses: { course_id: string; title: string | null }[]
-  owned_storage_objects: number
   deletable: boolean
 }
 
@@ -33,9 +32,6 @@ function blockerMessage(b: Blockers): string {
   }
   if (b.active_instructor_courses.length > 0) {
     return 'Du er satt som instruktør på aktive eller kommende kurs. Fjern deg fra disse kursene før du sletter kontoen.'
-  }
-  if (b.owned_storage_objects > 0) {
-    return 'Du har opplastede bilder knyttet til kontoen. Kontakt support, så hjelper vi deg med å slette kontoen.'
   }
   return 'Kontoen kan ikke slettes automatisk akkurat nå. Kontakt support.'
 }
