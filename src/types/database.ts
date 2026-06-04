@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       course_sessions: {
@@ -549,6 +574,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_buckets: {
+        Row: {
+          bucket_key: string
+          hit_count: number
+          window_start: string
+        }
+        Insert: {
+          bucket_key: string
+          hit_count?: number
+          window_start?: string
+        }
+        Update: {
+          bucket_key?: string
+          hit_count?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       seller_members: {
         Row: {
           created_at: string | null
@@ -806,7 +849,7 @@ export type Database = {
       team_affiliations: {
         Row: {
           invited_at: string
-          invited_by: string
+          invited_by: string | null
           responded_at: string | null
           seller_id: string
           status: string
@@ -814,7 +857,7 @@ export type Database = {
         }
         Insert: {
           invited_at?: string
-          invited_by: string
+          invited_by?: string | null
           responded_at?: string | null
           seller_id: string
           status: string
@@ -822,7 +865,7 @@ export type Database = {
         }
         Update: {
           invited_at?: string
-          invited_by?: string
+          invited_by?: string | null
           responded_at?: string | null
           seller_id?: string
           status?: string
@@ -980,7 +1023,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _account_deletion_blockers: { Args: { p_user_id: string }; Returns: Json }
       _normalize_team_slug: { Args: { p_input: string }; Returns: string }
+      account_deletion_preflight: { Args: never; Returns: Json }
       available_ticket_types: {
         Args: { p_course_id: string }
         Returns: {
@@ -1003,6 +1048,10 @@ export type Database = {
       calculate_package_end_date: {
         Args: { p_course_start_date: string; p_package_weeks: number }
         Returns: string
+      }
+      check_rate_limit: {
+        Args: { p_key: string; p_limit: number; p_window_seconds: number }
+        Returns: boolean
       }
       check_session_conflict: {
         Args: {
@@ -1036,6 +1085,7 @@ export type Database = {
         }[]
       }
       cleanup_old_webhook_events: { Args: never; Returns: number }
+      cleanup_rate_limit_buckets: { Args: never; Returns: undefined }
       complete_buyer_onboarding: {
         Args: { p_name: string; p_phone?: string }
         Returns: {
@@ -1420,6 +1470,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       course_format: ["single", "series"],
