@@ -28,7 +28,7 @@ function blockerMessage(b: Blockers): string {
   if (b.blocking_studios.length > 0) {
     const name = b.blocking_studios[0]?.name?.trim()
     return name
-      ? `Studioet «${name}» har aktive kurs eller betalinger som ikke er fullført. Fullfør eller avlys disse før du kan slette kontoen.`
+      ? `Du har aktive kurs eller uavsluttede betalinger i «${name}». Fullfør eller avlys disse før du kan slette kontoen.`
       : 'Du har et studio med aktive kurs eller uavsluttede betalinger. Fullfør eller avlys disse før du kan slette kontoen.'
   }
   if (b.active_instructor_courses.length > 0) {
@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
     })
     if (blockerErr) {
       console.error('blocker check failed:', blockerErr)
-      return errorResponse('Kunne ikke kontrollere kontoen. Prøv igjen.', 500, req)
+      return errorResponse('Kunne ikke sjekke kontoen. Prøv igjen.', 500, req)
     }
     const blockers = data as Blockers
     if (!blockers.deletable) {
