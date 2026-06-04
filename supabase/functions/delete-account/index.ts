@@ -47,7 +47,7 @@ Deno.serve(async (req: Request) => {
   try {
     const auth = await verifyAuth(req)
     if (!auth.authenticated || !auth.userId) {
-      return errorResponse(auth.error || 'Unauthorized', 401, req)
+      return errorResponse(auth.error || 'Du er ikke logget inn.', 401, req)
     }
     const userId = auth.userId
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
