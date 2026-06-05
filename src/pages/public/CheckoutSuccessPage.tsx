@@ -260,7 +260,7 @@ const CheckoutSuccessPage = () => {
         <div className="flex flex-col items-center text-center max-w-md">
           <div
             aria-hidden="true"
-            className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted text-danger"
+            className="mb-4 flex size-12 items-center justify-center rounded-full bg-danger text-danger-foreground"
           >
             <X className="size-6" strokeWidth={2.5} />
           </div>
@@ -302,7 +302,7 @@ const CheckoutSuccessPage = () => {
                   <div className="flex flex-col items-center text-center">
                     <div
                       aria-hidden="true"
-                      className="flex size-12 items-center justify-center rounded-full bg-muted text-success"
+                      className="flex size-12 items-center justify-center rounded-full bg-success text-success-foreground"
                     >
                       <Check className="size-6" strokeWidth={2.5} />
                     </div>
