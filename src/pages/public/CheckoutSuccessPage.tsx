@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ImageIcon, Check, X } from '@/lib/icons';
+import { ImageIcon, Check, X, Clock } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { PageState } from '@/components/page-state/page-state';
@@ -228,12 +228,18 @@ const CheckoutSuccessPage = () => {
 
     return (
       <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
-          <h1 className="text-3xl font-medium tracking-tight mb-3 text-foreground">
+        <div className="flex flex-col items-center text-center max-w-md">
+          <div
+            aria-hidden="true"
+            className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted text-foreground"
+          >
+            <Clock className="size-6" strokeWidth={2.5} />
+          </div>
+          <h1 className="mb-3 text-3xl font-medium tracking-tight text-foreground">
             Betalingen er bekreftet
           </h1>
-          <p className="text-base text-foreground-muted mb-8">
-            Bekreftelsen tar litt tid. Vi sender deg en e-post når påmeldingen er klar.
+          <p className="mb-8 text-base text-foreground-muted">
+            Det tar litt tid – vi sender deg en e-post når påmeldingen er klar.
           </p>
           <Button asChild variant="default">
             <Link to={failedStudioUrl}>
