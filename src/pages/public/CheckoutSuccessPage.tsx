@@ -183,11 +183,11 @@ const CheckoutSuccessPage = () => {
 
     return (
       <div className="min-h-screen w-full bg-background flex items-center justify-center">
-        <div className="text-center max-w-xs px-4" role="status" aria-live="polite" aria-atomic="true">
-          <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
-            <Spinner size="xl" className="text-foreground" />
+        <div className="text-center max-w-md px-4" role="status" aria-live="polite" aria-atomic="true">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
+            <Spinner size="lg" className="text-foreground" />
           </div>
-          <p className="text-base font-medium mb-2 text-foreground">Bekrefter betaling</p>
+          <p className="mb-3 text-3xl font-medium tracking-tight text-foreground">Bekrefter betaling</p>
           <p className="text-base text-foreground-muted">
             {isLongWait
               ? 'Det tar litt lenger tid enn vanlig. Du får bekreftelsen på e-post om vi ikke blir ferdige her.'
@@ -280,8 +280,8 @@ const CheckoutSuccessPage = () => {
         </Link>
       </header>
 
-      <main className="flex-1 px-4 pb-16 sm:px-6">
-        <div className="mx-auto w-full max-w-xl">
+      <main className="flex flex-1 items-start justify-center px-4 pb-16 sm:px-6 md:items-center">
+        <div className="w-full max-w-md">
           {(() => {
             const dateLong = formatDate(signup?.course.start_date ?? null);
             const time = extractTimeFromSchedule(signup?.course.time_schedule)?.time ?? null;
@@ -291,18 +291,17 @@ const CheckoutSuccessPage = () => {
             const whenLine = [dateLong, time ? `kl. ${time}` : null].filter(Boolean).join(' · ');
 
             return (
-              <div className="overflow-hidden rounded-lg border border-border bg-surface">
-                <div className="p-6 sm:p-8">
-                  {/* Title block — green check, title, description, all centered. */}
+              <>
+                  {/* Title block — neutral circle + green check, centered heading. */}
                   <div className="flex flex-col items-center text-center">
                     <div
                       aria-hidden="true"
-                      className="flex size-8 items-center justify-center rounded-full bg-success text-success-foreground"
+                      className="flex size-12 items-center justify-center rounded-full bg-muted text-success"
                     >
-                      <Check className="size-4" strokeWidth={2.5} />
+                      <Check className="size-6" strokeWidth={2.5} />
                     </div>
-                    <h1 className="mt-4 text-base font-medium text-foreground">Du er påmeldt</h1>
-                    <p className="mt-1 text-base text-foreground-muted">
+                    <h1 className="mt-4 text-3xl font-medium tracking-tight text-foreground">Du er påmeldt</h1>
+                    <p className="mt-2 text-base text-foreground-muted">
                       {signup
                         ? `Vi har sendt en bekreftelse til ${signup.participant_email}.`
                         : 'Vi har sendt en bekreftelse til e-posten din.'}
@@ -368,8 +367,7 @@ const CheckoutSuccessPage = () => {
                     </a>
                     .
                   </p>
-                </div>
-              </div>
+              </>
             );
           })()}
         </div>
