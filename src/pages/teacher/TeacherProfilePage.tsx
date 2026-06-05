@@ -266,7 +266,7 @@ const TeacherProfilePage = () => {
                     }}
                     ariaLabel="Slett kontoen din"
                     title="Slett konto"
-                    body={<>Kontoen <strong>{profile?.email}</strong> slettes permanent. Vi beholder betalingsdokumentasjon vi er lovpålagt å oppbevare.</>}
+                    body={<>Kontoen <strong>{profile?.email}</strong> slettes permanent. Dette kan ikke angres.</>}
                     actionLabel="Slett konto"
                     onConfirm={handleDeleteAccount}
                     loading={isDeletingAccount}
