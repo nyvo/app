@@ -29,6 +29,10 @@ function shortRef(id: string): string {
 
 interface SignupDetails {
   id: string;
+  // Returned by get_signup_by_dintero_id so the receipt never confirms a
+  // capture-failed / refunded / cancelled row.
+  payment_status?: string | null;
+  status?: string | null;
   participant_name: string;
   participant_email: string;
   amount_paid: number;
@@ -69,6 +73,7 @@ const CheckoutSuccessPage = () => {
   const [signup, setSignup] = useState<SignupDetails | null>(null);
   const [error, _setError] = useState<string | null>(null);
   const [bookingFailed, setBookingFailed] = useState(false);
+  const [paymentFailed, setPaymentFailed] = useState(false);
   const [attemptCount, setAttemptCount] = useState(0);
 
   useEffect(() => {
@@ -121,9 +126,22 @@ const CheckoutSuccessPage = () => {
         );
 
         if (data && !fetchError) {
-          setSignup(data as unknown as SignupDetails);
-          setLoading(false);
-          return;
+          const row = data as unknown as SignupDetails;
+          // Capture failed (or payment otherwise didn't complete) — never tell
+          // the buyer they're enrolled.
+          if (row.payment_status === 'failed') {
+            setPaymentFailed(true);
+            setLoading(false);
+            return;
+          }
+          // Only a captured, confirmed signup is a real "Du er påmeldt".
+          if (row.payment_status === 'paid' && row.status === 'confirmed') {
+            setSignup(row);
+            setLoading(false);
+            return;
+          }
+          // Otherwise (still pending, refunded, cancelled) keep polling; the
+          // max-retries fallback below shows the softer "tar litt tid" state.
         }
 
         // If last attempt failed, show softer message
@@ -221,6 +239,27 @@ const CheckoutSuccessPage = () => {
             <Link to={failedStudioUrl}>
               Tilbake
             </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Payment didn't capture — don't tell the buyer they're enrolled.
+  if (paymentFailed) {
+    const failedStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
+
+    return (
+      <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <h1 className="text-3xl font-medium tracking-tight mb-3 text-foreground">
+            Betalingen gikk ikke gjennom
+          </h1>
+          <p className="text-base text-foreground-muted mb-8">
+            Du er ikke påmeldt ennå. Prøv igjen, eller ta kontakt med studioet hvis beløpet allerede er trukket.
+          </p>
+          <Button asChild variant="default">
+            <Link to={failedStudioUrl}>Tilbake</Link>
           </Button>
         </div>
       </div>
