@@ -82,7 +82,7 @@ const PrivacyPage = () => {
                 Vi lagrer ikke data lenger enn vi trenger det.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Når du sletter kontoen din, sletter vi innloggingen og profilen din og fjerner personopplysninger vi ikke er pålagt å beholde. Unntaket er kjøps- og betalingsdokumentasjon: bokføringsloven krever at vi oppbevarer denne i fem år, inkludert det som identifiserer kjøpet – navn, beløp, dato og kurs. Etter oppbevaringstiden sletter vi også denne dokumentasjonen.
+                Når du sletter kontoen din, sletter vi innloggingen og profilen din. Dokumentasjon om påmeldinger og betalinger kan vi oppbevare der loven krever det, eller der det er nødvendig for gjennomførte kjøp, refusjoner, klager, regnskap eller kontroll. Når oppbevaringstiden er ute, sletter eller anonymiserer vi også denne dokumentasjonen.
               </p>
             </section>
 

@@ -62,21 +62,10 @@ Deno.serve(async (req: Request) => {
       return errorResponse(blockerMessage(blockers), 409, req)
     }
 
-    // Dormant studios this user solely owns are closed + anonymized first — their
-    // financial records are kept, the studio becomes an ownerless tombstone. (A
-    // studio with unfinished business would have blocked above.)
-    for (const studio of blockers.dormant_studios) {
-      const { error: closeErr } = await supabase.rpc('close_and_anonymize_seller', {
-        p_seller_id: studio.seller_id,
-      })
-      if (closeErr) {
-        console.error('close_and_anonymize_seller failed:', studio.seller_id, closeErr)
-        return errorResponse('Kunne ikke avslutte studioet automatisk. Kontakt support.', 500, req)
-      }
-    }
-
-    // Delete the auth user → cascades to the profile. The BEFORE DELETE guard
-    // re-evaluates atomically and aborts if a blocker appeared in between.
+    // Delete the auth user → cascades to the profile. The BEFORE DELETE guard on
+    // profiles does the rest atomically: re-checks blockers (aborts if one
+    // appeared), closes + anonymizes any dormant studios, and redacts the user's
+    // booking notifications — so nothing is half-applied if this call fails.
     const { error: delErr } = await supabase.auth.admin.deleteUser(userId)
     if (delErr) {
       console.error('auth.admin.deleteUser failed:', delErr)
