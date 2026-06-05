@@ -39,7 +39,7 @@ const PrivacyPage = () => {
                 Når du booker et kurs lagrer vi navn, e-postadresse, telefonnummer og hvilke kurs du har meldt deg på.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Når du betaler håndteres betalingen av Dintero. Vi lagrer ikke kortdetaljer. Vi lagrer kvitteringsinformasjon (beløp, dato, kurs) i fem år, slik bokføringsloven krever.
+                Når du betaler håndteres betalingen av Dintero. Vi lagrer ikke kortdetaljer. Vi lagrer kvitteringsinformasjon (navn, beløp, dato og kurs) i fem år, slik bokføringsloven krever.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Når du er lærer eller studio lagrer vi i tillegg organisasjonsnummer, logo og kontoinformasjon for utbetaling.
@@ -82,7 +82,7 @@ const PrivacyPage = () => {
                 Vi lagrer ikke data lenger enn vi trenger det.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Når du sletter kontoen din, fjerner vi personopplysningene dine umiddelbart. Det eneste unntaket er betalingsinformasjon: bokføringsloven krever at vi oppbevarer kvitteringer i fem år. I disse postene anonymiserer vi navn, e-post og telefonnummer, og beholder kun det regnskapsloven krever (beløp, dato, kurs).
+                Når du sletter kontoen din, sletter vi innloggingen og profilen din og fjerner personopplysninger vi ikke er pålagt å beholde. Unntaket er kjøps- og betalingsdokumentasjon: bokføringsloven krever at vi oppbevarer denne i fem år, inkludert det som identifiserer kjøpet – navn, beløp, dato og kurs. Etter oppbevaringstiden sletter vi også denne dokumentasjonen.
               </p>
             </section>
 
@@ -131,7 +131,7 @@ const PrivacyPage = () => {
           </div>
 
           <p className="text-sm text-foreground-muted">
-            Sist oppdatert: 19. mai 2026
+            Sist oppdatert: 5. juni 2026
           </p>
         </div>
       </main>
