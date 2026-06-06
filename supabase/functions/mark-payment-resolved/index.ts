@@ -57,11 +57,11 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Signup not found', 404, req)
     }
 
-    // Only seller members (owner/admin/teacher) can reconcile payments.
+    // Only seller members can reconcile payments. seller_members.role is only
+    // ever 'owner' | 'admin' (see the enum); there is no 'teacher' role.
     const authzResult = await verifyOrgMembership(authResult.userId!, signup.seller_id, [
       'owner',
       'admin',
-      'teacher',
     ])
     if (!authzResult.authorized) {
       return errorResponse('You do not have permission to update payments for this seller', 403, req)

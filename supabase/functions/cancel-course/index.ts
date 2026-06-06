@@ -82,10 +82,11 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Course not found', 404, req)
     }
 
+    // seller_members.role is only ever 'owner' | 'admin' (see the enum); there is
+    // no 'teacher' role, so refund/cancel authority is owner/admin.
     const authzResult = await verifyOrgMembership(authResult.userId!, course.seller_id, [
       'owner',
       'admin',
-      'teacher',
     ])
     if (!authzResult.authorized) {
       return errorResponse('You do not have permission to cancel this course', 403, req)
