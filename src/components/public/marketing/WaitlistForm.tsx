@@ -41,7 +41,11 @@ export function WaitlistForm({
 
     if (insertError && insertError.code !== '23505') {
       setStatus('error');
-      setError('Noe gikk galt. Prøv igjen.');
+      setError(
+        insertError.code === '53400'
+          ? 'For mange forsøk. Prøv igjen om litt.'
+          : 'Noe gikk galt. Prøv igjen.',
+      );
       return;
     }
 
