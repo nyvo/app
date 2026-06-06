@@ -1,0 +1,23 @@
+-- F4.1 — narrow authenticated's write surface on profiles to least privilege.
+--
+-- authenticated held a TABLE-level UPDATE grant on profiles. Postgres privileges
+-- are additive and a column-level REVOKE does NOT override a table grant, so the
+-- only thing preventing a buyer from PATCHing profiles.is_platform_admin = true
+-- (-> platform admin, because is_platform_admin() reads that column) was the
+-- profiles_block_protected_columns trigger. That is one disabled trigger away from
+-- privilege escalation.
+--
+-- Replace the broad table grant with column-scoped UPDATE on only the fields the
+-- browser writes directly:
+--   - name                   (TeacherProfilePage)
+--   - setup_complete_seen_at (use-seller-setup-status hook)
+--   - phone                  (self-owned contact field; allowed for profile edits)
+--
+-- All server-controlled writes (role, onboarding_completed_at, is_platform_admin,
+-- email) continue through the SECURITY DEFINER RPCs set_user_role /
+-- complete_buyer_onboarding / mark_seller_onboarding_complete, which run as the
+-- function owner and are unaffected by this grant. updated_at is stamped by the
+-- update_profiles_updated_at trigger (not the client). The
+-- profiles_block_protected_columns trigger remains as a defense-in-depth backstop.
+REVOKE UPDATE ON public.profiles FROM authenticated;
+GRANT UPDATE (name, phone, setup_complete_seen_at) ON public.profiles TO authenticated;
