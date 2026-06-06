@@ -31,17 +31,17 @@ All applied to production and verified; see git history for details.
 - [ ] **Failure alerting / cron health** — no alerting exists today. The 7 pg_cron
       jobs self-heal (e.g. `sweep-pending-payments` every 2 min recovers orphaned
       payments), but nothing alerts if a cron stops firing or payments fail
-      repeatedly. Consider a lightweight daily check on stuck `payment_attempts`
-      and last-run timestamps.
+      repeatedly. Copy-pasteable checks are in
+      [`ops-health-checks.md`](./ops-health-checks.md); run them on a cadence (or
+      wrap the dashboard query in a tiny daily cron that emails on non-zero).
 - [ ] **Support / admin recovery runbook** — `is_platform_admin` can read all
-      profiles, but there is no admin UI; recovery is via direct service-role /
-      SQL. Fine for a founder-operated launch — write down the common steps
-      (issue a refund, force-cancel a course, fix a stuck signup, anonymize on
-      request).
+      profiles, but there is no admin UI; recovery is via the edge functions or
+      direct service-role SQL. Procedures are in
+      [`support-admin-runbook.md`](./support-admin-runbook.md).
 - [ ] **GDPR data export** — the privacy page promises a copy within 30 days, but
-      there is no export function. Handle as a manual support process
-      (service-role query → send the user their data). Build an RPC if volume
-      grows.
+      there is no export function. Handle as a manual support process; the export
+      query shapes are in [`support-admin-runbook.md`](./support-admin-runbook.md)
+      §5. Build an RPC if volume grows.
 - [ ] **Launch cutover** — when `VITE_PRELAUNCH` flips to `false`, confirm `/auth`
       is reachable and the landing CTAs (`Kom i gang` → `/auth`) work.
 
