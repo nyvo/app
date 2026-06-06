@@ -97,8 +97,8 @@ export function SendCourseMessageDrawer({
               </Alert>
             )}
 
-            <div className="space-y-1.5">
-              <label htmlFor="message-body" className="text-base font-medium text-foreground">
+            <div>
+              <label htmlFor="message-body" className="text-base font-medium mb-1.5 block text-foreground">
                 Melding
               </label>
               <Textarea
@@ -111,7 +111,7 @@ export function SendCourseMessageDrawer({
                 disabled={submitting}
                 className="resize-y min-h-[200px]"
               />
-              <p className="text-sm text-foreground-muted text-right tabular-nums">
+              <p className="mt-1.5 text-sm text-foreground-muted text-right tabular-nums">
                 {body.length} / {BODY_MAX}
               </p>
             </div>
