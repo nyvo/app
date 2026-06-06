@@ -61,6 +61,36 @@ All applied to production and verified; see git history for details.
   `create-free-signup` allow the request if the limiter itself errors (an
   availability-over-strictness choice). Accepted.
 
+## Supabase advisors & SECURITY DEFINER closeout (2026-06-07)
+
+Ran the Supabase advisors + a full SECURITY DEFINER `search_path` sweep to close the
+original brief's "run the advisors" step.
+
+- **`search_path` sweep — clean.** All 38 SECURITY DEFINER functions in `public`
+  have a pinned `search_path` (0 missing). `create_team_invite_link` was aligned to
+  `pg_catalog, public`.
+- **Advisor cleanup shipped:** `waitlist_rate_limit()` is a trigger function, not an
+  RPC — `EXECUTE` revoked from `PUBLIC`/`anon`/`authenticated` (trigger firing
+  unaffected; service_role retained). Advisor warning cleared.
+- **Remaining advisor warnings are intentional / expected:**
+  - *Public-executable SECURITY DEFINER* — the 5 storefront RPCs
+    (`available_ticket_types`, `get_signup_by_dintero_id`, `lookup_team_invite_link`,
+    `public_signup_counts`, `public_storefront_seller_ids`). Intentional public API,
+    reviewed in Area #3.
+  - *Authenticated-executable SECURITY DEFINER* — app RPCs (`set_user_role`,
+    `rename_team_slug`, `redeem_team_invite_link`, `delete_course_cascade`,
+    onboarding/seller helpers) that each enforce their own internal authz, **plus**
+    the RLS helper functions (`is_seller_member/owner`, `is_team_admin`,
+    `is_platform_admin`, `storage_can_write_*`) which **must** stay executable —
+    they're called inside RLS policies; revoking would break RLS.
+  - `rate_limit_buckets` RLS-enabled-no-policy (INFO) — intentional default-deny;
+    only SECURITY DEFINER functions + service_role touch it.
+  - Leaked-password protection disabled (WARN) — **N/A**, the app is passwordless
+    (Google OAuth + passkeys). Optional dashboard toggle.
+- **Performance advisors:** only INFO "unused index" notices (`notifications_*`,
+  `idx_webhook_events_type`) — expected pre-launch with little data. Do not drop
+  pre-launch.
+
 ## Notes for future work
 
 - **Waitlist is intentionally closed.** `public.waitlist` anon/authenticated
