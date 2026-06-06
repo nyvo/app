@@ -60,8 +60,9 @@ Deno.serve(async (req: Request) => {
       seller_id: string
     }
 
-    // seller_members.role is only ever 'owner' | 'admin' (see the enum); there is
-    // no 'teacher' role, so refund/cancel authority is owner/admin.
+    // seller_members.role is the single studio owner/operator role — always 'owner'
+    // ('admin' is a legacy enum value, blocked by a DB CHECK; no 'teacher' role).
+    // The 'admin' entry below is retained harmlessly as legacy.
     const authzResult = await verifyOrgMembership(authResult.userId!, course.seller_id, [
       'owner',
       'admin',

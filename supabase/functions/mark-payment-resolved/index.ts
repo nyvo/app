@@ -57,8 +57,9 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Signup not found', 404, req)
     }
 
-    // Only seller members can reconcile payments. seller_members.role is only
-    // ever 'owner' | 'admin' (see the enum); there is no 'teacher' role.
+    // Only seller members can reconcile payments. seller_members.role is the single
+    // studio owner/operator role — always 'owner' ('admin' is a legacy enum value
+    // blocked by a DB CHECK; no 'teacher' role).
     const authzResult = await verifyOrgMembership(authResult.userId!, signup.seller_id, [
       'owner',
       'admin',
