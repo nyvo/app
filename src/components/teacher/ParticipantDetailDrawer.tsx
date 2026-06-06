@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import {
   Calendar,
   CalendarPlus,
+  Copy,
   CreditCard,
   Mail,
   Phone,
@@ -237,6 +238,9 @@ export function ParticipantDetailDrawer({
     paymentStatus === 'paid' && signup.amount_paid != null && signup.amount_paid > 0;
   const canRefund = isPaid && !!signup.dintero_transaction_id;
   const canMarkResolved = paymentStatus === 'pending' || paymentStatus === 'failed';
+  // The action menu now holds only high-impact actions (copy moved inline onto the
+  // contact rows). A cancelled signup with nothing to refund has none — disable.
+  const hasActions = !isCancelled || canRefund;
 
   const expectedPrice =
     signup.amount_paid != null ? signup.amount_paid : signup.ticket_type?.price ?? null;
@@ -353,8 +357,22 @@ export function ParticipantDetailDrawer({
 
               {(email || phone) && (
                 <Section title="Kontakt">
-                  {email && <DetailRow icon={Mail} label="E-post" value={email} />}
-                  {phone && <DetailRow icon={Phone} label="Telefon" value={phone} />}
+                  {email && (
+                    <CopyRow
+                      icon={Mail}
+                      label="E-post"
+                      value={email}
+                      onCopy={() => copyToClipboard(email, 'e-post')}
+                    />
+                  )}
+                  {phone && (
+                    <CopyRow
+                      icon={Phone}
+                      label="Telefon"
+                      value={phone}
+                      onCopy={() => copyToClipboard(phone, 'telefonnummer')}
+                    />
+                  )}
                 </Section>
               )}
 
@@ -396,9 +414,8 @@ export function ParticipantDetailDrawer({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="secondary"
                   className="w-full"
-                  disabled={loading}
+                  disabled={loading || !hasActions}
                 >
                   Handlinger
                 </Button>
@@ -409,47 +426,27 @@ export function ParticipantDetailDrawer({
                 sideOffset={8}
                 className="w-[var(--radix-dropdown-menu-trigger-width)]"
               >
-                {email && (
-                  <DropdownMenuItem onSelect={() => copyToClipboard(email, 'e-post')}>
-                    Kopier e-post
-                  </DropdownMenuItem>
-                )}
-                {phone && (
-                  <DropdownMenuItem onSelect={() => copyToClipboard(phone, 'telefonnummer')}>
-                    Kopier telefonnummer
-                  </DropdownMenuItem>
-                )}
-
                 {!isCancelled && canMarkResolved && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => setConfirmKind('resolve')}>
-                      Merk som betalt
-                    </DropdownMenuItem>
-                  </>
+                  <DropdownMenuItem onSelect={() => setConfirmKind('resolve')}>
+                    Merk som betalt
+                  </DropdownMenuItem>
                 )}
 
                 {!isCancelled && canRefund && (
-                  <>
-                    {!canMarkResolved && <DropdownMenuSeparator />}
-                    <DropdownMenuItem onSelect={() => setConfirmKind('cancel-with-refund')}>
-                      Avbestill og refunder
-                    </DropdownMenuItem>
-                  </>
+                  <DropdownMenuItem onSelect={() => setConfirmKind('cancel-with-refund')}>
+                    Avbestill og refunder
+                  </DropdownMenuItem>
                 )}
 
                 {isCancelled && canRefund && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => setConfirmKind('refund-only')}>
-                      Refunder beløp
-                    </DropdownMenuItem>
-                  </>
+                  <DropdownMenuItem onSelect={() => setConfirmKind('refund-only')}>
+                    Refunder beløp
+                  </DropdownMenuItem>
                 )}
 
                 {!isCancelled && (
                   <>
-                    <DropdownMenuSeparator />
+                    {(canMarkResolved || canRefund) && <DropdownMenuSeparator />}
                     <DropdownMenuItem
                       variant="destructive"
                       onSelect={() => setConfirmKind('cancel-no-refund')}
@@ -564,6 +561,37 @@ function DetailRow({
       <dd className="text-sm text-foreground ml-auto text-right min-w-0 break-words">
         {value}
       </dd>
+    </div>
+  );
+}
+
+// Contact row whose value is itself the copy affordance — a trailing copy icon
+// reveals on hover. Keeps high-impact actions in the footer menu and makes
+// email/phone copyable in one tap, right where they're shown.
+function CopyRow({
+  icon: Icon,
+  label,
+  value,
+  onCopy,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  onCopy: () => void;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <Icon className="size-4 text-foreground-muted shrink-0 mt-0.5" aria-hidden="true" />
+      <dt className="text-sm text-foreground-muted shrink-0">{label}</dt>
+      <button
+        type="button"
+        onClick={onCopy}
+        aria-label={`Kopier ${label.toLowerCase()}`}
+        className="group ml-auto flex min-w-0 items-center gap-1.5 text-right text-sm text-foreground"
+      >
+        <span className="truncate">{value}</span>
+        <Copy className="size-3.5 shrink-0 text-foreground-muted transition-colors group-hover:text-foreground" />
+      </button>
     </div>
   );
 }
