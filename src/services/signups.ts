@@ -17,7 +17,9 @@ export interface SignupWithDetails extends Signup {
 // communicates whether the money has cleared.
 export interface SignupWithProfile extends Signup {
   profile: Pick<Profile, 'id' | 'name' | 'email'> | null
-  ticket_type: { price: number } | null
+  // Optional: the course-participants query joins it for a price fallback, but
+  // lighter callers (e.g. the dashboard "Siste påmeldinger" drawer) omit it.
+  ticket_type?: { price: number } | null
 }
 
 export async function fetchRecentSignups(

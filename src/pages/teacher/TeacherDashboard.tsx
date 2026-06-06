@@ -5,6 +5,7 @@ import { routes } from '@/lib/routes';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
+import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
 import { fetchIncomeSeries, type IncomeRange, type IncomeSeries } from '@/services/income';
 import { DateBadge } from '@/components/ui/date-badge';
@@ -15,7 +16,14 @@ import { ErrorState } from '@/components/ui/error-state';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchCourses, fetchNextSessions } from '@/services/courses';
 import type { Course as CourseDB, CourseSession } from '@/types/database';
-import { fetchRecentSignups, type SignupWithDetails } from '@/services/signups';
+import {
+  fetchRecentSignups,
+  teacherCancelSignup,
+  markPaymentResolved,
+  type SignupWithDetails,
+} from '@/services/signups';
+import { friendlyError } from '@/lib/error-messages';
+import { toast } from 'sonner';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { formatRelativeTimePast } from '@/utils/dateFormatting';
 import { useMultiTableSubscription } from '@/hooks/use-realtime-subscription';
@@ -74,6 +82,7 @@ const TeacherDashboard = () => {
   incomeRangeRef.current = incomeRange;
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [selectedSignupId, setSelectedSignupId] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
 
   function processDashboardResults(
@@ -106,6 +115,27 @@ const TeacherDashboard = () => {
     processDashboardResults(nextSessionsResult, signupsResult);
     if (incomeResult.data) setIncomeSeries(incomeResult.data);
   }, [currentSeller?.id]);
+
+  // Drawer actions mirror the course page; refetch refreshes the recent list.
+  const handleCancelEnrollment = async (signupId: string, refund: boolean) => {
+    const { error } = await teacherCancelSignup(signupId, { refund });
+    if (error) {
+      toast.error(friendlyError(error, 'Kunne ikke avbestille påmeldingen.'));
+      return;
+    }
+    toast.success(refund ? 'Påmelding avbestilt og refusjon behandlet' : 'Påmelding avbestilt');
+    refetchDashboardData();
+  };
+
+  const handleMarkResolved = async (signupId: string) => {
+    const { error } = await markPaymentResolved(signupId);
+    if (error) {
+      toast.error(friendlyError(error, 'Kunne ikke merke som betalt.'));
+      return;
+    }
+    toast.success('Påmelding merket som betalt');
+    refetchDashboardData();
+  };
 
   useMultiTableSubscription(
     [
@@ -207,11 +237,26 @@ const TeacherDashboard = () => {
 
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <UpcomingCoursesSection courses={dashboardCourses} isLoading={isLoading} />
-                <RecentSignupsSection signups={recentSignupsRaw} isLoading={isLoading} />
+                <RecentSignupsSection
+                  signups={recentSignupsRaw}
+                  isLoading={isLoading}
+                  onSelect={setSelectedSignupId}
+                />
               </div>
             </div>
           )}
       </PageShell>
+
+      <ParticipantDetailDrawer
+        open={selectedSignupId !== null}
+        onOpenChange={(open) => !open && setSelectedSignupId(null)}
+        signup={recentSignupsRaw?.find((s) => s.id === selectedSignupId) ?? null}
+        courseTitle={
+          recentSignupsRaw?.find((s) => s.id === selectedSignupId)?.course?.title ?? ''
+        }
+        onCancelEnrollment={handleCancelEnrollment}
+        onMarkResolved={handleMarkResolved}
+      />
     </div>
   );
 };
@@ -287,9 +332,11 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
 function RecentSignupsSection({
   signups,
   isLoading,
+  onSelect,
 }: {
   signups: SignupWithDetails[] | null;
   isLoading: boolean;
+  onSelect: (signupId: string) => void;
 }) {
   const items = (signups ?? []).slice(0, ROW_LIMIT);
   const showSkeleton = isLoading && signups === null;
@@ -313,7 +360,7 @@ function RecentSignupsSection({
         ) : (
           <div className="space-y-1">
             {items.map((signup) => (
-              <SignupRow key={signup.id} signup={signup} />
+              <SignupRow key={signup.id} signup={signup} onSelect={onSelect} />
             ))}
           </div>
         )}
@@ -322,14 +369,23 @@ function RecentSignupsSection({
   );
 }
 
-function SignupRow({ signup }: { signup: SignupWithDetails }) {
+function SignupRow({
+  signup,
+  onSelect,
+}: {
+  signup: SignupWithDetails;
+  onSelect: (signupId: string) => void;
+}) {
   const name = signup.profile?.name || signup.participant_name || 'Ukjent deltaker';
   const courseTitle = signup.course?.title;
-  const courseId = signup.course?.id;
   const when = signup.created_at ? formatRelativeTimePast(signup.created_at) : '';
 
-  const body = (
-    <>
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(signup.id)}
+      className="flex w-full items-center gap-3 rounded-lg p-3 text-left outline-none transition-colors duration-150 cursor-pointer hover:bg-muted focus-visible:bg-muted"
+    >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-foreground">{name}</p>
@@ -338,18 +394,7 @@ function SignupRow({ signup }: { signup: SignupWithDetails }) {
         </p>
       </div>
       <span className="shrink-0 text-base tabular-nums text-foreground-muted">{when}</span>
-    </>
-  );
-
-  const rowClass =
-    'flex items-center gap-3 rounded-lg p-3 no-underline outline-none transition-colors duration-150 hover:bg-muted focus-visible:bg-muted';
-
-  return courseId ? (
-    <Link to={routes.course(courseId)} className={rowClass}>
-      {body}
-    </Link>
-  ) : (
-    <div className={rowClass}>{body}</div>
+    </button>
   );
 }
 
