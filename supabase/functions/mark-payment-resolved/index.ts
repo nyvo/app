@@ -95,7 +95,7 @@ Deno.serve(async (req: Request) => {
     return successResponse({ success: true, signup_id: body.signup_id }, 200, req)
   } catch (err) {
     console.error('mark-payment-resolved error:', err)
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    return errorResponse(message, 500, req)
+    console.error('mark-payment-resolved error:', err)
+    return errorResponse('Noe gikk galt. Prøv igjen.', 500, req)
   }
 })

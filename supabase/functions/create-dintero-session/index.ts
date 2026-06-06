@@ -408,7 +408,7 @@ Deno.serve(async (req: Request) => {
       req,
     )
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    return errorResponse(message, 500, req)
+    console.error('create-dintero-session error:', error)
+    return errorResponse('Noe gikk galt. Prøv igjen.', 500, req)
   }
 })

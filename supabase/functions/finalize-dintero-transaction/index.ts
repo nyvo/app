@@ -85,8 +85,8 @@ Deno.serve(async (req: Request) => {
     try {
       transaction = await getTransaction(transactionId)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown'
-      return json({ error: `Failed to load transaction: ${message}` }, 502)
+      console.error('finalize-dintero-transaction: getTransaction failed', err)
+      return json({ error: 'Kunne ikke laste transaksjonen. Prøv igjen.' }, 502)
     }
 
     const dinteroMerchantRef = transaction.merchant_reference ?? null
@@ -154,7 +154,7 @@ Deno.serve(async (req: Request) => {
         try {
           await captureIfAuthorized(transactionId, transaction.amount)
         } catch (err) {
-          const message = err instanceof Error ? err.message : 'capture failed'
+          console.error('finalize-dintero-transaction: capture failed (payment-link)', err)
           await supabase
             .from('signups')
             .update({ payment_status: 'failed' })
@@ -163,7 +163,7 @@ Deno.serve(async (req: Request) => {
             .from('payment_attempts')
             .update({ status: 'failed' })
             .eq('id', attempt.id)
-          return json({ error: `capture_failed: ${message}` }, 502)
+          return json({ error: 'Betalingen kunne ikke fullføres. Prøv igjen.' }, 502)
         }
       }
 
@@ -264,7 +264,7 @@ Deno.serve(async (req: Request) => {
       try {
         await captureIfAuthorized(transactionId, transaction.amount)
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'capture failed'
+        console.error('finalize-dintero-transaction: capture failed (embedded)', err)
         await supabase
           .from('signups')
           .update({ payment_status: 'failed' })
@@ -273,7 +273,7 @@ Deno.serve(async (req: Request) => {
           .from('payment_attempts')
           .update({ status: 'failed' })
           .eq('id', attempt.id)
-        return json({ error: `capture_failed: ${message}`, signup_id: signupResult.signup_id }, 502)
+        return json({ error: 'Betalingen kunne ikke fullføres. Prøv igjen.', signup_id: signupResult.signup_id }, 502)
       }
     }
 
@@ -290,7 +290,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ signup_id: signupResult.signup_id, status: 'confirmed' } satisfies FinalizeResult, 200)
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    return json({ error: message }, 500)
+    console.error('finalize-dintero-transaction error:', err)
+    return json({ error: 'Noe gikk galt. Prøv igjen.' }, 500)
   }
 })

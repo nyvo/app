@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
       contractUrl,
     }, 200, req)
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    return errorResponse(message, 500, req)
+    console.error('create-dintero-seller error:', err)
+    return errorResponse('Noe gikk galt. Prøv igjen.', 500, req)
   }
 })
