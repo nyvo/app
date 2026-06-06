@@ -23,6 +23,25 @@ interface Blockers {
   deletable: boolean
 }
 
+// Extract the object path of a seller-logos Storage URL. Returns null for
+// external/malformed URLs so we never attempt to delete something outside our
+// own bucket.
+function extractSellerLogoPath(url: string | null): string | null {
+  if (!url) return null
+  const marker = '/seller-logos/'
+  const i = url.indexOf(marker)
+  if (i === -1) return null
+  let path = url.slice(i + marker.length)
+  const q = path.indexOf('?')
+  if (q !== -1) path = path.slice(0, q)
+  try {
+    path = decodeURIComponent(path)
+  } catch {
+    return null
+  }
+  return path.length > 0 ? path : null
+}
+
 function blockerMessage(b: Blockers): string {
   if (b.blocking_studios.length > 0) {
     const name = b.blocking_studios[0]?.name?.trim()
@@ -62,6 +81,23 @@ Deno.serve(async (req: Request) => {
       return errorResponse(blockerMessage(blockers), 409, req)
     }
 
+    // Capture seller-logo Storage paths for the studios that will be anonymized,
+    // BEFORE deletion — close_and_anonymize_seller nulls logo_url in the cascade,
+    // so we can't read them afterwards. We only remove the objects once the user
+    // delete actually succeeds (below), so a guard abort never deletes a logo for
+    // a still-active studio.
+    const dormantIds = (blockers.dormant_studios ?? []).map((s) => s.seller_id)
+    let logoPaths: string[] = []
+    if (dormantIds.length > 0) {
+      const { data: logos } = await supabase
+        .from('sellers')
+        .select('logo_url')
+        .in('id', dormantIds)
+      logoPaths = (logos ?? [])
+        .map((r) => extractSellerLogoPath((r as { logo_url: string | null }).logo_url))
+        .filter((p): p is string => p !== null)
+    }
+
     // Delete the auth user → cascades to the profile. The BEFORE DELETE guard on
     // profiles does the rest atomically: re-checks blockers (aborts if one
     // appeared), closes + anonymizes any dormant studios, and redacts the user's
@@ -74,6 +110,14 @@ Deno.serve(async (req: Request) => {
         409,
         req,
       )
+    }
+
+    // Best-effort: remove the now-anonymized studios' logo objects from Storage
+    // (the column was already nulled atomically by the guard). Non-fatal — the
+    // account is already deleted; a leftover object is a minor cleanup miss.
+    if (logoPaths.length > 0) {
+      const { error: rmErr } = await supabase.storage.from('seller-logos').remove(logoPaths)
+      if (rmErr) console.error('seller-logos cleanup failed (non-fatal):', rmErr)
     }
 
     return successResponse({ ok: true }, 200, req)
