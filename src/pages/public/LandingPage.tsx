@@ -4,7 +4,6 @@ import { Check } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Grain } from '@/components/ui/grain';
 import { DinteroPaymentBadge } from '@/components/public/DinteroPaymentBadge';
-import { WaitlistForm } from '@/components/public/marketing/WaitlistForm';
 import { formatKroner } from '@/lib/utils';
 import { COMPANY } from '@/lib/company';
 import {
@@ -96,11 +95,10 @@ const LandingPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
               >
-                <WaitlistForm
-                  source="hero"
-                  className="md:mx-0"
-                  helperText="Vi åpner snart. Legg igjen e-posten din, så sier vi fra."
-                />
+                <Button asChild size="cta">
+                  <a href={`mailto:${COMPANY.email}`}>Ta kontakt</a>
+                </Button>
+                <p className="mt-3 text-sm text-foreground-muted">Vi åpner snart.</p>
               </motion.div>
             </div>
           ) : (
@@ -248,7 +246,7 @@ const LandingPage = () => {
                   'Refusjoner og avbestillinger',
                 ],
                 cta: PRELAUNCH
-                  ? { label: 'Bli varslet', to: '#varsle' }
+                  ? { label: 'Ta kontakt', to: '#varsle' }
                   : { label: 'Start gratis', to: '/auth' },
                 caption: PRELAUNCH ? 'Kommer snart.' : 'Ingen kort nødvendig.',
               }}
@@ -267,7 +265,7 @@ const LandingPage = () => {
                   'Prioritert kundestøtte',
                 ],
                 cta: PRELAUNCH
-                  ? { label: 'Bli varslet', to: '#varsle' }
+                  ? { label: 'Ta kontakt', to: '#varsle' }
                   : { label: 'Velg Pro', to: '/auth' },
                 caption: PRELAUNCH ? 'Kommer snart.' : 'Ingen bindingstid.',
               }}
@@ -293,7 +291,9 @@ const LandingPage = () => {
               {PRELAUNCH ? 'Bli med fra start.' : 'Klar?'}
             </h2>
             {PRELAUNCH ? (
-              <WaitlistForm source="final-cta" className="md:mx-0" />
+              <Button asChild size="cta">
+                <a href={`mailto:${COMPANY.email}`}>Ta kontakt</a>
+              </Button>
             ) : (
               <Button asChild size="cta">
                 <Link to="/auth">Kom i gang</Link>
