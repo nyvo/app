@@ -625,6 +625,8 @@ const CoursePage = () => {
           {activeTab === 'oversikt' && (
             <CourseOverviewTab
               course={courseData}
+              enrolledCount={participantKpis.confirmed}
+              revenue={participantKpis.revenue}
               dinteroOnboardingStatus={currentSeller?.dintero_onboarding_status ?? null}
               dinteroOnboardingComplete={currentSeller?.dintero_onboarding_complete ?? false}
               allowsDropIn={settingsAllowsDropIn}

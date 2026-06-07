@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react';
 import { Calendar, Clock, MapPin } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { SettingsSection } from '@/components/teacher/SettingsSection';
+import { cn, formatKroner } from '@/lib/utils';
 import type { MappedCourse } from '@/hooks/use-course-detail';
 import {
   PublishChecklist,
@@ -12,6 +14,11 @@ import {
 
 interface CourseOverviewTabProps {
   course: MappedCourse;
+  /** Confirmed signups on the course — drives the "Påmeldte" KPI (matches the
+   *  Påmeldte tab count). */
+  enrolledCount: number;
+  /** Actual paid revenue (sum of amount_paid on paid signups) — "Inntekt" KPI. */
+  revenue: number;
   /** Raw Dintero onboarding status (PENDING | WAITING_FOR_DECLARATION |
    *  WAITING_FOR_SIGNATURE | ACTIVE | DECLINED | TERMINATED | null) */
   dinteroOnboardingStatus: string | null;
@@ -64,6 +71,8 @@ function buildTimeRange(startTime: string, durationMinutes: number): string {
 
 export function CourseOverviewTab({
   course,
+  enrolledCount,
+  revenue,
   dinteroOnboardingStatus,
   dinteroOnboardingComplete,
   allowsDropIn,
@@ -97,14 +106,6 @@ export function CourseOverviewTab({
   const showKursplanCard = isSeries && (status === 'upcoming' || status === 'active');
   const showSingleSessionCard = !isSeries && (status === 'upcoming' || status === 'active');
 
-  const kursplanSub =
-    status === 'upcoming'
-      ? `${course.totalWeeks} timer · starter ${formatNorwegianDate(course.startDate)}`
-      : `${course.totalWeeks} timer · pågår`;
-
-  // Single (enkelttime) courses have no kursplan or series-only toggles, so the
-  // Oversikt would otherwise be empty — surface the one session's date / time /
-  // place + fill rate instead.
   const rawSessionTime = course.timeSchedule.includes(',')
     ? course.timeSchedule.split(',').pop()!.trim()
     : course.timeSchedule.trim();
@@ -113,19 +114,18 @@ export function CourseOverviewTab({
     ? buildTimeRange(rawSessionTime, course.durationMinutes)
     : null;
 
-  // If nothing here would render, return null so the page shows a clean state.
-  const hasContent =
-    isWaitingForDintero ||
-    status === 'draft' ||
-    showKursplanCard ||
-    showSingleSessionCard ||
-    showTogglesCard ||
-    status === 'completed' ||
-    status === 'cancelled';
-  if (!hasContent) return null;
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* KPI spine — always rendered so the Oversikt is never empty, in every
+          lifecycle state (draft, upcoming, active, completed, cancelled) and
+          for both series and enkelttime. */}
+      <CourseKpis
+        enrolled={enrolledCount}
+        capacity={course.capacity}
+        revenue={revenue}
+        price={course.price}
+      />
+
       {isWaitingForDintero && (
         <InfoBanner
           title="Venter på godkjenning fra Dintero."
@@ -186,38 +186,92 @@ export function CourseOverviewTab({
         />
       )}
 
-      {/* Kursplan + drop-in/late-signups sit together as borderless peer rows
-          (same hierarchy), Kursplan first. Series Kursplan gets a "Se kursplan"
-          button; single shows the session row. */}
-      {(showKursplanCard || showSingleSessionCard || showTogglesCard) && (
-        <div className="divide-y divide-border">
-          {(showKursplanCard || showSingleSessionCard) && (
-            <KursplanSection
-              isSeries={isSeries}
-              sessionCount={sessionCount}
-              sub={kursplanSub}
-              onOpen={onOpenKursplan}
-              dateLabel={singleSessionDate}
-              timeLabel={singleSessionTime}
-              location={course.location ?? null}
-              enrolled={course.enrolled}
-              capacity={course.capacity}
-            />
-          )}
-
-          {showTogglesCard && (
-            <TogglesSection
-              isFree={isFree}
-              allowsDropIn={allowsDropIn}
-              onAllowsDropInChange={onAllowsDropInChange}
-              dropInPrice={dropInPrice}
-              onDropInPriceChange={onDropInPriceChange}
-              acceptsLateSignups={acceptsLateSignups}
-              onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
-            />
-          )}
-        </div>
+      {showKursplanCard && (
+        // Series schedule — just the session count + a way into the full plan.
+        // Too little for a labelled section, so it's a compact card row.
+        <Card>
+          <CardContent className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+            <p className="text-base font-medium text-foreground">
+              Kursrekke · {course.totalWeeks} {course.totalWeeks === 1 ? 'uke' : 'uker'}
+            </p>
+            {sessionCount > 1 && (
+              <Button variant="secondary" onClick={onOpenKursplan} className="shrink-0">
+                Se kursplan
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       )}
+
+      {showSingleSessionCard && (
+        <SettingsSection title="Tid og sted">
+          <Card>
+            <CardContent>
+              <SingleSessionDetails
+                sessionCount={sessionCount}
+                onOpen={onOpenKursplan}
+                dateLabel={singleSessionDate}
+                timeLabel={singleSessionTime}
+                location={course.location ?? null}
+              />
+            </CardContent>
+          </Card>
+        </SettingsSection>
+      )}
+
+      {showTogglesCard && (
+        <SettingsSection title="Kursinnstillinger">
+          <Card>
+            <CardContent>
+              <TogglesSection
+                isFree={isFree}
+                allowsDropIn={allowsDropIn}
+                onAllowsDropInChange={onAllowsDropInChange}
+                dropInPrice={dropInPrice}
+                onDropInPriceChange={onDropInPriceChange}
+                acceptsLateSignups={acceptsLateSignups}
+                onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
+              />
+            </CardContent>
+          </Card>
+        </SettingsSection>
+      )}
+    </div>
+  );
+}
+
+// ─── KPI spine ─────────────────────────────────────────────────────────
+
+function CourseKpis({
+  enrolled,
+  capacity,
+  revenue,
+  price,
+}: {
+  enrolled: number;
+  capacity: number;
+  revenue: number;
+  price: number;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <KpiCard
+        label="Påmeldte"
+        value={capacity > 0 ? `${enrolled} / ${capacity}` : String(enrolled)}
+      />
+      <KpiCard label="Inntekt" value={formatKroner(revenue)} />
+      <KpiCard label="Pris" value={price > 0 ? formatKroner(price) : 'Gratis'} />
+    </div>
+  );
+}
+
+function KpiCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-surface px-5 py-4">
+      <p className="text-xs font-medium text-foreground-muted">{label}</p>
+      <p className="mt-2 text-2xl font-medium tracking-tight text-foreground tabular-nums">
+        {value}
+      </p>
     </div>
   );
 }
@@ -276,81 +330,49 @@ function BaseBanner({
   );
 }
 
-// ─── Section row (title + sub + action, sits directly on canvas) ──────
+// ─── Single-session details (date / time / place) for enkelttime ──────────
 
-function KursplanSection({
-  isSeries,
+function SingleSessionDetails({
   sessionCount,
-  sub,
   onOpen,
   dateLabel,
   timeLabel,
   location,
-  enrolled,
-  capacity,
 }: {
-  isSeries: boolean;
   sessionCount: number;
-  sub: string;
   onOpen: () => void;
   dateLabel: string | null;
   timeLabel: string | null;
   location: string | null;
-  enrolled: number;
-  capacity: number;
 }) {
   return (
-    <section className="py-5 first:pt-0 last:pb-0">
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-        <div className="min-w-0 space-y-2">
-          <p className="text-base font-medium text-foreground">
-            {isSeries
-              ? 'Kursplan'
-              : sessionCount > 1
-                ? `Enkelttime (${sessionCount} dager)`
-                : 'Enkelttime'}
-          </p>
-          {isSeries ? (
-            <p className="text-base text-foreground-muted">{sub}</p>
-          ) : (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-base text-foreground-muted">
-              {dateLabel && (
-                <span className="inline-flex items-center gap-1.5 first-letter:uppercase">
-                  <Calendar className="size-3.5 shrink-0" strokeWidth={1.75} />
-                  {dateLabel}
-                </span>
-              )}
-              {timeLabel && (
-                <span className="inline-flex items-center gap-1.5 tabular-nums">
-                  <Clock className="size-3.5 shrink-0" strokeWidth={1.75} />
-                  {timeLabel}
-                </span>
-              )}
-              {location && (
-                <span className="inline-flex min-w-0 items-center gap-1.5">
-                  <MapPin className="size-3.5 shrink-0" strokeWidth={1.75} />
-                  <span className="truncate">{location}</span>
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-        {sessionCount > 1 ? (
-          <Button variant="secondary" onClick={onOpen}>
-            Se kursplan
-          </Button>
-        ) : (
-          capacity > 0 && (
-            <div className="shrink-0 text-right">
-              <p className="text-base font-medium text-foreground tabular-nums">
-                {enrolled} / {capacity}
-              </p>
-              <p className="text-sm text-foreground-muted">påmeldte</p>
-            </div>
-          )
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-base text-foreground">
+        {dateLabel && (
+          <span className="inline-flex items-center gap-1.5 first-letter:uppercase">
+            <Calendar className="size-3.5 shrink-0 text-foreground-muted" strokeWidth={1.75} />
+            {dateLabel}
+          </span>
+        )}
+        {timeLabel && (
+          <span className="inline-flex items-center gap-1.5 tabular-nums">
+            <Clock className="size-3.5 shrink-0 text-foreground-muted" strokeWidth={1.75} />
+            {timeLabel}
+          </span>
+        )}
+        {location && (
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            <MapPin className="size-3.5 shrink-0 text-foreground-muted" strokeWidth={1.75} />
+            <span className="truncate">{location}</span>
+          </span>
         )}
       </div>
-    </section>
+      {sessionCount > 1 && (
+        <Button variant="secondary" onClick={onOpen} className="shrink-0">
+          Se kursplan
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -380,7 +402,7 @@ function EndStateSection({
   );
 }
 
-// ─── Toggles section (drop-in + late signups, lives on canvas) ────────
+// ─── Toggles (drop-in + late signups, inside a SettingsSection card) ──────
 
 interface TogglesSectionProps {
   isFree: boolean;
@@ -402,26 +424,24 @@ function TogglesSection({
   onAcceptsLateSignupsChange,
 }: TogglesSectionProps) {
   return (
-    <section className="py-5 first:pt-0 last:pb-0">
-      <div className="divide-y divide-border-subtle">
-        <DropInToggleRow
-          checked={allowsDropIn}
-          onChange={onAllowsDropInChange}
-          price={dropInPrice}
-          onPriceChange={onDropInPriceChange}
-        />
-        <ToggleRow
-          label="Tillat påmelding etter oppstart"
-          help={
-            isFree
-              ? 'Lar deltakere melde seg på etter at kurset har startet.'
-              : 'Prisen blir justert automatisk etter antall uker igjen.'
-          }
-          checked={acceptsLateSignups}
-          onChange={onAcceptsLateSignupsChange}
-        />
-      </div>
-    </section>
+    <div className="divide-y divide-border-subtle">
+      <DropInToggleRow
+        checked={allowsDropIn}
+        onChange={onAllowsDropInChange}
+        price={dropInPrice}
+        onPriceChange={onDropInPriceChange}
+      />
+      <ToggleRow
+        label="Tillat påmelding etter oppstart"
+        help={
+          isFree
+            ? 'Lar deltakere melde seg på etter at kurset har startet.'
+            : 'Prisen blir justert automatisk etter antall uker igjen.'
+        }
+        checked={acceptsLateSignups}
+        onChange={onAcceptsLateSignupsChange}
+      />
+    </div>
   );
 }
 
