@@ -216,8 +216,8 @@ export async function fetchPublicCourses(
   count?: number
 }> {
   // If filtering by team slug, include the storefront owner and all active
-  // collaborators. The storefront controls display; the course seller still
-  // owns payments, signups, and management.
+  // collaborators. Draft and finished courses are still excluded by the course
+  // status/date filters below; the course seller owns payments and signups.
   let sellerIdFilter: string[] | null = null
   if (filters?.sellerIds && filters.sellerIds.length > 0) {
     sellerIdFilter = filters.sellerIds
