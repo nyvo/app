@@ -41,19 +41,18 @@ export function PlacesAutocomplete({
   // One session token spans the autocomplete keystrokes + the details lookup,
   // then is regenerated after a selection so each pick is billed as one session.
   const sessionToken = useRef(newToken());
-  // Suppress the search that the programmatic value-set after a select would
-  // otherwise trigger.
-  const skipNextSearch = useRef(false);
+  // Search only for text the user actually typed. Programmatic value changes —
+  // the initial load with a saved place, the fill after a select, a team switch
+  // — must not pop the dropdown open. We record the last typed string and bail
+  // when the (debounced) value doesn't match it.
+  const lastTyped = useRef<string | null>(null);
   // "Latest request wins" — ignore responses from superseded keystrokes.
   const reqId = useRef(0);
 
   const debounced = useDebounce(value, 250);
 
   useEffect(() => {
-    if (skipNextSearch.current) {
-      skipNextSearch.current = false;
-      return;
-    }
+    if (debounced !== lastTyped.current) return;
     const q = debounced.trim();
     if (q.length < 3) {
       setResults([]);
@@ -77,8 +76,10 @@ export function PlacesAutocomplete({
     const { data } = await getPlaceDetails(placeId, sessionToken.current);
     sessionToken.current = newToken();
     setResults([]);
+    // Forget the typed query so the programmatic name fill below can't re-match
+    // and re-open the dropdown.
+    lastTyped.current = null;
     if (data) {
-      skipNextSearch.current = true;
       onSelect(data);
     }
   };
@@ -96,7 +97,10 @@ export function PlacesAutocomplete({
         aria-autocomplete="list"
         aria-invalid={aria['aria-invalid'] || undefined}
         aria-describedby={aria['aria-describedby']}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          lastTyped.current = e.target.value;
+          onChange(e.target.value);
+        }}
         onFocus={() => {
           if (results.length > 0) setOpen(true);
         }}
