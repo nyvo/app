@@ -258,7 +258,7 @@ function BuyerSetup() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <label htmlFor="buyer-first-name" className="text-base font-medium text-foreground">
+              <label htmlFor="buyer-first-name" className="text-sm font-medium text-foreground">
                 Fornavn
               </label>
               <Input
@@ -271,7 +271,7 @@ function BuyerSetup() {
               {errors.firstName && <FieldError className="mt-0">{errors.firstName}</FieldError>}
             </div>
             <div className="grid gap-2">
-              <label htmlFor="buyer-last-name" className="text-base font-medium text-foreground">
+              <label htmlFor="buyer-last-name" className="text-sm font-medium text-foreground">
                 Etternavn
               </label>
               <Input
@@ -285,7 +285,7 @@ function BuyerSetup() {
           </div>
 
           <div className="grid gap-2">
-            <label htmlFor="buyer-phone" className="text-base font-medium text-foreground">
+            <label htmlFor="buyer-phone" className="text-sm font-medium text-foreground">
               Telefonnummer
             </label>
             <Input
@@ -486,7 +486,7 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
         </h1>
 
         <div className="grid gap-2">
-          <label htmlFor="seller-name" className="text-base font-medium text-foreground">
+          <label htmlFor="seller-name" className="text-sm font-medium text-foreground">
             {nameLabel}
           </label>
           <Input

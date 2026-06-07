@@ -247,7 +247,7 @@ function LocationDrawer({
             <label
               htmlFor="loc-drawer-name"
               data-error={!!nameError || undefined}
-              className="text-base font-medium text-foreground data-[error=true]:text-danger"
+              className="text-sm font-medium text-foreground data-[error=true]:text-danger"
             >
               Navn
             </label>
@@ -268,7 +268,7 @@ function LocationDrawer({
           </div>
 
           <div className="grid gap-2">
-            <label htmlFor="loc-drawer-addr" className="text-base font-medium text-foreground">
+            <label htmlFor="loc-drawer-addr" className="text-sm font-medium text-foreground">
               Adresse
             </label>
             <Input

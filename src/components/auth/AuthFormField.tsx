@@ -59,7 +59,7 @@ export function AuthFormField({
         <label
           htmlFor={id}
           data-error={hasError || undefined}
-          className="text-base font-medium block text-foreground data-[error=true]:text-danger"
+          className="text-sm font-medium block text-foreground data-[error=true]:text-danger"
         >
           {label}
         </label>

@@ -143,7 +143,7 @@ export default function HelpPage() {
           <CardContent>
           <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="help-subject" className="text-base font-medium text-foreground">
+              <label htmlFor="help-subject" className="text-sm font-medium text-foreground">
                 Hva gjelder det?
               </label>
               <Select value={subject} onValueChange={setSubject}>
@@ -165,7 +165,7 @@ export default function HelpPage() {
             {showCourseFields && (
               <>
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="help-course" className="text-base font-medium text-foreground">
+                  <label htmlFor="help-course" className="text-sm font-medium text-foreground">
                     Gjelder kurs
                   </label>
                   <Select value={courseId} onValueChange={setCourseId} disabled={loadingCourses}>
@@ -186,7 +186,7 @@ export default function HelpPage() {
 
                 {showSignupField && (
                   <div className="flex flex-col gap-1.5">
-                    <label htmlFor="help-signup" className="text-base font-medium text-foreground">
+                    <label htmlFor="help-signup" className="text-sm font-medium text-foreground">
                       Gjelder påmelding
                     </label>
                     <Select value={signupId} onValueChange={setSignupId} disabled={loadingSignups}>
@@ -209,7 +209,7 @@ export default function HelpPage() {
             )}
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="help-message" className="text-base font-medium text-foreground">
+              <label htmlFor="help-message" className="text-sm font-medium text-foreground">
                 Melding
               </label>
               <Textarea
