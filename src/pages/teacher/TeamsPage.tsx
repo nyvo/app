@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ExternalLink, X } from '@/lib/icons';
+import { ExternalLink, Plus, X } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
@@ -101,6 +101,8 @@ function StudioPublicSettings({
   const [rooms, setRooms] = useState<Room[]>([]);
   const [newRoom, setNewRoom] = useState('');
   const [newRoomCapacity, setNewRoomCapacity] = useState('');
+  // The add-room form stays collapsed behind a card until the teacher opens it.
+  const [addingRoom, setAddingRoom] = useState(false);
   const [placeError, setPlaceError] = useState<string | null>(null);
   // Coords from the Google Place behind the address (null until a place is
   // picked, and cleared again the moment the name is edited by hand).
@@ -118,6 +120,7 @@ function StudioPublicSettings({
     setPlaceCoords(coordsFromLocation(primaryLocation));
     setNewRoom('');
     setNewRoomCapacity('');
+    setAddingRoom(false);
     setPlaceError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [primaryLocation?.id, primaryLocation?.name, primaryLocation?.address, primaryLocation?.rooms]);
@@ -203,6 +206,12 @@ function StudioPublicSettings({
     setNewRoom('');
     setNewRoomCapacity('');
     void persistRooms(next, previous);
+  };
+
+  const cancelAddRoom = () => {
+    setNewRoom('');
+    setNewRoomCapacity('');
+    setAddingRoom(false);
   };
 
   const removeRoom = (name: string) => {
@@ -544,47 +553,79 @@ function StudioPublicSettings({
                 </div>
               )}
 
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Input
-                  value={newRoom}
-                  onChange={(e) => setNewRoom(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addRoom();
-                    }
-                  }}
-                  disabled={isSaving || loadingLocations}
-                  placeholder="Sal 1, behandlingsrom, ute…"
-                  className="sm:flex-1"
-                />
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  min="1"
-                  value={newRoomCapacity}
-                  onChange={(e) => setNewRoomCapacity(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addRoom();
-                    }
-                  }}
-                  disabled={isSaving || loadingLocations}
-                  placeholder="Plasser"
-                  aria-label="Antall plasser"
-                  className="sm:w-28"
-                />
-                <Button
+              {addingRoom ? (
+                <div className="rounded-md border border-border bg-surface p-3">
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      autoFocus
+                      value={newRoom}
+                      onChange={(e) => setNewRoom(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addRoom();
+                        } else if (e.key === 'Escape') {
+                          e.preventDefault();
+                          cancelAddRoom();
+                        }
+                      }}
+                      disabled={isSaving || loadingLocations}
+                      placeholder="Sal 1, behandlingsrom, ute…"
+                      aria-label="Navn på rom"
+                      className="sm:flex-1"
+                    />
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min="1"
+                      value={newRoomCapacity}
+                      onChange={(e) => setNewRoomCapacity(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addRoom();
+                        } else if (e.key === 'Escape') {
+                          e.preventDefault();
+                          cancelAddRoom();
+                        }
+                      }}
+                      disabled={isSaving || loadingLocations}
+                      placeholder="Plasser"
+                      aria-label="Antall plasser"
+                      className="sm:w-28"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={addRoom}
+                        disabled={!newRoom.trim()}
+                        className="flex-1 sm:flex-none"
+                      >
+                        Legg til
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={cancelAddRoom}
+                        disabled={isSaving || loadingLocations}
+                      >
+                        Avbryt
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
                   type="button"
-                  variant="secondary"
-                  onClick={addRoom}
-                  disabled={!newRoom.trim()}
-                  className="sm:w-auto"
+                  onClick={() => setAddingRoom(true)}
+                  disabled={isSaving || loadingLocations}
+                  className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border bg-surface px-3 py-2.5 text-sm font-medium text-foreground-muted transition-colors hover:border-foreground/25 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed disabled:opacity-50"
                 >
+                  <Plus className="size-4" />
                   Legg til rom
-                </Button>
-              </div>
+                </button>
+              )}
             </div>
 
             {additionalLocations.length > 0 && (
