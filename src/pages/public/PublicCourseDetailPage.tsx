@@ -150,6 +150,7 @@ export default function PublicCourseDetailPage() {
                   <section>
                     <LocationCard
                       location={course.location}
+                      address={course.location_address}
                       lat={course.location_lat}
                       lon={course.location_lon}
                       placeId={course.location_place_id}

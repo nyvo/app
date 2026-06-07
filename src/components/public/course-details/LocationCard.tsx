@@ -1,29 +1,39 @@
 import { ArrowUpRight, MapPin } from '@/lib/icons';
 import { MapEmbed } from '@/components/ui/map-embed';
+import { LOCATION_VALUE_SEPARATOR } from '@/lib/rooms';
 
 interface LocationCardProps {
-  /** The course's location string — usually "Studio · Sal" or a full address. */
+  /** The course's location string — usually "Venue – Room" or a freeform place. */
   location: string;
+  /** Street address copied from the picked venue; shown under the title. */
+  address?: string | null;
   /** When the location was picked from a Google Place, these pin it exactly. */
   lat?: number | null;
   lon?: number | null;
   placeId?: string | null;
 }
 
-export function LocationCard({ location, lat, lon, placeId }: LocationCardProps) {
+export function LocationCard({ location, address, lat, lon, placeId }: LocationCardProps) {
   const hasCoords = placeId != null || (lat != null && lon != null);
+
+  // "Venue – Room" → venue becomes the title; the room drops to the detail line
+  // beside the address. A freeform location with no separator stays as the title.
+  const [venue, ...roomParts] = location.split(LOCATION_VALUE_SEPARATOR);
+  const room = roomParts.join(LOCATION_VALUE_SEPARATOR) || null;
+  const title = venue || location;
+  const detail = [address, room].filter(Boolean).join(' · ');
 
   // Directions, not just "view" — once the map is shown, the useful action is
   // getting there. The /dir/ URL opens the native Maps app on mobile. Prefer an
   // exact pin (place_id, else coords); fall back to a text search.
   const params = new URLSearchParams({ api: '1' });
   if (placeId) {
-    params.set('destination', location);
+    params.set('destination', address || title);
     params.set('destination_place_id', placeId);
   } else if (lat != null && lon != null) {
     params.set('destination', `${lat},${lon}`);
   } else {
-    params.set('destination', location.split('·')[0].trim() || location);
+    params.set('destination', address || title);
   }
   const directionsUrl = `https://www.google.com/maps/dir/?${params.toString()}`;
 
@@ -34,7 +44,7 @@ export function LocationCard({ location, lat, lon, placeId }: LocationCardProps)
           placeId={placeId}
           lat={lat}
           lon={lon}
-          title={`Kart over ${location}`}
+          title={`Kart over ${title}`}
           className="h-56 rounded-none border-0"
         />
       )}
@@ -43,7 +53,8 @@ export function LocationCard({ location, lat, lon, placeId }: LocationCardProps)
           <MapPin className="size-5" strokeWidth={1.75} />
         </span>
         <div className="min-w-0">
-          <p className="text-base font-medium text-foreground">{location}</p>
+          <p className="text-base font-medium text-foreground">{title}</p>
+          {detail && <p className="mt-0.5 text-sm text-foreground-muted">{detail}</p>}
           <a
             href={directionsUrl}
             target="_blank"

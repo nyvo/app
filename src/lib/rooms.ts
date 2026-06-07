@@ -9,6 +9,11 @@
 
 export type Room = { name: string; capacity: number | null }
 
+// Joins a venue name and a room name into one location value ("Venue – Room").
+// Shared between the location picker (write) and the public card (read) so the
+// split/join stay in sync.
+export const LOCATION_VALUE_SEPARATOR = ' – '
+
 export function parseRooms(value: unknown): Room[] {
   if (!Array.isArray(value)) return []
   const rooms: Room[] = []

@@ -94,7 +94,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
   const [days, setDays] = useState('1');
   const [location, setLocation] = useState('');
   const [locationCoords, setLocationCoords] = useState<
-    { lat: number | null; lon: number | null; placeId: string | null } | null
+    { lat: number | null; lon: number | null; placeId: string | null; address: string | null } | null
   >(null);
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
@@ -106,7 +106,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
     setLocation(value);
     setLocationCoords(
       meta && meta.lat != null && meta.lon != null
-        ? { lat: meta.lat, lon: meta.lon, placeId: meta.placeId }
+        ? { lat: meta.lat, lon: meta.lon, placeId: meta.placeId, address: meta.address }
         : null,
     );
     if (meta?.capacity != null && capacity.trim() === '') {
@@ -215,6 +215,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
           duration,
           total_weeks: format === 'series' ? parseInt(weeks, 10) : null,
           location: location.trim() || null,
+          location_address: locationCoords?.address ?? null,
           location_lat: locationCoords?.lat ?? null,
           location_lon: locationCoords?.lon ?? null,
           location_place_id: locationCoords?.placeId ?? null,
