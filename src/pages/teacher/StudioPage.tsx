@@ -28,7 +28,7 @@ import type { Seller, Team } from '@/types/database';
 
 const DEFAULT_PLACE_NAME = 'Studio';
 
-const TeamsPage = () => {
+const StudioPage = () => {
   const { currentTeam, currentSeller, refreshSellers } = useAuth();
 
   return (
@@ -456,7 +456,7 @@ function StudioPublicSettings({
 
       <SettingsSection
         title="Sted og rom"
-        description="Brukes når du lager kurs og når deltakerne ser hvor de skal møte opp."
+        description="Brukes når du lager kurs, og vises til deltakerne som skal møte opp."
       >
         <Card>
           <CardContent className="space-y-6">
@@ -511,7 +511,7 @@ function StudioPublicSettings({
               <div>
                 <span className="text-sm font-medium text-foreground">Rom</span>
                 <p className="mt-1 text-sm text-foreground-muted">
-                  Sett antall plasser per rom, så fylles det inn automatisk når du velger rommet på et kurs.
+                  Sett antall plasser per rom. Da fylles det inn automatisk når du bruker rommet på et kurs.
                 </p>
               </div>
 
@@ -655,4 +655,4 @@ function StudioPublicSettings({
   );
 }
 
-export default TeamsPage;
+export default StudioPage;
