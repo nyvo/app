@@ -103,7 +103,7 @@ function StudioPublicSettings({
   const [newRoomCapacity, setNewRoomCapacity] = useState('');
   const [placeError, setPlaceError] = useState<string | null>(null);
   // Coords from the Google Place behind the address (null until a place is
-  // picked, and cleared again the moment the name/address is edited by hand).
+  // picked, and cleared again the moment the name is edited by hand).
   const [placeCoords, setPlaceCoords] = useState<
     { lat: number | null; lon: number | null; placeId: string | null } | null
   >(null);
@@ -463,7 +463,9 @@ function StudioPublicSettings({
                 value={placeName}
                 onChange={(v) => {
                   setPlaceName(v);
-                  // Manual edit ⇒ the stored coords no longer match the name.
+                  // The name field is the search box — typing means you're after a
+                  // different place, so the picked address + coords no longer apply.
+                  setAddress('');
                   setPlaceCoords(null);
                   if (placeError) setPlaceError(null);
                 }}
@@ -480,24 +482,9 @@ function StudioPublicSettings({
                 aria-describedby={placeError ? 'studio-place-error' : undefined}
               />
               {placeError && <FieldError id="studio-place-error">{placeError}</FieldError>}
-            </div>
-
-            <div className="grid gap-2">
-              <label htmlFor="studio-address" className="text-sm font-medium text-foreground">
-                Adresse
-              </label>
-              <Input
-                id="studio-address"
-                value={address}
-                onChange={(e) => {
-                  setAddress(e.target.value);
-                  // Hand-editing the address detaches it from the picked place.
-                  setPlaceCoords(null);
-                }}
-                onKeyDown={handleKeyDown}
-                disabled={isSaving || loadingLocations}
-                placeholder="Gateadresse, by"
-              />
+              {/* Address is derived from the picked place — shown for confirmation,
+                  not editable. Re-pick from the search to change it. */}
+              {address && <p className="text-sm text-foreground-muted">{address}</p>}
               {(placeCoords?.placeId != null ||
                 (placeCoords?.lat != null && placeCoords?.lon != null)) && (
                 <MapEmbed
