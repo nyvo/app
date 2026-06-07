@@ -13,10 +13,8 @@ import {
 import type { NotificationType } from '@/types/database'
 
 /**
- * Type → leading-glyph map. All icons render in a uniform neutral plate
- * (no per-type color); the glyph itself signals the event class. Severity
- * is communicated structurally (Krever handling group, amber bell dot),
- * never via color on the row.
+ * Type → leading-glyph map. The glyph signals the event class; the plate
+ * tint (see STATUS_MAP) signals severity.
  */
 const ICON_MAP: Record<NotificationType, LucideIcon> = {
   'booking.created': User,
@@ -32,4 +30,28 @@ const ICON_MAP: Record<NotificationType, LucideIcon> = {
 
 export function getNotificationIcon(type: string): LucideIcon {
   return ICON_MAP[type as NotificationType] ?? User
+}
+
+/**
+ * Type → status tint for the icon plate. Carried by the `--success/-subtle`,
+ * `--warning/-subtle`, `--danger/-subtle` token pairs; `neutral` keeps the
+ * plain muted plate. Row text stays single-color per line — only the plate
+ * carries hue. Read rows drain this back to neutral (see NotificationRow).
+ */
+export type NotificationStatus = 'success' | 'warning' | 'danger' | 'neutral'
+
+const STATUS_MAP: Record<NotificationType, NotificationStatus> = {
+  'booking.created': 'success',
+  'booking.waitlist_promoted': 'success',
+  'payment.failed': 'danger',
+  'refund.completed': 'neutral',
+  'payout.sent': 'success',
+  'dintero_seller.action_required': 'warning',
+  'dintero_seller.approved': 'success',
+  'dintero_seller.rejected': 'danger',
+  'team.invite_accepted': 'neutral',
+}
+
+export function getNotificationStatus(type: string): NotificationStatus {
+  return STATUS_MAP[type as NotificationType] ?? 'neutral'
 }

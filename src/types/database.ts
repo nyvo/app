@@ -291,6 +291,7 @@ export type Database = {
           action_required: boolean
           action_url: string
           actor_id: string | null
+          archived_at: string | null
           body: string | null
           created_at: string
           dedupe_key: string | null
@@ -308,6 +309,7 @@ export type Database = {
           action_required?: boolean
           action_url: string
           actor_id?: string | null
+          archived_at?: string | null
           body?: string | null
           created_at?: string
           dedupe_key?: string | null
@@ -325,6 +327,7 @@ export type Database = {
           action_required?: boolean
           action_url?: string
           actor_id?: string | null
+          archived_at?: string | null
           body?: string | null
           created_at?: string
           dedupe_key?: string | null

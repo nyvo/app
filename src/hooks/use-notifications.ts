@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription'
 import { logger } from '@/lib/logger'
+import { runWithUndo } from '@/lib/undo'
 import type { Notification } from '@/types/database'
 
 const PAGE_SIZE = 30
@@ -23,6 +24,7 @@ interface UseNotificationsReturn {
   markRead: (id: number) => Promise<void>
   markAllRead: () => Promise<void>
   markResolved: (id: number) => Promise<void>
+  archive: (notification: Notification) => void
   refetch: () => Promise<void>
 }
 
@@ -59,6 +61,7 @@ export function useNotifications(): UseNotificationsReturn {
       .from('notifications')
       .select('*')
       .eq('recipient_id', userId)
+      .is('archived_at', null)
       .order('created_at', { ascending: false })
       .limit(PAGE_SIZE)
 
@@ -95,9 +98,13 @@ export function useNotifications(): UseNotificationsReturn {
         })
       } else if (payload.eventType === 'UPDATE' && payload.new) {
         const updated = payload.new as Notification
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === updated.id ? updated : n)),
-        )
+        setNotifications((prev) => {
+          // Archived (e.g. dismissed on another device) → drop from the feed.
+          if (updated.archived_at !== null) {
+            return prev.filter((n) => n.id !== updated.id)
+          }
+          return prev.map((n) => (n.id === updated.id ? updated : n))
+        })
       } else if (payload.eventType === 'DELETE' && payload.old) {
         const deleted = payload.old as Partial<Notification>
         if (deleted.id == null) return
@@ -222,6 +229,40 @@ export function useNotifications(): UseNotificationsReturn {
     [userId, notifications],
   )
 
+  // Per-item dismiss with a 6s undo window (Gmail delay-commit via runWithUndo).
+  // The row hides instantly; the archive only commits to the DB when the toast
+  // expires, so "Angre" cancels it before any write. Soft archive — when it
+  // does commit, the row is hidden from the feed but retained for history/audit
+  // (not a delete). Restore re-inserts in created_at-desc order.
+  const archive = useCallback(
+    (notification: Notification) => {
+      if (!userId) return
+
+      runWithUndo({
+        message: 'Varsel fjernet',
+        hide: () =>
+          setNotifications((prev) =>
+            prev.filter((n) => n.id !== notification.id),
+          ),
+        restore: () =>
+          setNotifications((prev) => {
+            if (prev.some((n) => n.id === notification.id)) return prev
+            return [...prev, notification]
+              .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+              .slice(0, PAGE_SIZE)
+          }),
+        commit: async () =>
+          await supabase
+            .from('notifications')
+            .update({ archived_at: new Date().toISOString() })
+            .eq('id', notification.id)
+            .eq('recipient_id', userId),
+        errorOf: (result) => result.error,
+      })
+    },
+    [userId],
+  )
+
   return {
     notifications,
     isLoading,
@@ -236,6 +277,7 @@ export function useNotifications(): UseNotificationsReturn {
     markRead,
     markAllRead,
     markResolved,
+    archive,
     refetch: fetchInitial,
   }
 }

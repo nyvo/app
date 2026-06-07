@@ -39,6 +39,7 @@ export function NotificationsPopover() {
     markSeenAll,
     markRead,
     markAllRead,
+    archive,
   } = useNotifications()
 
   // On panel open: clear the bell dot via seen_at. Row read state is
@@ -56,6 +57,10 @@ export function NotificationsPopover() {
 
   const handleMarkAllRead = () => {
     void markAllRead()
+  }
+
+  const handleArchive = (notification: (typeof notifications)[number]) => {
+    archive(notification)
   }
 
   const dotColor =
@@ -113,6 +118,7 @@ export function NotificationsPopover() {
         notifications={notifications}
         isLoading={isLoading}
         onActivate={handleActivate}
+        onArchive={handleArchive}
       />
     </>
   )

@@ -6,16 +6,14 @@ interface NotificationFeedProps {
   notifications: Notification[]
   isLoading: boolean
   onActivate: (id: number) => void
+  onArchive: (notification: Notification) => void
 }
 
 /**
- * Scrolling feed inside the popover. Splits into two parallel sections:
- *
- *   Krever handling — unresolved action_required items, pinned to top.
- *   Aktivitet      — everything else, chronological.
- *
- * Group labels appear only when their section has content — an empty
- * "Krever handling" or empty "Aktivitet" would be visual noise.
+ * Scrolling feed inside the popover. One flat, label-free list: unresolved
+ * action_required items sort to the top (the row's status tint — amber/red —
+ * carries the severity, so no "Krever handling" header is needed), then
+ * everything else in chronological order.
  *
  * Time-based grouping ("I dag / I går / Tidligere") is intentionally
  * absent — each row carries its own relative timestamp, so a time
@@ -25,6 +23,7 @@ export function NotificationFeed({
   notifications,
   isLoading,
   onActivate,
+  onArchive,
 }: NotificationFeedProps) {
   if (isLoading) {
     return (
@@ -52,41 +51,24 @@ export function NotificationFeed({
     return <EmptyState />
   }
 
-  const actionRequired = notifications.filter(
-    (n) => n.action_required && n.resolved_at === null,
-  )
-  const activity = notifications.filter(
-    (n) => !(n.action_required && n.resolved_at === null),
+  // Unresolved action-required items first, then chronological. Stable sort
+  // preserves the incoming created_at-desc order within each group.
+  const isUnresolvedAction = (n: Notification) =>
+    n.action_required && n.resolved_at === null
+  const ordered = [...notifications].sort(
+    (a, b) => Number(isUnresolvedAction(b)) - Number(isUnresolvedAction(a)),
   )
 
   return (
     <div className="overflow-y-auto">
-      {actionRequired.length > 0 && (
-        <Section label="Krever handling">
-          {actionRequired.map((n) => (
-            <NotificationRow key={n.id} notification={n} onActivate={onActivate} />
-          ))}
-        </Section>
-      )}
-
-      {activity.length > 0 && (
-        <Section label="Aktivitet">
-          {activity.map((n) => (
-            <NotificationRow key={n.id} notification={n} onActivate={onActivate} />
-          ))}
-        </Section>
-      )}
-    </div>
-  )
-}
-
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="px-4 pt-3 pb-1 text-[11px] font-medium text-foreground-muted">
-        {label}
-      </div>
-      {children}
+      {ordered.map((n) => (
+        <NotificationRow
+          key={n.id}
+          notification={n}
+          onActivate={onActivate}
+          onArchive={onArchive}
+        />
+      ))}
     </div>
   )
 }
