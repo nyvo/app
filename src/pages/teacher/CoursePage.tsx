@@ -106,7 +106,7 @@ const CoursePage = () => {
   const [settingsDescription, setSettingsDescription] = useState('');
   const [settingsLocation, setSettingsLocation] = useState('');
   const [settingsLocationCoords, setSettingsLocationCoords] = useState<
-    { lat: number | null; lon: number | null; placeId: string | null; address: string | null } | null
+    { lat: number | null; lon: number | null; placeId: string | null } | null
   >(null);
   const [settingsImageUrl, setSettingsImageUrl] = useState<string | null>(null);
   const [settingsImageFile, setSettingsImageFile] = useState<File | null>(null);
@@ -135,7 +135,7 @@ const CoursePage = () => {
     setSettingsLocation(courseData.location || '');
     setSettingsLocationCoords(
       courseData.locationLat != null
-        ? { lat: courseData.locationLat, lon: courseData.locationLon, placeId: courseData.locationPlaceId, address: courseData.locationAddress }
+        ? { lat: courseData.locationLat, lon: courseData.locationLon, placeId: courseData.locationPlaceId }
         : null,
     );
     setSettingsImageUrl(courseData.imageUrl);
@@ -271,7 +271,6 @@ const CoursePage = () => {
         title: settingsTitle.trim(),
         description: settingsDescription.trim() || null,
         location: settingsLocation.trim() || null,
-        location_address: settingsLocationCoords?.address ?? null,
         location_lat: settingsLocationCoords?.lat ?? null,
         location_lon: settingsLocationCoords?.lon ?? null,
         location_place_id: settingsLocationCoords?.placeId ?? null,
@@ -314,7 +313,6 @@ const CoursePage = () => {
               title: settingsTitle.trim(),
               description: settingsDescription.trim(),
               location: settingsLocation.trim() || null,
-              locationAddress: settingsLocationCoords?.address ?? null,
               locationLat: settingsLocationCoords?.lat ?? null,
               locationLon: settingsLocationCoords?.lon ?? null,
               locationPlaceId: settingsLocationCoords?.placeId ?? null,
@@ -494,7 +492,7 @@ const CoursePage = () => {
     setSettingsLocation(courseData.location || '');
     setSettingsLocationCoords(
       courseData.locationLat != null
-        ? { lat: courseData.locationLat, lon: courseData.locationLon, placeId: courseData.locationPlaceId, address: courseData.locationAddress }
+        ? { lat: courseData.locationLat, lon: courseData.locationLon, placeId: courseData.locationPlaceId }
         : null,
     );
     setSettingsImageUrl(courseData.imageUrl);

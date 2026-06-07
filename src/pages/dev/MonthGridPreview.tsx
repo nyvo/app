@@ -84,7 +84,6 @@ function makeMockCourses(): PublicCourseWithDetails[] {
     delivery_mode: 'in_person',
     status: 'active',
     location: 'Studio, Oslo',
-    location_address: null,
     location_lat: null,
     location_lon: null,
     location_place_id: null,

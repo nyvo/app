@@ -561,7 +561,6 @@ function makeMockCourse(variant: Variant): PublicCourseWithDetails {
     delivery_mode: 'in_person',
     status: 'active',
     location: 'InSPIRE Yogastudio · Sal 1',
-    location_address: null,
     location_lat: null,
     location_lon: null,
     location_place_id: null,

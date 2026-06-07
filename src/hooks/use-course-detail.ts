@@ -31,7 +31,6 @@ function mapCourseToComponentFormat(
     status: courseData.status,
     date: courseData.time_schedule || '',
     location: courseData.location,
-    locationAddress: courseData.location_address,
     locationLat: courseData.location_lat,
     locationLon: courseData.location_lon,
     locationPlaceId: courseData.location_place_id,

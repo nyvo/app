@@ -36,7 +36,6 @@ interface CourseQueryResult {
   delivery_mode: string
   status: string
   location: string | null
-  location_address: string | null
   location_lat: number | null
   location_lon: number | null
   location_place_id: string | null
@@ -83,7 +82,6 @@ export interface PublicCourseWithDetails {
   delivery_mode: DeliveryMode
   status: CourseStatus
   location: string | null
-  location_address: string | null
   location_lat: number | null
   location_lon: number | null
   location_place_id: string | null
@@ -251,7 +249,6 @@ export async function fetchPublicCourses(
       delivery_mode,
       status,
       location,
-      location_address,
       location_lat,
       location_lon,
       location_place_id,
@@ -435,7 +432,6 @@ export async function fetchPublicCourses(
       delivery_mode: course.delivery_mode as DeliveryMode,
       status: course.status as CourseStatus,
       location: course.location,
-      location_address: course.location_address ?? null,
       location_lat: course.location_lat ?? null,
       location_lon: course.location_lon ?? null,
       location_place_id: course.location_place_id ?? null,
@@ -488,7 +484,6 @@ export async function fetchPublicCourseBySlug(
       delivery_mode,
       status,
       location,
-      location_address,
       location_lat,
       location_lon,
       location_place_id,
@@ -585,7 +580,6 @@ export async function fetchPublicCourseBySlug(
     delivery_mode: typedCourse.delivery_mode as DeliveryMode,
     status: typedCourse.status as CourseStatus,
     location: typedCourse.location,
-    location_address: typedCourse.location_address,
     location_lat: typedCourse.location_lat,
     location_lon: typedCourse.location_lon,
     location_place_id: typedCourse.location_place_id,

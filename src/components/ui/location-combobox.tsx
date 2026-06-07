@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Check, ChevronsUpDown, MapPin } from '@/lib/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn, foldNorwegian } from '@/lib/utils';
-import { parseRooms, LOCATION_VALUE_SEPARATOR } from '@/lib/rooms';
+import { parseRooms } from '@/lib/rooms';
 import type { TeacherLocation } from '@/types/database';
 
 interface LocationOption {
@@ -17,7 +17,6 @@ export interface LocationSelectMeta {
   lat: number | null;
   lon: number | null;
   placeId: string | null;
-  address: string | null;
 }
 
 interface LocationComboboxProps {
@@ -29,6 +28,8 @@ interface LocationComboboxProps {
   'aria-invalid'?: 'true' | 'false';
   'aria-label'?: string;
 }
+
+export const LOCATION_VALUE_SEPARATOR = ' \u2013 ';
 
 function buildOptions(locations: TeacherLocation[]): LocationOption[] {
   const options: LocationOption[] = [];
@@ -89,17 +90,9 @@ export function LocationCombobox({
   // pin. Derive them from the venue half of the selected value; custom typed
   // entries match no venue → no coords.
   const coordsByVenue = useMemo(() => {
-    const map = new Map<
-      string,
-      { lat: number | null; lon: number | null; placeId: string | null; address: string | null }
-    >();
+    const map = new Map<string, { lat: number | null; lon: number | null; placeId: string | null }>();
     for (const loc of locations) {
-      map.set(loc.name, {
-        lat: loc.lat,
-        lon: loc.lon,
-        placeId: loc.google_place_id,
-        address: loc.address,
-      });
+      map.set(loc.name, { lat: loc.lat, lon: loc.lon, placeId: loc.google_place_id });
     }
     return map;
   }, [locations]);
@@ -112,7 +105,6 @@ export function LocationCombobox({
       lat: coords?.lat ?? null,
       lon: coords?.lon ?? null,
       placeId: coords?.placeId ?? null,
-      address: coords?.address ?? null,
     });
     setOpen(false);
     setSearch('');

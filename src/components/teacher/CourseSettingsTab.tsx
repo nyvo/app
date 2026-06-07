@@ -39,7 +39,7 @@ interface CourseSettingsTabProps {
   // Coords copied from the picked location onto the course (null when the
   // location is custom-typed or cleared).
   onLocationCoordsChange: (
-    coords: { lat: number | null; lon: number | null; placeId: string | null; address: string | null } | null,
+    coords: { lat: number | null; lon: number | null; placeId: string | null } | null,
   ) => void;
 
   // Schedule
@@ -232,7 +232,7 @@ export const CourseSettingsTab = ({
     // location) so the public page can map it.
     onLocationCoordsChange(
       meta && meta.lat != null && meta.lon != null
-        ? { lat: meta.lat, lon: meta.lon, placeId: meta.placeId, address: meta.address }
+        ? { lat: meta.lat, lon: meta.lon, placeId: meta.placeId }
         : null,
     );
     if (meta?.capacity != null && participantsInput.trim() === '') {
