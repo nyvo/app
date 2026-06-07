@@ -12,9 +12,16 @@ interface LocationOption {
   capacity?: number | null;
 }
 
+export interface LocationSelectMeta {
+  capacity: number | null;
+  lat: number | null;
+  lon: number | null;
+  placeId: string | null;
+}
+
 interface LocationComboboxProps {
   value: string;
-  onChange: (value: string, meta?: { capacity: number | null }) => void;
+  onChange: (value: string, meta?: LocationSelectMeta) => void;
   locations: TeacherLocation[];
   placeholder?: string;
   className?: string;
@@ -79,8 +86,26 @@ export function LocationCombobox({
   const hasOptions = locations.length > 0;
   const showCustom = search.trim() && !allOptions.some((o) => foldNorwegian(o.value) === foldNorwegian(search.trim()));
 
+  // Coords live on the venue (teacher_location), so a room inherits its venue's
+  // pin. Derive them from the venue half of the selected value; custom typed
+  // entries match no venue → no coords.
+  const coordsByVenue = useMemo(() => {
+    const map = new Map<string, { lat: number | null; lon: number | null; placeId: string | null }>();
+    for (const loc of locations) {
+      map.set(loc.name, { lat: loc.lat, lon: loc.lon, placeId: loc.google_place_id });
+    }
+    return map;
+  }, [locations]);
+
   const handleSelect = (val: string, capacity?: number | null) => {
-    onChange(val, { capacity: capacity ?? null });
+    const venueName = val.split(LOCATION_VALUE_SEPARATOR)[0];
+    const coords = coordsByVenue.get(venueName);
+    onChange(val, {
+      capacity: capacity ?? null,
+      lat: coords?.lat ?? null,
+      lon: coords?.lon ?? null,
+      placeId: coords?.placeId ?? null,
+    });
     setOpen(false);
     setSearch('');
   };

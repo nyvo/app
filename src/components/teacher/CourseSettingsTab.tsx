@@ -8,7 +8,7 @@ import { FieldError } from '@/components/ui/field-error';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { ImageField } from '@/components/ui/image-upload';
 import { DatePicker } from '@/components/ui/date-picker';
-import { LocationCombobox } from '@/components/ui/location-combobox';
+import { LocationCombobox, type LocationSelectMeta } from '@/components/ui/location-combobox';
 import { useLocations } from '@/hooks/use-locations';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -36,6 +36,11 @@ interface CourseSettingsTabProps {
   // Location — committed as null when empty (per DB schema).
   settingsLocation: string;
   onLocationChange: (location: string) => void;
+  // Coords copied from the picked location onto the course (null when the
+  // location is custom-typed or cleared).
+  onLocationCoordsChange: (
+    coords: { lat: number | null; lon: number | null; placeId: string | null } | null,
+  ) => void;
 
   // Schedule
   settingsDate: Date | undefined;
@@ -92,6 +97,7 @@ export const CourseSettingsTab = ({
   isSaving,
   settingsLocation,
   onLocationChange,
+  onLocationCoordsChange,
   settingsDate,
   onDateChange,
   settingsTime,
@@ -220,8 +226,15 @@ export const CourseSettingsTab = ({
 
   // Selecting a room pre-fills Plasser from the room's capacity, but only when
   // the field is still empty — never clobber a value the teacher typed.
-  const handleLocationChange = (value: string, meta?: { capacity: number | null }) => {
+  const handleLocationChange = (value: string, meta?: LocationSelectMeta) => {
     onLocationChange(value);
+    // Copy the venue's coords onto the course (or clear them for a custom/typed
+    // location) so the public page can map it.
+    onLocationCoordsChange(
+      meta && meta.lat != null && meta.lon != null
+        ? { lat: meta.lat, lon: meta.lon, placeId: meta.placeId }
+        : null,
+    );
     if (meta?.capacity != null && participantsInput.trim() === '') {
       const filled = Math.max(minParticipants, meta.capacity);
       onMaxParticipantsChange(filled);

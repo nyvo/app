@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
-import { LocationCombobox } from '@/components/ui/location-combobox';
+import { LocationCombobox, type LocationSelectMeta } from '@/components/ui/location-combobox';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/use-locations';
@@ -93,13 +93,22 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
   const [weeks, setWeeks] = useState('');
   const [days, setDays] = useState('1');
   const [location, setLocation] = useState('');
+  const [locationCoords, setLocationCoords] = useState<
+    { lat: number | null; lon: number | null; placeId: string | null } | null
+  >(null);
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
 
   // Picking a room pre-fills capacity from the room's capacity, but only when
-  // Plasser is still empty — never overwrite a value the teacher typed.
-  const handleLocationChange = (value: string, meta?: { capacity: number | null }) => {
+  // Plasser is still empty — never overwrite a value the teacher typed. The
+  // venue's coords ride onto the course so the public page can map it.
+  const handleLocationChange = (value: string, meta?: LocationSelectMeta) => {
     setLocation(value);
+    setLocationCoords(
+      meta && meta.lat != null && meta.lon != null
+        ? { lat: meta.lat, lon: meta.lon, placeId: meta.placeId }
+        : null,
+    );
     if (meta?.capacity != null && capacity.trim() === '') {
       setCapacity(String(meta.capacity));
     }
@@ -151,6 +160,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
     setWeeks('');
     setDays('1');
     setLocation('');
+    setLocationCoords(null);
     setCapacity('');
     setPrice('');
     setSubmitAttempted(false);
@@ -205,6 +215,9 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
           duration,
           total_weeks: format === 'series' ? parseInt(weeks, 10) : null,
           location: location.trim() || null,
+          location_lat: locationCoords?.lat ?? null,
+          location_lon: locationCoords?.lon ?? null,
+          location_place_id: locationCoords?.placeId ?? null,
           price:
             format === 'series'
               ? (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0)

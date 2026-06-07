@@ -148,7 +148,12 @@ export default function PublicCourseDetailPage() {
                 )}
                 {course.location && (
                   <section>
-                    <LocationCard location={course.location} />
+                    <LocationCard
+                      location={course.location}
+                      lat={course.location_lat}
+                      lon={course.location_lon}
+                      placeId={course.location_place_id}
+                    />
                   </section>
                 )}
               </div>

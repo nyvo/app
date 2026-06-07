@@ -7,6 +7,9 @@ import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { FieldError } from '@/components/ui/field-error';
 import { ImageField } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
+import { PlacesAutocomplete } from '@/components/ui/places-autocomplete';
+import { MapEmbed } from '@/components/ui/map-embed';
+import type { PlaceDetails } from '@/services/places';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
@@ -99,14 +102,24 @@ function StudioPublicSettings({
   const [newRoom, setNewRoom] = useState('');
   const [newRoomCapacity, setNewRoomCapacity] = useState('');
   const [placeError, setPlaceError] = useState<string | null>(null);
+  // Coords from the Google Place behind the address (null until a place is
+  // picked, and cleared again the moment the name/address is edited by hand).
+  const [placeCoords, setPlaceCoords] = useState<
+    { lat: number | null; lon: number | null; placeId: string | null } | null
+  >(null);
+
+  const coordsFromLocation = (loc: typeof primaryLocation) =>
+    loc?.lat != null ? { lat: loc.lat, lon: loc.lon, placeId: loc.google_place_id } : null;
 
   useEffect(() => {
     setPlaceName(primaryLocation?.name ?? DEFAULT_PLACE_NAME);
     setAddress(primaryLocation?.address ?? '');
     setRooms(parseRooms(primaryLocation?.rooms));
+    setPlaceCoords(coordsFromLocation(primaryLocation));
     setNewRoom('');
     setNewRoomCapacity('');
     setPlaceError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [primaryLocation?.id, primaryLocation?.name, primaryLocation?.address, primaryLocation?.rooms]);
 
   const [isSaving, setIsSaving] = useState(false);
@@ -129,6 +142,7 @@ function StudioPublicSettings({
     setSlugError(null);
     setPlaceName(primaryLocation?.name ?? DEFAULT_PLACE_NAME);
     setAddress(primaryLocation?.address ?? '');
+    setPlaceCoords(coordsFromLocation(primaryLocation));
     setPlaceError(null);
   };
 
@@ -161,6 +175,9 @@ function StudioPublicSettings({
       name: trimmedPlaceName,
       address: address.trim() || null,
       rooms: next,
+      lat: placeCoords?.lat ?? null,
+      lon: placeCoords?.lon ?? null,
+      google_place_id: placeCoords?.placeId ?? null,
     });
     if (error) {
       setRooms(previous);
@@ -295,6 +312,9 @@ function StudioPublicSettings({
           name: trimmedPlaceName || DEFAULT_PLACE_NAME,
           address: trimmedAddress || null,
           rooms,
+          lat: placeCoords?.lat ?? null,
+          lon: placeCoords?.lon ?? null,
+          google_place_id: placeCoords?.placeId ?? null,
         };
         const result = primaryLocation
           ? await updateLocation(primaryLocation.id, payload)
@@ -438,15 +458,24 @@ function StudioPublicSettings({
               >
                 Stedsnavn
               </label>
-              <Input
+              <PlacesAutocomplete
                 id="studio-place-name"
                 value={placeName}
-                onChange={(e) => {
-                  setPlaceName(e.target.value);
+                onChange={(v) => {
+                  setPlaceName(v);
+                  // Manual edit ⇒ the stored coords no longer match the name.
+                  setPlaceCoords(null);
                   if (placeError) setPlaceError(null);
+                }}
+                onSelect={(place: PlaceDetails) => {
+                  setPlaceName(place.name || placeName);
+                  setAddress(place.address);
+                  setPlaceCoords({ lat: place.lat, lon: place.lon, placeId: place.placeId });
+                  setPlaceError(null);
                 }}
                 onKeyDown={handleKeyDown}
                 disabled={isSaving || loadingLocations}
+                placeholder="Søk etter studio eller adresse…"
                 aria-invalid={!!placeError || undefined}
                 aria-describedby={placeError ? 'studio-place-error' : undefined}
               />
@@ -460,11 +489,25 @@ function StudioPublicSettings({
               <Input
                 id="studio-address"
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  // Hand-editing the address detaches it from the picked place.
+                  setPlaceCoords(null);
+                }}
                 onKeyDown={handleKeyDown}
                 disabled={isSaving || loadingLocations}
                 placeholder="Gateadresse, by"
               />
+              {(placeCoords?.placeId != null ||
+                (placeCoords?.lat != null && placeCoords?.lon != null)) && (
+                <MapEmbed
+                  placeId={placeCoords.placeId}
+                  lat={placeCoords.lat}
+                  lon={placeCoords.lon}
+                  title={`Kart over ${placeName}`}
+                  className="mt-1 h-44"
+                />
+              )}
             </div>
 
             <div className="grid gap-3">

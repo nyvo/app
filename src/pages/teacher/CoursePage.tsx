@@ -105,6 +105,9 @@ const CoursePage = () => {
   const [settingsTitle, setSettingsTitle] = useState('');
   const [settingsDescription, setSettingsDescription] = useState('');
   const [settingsLocation, setSettingsLocation] = useState('');
+  const [settingsLocationCoords, setSettingsLocationCoords] = useState<
+    { lat: number | null; lon: number | null; placeId: string | null } | null
+  >(null);
   const [settingsImageUrl, setSettingsImageUrl] = useState<string | null>(null);
   const [settingsImageFile, setSettingsImageFile] = useState<File | null>(null);
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
@@ -130,6 +133,11 @@ const CoursePage = () => {
     setSettingsTitle(courseData.title);
     setSettingsDescription(courseData.description || '');
     setSettingsLocation(courseData.location || '');
+    setSettingsLocationCoords(
+      courseData.locationLat != null
+        ? { lat: courseData.locationLat, lon: courseData.locationLon, placeId: courseData.locationPlaceId }
+        : null,
+    );
     setSettingsImageUrl(courseData.imageUrl);
     const timeMatch = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/);
     if (timeMatch) setSettingsTime(timeMatch[1]);
@@ -263,6 +271,9 @@ const CoursePage = () => {
         title: settingsTitle.trim(),
         description: settingsDescription.trim() || null,
         location: settingsLocation.trim() || null,
+        location_lat: settingsLocationCoords?.lat ?? null,
+        location_lon: settingsLocationCoords?.lon ?? null,
+        location_place_id: settingsLocationCoords?.placeId ?? null,
         max_participants: maxParticipants,
         price: settingsPrice,
         time_schedule: timeSchedule,
@@ -302,6 +313,9 @@ const CoursePage = () => {
               title: settingsTitle.trim(),
               description: settingsDescription.trim(),
               location: settingsLocation.trim() || null,
+              locationLat: settingsLocationCoords?.lat ?? null,
+              locationLon: settingsLocationCoords?.lon ?? null,
+              locationPlaceId: settingsLocationCoords?.placeId ?? null,
               capacity: maxParticipants,
               price: settingsPrice,
               timeSchedule: timeSchedule || prev.timeSchedule,
@@ -476,6 +490,11 @@ const CoursePage = () => {
     setSettingsTitle(courseData.title);
     setSettingsDescription(courseData.description || '');
     setSettingsLocation(courseData.location || '');
+    setSettingsLocationCoords(
+      courseData.locationLat != null
+        ? { lat: courseData.locationLat, lon: courseData.locationLon, placeId: courseData.locationPlaceId }
+        : null,
+    );
     setSettingsImageUrl(courseData.imageUrl);
     setSettingsImageFile(null);
     setImageToDelete(null);
@@ -674,6 +693,7 @@ const CoursePage = () => {
               onDescriptionChange={setSettingsDescription}
               settingsLocation={settingsLocation}
               onLocationChange={setSettingsLocation}
+              onLocationCoordsChange={setSettingsLocationCoords}
               settingsImageUrl={settingsImageUrl}
               onImageFileChange={(file) => {
                 setSettingsImageFile(file);
