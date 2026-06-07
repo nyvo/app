@@ -1,5 +1,5 @@
 name: "Studio"
-philosophy: "Airy, calm wellness. Geist + warm sand neutral + restraint. Black primary, monochrome canvas. Generous spacing because the dashboard isn't data-heavy and shouldn't feel like one."
+philosophy: "Airy, calm wellness. Geist + cool Slate neutral + indigo primary. Cool neutral app-wide, shared with the dark Slate chrome (sidebar, toast) for one coherent temperature. Generous spacing because the dashboard isn't data-heavy and shouldn't feel like one."
 primary_mode: "light"
 brand_domain: "wellness / yoga / studio booking"
 brand_type: "ui-rich"
@@ -9,19 +9,24 @@ mono_for_metrics: false
 # ── PRIMITIVES ──
 primitives:
   colors:
-    sand:    # Warm neutral, Radix sand
-      1:  "#fdfdfc"
-      2:  "#f9f9f8"
-      3:  "#f1f0ef"
-      4:  "#e9e8e6"
-      5:  "#e2e1de"
-      6:  "#dad9d6"
-      7:  "#cfceca"
-      8:  "#bcbbb5"
-      9:  "#8d8d86"
-      10: "#82827c"
-      11: "#63635e"
-      12: "#21201c"
+    neutral:    # Cool neutral, Radix Slate (cool hue ~250–286, low chroma)
+      1:   "#fcfcfd"
+      2:   "#f9f9fb"
+      3:   "#f0f0f3"
+      4:   "#e8e8ec"
+      5:   "#e0e1e6"
+      6:   "#d9d9e0"
+      7:   "#cdced6"
+      8:   "#b9bbc6"
+      9:   "#8b8d98"
+      10:  "#80838d"
+      11:  "#60646c"
+      12:  "#1c2024"
+    indigo:   # Indigo primary / brand
+      primary: "#3a4dec"   # oklch(0.515 0.237 270), white text 6.1:1 AA
+    chrome:   # Dark-chrome surfaces (sidebar, toast) — ≈ Radix Slate dark
+      surface: "#222326"   # slate-3 · hover #303136 (slate-5) · active #50525a (slate-8)
+      muted:   "#b2b4bb"   # slate-11 muted text on chrome
     jade:     # Success
       3:  "#e6f7ed"
       11: "#208368"
@@ -40,13 +45,13 @@ tokens:
     light:
       background:           "#ffffff"     # pure white page
       surface:              "#ffffff"     # cards, same value, different role
-      muted:                "{sand.3}"   # hover fill
-      active:               "{sand.4}"   # selected fill (sidebar nav, picked items)
-      border:               "{sand.6}"   # default border, divider, separator
-      foreground_disabled:  "{sand.8}"
-      foreground_muted:     "{sand.11}"
-      foreground:           "{sand.12}"
-      ring:                 "{sand.12}"
+      muted:                "{neutral.3}"   # hover fill
+      active:               "{neutral.4}"   # selected fill (sidebar nav, picked items)
+      border:               "{neutral.7}"   # default border, divider, separator (visible on white)
+      foreground_disabled:  "{neutral.8}"
+      foreground_muted:     "{neutral.11}"
+      foreground:           "{neutral.12}"
+      ring:                 "{indigo.primary}"   # indigo focus ring
     success:        "{jade.11}"   # text-success / bg-success (also resolves as solid bg)
     success_subtle: "{jade.3}"    # bg-success-subtle (pill background)
     warning:        "{amber.11}"
@@ -167,55 +172,54 @@ tokens:
 components:
   button_primary:
     source: "derived"
-    background: "{sand.12}"
+    background: "{indigo.primary}"
     color: "#ffffff"
     border: "transparent"
     padding: "10px 18px"
     radius: "{radii.full}"   # PILL — roundest tier
     font_size: "14px"
     font_weight: 500
-    transition: "none on background — primary stays solid"
-    hover: "no fill change (sand-12 is already near-black; opacity hover adds noise)"
+    hover: "darken to 90% (indigo is a mid-tone, not near-black — a subtle shift reads as feedback)"
     active: "no fill change"
-    focus: "2px solid {sand.12}, 2px offset"
+    focus: "2px solid {indigo.primary}, 2px offset"
     disabled: { opacity: 0.5 }
-    note: "Primary is the only button that doesn't shift on hover. The motion comes from secondary/ghost variants."
+    note: "Primary is electric indigo — the brand identity color. White label, 6:1 AA."
 
   button_secondary:
     source: "derived"
-    doctrine: "Filled-only — no border, no shadow. Studio uses two filled button variants: primary (sand-12) and secondary (sand-3 / bg-muted). Hierarchy comes from fill darkness, not borders. The deprecated `outline` variant still exists in code for migration but should not appear in new work. See SKILL.md §3 anti-patterns + components.md § Button."
-    background: "{sand.3}"          # bg-muted — filled, no surface border
-    color: "{sand.12}"              # foreground
+    doctrine: "Filled-only — no border, no shadow. Studio uses two filled button variants: primary (indigo) and secondary (neutral-3 / bg-muted). Hierarchy comes from fill, not borders. The deprecated `outline` variant still exists in code for migration but should not appear in new work. See SKILL.md §3 anti-patterns + components.md § Button."
+    background: "{neutral.3}"          # bg-muted — filled, no surface border
+    color: "{neutral.12}"              # foreground
     border: "none"
     shadow: "none"
     padding: "10px 18px"
     radius: "{radii.full}"          # PILL
-    hover: { background: "{sand.4}" } # bg-active — next tonal step
+    hover: { background: "{neutral.4}" } # bg-active — next tonal step
 
   button_ghost:
     source: "derived"
     doctrine: "Low-emphasis transparent variant. Use for sidebar nav, inline row actions, and dense table action columns where a persistent fill would crowd the layout. For dedicated icon controls (close ×, kebab triggers, share) use `button_soft` instead — the resting muted circle reads as a discoverable tappable target."
     background: "transparent"
-    color: "{sand.12}"
+    color: "{neutral.12}"
     padding: "10px 18px"
     radius: "{radii.full}"   # PILL
-    hover: { background: "{sand.3}" }
+    hover: { background: "{neutral.3}" }
 
   button_soft:
     source: "derived"
     doctrine: "Dedicated icon controls — close × in dialog/sheet/drawer headers, kebab menu triggers (MoreHorizontal/MoreVertical), share, copy-link. The persistent muted-fill circle (bg-muted at rest, bg-active on hover) makes the control feel like a discoverable tappable target without competing with primary actions. Pair with `size=\"icon\"` for the standard 36px circle. For inline/dense row controls use `button_ghost` instead."
-    background: "{sand.3}"          # bg-muted — filled circle at rest
-    color: "{sand.12}"              # foreground
+    background: "{neutral.3}"          # bg-muted — filled circle at rest
+    color: "{neutral.12}"              # foreground
     border: "none"
     shadow: "none"
     radius: "{radii.full}"          # PILL → circle when size="icon"
-    hover: { background: "{sand.4}" } # bg-active
+    hover: { background: "{neutral.4}" } # bg-active
 
   card:
     source: "derived"
     doctrine: "A deliberate tool for explicit grouping — NOT the default page-structure mechanism. Reach for spacing → headings → dividers → rows first; only when those don't communicate the grouping does a card belong. White page canvas + structural rhythm is the baseline. Bordered cards are still the correct visual when a card has a clear job (KPI tile, modal, course card, grouped form section, hover-able tile). Tinted/filled panels (bg-muted, danger-subtle) are appropriate only when containment is genuinely needed (destructive zones, contextual callouts) — not as a page-structure replacement. Studio does NOT adopt 'tinted canvas everywhere'. See SKILL.md §2 + components.md § Card."
     background: "{colors.surface}"
-    border: "1px solid {sand.6}"
+    border: "1px solid {neutral.7}"
     radius: "{radii.md}"   # 8px
     padding: "24px"        # p-6 — DEFAULT (airy)
     shadow: "none"
@@ -223,18 +227,18 @@ components:
   input:
     source: "derived"
     background: "{colors.surface}"
-    border: "1px solid {sand.6}"
+    border: "1px solid {neutral.7}"
     radius: "{radii.sm}"   # 6px (NOT pill — pills don't fit text inputs)
     padding: "8px 12px"
     height: "36px"         # h-9
     font_size: "14px"
-    placeholder_color: "{sand.11}"   # ~5.6:1 contrast on white — passes WCAG 1.4.3 AA. sand-9 (~3.7:1) and sand-8 (~2.5:1) both fail.
-    focus: { border: "{sand.12}", ring: "2px solid {sand.12}/15" }
+    placeholder_color: "{neutral.11}"   # ~5.6:1 contrast on white — passes WCAG 1.4.3 AA. neutral-9 (~3.7:1) and neutral-8 (~2.5:1) both fail.
+    focus: { border: "{neutral.12}", ring: "2px solid {neutral.12}/15" }
 
   badge:
     source: "derived"
-    background: "{sand.3}"
-    color: "{sand.12}"
+    background: "{neutral.3}"
+    color: "{neutral.12}"
     padding: "2px 8px"
     radius: "{radii.full}"
     font_size: "12px"
@@ -243,19 +247,19 @@ components:
 
   course_card:
     source: "derived"
-    notes: "Monochrome bordered card. Image-led when an image exists; bordered sand surface otherwise. No underline on titles even when the whole card is an <a> — the card itself is the affordance. Type/format gets a text label in the meta line, not a colored fill."
+    notes: "Monochrome bordered card. Image-led when an image exists; bordered neutral surface otherwise. No underline on titles even when the whole card is an <a> — the card itself is the affordance. Type/format gets a text label in the meta line, not a colored fill."
     background: "{colors.surface}"
-    border: "1px solid {sand.6}"
+    border: "1px solid {neutral.7}"
     text_decoration: "none"
     radius: "{radii.md}"
     padding: "16px"
 
   schedule_card:
     source: "derived"
-    notes: "Schedule/timeplan cards are bordered sand surfaces. Hover lifts to bg-muted. Type/delivery (engangstime / kursrekke / online) reads as a text label in the meta line — color is never used to encode type."
+    notes: "Schedule/timeplan cards are bordered neutral surfaces. Hover lifts to bg-muted. Type/delivery (engangstime / kursrekke / online) reads as a text label in the meta line — color is never used to encode type."
     background: "{colors.surface}"
-    border: "1px solid {sand.6}"
-    hover: { background: "{sand.3}" }
+    border: "1px solid {neutral.7}"
+    hover: { background: "{neutral.3}" }
     radius: "{radii.lg}"
     padding: "16px"
 
@@ -263,7 +267,7 @@ components:
     source: "derived"
     notes: "Single-metric tile for dashboard hero rows. Label → headline value → delta-as-badge. Delta wraps in badge-rect with semantic color (success when the change is GOOD for the user — fewer cancellations is success, not danger). Max 4 in a row. Never tint the whole card based on direction."
     background: "{colors.surface}"
-    border: "1px solid {sand.6}"
+    border: "1px solid {neutral.7}"
     radius: "{radii.md}"
     padding: "24px"
     label:
@@ -292,7 +296,7 @@ components:
 
   sidebar_nav_item:
     source: "derived"
-    notes: "Three-tier state. Rest = no chrome, just muted text. Hover = muted fill. Selected = active fill + foreground text + medium weight. Selected differs from hover by a single tier (sand-3 vs sand-4) — the delta is small but distinguishable."
+    notes: "Three-tier state. Rest = no chrome, just muted text. Hover = muted fill. Selected = active fill + foreground text + medium weight. Selected differs from hover by a single tier (neutral-3 vs neutral-4) — the delta is small but distinguishable."
     rest:     { background: "transparent",   color: "{foreground_muted}", weight: 400 }
     hover:    { background: "{muted}",       color: "{foreground}",       weight: 400 }
     selected: { background: "{active}",      color: "{foreground}",       weight: 500 }

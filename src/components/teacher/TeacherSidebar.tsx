@@ -95,7 +95,7 @@ export const TeacherSidebar = () => {
       <SidebarHeader>
         <Link
           to={routes.dashboard}
-          className="flex h-12 items-center rounded-md px-3 text-base font-medium tracking-tight text-foreground outline-none focus-visible:ring-2 focus-visible:ring-foreground/15"
+          className="flex h-12 items-center rounded-md px-3 text-base font-medium tracking-tight text-sidebar-foreground outline-none focus-visible:ring-2 focus-visible:ring-white/20"
         >
           Openspot
         </Link>
@@ -130,7 +130,7 @@ export const TeacherSidebar = () => {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="text-foreground hover:bg-muted data-[state=open]:bg-muted data-[state=open]:text-foreground">
+                <SidebarMenuButton className="text-sidebar-foreground-muted hover:bg-sidebar-accent hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-foreground">
                   <span className="flex-1 truncate">{profile?.name || currentSeller?.name || 'Konto'}</span>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>

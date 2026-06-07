@@ -15,7 +15,7 @@ import {
 const PRELAUNCH = import.meta.env.VITE_PRELAUNCH === 'true';
 
 // =============================================================================
-// ProductFrame — the "card within a card" pattern. A muted sand panel
+// ProductFrame — the "card within a card" pattern. A muted neutral panel
 // holds a screenshot floating inside it. Monochrome, palette-aligned,
 // textured via grain (not gradient).
 // =============================================================================

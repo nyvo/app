@@ -17,7 +17,7 @@ import { NotificationLiveRegion } from './NotificationLiveRegion'
  * Bell + popover (desktop) / Vaul drawer (mobile), mounted in the dashboard nav.
  *
  * Trigger: 36 px circular button with the Bell glyph. A small dot appears
- * top-right when there's anything unseen — sand-12 by default, amber-11
+ * top-right when there's anything unseen — neutral-12 by default, amber-11
  * when an unresolved action_required item exists. Precedence is computed
  * once in `useNotifications` so bell, ARIA label, and any future surface
  * stay in sync.

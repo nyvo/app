@@ -75,7 +75,7 @@ function buildEmptySeries(range: IncomeRange): IncomeSeries {
 }
 
 const SHADCN_TOOLTIP_CONFIG = {
-  amount: { label: 'Inntekt', color: '#2563EB' },
+  amount: { label: 'Inntekt', color: 'var(--color-primary)' },
 } as const;
 
 export default function IncomeChartPreview() {

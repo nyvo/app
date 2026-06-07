@@ -39,6 +39,15 @@
   --color-surface-on-dark: var(--surface-on-dark);
   --color-border-on-dark: var(--border-on-dark);
 
+  /* Sidebar — permanently-dark warm rail (same in both app themes) */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-foreground-muted: var(--sidebar-foreground-muted);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+
   /* Foreground — role then modifier (Studio convention) */
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
@@ -57,7 +66,7 @@
 
   /* Hover/active fill (subtle, not a status) */
   --color-muted: var(--muted);
-  --color-active: var(--sand-3);
+  --color-active: var(--neutral-3);
 
   /* Status — solid (alert dialog, toast, button) + subtle (pill, banner) */
   --color-success: var(--success);
@@ -144,19 +153,21 @@
      tokens below. Adding a new color = define here first.
      ──────────────────────────────────────────────────────────── */
 
-  /* Sand — canonical Radix Sand scale (light mode), warm-neutral. */
-  --sand-1:  oklch(0.992 0.002 89);
-  --sand-2:  oklch(0.983 0.003 89);
-  --sand-3:  oklch(0.953 0.005 89);
-  --sand-4:  oklch(0.929 0.006 86);
-  --sand-5:  oklch(0.906 0.007 80);
-  --sand-6:  oklch(0.881 0.008 80);
-  --sand-7:  oklch(0.848 0.010 80);
-  --sand-8:  oklch(0.776 0.013 86);
-  --sand-9:  oklch(0.612 0.010 86);
-  --sand-10: oklch(0.569 0.010 86);
-  --sand-11: oklch(0.453 0.012 86);   /* WCAG 1.4.3 AA on white */
-  --sand-12: oklch(0.231 0.008 88);
+  /* Neutral — Radix Slate (light mode), cool hue ~250–286. Cool neutral chosen
+     app-wide: pairs with the indigo primary and shares temperature with the
+     dark Slate chrome (sidebar, toast) for one coherent system. */
+  --neutral-1:  oklch(0.991 0.001 286);
+  --neutral-2:  oklch(0.983 0.003 286);
+  --neutral-3:  oklch(0.956 0.004 286);
+  --neutral-4:  oklch(0.932 0.005 286);
+  --neutral-5:  oklch(0.910 0.007 277);
+  --neutral-6:  oklch(0.887 0.010 286);
+  --neutral-7:  oklch(0.853 0.011 280);
+  --neutral-8:  oklch(0.794 0.016 278);
+  --neutral-9:  oklch(0.645 0.016 278);
+  --neutral-10: oklch(0.611 0.015 273);
+  --neutral-11: oklch(0.502 0.014 264);   /* WCAG 1.4.3 AA on white (~4.7:1) */
+  --neutral-12: oklch(0.241 0.010 248);
 
   /* Status — jade (success) / amber (warning) / red (danger) */
   --jade-3:   oklch(0.953 0.034 158);
@@ -173,28 +184,28 @@
   --background: oklch(1 0 0);                      /* pure white, per spec */
   --surface: oklch(1 0 0);                         /* cards, popovers, panels */
   --surface-elevated: oklch(1 0 0 / 0.8);          /* translucent backdrop-blur header */
-  --surface-tinted: oklch(0.97 0.03 258);
-  --surface-tinted-border: oklch(0.9 0.04 258);
+  --surface-tinted: oklch(0.97 0.03 270);
+  --surface-tinted-border: oklch(0.9 0.04 270);
   --surface-on-dark: oklch(1 0 0 / 0.06);          /* faint elevated surface over bg-primary */
   --border-on-dark: oklch(1 0 0 / 0.15);           /* subtle border over bg-primary */
 
   /* Foreground */
-  --foreground: var(--sand-12);
-  --foreground-muted: var(--sand-11);             /* WCAG AA on bg */
-  --foreground-disabled: var(--sand-8);
+  --foreground: var(--neutral-12);
+  --foreground-muted: var(--neutral-11);             /* WCAG AA on bg */
+  --foreground-disabled: var(--neutral-8);
 
-  /* Brand / interaction */
-  --primary: var(--sand-12);
-  --primary-foreground: var(--sand-1);
-  --toast-surface: oklch(0.255 0.005 89);
+  /* Brand / interaction — indigo (#3a4dec). White text = 6.1:1 AA. */
+  --primary: oklch(0.515 0.237 270);
+  --primary-foreground: oklch(0.985 0 0);
+  --toast-surface: var(--chrome-surface);             /* shared dark-chrome surface */
   --primary-muted-foreground: oklch(1 0 0 / 0.7);
-  --brand: oklch(0.546 0.245 262.881);
+  --brand: oklch(0.515 0.237 270);
   --brand-foreground: oklch(1 0 0);
-  --secondary: var(--sand-3);
-  --secondary-foreground: var(--sand-12);
-  --accent: var(--sand-3);
-  --accent-foreground: var(--sand-12);
-  --muted: var(--sand-3);                         /* hover/active fill */
+  --secondary: var(--neutral-3);
+  --secondary-foreground: var(--neutral-12);
+  --accent: var(--neutral-3);
+  --accent-foreground: var(--neutral-12);
+  --muted: var(--neutral-3);                         /* hover/active fill */
 
   /* Status — solid + subtle pairs.
      `--success` (= jade-11) is the canonical green; used as text on light bg
@@ -202,53 +213,72 @@
      replaces the `bg-success/10` opacity hack with a proper opaque token.
      `-foreground` is the contrast color used on top of the solid bg. */
   --success: var(--jade-11);
-  --success-foreground: var(--sand-1);
+  --success-foreground: var(--neutral-1);
   --success-subtle: var(--jade-3);
   --warning: var(--amber-11);
-  --warning-foreground: var(--sand-1);
+  --warning-foreground: var(--neutral-1);
   --warning-subtle: var(--amber-3);
   --danger: var(--red-11);
-  --danger-foreground: var(--sand-1);
+  --danger-foreground: var(--neutral-1);
   --danger-subtle: var(--red-3);
-  --info: oklch(0.55 0.18 255);
-  --info-foreground: var(--sand-1);
-  --info-subtle: oklch(0.95 0.02 255);
+  --info: oklch(0.55 0.18 270);
+  --info-foreground: var(--neutral-1);
+  --info-subtle: oklch(0.95 0.03 270);
 
   /* Selection */
-  --selection: oklch(0.546 0.245 262.881);
+  --selection: oklch(0.515 0.237 270);
   --selection-foreground: oklch(0.985 0 0);
-  --selection-light: oklch(0.546 0.245 262.881 / 8%);
+  --selection-light: oklch(0.515 0.237 270 / 8%);
 
   /* Structure */
-  --border: var(--sand-6);
-  --border-subtle: var(--sand-5);
-  --input: var(--sand-6);
-  --ring: var(--sand-12);                          /* per spec: ring = foreground */
+  --border: var(--neutral-7);                         /* visible divider (was neutral-6, too faint on white) */
+  --border-subtle: var(--neutral-6);
+  --input: var(--neutral-7);                          /* crisp field edge */
+  --ring: var(--primary);                             /* indigo focus ring */
 
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
+  /* Dark chrome — Slate-dark surface scale for chrome that stays dark in BOTH
+     app themes (sidebar, toast, future overlays). Single source of truth so
+     these surfaces never drift apart. ≈ Radix Slate dark 3/5/8/11. */
+  --chrome-surface:          oklch(0.255 0.006 270);  /* ≈ slate-3 (#222326) */
+  --chrome-hover:            oklch(0.315 0.008 270);  /* ≈ slate-5 (#303136) */
+  --chrome-active:           oklch(0.440 0.013 270);  /* ≈ slate-8 (#50525a) */
+  --chrome-foreground:       oklch(0.985 0 0);        /* strong/active text */
+  --chrome-foreground-muted: oklch(0.770 0.010 270);  /* ≈ slate-11, muted text */
+  --chrome-border:           oklch(1 0 0 / 0.12);
+
+  /* Sidebar — consumes the dark-chrome scale (neutral rail, no brand). */
+  --sidebar: var(--chrome-surface);
+  --sidebar-foreground: var(--chrome-foreground);
+  --sidebar-foreground-muted: var(--chrome-foreground-muted);
+  --sidebar-accent: var(--chrome-hover);
+  --sidebar-active: var(--chrome-active);
+  --sidebar-active-foreground: var(--chrome-foreground);
+  --sidebar-border: var(--chrome-border);
+
+  --chart-1: oklch(0.809 0.105 266);
+  --chart-2: oklch(0.623 0.200 268);
+  --chart-3: oklch(0.546 0.237 270);   /* = primary */
+  --chart-4: oklch(0.488 0.230 271);
+  --chart-5: oklch(0.424 0.190 272);
   --radius: 0.45rem;
 }
 
 .dark {
-  /* ── PRIMITIVES (dark mode — Radix sand dark, pop accents shifted) ── */
+  /* ── PRIMITIVES (dark mode — warm Stone dark, indigo accents) ── */
 
-  /* Sand — dark mode (1 = darkest, 12 = lightest, mirroring light scale's role) */
-  --sand-1:  oklch(0.182 0.003 89);
-  --sand-2:  oklch(0.215 0.004 89);
-  --sand-3:  oklch(0.253 0.005 89);
-  --sand-4:  oklch(0.286 0.005 86);
-  --sand-5:  oklch(0.317 0.006 80);
-  --sand-6:  oklch(0.355 0.007 80);
-  --sand-7:  oklch(0.407 0.010 80);
-  --sand-8:  oklch(0.484 0.013 86);
-  --sand-9:  oklch(0.557 0.011 86);
-  --sand-10: oklch(0.605 0.011 86);
-  --sand-11: oklch(0.756 0.010 89);
-  --sand-12: oklch(0.952 0.003 89);
+  /* Neutral — Radix Slate dark (1 = darkest, 12 = lightest, mirroring light roles). */
+  --neutral-1:  oklch(0.179 0.004 286);
+  --neutral-2:  oklch(0.213 0.004 264);
+  --neutral-3:  oklch(0.252 0.006 271);
+  --neutral-4:  oklch(0.283 0.007 248);
+  --neutral-5:  oklch(0.312 0.008 256);
+  --neutral-6:  oklch(0.347 0.010 254);
+  --neutral-7:  oklch(0.399 0.012 253);
+  --neutral-8:  oklch(0.489 0.016 252);
+  --neutral-9:  oklch(0.537 0.015 262);
+  --neutral-10: oklch(0.583 0.015 267);
+  --neutral-11: oklch(0.769 0.010 258);
+  --neutral-12: oklch(0.949 0.003 264);
 
   /* Status — dark mode */
   --jade-3:   oklch(0.270 0.040 165);
@@ -259,61 +289,61 @@
   --red-11:   oklch(0.730 0.180 25);
 
   /* Surfaces */
-  --background: oklch(0.177 0.003 264);
-  --surface: oklch(0.177 0.003 264);
+  --background: var(--neutral-1);                  /* page canvas */
+  --surface: var(--neutral-1);                     /* same value as bg, per spec */
   --surface-elevated: oklch(0.205 0 0 / 0.8);
-  --surface-tinted: oklch(0.27 0.04 258);
-  --surface-tinted-border: oklch(0.38 0.06 258);
+  --surface-tinted: oklch(0.27 0.04 270);
+  --surface-tinted-border: oklch(0.38 0.06 270);
   --surface-on-dark: oklch(1 0 0 / 0.06);
   --border-on-dark: oklch(1 0 0 / 0.15);
 
   /* Foreground */
-  --foreground: var(--sand-12);
-  --foreground-muted: var(--sand-11);
-  --foreground-disabled: var(--sand-8);
+  --foreground: var(--neutral-12);
+  --foreground-muted: var(--neutral-11);
+  --foreground-disabled: var(--neutral-8);
 
-  /* Brand / interaction */
-  --primary: var(--sand-12);
-  --primary-foreground: var(--sand-1);
-  --toast-surface: oklch(0.235 0.003 264);
-  --primary-muted-foreground: oklch(0.205 0 0 / 0.7);
-  --brand: oklch(0.623 0.214 259.815);
+  /* Brand / interaction — indigo, brighter on dark (~5:1 white text AA). */
+  --primary: oklch(0.560 0.220 270);
+  --primary-foreground: oklch(0.985 0 0);
+  /* --toast-surface inherits the shared --chrome-surface from :root (dark in both themes) */
+  --primary-muted-foreground: oklch(1 0 0 / 0.7);
+  --brand: oklch(0.560 0.220 270);
   --brand-foreground: oklch(0.985 0 0);
-  --secondary: var(--sand-3);
-  --secondary-foreground: var(--sand-12);
-  --accent: var(--sand-3);
-  --accent-foreground: var(--sand-12);
-  --muted: var(--sand-3);
+  --secondary: var(--neutral-3);
+  --secondary-foreground: var(--neutral-12);
+  --accent: var(--neutral-3);
+  --accent-foreground: var(--neutral-12);
+  --muted: var(--neutral-3);
 
   /* Status */
   --success: var(--jade-11);
-  --success-foreground: var(--sand-1);
+  --success-foreground: var(--neutral-1);
   --success-subtle: var(--jade-3);
   --warning: var(--amber-11);
-  --warning-foreground: var(--sand-1);
+  --warning-foreground: var(--neutral-1);
   --warning-subtle: var(--amber-3);
   --danger: var(--red-11);
-  --danger-foreground: var(--sand-1);
+  --danger-foreground: var(--neutral-1);
   --danger-subtle: var(--red-3);
-  --info: oklch(0.68 0.18 255);
-  --info-foreground: var(--sand-1);
-  --info-subtle: oklch(0.30 0.04 255);
+  --info: oklch(0.68 0.18 270);
+  --info-foreground: var(--neutral-1);
+  --info-subtle: oklch(0.30 0.05 270);
 
   /* Selection */
-  --selection: oklch(0.623 0.214 259.815);
+  --selection: oklch(0.560 0.220 270);
   --selection-foreground: oklch(0.985 0 0);
-  --selection-light: oklch(0.623 0.214 259.815 / 12%);
+  --selection-light: oklch(0.560 0.220 270 / 12%);
 
   /* Structure */
-  --border: var(--sand-6);
-  --border-subtle: var(--sand-5);
-  --input: var(--sand-6);
-  --ring: var(--sand-12);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
+  --border: var(--neutral-7);
+  --border-subtle: var(--neutral-6);
+  --input: var(--neutral-7);
+  --ring: var(--primary);
+  --chart-1: oklch(0.809 0.105 266);
+  --chart-2: oklch(0.623 0.200 268);
+  --chart-3: oklch(0.546 0.237 270);   /* = primary */
+  --chart-4: oklch(0.488 0.230 271);
+  --chart-5: oklch(0.424 0.190 272);
 }
 
 @layer base {
@@ -348,7 +378,7 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background-color: var(--ring);
+    background-color: var(--foreground);
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
@@ -359,7 +389,7 @@
   }
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--ring) transparent;
+    scrollbar-color: var(--foreground) transparent;
   }
 
   /* Override browser autofill styles */
@@ -424,7 +454,7 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--ring);
+    background: var(--foreground);
     border-radius: 9999px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {

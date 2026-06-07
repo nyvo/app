@@ -22,25 +22,25 @@ export function SidebarSetupCard() {
       aria-label={`Kom i gang — ${completedCount} av ${totalCount} fullført`}
       className={cn(
         'block rounded-lg px-3 py-2.5 transition-colors duration-150',
-        'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
-        isActive && 'bg-active',
+        'hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
+        isActive && 'bg-sidebar-accent',
       )}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-base font-medium text-foreground">Kom i gang</p>
-        <p className="text-sm text-foreground-muted tabular-nums">
+        <p className="text-base font-medium text-sidebar-foreground">Kom i gang</p>
+        <p className="text-sm text-sidebar-foreground-muted tabular-nums">
           {completedCount}/{totalCount}
         </p>
       </div>
       <div
-        className="mt-2 h-1 overflow-hidden rounded-full bg-border"
+        className="mt-2 h-1 overflow-hidden rounded-full bg-sidebar-border"
         role="progressbar"
         aria-valuenow={completedCount}
         aria-valuemin={0}
         aria-valuemax={totalCount}
       >
         <div
-          className="h-full rounded-full bg-foreground transition-[width] duration-300"
+          className="h-full rounded-full bg-sidebar-foreground transition-[width] duration-300"
           style={{ width: `${progress}%` }}
         />
       </div>

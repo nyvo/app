@@ -208,7 +208,7 @@ export default function ModalsButtonsToastsPreview() {
         <Section title="Toasts">
           <p className="mb-6 max-w-3xl text-base text-foreground-muted">
             Old uses white surface with a 4px variant stripe (white-on-white reads low-contrast on the calm canvas).
-            New uses a dark monochrome surface (foreground / sand-12) with a small icon for variant — matches Sonner,
+            New uses a dark monochrome surface (foreground / neutral-12) with a small icon for variant — matches Sonner,
             Linear and Vercel defaults. Position stays <code className="rounded bg-muted px-1.5 py-0.5 text-xs">bottom-center</code> (your choice).
           </p>
 
@@ -611,7 +611,7 @@ function NewToast({
 }) {
   // Card-like toast — taller than a slim pill, supports optional 2nd line
   // for context (matches Time2Book / Linear pattern). Surface ~5% lighter
-  // than sand-12 for a softer near-black. Final spec will introduce a real
+  // than neutral-12 for a softer near-black. Final spec will introduce a real
   // `--toast-surface` token.
   return (
     <div

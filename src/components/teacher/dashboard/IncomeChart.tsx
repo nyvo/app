@@ -22,11 +22,11 @@ const RANGE_TABS: { key: IncomeRange; label: string }[] = [
 ]
 
 const CHART_CONFIG = {
-  amount: { label: 'Inntekt', color: '#2563EB' },
+  amount: { label: 'Inntekt', color: 'var(--color-primary)' },
 } as const
 
-const STROKE = '#2563EB'
-const FILL = '#3B82F6'
+const STROKE = 'var(--color-primary)'
+const FILL = 'var(--color-primary)'
 
 /**
  * Empty-state floor — recharts collapses an all-zero series unless we pin

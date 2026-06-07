@@ -11,7 +11,7 @@ import { Spinner } from "./spinner"
  *
  * Variant axis (color + emphasis):
  *   default    — primary action per section (max 1–2 per screen). No hover
- *                shift: sand-12 is already near-black, hover-darken reads
+ *                shift: neutral-12 is already near-black, hover-darken reads
  *                as noise.
  *   secondary  — paired alternative (e.g. "Avbryt" next to a default).
  *   outline    — deprecated legacy. Use secondary or plain/link instead.
@@ -41,8 +41,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary — no hover-shift per Studio (sand-12 already near-black)
-        default: "bg-primary text-primary-foreground",
+        // Primary — indigo brand; subtle darken on hover
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
         outline:
           "border-border bg-background shadow-xs hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-border dark:bg-surface-on-dark dark:hover:bg-surface-on-dark",
         "outline-soft":
