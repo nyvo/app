@@ -319,7 +319,7 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
         <p className="truncate text-base text-foreground-muted">{when || '—'}</p>
       </div>
       {hasCapacity && (
-        <span className="shrink-0 text-base tabular-nums text-foreground-muted">
+        <span className="shrink-0 text-sm tabular-nums text-foreground-muted">
           {course.signups} / {course.capacity}
         </span>
       )}
@@ -393,7 +393,7 @@ function SignupRow({
           {courseTitle ?? 'Ny påmelding'}
         </p>
       </div>
-      <span className="shrink-0 text-base tabular-nums text-foreground-muted">{when}</span>
+      <span className="shrink-0 text-sm tabular-nums text-foreground-muted">{when}</span>
     </button>
   );
 }
