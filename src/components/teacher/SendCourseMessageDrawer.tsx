@@ -87,9 +87,9 @@ export function SendCourseMessageDrawer({
 
         <div className="flex flex-1 flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-            <div className="rounded-md bg-muted px-3 py-2.5 text-base text-foreground-muted leading-relaxed">
+            <Alert variant="info" size="sm">
               Meldingen sendes som e-post til {recipientLabel} på {courseTitle}.
-            </div>
+            </Alert>
 
             {error && (
               <Alert variant="error" size="sm">

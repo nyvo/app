@@ -205,11 +205,11 @@ export function AddParticipantDrawer({
           <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
             {/* Mental-model note — manual signups bypass the integrated
-                payment flow. Muted fill, no border, no icon — this is
-                context, not an alert. */}
-            <div className="rounded-md bg-muted px-3 py-2.5 text-base text-foreground-muted leading-relaxed">
+                payment flow. Shown as an info callout so the teacher clearly
+                registers that they handle payment themselves. */}
+            <Alert variant="info" size="sm">
               Manuelle påmeldinger registreres som betalt. Du håndterer betalingen selv (Vipps, kontant, faktura).
-            </div>
+            </Alert>
 
             {/* Info banner if full */}
             {isFull && (
