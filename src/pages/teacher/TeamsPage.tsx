@@ -270,8 +270,7 @@ function StudioPublicSettings({
   };
 
   return (
-    <>
-      <div className="max-w-3xl space-y-10">
+    <div className="max-w-3xl space-y-10">
           <section>
             <div className="space-y-6">
               <div className="grid gap-3">
@@ -292,7 +291,7 @@ function StudioPublicSettings({
               </div>
 
               <div className="grid gap-2">
-                <label htmlFor="studio-name" className="text-base font-medium text-foreground">
+                <label htmlFor="studio-name" className="text-sm font-medium text-foreground">
                   Navn
                 </label>
                 <Input
@@ -311,7 +310,7 @@ function StudioPublicSettings({
               </div>
 
               <div className="grid gap-2">
-                <label htmlFor="studio-slug" className="text-base font-medium text-foreground">
+                <label htmlFor="studio-slug" className="text-sm font-medium text-foreground">
                   Nettadresse
                 </label>
                 <InputGroup data-disabled={isSaving || undefined}>
@@ -346,7 +345,7 @@ function StudioPublicSettings({
                 <label
                   htmlFor="studio-place-name"
                   data-error={!!placeError || undefined}
-                  className="text-base font-medium text-foreground data-[error=true]:text-danger"
+                  className="text-sm font-medium text-foreground data-[error=true]:text-danger"
                 >
                   Stedsnavn
                 </label>
@@ -366,7 +365,7 @@ function StudioPublicSettings({
               </div>
 
               <div className="grid gap-2">
-                <label htmlFor="studio-address" className="text-base font-medium text-foreground">
+                <label htmlFor="studio-address" className="text-sm font-medium text-foreground">
                   Adresse
                 </label>
                 <Input
@@ -443,7 +442,6 @@ function StudioPublicSettings({
               )}
             </div>
           </section>
-      </div>
 
       <DirtyFormBar
         visible={isDirty}
@@ -451,7 +449,7 @@ function StudioPublicSettings({
         onSave={handleSave}
         onCancel={handleCancel}
       />
-    </>
+    </div>
   );
 }
 

@@ -484,7 +484,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange }: DropInTogg
       <div className="flex-1 min-w-0">
         <p className="text-base font-medium text-foreground">Tillat drop-in</p>
         <div className="mt-2.5 flex items-center gap-2.5">
-          <label htmlFor="overview-drop-in-price" className="text-base text-foreground-muted">
+          <label htmlFor="overview-drop-in-price" className="text-sm text-foreground-muted">
             Pris per time
           </label>
           <div className="relative inline-flex items-center">

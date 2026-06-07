@@ -197,7 +197,7 @@ function IndividualView({ sellerId }: { sellerId: string }) {
             Kursene dine vises på {host.name}
           </h2>
           <p className="mt-2 max-w-2xl text-base text-foreground-muted">
-            Du kan stoppe visningen når som helst.
+            Utkast og avsluttede kurs vises ikke. Du kan stoppe visningen når som helst.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Button variant="secondary" onClick={() => setConfirmLeave(true)}>

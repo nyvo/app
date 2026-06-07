@@ -175,7 +175,7 @@ const TeacherProfilePage = () => {
                 <div className="grid gap-2">
                   <label
                     htmlFor="profile-name"
-                    className="text-base font-medium text-foreground"
+                    className="text-sm font-medium text-foreground"
                   >
                     Navn
                   </label>
@@ -191,7 +191,7 @@ const TeacherProfilePage = () => {
                   <label
                     htmlFor="profile-email"
                     data-error={(errors.email && touched.email) || undefined}
-                    className="text-base font-medium text-foreground data-[error=true]:text-danger"
+                    className="text-sm font-medium text-foreground data-[error=true]:text-danger"
                   >
                     E-post
                   </label>

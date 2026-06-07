@@ -98,7 +98,7 @@ export function SendCourseMessageDrawer({
             )}
 
             <div>
-              <label htmlFor="message-body" className="text-base font-medium mb-1.5 block text-foreground">
+              <label htmlFor="message-body" className="text-sm font-medium mb-1.5 block text-foreground">
                 Melding
               </label>
               <Textarea

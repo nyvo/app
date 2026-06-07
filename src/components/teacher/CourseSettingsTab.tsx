@@ -505,7 +505,7 @@ function FieldLabel({
       htmlFor={htmlFor}
       id={id}
       className={cn(
-        'mb-2 block text-base font-medium',
+        'mb-2 block text-sm font-medium',
         error ? 'text-danger' : 'text-foreground',
       )}
     >

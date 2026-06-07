@@ -470,7 +470,7 @@ function FieldLabel({
   return (
     <label
       htmlFor={htmlFor}
-      className="mb-2 block text-base font-medium text-foreground"
+      className="mb-2 block text-sm font-medium text-foreground"
     >
       {children}
     </label>

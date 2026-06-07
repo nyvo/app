@@ -177,7 +177,7 @@ const PaymentsPage = () => {
                     <div className="grid gap-2">
                       <label
                         htmlFor="organizationNumber"
-                        className="text-base font-medium text-foreground"
+                        className="text-sm font-medium text-foreground"
                       >
                         Organisasjonsnummer
                       </label>
