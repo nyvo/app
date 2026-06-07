@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ExternalLink, X } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { FieldError } from '@/components/ui/field-error';
 import { ImageField } from '@/components/ui/image-upload';
@@ -9,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
+import { SettingsSection } from '@/components/teacher/SettingsSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/use-locations';
 import { friendlyError } from '@/lib/error-messages';
@@ -29,6 +31,7 @@ const TeamsPage = () => {
       <MobileTeacherHeader title="Studio" />
 
       <PageShell
+        narrow="centered"
         title="Studio"
         action={
           currentTeam?.slug ? (
@@ -270,178 +273,178 @@ function StudioPublicSettings({
   };
 
   return (
-    <div className="max-w-3xl space-y-10">
-          <section>
-            <div className="space-y-6">
-              <div className="grid gap-3">
-                <div>
-                  <span className="text-base font-medium text-foreground">Profilbilde</span>
-                  <p className="mt-1 text-base text-foreground-muted">
-                    Bildet vises på den offentlige siden.
-                  </p>
-                </div>
-                <ImageField
-                  variant="avatar"
-                  value={logoUrl}
-                  onChange={handlePhotoSelected}
-                  onRemove={handlePhotoRemove}
-                  loading={savingPhoto}
-                  ariaLabel="Last opp profilbilde"
-                />
-              </div>
+    <div className="space-y-10">
+      <SettingsSection
+        title="Studioprofil"
+        description="Vises på den offentlige studiosiden din."
+      >
+        <Card>
+          <CardContent className="space-y-6">
+            <div className="grid gap-3">
+              <span className="text-sm font-medium text-foreground">Profilbilde</span>
+              <ImageField
+                variant="avatar"
+                value={logoUrl}
+                onChange={handlePhotoSelected}
+                onRemove={handlePhotoRemove}
+                loading={savingPhoto}
+                ariaLabel="Last opp profilbilde"
+              />
+            </div>
 
-              <div className="grid gap-2">
-                <label htmlFor="studio-name" className="text-sm font-medium text-foreground">
-                  Navn
-                </label>
-                <Input
-                  id="studio-name"
-                  value={name}
+            <div className="grid gap-2">
+              <label htmlFor="studio-name" className="text-sm font-medium text-foreground">
+                Navn
+              </label>
+              <Input
+                id="studio-name"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (nameError) setNameError(null);
+                }}
+                onKeyDown={handleKeyDown}
+                disabled={isSaving}
+                aria-invalid={!!nameError || undefined}
+                aria-describedby={nameError ? 'studio-name-error' : undefined}
+              />
+              {nameError && <FieldError id="studio-name-error">{nameError}</FieldError>}
+            </div>
+
+            <div className="grid gap-2">
+              <label htmlFor="studio-slug" className="text-sm font-medium text-foreground">
+                Nettadresse
+              </label>
+              <InputGroup data-disabled={isSaving || undefined}>
+                <InputGroupAddon align="inline-start">openspot.no/</InputGroupAddon>
+                <InputGroupInput
+                  id="studio-slug"
+                  type="text"
+                  value={slug}
                   onChange={(e) => {
-                    setName(e.target.value);
-                    if (nameError) setNameError(null);
+                    setSlug(e.target.value);
+                    if (slugError) setSlugError(null);
                   }}
                   onKeyDown={handleKeyDown}
                   disabled={isSaving}
-                  aria-invalid={!!nameError || undefined}
-                  aria-describedby={nameError ? 'studio-name-error' : undefined}
+                  aria-invalid={!!slugError || undefined}
+                  aria-describedby={slugError ? 'studio-slug-error' : undefined}
                 />
-                {nameError && <FieldError id="studio-name-error">{nameError}</FieldError>}
-              </div>
-
-              <div className="grid gap-2">
-                <label htmlFor="studio-slug" className="text-sm font-medium text-foreground">
-                  Nettadresse
-                </label>
-                <InputGroup data-disabled={isSaving || undefined}>
-                  <InputGroupAddon align="inline-start">openspot.no/</InputGroupAddon>
-                  <InputGroupInput
-                    id="studio-slug"
-                    type="text"
-                    value={slug}
-                    onChange={(e) => {
-                      setSlug(e.target.value);
-                      if (slugError) setSlugError(null);
-                    }}
-                    onKeyDown={handleKeyDown}
-                    disabled={isSaving}
-                    aria-invalid={!!slugError || undefined}
-                    aria-describedby={slugError ? 'studio-slug-error' : undefined}
-                  />
-                </InputGroup>
-                {slugError && <FieldError id="studio-slug-error">{slugError}</FieldError>}
-              </div>
+              </InputGroup>
+              {slugError && <FieldError id="studio-slug-error">{slugError}</FieldError>}
             </div>
-          </section>
+          </CardContent>
+        </Card>
+      </SettingsSection>
 
-          <section className="border-t border-border pt-8">
-            <SectionHeader
-              title="Sted og rom"
-              description="Brukes når du lager kurs og når deltakerne ser hvor de skal møte opp."
-            />
+      <SettingsSection
+        title="Sted og rom"
+        description="Brukes når du lager kurs og når deltakerne ser hvor de skal møte opp."
+      >
+        <Card>
+          <CardContent className="space-y-6">
+            <div className="grid gap-2">
+              <label
+                htmlFor="studio-place-name"
+                data-error={!!placeError || undefined}
+                className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+              >
+                Stedsnavn
+              </label>
+              <Input
+                id="studio-place-name"
+                value={placeName}
+                onChange={(e) => {
+                  setPlaceName(e.target.value);
+                  if (placeError) setPlaceError(null);
+                }}
+                onKeyDown={handleKeyDown}
+                disabled={isSaving || loadingLocations}
+                aria-invalid={!!placeError || undefined}
+                aria-describedby={placeError ? 'studio-place-error' : undefined}
+              />
+              {placeError && <FieldError id="studio-place-error">{placeError}</FieldError>}
+            </div>
 
-            <div className="mt-6 space-y-6">
-              <div className="grid gap-2">
-                <label
-                  htmlFor="studio-place-name"
-                  data-error={!!placeError || undefined}
-                  className="text-sm font-medium text-foreground data-[error=true]:text-danger"
-                >
-                  Stedsnavn
-                </label>
-                <Input
-                  id="studio-place-name"
-                  value={placeName}
-                  onChange={(e) => {
-                    setPlaceName(e.target.value);
-                    if (placeError) setPlaceError(null);
-                  }}
-                  onKeyDown={handleKeyDown}
-                  disabled={isSaving || loadingLocations}
-                  aria-invalid={!!placeError || undefined}
-                  aria-describedby={placeError ? 'studio-place-error' : undefined}
-                />
-                {placeError && <FieldError id="studio-place-error">{placeError}</FieldError>}
-              </div>
+            <div className="grid gap-2">
+              <label htmlFor="studio-address" className="text-sm font-medium text-foreground">
+                Adresse
+              </label>
+              <Input
+                id="studio-address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isSaving || loadingLocations}
+                placeholder="Gateadresse, by"
+              />
+            </div>
 
-              <div className="grid gap-2">
-                <label htmlFor="studio-address" className="text-sm font-medium text-foreground">
-                  Adresse
-                </label>
-                <Input
-                  id="studio-address"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  disabled={isSaving || loadingLocations}
-                  placeholder="Gateadresse, by"
-                />
-              </div>
-
-              <div className="grid gap-3">
-                <span className="text-base font-medium text-foreground">Rom</span>
-                {rooms.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {rooms.map((room) => (
-                      <span
-                        key={room}
-                        className="inline-flex h-8 items-center gap-1 rounded-full bg-muted pl-3 pr-1 text-base font-medium text-foreground"
+            <div className="grid gap-3">
+              <span className="text-sm font-medium text-foreground">Rom</span>
+              {rooms.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {rooms.map((room) => (
+                    <span
+                      key={room}
+                      className="inline-flex h-8 items-center gap-1 rounded-full bg-muted pl-3 pr-1 text-base font-medium text-foreground"
+                    >
+                      {room}
+                      <button
+                        type="button"
+                        onClick={() => removeRoom(room)}
+                        className="flex size-6 items-center justify-center rounded-full text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
+                        aria-label={`Fjern ${room}`}
                       >
-                        {room}
-                        <button
-                          type="button"
-                          onClick={() => removeRoom(room)}
-                          className="flex size-6 items-center justify-center rounded-full text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
-                          aria-label={`Fjern ${room}`}
-                        >
-                          <X className="size-3.5" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Input
-                    value={newRoom}
-                    onChange={(e) => setNewRoom(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addRoom();
-                      }
-                    }}
-                    disabled={isSaving || loadingLocations}
-                  placeholder="Sal 1, behandlingsrom, ute…"
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={addRoom}
-                    disabled={!newRoom.trim()}
-                    className="sm:w-auto"
-                  >
-                    Legg til rom
-                  </Button>
-                </div>
-              </div>
-
-              {additionalLocations.length > 0 && (
-                <div className="border-t border-border pt-6">
-                  <p className="text-base font-medium text-foreground">Andre lagrede steder</p>
-                  <div className="mt-3 divide-y divide-border rounded-xl border border-border bg-surface">
-                    {additionalLocations.map((location) => (
-                      <div key={location.id} className="px-4 py-3">
-                        <p className="truncate text-base font-medium text-foreground">{location.name}</p>
-                        {location.address && (
-                          <p className="truncate text-base text-foreground-muted">{location.address}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                        <X className="size-3.5" />
+                      </button>
+                    </span>
+                  ))}
                 </div>
               )}
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  value={newRoom}
+                  onChange={(e) => setNewRoom(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addRoom();
+                    }
+                  }}
+                  disabled={isSaving || loadingLocations}
+                  placeholder="Sal 1, behandlingsrom, ute…"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={addRoom}
+                  disabled={!newRoom.trim()}
+                  className="sm:w-auto"
+                >
+                  Legg til rom
+                </Button>
+              </div>
             </div>
-          </section>
+
+            {additionalLocations.length > 0 && (
+              <div className="border-t border-border pt-6">
+                <p className="text-sm font-medium text-foreground">Andre lagrede steder</p>
+                <div className="mt-3 divide-y divide-border rounded-xl border border-border bg-surface">
+                  {additionalLocations.map((location) => (
+                    <div key={location.id} className="px-4 py-3">
+                      <p className="truncate text-base font-medium text-foreground">{location.name}</p>
+                      {location.address && (
+                        <p className="truncate text-base text-foreground-muted">{location.address}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </SettingsSection>
 
       <DirtyFormBar
         visible={isDirty}
@@ -449,15 +452,6 @@ function StudioPublicSettings({
         onSave={handleSave}
         onCancel={handleCancel}
       />
-    </div>
-  );
-}
-
-function SectionHeader({ title, description }: { title: string; description: string }) {
-  return (
-    <div>
-      <h2 className="text-lg font-medium tracking-tight text-foreground">{title}</h2>
-      <p className="mt-1 max-w-2xl text-base text-foreground-muted">{description}</p>
     </div>
   );
 }

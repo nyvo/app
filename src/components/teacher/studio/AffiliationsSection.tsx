@@ -2,11 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { MoreVertical } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { SettingsSection } from '@/components/teacher/SettingsSection';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,27 +104,32 @@ function BusinessView({ teamId }: { teamId: string }) {
 
   return (
     <div className="space-y-10">
-      <InviteLinkPanel teamId={teamId} />
+      <SettingsSection title="Invitasjonslenke">
+        <Card>
+          <CardContent>
+            <InviteLinkPanel teamId={teamId} />
+          </CardContent>
+        </Card>
+      </SettingsSection>
 
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-medium tracking-tight text-foreground">
-            Instruktører
-          </h2>
-          {visibleAffiliates === null ? (
+      <SettingsSection
+        title="Instruktører"
+        action={
+          visibleAffiliates === null ? (
             <Skeleton className="h-6 w-20 rounded-full" aria-hidden="true" />
           ) : visibleAffiliates.length > 0 ? (
             <Badge variant="neutral" shape="pill" size="md">
               {formatInstructorCount(visibleAffiliates.length)}
             </Badge>
-          ) : null}
-        </div>
+          ) : null
+        }
+      >
         <AffiliatesList
           affiliates={visibleAffiliates}
           loading={loadingAffiliates}
           onRevoke={handleRevoke}
         />
-      </section>
+      </SettingsSection>
     </div>
   );
 }
@@ -181,37 +188,41 @@ function IndividualView({ sellerId }: { sellerId: string }) {
   const hostUrl = host ? `${window.location.origin}/${host.slug}` : null;
 
   return (
-    <section className="space-y-6">
+    <>
       {host === undefined ? (
         <ConnectionSkeleton />
       ) : host === null ? (
-        <div className="rounded-xl border border-border bg-surface p-6">
-          <p className="text-base font-medium text-foreground">Ingen aktive samarbeid</p>
-          <p className="mt-1 max-w-md text-base text-foreground-muted">
-            Be studioet sende deg en invitasjonslenke.
-          </p>
-        </div>
+        <Card>
+          <CardContent>
+            <p className="text-base font-medium text-foreground">Ingen aktive samarbeid</p>
+            <p className="mt-1 max-w-md text-base text-foreground-muted">
+              Be studioet sende deg en invitasjonslenke.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
-        <section>
-          <h2 className="text-lg font-medium tracking-tight text-foreground">
-            Kursene dine vises på {host.name}
-          </h2>
-          <p className="mt-2 max-w-2xl text-base text-foreground-muted">
-            Utkast og avsluttede kurs vises ikke. Du kan stoppe visningen når som helst.
-          </p>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <Button variant="secondary" onClick={() => setConfirmLeave(true)}>
-              Stopp visning
-            </Button>
-            {hostUrl && (
-              <Button asChild>
-                <a href={hostUrl} target="_blank" rel="noopener noreferrer">
-                  Vis studiosiden
-                </a>
+        <Card>
+          <CardContent>
+            <h2 className="text-base font-medium tracking-tight text-foreground">
+              Kursene dine vises på {host.name}
+            </h2>
+            <p className="mt-1 max-w-2xl text-base text-foreground-muted">
+              Utkast og avsluttede kurs vises ikke. Du kan stoppe visningen når som helst.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Button variant="secondary" onClick={() => setConfirmLeave(true)}>
+                Stopp visning
               </Button>
-            )}
-          </div>
-        </section>
+              {hostUrl && (
+                <Button asChild>
+                  <a href={hostUrl} target="_blank" rel="noopener noreferrer">
+                    Vis studiosiden
+                  </a>
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
       {host && (
         <ConfirmDialog
@@ -226,7 +237,7 @@ function IndividualView({ sellerId }: { sellerId: string }) {
           loadingText="Stopper"
         />
       )}
-    </section>
+    </>
   );
 }
 

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
+import { SettingsSection } from '@/components/teacher/SettingsSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, typedFrom } from '@/lib/supabase';
 import { isValidEmail, resolveDisplayName } from '@/lib/utils';
@@ -165,120 +166,103 @@ const TeacherProfilePage = () => {
         <MobileTeacherHeader title="Innstillinger" />
 
         <PageShell narrow="centered" title="Innstillinger">
-          <div className="divide-y divide-border">
-            {/* Personlig informasjon */}
-            <section className="py-10 first:pt-0">
-              <h2 className="mb-6 text-lg font-medium tracking-tight text-foreground">
-                Personlig informasjon
-              </h2>
-              <div className="grid grid-cols-1 gap-6">
-                <div className="grid gap-2">
-                  <label
-                    htmlFor="profile-name"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    Navn
-                  </label>
-                  <Input
-                    id="profile-name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
+          <div className="space-y-10">
+            <SettingsSection title="Personlig informasjon">
+              <Card>
+                <CardContent className="grid grid-cols-1 gap-6">
+                  <div className="grid gap-2">
+                    <label
+                      htmlFor="profile-name"
+                      className="text-sm font-medium text-foreground"
+                    >
+                      Navn
+                    </label>
+                    <Input
+                      id="profile-name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </div>
 
-                <div className="grid gap-2">
-                  <label
-                    htmlFor="profile-email"
-                    data-error={(errors.email && touched.email) || undefined}
-                    className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+                  <div className="grid gap-2">
+                    <label
+                      htmlFor="profile-email"
+                      data-error={(errors.email && touched.email) || undefined}
+                      className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+                    >
+                      E-post
+                    </label>
+                    <Input
+                      id="profile-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                      onBlur={() => handleBlur('email')}
+                      aria-invalid={!!(errors.email && touched.email) || undefined}
+                      aria-describedby={errors.email && touched.email ? 'profile-email-error' : undefined}
+                    />
+                    {errors.email && touched.email && (
+                      <FieldError id="profile-email-error" className="mt-0">{errors.email}</FieldError>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </SettingsSection>
+
+            <SettingsSection title="Konto og sikkerhet">
+              <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
+                <div className="flex items-center justify-between gap-4 px-5 py-4">
+                  <span className="text-base font-medium text-foreground">Logg ut alle enheter</span>
+                  <Button
+                    variant="secondary"
+                    className="shrink-0"
+                    onClick={() => setLogoutAllOpen(true)}
                   >
-                    E-post
-                  </label>
-                  <Input
-                    id="profile-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
-                    onBlur={() => handleBlur('email')}
-                    aria-invalid={!!(errors.email && touched.email) || undefined}
-                    aria-describedby={errors.email && touched.email ? 'profile-email-error' : undefined}
-                  />
-                  {errors.email && touched.email && (
-                    <FieldError id="profile-email-error" className="mt-0">{errors.email}</FieldError>
-                  )}
+                    Logg ut alle
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between gap-4 px-5 py-4">
+                  <span className="text-base font-medium text-foreground">Slett kontoen din</span>
+                  <Button
+                    variant="destructive"
+                    className="shrink-0"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    Slett konto
+                  </Button>
                 </div>
               </div>
-            </section>
 
-            {/* Konto og sikkerhet */}
-            <section className="py-10">
-              <h2 className="mb-6 text-lg font-medium tracking-tight text-foreground">
-                Konto og sikkerhet
-              </h2>
-              <div className="space-y-4">
-                {/* Logg ut alle enheter */}
-                <Card size="sm">
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <span className="text-base font-medium block text-foreground">Logg ut alle enheter</span>
-                      <Button
-                        variant="secondary"
-                        className="ml-4 shrink-0"
-                        onClick={() => setLogoutAllOpen(true)}
-                      >
-                        Logg ut alle
-                      </Button>
-                    </div>
-                  </CardContent>
-                  <ConfirmDialog
-                    open={logoutAllOpen}
-                    onOpenChange={setLogoutAllOpen}
-                    ariaLabel="Logg ut alle enheter"
-                    title="Logg ut alle enheter"
-                    body="Du blir logget ut fra alle nettlesere og enheter, inkludert denne."
-                    actionLabel="Logg ut alle"
-                    onConfirm={handleLogoutAllDevices}
-                    loading={isLoggingOutAll}
-                    loadingText="Logger ut"
-                  />
-                </Card>
-
-                {/* Slett konto */}
-                <Card size="sm">
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <span className="text-base font-medium block text-foreground">Slett kontoen din</span>
-                      <Button
-                        variant="destructive"
-                        className="ml-4 shrink-0"
-                        onClick={() => setDeleteOpen(true)}
-                      >
-                        Slett konto
-                      </Button>
-                    </div>
-                  </CardContent>
-                  <ConfirmDialog
-                    open={deleteOpen}
-                    onOpenChange={(open) => {
-                      setDeleteOpen(open);
-                      if (!open) setDeleteConfirmText('');
-                    }}
-                    ariaLabel="Slett kontoen din"
-                    title="Slett konto"
-                    body={<>Kontoen <strong>{profile?.email}</strong> slettes permanent. Dette kan ikke angres.</>}
-                    actionLabel="Slett konto"
-                    onConfirm={handleDeleteAccount}
-                    loading={isDeletingAccount}
-                    loadingText="Sletter"
-                    typeToConfirm="SLETT"
-                    typeToConfirmValue={deleteConfirmText}
-                    onTypeToConfirmChange={setDeleteConfirmText}
-                  />
-                </Card>
-              </div>
-            </section>
-          </div>
+              <ConfirmDialog
+                open={logoutAllOpen}
+                onOpenChange={setLogoutAllOpen}
+                ariaLabel="Logg ut alle enheter"
+                title="Logg ut alle enheter"
+                body="Du blir logget ut fra alle nettlesere og enheter, inkludert denne."
+                actionLabel="Logg ut alle"
+                onConfirm={handleLogoutAllDevices}
+                loading={isLoggingOutAll}
+                loadingText="Logger ut"
+              />
+              <ConfirmDialog
+                open={deleteOpen}
+                onOpenChange={(open) => {
+                  setDeleteOpen(open);
+                  if (!open) setDeleteConfirmText('');
+                }}
+                ariaLabel="Slett kontoen din"
+                title="Slett konto"
+                body={<>Kontoen <strong>{profile?.email}</strong> slettes permanent. Dette kan ikke angres.</>}
+                actionLabel="Slett konto"
+                onConfirm={handleDeleteAccount}
+                loading={isDeletingAccount}
+                loadingText="Sletter"
+                typeToConfirm="SLETT"
+                typeToConfirmValue={deleteConfirmText}
+                onTypeToConfirmChange={setDeleteConfirmText}
+              />
+            </SettingsSection>
 
             <DirtyFormBar
               visible={isDirty}
@@ -286,7 +270,7 @@ const TeacherProfilePage = () => {
               onSave={handleSave}
               onCancel={handleCancel}
             />
-
+          </div>
         </PageShell>
     </main>
   );
