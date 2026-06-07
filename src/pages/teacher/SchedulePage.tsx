@@ -290,7 +290,7 @@ const SchedulePage = () => {
                 ? 'Prøv en annen måned.'
                 : rangeFilter === 'active'
                   ? 'Opprett et kurs for å fylle timeplanen.'
-                  : 'Tidligere økter dukker opp her etter de er ferdige.'
+                  : 'Tidligere timer dukker opp her når de er ferdige.'
             }
             className="py-16"
           />

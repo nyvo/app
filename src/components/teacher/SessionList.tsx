@@ -223,7 +223,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                       </div>
 
                       <Alert variant="neutral" size="sm" icon={Info}>
-                        <p className="text-sm text-foreground-muted">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
+                        <p className="text-sm text-foreground-muted">Endrer du dato eller tidspunkt, får alle påmeldte e-post.</p>
                       </Alert>
 
                       <div className="flex gap-2">

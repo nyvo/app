@@ -263,7 +263,7 @@ const PaymentsPage = () => {
                     </p>
                     <p className="mt-1 text-base text-foreground-muted">
                       Dintero håndterer utbetalingene direkte til bankkontoen din. Saldo,
-                      transaksjoner og innstillinger ser du på din Dintero-konto.
+                      transaksjoner og innstillinger ser du på Dintero-kontoen din.
                     </p>
                     <div className="mt-4">
                       <Button onClick={handleOpenDintero}>

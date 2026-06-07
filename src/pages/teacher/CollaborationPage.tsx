@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 // Helper copy varies by account type. Always present, regardless of
 // affiliated state — explains what this page is for before any data shows.
 const BUSINESS_DESCRIPTION =
-  'Del lenken med en instruktør. Når de godtar, vises kursene deres sammen med dine på studiosiden.';
+  'Del lenken med en instruktør. Takker de ja, vises kursene deres på studiosiden din.';
 const INDIVIDUAL_DESCRIPTION =
   'Når et studio inviterer deg, vises kursene dine sammen med deres på studiosiden.';
 
