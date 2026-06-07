@@ -16,6 +16,8 @@ import { useLocations } from '@/hooks/use-locations';
 import { friendlyError } from '@/lib/error-messages';
 import { logger } from '@/lib/logger';
 import { createLocation, updateLocation } from '@/services/locations';
+import { parseRooms, type Room } from '@/lib/rooms';
+import { runWithUndo } from '@/lib/undo';
 import { updateSeller } from '@/services/sellers';
 import { renameTeamSlug, updateTeam } from '@/services/teams';
 import { uploadSellerLogo } from '@/services/storage';
@@ -93,29 +95,32 @@ function StudioPublicSettings({
 
   const [placeName, setPlaceName] = useState(DEFAULT_PLACE_NAME);
   const [address, setAddress] = useState('');
-  const [rooms, setRooms] = useState<string[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [newRoom, setNewRoom] = useState('');
+  const [newRoomCapacity, setNewRoomCapacity] = useState('');
   const [placeError, setPlaceError] = useState<string | null>(null);
 
   useEffect(() => {
     setPlaceName(primaryLocation?.name ?? DEFAULT_PLACE_NAME);
     setAddress(primaryLocation?.address ?? '');
-    setRooms(primaryLocation?.rooms ?? []);
+    setRooms(parseRooms(primaryLocation?.rooms));
     setNewRoom('');
+    setNewRoomCapacity('');
     setPlaceError(null);
   }, [primaryLocation?.id, primaryLocation?.name, primaryLocation?.address, primaryLocation?.rooms]);
 
   const [isSaving, setIsSaving] = useState(false);
 
+  // Rooms save the moment you add/remove one — so they're a committed action,
+  // not part of the dirty form. The bar below only tracks the text fields.
   const isDirty = useMemo(() => {
     const locationDirty = primaryLocation
       ? placeName.trim() !== primaryLocation.name ||
-        address.trim() !== (primaryLocation.address ?? '') ||
-        !sameStringArray(rooms, primaryLocation.rooms ?? [])
-      : placeName.trim() !== DEFAULT_PLACE_NAME || address.trim() !== '' || rooms.length > 0;
+        address.trim() !== (primaryLocation.address ?? '')
+      : placeName.trim() !== DEFAULT_PLACE_NAME || address.trim() !== '';
 
     return name.trim() !== seller.name || slug.trim() !== team.slug || locationDirty;
-  }, [address, name, placeName, primaryLocation, rooms, seller.name, slug, team.slug]);
+  }, [address, name, placeName, primaryLocation, seller.name, slug, team.slug]);
 
   const handleCancel = () => {
     setName(seller.name);
@@ -124,23 +129,105 @@ function StudioPublicSettings({
     setSlugError(null);
     setPlaceName(primaryLocation?.name ?? DEFAULT_PLACE_NAME);
     setAddress(primaryLocation?.address ?? '');
-    setRooms(primaryLocation?.rooms ?? []);
-    setNewRoom('');
     setPlaceError(null);
+  };
+
+  // A room's capacity is optional. Treat blank / < 1 as unset (null).
+  const normalizeCapacity = (value: number | null): number | null =>
+    value != null && Number.isFinite(value) && value >= 1 ? Math.floor(value) : null;
+
+  // Persist the next room list immediately. With a saved place we patch just
+  // its rooms; without one, the first room creates the place from the current
+  // field values. Reverts the optimistic UI on failure.
+  const persistRooms = async (next: Room[], previous: Room[]) => {
+    if (primaryLocation) {
+      const { error } = await updateLocation(primaryLocation.id, { rooms: next });
+      if (error) {
+        setRooms(previous);
+        toast.error('Kunne ikke lagre rommet.');
+      }
+      return;
+    }
+
+    const trimmedPlaceName = placeName.trim();
+    if (!trimmedPlaceName) {
+      setRooms(previous);
+      setPlaceError('Skriv inn et navn på stedet.');
+      return;
+    }
+
+    const { error } = await createLocation({
+      seller_id: seller.id,
+      name: trimmedPlaceName,
+      address: address.trim() || null,
+      rooms: next,
+    });
+    if (error) {
+      setRooms(previous);
+      toast.error('Kunne ikke lagre rommet.');
+      return;
+    }
+    await refetch();
   };
 
   const addRoom = () => {
     const trimmed = newRoom.trim();
-    if (!trimmed || rooms.includes(trimmed)) {
+    if (!trimmed || rooms.some((r) => r.name === trimmed)) {
       setNewRoom('');
+      setNewRoomCapacity('');
       return;
     }
-    setRooms((prev) => [...prev, trimmed]);
+    const previous = rooms;
+    const next = [
+      ...rooms,
+      { name: trimmed, capacity: normalizeCapacity(Number(newRoomCapacity)) },
+    ];
+    setRooms(next);
     setNewRoom('');
+    setNewRoomCapacity('');
+    void persistRooms(next, previous);
   };
 
-  const removeRoom = (room: string) => {
-    setRooms((prev) => prev.filter((value) => value !== room));
+  const removeRoom = (name: string) => {
+    const previous = rooms;
+    const next = rooms.filter((r) => r.name !== name);
+
+    if (!primaryLocation) {
+      setRooms(next);
+      return;
+    }
+
+    runWithUndo({
+      message: 'Rommet er fjernet',
+      hide: () => setRooms(next),
+      restore: () => setRooms(previous),
+      commit: () => updateLocation(primaryLocation.id, { rooms: next }),
+      errorOf: (r) => r.error,
+      errorMessage: 'Kunne ikke fjerne rommet.',
+    });
+  };
+
+  // Inline capacity editing: keystrokes update the row optimistically; blur /
+  // Enter normalizes and persists only if it changed from the saved value.
+  const setRoomCapacityDraft = (name: string, value: string) => {
+    const num = value.trim() === '' ? null : Number(value);
+    setRooms((prev) =>
+      prev.map((r) =>
+        r.name === name ? { ...r, capacity: num != null && Number.isFinite(num) ? num : null } : r,
+      ),
+    );
+  };
+
+  const commitRoomCapacity = (name: string) => {
+    if (!primaryLocation) return;
+    const room = rooms.find((r) => r.name === name);
+    if (!room) return;
+    const normalized = normalizeCapacity(room.capacity);
+    const next = rooms.map((r) => (r.name === name ? { ...r, capacity: normalized } : r));
+    setRooms(next);
+    const saved = parseRooms(primaryLocation.rooms).find((r) => r.name === name)?.capacity ?? null;
+    if (normalized === saved) return;
+    void persistRooms(next, parseRooms(primaryLocation.rooms));
   };
 
   const handleSave = async () => {
@@ -381,27 +468,52 @@ function StudioPublicSettings({
             </div>
 
             <div className="grid gap-3">
-              <span className="text-sm font-medium text-foreground">Rom</span>
+              <div>
+                <span className="text-sm font-medium text-foreground">Rom</span>
+                <p className="mt-1 text-sm text-foreground-muted">
+                  Sett antall plasser per rom, så fylles det inn automatisk når du velger rommet på et kurs.
+                </p>
+              </div>
+
               {rooms.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-surface">
                   {rooms.map((room) => (
-                    <span
-                      key={room}
-                      className="inline-flex h-8 items-center gap-1 rounded-full bg-muted pl-3 pr-1 text-base font-medium text-foreground"
-                    >
-                      {room}
+                    <div key={room.name} className="flex items-center gap-3 px-3 py-2">
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                        {room.name}
+                      </span>
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min="1"
+                        value={room.capacity == null ? '' : String(room.capacity)}
+                        onChange={(e) => setRoomCapacityDraft(room.name, e.target.value)}
+                        onBlur={() => commitRoomCapacity(room.name)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            (e.currentTarget as HTMLInputElement).blur();
+                          }
+                        }}
+                        disabled={isSaving || loadingLocations}
+                        placeholder="–"
+                        aria-label={`Antall plasser i ${room.name}`}
+                        className="h-8 w-16 shrink-0 text-center"
+                      />
+                      <span className="shrink-0 text-sm text-foreground-muted">plasser</span>
                       <button
                         type="button"
-                        onClick={() => removeRoom(room)}
-                        className="flex size-6 items-center justify-center rounded-full text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
-                        aria-label={`Fjern ${room}`}
+                        onClick={() => removeRoom(room.name)}
+                        className="flex size-7 shrink-0 items-center justify-center rounded-md text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
+                        aria-label={`Fjern ${room.name}`}
                       >
-                        <X className="size-3.5" />
+                        <X className="size-4" />
                       </button>
-                    </span>
+                    </div>
                   ))}
                 </div>
               )}
+
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
                   value={newRoom}
@@ -414,6 +526,24 @@ function StudioPublicSettings({
                   }}
                   disabled={isSaving || loadingLocations}
                   placeholder="Sal 1, behandlingsrom, ute…"
+                  className="sm:flex-1"
+                />
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  value={newRoomCapacity}
+                  onChange={(e) => setNewRoomCapacity(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addRoom();
+                    }
+                  }}
+                  disabled={isSaving || loadingLocations}
+                  placeholder="Plasser"
+                  aria-label="Antall plasser"
+                  className="sm:w-28"
                 />
                 <Button
                   type="button"
@@ -454,11 +584,6 @@ function StudioPublicSettings({
       />
     </div>
   );
-}
-
-function sameStringArray(a: string[], b: string[]) {
-  if (a.length !== b.length) return false;
-  return a.every((value, index) => value === b[index]);
 }
 
 export default TeamsPage;

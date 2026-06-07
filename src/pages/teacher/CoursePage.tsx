@@ -762,7 +762,7 @@ const CoursePage = () => {
                         variant="secondary"
                         onClick={() => setIsAddParticipantOpen(true)}
                         disabled={isFull}
-                        title={isFull ? 'Kurset er fullt. Øk kapasiteten i fanen Rediger for å legge til flere.' : undefined}
+                        title={isFull ? 'Kurset er fullt. Øk antall plasser i fanen Rediger for å legge til flere.' : undefined}
                       >
                         Legg til deltaker
                       </Button>

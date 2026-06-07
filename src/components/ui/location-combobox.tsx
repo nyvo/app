@@ -2,17 +2,19 @@ import { useState, useMemo } from 'react';
 import { Check, ChevronsUpDown, MapPin } from '@/lib/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn, foldNorwegian } from '@/lib/utils';
+import { parseRooms } from '@/lib/rooms';
 import type { TeacherLocation } from '@/types/database';
 
 interface LocationOption {
   value: string;
   label: string;
   group?: string;
+  capacity?: number | null;
 }
 
 interface LocationComboboxProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, meta?: { capacity: number | null }) => void;
   locations: TeacherLocation[];
   placeholder?: string;
   className?: string;
@@ -26,11 +28,12 @@ function buildOptions(locations: TeacherLocation[]): LocationOption[] {
   const options: LocationOption[] = [];
   for (const loc of locations) {
     options.push({ value: loc.name, label: loc.name });
-    for (const room of loc.rooms) {
+    for (const room of parseRooms(loc.rooms)) {
       options.push({
-        value: `${loc.name}${LOCATION_VALUE_SEPARATOR}${room}`,
-        label: room,
+        value: `${loc.name}${LOCATION_VALUE_SEPARATOR}${room.name}`,
+        label: room.name,
         group: loc.name,
+        capacity: room.capacity,
       });
     }
   }
@@ -76,8 +79,8 @@ export function LocationCombobox({
   const hasOptions = locations.length > 0;
   const showCustom = search.trim() && !allOptions.some((o) => foldNorwegian(o.value) === foldNorwegian(search.trim()));
 
-  const handleSelect = (val: string) => {
-    onChange(val);
+  const handleSelect = (val: string, capacity?: number | null) => {
+    onChange(val, { capacity: capacity ?? null });
     setOpen(false);
     setSearch('');
   };
@@ -166,13 +169,18 @@ export function LocationCombobox({
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => handleSelect(opt.value)}
+                    onClick={() => handleSelect(opt.value, opt.capacity)}
                     className={cn(
                       'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm outline-none hover:bg-accent',
                       value === opt.value ? 'bg-accent font-medium text-foreground' : 'text-foreground-muted'
                     )}
                   >
                     <span className="flex-1 truncate">{opt.label}</span>
+                    {opt.capacity != null && (
+                      <span className="shrink-0 text-sm text-foreground-muted tabular-nums">
+                        {opt.capacity} plasser
+                      </span>
+                    )}
                     {value === opt.value && <Check className="size-3.5 shrink-0" />}
                   </button>
                 ))}

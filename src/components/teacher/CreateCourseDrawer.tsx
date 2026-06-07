@@ -12,6 +12,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import {
   Select,
   SelectContent,
@@ -20,8 +21,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
+import { LocationCombobox } from '@/components/ui/location-combobox';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocations } from '@/hooks/use-locations';
 import { createCourse } from '@/services/courses';
 import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
@@ -75,6 +78,7 @@ const ALL_TIME_SLOTS = generateTimeSlots();
 export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerProps) {
   const navigate = useNavigate();
   const { currentSeller } = useAuth();
+  const { locations } = useLocations(currentSeller?.id);
 
   // Quick-create captures only the saveable-as-draft minimum (type, title,
   // dates, time, capacity, price). Description, image, instructor, and
@@ -88,8 +92,18 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
   const [endTime, setEndTime] = useState('');
   const [weeks, setWeeks] = useState('');
   const [days, setDays] = useState('1');
+  const [location, setLocation] = useState('');
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
+
+  // Picking a room pre-fills capacity from the room's capacity, but only when
+  // Plasser is still empty — never overwrite a value the teacher typed.
+  const handleLocationChange = (value: string, meta?: { capacity: number | null }) => {
+    setLocation(value);
+    if (meta?.capacity != null && capacity.trim() === '') {
+      setCapacity(String(meta.capacity));
+    }
+  };
 
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -136,6 +150,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
     setEndTime('');
     setWeeks('');
     setDays('1');
+    setLocation('');
     setCapacity('');
     setPrice('');
     setSubmitAttempted(false);
@@ -179,8 +194,9 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
         {
           seller_id: currentSeller.id,
           title: title.trim(),
-          // Description, image, instructor, location are filled in on the
-          // course detail page after creation — see PublishChecklist.
+          // Description, image and instructor are deferred to the course detail
+          // page after creation (see PublishChecklist); Sted is captured here so
+          // its room can pre-fill Plasser.
           description: null,
           instructor_name: null,
           format: dbFormat,
@@ -188,7 +204,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
           time_schedule: timeSchedule,
           duration,
           total_weeks: format === 'series' ? parseInt(weeks, 10) : null,
-          location: null,
+          location: location.trim() || null,
           price:
             format === 'series'
               ? (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0)
@@ -386,6 +402,17 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
 
           <FormSection>
             <div>
+              <FieldLabel htmlFor="cc-location">Sted</FieldLabel>
+              <LocationCombobox
+                value={location}
+                onChange={handleLocationChange}
+                locations={locations}
+                placeholder="Velg sted (valgfritt)"
+                aria-label="Sted"
+              />
+            </div>
+
+            <div>
               <FieldLabel htmlFor="cc-capacity">
                 Antall plasser
               </FieldLabel>
@@ -407,17 +434,19 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
               <FieldLabel htmlFor="cc-price">
                 {format === 'series' ? 'Pris per gang' : 'Pris'}
               </FieldLabel>
-              <Input
-                id="cc-price"
-                type="number"
-                inputMode="numeric"
-                min="0"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                aria-invalid={showError('price') ? 'true' : undefined}
-                aria-required="true"
-                className={cn(showError('price') && 'border-danger focus-visible:ring-danger')}
-              />
+              <InputGroup>
+                <InputGroupInput
+                  id="cc-price"
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  aria-invalid={showError('price') ? 'true' : undefined}
+                  aria-required="true"
+                />
+                <InputGroupAddon align="inline-end" aria-hidden="true">kr</InputGroupAddon>
+              </InputGroup>
               {format === 'series' && price !== '' && weeks !== '' && !showError('price') && !showError('weeks') && (
                 <p className="mt-2 text-base text-foreground-muted">
                   Totalt {formatKroner((parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0))} for {parseInt(weeks, 10) || 0} uker

@@ -3,6 +3,7 @@ import { cn, formatKroner } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { FieldError } from '@/components/ui/field-error';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { ImageField } from '@/components/ui/image-upload';
@@ -217,6 +218,17 @@ export const CourseSettingsTab = ({
     setParticipantsInput(String(normalized));
   };
 
+  // Selecting a room pre-fills Plasser from the room's capacity, but only when
+  // the field is still empty — never clobber a value the teacher typed.
+  const handleLocationChange = (value: string, meta?: { capacity: number | null }) => {
+    onLocationChange(value);
+    if (meta?.capacity != null && participantsInput.trim() === '') {
+      const filled = Math.max(minParticipants, meta.capacity);
+      onMaxParticipantsChange(filled);
+      setParticipantsInput(String(filled));
+    }
+  };
+
 
   // Plasser error state — derived once for both the input and the label.
   const participantsTypedValue = parseInt(participantsInput, 10);
@@ -280,7 +292,7 @@ export const CourseSettingsTab = ({
               <FieldLabel>Sted</FieldLabel>
               <LocationCombobox
                 value={settingsLocation}
-                onChange={onLocationChange}
+                onChange={handleLocationChange}
                 locations={locations}
                 placeholder="Velg sted"
                 aria-label="Sted"
@@ -379,21 +391,24 @@ export const CourseSettingsTab = ({
               <FieldLabel htmlFor="settings-price">
                 {courseFormat === 'series' ? 'Pris per gang' : 'Pris'}
               </FieldLabel>
-              <Input
-                id="settings-price"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={priceInput}
-                onChange={(e) => setPriceInput(e.target.value.replace(/[^\d]/g, ''))}
-                onBlur={commitPriceInput}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    commitPriceInput();
-                  }
-                }}
-              />
+              <InputGroup>
+                <InputGroupInput
+                  id="settings-price"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={priceInput}
+                  onChange={(e) => setPriceInput(e.target.value.replace(/[^\d]/g, ''))}
+                  onBlur={commitPriceInput}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      commitPriceInput();
+                    }
+                  }}
+                />
+                <InputGroupAddon align="inline-end" aria-hidden="true">kr</InputGroupAddon>
+              </InputGroup>
               {courseFormat === 'series' && priceInput !== '' && totalWeeks > 0 && (
                 <p className="mt-2 text-sm text-foreground-muted">
                   Totalt {formatKroner((parseInt(priceInput, 10) || 0) * totalWeeks)} for {totalWeeks} uker

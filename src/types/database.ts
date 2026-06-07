@@ -817,7 +817,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
-          rooms: string[]
+          rooms: Json
           seller_id: string
           updated_at: string
         }
@@ -826,7 +826,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
-          rooms?: string[]
+          rooms?: Json
           seller_id: string
           updated_at?: string
         }
@@ -835,7 +835,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
-          rooms?: string[]
+          rooms?: Json
           seller_id?: string
           updated_at?: string
         }
