@@ -205,6 +205,7 @@ function StudioPublicSettings({
     setRooms(next);
     setNewRoom('');
     setNewRoomCapacity('');
+    setAddingRoom(false);
     void persistRooms(next, previous);
   };
 
