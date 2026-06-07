@@ -38,37 +38,44 @@ Deno.serve(async (req: Request) => {
 
     // Per-IP fixed-window limit. Autocomplete fires per keystroke, so the bucket
     // is generous; fail open (only block on an explicit false) so a limiter
-    // hiccup never wedges a teacher mid-search.
+    // hiccup never wedges a teacher mid-search. Kick the check off now but don't
+    // await it yet — run it concurrently with the Google call below so the DB
+    // round-trip doesn't add latency to every keystroke.
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const clientIp = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown'
-    const { data: allowed, error: limitErr } = await supabase.rpc('check_rate_limit', {
+    const limitPromise = supabase.rpc('check_rate_limit', {
       p_key: `places:ip:${clientIp}`,
       p_limit: 200,
       p_window_seconds: 3600,
     })
-    if (limitErr) console.error('check_rate_limit failed:', limitErr)
-    if (allowed === false) {
-      return errorResponse('For mange søk. Prøv igjen om litt.', 429, req)
+    const isRateLimited = async () => {
+      const { data: allowed, error: limitErr } = await limitPromise
+      if (limitErr) console.error('check_rate_limit failed:', limitErr)
+      return allowed === false
     }
 
     if (body.action === 'autocomplete') {
       const input = (body.input || '').trim()
       if (input.length < 3) return successResponse({ suggestions: [] }, 200, req)
 
-      const res = await fetch(`${PLACES_BASE}/places:autocomplete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Goog-Api-Key': googleApiKey,
-        },
-        body: JSON.stringify({
-          input,
-          sessionToken: body.sessionToken,
-          languageCode: 'no',
-          regionCode: 'NO',
-          includedRegionCodes: ['no'],
+      const [limited, res] = await Promise.all([
+        isRateLimited(),
+        fetch(`${PLACES_BASE}/places:autocomplete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': googleApiKey,
+          },
+          body: JSON.stringify({
+            input,
+            sessionToken: body.sessionToken,
+            languageCode: 'no',
+            regionCode: 'NO',
+            includedRegionCodes: ['no'],
+          }),
         }),
-      })
+      ])
+      if (limited) return errorResponse('For mange søk. Prøv igjen om litt.', 429, req)
       if (!res.ok) {
         console.error('places:autocomplete', res.status, await res.text())
         return errorResponse('Søket feilet. Prøv igjen.', 502, req)
@@ -95,6 +102,9 @@ Deno.serve(async (req: Request) => {
 
     if (body.action === 'details') {
       if (!body.placeId) return errorResponse('Missing placeId', 400, req)
+      if (await isRateLimited()) {
+        return errorResponse('For mange søk. Prøv igjen om litt.', 429, req)
+      }
 
       const url = new URL(`${PLACES_BASE}/places/${encodeURIComponent(body.placeId)}`)
       url.searchParams.set('sessionToken', body.sessionToken)
