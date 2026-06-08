@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Clock } from '@/lib/icons';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
+import { toLocalDate } from '@/utils/dateUtils';
 
 interface StudioScheduleStripProps {
   courses: PublicCourseWithDetails[];
@@ -33,7 +34,7 @@ function extractTimeValue(timeSchedule: string | null): number {
 }
 
 function formatDayHeading(dateStr: string): string {
-  const d = new Date(dateStr);
+  const d = toLocalDate(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   const today = new Date();
   today.setHours(0, 0, 0, 0);

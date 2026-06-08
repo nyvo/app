@@ -4,6 +4,7 @@ import { Clock, Calendar, ChevronLeft } from '@/lib/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { toLocalDate } from '@/utils/dateUtils';
 import {
   Dialog,
   DialogContent,
@@ -394,7 +395,7 @@ function resolveTimeRange(timeSchedule: string | null, durationMinutes: number |
 
 function formatRelativeDate(dateStr: string | null): string {
   if (!dateStr) return '';
-  const d = new Date(dateStr);
+  const d = toLocalDate(dateStr);
   if (isNaN(d.getTime())) return '';
   const today = new Date();
   today.setHours(0, 0, 0, 0);

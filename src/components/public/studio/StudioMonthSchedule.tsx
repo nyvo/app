@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Clock, MapPin, Users } from '@/lib/icons';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
+import { toLocalDate } from '@/utils/dateUtils';
 
 interface StudioMonthScheduleProps {
   courses: PublicCourseWithDetails[];
@@ -158,7 +159,7 @@ export function StudioMonthSchedule({ courses, viewingSlug, viewingName }: Studi
     for (const key of buckets.keys()) if (key > maxKey) maxKey = key;
     let stripLen = MIN_STRIP_DAYS;
     if (maxKey) {
-      const last = new Date(maxKey);
+      const last = toLocalDate(maxKey);
       last.setHours(0, 0, 0, 0);
       stripLen = Math.max(MIN_STRIP_DAYS, Math.min(MAX_STRIP_DAYS, daysBetween(today, last) + 1));
     }

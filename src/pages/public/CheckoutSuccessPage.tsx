@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { finalizeDinteroTransaction } from '@/services/checkout';
 import { formatKroner } from '@/lib/utils';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
+import { toLocalDate } from '@/utils/dateUtils';
 
 const WEEKDAYS = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
 const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
@@ -77,6 +78,7 @@ const CheckoutSuccessPage = () => {
   const [attemptCount, setAttemptCount] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
     async function fetchSignupDetails() {
       if (!hasReceiptLookupIds) {
         if (!isFreeSignup && (transactionId || merchantReference)) {
@@ -109,10 +111,12 @@ const CheckoutSuccessPage = () => {
       const delays = [500, 1000, 2000, 2000, 4000, 4000, 4000, 8000, 8000, 8000, 8000, 8000];
 
       for (let attempt = 0; attempt < maxRetries; attempt++) {
+        if (cancelled) return;
         setAttemptCount(attempt + 1);
 
         // Wait before each attempt (exponential backoff)
         await new Promise(resolve => setTimeout(resolve, delays[attempt] || 8000));
+        if (cancelled) return;
 
         // Server-side lookup via SECURITY DEFINER RPC — avoids exposing
         // all paid signups through a broad SELECT RLS policy.
@@ -124,6 +128,7 @@ const CheckoutSuccessPage = () => {
             p_merchant_reference: merchantReference,
           }
         );
+        if (cancelled) return;
 
         if (data && !fetchError) {
           const row = data as unknown as SignupDetails;
@@ -162,13 +167,16 @@ const CheckoutSuccessPage = () => {
     }
 
     fetchSignupDetails();
+    return () => {
+      cancelled = true;
+    };
   }, [hasReceiptLookupIds, transactionId, merchantReference, isFreeSignup]);
 
   // Format a YYYY-MM-DD date as "Mandag 2. februar". Returns null on bad input
   // so callers can fall back gracefully instead of rendering "Ikke angitt".
   const formatDate = (dateString: string | null): string | null => {
     if (!dateString) return null;
-    const date = new Date(dateString);
+    const date = toLocalDate(dateString);
     if (isNaN(date.getTime())) return null;
     return `${WEEKDAYS[date.getDay()]} ${date.getDate()}. ${MONTHS[date.getMonth()]}`;
   };

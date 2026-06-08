@@ -6,6 +6,7 @@ import { PageState } from '@/components/page-state/page-state';
 import { FilterChips, type FilterChip } from '@/components/ui/filter-chips';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug, type PublicSeller } from '@/services/sellers';
+import { toLocalDate } from '@/utils/dateUtils';
 import { StudioHero, type StudioTab } from '@/components/public/studio/StudioHero';
 import { StudioMonthSchedule } from '@/components/public/studio/StudioMonthSchedule';
 
@@ -18,7 +19,7 @@ function isVisible(course: PublicCourseWithDetails): boolean {
   if (course.status === 'cancelled') {
     if (!course.start_date) return false;
     const graceMs = CANCELLED_GRACE_DAYS * 24 * 60 * 60 * 1000;
-    const start = new Date(course.start_date).getTime();
+    const start = toLocalDate(course.start_date).getTime();
     if (isNaN(start)) return false;
     return Date.now() - start <= graceMs;
   }
@@ -28,7 +29,7 @@ function isVisible(course: PublicCourseWithDetails): boolean {
 function getDisplayDateMs(course: PublicCourseWithDetails): number {
   const d = course.next_session?.session_date ?? course.start_date;
   if (!d) return Number.POSITIVE_INFINITY;
-  const t = new Date(d).getTime();
+  const t = toLocalDate(d).getTime();
   return isNaN(t) ? Number.POSITIVE_INFINITY : t;
 }
 

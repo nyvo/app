@@ -3,13 +3,15 @@
  * Consolidates date formatting logic used across the application
  */
 
+import { toLocalDate } from './dateUtils'
+
 /**
  * Format a date string to Norwegian long format
  * e.g., "mandag 15. januar 2024"
  */
 export function formatDateLong(dateStr: string | null | undefined): string {
   if (!dateStr) return ''
-  const date = new Date(dateStr)
+  const date = toLocalDate(dateStr)
   return date.toLocaleDateString('nb-NO', {
     weekday: 'long',
     day: 'numeric',
@@ -24,7 +26,7 @@ export function formatDateLong(dateStr: string | null | undefined): string {
  */
 function formatDateMedium(dateStr: string | null | undefined): string {
   if (!dateStr) return ''
-  const date = new Date(dateStr)
+  const date = toLocalDate(dateStr)
   return date.toLocaleDateString('nb-NO', {
     day: 'numeric',
     month: 'long',
@@ -38,7 +40,7 @@ function formatDateMedium(dateStr: string | null | undefined): string {
  */
 function formatDateShort(dateStr: string | null | undefined): string {
   if (!dateStr) return ''
-  const date = new Date(dateStr)
+  const date = toLocalDate(dateStr)
   return date.toLocaleDateString('nb-NO', {
     day: 'numeric',
     month: 'short'
@@ -146,7 +148,7 @@ export function formatCourseStartTime(
 
   // Upcoming courses with start date
   if (startDate && status === 'upcoming') {
-    const start = new Date(startDate);
+    const start = toLocalDate(startDate);
 
     // Guard against invalid dates
     if (isNaN(start.getTime())) {
@@ -192,7 +194,7 @@ export function formatCourseStartTime(
 
     // More than 14 days: show absolute date with "Starter" prefix
     // Use original startDate string for formatting (preserves timezone info)
-    const startYear = new Date(startDate).getFullYear();
+    const startYear = toLocalDate(startDate).getFullYear();
     const currentYear = new Date().getFullYear();
 
     if (startYear !== currentYear) {

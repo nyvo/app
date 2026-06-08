@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ImageIcon, Clock, Calendar } from '@/lib/icons';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
+import { toLocalDate } from '@/utils/dateUtils';
 
 const WEEKDAYS = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
 const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
@@ -9,14 +10,14 @@ const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 's
 
 function formatShortDate(dateStr: string | null): string | null {
   if (!dateStr) return null;
-  const d = new Date(dateStr);
+  const d = toLocalDate(dateStr);
   if (isNaN(d.getTime())) return null;
   return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
 }
 
 function formatRelativeDate(dateStr: string | null): string {
   if (!dateStr) return '';
-  const d = new Date(dateStr);
+  const d = toLocalDate(dateStr);
   if (isNaN(d.getTime())) return '';
   const today = new Date();
   today.setHours(0, 0, 0, 0);

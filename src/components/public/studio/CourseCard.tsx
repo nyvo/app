@@ -6,6 +6,7 @@ import { StatusBadge, type CourseStatus } from '@/components/ui/status-badge';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 import type { CourseFormat, DeliveryMode } from '@/types/database';
+import { toLocalDate } from '@/utils/dateUtils';
 
 /**
  * Image-overlay badges fall into two buckets:
@@ -56,7 +57,7 @@ interface DateChip {
 
 function formatDateChip(dateStr: string | null): DateChip | null {
   if (!dateStr) return null;
-  const d = new Date(dateStr);
+  const d = toLocalDate(dateStr);
   if (isNaN(d.getTime())) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);

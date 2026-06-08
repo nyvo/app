@@ -4,6 +4,7 @@ import { cn, formatCoursePrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/ui/status-badge';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
+import { toLocalDate } from '@/utils/dateUtils';
 
 interface ScheduleRowProps {
   course: PublicCourseWithDetails;
@@ -25,8 +26,8 @@ function extractTime(timeSchedule: string | null): string {
 
 function weekOfSeries(startDate: string | null, totalWeeks: number | null | undefined, displayDate: string): string | null {
   if (!startDate || !totalWeeks) return null;
-  const start = new Date(startDate);
-  const current = new Date(displayDate);
+  const start = toLocalDate(startDate);
+  const current = toLocalDate(displayDate);
   if (isNaN(start.getTime()) || isNaN(current.getTime())) return null;
   const weeksElapsed = Math.floor((current.getTime() - start.getTime()) / (DAY_MS * 7));
   const currentWeek = Math.min(Math.max(1, weeksElapsed + 1), totalWeeks);

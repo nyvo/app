@@ -18,6 +18,21 @@ export function parseLocalDate(
 }
 
 /**
+ * Parse a date string into a local-timezone Date.
+ *
+ * Date-only strings (`YYYY-MM-DD`) are built at local midnight to avoid the
+ * `new Date('YYYY-MM-DD')` UTC-parse off-by-one (which lands on the previous
+ * day for any timezone west of UTC). Full ISO timestamps keep their original
+ * time/zone semantics, so this is a safe drop-in for `new Date(str)`.
+ */
+export function toLocalDate(dateString: string): Date {
+  const parsed = dateString.length === 10 ? parseLocalDate(dateString) : null;
+  return parsed
+    ? new Date(parsed.year, parsed.month - 1, parsed.day)
+    : new Date(dateString);
+}
+
+/**
  * Format a Date as YYYY-MM-DD using local timezone (not UTC).
  */
 export function formatLocalDateKey(date: Date): string {

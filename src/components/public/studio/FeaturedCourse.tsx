@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import { htmlToPlainText } from '@/components/ui/rich-text-content';
 import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
+import { toLocalDate } from '@/utils/dateUtils';
 
 interface FeaturedCourseProps {
   course: PublicCourseWithDetails;
@@ -18,7 +19,7 @@ const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'au
 
 function formatLongDate(dateStr: string | null): string {
   if (!dateStr) return '';
-  const d = new Date(dateStr);
+  const d = toLocalDate(dateStr);
   if (isNaN(d.getTime())) return '';
   const today = new Date();
   today.setHours(0, 0, 0, 0);

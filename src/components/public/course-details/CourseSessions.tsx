@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import type { CourseSession } from '@/types/database';
+import { toLocalDate } from '@/utils/dateUtils';
 
 interface CourseSessionsProps {
   sessions: CourseSession[];
@@ -38,12 +39,12 @@ export function CourseSessions({ sessions }: CourseSessionsProps) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
       {visible.map(s => {
-        const d = new Date(s.session_date);
+        const d = toLocalDate(s.session_date);
         const valid = !isNaN(d.getTime());
         const day = valid ? WEEKDAYS_LONG[d.getDay()] : '';
         const dayNum = valid ? d.getDate() : '';
         const month = valid ? MONTHS_SHORT[d.getMonth()] : '';
-        const isPast = valid && new Date(s.session_date).setHours(0, 0, 0, 0) < todayMs;
+        const isPast = valid && toLocalDate(s.session_date).setHours(0, 0, 0, 0) < todayMs;
         const isCancelled = s.status === 'cancelled';
         const dim = isPast || isCancelled;
 

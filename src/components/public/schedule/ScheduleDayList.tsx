@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { ScheduleRow } from './ScheduleRow';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
+import { toLocalDate } from '@/utils/dateUtils';
 
 interface ScheduleDayListProps {
   courses: PublicCourseWithDetails[];
@@ -25,7 +26,7 @@ function getDisplayDate(course: PublicCourseWithDetails): string | null {
 }
 
 function formatDayHeading(dateStr: string): string {
-  const d = new Date(dateStr);
+  const d = toLocalDate(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   const today = new Date();
   today.setHours(0, 0, 0, 0);

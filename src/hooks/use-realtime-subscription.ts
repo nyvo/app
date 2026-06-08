@@ -6,6 +6,15 @@ import type { RealtimePostgresChangesFilter } from '@supabase/realtime-js'
 
 type PostgresChangeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*'
 
+// Monotonic suffix for channel names. `Date.now()` alone collides when an
+// effect re-runs inside the same millisecond (StrictMode's double-invoke, an
+// HMR remount): supabase.channel() then returns the still-registered previous
+// channel — whose async removeChannel() hasn't completed — and calling .on()
+// on an already-subscribed channel throws. A process-wide counter guarantees
+// every channel name is unique, so a fresh channel is always created.
+let channelSeq = 0
+const nextChannelSeq = () => (channelSeq = (channelSeq + 1) % Number.MAX_SAFE_INTEGER)
+
 interface SubscriptionConfig {
   table: string
   schema?: string
@@ -68,7 +77,7 @@ export function useRealtimeSubscription<T extends Record<string, unknown>>(
         channelRef.current = null
       }
 
-      const channelName = `${table}-${filter || 'all'}-${Date.now()}`
+      const channelName = `${table}-${filter || 'all'}-${Date.now()}-${nextChannelSeq()}`
 
       const subscriptionConfig: RealtimePostgresChangesFilter<'*'> = {
         event: event as '*',
@@ -175,7 +184,7 @@ export function useMultiTableSubscription(
 
     const channels = configs.map((config, index) => {
       const { table, schema = 'public', event = '*', filter } = config
-      const channelName = `multi-${table}-${index}-${Date.now()}`
+      const channelName = `multi-${table}-${index}-${Date.now()}-${nextChannelSeq()}`
 
       const subscriptionConfig: RealtimePostgresChangesFilter<'*'> = {
         event: event as '*',
