@@ -16,11 +16,11 @@ import { NotificationLiveRegion } from './NotificationLiveRegion'
 /**
  * Bell + popover (desktop) / Vaul drawer (mobile), mounted in the dashboard nav.
  *
- * Trigger: 36 px circular button with the Bell glyph. A small dot appears
- * top-right when there's anything unseen — neutral-12 by default, amber-11
- * when an unresolved action_required item exists. Precedence is computed
- * once in `useNotifications` so bell, ARIA label, and any future surface
- * stay in sync.
+ * Trigger: 36 px circular button with the Bell glyph. A single red dot
+ * appears top-right whenever there are unseen notifications, and the bell
+ * itself brightens from muted to foreground. One signal — "open me". Per-item
+ * urgency (failed payments etc.) lives in the row status plates inside the
+ * panel, not on the bell. The dot clears on open via `markSeenAll`.
  *
  * Panel: 380 × 520 max with internal scroll on desktop; bottom sheet on
  * mobile. On open we mark everything as seen (clears the bell dot) without
@@ -30,17 +30,27 @@ import { NotificationLiveRegion } from './NotificationLiveRegion'
 export function NotificationsPopover() {
   const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
+  // Frozen at the instant the panel opens, before markSeenAll stamps seen_at.
+  // Rows seen *before* this moment dim; anything seen during this session stays
+  // highlighted and only dims on the next open. See NotificationRow.
+  const [openedAt, setOpenedAt] = useState<string | null>(null)
   const {
     notifications,
     isLoading,
     unseenCount,
     unreadCount,
-    bellState,
     markSeenAll,
     markRead,
     markAllRead,
     archive,
   } = useNotifications()
+
+  // Capture the open timestamp synchronously, before the effect below stamps
+  // seen_at — so dimming keys off the *previous* open, not this one.
+  const handleOpenChange = (next: boolean) => {
+    if (next) setOpenedAt(new Date().toISOString())
+    setOpen(next)
+  }
 
   // On panel open: clear the bell dot via seen_at. Row read state is
   // unchanged — owners still need to click a row to mark it read.
@@ -63,35 +73,23 @@ export function NotificationsPopover() {
     archive(notification)
   }
 
-  const dotColor =
-    bellState === 'action'
-      ? 'bg-warning'
-      : bellState === 'unread'
-        ? 'bg-foreground'
-        : null
-
-  const ariaLabel =
-    bellState === 'action'
-      ? 'Varsler, krever handling'
-      : bellState === 'unread'
-        ? 'Varsler, uleste'
-        : 'Varsler'
+  const hasUnseen = unseenCount > 0
 
   const triggerButton = (
     <button
       type="button"
-      aria-label={ariaLabel}
+      aria-label={hasUnseen ? 'Varsler, uleste' : 'Varsler'}
       aria-haspopup="dialog"
-      className="relative inline-flex size-9 shrink-0 items-center justify-center rounded-full text-foreground-muted outline-none transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 data-[state=open]:bg-muted data-[state=open]:text-foreground"
+      className={cn(
+        'relative inline-flex size-9 shrink-0 items-center justify-center rounded-full outline-none transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 data-[state=open]:bg-muted data-[state=open]:text-foreground',
+        hasUnseen ? 'text-foreground' : 'text-foreground-muted',
+      )}
     >
       <Bell className="size-5" />
-      {dotColor && (
+      {hasUnseen && (
         <span
           aria-hidden="true"
-          className={cn(
-            'pointer-events-none absolute right-2 top-2 size-1.5 rounded-full ring-2 ring-background',
-            dotColor,
-          )}
+          className="pointer-events-none absolute right-2 top-2 size-2 rounded-full bg-danger ring-2 ring-background"
         />
       )}
     </button>
@@ -117,6 +115,7 @@ export function NotificationsPopover() {
       <NotificationFeed
         notifications={notifications}
         isLoading={isLoading}
+        openedAt={openedAt}
         onActivate={handleActivate}
         onArchive={handleArchive}
       />
@@ -127,7 +126,7 @@ export function NotificationsPopover() {
     return (
       <>
         <NotificationLiveRegion notifications={notifications} enabled={!open} />
-        <Drawer open={open} onOpenChange={setOpen}>
+        <Drawer open={open} onOpenChange={handleOpenChange}>
           <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
           <DrawerContent className="max-h-[85vh]">
             {panelInner(
@@ -142,7 +141,7 @@ export function NotificationsPopover() {
   return (
     <>
       <NotificationLiveRegion notifications={notifications} enabled={!open} />
-      <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+      <PopoverPrimitive.Root open={open} onOpenChange={handleOpenChange}>
         <PopoverPrimitive.Trigger asChild>{triggerButton}</PopoverPrimitive.Trigger>
         <PopoverPrimitive.Portal>
           <PopoverPrimitive.Content

@@ -5,6 +5,8 @@ import type { Notification } from '@/types/database'
 interface NotificationFeedProps {
   notifications: Notification[]
   isLoading: boolean
+  /** Panel-open timestamp; rows seen before it render dimmed. */
+  openedAt: string | null
   onActivate: (id: number) => void
   onArchive: (notification: Notification) => void
 }
@@ -22,6 +24,7 @@ interface NotificationFeedProps {
 export function NotificationFeed({
   notifications,
   isLoading,
+  openedAt,
   onActivate,
   onArchive,
 }: NotificationFeedProps) {
@@ -65,6 +68,7 @@ export function NotificationFeed({
         <NotificationRow
           key={n.id}
           notification={n}
+          openedAt={openedAt}
           onActivate={onActivate}
           onArchive={onArchive}
         />

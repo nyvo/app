@@ -8,8 +8,6 @@ import type { Notification } from '@/types/database'
 
 const PAGE_SIZE = 30
 
-export type BellState = 'idle' | 'unread' | 'action'
-
 interface UseNotificationsReturn {
   notifications: Notification[]
   isLoading: boolean
@@ -17,8 +15,6 @@ interface UseNotificationsReturn {
 
   unseenCount: number
   unreadCount: number
-  unresolvedActionCount: number
-  bellState: BellState
 
   markSeenAll: () => Promise<void>
   markRead: (id: number) => Promise<void>
@@ -124,16 +120,6 @@ export function useNotifications(): UseNotificationsReturn {
     () => notifications.filter((n) => n.read_at === null).length,
     [notifications],
   )
-  const unresolvedActionCount = useMemo(
-    () =>
-      notifications.filter(
-        (n) => n.action_required && n.resolved_at === null,
-      ).length,
-    [notifications],
-  )
-
-  const bellState: BellState =
-    unresolvedActionCount > 0 ? 'action' : unseenCount > 0 ? 'unread' : 'idle'
 
   // ---------- Mutations ----------
   //
@@ -270,8 +256,6 @@ export function useNotifications(): UseNotificationsReturn {
 
     unseenCount,
     unreadCount,
-    unresolvedActionCount,
-    bellState,
 
     markSeenAll,
     markRead,

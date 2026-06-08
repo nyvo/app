@@ -19,6 +19,8 @@ const STATUS_PLATE: Record<Exclude<NotificationStatus, 'neutral'>, string> = {
 
 interface NotificationRowProps {
   notification: Notification
+  /** Panel-open timestamp; a row seen before it counts as already-seen. */
+  openedAt: string | null
   onActivate: (id: number) => void
   onArchive: (notification: Notification) => void
 }
@@ -30,10 +32,13 @@ interface NotificationRowProps {
  * relative time (muted, tabular-nums). Single typographic weight per row
  * — hierarchy is carried by color, never by font weight.
  *
- * Read state dims title/icon to muted and sub to disabled, and drains the
- * plate tint back to neutral grey. No left-edge dot — dimming alone
- * communicates the state. Click activates: navigate to action_url and mark
- * read (handled by parent through onActivate).
+ * Dimmed state mutes title/icon to muted and sub to disabled, and drains the
+ * plate tint back to neutral grey. A row dims once it's been read, its action
+ * resolved, or it was seen in a previous session (seen_at predates `openedAt`)
+ * — so already-seen items render greyed on the next open, while items that
+ * arrived since last open stay full-contrast this session. No left-edge dot —
+ * dimming alone communicates the state. Click activates: navigate to
+ * action_url and mark read (handled by parent through onActivate).
  *
  * A dismiss (✕) button soft-archives the row — removes it from the feed while
  * retaining it in the DB (not a delete; the 2025/26 inbox standard), with a
@@ -44,6 +49,7 @@ interface NotificationRowProps {
  */
 export function NotificationRow({
   notification,
+  openedAt,
   onActivate,
   onArchive,
 }: NotificationRowProps) {
@@ -53,7 +59,13 @@ export function NotificationRow({
   const isRead = notification.read_at !== null
   const isResolvedAction =
     notification.action_required && notification.resolved_at !== null
-  const dimmed = isRead || isResolvedAction
+  // Seen in a *previous* session — seen_at predates this panel open. Items seen
+  // during this session (seen_at stamped on open) stay fresh until the next open.
+  const seenBeforeOpen =
+    notification.seen_at !== null &&
+    openedAt !== null &&
+    notification.seen_at < openedAt
+  const dimmed = isRead || isResolvedAction || seenBeforeOpen
 
   const handleClick = () => {
     onActivate(notification.id)
