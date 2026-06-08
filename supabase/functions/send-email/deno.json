@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "jsxImportSource": "npm:react@19.2.6"
+    "jsx": "react"
   },
   "imports": {
     "react": "npm:react@19.2.6",

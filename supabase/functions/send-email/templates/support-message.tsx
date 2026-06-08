@@ -1,4 +1,5 @@
 import { Heading, Section, Text } from '@react-email/components'
+import * as React from 'react'
 import { EmailLayout, styles } from './_layout.tsx'
 
 export interface SupportMessageProps {
