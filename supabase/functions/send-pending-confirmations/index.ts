@@ -8,8 +8,9 @@
 // and retries until the column is set.
 //
 // Idempotent by construction: seller notification dedupes on dedupe_key;
-// buyer email is gated by the confirmation_sent_at column inside
-// deliverBookingConfirmations.
+// buyer email is gated by confirmation_sent_at and the seller email by
+// seller_notified_at, both inside deliverBookingConfirmations. We retry a
+// row until BOTH timestamps are set.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
@@ -46,7 +47,7 @@ Deno.serve(async (req: Request) => {
       .from('signups')
       .select('id, seller_id, course_id, participant_name, participant_email, amount_paid')
       .eq('payment_status', 'paid')
-      .is('confirmation_sent_at', null)
+      .or('confirmation_sent_at.is.null,seller_notified_at.is.null')
       .lt('created_at', graceCutoff)
       .gt('created_at', abandonCutoff)
       .limit(100)

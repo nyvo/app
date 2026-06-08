@@ -66,6 +66,17 @@ export interface SessionRescheduledEmailProps {
   courseLocation?: string
 }
 
+export interface BookingNotificationEmailProps {
+  buyerName: string
+  courseTitle: string
+  /** Pre-formatted Norwegian date/time, e.g. "onsdag 28. mai kl. 18:00" */
+  courseStart: string
+  /** Pre-formatted via formatKroner, e.g. "1 200 kr" — or "Gratis" for free signups */
+  amount: string
+  bookingId: string
+  buyerEmail?: string
+}
+
 export interface SupportMessageEmailProps {
   userId: string
   senderName?: string
@@ -90,6 +101,7 @@ export type SendEmailInput =
   | { template: 'support-message'; to: string; props: SupportMessageEmailProps; subject?: string; replyTo?: string }
   | { template: 'session-rescheduled'; to: string; props: SessionRescheduledEmailProps; subject?: string; replyTo?: string }
   | { template: 'course-message'; to: string; props: CourseMessageEmailProps; subject?: string; replyTo?: string }
+  | { template: 'booking-notification'; to: string; props: BookingNotificationEmailProps; subject?: string; replyTo?: string }
 
 export interface SendEmailResult {
   id?: string

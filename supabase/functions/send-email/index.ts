@@ -21,6 +21,7 @@ import ClassReminder, { type ClassReminderProps } from './templates/class-remind
 import SupportMessage, { type SupportMessageProps } from './templates/support-message.tsx'
 import SessionRescheduled, { type SessionRescheduledProps } from './templates/session-rescheduled.tsx'
 import CourseMessage, { type CourseMessageProps } from './templates/course-message.tsx'
+import BookingNotification, { type BookingNotificationProps } from './templates/booking-notification.tsx'
 
 const resendApiKey = Deno.env.get('RESEND_API_KEY') || ''
 const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || ''
@@ -35,6 +36,7 @@ type EmailTemplate =
   | 'support-message'
   | 'session-rescheduled'
   | 'course-message'
+  | 'booking-notification'
 
 interface SendEmailRequest {
   template: EmailTemplate
@@ -46,6 +48,7 @@ interface SendEmailRequest {
     | SupportMessageProps
     | SessionRescheduledProps
     | CourseMessageProps
+    | BookingNotificationProps
   /** Optional override for the auto-generated subject line */
   subject?: string
   /** Optional reply-to address, used for support messages. */
@@ -68,6 +71,8 @@ function defaultSubject(template: EmailTemplate, props: SendEmailRequest['props'
     }
     case 'course-message':
       return (props as CourseMessageProps).subject
+    case 'booking-notification':
+      return `Ny påmelding — ${(props as BookingNotificationProps).courseTitle}`
   }
 }
 
@@ -85,6 +90,8 @@ function renderTemplate(template: EmailTemplate, props: SendEmailRequest['props'
       return SessionRescheduled(props as SessionRescheduledProps)
     case 'course-message':
       return CourseMessage(props as CourseMessageProps)
+    case 'booking-notification':
+      return BookingNotification(props as BookingNotificationProps)
   }
 }
 
@@ -119,7 +126,7 @@ Deno.serve(async (req: Request) => {
     return errorResponse('Missing required fields: template, to, props', 400, req)
   }
 
-  if (!['order-confirm', 'refund-receipt', 'class-reminder', 'support-message', 'session-rescheduled', 'course-message'].includes(template)) {
+  if (!['order-confirm', 'refund-receipt', 'class-reminder', 'support-message', 'session-rescheduled', 'course-message', 'booking-notification'].includes(template)) {
     return errorResponse(`Unknown template: ${template}`, 400, req)
   }
 
