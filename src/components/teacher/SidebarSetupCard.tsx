@@ -1,4 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
 import { routes } from '@/lib/routes'
 import { SidebarSeparator } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
@@ -6,16 +8,59 @@ import { useSellerSetupStatus } from '@/hooks/use-seller-setup-status'
 
 // Sits under the primary sidebar nav. Pattern from
 // Notion / Vercel / Intercom — small card with progress count + thin
-// progress bar, whole-card click → /get-started. Hidden once everything
-// is complete (skill §16 + components.md "Setup checklist").
+// progress bar, whole-card click → /get-started.
+//
+// Two phases:
+//   1. Required pending → the loud progress card (count + bar).
+//   2. Required done, polish left → a quiet "Gjør siden ferdig" entry (no
+//      bar) so the optional steps stay reachable from nav; without it the
+//      /get-started "you're live" state is unreachable once the card hides.
+// Removed entirely once everything — required and optional — is done
+// (skill §16 + components.md "Setup checklist").
 export function SidebarSetupCard() {
   const location = useLocation()
-  const { completedCount, totalCount, isSetupComplete } = useSellerSetupStatus()
+  const { completedCount, totalCount, isSetupComplete, optionalSteps, isLoading } =
+    useSellerSetupStatus()
 
-  if (isSetupComplete) return null
-
-  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
+  const remainingOptional = optionalSteps.filter((step) => !step.isComplete).length
   const isActive = location.pathname === routes.getStarted
+
+  // Hold until the first fetch resolves — otherwise the card paints its
+  // required-progress phase before flipping to the quiet "polish" phase.
+  if (isLoading) return null
+
+  // Everything done — required and polish alike. Nothing left to nudge.
+  if (isSetupComplete && remainingOptional === 0) return null
+
+  // Phase 2 — live, but polish remains. Quiet, no progress bar.
+  if (isSetupComplete) {
+    return (
+      <div className="mt-2">
+        <SidebarSeparator className="mx-0 mb-2" />
+        <Link
+          to={routes.getStarted}
+          aria-label="Gjør studioet ferdig"
+          className={cn(
+            'flex items-center justify-between gap-2 rounded-md px-3 py-2 transition-colors duration-150',
+            'text-sidebar-foreground-muted hover:bg-sidebar-accent hover:text-sidebar-foreground',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
+            isActive && 'bg-sidebar-accent text-sidebar-foreground',
+          )}
+        >
+          <span className="text-sm font-medium">Gjør studioet ferdig</span>
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            size={16}
+            strokeWidth={1.75}
+            className="shrink-0"
+          />
+        </Link>
+      </div>
+    )
+  }
+
+  // Phase 1 — required steps pending. The loud, motivating progress card.
+  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
   return (
     <div className="mt-2">

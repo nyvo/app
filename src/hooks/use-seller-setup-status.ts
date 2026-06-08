@@ -16,12 +16,20 @@ export function useSellerSetupStatus() {
   const [hasPublishedCourse, setHasPublishedCourse] = useState(false)
   const [hasLocation, setHasLocation] = useState(false)
   const [draftCourseId, setDraftCourseId] = useState<string | null>(null)
+  // True until the first courses/locations fetch resolves. Without this, the
+  // hook derives state from `hasPublishedCourse=false` on the first paint —
+  // even when the seller actually has a published course — so consumers flash
+  // the incomplete checklist before the fetch flips them to "done". Only ever
+  // flips to false (realtime refreshes never set it back true), so a live
+  // refresh doesn't blink the UI back to a skeleton.
+  const [isLoading, setIsLoading] = useState(true)
 
   const refresh = useCallback(async () => {
     if (!currentSeller?.id) {
       setHasPublishedCourse(false)
       setHasLocation(false)
       setDraftCourseId(null)
+      setIsLoading(false)
       return
     }
     // One courses fetch drives both signals: "published" = any course past
@@ -41,6 +49,7 @@ export function useSellerSetupStatus() {
     setHasPublishedCourse(rows.some((c) => c.status !== 'draft'))
     setDraftCourseId(rows.find((c) => c.status === 'draft')?.id ?? null)
     setHasLocation((locationCount ?? 0) > 0)
+    setIsLoading(false)
   }, [currentSeller?.id])
 
   useEffect(() => {
@@ -80,5 +89,5 @@ export function useSellerSetupStatus() {
       .eq('id', profile.id)
   }, [progress.isSetupComplete, profile?.id, profile?.setup_complete_seen_at])
 
-  return progress
+  return { ...progress, isLoading }
 }
