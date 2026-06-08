@@ -1,0 +1,82 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@supabase/functions-js@*": "2.108.0",
+    "jsr:@supabase/supabase-js@2": "2.108.0"
+  },
+  "jsr": {
+    "@supabase/functions-js@2.108.0": {
+      "integrity": "8601892c30d31df6cb9d22334ebfb4a49295586980b8d6db8a74b8ca717bb4c3"
+    },
+    "@supabase/supabase-js@2.108.0": {
+      "integrity": "97abfc32cc91c1314ea0742436d9ec225229885e2a7ed8a2d2cafaf9758fe3d3"
+    }
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@dintero/checkout-web-sdk@~0.12.12",
+        "npm:@fontsource-variable/geist@^5.2.8",
+        "npm:@hugeicons/core-free-icons@^4.1.3",
+        "npm:@hugeicons/react@^1.1.6",
+        "npm:@playwright/test@^1.58.2",
+        "npm:@radix-ui/react-alert-dialog@^1.1.15",
+        "npm:@radix-ui/react-checkbox@^1.3.3",
+        "npm:@radix-ui/react-collapsible@^1.1.12",
+        "npm:@radix-ui/react-dialog@^1.1.15",
+        "npm:@radix-ui/react-dropdown-menu@^2.1.16",
+        "npm:@radix-ui/react-popover@^1.1.15",
+        "npm:@radix-ui/react-radio-group@^1.3.8",
+        "npm:@radix-ui/react-select@^2.2.6",
+        "npm:@radix-ui/react-separator@^1.1.8",
+        "npm:@radix-ui/react-slot@^1.2.4",
+        "npm:@radix-ui/react-switch@^1.2.6",
+        "npm:@radix-ui/react-tabs@^1.1.13",
+        "npm:@radix-ui/react-toggle-group@^1.1.11",
+        "npm:@radix-ui/react-tooltip@^1.2.8",
+        "npm:@react-email/components@^1.0.12",
+        "npm:@react-email/render@^2.0.8",
+        "npm:@react-email/ui@^6.1.4",
+        "npm:@supabase/supabase-js@^2.87.2",
+        "npm:@tailwindcss/postcss@^4.1.17",
+        "npm:@testing-library/jest-dom@^6.9.1",
+        "npm:@testing-library/react@^16.3.1",
+        "npm:@tiptap/extension-link@^3.23.4",
+        "npm:@tiptap/react@^3.23.4",
+        "npm:@tiptap/starter-kit@^3.23.4",
+        "npm:@types/dompurify@^3.0.5",
+        "npm:@types/node@^24.10.1",
+        "npm:@types/react-dom@^19.2.3",
+        "npm:@types/react@^19.2.6",
+        "npm:@vitejs/plugin-react@^5.1.1",
+        "npm:autoprefixer@^10.4.22",
+        "npm:class-variance-authority@~0.7.1",
+        "npm:clsx@^2.1.1",
+        "npm:date-fns@^4.1.0",
+        "npm:dompurify@^3.4.3",
+        "npm:framer-motion@^12.23.24",
+        "npm:input-otp@^1.4.2",
+        "npm:jsdom@^27.4.0",
+        "npm:lucide-react@^1.8.0",
+        "npm:postcss@^8.5.6",
+        "npm:radix-ui@^1.4.3",
+        "npm:react-day-picker@^9.14.0",
+        "npm:react-dom@^19.2.0",
+        "npm:react-email@^6.1.4",
+        "npm:react-router-dom@^7.9.6",
+        "npm:react@^19.2.0",
+        "npm:recharts@^3.8.0",
+        "npm:shadcn@^4.2.0",
+        "npm:sonner@^2.0.7",
+        "npm:supabase@^2.72.8",
+        "npm:tailwind-merge@^3.5.0",
+        "npm:tailwindcss@^4.1.17",
+        "npm:tw-animate-css@^1.4.0",
+        "npm:typescript@~5.9.3",
+        "npm:vaul@^1.1.2",
+        "npm:vite@^7.2.4",
+        "npm:vitest@^4.0.17"
+      ]
+    }
+  }
+}

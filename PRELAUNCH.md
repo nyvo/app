@@ -6,6 +6,34 @@ not strict dependency.
 
 ---
 
+## 2026-06-08 prelaunch checklist pass
+
+### Done in this pass
+
+- **Capture-amount defense-in-depth** — `finalize-dintero-transaction` and
+  `dintero-webhook` now compare Dintero's transaction amount against
+  `payment_attempts.total_price_nok` before creating a signup or capturing an
+  authorization. Mismatched authorizations are voided and logged.
+- **E2E smoke coverage refreshed** — Playwright specs now target the current
+  `/auth` magic-link flow and current protected routes instead of the removed
+  `/signup`, `/login`, `/forgot-password`, and `/teacher/*` routes.
+- **Production dependency audit clean** — `npm audit --omit=dev` now reports
+  0 vulnerabilities after lockfile updates for React Router, Supabase JS, Vite,
+  Vitest, and Supabase CLI.
+
+### Still needs human / production verification
+
+- Run the Dintero manual smoke-test runbook below against sandbox/live.
+- Confirm production `VITE_PRELAUNCH` is explicitly set for the intended launch
+  state.
+- Confirm DMARC, PITR/backups, and failure alerting from
+  `docs/launch-readiness.md`.
+- Full `npm audit` still reports a dev-only moderate advisory in
+  `@react-email/ui -> next -> postcss` with no available fix; it is not present
+  in `npm audit --omit=dev`.
+
+---
+
 ## 2026-06-01 soft-launch readiness review
 
 A code + DB sweep ahead of the soft launch. Findings below; the DB-hygiene
@@ -26,13 +54,9 @@ and are **all still open** (nothing has been applied since 2026-05-19).
 
 ### Real, deferred to post-launch (low risk at soft-launch traffic)
 
-- **Capture-amount defense-in-depth** — `finalize-dintero-transaction` captures
-  `transaction.amount` from Dintero without asserting it equals the expected
-  `payment_attempt` total. Low risk: the amount was set by our own
-  `create-dintero-session` and the customer can't alter it in the embedded flow.
-  Optional hardening, not a blocker.
-- **Rate limiting** on `create-free-signup` and the email functions — a spam
-  vector, but negligible at soft-launch volume. Add if abuse appears.
+- **Additional rate limiting** on authenticated support/course-message email
+  functions — a spam vector, but low-risk because callers are logged in and
+  self-identifying. Add if abuse appears.
 
 ### Investigated and dismissed — do NOT re-open
 
