@@ -120,12 +120,12 @@ export const TeacherSidebar = () => {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+            {profile?.role === 'seller' && <SidebarSetupCard />}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter>
-        {profile?.role === 'seller' && <SidebarSetupCard />}
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>

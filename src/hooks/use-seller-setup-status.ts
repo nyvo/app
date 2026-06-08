@@ -13,17 +13,34 @@ import { useSetupProgress } from '@/hooks/use-setup-progress'
 export function useSellerSetupStatus() {
   const { currentSeller, profile } = useAuth()
   const navigate = useNavigate()
-  const [hasCourses, setHasCourses] = useState(false)
+  const [hasPublishedCourse, setHasPublishedCourse] = useState(false)
+  const [hasLocation, setHasLocation] = useState(false)
+  const [draftCourseId, setDraftCourseId] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     if (!currentSeller?.id) {
-      setHasCourses(false)
+      setHasPublishedCourse(false)
+      setHasLocation(false)
+      setDraftCourseId(null)
       return
     }
-    const { count } = await typedFrom('courses')
-      .select('id', { count: 'exact', head: true })
-      .eq('seller_id', currentSeller.id)
-    setHasCourses((count ?? 0) > 0)
+    // One courses fetch drives both signals: "published" = any course past
+    // draft (a draft isn't bookable, and completed/cancelled still count as
+    // "has launched" so the checklist never resurfaces), plus the newest
+    // draft's id so the course step can resume it instead of starting over.
+    const [{ data: courses }, { count: locationCount }] = await Promise.all([
+      typedFrom('courses')
+        .select('id, status')
+        .eq('seller_id', currentSeller.id)
+        .order('created_at', { ascending: false }),
+      typedFrom('teacher_locations')
+        .select('id', { count: 'exact', head: true })
+        .eq('seller_id', currentSeller.id),
+    ])
+    const rows = (courses ?? []) as Array<{ id: string; status: string | null }>
+    setHasPublishedCourse(rows.some((c) => c.status !== 'draft'))
+    setDraftCourseId(rows.find((c) => c.status === 'draft')?.id ?? null)
+    setHasLocation((locationCount ?? 0) > 0)
   }, [currentSeller?.id])
 
   useEffect(() => {
@@ -31,7 +48,10 @@ export function useSellerSetupStatus() {
   }, [refresh])
 
   useMultiTableSubscription(
-    [{ table: 'courses', filter: `seller_id=eq.${currentSeller?.id}` }],
+    [
+      { table: 'courses', filter: `seller_id=eq.${currentSeller?.id}` },
+      { table: 'teacher_locations', filter: `seller_id=eq.${currentSeller?.id}` },
+    ],
     refresh,
     !!currentSeller?.id,
     currentSeller?.id,
@@ -43,8 +63,9 @@ export function useSellerSetupStatus() {
 
   const progress = useSetupProgress({
     currentSeller,
-    profile,
-    hasCourses,
+    hasLocation,
+    hasPublishedCourse,
+    draftCourseId,
     onConnectPayments,
   })
 
