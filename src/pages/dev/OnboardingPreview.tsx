@@ -131,8 +131,7 @@ function Step1RoleChooser() {
 // ---------------------------------------------------------------------------
 
 function Step2BuyerSetup() {
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
+  const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
 
   return (
@@ -143,28 +142,17 @@ function Step2BuyerSetup() {
         </h1>
 
         <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <label htmlFor="buyer-first-name" className="text-sm font-medium text-foreground">
-                Fornavn
-              </label>
-              <Input
-                id="buyer-first-name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                autoFocus
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="buyer-last-name" className="text-sm font-medium text-foreground">
-                Etternavn
-              </label>
-              <Input
-                id="buyer-last-name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-              />
-            </div>
+          <div className="grid gap-2">
+            <label htmlFor="buyer-name" className="text-sm font-medium text-foreground">
+              Navn
+            </label>
+            <Input
+              id="buyer-name"
+              autoComplete="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+            />
           </div>
 
           <div className="grid gap-2">

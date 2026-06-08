@@ -19,6 +19,32 @@ export function formatCoursePrice(amount: number | null | undefined): string {
   return amount && amount > 0 ? formatKroner(amount) : 'Gratis';
 }
 
+/**
+ * Conservatively title-cases a person's name on write, so the common
+ * all-lowercase typo `ola nordmann` is stored as `Ola Nordmann`. Splits on
+ * spaces and hyphens (both preserved) and capitalizes each part's first
+ * letter — but ONLY when that part is entirely lowercase. Any part that
+ * already contains an uppercase letter is left untouched, so deliberate
+ * casing survives: `McLeod`, `O'Brien`, `DJ`. Also collapses internal
+ * whitespace and trims, so it doubles as the name normalizer on save.
+ *
+ * Light-touch by design: the goal is to fix the lowercase typo, not to enforce
+ * a canonical form. Known trade-off — a lowercase particle (`van`, `de`) the
+ * user typed gets capitalized too (`van der berg` → `Van Der Berg`); these are
+ * rare in Norwegian names and not worth a heuristic that risks real names.
+ * Uses `nb-NO` casing so `å/ø/æ` uppercase correctly.
+ */
+export function formatPersonName(name: string): string {
+  return name
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/[^\s-]+/g, (part) =>
+      part === part.toLocaleLowerCase('nb-NO')
+        ? part.charAt(0).toLocaleUpperCase('nb-NO') + part.slice(1)
+        : part,
+    );
+}
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function isValidEmail(email: string): boolean {

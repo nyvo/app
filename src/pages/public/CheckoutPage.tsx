@@ -11,7 +11,7 @@ import { FieldError } from '@/components/ui/field-error';
 import { PageState } from '@/components/page-state/page-state';
 import { embedDinteroCheckout, type DinteroCheckoutInstance } from '@/lib/dintero';
 import { ChevronLeft } from '@/lib/icons';
-import { formatKroner, isValidEmail, isValidPhone } from '@/lib/utils';
+import { formatKroner, formatPersonName, isValidEmail, isValidPhone } from '@/lib/utils';
 import { calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
 import { fetchPublicCourseBySlug, type PublicCourseWithDetails } from '@/services/publicCourses';
@@ -231,7 +231,7 @@ const CheckoutPage = () => {
       ticketTypeId: selectedTier.id,
       sessionId: isDropInSelected ? dropInSessionId ?? undefined : undefined,
       customerEmail: form.email.trim(),
-      customerName: form.name.trim(),
+      customerName: formatPersonName(form.name),
       customerPhone: form.phone.trim() || undefined,
       customerNote: form.note.trim() || undefined,
     });
@@ -264,7 +264,7 @@ const CheckoutPage = () => {
     setEmailMessage(null);
     const { error: signupErr } = await createFreeSignup({
       courseId: course.id,
-      participantName: form.name.trim(),
+      participantName: formatPersonName(form.name),
       participantEmail: form.email.trim(),
       participantPhone: form.phone.trim() || undefined,
       participantNote: form.note.trim() || undefined,
@@ -336,7 +336,7 @@ const CheckoutPage = () => {
 
                 <div className="px-2 sm:px-6">
                   <div className="space-y-4">
-                    <Field label="Fullt navn" htmlFor="name">
+                    <Field label="Navn" htmlFor="name">
                       <Input
                         id="name"
                         type="text"

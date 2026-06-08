@@ -7,7 +7,7 @@ import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
 import { logger } from '@/lib/logger'
-import { cn, resolveDisplayName } from '@/lib/utils'
+import { cn, formatPersonName, resolveDisplayName } from '@/lib/utils'
 import { stepVariants } from '@/lib/motion'
 import { toast } from 'sonner'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
@@ -209,8 +209,7 @@ function BuyerSetup() {
     [profile],
   )
 
-  const [firstName, setFirstName] = useState(() => prefillName.split(' ')[0] || '')
-  const [lastName, setLastName] = useState(() => prefillName.split(' ').slice(1).join(' ') || '')
+  const [name, setName] = useState(() => prefillName)
   const [phone, setPhone] = useState(() => profile?.phone || '')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
@@ -226,16 +225,14 @@ function BuyerSetup() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const next: Record<string, string> = {}
-    if (!firstName.trim()) next.firstName = 'Skriv inn fornavn'
-    if (!lastName.trim()) next.lastName = 'Skriv inn etternavn'
+    if (!name.trim()) next.name = 'Skriv inn navnet ditt'
     setErrors(next)
     if (Object.keys(next).length > 0) return
 
     setSaving(true)
-    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim()
     const phoneDigits = phone.replace(/\s/g, '')
     const { error } = await completeBuyerOnboarding({
-      name: fullName,
+      name: formatPersonName(name),
       phone: phoneDigits || undefined,
     })
     if (error) {
@@ -256,32 +253,19 @@ function BuyerSetup() {
         </h1>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <label htmlFor="buyer-first-name" className="text-sm font-medium text-foreground">
-                Fornavn
-              </label>
-              <Input
-                id="buyer-first-name"
-                value={firstName}
-                onChange={(e) => { setFirstName(e.target.value); if (errors.firstName) setErrors((p) => ({ ...p, firstName: '' })) }}
-                autoFocus
-                aria-invalid={!!errors.firstName || undefined}
-              />
-              {errors.firstName && <FieldError className="mt-0">{errors.firstName}</FieldError>}
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="buyer-last-name" className="text-sm font-medium text-foreground">
-                Etternavn
-              </label>
-              <Input
-                id="buyer-last-name"
-                value={lastName}
-                onChange={(e) => { setLastName(e.target.value); if (errors.lastName) setErrors((p) => ({ ...p, lastName: '' })) }}
-                aria-invalid={!!errors.lastName || undefined}
-              />
-              {errors.lastName && <FieldError className="mt-0">{errors.lastName}</FieldError>}
-            </div>
+          <div className="grid gap-2">
+            <label htmlFor="buyer-name" className="text-sm font-medium text-foreground">
+              Navn
+            </label>
+            <Input
+              id="buyer-name"
+              autoComplete="name"
+              value={name}
+              onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((p) => ({ ...p, name: '' })) }}
+              autoFocus
+              aria-invalid={!!errors.name || undefined}
+            />
+            {errors.name && <FieldError className="mt-0">{errors.name}</FieldError>}
           </div>
 
           <div className="grid gap-2">

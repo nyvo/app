@@ -15,7 +15,7 @@ import { FieldError } from '@/components/ui/field-error';
 import { checkCourseAvailability, createSignup } from '@/services/signups';
 import { friendlyError } from '@/lib/error-messages';
 import { AUTH_VALIDATION } from '@/lib/auth-messages';
-import { isValidEmail } from '@/lib/utils';
+import { formatPersonName, isValidEmail } from '@/lib/utils';
 
 
 interface AddParticipantDrawerProps {
@@ -35,8 +35,7 @@ export function AddParticipantDrawer({
 }: AddParticipantDrawerProps) {
   // Form data
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    name: '',
     email: '',
     phone: '',
     note: '',
@@ -66,7 +65,7 @@ export function AddParticipantDrawer({
   // Reset form when drawer closes
   useEffect(() => {
     if (!open) {
-      setFormData({ firstName: '', lastName: '', email: '', phone: '', note: '' });
+      setFormData({ name: '', email: '', phone: '', note: '' });
       setErrors({});
       setTouched({});
       setSubmitError(null);
@@ -105,12 +104,8 @@ export function AddParticipantDrawer({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'Skriv inn fornavn';
-    }
-
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Skriv inn etternavn';
+    if (!formData.name.trim()) {
+      newErrors.name = 'Skriv inn navnet på deltakeren';
     }
 
     if (!formData.email.trim()) {
@@ -128,8 +123,7 @@ export function AddParticipantDrawer({
 
     // Mark all fields as touched
     setTouched({
-      firstName: true,
-      lastName: true,
+      name: true,
       email: true,
     });
 
@@ -164,7 +158,7 @@ export function AddParticipantDrawer({
       const { error } = await createSignup({
         seller_id: organizationId,
         course_id: courseId,
-        participant_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+        participant_name: formatPersonName(formData.name),
         participant_email: formData.email.trim().toLowerCase(),
         participant_phone: formData.phone.trim() || null,
         note: formData.note.trim() || null,
@@ -225,73 +219,36 @@ export function AddParticipantDrawer({
               </Alert>
             )}
 
-            {/* Form fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* First Name */}
-              <div>
-                <label
-                  htmlFor="firstName"
-                  data-error={(errors.firstName && touched.firstName) || undefined}
-                  className="text-sm font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
-                >
-                  Fornavn
-                </label>
-                <Input
-                  id="firstName"
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  onBlur={() => handleBlur('firstName')}
-                  aria-invalid={!!errors.firstName}
-                  aria-describedby={
-                    errors.firstName && touched.firstName ? 'firstName-error' : undefined
-                  }
-                  aria-required="true"
-                  disabled={isSubmitting}
-                  className={
-                    errors.firstName && touched.firstName
-                      ? 'border-danger bg-danger-subtle animate-shake'
-                      : ''
-                  }
-                />
-                {errors.firstName && touched.firstName && (
-                  <FieldError id="firstName-error">{errors.firstName}</FieldError>
-                )}
-              </div>
-
-              {/* Last Name */}
-              <div>
-                <label
-                  htmlFor="lastName"
-                  data-error={(errors.lastName && touched.lastName) || undefined}
-                  className="text-sm font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
-                >
-                  Etternavn
-                </label>
-                <Input
-                  id="lastName"
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  onBlur={() => handleBlur('lastName')}
-                  aria-invalid={!!errors.lastName}
-                  aria-describedby={
-                    errors.lastName && touched.lastName ? 'lastName-error' : undefined
-                  }
-                  aria-required="true"
-                  disabled={isSubmitting}
-                  className={
-                    errors.lastName && touched.lastName
-                      ? 'border-danger bg-danger-subtle animate-shake'
-                      : ''
-                  }
-                />
-                {errors.lastName && touched.lastName && (
-                  <FieldError id="lastName-error">{errors.lastName}</FieldError>
-                )}
-              </div>
+            {/* Full name */}
+            <div>
+              <label
+                htmlFor="name"
+                data-error={(errors.name && touched.name) || undefined}
+                className="text-sm font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
+              >
+                Navn
+              </label>
+              <Input
+                id="name"
+                type="text"
+                name="name"
+                autoComplete="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                onBlur={() => handleBlur('name')}
+                aria-invalid={!!errors.name}
+                aria-describedby={errors.name && touched.name ? 'name-error' : undefined}
+                aria-required="true"
+                disabled={isSubmitting}
+                className={
+                  errors.name && touched.name
+                    ? 'border-danger bg-danger-subtle animate-shake'
+                    : ''
+                }
+              />
+              {errors.name && touched.name && (
+                <FieldError id="name-error">{errors.name}</FieldError>
+              )}
             </div>
 
             {/* Email */}
