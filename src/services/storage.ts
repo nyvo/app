@@ -141,3 +141,28 @@ export async function uploadSellerLogo(
   const { data: urlData } = supabase.storage.from(SELLER_LOGOS_BUCKET).getPublicUrl(filePath)
   return { url: urlData.publicUrl, error: null }
 }
+
+// Delete a seller logo by URL. The logo path is prefixed with the seller id, so
+// we verify the URL belongs to this seller before removing (prevents path
+// traversal into another seller's folder).
+export async function deleteSellerLogo(
+  sellerId: string,
+  logoUrl: string,
+): Promise<{ error: Error | null }> {
+  const urlParts = logoUrl.split(`${SELLER_LOGOS_BUCKET}/`)
+  if (urlParts.length !== 2) {
+    return { error: new Error('Bildet kunne ikke slettes. Prøv igjen.') }
+  }
+
+  const filePath = urlParts[1]
+  if (!filePath.startsWith(`${sellerId}/`)) {
+    return { error: new Error('Bildet tilhører ikke dette studioet.') }
+  }
+
+  const { error } = await supabase.storage.from(SELLER_LOGOS_BUCKET).remove([filePath])
+  if (error) {
+    return { error: error as Error }
+  }
+
+  return { error: null }
+}

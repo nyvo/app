@@ -32,6 +32,7 @@ interface CourseSettingsTabProps {
   onImageFileChange: (file: File | null) => void;
   onImageRemove: () => void;
   isSaving: boolean;
+  isImageSaving: boolean;
 
   // Location — committed as null when empty (per DB schema).
   settingsLocation: string;
@@ -95,6 +96,7 @@ export const CourseSettingsTab = ({
   onImageFileChange,
   onImageRemove,
   isSaving,
+  isImageSaving,
   settingsLocation,
   onLocationChange,
   onLocationCoordsChange,
@@ -269,7 +271,8 @@ export const CourseSettingsTab = ({
                 onImageRemove();
               }
             }}
-            disabled={isSaving}
+            disabled={isSaving || isImageSaving}
+            loading={isImageSaving}
             className="max-w-sm"
           />
         </SettingsSection>
@@ -481,7 +484,7 @@ export const CourseSettingsTab = ({
       <DirtyFormBar
         visible={isDirty || !!saveError}
         error={saveError}
-        isSaving={isSaving}
+        isSaving={isSaving || isImageSaving}
         onSave={() => {
           commitParticipantsInput();
           onSave();

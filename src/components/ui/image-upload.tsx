@@ -66,12 +66,23 @@ export function ImageField({
   const [validationError, setValidationError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const pickerRef = useRef<HTMLButtonElement>(null)
+  const wasLoadingRef = useRef(loading)
 
   useEffect(() => {
     return () => {
       if (previewUrl) revokeImagePreviewUrl(previewUrl)
     }
   }, [previewUrl])
+
+  // When an instant-save settles (loading goes true → false), drop the local
+  // preview so the picker falls back to the authoritative `value`. On success
+  // that's the new URL; on failure it's the unchanged old one — so a failed
+  // upload never keeps showing the picked file. Callers using instant-save
+  // don't need to remount this field to reset it.
+  useEffect(() => {
+    if (wasLoadingRef.current && !loading) setPreviewUrl(null)
+    wasLoadingRef.current = loading
+  }, [loading])
 
   const isAvatar = variant === 'avatar'
   const displayUrl = previewUrl || value || null

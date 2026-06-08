@@ -23,10 +23,8 @@ import { parseRooms, type Room } from '@/lib/rooms';
 import { runWithUndo } from '@/lib/undo';
 import { updateSeller } from '@/services/sellers';
 import { renameTeamSlug, updateTeam } from '@/services/teams';
-import { uploadSellerLogo } from '@/services/storage';
+import { deleteSellerLogo, uploadSellerLogo } from '@/services/storage';
 import type { Seller, Team } from '@/types/database';
-
-const DEFAULT_PLACE_NAME = 'Studio';
 
 const StudioPage = () => {
   const { currentTeam, currentSeller, refreshSellers } = useAuth();
@@ -96,7 +94,7 @@ function StudioPublicSettings({
     setSlug(team.slug);
   }, [team.slug]);
 
-  const [placeName, setPlaceName] = useState(DEFAULT_PLACE_NAME);
+  const [placeName, setPlaceName] = useState('');
   const [address, setAddress] = useState('');
   const [rooms, setRooms] = useState<Room[]>([]);
   const [newRoom, setNewRoom] = useState('');
@@ -114,7 +112,7 @@ function StudioPublicSettings({
     loc?.lat != null ? { lat: loc.lat, lon: loc.lon, placeId: loc.google_place_id } : null;
 
   useEffect(() => {
-    setPlaceName(primaryLocation?.name ?? DEFAULT_PLACE_NAME);
+    setPlaceName(primaryLocation?.name ?? '');
     setAddress(primaryLocation?.address ?? '');
     setRooms(parseRooms(primaryLocation?.rooms));
     setPlaceCoords(coordsFromLocation(primaryLocation));
@@ -133,7 +131,7 @@ function StudioPublicSettings({
     const locationDirty = primaryLocation
       ? placeName.trim() !== primaryLocation.name ||
         address.trim() !== (primaryLocation.address ?? '')
-      : placeName.trim() !== DEFAULT_PLACE_NAME || address.trim() !== '';
+      : placeName.trim() !== '' || address.trim() !== '';
 
     return name.trim() !== seller.name || slug.trim() !== team.slug || locationDirty;
   }, [address, name, placeName, primaryLocation, seller.name, slug, team.slug]);
@@ -143,7 +141,7 @@ function StudioPublicSettings({
     setSlug(team.slug);
     setNameError(null);
     setSlugError(null);
-    setPlaceName(primaryLocation?.name ?? DEFAULT_PLACE_NAME);
+    setPlaceName(primaryLocation?.name ?? '');
     setAddress(primaryLocation?.address ?? '');
     setPlaceCoords(coordsFromLocation(primaryLocation));
     setPlaceError(null);
@@ -280,7 +278,7 @@ function StudioPublicSettings({
       setSlugError(null);
     }
 
-    if ((trimmedAddress || rooms.length > 0) && !trimmedPlaceName) {
+    if ((primaryLocation || trimmedAddress || rooms.length > 0) && !trimmedPlaceName) {
       setPlaceError('Skriv inn et navn på stedet.');
       blocked = true;
     } else {
@@ -316,10 +314,11 @@ function StudioPublicSettings({
         setSlug(nextSlug);
       }
 
-      const shouldPersistLocation = !!primaryLocation || !!trimmedAddress || rooms.length > 0;
+      const shouldPersistLocation =
+        !!primaryLocation || !!trimmedPlaceName || !!trimmedAddress || rooms.length > 0;
       if (shouldPersistLocation) {
         const payload = {
-          name: trimmedPlaceName || DEFAULT_PLACE_NAME,
+          name: trimmedPlaceName,
           address: trimmedAddress || null,
           rooms,
           lat: placeCoords?.lat ?? null,
@@ -347,16 +346,26 @@ function StudioPublicSettings({
   const handlePhotoSelected = async (file: File | null) => {
     if (!file) return;
 
+    const previousUrl = seller.logo_url;
     setSavingPhoto(true);
     try {
       const { url, error: uploadError } = await uploadSellerLogo(seller.id, file);
       if (uploadError || !url) throw uploadError ?? new Error('Kunne ikke laste opp bildet.');
 
       const { error } = await updateSeller(seller.id, { logo_url: url });
-      if (error) throw error;
+      if (error) {
+        // Row still points at the old logo — drop the just-uploaded orphan.
+        void deleteSellerLogo(seller.id, url);
+        throw error;
+      }
 
       setLogoUrl(url);
+
+      if (previousUrl && previousUrl !== url) {
+        void deleteSellerLogo(seller.id, previousUrl);
+      }
       await onSaved();
+      toast.success('Bilde oppdatert');
     } catch (err) {
       const isLocalValidation =
         err instanceof Error &&
@@ -368,6 +377,7 @@ function StudioPublicSettings({
   };
 
   const handlePhotoRemove = async () => {
+    const previousUrl = seller.logo_url;
     setSavingPhoto(true);
     const { error } = await updateSeller(seller.id, { logo_url: null });
     setSavingPhoto(false);
@@ -376,7 +386,11 @@ function StudioPublicSettings({
       return;
     }
     setLogoUrl(null);
+    if (previousUrl) {
+      void deleteSellerLogo(seller.id, previousUrl);
+    }
     await onSaved();
+    toast.success('Bilde fjernet');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

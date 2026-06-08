@@ -109,8 +109,7 @@ const CoursePage = () => {
     { lat: number | null; lon: number | null; placeId: string | null } | null
   >(null);
   const [settingsImageUrl, setSettingsImageUrl] = useState<string | null>(null);
-  const [settingsImageFile, setSettingsImageFile] = useState<File | null>(null);
-  const [imageToDelete, setImageToDelete] = useState<string | null>(null);
+  const [isSavingImage, setIsSavingImage] = useState(false);
   const [settingsTime, setSettingsTime] = useState('09:00');
   const [settingsDate, setSettingsDate] = useState<Date | undefined>(undefined);
   const [settingsDuration, setSettingsDuration] = useState<number | null>(60);
@@ -154,9 +153,6 @@ const CoursePage = () => {
     if (settingsTitle !== courseData.title) return true;
     if (settingsDescription !== (courseData.description || '')) return true;
     if (settingsLocation !== (courseData.location || '')) return true;
-    if (settingsImageUrl !== courseData.imageUrl) return true;
-    if (settingsImageFile !== null) return true;
-    if (imageToDelete !== null) return true;
     if (maxParticipants !== courseData.capacity) return true;
     if (settingsPrice !== courseData.price) return true;
     if (settingsDropInPrice !== courseData.dropInPrice) return true;
@@ -172,9 +168,8 @@ const CoursePage = () => {
     return false;
   }, [
     courseData, settingsTitle, settingsDescription, settingsLocation,
-    settingsImageUrl, settingsImageFile, imageToDelete, maxParticipants,
-    settingsDuration, settingsDate, settingsTime, settingsPrice,
-    settingsDropInPrice,
+    maxParticipants, settingsDuration, settingsDate, settingsTime,
+    settingsPrice, settingsDropInPrice,
   ]);
 
   const refundPreview = useMemo(() => {
@@ -244,23 +239,6 @@ const CoursePage = () => {
     setIsSaving(true);
     setSaveError(null);
     try {
-      let newImageUrl = settingsImageUrl;
-
-      if (imageToDelete && currentSeller?.id) {
-        await deleteCourseImage(courseId, imageToDelete, currentSeller.id);
-        setImageToDelete(null);
-      }
-      if (settingsImageFile) {
-        const { url, error: uploadError } = await uploadCourseImage(courseId, settingsImageFile);
-        if (uploadError) {
-          setSaveError(uploadError.message);
-          setIsSaving(false);
-          return;
-        }
-        newImageUrl = url;
-        setSettingsImageFile(null);
-      }
-
       let timeSchedule: string | undefined;
       if (settingsDate && settingsTime) {
         const dayName = new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(settingsDate);
@@ -277,7 +255,6 @@ const CoursePage = () => {
         max_participants: maxParticipants,
         price: settingsPrice,
         time_schedule: timeSchedule,
-        image_url: newImageUrl,
         duration: settingsDuration,
       };
 
@@ -319,19 +296,79 @@ const CoursePage = () => {
               capacity: maxParticipants,
               price: settingsPrice,
               timeSchedule: timeSchedule || prev.timeSchedule,
-              imageUrl: newImageUrl,
               durationMinutes: settingsDuration || prev.durationMinutes,
               allowsDropIn: settingsAllowsDropIn,
               dropInPrice: settingsDropInPrice,
             }
           : null,
       );
-      setSettingsImageUrl(newImageUrl);
       toast.success('Endringer lagret');
     } catch {
       setSaveError('Noe gikk galt. Prøv igjen.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleImageSelected = async (file: File | null) => {
+    if (!file || !courseId || !courseData) return;
+
+    const previousUrl = courseData.imageUrl;
+    setIsSavingImage(true);
+    setSaveError(null);
+
+    try {
+      const { url, error: uploadError } = await uploadCourseImage(courseId, file);
+      if (uploadError || !url) {
+        throw uploadError ?? new Error('Kunne ikke laste opp bildet.');
+      }
+
+      const { error: updateError } = await updateCourse(courseId, { image_url: url });
+      if (updateError) {
+        if (currentSeller?.id) {
+          void deleteCourseImage(courseId, url, currentSeller.id);
+        }
+        throw updateError;
+      }
+
+      setCourseData((prev) => (prev ? { ...prev, imageUrl: url } : prev));
+      setSettingsImageUrl(url);
+
+      if (previousUrl && previousUrl !== url && currentSeller?.id) {
+        void deleteCourseImage(courseId, previousUrl, currentSeller.id);
+      }
+
+      toast.success('Bilde oppdatert');
+    } catch (err) {
+      toast.error(friendlyError(err, 'Kunne ikke oppdatere bildet.'));
+    } finally {
+      setIsSavingImage(false);
+    }
+  };
+
+  const handleImageRemove = async () => {
+    if (!courseId || !courseData?.imageUrl) return;
+
+    const previousUrl = courseData.imageUrl;
+    setIsSavingImage(true);
+    setSaveError(null);
+
+    try {
+      const { error: updateError } = await updateCourse(courseId, { image_url: null });
+      if (updateError) throw updateError;
+
+      setCourseData((prev) => (prev ? { ...prev, imageUrl: null } : prev));
+      setSettingsImageUrl(null);
+
+      if (currentSeller?.id) {
+        void deleteCourseImage(courseId, previousUrl, currentSeller.id);
+      }
+
+      toast.success('Bilde fjernet');
+    } catch (err) {
+      toast.error(friendlyError(err, 'Kunne ikke fjerne bildet.'));
+    } finally {
+      setIsSavingImage(false);
     }
   };
 
@@ -496,8 +533,6 @@ const CoursePage = () => {
         : null,
     );
     setSettingsImageUrl(courseData.imageUrl);
-    setSettingsImageFile(null);
-    setImageToDelete(null);
     setMaxParticipants(courseData.capacity);
     setSettingsDuration(courseData.durationMinutes);
     setSettingsDropInPrice(courseData.dropInPrice);
@@ -695,20 +730,10 @@ const CoursePage = () => {
               onLocationChange={setSettingsLocation}
               onLocationCoordsChange={setSettingsLocationCoords}
               settingsImageUrl={settingsImageUrl}
-              onImageFileChange={(file) => {
-                setSettingsImageFile(file);
-                if (!file && settingsImageUrl) {
-                  setImageToDelete(settingsImageUrl);
-                  setSettingsImageUrl(null);
-                }
-              }}
-              onImageRemove={() => {
-                if (settingsImageUrl) {
-                  setImageToDelete(settingsImageUrl);
-                  setSettingsImageUrl(null);
-                }
-              }}
+              onImageFileChange={(file) => void handleImageSelected(file)}
+              onImageRemove={() => void handleImageRemove()}
               isSaving={isSaving}
+              isImageSaving={isSavingImage}
               settingsDate={settingsDate}
               onDateChange={setSettingsDate}
               settingsTime={settingsTime}
