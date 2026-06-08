@@ -468,7 +468,7 @@ const sidebarMenuButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: "hover:bg-muted hover:text-foreground",
+        default: "",
         outline:
           "bg-background ring-1 ring-border hover:bg-muted hover:text-foreground hover:ring-border",
       },
