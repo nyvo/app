@@ -56,7 +56,7 @@ function RadioGroupCardItem({
       className={cn(
         "group/radio-card relative flex w-full items-start gap-3.5 rounded-lg border border-border bg-surface p-4 text-left outline-none transition-colors",
         "hover:bg-muted focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15",
-        "data-checked:border-primary data-checked:ring-1 data-checked:ring-primary",
+        "data-checked:border-foreground data-checked:ring-1 data-checked:ring-foreground",
         "disabled:pointer-events-none disabled:opacity-50",
         className
       )}
@@ -74,7 +74,7 @@ function RadioGroupCardItem({
           <p className="mt-0.5 text-xs text-foreground-muted leading-relaxed">{description}</p>
         )}
       </div>
-      <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm border-2 border-border text-transparent transition-colors group-data-checked/radio-card:border-primary group-data-checked/radio-card:bg-primary group-data-checked/radio-card:text-primary-foreground">
+      <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm border-2 border-border text-transparent transition-colors group-data-checked/radio-card:border-foreground group-data-checked/radio-card:bg-foreground group-data-checked/radio-card:text-background">
         <RadioGroupPrimitive.Indicator>
           <svg className="size-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M2.5 6l2.5 2.5 4.5-5" />
