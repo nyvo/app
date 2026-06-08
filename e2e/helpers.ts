@@ -4,23 +4,21 @@ import type { Page } from '@playwright/test';
 // share the same test emails within a run, but each run gets fresh emails.
 const timestamp = process.env.TEST_RUN_ID || String(Date.now());
 
-export const TEST_TEACHER = {
+export const TEST_AUTH_USER = {
   email: `teacher-${timestamp}@test.example.com`,
-  password: 'testpass123',
 };
 
-export async function signupTeacher(page: Page) {
-  await page.goto('/signup');
-  await page.getByLabel('E-post').fill(TEST_TEACHER.email);
-  await page.locator('#password').fill(TEST_TEACHER.password);
-  await page.getByRole('button', { name: 'Opprett konto' }).click();
-  await page.waitForURL(/\/teacher/, { timeout: 15_000 });
-}
-
-export async function loginTeacher(page: Page) {
-  await page.goto('/login');
-  await page.getByLabel('E-post').fill(TEST_TEACHER.email);
-  await page.locator('#password').fill(TEST_TEACHER.password);
-  await page.getByRole('button', { name: 'Logg inn' }).click();
-  await page.waitForURL(/\/teacher/, { timeout: 15_000 });
+export async function mockMagicLinkRequest(page: Page) {
+  await page.route('**/auth/v1/otp*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      },
+      body: '{}',
+    });
+  });
 }
