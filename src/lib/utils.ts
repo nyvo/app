@@ -58,10 +58,11 @@ export function foldNorwegian(value: string): string {
 }
 
 /**
- * When Supabase auto-creates a profile from an email, it seeds `name` with the
- * local-part of the email (`kristian@example.com` → `kristian`). That's a
- * placeholder, not a real name. Treat it as empty so inputs default to blank
- * instead of pre-filling with a half-name the user didn't type.
+ * Treats a name equal to the email local-part (`kristian@example.com` →
+ * `kristian`) as a placeholder and returns empty. The signup trigger no longer
+ * seeds this (see 20260608205606_profile_name_no_email_seed), but some OAuth
+ * providers still hand back a name that matches the email prefix — this keeps
+ * those out of inputs and display surfaces.
  */
 export function resolveDisplayName(
   name: string | null | undefined,
@@ -72,4 +73,30 @@ export function resolveDisplayName(
   const emailPrefix = email?.split('@')[0];
   if (emailPrefix && trimmed.toLowerCase() === emailPrefix.toLowerCase()) return '';
   return trimmed;
+}
+
+/**
+ * The name shown on an account card (sidebar, menus) across all three account
+ * types. Precedence: a real personal name → the seller/studio name → email.
+ *
+ * Personal name runs through `resolveDisplayName` so an email-prefix placeholder
+ * never out-prioritizes a legitimate studio name. Buyers have no seller, so they
+ * fall straight through to their personal name or email. Returns '' when nothing
+ * usable exists — callers add their own final fallback (e.g. "Konto").
+ */
+export function accountDisplayName({
+  profileName,
+  sellerName,
+  email,
+}: {
+  profileName?: string | null;
+  sellerName?: string | null;
+  email?: string | null;
+}): string {
+  return (
+    resolveDisplayName(profileName, email) ||
+    sellerName?.trim() ||
+    email?.trim() ||
+    ''
+  );
 }

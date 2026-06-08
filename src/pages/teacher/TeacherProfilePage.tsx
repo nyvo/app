@@ -181,8 +181,13 @@ const TeacherProfilePage = () => {
                       id="profile-name"
                       type="text"
                       value={name}
+                      placeholder="Navnet ditt"
                       onChange={(e) => setName(e.target.value)}
+                      aria-describedby="profile-name-hint"
                     />
+                    <p id="profile-name-hint" className="text-sm text-foreground-muted">
+                      Brukes bare på kontoen din. Den offentlige siden viser studionavnet.
+                    </p>
                   </div>
 
                   <div className="grid gap-2">
@@ -255,6 +260,7 @@ const TeacherProfilePage = () => {
                 title="Slett konto"
                 body={<>Kontoen <strong>{profile?.email}</strong> slettes permanent. Dette kan ikke angres.</>}
                 actionLabel="Slett konto"
+                destructive
                 onConfirm={handleDeleteAccount}
                 loading={isDeletingAccount}
                 loadingText="Sletter"

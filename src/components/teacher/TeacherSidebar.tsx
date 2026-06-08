@@ -9,12 +9,14 @@ import {
   UserGroupIcon,
   CreditCardIcon,
   UserCircleIcon,
+  Settings01Icon,
   HelpCircleIcon,
   Logout03Icon,
 } from '@hugeicons/core-free-icons';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { routes } from '@/lib/routes';
+import { accountDisplayName } from '@/lib/utils';
 import {
   Sidebar,
   SidebarContent,
@@ -45,9 +47,10 @@ interface NavItem {
   href: string;
 }
 
-// Seller sidebar — 6 single-level items. The dashboard mental model is
-// "what's happening (Timeplan), what's offered (Kurs), the storefront
-// (Studio), payouts, account." No nested groups.
+// Seller sidebar — 6 single-level items: home, schedule, courses, the
+// storefront (Studio), team (Samarbeid), payouts. Personal account settings
+// (Innstillinger) live in the footer account menu, not here — they're
+// low-frequency and belong under the user's identity. No nested groups.
 const SELLER_NAV_ITEMS: NavItem[] = [
   { icon: Home01Icon, label: 'Hjem', href: routes.dashboard },
   { icon: Calendar03Icon, label: 'Timeplan', href: routes.schedule },
@@ -55,7 +58,6 @@ const SELLER_NAV_ITEMS: NavItem[] = [
   { icon: Building03Icon, label: 'Studio', href: routes.studio },
   { icon: UserGroupIcon, label: 'Samarbeid', href: routes.collaboration },
   { icon: CreditCardIcon, label: 'Betalingskonto', href: routes.settingsPayouts },
-  { icon: UserCircleIcon, label: 'Innstillinger', href: routes.settingsProfile },
 ];
 
 // Buyer sidebar — minimal. Until the buyer dashboard build-out (deferred
@@ -78,6 +80,11 @@ export const TeacherSidebar = () => {
   const { signOut, profile, currentSeller } = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
   const navItems = profile?.role === 'buyer' ? BUYER_NAV_ITEMS : SELLER_NAV_ITEMS;
+  const displayName = accountDisplayName({
+    profileName: profile?.name,
+    sellerName: currentSeller?.name,
+    email: profile?.email,
+  });
 
   useEffect(() => {
     if (isMobile) {
@@ -131,7 +138,7 @@ export const TeacherSidebar = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton className="text-sidebar-foreground-muted hover:bg-sidebar-accent hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-foreground">
-                  <span className="flex-1 truncate">{profile?.name || currentSeller?.name || 'Konto'}</span>
+                  <span className="flex-1 truncate">{displayName || 'Konto'}</span>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -151,7 +158,7 @@ export const TeacherSidebar = () => {
                     />
                     <div className="grid flex-1 leading-tight">
                       <span className="text-sm font-medium truncate text-foreground">
-                        {profile?.name || currentSeller?.name}
+                        {displayName}
                       </span>
                       <span className="text-sm truncate text-foreground-muted">
                         {profile?.email}
@@ -160,6 +167,12 @@ export const TeacherSidebar = () => {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to={routes.settingsProfile}>
+                    <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={1.75} />
+                    Innstillinger
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to={routes.help}>
                     <HugeiconsIcon icon={HelpCircleIcon} size={16} strokeWidth={1.75} />
