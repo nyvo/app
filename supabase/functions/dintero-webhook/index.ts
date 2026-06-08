@@ -121,6 +121,16 @@ async function notifyPaymentFailed(
   })
 }
 
+function toOre(value: unknown): number | null {
+  const amount = typeof value === 'number'
+    ? value
+    : typeof value === 'string'
+      ? Number(value)
+      : NaN
+  if (!Number.isFinite(amount)) return null
+  return Math.round(amount * 100)
+}
+
 /**
  * Supabase's edge runtime rewrites the request URL before handing it to
  * the function — the `/functions/v1/` prefix is stripped. But Dintero
@@ -281,6 +291,39 @@ Deno.serve(async (req: Request) => {
             merchant_reference: merchantReference,
           })
           return new Response('Payment attempt not found', { status: 404 })
+        }
+
+        const expectedAmountOre = toOre(attempt.total_price_nok)
+        if (expectedAmountOre !== transaction.amount) {
+          console.error('dintero-webhook: amount mismatch', {
+            transactionId: transaction.id,
+            merchantReference,
+            expectedAmountOre,
+            transactionAmountOre: transaction.amount,
+          })
+
+          try {
+            await voidTransaction(transaction.id)
+          } catch (_voidErr) {
+            // Non-fatal; still prevent signup creation/capture.
+          }
+
+          await supabase
+            .from('payment_attempts')
+            .update({
+              dintero_transaction_id: transaction.id,
+              status: 'voided',
+              payment_product: transaction.payment_product ?? null,
+            })
+            .eq('id', attempt.id)
+
+          await markEventResult(supabase, transaction.id, status, {
+            type: 'amount_mismatch',
+            merchant_reference: merchantReference,
+            expected_amount_ore: expectedAmountOre,
+            transaction_amount_ore: transaction.amount,
+          })
+          return new Response('OK', { status: 200 })
         }
 
         // Persist the Dintero transaction id on the attempt

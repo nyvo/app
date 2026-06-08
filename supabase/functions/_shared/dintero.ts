@@ -385,7 +385,11 @@ async function hmac(
     false,
     ['sign'],
   )
-  return crypto.subtle.sign('HMAC', key, message)
+  const messageBuffer = message.buffer.slice(
+    message.byteOffset,
+    message.byteOffset + message.byteLength,
+  ) as ArrayBuffer
+  return crypto.subtle.sign('HMAC', key, messageBuffer)
 }
 
 /**

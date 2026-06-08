@@ -42,6 +42,16 @@ interface FinalizeResult {
   status: 'confirmed' | 'already_processed'
 }
 
+function toOre(value: unknown): number | null {
+  const amount = typeof value === 'number'
+    ? value
+    : typeof value === 'string'
+      ? Number(value)
+      : NaN
+  if (!Number.isFinite(amount)) return null
+  return Math.round(amount * 100)
+}
+
 function jsonFor(req: Request) {
   const corsHeaders = getCorsHeaders(req.headers.get('origin'))
   return (body: unknown, status: number): Response =>
@@ -123,6 +133,38 @@ Deno.serve(async (req: Request) => {
 
     if (!attempt) {
       return json({ error: 'Payment attempt not found' }, 404)
+    }
+
+    const expectedAmountOre = toOre(attempt.total_price_nok)
+    if (
+      (transaction.status === 'AUTHORIZED' || transaction.status === 'CAPTURED') &&
+      expectedAmountOre !== transaction.amount
+    ) {
+      console.error('finalize-dintero-transaction: amount mismatch', {
+        transactionId,
+        merchantReference,
+        expectedAmountOre,
+        transactionAmountOre: transaction.amount,
+      })
+
+      if (transaction.status === 'AUTHORIZED') {
+        try {
+          await voidTransaction(transactionId)
+        } catch (_voidErr) {
+          // Non-fatal; still prevent signup creation/capture.
+        }
+      }
+
+      await supabase
+        .from('payment_attempts')
+        .update({
+          status: transaction.status === 'AUTHORIZED' ? 'voided' : 'failed',
+          dintero_transaction_id: transactionId,
+          payment_product: transaction.payment_product ?? null,
+        })
+        .eq('id', attempt.id)
+
+      return json({ error: 'amount_mismatch' }, 409)
     }
 
     const amountNok = transaction.amount / 100
