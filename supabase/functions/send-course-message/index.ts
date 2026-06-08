@@ -58,7 +58,7 @@ Deno.serve(async (req: Request) => {
 
   if (courseError || !course) return errorResponse('Course not found', 404, req)
 
-  const seller = course.seller as { name: string } | null
+  const seller = course.seller as unknown as { name: string } | null
   const studioName = seller?.name ?? ''
 
   const authz = await verifyOrgMembership(auth.userId, course.seller_id)

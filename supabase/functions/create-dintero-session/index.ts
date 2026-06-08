@@ -161,7 +161,7 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Course not found', 404, req)
     }
 
-    const seller = course.seller as {
+    const seller = course.seller as unknown as {
       id: string
       name: string
       dintero_seller_id: string | null

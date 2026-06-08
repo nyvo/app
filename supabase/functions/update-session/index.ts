@@ -81,7 +81,7 @@ Deno.serve(async (req: Request) => {
     return errorResponse('Session not found', 404, req)
   }
 
-  const course = session.course as {
+  const course = session.course as unknown as {
     id: string
     title: string
     location: string | null
