@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { lookupInviteLink, redeemInviteLink } from '@/services/invite-links';
 import { PageState } from '@/components/page-state/page-state';
 import { friendlyError } from '@/lib/error-messages';
+import { routes } from '@/lib/routes';
 import type { LookupTeamInviteLinkResult } from '@/types/database';
 
 // ---------------------------------------------------------------------------
@@ -22,7 +23,7 @@ import type { LookupTeamInviteLinkResult } from '@/types/database';
 //   2. In another team     → "Forlat og bli med" with the leaving team named
 //   3. Logged out          → "Logg inn" + "Opprett konto" (return after auth)
 //   4. Expired / not_found → message, single "Tilbake" ghost
-//   5. Already a member    → "Til timeplanen"
+//   5. Already a member    → message + "Til samarbeid"
 //
 // The join page DOES the "leave current team and switch" confirm — there's no
 // async "pending invite" state in the dashboard, by design.
@@ -36,9 +37,9 @@ type LookupState =
 
 type JoinPhase =
   | { kind: 'idle' }
+  | { kind: 'checking_membership' }
   | { kind: 'redeeming' }
   | { kind: 'need_force_leave'; existingTeamName: string | null }
-  | { kind: 'joined' }
   | { kind: 'already_member' }
   | { kind: 'own_team' }
   | { kind: 'no_access' };
@@ -85,7 +86,7 @@ export default function JoinPage() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, isInitialized } = useAuth();
+  const { user, profile, isInitialized, currentSeller, currentTeam } = useAuth();
 
   const [lookup, setLookup] = useState<LookupState>({ status: 'loading' });
   const [phase, setPhase] = useState<JoinPhase>({ kind: 'idle' });
@@ -111,6 +112,61 @@ export default function JoinPage() {
     return () => { cancelled = true; };
   }, [code]);
 
+  // Logged-in preflight: the public lookup only validates the invite code.
+  // Check the current seller's membership before showing the join CTA so an
+  // existing member doesn't see "Bli med" as the default state.
+  useEffect(() => {
+    if (lookup.status !== 'valid' || !user || profile?.role !== 'seller' || !currentSeller) {
+      return;
+    }
+
+    let cancelled = false;
+    const teamId = lookup.team.team_id;
+
+    setPhase({ kind: 'checking_membership' });
+
+    void (async () => {
+      if (currentTeam?.id === teamId) {
+        if (!cancelled) setPhase({ kind: 'own_team' });
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('team_affiliations')
+        .select('team_id, team:teams!inner(name)')
+        .eq('seller_id', currentSeller.id)
+        .eq('status', 'active')
+        .limit(1)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error || !data) {
+        setPhase({ kind: 'idle' });
+        return;
+      }
+
+      const activeAffiliation = data as {
+        team_id: string;
+        team: { name: string } | null;
+      };
+
+      if (activeAffiliation.team_id === teamId) {
+        setPhase({ kind: 'already_member' });
+        return;
+      }
+
+      setPhase({
+        kind: 'need_force_leave',
+        existingTeamName: activeAffiliation.team?.name ?? null,
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lookup, user, profile?.role, currentSeller, currentTeam]);
+
   const handleJoin = async (forceLeave = false) => {
     if (!code) return;
     setPhase({ kind: 'redeeming' });
@@ -123,7 +179,7 @@ export default function JoinPage() {
 
     switch (data.status) {
       case 'joined':
-        setPhase({ kind: 'joined' });
+        navigate(routes.collaboration, { replace: true });
         return;
       case 'already_member':
         setPhase({ kind: 'already_member' });
@@ -242,7 +298,22 @@ export default function JoinPage() {
     return <PageState variant="generic" />;
   }
 
-  // Already a member (either checked on redeem or pre-flight could check)
+  if (phase.kind === 'checking_membership') {
+    return (
+      <Shell>
+        <Cover url={team.team_cover_image_url} />
+        <div role="status" aria-live="polite" className="space-y-6">
+          <span className="sr-only">Sjekker medlemskap…</span>
+          <div className="space-y-3">
+            <Skeleton className="mx-auto h-8 w-56" />
+            <Skeleton className="mx-auto h-4 w-72 max-w-full" />
+          </div>
+          <Skeleton className="h-11 w-full rounded-full" />
+        </div>
+      </Shell>
+    );
+  }
+
   if (phase.kind === 'already_member') {
     return (
       <Shell>
@@ -253,26 +324,8 @@ export default function JoinPage() {
         <p className="text-base text-foreground-muted mb-8">
           Du er allerede medlem av {team.team_name}.
         </p>
-        <Button size="cta" className="w-full" onClick={() => navigate('/schedule')}>
-          Til timeplanen
-        </Button>
-      </Shell>
-    );
-  }
-
-  // Joined just now — success state
-  if (phase.kind === 'joined') {
-    return (
-      <Shell>
-        <Cover url={team.team_cover_image_url} />
-        <h1 className="text-3xl font-medium tracking-tight text-foreground mb-3">
-          Velkommen til {team.team_name}
-        </h1>
-        <p className="text-base text-foreground-muted mb-8">
-          Kursene dine vises nå på studio-siden deres.
-        </p>
-        <Button size="cta" className="w-full" onClick={() => navigate('/studio')}>
-          Til Studio
+        <Button size="cta" className="w-full" onClick={() => navigate(routes.collaboration)}>
+          Min side
         </Button>
       </Shell>
     );
@@ -288,7 +341,7 @@ export default function JoinPage() {
         <p className="text-base text-foreground-muted mb-8">
           Du kan ikke bli medlem av ditt eget team.
         </p>
-        <Button size="cta" className="w-full" onClick={() => navigate('/studio')}>
+        <Button size="cta" className="w-full" onClick={() => navigate(routes.studio)}>
           Til Studio
         </Button>
       </Shell>
