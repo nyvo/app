@@ -76,7 +76,7 @@ async function claimEvent(
   const eventId = `${transactionId}:${status}`
   const { error } = await supabase
     .from('processed_webhook_events')
-    .insert({ event_id: eventId, event_type: `dintero.${status}`, result: { status: 'processing' } })
+    .insert({ event_id: eventId, event_type: `dintero.${status}`, result: { status: 'processing' }, processed_at: null })
   if (error) {
     if (error.code === '23505') return false
     // Other errors: log and allow processing to continue; downstream idempotency is safe.
@@ -94,7 +94,7 @@ async function markEventResult(
   const eventId = `${transactionId}:${status}`
   await supabase
     .from('processed_webhook_events')
-    .update({ result })
+    .update({ result, processed_at: new Date().toISOString() })
     .eq('event_id', eventId)
 }
 
@@ -413,7 +413,7 @@ Deno.serve(async (req: Request) => {
           return new Response('OK', { status: 200 })
         }
 
-        const { data: signupResult } = await supabase.rpc('create_signup_if_available', {
+        const { data: signupResult, error: signupRpcError } = await supabase.rpc('create_signup_if_available', {
           p_seller_id: attempt.seller_id,
           p_course_id: attempt.course_id,
           p_ticket_type_id: attempt.ticket_type_id,
@@ -428,6 +428,14 @@ Deno.serve(async (req: Request) => {
           p_note: attempt.note ?? null,
           p_payment_product: transaction.payment_product ?? null,
         })
+
+        if (signupRpcError) {
+          // Transport/DB error from the RPC — NOT a capacity reject. Throw to
+          // the outer catch (→ 500), which releases the idempotency claim so
+          // Dintero's retry re-runs. Do NOT void: the authorization is still
+          // good, and a transient DB hiccup must not refuse a paid customer.
+          throw new Error(`create_signup_if_available failed: ${signupRpcError.message}`)
+        }
 
         if (!signupResult || !signupResult.success) {
           const errorType = (signupResult && signupResult.error) || 'unknown'
@@ -677,6 +685,21 @@ Deno.serve(async (req: Request) => {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown'
+    // Release the idempotency claim if the work never reached a terminal
+    // result (processed_at still null). Otherwise Dintero's retry hits the
+    // 23505 already_processed fast-path and the AUTHORIZED work never re-runs,
+    // leaving the auth to expire uncaptured. Terminal rows (processed_at set
+    // by markEventResult) are preserved so intentional voids aren't retried.
+    try {
+      await supabase
+        .from('processed_webhook_events')
+        .delete()
+        .eq('event_id', `${transaction.id}:${status}`)
+        .is('processed_at', null)
+    } catch (_releaseErr) {
+      // Non-fatal — the row will be swept or retried; surfacing the original
+      // error to Dintero is what matters.
+    }
     // Return 500 so Dintero retries on transient errors
     return new Response(`Webhook Error: ${message}`, { status: 500 })
   }

@@ -248,7 +248,7 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'attempt_missing_ticket_type' }, 500)
     }
 
-    const { data: signupResult } = await supabase.rpc('create_signup_if_available', {
+    const { data: signupResult, error: signupRpcError } = await supabase.rpc('create_signup_if_available', {
       p_seller_id: attempt.seller_id,
       p_course_id: attempt.course_id,
       p_ticket_type_id: attempt.ticket_type_id,
@@ -263,6 +263,18 @@ Deno.serve(async (req: Request) => {
       p_note: attempt.note ?? null,
       p_payment_product: transaction.payment_product ?? null,
     })
+
+    if (signupRpcError) {
+      // Transport/DB error from the RPC — NOT a capacity reject. Do not void:
+      // the authorization is still live and the webhook (or a client retry)
+      // can still complete the signup. Return a retryable 503 so the caller
+      // re-polls instead of treating a DB hiccup as a refused booking.
+      console.error('finalize-dintero-transaction: create_signup_if_available RPC error', signupRpcError)
+      return json(
+        { error: 'signup_rpc_error', message: 'Kunne ikke fullføre påmeldingen. Prøv igjen.' },
+        503,
+      )
+    }
 
     if (!signupResult || !signupResult.success) {
       // The RPC serializes same-transaction callers on an advisory lock and

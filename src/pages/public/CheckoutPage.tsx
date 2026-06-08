@@ -527,6 +527,14 @@ function DinteroEmbed({
   const checkoutRef = useRef<DinteroCheckoutInstance | null>(null);
   const [embedError, setEmbedError] = useState<string | null>(null);
 
+  // Read onPaymentAuthorized through a ref so a fresh inline-arrow identity from
+  // the parent doesn't land in the effect deps and tear down + re-embed the
+  // iframe mid-payment. Same callbackRef pattern as use-realtime-subscription.
+  const onPaymentAuthorizedRef = useRef(onPaymentAuthorized);
+  useEffect(() => {
+    onPaymentAuthorizedRef.current = onPaymentAuthorized;
+  }, [onPaymentAuthorized]);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container || !sid) return;
@@ -534,7 +542,7 @@ function DinteroEmbed({
     embedDinteroCheckout({
       container,
       sid,
-      onPaymentAuthorized,
+      onPaymentAuthorized: (transactionId) => onPaymentAuthorizedRef.current(transactionId),
       onPaymentError: (msg) => setEmbedError(msg),
       onSessionCancel: () => {
         // No-op: user can still adjust the form above. Iframe stays mounted
@@ -558,7 +566,7 @@ function DinteroEmbed({
       checkoutRef.current = null;
       container.innerHTML = '';
     };
-  }, [sid, onPaymentAuthorized]);
+  }, [sid]);
 
   if (errorMessage || embedError) {
     return (
@@ -615,7 +623,7 @@ function CheckoutSummary({
       <div className="p-5 space-y-5">
         <div>
           <p className="text-base text-foreground-muted">{course.seller?.name}</p>
-          <h3 className="mt-0.5 text-base font-semibold tracking-tight text-foreground">
+          <h3 className="mt-0.5 text-base font-medium tracking-tight text-foreground">
             {course.title}
           </h3>
           {meta && (
@@ -647,7 +655,7 @@ function CheckoutSummary({
             )}
             <div className="flex items-baseline justify-between gap-3">
               <span className="text-base font-medium text-foreground">Totalt</span>
-              <span className="text-base font-semibold tabular-nums text-foreground">
+              <span className="text-base font-medium tabular-nums text-foreground">
                 {formatKroner(total)}
               </span>
             </div>

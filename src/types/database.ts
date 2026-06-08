@@ -720,6 +720,7 @@ export type Database = {
           refund_amount: number | null
           refunded_at: string | null
           seller_id: string
+          seller_notified_at: string | null
           status: Database["public"]["Enums"]["signup_status"]
           ticket_audience_snapshot: Database["public"]["Enums"]["ticket_audience_t"]
           ticket_kind_snapshot: Database["public"]["Enums"]["ticket_kind_t"]
@@ -749,6 +750,7 @@ export type Database = {
           refund_amount?: number | null
           refunded_at?: string | null
           seller_id: string
+          seller_notified_at?: string | null
           status?: Database["public"]["Enums"]["signup_status"]
           ticket_audience_snapshot: Database["public"]["Enums"]["ticket_audience_t"]
           ticket_kind_snapshot: Database["public"]["Enums"]["ticket_kind_t"]
@@ -778,6 +780,7 @@ export type Database = {
           refund_amount?: number | null
           refunded_at?: string | null
           seller_id?: string
+          seller_notified_at?: string | null
           status?: Database["public"]["Enums"]["signup_status"]
           ticket_audience_snapshot?: Database["public"]["Enums"]["ticket_audience_t"]
           ticket_kind_snapshot?: Database["public"]["Enums"]["ticket_kind_t"]

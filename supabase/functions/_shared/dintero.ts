@@ -219,6 +219,28 @@ async function dinteroFetch<T>(
   }
 }
 
+// GET against the accounts API (api.dintero.com) that degrades gracefully:
+// 404 and empty bodies both resolve to null (sandbox payout/settlement reads
+// routinely 404). Reuses the cached access token from getAccessToken(), so
+// callers don't mint a fresh token per request.
+export async function dinteroGet<T>(path: string): Promise<T | null> {
+  const token = await getAccessToken()
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  if (res.status === 404) return null
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Dintero GET ${path} -> ${res.status}: ${text}`)
+  }
+  const text = await res.text()
+  if (!text) return null
+  return JSON.parse(text) as T
+}
+
 // ---------- Checkout / Transactions ----------
 
 export function createSession(req: DinteroSessionRequest): Promise<DinteroSessionResponse> {
