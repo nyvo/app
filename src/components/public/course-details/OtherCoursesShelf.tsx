@@ -49,7 +49,7 @@ export function OtherCoursesShelf({
 
   return (
     <section className="space-y-4">
-      <h2 className="text-xl font-semibold text-foreground">
+      <h2 className="text-xl font-medium text-foreground">
         Andre kurs fra {organizationName}
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

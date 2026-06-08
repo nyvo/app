@@ -258,7 +258,7 @@ const PaymentsPage = () => {
                     <Check className="size-5" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-base font-semibold text-foreground">
+                    <p className="text-base font-medium text-foreground">
                       Utbetalinger er klare
                     </p>
                     <p className="mt-1 text-base text-foreground-muted">

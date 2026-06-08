@@ -167,7 +167,7 @@ const PublicCoursesPage = () => {
                 )
               ) : (
                 <div className="pt-10 pb-20 max-w-2xl">
-                  <h2 className="text-xl font-semibold text-foreground">Om studioet</h2>
+                  <h2 className="text-xl font-medium text-foreground">Om studioet</h2>
                 </div>
               )}
             </div>

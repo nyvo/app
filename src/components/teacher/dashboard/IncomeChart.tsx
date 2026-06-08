@@ -115,7 +115,7 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
             {isLoading ? (
               <Skeleton className="h-9 w-40" />
             ) : (
-              <span className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">
+              <span className="text-3xl font-medium tracking-tight text-foreground tabular-nums">
                 {formatKroner(total)}
               </span>
             )}

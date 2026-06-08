@@ -134,7 +134,7 @@ export function CourseCard({ course, ratio = 'portrait', className, viewingSlug,
         'group relative flex flex-col overflow-hidden rounded-xl bg-surface outline-none',
         'ring-1 ring-border/0 transition-shadow duration-150',
         'hover:ring-border',
-        'focus-within:ring-2 focus-within:ring-ring',
+        'focus-within:ring-2 focus-within:ring-foreground',
         isDisabled && 'bg-muted hover:ring-border/0',
         className,
       )}
@@ -198,7 +198,7 @@ export function CourseCard({ course, ratio = 'portrait', className, viewingSlug,
 
         {/* Title */}
         <h3 className={cn(
-          'text-base font-semibold leading-tight line-clamp-2',
+          'text-base font-medium leading-tight line-clamp-2',
           isDisabled ? 'text-foreground-muted' : 'text-foreground',
         )}>
           <Link

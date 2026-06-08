@@ -41,6 +41,8 @@ export interface ConfirmDialogProps {
   actionLabel: React.ReactNode
   /** Safe/cancel button label. Use "Behold" when the action itself says Avbryt/Avbestill. */
   cancelLabel?: React.ReactNode
+  /** Render the confirm button with the destructive (danger) token instead of primary. */
+  destructive?: boolean
   onConfirm: (event: React.MouseEvent<HTMLButtonElement>) => void
   disabled?: boolean
   loading?: boolean
@@ -110,6 +112,7 @@ function ConfirmContent({
   disabled,
   loading,
   loadingText,
+  destructive,
   mobile,
 }: ConfirmDialogProps & { mobile?: boolean }) {
   const typeGateOpen =
@@ -189,6 +192,7 @@ function ConfirmContent({
             disabled={actionDisabled}
             loading={loading}
             loadingText={loadingText}
+            destructive={destructive}
           >
             {actionLabel}
           </ActionButton>
@@ -201,6 +205,7 @@ function ConfirmContent({
             disabled={actionDisabled}
             loading={loading}
             loadingText={loadingText}
+            destructive={destructive}
           >
             {actionLabel}
           </ActionButton>
@@ -215,17 +220,19 @@ function ActionButton({
   disabled,
   loading,
   loadingText,
+  destructive,
   children,
 }: {
   onConfirm: (event: React.MouseEvent<HTMLButtonElement>) => void
   disabled?: boolean
   loading?: boolean
   loadingText?: string
+  destructive?: boolean
   children: React.ReactNode
 }) {
   return (
     <Button
-      variant="default"
+      variant={destructive ? "destructive" : "default"}
       size="lg"
       className="flex-1"
       onClick={onConfirm}

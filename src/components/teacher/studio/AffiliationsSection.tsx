@@ -232,6 +232,7 @@ function IndividualView({ sellerId }: { sellerId: string }) {
           title="Stopp visning"
           body={<><strong>{host.name}</strong> fjernes fra studiosiden.</>}
           actionLabel="Stopp visning"
+          destructive
           onConfirm={handleLeave}
           loading={leaving}
           loadingText="Stopper"

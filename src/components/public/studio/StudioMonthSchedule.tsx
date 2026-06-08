@@ -196,7 +196,7 @@ export function StudioMonthSchedule({ courses, viewingSlug, viewingName }: Studi
   return (
     <section className="space-y-6">
       <header>
-        <h2 className="text-xl font-semibold capitalize text-foreground">{monthLabel}</h2>
+        <h2 className="text-xl font-medium capitalize text-foreground">{monthLabel}</h2>
       </header>
 
       <div className="relative -mx-4 sm:-mx-6 lg:-mx-8">
@@ -246,7 +246,7 @@ export function StudioMonthSchedule({ courses, viewingSlug, viewingName }: Studi
                 </div>
                 <div
                   className={cn(
-                    'mt-1 text-2xl font-semibold tabular-nums leading-none',
+                    'mt-1 text-2xl font-medium tabular-nums leading-none',
                     hasClasses ? 'text-foreground' : 'text-foreground-muted',
                   )}
                 >

@@ -72,7 +72,7 @@ export function StudioHero({ organization, activeTab, onTabChange }: StudioHeroP
           )}
         </div>
 
-        <h1 className="mt-5 sm:mt-6 font-semibold tracking-tight text-foreground text-3xl sm:text-4xl leading-tight">
+        <h1 className="mt-5 sm:mt-6 font-medium tracking-tight text-foreground text-3xl sm:text-4xl leading-tight">
           {organization.name}
         </h1>
 

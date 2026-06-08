@@ -310,7 +310,7 @@ const LandingPage = () => {
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-16 grid grid-cols-1 gap-12 md:grid-cols-12">
             <div className="md:col-span-5">
-              <span className="text-xl font-semibold text-foreground">Openspot</span>
+              <span className="text-xl font-medium text-foreground">Openspot</span>
               <p className="mt-6 max-w-sm text-base leading-relaxed text-foreground-muted">
                 Påmelding, betaling og kursoversikt for yogastudioer.
                 <br />
@@ -513,7 +513,7 @@ function PricingTier({ tier }: { tier: Tier }) {
       className="flex flex-col rounded-xl border border-border bg-background p-8"
     >
       <div className="mb-6">
-        <h3 className="inline-flex items-center rounded-full bg-muted px-3 py-0.5 text-base font-semibold text-foreground">
+        <h3 className="inline-flex items-center rounded-full bg-muted px-3 py-0.5 text-base font-medium text-foreground">
           {tier.name}
         </h3>
         <p className="mt-3 text-base text-foreground-muted">{tier.description}</p>
@@ -521,7 +521,7 @@ function PricingTier({ tier }: { tier: Tier }) {
 
       <div className="mb-8 border-b border-border pb-8">
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-semibold tabular-nums tracking-tight text-foreground">
+          <span className="text-3xl font-medium tabular-nums tracking-tight text-foreground">
             {tier.price}
           </span>
           {tier.priceSub && (

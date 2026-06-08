@@ -79,7 +79,7 @@ export function StudioScheduleStrip({ courses, viewingSlug, viewingName }: Studi
   return (
     <section className="space-y-8">
       <header className="space-y-1.5">
-        <h2 className="text-xl font-semibold text-foreground">
+        <h2 className="text-xl font-medium text-foreground">
           Hele timeplanen
         </h2>
         <p className="text-base text-foreground-muted leading-snug max-w-md">
@@ -91,7 +91,7 @@ export function StudioScheduleStrip({ courses, viewingSlug, viewingName }: Studi
         {buckets.map(bucket => (
           <div key={bucket.dateStr} className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4 md:gap-10 py-6">
             <div className="md:pt-2">
-              <h3 className="text-base font-semibold text-foreground">
+              <h3 className="text-base font-medium text-foreground">
                 {formatDayHeading(bucket.dateStr)}
               </h3>
             </div>

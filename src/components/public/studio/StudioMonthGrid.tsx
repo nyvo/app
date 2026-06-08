@@ -86,7 +86,7 @@ export function StudioMonthGrid({ courses, onSelectDay }: StudioMonthGridProps) 
   return (
     <section className="space-y-4">
       <header className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-foreground tabular-nums">
+        <h2 className="text-xl font-medium text-foreground tabular-nums">
           {monthLabel}
         </h2>
         <div className="flex items-center gap-1">

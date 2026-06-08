@@ -113,7 +113,7 @@ export function FeaturedCourse({ course, viewingSlug, viewingName }: FeaturedCou
           )}
 
           {/* Display title */}
-          <h3 className="font-semibold text-foreground text-3xl leading-tight tracking-tight sm:text-5xl">
+          <h3 className="font-medium text-foreground text-3xl leading-tight tracking-tight sm:text-5xl">
             {course.title}
           </h3>
 
@@ -151,7 +151,7 @@ export function FeaturedCourse({ course, viewingSlug, viewingName }: FeaturedCou
         {/* CTA / price row */}
         <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
           <div className="space-y-0.5">
-            <div className="text-2xl font-semibold text-foreground tabular-nums">
+            <div className="text-2xl font-medium text-foreground tabular-nums">
               {formatCoursePrice(course.price)}
             </div>
             {isSeries && course.total_weeks && (

@@ -148,6 +148,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
         }
         actionLabel="Avbestill"
         cancelLabel="Behold"
+        destructive
         onConfirm={() => {
           setConfirmDialog(null);
           runAction(() => handlers.onCancelEnrollment(signup.id, false));
@@ -165,6 +166,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
         }
         actionLabel="Avbestill og refunder"
         cancelLabel="Behold"
+        destructive
         onConfirm={() => {
           setConfirmDialog(null);
           runAction(() => handlers.onCancelEnrollment(signup.id, true));

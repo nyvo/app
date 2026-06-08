@@ -72,7 +72,7 @@ export function CourseSessions({ sessions }: CourseSessionsProps) {
             >
               <span
                 className={cn(
-                  'text-2xl font-semibold tabular-nums tracking-tight leading-none',
+                  'text-2xl font-medium tabular-nums tracking-tight leading-none',
                   dim ? 'text-foreground-muted' : 'text-foreground',
                 )}
               >

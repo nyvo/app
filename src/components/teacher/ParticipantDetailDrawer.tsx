@@ -473,6 +473,7 @@ export function ParticipantDetailDrawer({
         }
         actionLabel="Avbestill"
         cancelLabel="Behold"
+        destructive
         loading={loading}
         loadingText="Avbestiller…"
         onConfirm={() => runAction(() => onCancelEnrollment(signup.id, false))}
@@ -486,6 +487,7 @@ export function ParticipantDetailDrawer({
         body={<><strong>{name}</strong> avbestilles og refunderes <strong>{formatKroner(signup.amount_paid ?? 0)}</strong>.</>}
         actionLabel="Avbestill og refunder"
         cancelLabel="Behold"
+        destructive
         loading={loading}
         loadingText="Refunderer…"
         onConfirm={() => runAction(() => onCancelEnrollment(signup.id, true))}
@@ -498,6 +500,7 @@ export function ParticipantDetailDrawer({
         title="Refunder beløp"
         body={<><strong>{name}</strong> refunderes <strong>{formatKroner(signup.amount_paid ?? 0)}</strong>.</>}
         actionLabel="Refunder"
+        destructive
         loading={loading}
         loadingText="Refunderer…"
         // Reuse cancel-enrollment with refund=true; the edge function detects
