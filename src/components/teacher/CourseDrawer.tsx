@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { MoreHorizontal, Calendar, Clock, MapPin } from '@/lib/icons';
+import { MoreHorizontal } from '@/lib/icons';
 import {
   Sheet,
   SheetContent,
@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
+import { CourseMetaRow } from '@/components/teacher/CourseMetaRow';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCourseDetail } from '@/hooks/use-course-detail';
@@ -520,28 +521,11 @@ function ScheduleQuickView({
     ? buildTimeRange(currentSession.start_time, courseData.durationMinutes)
     : null;
 
+  // Location is intentionally dropped here — it's too wide for the narrow
+  // sheet header. The full date · time · place lives on the course page.
   const headerDescription =
-    sessionDateLabel || sessionTimeRange || courseData.location ? (
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-base text-foreground-muted">
-        {sessionDateLabel && (
-          <span className="inline-flex items-center gap-1.5">
-            <Calendar className="size-3.5" strokeWidth={1.75} />
-            {sessionDateLabel}
-          </span>
-        )}
-        {sessionTimeRange && (
-          <span className="inline-flex items-center gap-1.5 tabular-nums">
-            <Clock className="size-3.5" strokeWidth={1.75} />
-            {sessionTimeRange}
-          </span>
-        )}
-        {courseData.location && (
-          <span className="inline-flex items-center gap-1.5">
-            <MapPin className="size-3.5" strokeWidth={1.75} />
-            {courseData.location}
-          </span>
-        )}
-      </div>
+    sessionDateLabel || sessionTimeRange ? (
+      <CourseMetaRow date={sessionDateLabel} time={sessionTimeRange} />
     ) : undefined;
 
   const confirmedParticipants = participants.filter((p) => p.status === 'confirmed');

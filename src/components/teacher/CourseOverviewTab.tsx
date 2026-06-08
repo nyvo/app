@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Calendar, Clock, MapPin } from '@/lib/icons';
+import { Clock } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -58,17 +58,6 @@ function formatNorwegianDate(input: string | null | undefined): string {
   }).format(date);
 }
 
-// "12:00" + 60 min → "12:00–13:00". Falls back to the raw start if it isn't a
-// parseable HH:MM.
-function buildTimeRange(startTime: string, durationMinutes: number): string {
-  const [h, m] = startTime.split(':').map(Number);
-  if (Number.isNaN(h) || Number.isNaN(m)) return startTime;
-  const end = (h * 60 + m + durationMinutes) % 1440;
-  const eh = String(Math.floor(end / 60)).padStart(2, '0');
-  const em = String(end % 60).padStart(2, '0');
-  return `${startTime}–${eh}:${em}`;
-}
-
 export function CourseOverviewTab({
   course,
   enrolledCount,
@@ -104,15 +93,11 @@ export function CourseOverviewTab({
   const showTogglesCard =
     isSeries && (status === 'draft' || status === 'upcoming' || status === 'active');
   const showKursplanCard = isSeries && (status === 'upcoming' || status === 'active');
-  const showSingleSessionCard = !isSeries && (status === 'upcoming' || status === 'active');
-
-  const rawSessionTime = course.timeSchedule.includes(',')
-    ? course.timeSchedule.split(',').pop()!.trim()
-    : course.timeSchedule.trim();
-  const singleSessionDate = course.startDate ? formatNorwegianDate(course.startDate) : null;
-  const singleSessionTime = rawSessionTime
-    ? buildTimeRange(rawSessionTime, course.durationMinutes)
-    : null;
+  // Enkeltkurs only earns a card when it spans multiple days — then it mirrors
+  // the Kursrekke card (compact summary + "Se kursplan"), without per-session
+  // metadata. A single-day enkeltkurs renders nothing here.
+  const showSingleSessionCard =
+    !isSeries && sessionCount > 1 && (status === 'upcoming' || status === 'active');
 
   return (
     <div className="space-y-8">
@@ -204,19 +189,18 @@ export function CourseOverviewTab({
       )}
 
       {showSingleSessionCard && (
-        <SettingsSection title="Tid og sted">
-          <Card>
-            <CardContent>
-              <SingleSessionDetails
-                sessionCount={sessionCount}
-                onOpen={onOpenKursplan}
-                dateLabel={singleSessionDate}
-                timeLabel={singleSessionTime}
-                location={course.location ?? null}
-              />
-            </CardContent>
-          </Card>
-        </SettingsSection>
+        // Multi-day enkeltkurs — mirrors the Kursrekke card: a compact summary
+        // row + a way into the full plan, no per-session metadata.
+        <Card>
+          <CardContent className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+            <p className="text-base font-medium text-foreground">
+              Enkeltkurs · {sessionCount} {sessionCount === 1 ? 'dag' : 'dager'}
+            </p>
+            <Button variant="secondary" onClick={onOpenKursplan} className="shrink-0">
+              Se kursplan
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       {showTogglesCard && (
@@ -324,52 +308,6 @@ function BaseBanner({
       {action && (
         <Button variant="secondary" onClick={action.onClick} className="shrink-0">
           {action.label}
-        </Button>
-      )}
-    </div>
-  );
-}
-
-// ─── Single-session details (date / time / place) for enkelttime ──────────
-
-function SingleSessionDetails({
-  sessionCount,
-  onOpen,
-  dateLabel,
-  timeLabel,
-  location,
-}: {
-  sessionCount: number;
-  onOpen: () => void;
-  dateLabel: string | null;
-  timeLabel: string | null;
-  location: string | null;
-}) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-base text-foreground">
-        {dateLabel && (
-          <span className="inline-flex items-center gap-1.5 first-letter:uppercase">
-            <Calendar className="size-3.5 shrink-0 text-foreground-muted" strokeWidth={1.75} />
-            {dateLabel}
-          </span>
-        )}
-        {timeLabel && (
-          <span className="inline-flex items-center gap-1.5 tabular-nums">
-            <Clock className="size-3.5 shrink-0 text-foreground-muted" strokeWidth={1.75} />
-            {timeLabel}
-          </span>
-        )}
-        {location && (
-          <span className="inline-flex min-w-0 items-center gap-1.5">
-            <MapPin className="size-3.5 shrink-0 text-foreground-muted" strokeWidth={1.75} />
-            <span className="truncate">{location}</span>
-          </span>
-        )}
-      </div>
-      {sessionCount > 1 && (
-        <Button variant="secondary" onClick={onOpen} className="shrink-0">
-          Se kursplan
         </Button>
       )}
     </div>

@@ -30,8 +30,8 @@ import { cn } from '@/lib/utils';
 interface PageShellProps {
   /** Required page title — renders as h1. */
   title: string;
-  /** Optional one-line subtitle below the title. */
-  description?: string;
+  /** Optional subtitle below the title — a string or a rich node (e.g. a meta row). */
+  description?: ReactNode;
   /** Optional inline badge next to the title (status, count, etc). */
   badge?: ReactNode;
   /** Optional primary action right-aligned in the header row. */
@@ -98,7 +98,7 @@ export function PageShell({
             {action && <div className="shrink-0">{action}</div>}
           </div>
           {description && (
-            <p className="mt-2 text-base text-foreground-muted">{description}</p>
+            <div className="mt-2 text-base text-foreground-muted">{description}</div>
           )}
         </header>
 

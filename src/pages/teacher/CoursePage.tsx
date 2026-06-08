@@ -24,6 +24,12 @@ import { SendCourseMessageDrawer } from '@/components/teacher/SendCourseMessageD
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
+import {
+  CourseMetaRow,
+  buildTimeRange,
+  formatCourseDate,
+  nextUpcomingSession,
+} from '@/components/teacher/CourseMetaRow';
 import { PageState } from '@/components/page-state/page-state';
 import { AddParticipantDrawer } from '@/components/teacher/AddParticipantDrawer';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
@@ -588,12 +594,46 @@ const CoursePage = () => {
   const isLive = courseData.status === 'upcoming' || courseData.status === 'active';
   const canShare = isLive && !!courseUrl;
 
+  // Date · time · place under the title. The date adapts to the lifecycle so
+  // it never goes stale: a one-day single shows its date plainly; a series or
+  // multi-day course shows "Starter <første dato>" before it begins and
+  // "Neste: <neste økt>" once it's running. Archived (completed/cancelled)
+  // courses drop the date — their end-state banner already says when they ran.
+  // Time is pulled from the schedule string (e.g. "Tirsdager, 06:00").
+  const headerStartTime = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/)?.[1] ?? null;
+  const headerTime = headerStartTime
+    ? buildTimeRange(headerStartTime, courseData.durationMinutes)
+    : null;
+
+  const isSingleDay = sessions.length <= 1;
+  const isArchival =
+    courseData.status === 'completed' || courseData.status === 'cancelled';
+
+  let headerDate: string | null = null;
+  if (!isArchival) {
+    if (isSingleDay) {
+      headerDate = formatCourseDate(courseData.startDate);
+    } else if (courseData.status === 'active') {
+      const next = nextUpcomingSession(sessions);
+      headerDate = next ? `Neste: ${formatCourseDate(next.session_date)}` : null;
+    } else {
+      // upcoming / draft — hasn't begun yet, so the first date is the start.
+      headerDate = `Starter ${formatCourseDate(courseData.startDate)}`;
+    }
+  }
+
+  const headerMeta =
+    headerDate || headerTime || courseData.location ? (
+      <CourseMetaRow date={headerDate} time={headerTime} location={courseData.location} />
+    ) : undefined;
+
   return (
     <div className="flex-1 overflow-y-auto bg-background h-full">
       <MobileTeacherHeader title={courseData.title} />
 
       <PageShell
         title={courseData.title}
+        description={headerMeta}
         badge={
           courseData.status === 'cancelled' ? (
             <span className="inline-flex items-center px-2 h-6 rounded-md text-sm font-medium bg-muted text-foreground-muted line-through">
@@ -974,6 +1014,7 @@ const CoursePage = () => {
             : undefined
         }
         actionLabel="Avlys kurs"
+        destructive
         onConfirm={(e) => {
           e.preventDefault();
           handleCancelCourse();
