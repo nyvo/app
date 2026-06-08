@@ -42,7 +42,7 @@ const AuthPage = () => {
   // Two-step: identify (enter email) → sent (enter OTP / click email link)
   const [step, setStep] = useState<'identify' | 'sent'>('identify')
 
-  const { formData, errors, touched, setErrors, handleChange, handleBlur } =
+  const { formData, errors, touched, setErrors, handleChange, handleBlur, validateForm } =
     useFormValidation({
       initialValues: { email: prefillEmail },
       rules: {
@@ -100,17 +100,11 @@ const AuthPage = () => {
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    setErrors({})
-    const emailError = !formData.email.trim()
-      ? AUTH_VALIDATION.emailRequired
-      : !isValidEmail(formData.email)
-        ? AUTH_VALIDATION.emailInvalid
-        : undefined
-    if (emailError) {
-      setErrors({ email: emailError })
+    if (!validateForm()) {
       return
     }
 
+    setErrors({})
     setIsSubmitting(true)
     try {
       const { error } = await sendMagicLink(formData.email, callbackUrl)

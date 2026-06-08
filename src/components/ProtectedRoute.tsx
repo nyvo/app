@@ -7,10 +7,14 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, profile, isLoading, isInitialized } = useAuth()
+  const { user, profile, isInitialized } = useAuth()
   const location = useLocation()
 
-  if (isLoading || !isInitialized) {
+  // Only blank the shell on the very first load. `isInitialized` latches
+  // true and never flips back, so later background refreshes (which toggle
+  // `isLoading`) no longer unmount the layout — otherwise a click landing
+  // between mousedown and mouseup gets dropped as the sidebar disappears.
+  if (!isInitialized) {
     return null
   }
 
@@ -18,7 +22,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to={AUTH_ROUTES.auth} state={{ from: location }} replace />
   }
 
-  if (profile && !profile.onboarding_completed_at) {
+  // User is authenticated but profile hasn't loaded yet (e.g. mid background
+  // refresh). Hold rather than route on a stale/missing onboarding flag.
+  if (!profile) {
+    return null
+  }
+
+  if (!profile.onboarding_completed_at) {
     return <Navigate to={AUTH_ROUTES.onboarding} replace />
   }
 
