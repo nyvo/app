@@ -1,0 +1,19 @@
+"$schema" = "https://conductor.build/schemas/settings.repo.schema.json"
+
+# Auto-copy local env files (e.g. .env.local) into every new workspace so the
+# app can reach Supabase without a manual copy step.
+file_include_globs = ".env*\n"
+
+[scripts]
+# Install deps when a workspace is created.
+setup = "npm install"
+
+# One stable preview URL for everyone: always serve on :5173 and refuse to
+# drift to another port. Combined with nonconcurrent run_mode below, the
+# "active" workspace owns 5173 and its changes are what you see there.
+run = "npm run dev -- --port 5173 --strictPort"
+
+# Only one workspace's dev server runs at a time. Hitting Run in another
+# workspace stops the current one and frees 5173 — so you never juggle a
+# different port per agent; the active changes are always on the same port.
+run_mode = "nonconcurrent"
