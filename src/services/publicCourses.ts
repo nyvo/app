@@ -108,8 +108,28 @@ export interface PublicCourseWithDetails {
   /** All instructors, primary first then guests in display_order. */
   instructors: PublicCourseInstructor[]
   next_session: NextSessionInfo | null
-  /** All future session dates (status='upcoming', session_date >= today), ascending. Powers the day strip. */
+  /** Still-upcoming session dates — status='upcoming' and not yet ended (a
+   * today session whose start+duration has passed is excluded), ascending.
+   * Powers the day strip. */
   upcoming_session_dates: string[]
+}
+
+/**
+ * Whether a session still counts as upcoming *right now*. Date-only is not
+ * enough: a class today whose end time (start + duration) has already passed is
+ * finished and must not surface as bookable on the storefront. Mirrors the
+ * end-time rule `isSessionRemaining` uses on the detail page. Sessions without a
+ * start time fall back to a calendar-day comparison.
+ */
+function isSessionUpcoming(
+  session: { session_date: string; start_time: string | null },
+  durationMinutes: number | null,
+  todayStr: string,
+): boolean {
+  if (!session.start_time) return session.session_date >= todayStr
+  const startMs = new Date(`${session.session_date}T${session.start_time}`).getTime()
+  if (Number.isNaN(startMs)) return session.session_date >= todayStr
+  return startMs + (durationMinutes ?? 60) * 60000 > Date.now()
 }
 
 /** Wrap the explicit display-name instructor as a PublicCourseInstructor array. */
@@ -344,7 +364,7 @@ export async function fetchPublicCourses(
     (supabase.rpc as any)('public_signup_counts', { p_course_ids: courseIds }),
     supabase
       .from('course_sessions')
-      .select('course_id, session_date, session_number, status')
+      .select('course_id, session_date, session_number, status, start_time')
       .in('course_id', courseIds)
       .order('session_date', { ascending: true }),
     // Drop-in availability + price now lives on tier rows.
@@ -385,13 +405,17 @@ export async function fetchPublicCourses(
   const totalSessionsMap: Record<string, number> = {}
   const nextSessionMap: Record<string, NextSessionInfo> = {}
   const upcomingDatesMap: Record<string, string[]> = {}
-  const sessionsTyped = sessionsResult.data as { course_id: string; session_date: string; session_number: number; status: string }[] | null
+  // Per-course duration so the time-aware upcoming check below can derive each
+  // session's end instant (sessions carry start_time; duration lives on the course).
+  const durationByCourseId: Record<string, number | null> = {}
+  for (const c of courses) durationByCourseId[c.id] = c.duration
+  const sessionsTyped = sessionsResult.data as { course_id: string; session_date: string; session_number: number; status: string; start_time: string | null }[] | null
 
   for (const session of sessionsTyped || []) {
     // Count all sessions for total
     totalSessionsMap[session.course_id] = (totalSessionsMap[session.course_id] || 0) + 1
 
-    if (session.status === 'upcoming' && session.session_date >= todayStr) {
+    if (session.status === 'upcoming' && isSessionUpcoming(session, durationByCourseId[session.course_id] ?? null, todayStr)) {
       // Track first upcoming session per course
       if (!nextSessionMap[session.course_id]) {
         nextSessionMap[session.course_id] = {

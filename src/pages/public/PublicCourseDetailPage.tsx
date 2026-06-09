@@ -4,7 +4,7 @@ import { Clock, Calendar, ChevronLeft } from '@/lib/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { toLocalDate } from '@/utils/dateUtils';
+import { toLocalDate, formatLocalDateKey } from '@/utils/dateUtils';
 import {
   Dialog,
   DialogContent,
@@ -261,7 +261,6 @@ function MetaStrip({
 
 function SchedulePeek({ sessions, duration }: { sessions: CourseSession[]; duration: number | null }) {
   const [open, setOpen] = useState(false);
-  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <>
@@ -279,7 +278,7 @@ function SchedulePeek({ sessions, duration }: { sessions: CourseSession[]; durat
           </DialogHeader>
           <ul className="space-y-2.5">
             {sessions.map((s) => {
-              const isPast = s.session_date < today;
+              const isPast = hasSessionFinished(s, duration);
               const isCancelled = s.status === 'cancelled';
               const timeRange = s.start_time
                 ? sessionTimeRange(s.start_time, duration)
@@ -431,6 +430,18 @@ function isSessionRemaining(s: CourseSession, durationMinutes: number | null): b
   if (isNaN(startMs)) return false;
   const endMs = startMs + (durationMinutes ?? 60) * 60000;
   return endMs > Date.now();
+}
+
+/** A session is "finished" once its end time (start + duration) has passed —
+ * the inverse of `isSessionRemaining`'s end-time check, so a class that's
+ * underway isn't dimmed yet. A same-day session whose time has already gone by
+ * therefore reads as finished, not upcoming. Without a start time we can only
+ * judge by the calendar day. */
+function hasSessionFinished(s: CourseSession, durationMinutes: number | null): boolean {
+  if (!s.start_time) return s.session_date < formatLocalDateKey(new Date());
+  const startMs = new Date(`${s.session_date}T${s.start_time}`).getTime();
+  if (isNaN(startMs)) return false;
+  return startMs + (durationMinutes ?? 60) * 60000 <= Date.now();
 }
 
 /** Series counts as "started" once the first non-cancelled session's end

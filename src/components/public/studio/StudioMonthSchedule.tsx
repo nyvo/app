@@ -279,7 +279,9 @@ export function StudioMonthSchedule({ courses, viewingSlug, viewingName }: Studi
 
       {selectedCourses.length === 0 ? (
         <p className="py-10 text-center text-base text-foreground-muted">
-          Ingen klasser denne dagen.
+          {selectedKey === toKey(today)
+            ? 'Ingen flere klasser i dag.'
+            : 'Ingen klasser denne dagen.'}
         </p>
       ) : (
         <ul className="divide-y divide-border">
