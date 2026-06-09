@@ -9,12 +9,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FieldError } from '@/components/ui/field-error';
 import { PageState } from '@/components/page-state/page-state';
+import { DinteroPaymentBadge } from '@/components/public/DinteroPaymentBadge';
 import { embedDinteroCheckout, type DinteroCheckoutInstance } from '@/lib/dintero';
-import { ChevronLeft } from '@/lib/icons';
-import { formatKroner, formatPersonName, isValidEmail, isValidPhone } from '@/lib/utils';
+import { ChevronLeft, Check } from '@/lib/icons';
+import { formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
 import { calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
-import { fetchPublicCourseBySlug, type PublicCourseWithDetails } from '@/services/publicCourses';
+import { fetchPublicCourseBySlug, resolveCourseImage, singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { createDinteroSession } from '@/services/checkout';
 import { createFreeSignup, checkCourseAvailability } from '@/services/signups';
 import { supabase } from '@/lib/supabase';
@@ -332,7 +333,7 @@ const CheckoutPage = () => {
           <div className="space-y-6 max-w-[552px] min-w-0">
             {step === 'contact' || isFree ? (
               <>
-                <CheckoutStepHeader step={2} />
+                <CheckoutStepHeader step={1} />
 
                 <div className="px-2 sm:px-6">
                   <div className="space-y-4">
@@ -437,7 +438,7 @@ const CheckoutPage = () => {
               </>
             ) : (
               <>
-                <CheckoutStepHeader step={3} />
+                <CheckoutStepHeader step={2} />
 
                 <div id="payment" className="scroll-mt-6">
                   <DinteroEmbed
@@ -477,11 +478,57 @@ const CheckoutPage = () => {
 
 // ── Sub-components ───────────────────────────────────────────────────────
 
-function CheckoutStepHeader({ step }: { step: 2 | 3 }) {
+const CHECKOUT_STEPS = ['Kontakt', 'Betaling'] as const;
+
+/** Visual progress for the two in-checkout stages: the Kontakt form (1) and
+ * the Betaling iframe (2). Ticket choice happened on the course page and isn't
+ * counted — a single-class booking shouldn't read as a 3-step funnel. */
+function CheckoutStepHeader({ step }: { step: 1 | 2 }) {
+  const currentIndex = step - 1;
   return (
     <div className="px-2 sm:px-6">
       <h1 className="text-base font-medium tracking-tight text-foreground">Påmelding</h1>
-      <p className="mt-1 text-base text-foreground-muted">Steg {step} av 3</p>
+      <ol className="mt-4 flex items-center">
+        {CHECKOUT_STEPS.map((label, i) => {
+          const done = i < currentIndex;
+          const current = i === currentIndex;
+          const isLast = i === CHECKOUT_STEPS.length - 1;
+          return (
+            <li key={label} className={cn('flex items-center', !isLast && 'flex-1')}>
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums transition-colors',
+                    done && 'bg-primary text-primary-foreground',
+                    current && 'bg-primary text-primary-foreground ring-4 ring-selection-light',
+                    !done && !current && 'border border-border text-foreground-muted',
+                  )}
+                >
+                  {done ? <Check className="size-3.5" strokeWidth={2.5} /> : i + 1}
+                </span>
+                <span
+                  className={cn(
+                    'whitespace-nowrap text-xs sm:text-sm',
+                    current
+                      ? 'font-medium text-foreground'
+                      : done
+                        ? 'text-foreground'
+                        : 'text-foreground-muted',
+                  )}
+                >
+                  {label}
+                </span>
+              </div>
+              {!isLast && (
+                <span
+                  aria-hidden
+                  className={cn('mx-2 h-px flex-1 sm:mx-3', done ? 'bg-primary' : 'bg-border')}
+                />
+              )}
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
@@ -617,18 +664,28 @@ function CheckoutSummary({
   isFree: boolean;
 }) {
   const meta = buildMeta(course);
+  const img = resolveCourseImage(course);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-surface">
+    <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-soft">
       <div className="p-5 space-y-5">
-        <div>
-          <p className="text-base text-foreground-muted">{course.seller?.name}</p>
-          <h3 className="mt-0.5 text-base font-medium tracking-tight text-foreground">
-            {course.title}
-          </h3>
-          {meta && (
-            <p className="mt-2 text-base text-foreground-muted">{meta}</p>
+        {/* Course header — thumbnail + identity, so the buyer can see what
+            they're paying for, like Airbnb/Expedia checkout summaries. */}
+        <div className="flex gap-3">
+          {img && (
+            <div className="size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+              <img src={img} alt="" className="size-full object-cover" />
+            </div>
           )}
+          <div className="min-w-0">
+            <p className="truncate text-sm text-foreground-muted">{course.seller?.name}</p>
+            <h3 className="mt-0.5 text-base font-medium tracking-tight text-foreground">
+              {course.title}
+            </h3>
+            {meta && (
+              <p className="mt-1 text-sm text-foreground-muted">{meta}</p>
+            )}
+          </div>
         </div>
 
         {selectedTier && (
@@ -655,11 +712,18 @@ function CheckoutSummary({
             )}
             <div className="flex items-baseline justify-between gap-3">
               <span className="text-base font-medium text-foreground">Totalt</span>
-              <span className="text-base font-medium tabular-nums text-foreground">
+              <span className="text-xl font-medium tabular-nums tracking-tight text-foreground">
                 {formatKroner(total)}
               </span>
             </div>
           </>
+        )}
+
+        {!isFree && (
+          <div className="space-y-2 border-t border-border pt-4">
+            <p className="text-center text-xs text-foreground-muted">Sikker betaling</p>
+            <DinteroPaymentBadge variant="logomark" className="mx-auto w-full max-w-[280px]" />
+          </div>
         )}
       </div>
     </div>
@@ -692,9 +756,11 @@ function CheckoutSkeleton() {
 const SHORT_WEEKDAYS = ['søn.', 'man.', 'tir.', 'ons.', 'tor.', 'fre.', 'lør.'] as const;
 
 function buildMeta(course: PublicCourseWithDetails): string | null {
+  const isMultiDaySingle = course.format === 'single' && singleDayCount(course) > 1;
   const typeLabel =
     course.delivery_mode === 'online' ? 'Nettkurs'
     : course.format === 'series' ? 'Kursrekke'
+    : isMultiDaySingle ? 'Kurs'
     : 'Enkelttime';
   const m = course.time_schedule?.match(/(\d{1,2}:\d{2})/);
   const time = m ? m[1] : null;

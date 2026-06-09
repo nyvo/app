@@ -131,6 +131,22 @@ export function resolveCourseImage(
 }
 
 /**
+ * Number of days a course spans. A `single` course can run over consecutive
+ * days (the teacher sets "Antall dager"; each day is one session and the last
+ * becomes end_date). Returns the inclusive start→end span, or 1 when there's
+ * no end_date (a genuine one-day class). Series use weeks, not this.
+ */
+export function singleDayCount(
+  course: Pick<PublicCourseWithDetails, 'start_date' | 'end_date'>,
+): number {
+  if (!course.start_date || !course.end_date) return 1
+  const start = new Date(`${course.start_date}T12:00:00`).getTime()
+  const end = new Date(`${course.end_date}T12:00:00`).getTime()
+  if (isNaN(start) || isNaN(end)) return 1
+  return Math.max(1, Math.round((end - start) / 86_400_000) + 1)
+}
+
+/**
  * Fetch the team-owned slug + default_course_image_url for a set of seller ids
  * and return as a map keyed by seller_id. Each seller has at most one team
  * (teams.owner_seller_id is the FK).

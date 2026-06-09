@@ -362,7 +362,7 @@ export function StudioMonthSchedule({ courses, viewingSlug, viewingName }: Studi
                           </span>
                         </span>
                       )}
-                      <span className="tabular-nums">{formatCoursePrice(course.price)}</span>
+                      <span className="tabular-nums font-medium text-foreground">{formatCoursePrice(course.price)}</span>
                     </div>
                   </div>
                   <span

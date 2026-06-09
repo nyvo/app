@@ -432,6 +432,15 @@
                 color 0.3s cubic-bezier(0.25, 1, 0.5, 1);
   }
 
+  /* Soft elevation — the system is otherwise flat (white-on-white + border).
+     Reserved for focal floating surfaces (booking card, checkout summary) so
+     they read as premium without breaking the editorial flatness elsewhere. */
+  .shadow-soft {
+    box-shadow:
+      0 1px 2px rgb(16 24 40 / 0.04),
+      0 6px 20px -6px rgb(16 24 40 / 0.10);
+  }
+
 
   ::selection {
     background-color: var(--muted);

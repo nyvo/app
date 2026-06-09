@@ -4,7 +4,7 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge, type CourseStatus } from '@/components/ui/status-badge';
 import { cn, formatCoursePrice } from '@/lib/utils';
-import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
+import { resolveCourseImage, singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
 import type { CourseFormat, DeliveryMode } from '@/types/database';
 import { toLocalDate } from '@/utils/dateUtils';
 
@@ -73,6 +73,19 @@ function extractTime(timeSchedule: string | null): string {
   if (!timeSchedule) return '';
   const m = timeSchedule.match(/(\d{1,2}:\d{2})/);
   return m ? m[1] : '';
+}
+
+/** One-line "kind + commitment" descriptor for the card eyebrow. Gives the
+ * at-a-glance signal the card was missing: is this a single class, a series
+ * (and how many weeks), or an online run. */
+function formatSummary(course: PublicCourseWithDetails): string {
+  if (course.delivery_mode === 'online') return 'Nettkurs';
+  if (course.format === 'series') {
+    return course.total_weeks ? `Kursrekke · ${course.total_weeks} uker` : 'Kursrekke';
+  }
+  const days = singleDayCount(course);
+  if (days > 1) return `Kurs · ${days} dager`;
+  return course.duration ? `Enkelttime · ${course.duration} min` : 'Enkelttime';
 }
 
 /**
@@ -182,19 +195,15 @@ export function CourseCard({ course, ratio = 'portrait', className, viewingSlug,
 
       </Link>
 
-      {/* Body — title, when, meta. No CTA button. */}
+      {/* Body — kind, title, when, meta. No CTA button. */}
       <div className="flex flex-1 flex-col gap-1.5 p-4">
-        {/* When line — single tier, sentence case, tabular */}
-        {(dateChip || time) && (
-          <div className={cn(
-            'inline-flex items-baseline gap-1.5 text-sm font-medium tabular-nums',
-            isDisabled ? 'text-foreground-muted' : 'text-foreground-muted',
-          )}>
-            {dateChip && <span>{dateChip.label}</span>}
-            {dateChip && time && <span className="text-foreground-disabled">·</span>}
-            {time && <span>{time}</span>}
-          </div>
-        )}
+        {/* Eyebrow — course kind + commitment, single muted tier */}
+        <p className={cn(
+          'text-xs leading-tight',
+          isDisabled ? 'text-foreground-disabled' : 'text-foreground-muted',
+        )}>
+          {formatSummary(course)}
+        </p>
 
         {/* Title */}
         <h3 className={cn(
@@ -210,8 +219,17 @@ export function CourseCard({ course, ratio = 'portrait', className, viewingSlug,
           </Link>
         </h3>
 
-        {/* Meta line — single tier: avatar + name on the left, price on the right.
-            Falls back to studio name when no instructor is set. */}
+        {/* When line — single tier, sentence case, tabular */}
+        {(dateChip || time) && (
+          <div className="inline-flex items-baseline gap-1.5 text-sm font-medium tabular-nums text-foreground-muted">
+            {dateChip && <span>{dateChip.label}</span>}
+            {dateChip && time && <span className="text-foreground-disabled">·</span>}
+            {time && <span>{time}</span>}
+          </div>
+        )}
+
+        {/* Meta line — avatar + instructor on the left, emphasized price on the
+            right. Price gets foreground weight: it's decision info, not meta. */}
         <div className="mt-auto pt-1.5 flex items-center gap-2 text-sm text-foreground-muted tabular-nums">
           {personName && (
             <>
@@ -224,7 +242,12 @@ export function CourseCard({ course, ratio = 'portrait', className, viewingSlug,
               <span className="truncate">{personName}</span>
             </>
           )}
-          <span className="ml-auto shrink-0">{formatCoursePrice(course.price)}</span>
+          <span className={cn(
+            'ml-auto shrink-0 font-medium',
+            isDisabled ? 'text-foreground-muted' : 'text-foreground',
+          )}>
+            {formatCoursePrice(course.price)}
+          </span>
         </div>
       </div>
     </article>
