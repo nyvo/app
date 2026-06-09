@@ -23,11 +23,11 @@ export const MobileTeacherHeader: React.FC = () => {
 
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-30 flex md:hidden items-center border-b border-border bg-surface-elevated px-2 py-2 backdrop-blur-xl safe-area-top">
+      <div className="fixed inset-x-0 top-0 z-30 flex md:hidden items-center border-b border-sidebar-border bg-sidebar px-2 py-2 safe-area-top">
         <Button
           variant="ghost"
           onClick={toggleSidebar}
-          className="gap-2 px-3 text-foreground"
+          className="gap-2 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
         >
           <PanelLeft />
           Meny
