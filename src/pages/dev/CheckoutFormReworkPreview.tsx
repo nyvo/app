@@ -582,6 +582,7 @@ function makeMockCourse(variant: Variant): PublicCourseWithDetails {
       slug: 'mock-studio',
       logo_url: null,
       dintero_onboarding_complete: true,
+    uses_integrated_payments: true,
       default_course_image_url: null,
     },
     instructor_name: null,

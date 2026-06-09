@@ -23,6 +23,10 @@ interface CourseOverviewTabProps {
    *  WAITING_FOR_SIGNATURE | ACTIVE | DECLINED | TERMINATED | null) */
   dinteroOnboardingStatus: string | null;
   dinteroOnboardingComplete: boolean;
+  /** Whether Dintero setup is a publish requirement for this seller (Pro only).
+   *  Free-tier sellers publish without Dintero — the checklist row and the
+   *  waiting-for-approval banner are hidden for them. */
+  dinteroRequired: boolean;
   allowsDropIn: boolean;
   onAllowsDropInChange: (next: boolean) => void;
   dropInPrice: number;
@@ -63,6 +67,7 @@ export function CourseOverviewTab({
   enrolledCount,
   revenue,
   dinteroOnboardingStatus,
+  dinteroRequired,
   dinteroOnboardingComplete,
   allowsDropIn,
   onAllowsDropInChange,
@@ -83,6 +88,7 @@ export function CourseOverviewTab({
   const status = course.status;
 
   const isWaitingForDintero =
+    dinteroRequired &&
     status === 'draft' &&
     !dinteroOnboardingComplete &&
     dinteroOnboardingStatus !== null &&
@@ -141,12 +147,14 @@ export function CourseOverviewTab({
               description: 'Adressen vises på kurssiden og i bekreftelsen.',
               done: !!course.location,
             },
-            {
-              key: 'dintero',
-              title: 'Sett opp utbetaling',
-              description: 'Påkrevd for å ta imot påmeldinger.',
-              done: dinteroOnboardingComplete,
-            },
+            ...(dinteroRequired
+              ? [{
+                  key: 'dintero' as const,
+                  title: 'Sett opp utbetaling',
+                  description: 'Påkrevd for å ta imot påmeldinger.',
+                  done: dinteroOnboardingComplete,
+                }]
+              : []),
           ]}
           onItemClick={onJumpToField}
         />

@@ -51,6 +51,7 @@ import {
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { useAuth } from '@/contexts/AuthContext';
 import { friendlyError } from '@/lib/error-messages';
+import { isProSeller, sellerNeedsDinteroSetup } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 import { cn, formatKroner } from '@/lib/utils';
 import type {
@@ -225,12 +226,13 @@ const CoursePage = () => {
 
   // Publish readiness — mirrors required PublishChecklist items on the
   // Oversikt tab. Description and location are client-side UX gates; Dintero is also
-  // enforced by the DB trigger (enforce_course_publish_requires_dintero).
+  // enforced by the DB trigger (enforce_course_publish_requires_dintero) —
+  // for Pro sellers only. Free-tier sellers publish without Dintero (manual payments).
   const publishReadiness = useMemo(() => {
     const hasImage = !!courseData?.imageUrl;
     const hasDescription = !!courseData?.description;
     const hasLocation = !!courseData?.location;
-    const hasDintero = !!currentSeller?.dintero_onboarding_complete;
+    const hasDintero = !sellerNeedsDinteroSetup(currentSeller);
     return {
       hasImage,
       hasDescription,
@@ -238,7 +240,7 @@ const CoursePage = () => {
       hasDintero,
       ready: hasDescription && hasLocation && hasDintero,
     };
-  }, [courseData?.imageUrl, courseData?.description, courseData?.location, currentSeller?.dintero_onboarding_complete]);
+  }, [courseData?.imageUrl, courseData?.description, courseData?.location, currentSeller]);
 
   const handleSave = async () => {
     if (!courseId || !courseData) return;
@@ -485,7 +487,7 @@ const CoursePage = () => {
   // client check just keeps teachers out of a guaranteed-to-fail request.
   const handlePublish = async () => {
     if (!courseId || !courseData) return;
-    if (!currentSeller?.dintero_onboarding_complete) {
+    if (sellerNeedsDinteroSetup(currentSeller)) {
       setShowPublishDialog(true);
       return;
     }
@@ -723,6 +725,7 @@ const CoursePage = () => {
               revenue={participantKpis.revenue}
               dinteroOnboardingStatus={currentSeller?.dintero_onboarding_status ?? null}
               dinteroOnboardingComplete={currentSeller?.dintero_onboarding_complete ?? false}
+              dinteroRequired={isProSeller(currentSeller)}
               allowsDropIn={settingsAllowsDropIn}
               onAllowsDropInChange={handleToggleDropIn}
               dropInPrice={settingsDropInPrice}

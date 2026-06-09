@@ -68,6 +68,9 @@ const CheckoutSuccessPage = () => {
   const merchantReference = searchParams.get('ref');
   const orgSlugFromUrl = searchParams.get('org');
   const isFreeSignup = searchParams.get('free') === 'true';
+  // Manual signups (paid course, free-tier seller) confirm like free signups:
+  // no Dintero transaction to look up — payment is arranged with the studio.
+  const isManualSignup = searchParams.get('manual') === 'true';
   const hasReceiptLookupIds = Boolean(transactionId && merchantReference);
 
   const [loading, setLoading] = useState(true);
@@ -81,7 +84,7 @@ const CheckoutSuccessPage = () => {
     let cancelled = false;
     async function fetchSignupDetails() {
       if (!hasReceiptLookupIds) {
-        if (!isFreeSignup && (transactionId || merchantReference)) {
+        if (!isFreeSignup && !isManualSignup && (transactionId || merchantReference)) {
           logger.warn('Missing paired Dintero identifiers for receipt lookup', {
             hasTransactionId: Boolean(transactionId),
             hasMerchantReference: Boolean(merchantReference),
@@ -320,6 +323,11 @@ const CheckoutSuccessPage = () => {
                         ? `Vi har sendt en bekreftelse til ${signup.participant_email}.`
                         : 'Vi har sendt en bekreftelse til e-posten din.'}
                     </p>
+                    {isManualSignup && (
+                      <p className="mt-1 text-base text-foreground-muted">
+                        Betaling avtales direkte med studioet.
+                      </p>
+                    )}
                   </div>
 
                   {signup && (

@@ -151,6 +151,7 @@ Deno.serve(async (req: Request) => {
           name,
           dintero_seller_id,
           dintero_onboarding_complete,
+          uses_integrated_payments,
           team:teams!owner_seller_id(slug)
         )
       `)
@@ -166,6 +167,7 @@ Deno.serve(async (req: Request) => {
       name: string
       dintero_seller_id: string | null
       dintero_onboarding_complete: boolean
+      uses_integrated_payments: boolean
       team: { slug: string } | null
     } | null
 
@@ -192,6 +194,13 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!seller.dintero_seller_id || !seller.dintero_onboarding_complete) {
+      return errorResponse('Payment is not set up for this seller', 400, req)
+    }
+
+    // INV-1 (phase 3): integrated checkout requires an active Pro subscription.
+    // uses_integrated_payments is the derived predicate (pro + active/past_due
+    // + onboarded) — a lapsed Pro keeps Dintero state but can't sell through it.
+    if (!seller.uses_integrated_payments) {
       return errorResponse('Payment is not set up for this seller', 400, req)
     }
 
@@ -335,7 +344,7 @@ Deno.serve(async (req: Request) => {
     // disclosure norms).
     //
     //  Line 1 — Course: base price, split 95% teacher / 5% platform.
-    //  Line 2 — Servicegebyr: 5% of base added on top, 100% platform.
+    //  Line 2 — Servicegebyr: 5% of base (min. 9 kr, maks. 149 kr) added on top, 100% platform.
     const platformShareOnCourse = platformFee - serviceFeeInOre
     const teacherShareOnCourse = basePriceInOre - platformShareOnCourse
 

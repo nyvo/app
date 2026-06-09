@@ -17,6 +17,12 @@ interface PublicCourseSeller {
   slug: string
   logo_url: string | null
   dintero_onboarding_complete: boolean
+  /**
+   * Derived predicate (generated column): pro + active sub + Dintero onboarded.
+   * The booking UI branches on this — integrated → Dintero checkout + service
+   * fee; manual → signup only, payment arranged directly with the studio.
+   */
+  uses_integrated_payments: boolean
   default_course_image_url: string | null
 }
 
@@ -25,6 +31,7 @@ interface SellerJoinRow {
   name: string
   logo_url: string | null
   dintero_onboarding_complete: boolean
+  uses_integrated_payments: boolean
 }
 
 interface CourseQueryResult {
@@ -299,7 +306,7 @@ export async function fetchPublicCourses(
       instructor_name,
       accepts_late_signups,
       seller_id,
-      seller:sellers(id, name, logo_url, dintero_onboarding_complete)
+      seller:sellers(id, name, logo_url, dintero_onboarding_complete, uses_integrated_payments)
     `, { count: filters?.limit ? 'exact' : undefined })
     .in('status', ['active', 'upcoming', 'cancelled'])
     .order('start_date', { ascending: true })
@@ -459,6 +466,7 @@ export async function fetchPublicCourses(
           slug: teamMeta?.slug ?? '',
           logo_url: course.seller.logo_url,
           dintero_onboarding_complete: course.seller.dintero_onboarding_complete,
+          uses_integrated_payments: course.seller.uses_integrated_payments,
           default_course_image_url: teamMeta?.default_course_image_url ?? null,
         }
       : null
@@ -538,7 +546,7 @@ export async function fetchPublicCourseBySlug(
       instructor_name,
       accepts_late_signups,
       seller_id,
-      seller:sellers(id, name, logo_url, dintero_onboarding_complete)
+      seller:sellers(id, name, logo_url, dintero_onboarding_complete, uses_integrated_payments)
     `)
     .eq('slug', courseSlug)
     .neq('status', 'cancelled')
@@ -607,6 +615,7 @@ export async function fetchPublicCourseBySlug(
         slug: teamMeta?.slug ?? '',
         logo_url: typedCourse.seller.logo_url,
         dintero_onboarding_complete: typedCourse.seller.dintero_onboarding_complete,
+        uses_integrated_payments: typedCourse.seller.uses_integrated_payments,
         default_course_image_url: teamMeta?.default_course_image_url ?? null,
       }
     : null

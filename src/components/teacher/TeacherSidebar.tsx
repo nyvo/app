@@ -15,6 +15,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { isProSeller } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 import { accountDisplayName } from '@/lib/utils';
 import {
@@ -79,7 +80,15 @@ export const TeacherSidebar = () => {
   const navigate = useNavigate();
   const { signOut, profile, currentSeller } = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
-  const navItems = profile?.role === 'buyer' ? BUYER_NAV_ITEMS : SELLER_NAV_ITEMS;
+  // "Betalingskonto" (Dintero onboarding) is a Pro surface — hidden for
+  // free-tier sellers, who never touch Dintero. Becomes the upgrade entry
+  // point when plans ship in the UI.
+  const navItems =
+    profile?.role === 'buyer'
+      ? BUYER_NAV_ITEMS
+      : isProSeller(currentSeller)
+        ? SELLER_NAV_ITEMS
+        : SELLER_NAV_ITEMS.filter((item) => item.href !== routes.settingsPayouts);
   const displayName = accountDisplayName({
     profileName: profile?.name,
     sellerName: currentSeller?.name,

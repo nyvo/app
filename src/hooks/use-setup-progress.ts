@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { CreditCard, BookOpen, MapPin, Image } from '@/lib/icons'
 import type { LucideIcon } from '@/lib/icons'
 import type { Seller } from '@/types/database'
+import { isProSeller } from '@/lib/payments'
 import { routes } from '@/lib/routes'
 
 export interface SetupStep {
@@ -39,9 +40,14 @@ interface UseSetupProgressResult {
   motivationalSubtitle: string
 }
 
-function getMotivationalSubtitle(completedCount: number, totalCount: number): string {
+function getMotivationalSubtitle(completedCount: number, totalCount: number, isPro: boolean): string {
   const remaining = totalCount - completedCount
-  if (remaining === 0) return 'Du er klar til å ta imot påmeldinger og betaling'
+  if (remaining === 0) {
+    // Free-tier sellers take signups only — payment happens off-platform.
+    return isPro
+      ? 'Du er klar til å ta imot påmeldinger og betaling'
+      : 'Du er klar til å ta imot påmeldinger'
+  }
   if (remaining === 1) return 'Nesten i mål – ett steg igjen'
   return `${remaining} steg igjen før du kan ta imot påmeldinger`
 }
@@ -56,20 +62,25 @@ export function useSetupProgress({
   return useMemo(() => {
     const seller = currentSeller
 
-    // Required steps — the two actions that actually gate taking a paid
-    // booking: connect payouts (the KYC long pole) and publish a course.
+    // Required steps. Pro sellers must connect payouts (the KYC long pole)
+    // before anything else; free-tier sellers handle payment off-platform,
+    // so their only required step is publishing a course — the checklist
+    // must never dead-end on a Dintero step they can't (and shouldn't) do.
     // A course can be published with a free-typed location, so a saved
     // studio address is polish, not a publish blocker → it lives below.
+    const isPro = isProSeller(seller)
     const steps: SetupStep[] = [
-      {
-        id: 'payments',
-        title: 'Aktiver betalinger',
-        description: 'Koble til en betalingsløsning så du kan motta betaling fra elever.',
-        isComplete: !!seller?.dintero_onboarding_complete,
-        actionLabel: 'Aktiver',
-        actionOnClick: onConnectPayments,
-        icon: CreditCard,
-      },
+      ...(isPro
+        ? [{
+            id: 'payments' as const,
+            title: 'Aktiver betalinger',
+            description: 'Koble til en betalingsløsning så du kan motta betaling fra elever.',
+            isComplete: !!seller?.dintero_onboarding_complete,
+            actionLabel: 'Aktiver',
+            actionOnClick: onConnectPayments,
+            icon: CreditCard,
+          }]
+        : []),
       {
         id: 'course',
         title: 'Publiser ditt første kurs',
@@ -111,7 +122,7 @@ export function useSetupProgress({
     const completedCount = steps.filter((s) => s.isComplete).length
     const totalCount = steps.length
     const nextStep = steps.find((s) => !s.isComplete) || null
-    const motivationalSubtitle = getMotivationalSubtitle(completedCount, totalCount)
+    const motivationalSubtitle = getMotivationalSubtitle(completedCount, totalCount, isPro)
 
     return {
       steps,

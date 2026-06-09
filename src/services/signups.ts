@@ -273,6 +273,36 @@ export async function createFreeSignup(input: {
   }
 }
 
+// Create a signup for a PAID course on a manual-payment (free-tier) seller.
+// Routes through an edge function that verifies the seller does NOT use
+// integrated payments and calls the atomic capacity RPC with
+// payment_status='external' — the student settles directly with the studio.
+export async function createManualSignup(input: {
+  courseId: string
+  ticketTypeId?: string
+  courseSessionId?: string
+  participantName: string
+  participantEmail: string
+  participantPhone?: string
+  participantNote?: string
+}): Promise<{ data: { signupId: string } | null; error: Error | null }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('create-manual-signup', {
+      body: input,
+    })
+
+    if (error) {
+      return { data: null, error: new Error(error.message || 'Kunne ikke fullføre påmelding') }
+    }
+    if (data?.error) {
+      return { data: null, error: new Error(data.error) }
+    }
+    return { data: data as { signupId: string }, error: null }
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
+  }
+}
+
 // Mark a signup's payment as resolved (received outside Dintero — cash,
 // bank transfer, Vipps direct). Routed through an edge function so the
 // org-membership check + current-state guard run server-side instead of

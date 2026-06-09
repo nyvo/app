@@ -27,6 +27,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCourseDetail } from '@/hooks/use-course-detail';
 import { publishCourse, unpublishCourse } from '@/services/courses';
 import { friendlyError } from '@/lib/error-messages';
+import { sellerNeedsDinteroSetup } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 import type { CourseSession } from '@/types/database';
 
@@ -160,7 +161,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
 
   const handlePublish = async () => {
     if (!courseId) return;
-    if (!currentSeller?.dintero_onboarding_complete) {
+    if (sellerNeedsDinteroSetup(currentSeller)) {
       setShowPublishDialog(true);
       return;
     }
@@ -290,8 +291,9 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
 
       {/* Body — scrollable */}
       <div className="flex-1 overflow-y-auto">
-        {/* Payment alert — page-scoped inline */}
-        {!currentSeller?.dintero_onboarding_complete && (
+        {/* Payment alert — page-scoped inline. Pro sellers only: free-tier
+            sellers publish without Dintero (manual payments). */}
+        {sellerNeedsDinteroSetup(currentSeller) && (
           <div className="px-6 pt-6">
             <Alert variant="warning">
               <div>
