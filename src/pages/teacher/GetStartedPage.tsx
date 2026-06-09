@@ -32,7 +32,7 @@ export default function GetStartedPage() {
   if (isLoading) {
     return (
       <div className="flex-1 overflow-y-auto bg-background h-full">
-        <MobileTeacherHeader title="Kom i gang" />
+        <MobileTeacherHeader />
         <PageShell narrow="centered" title="Kom i gang">
           <div className="space-y-3" aria-hidden="true">
             <Skeleton className="h-40 w-full rounded-xl" />
@@ -52,7 +52,7 @@ export default function GetStartedPage() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-background h-full">
-      <MobileTeacherHeader title="Kom i gang" />
+      <MobileTeacherHeader />
       <PageShell
         narrow="centered"
         title="Kom i gang"

@@ -132,7 +132,7 @@ export default function HelpPage() {
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
-      <MobileTeacherHeader title="Hjelp" />
+      <MobileTeacherHeader />
 
       <PageShell
         narrow="centered"

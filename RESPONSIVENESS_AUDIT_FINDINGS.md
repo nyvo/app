@@ -96,10 +96,22 @@ live code + runtime — all are non-issues:
 - Interactive: Påmeldte table, `ParticipantDetailDrawer`, `CreateCourseDrawer`,
   `SessionsModal`, notifications popover, course tabs.
 
-**Not exhaustively covered (low risk, recommend a quick pass if time):**
-`CheckoutSuccessPage` (requires a completed payment), `JoinPage` (needs an invite
-code), `OnboardingPage`, `NotFoundPage`, landscape-phone on the checkout sticky
-rail, and the `time-picker` popover internals.
+**Gap-pass (2026-06-09) — now driven live, all clean, no new findings:**
+- `CheckoutSuccessPage` (`/checkout/success`) — renders the "Du er påmeldt"
+  confirmation even without payment params; no overflow at 320.
+- Not-found / `NotFoundPage` — clean at 320.
+- **Landscape checkout** (740×360) — single-column form, normal document scroll,
+  no sticky bar trapping content; no overflow.
+- **Time selector** in `CreateCourseDrawer` — a single-column scrollable time
+  dropdown (06:00/06:15…), fits and is legible at 320. (The `time-picker.tsx`
+  `grid-cols-4` component is not used in this flow; at `w-[280px]` it fits within
+  320 by construction regardless.)
+
+**Still un-auditable in current data state (low risk):**
+- `OnboardingPage` (`/onboarding`) — redirects to `/overview` because the audit
+  account is already onboarded.
+- `JoinPage` (`/join/:code`) — no active rows in `team_invite_links`; would need
+  a seeded invite code (not created, to avoid mutating data).
 
 **`md` seam verification (innerW exact):**
 - `innerW 767` → `railVisible:false, hamburgerVisible:true` (mobile) ✅

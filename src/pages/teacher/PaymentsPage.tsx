@@ -158,7 +158,7 @@ const PaymentsPage = () => {
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
-      <MobileTeacherHeader title="Betalingskonto" />
+      <MobileTeacherHeader />
 
       <PageShell narrow="centered" title="Betalingskonto">
         <div className="space-y-8">

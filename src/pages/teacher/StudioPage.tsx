@@ -31,7 +31,7 @@ const StudioPage = () => {
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
-      <MobileTeacherHeader title="Studio" />
+      <MobileTeacherHeader />
 
       <PageShell
         narrow="centered"

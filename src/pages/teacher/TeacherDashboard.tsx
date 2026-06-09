@@ -214,7 +214,7 @@ const TeacherDashboard = () => {
 
   return (
     <div className="flex-1 overflow-y-auto bg-background h-full">
-      <MobileTeacherHeader title="Oversikt" />
+      <MobileTeacherHeader />
 
       <PageShell
         title="Oversikt"

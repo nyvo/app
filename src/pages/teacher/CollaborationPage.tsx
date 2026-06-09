@@ -17,7 +17,7 @@ export default function CollaborationPage() {
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
-      <MobileTeacherHeader title="Samarbeid" />
+      <MobileTeacherHeader />
 
       <PageShell narrow="centered" title="Samarbeid" description={description}>
         <AffiliationsSection />

@@ -163,7 +163,7 @@ const TeacherProfilePage = () => {
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
-        <MobileTeacherHeader title="Innstillinger" />
+        <MobileTeacherHeader />
 
         <PageShell narrow="centered" title="Innstillinger">
           <div className="space-y-10">

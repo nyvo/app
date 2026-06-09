@@ -279,7 +279,7 @@ const CoursesPage = () => {
   return (
       <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
 
-        <MobileTeacherHeader title="Mine kurs" />
+        <MobileTeacherHeader />
 
         <PageShell
           title="Mine kurs"
