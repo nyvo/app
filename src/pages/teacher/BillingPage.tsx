@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Check, CreditCard, ExternalLink } from '@/lib/icons'
+import { Check, ExternalLink } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,17 +9,26 @@ import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { PageShell } from '@/components/teacher/PageShell'
 import { SettingsSection } from '@/components/teacher/SettingsSection'
 import { useAuth } from '@/contexts/AuthContext'
+import { formatKroner } from '@/lib/utils'
 import { createStripeCheckoutSession, createStripePortalSession } from '@/services/billing'
 import { toast } from 'sonner'
 
-function planLabel(plan: string | null | undefined): string {
+type SubscriptionPlan = string | null | undefined
+type SubscriptionStatus = string | null | undefined
+
+function planLabel(plan: SubscriptionPlan): string {
   return plan === 'pro' ? 'Pro' : 'Start'
 }
 
-function statusLabel(status: string | null | undefined): string {
-  if (status === 'active') return 'Aktiv'
+function statusLine(
+  plan: SubscriptionPlan,
+  status: SubscriptionStatus,
+  renewsAt: string | null,
+): string {
+  if (plan !== 'pro') return 'Gratis'
   if (status === 'past_due') return 'Betaling krever oppfølging'
   if (status === 'canceled') return 'Avsluttet'
+  if (status === 'active') return renewsAt ? `Aktiv · Fornyes ${renewsAt}` : 'Aktiv'
   return 'Ingen aktiv betaling'
 }
 
@@ -33,11 +42,12 @@ function formatBillingDate(value: string): string {
 
 const START_FEATURES = [
   'Påmeldinger og kurslenker',
-  'Betaling avtales direkte med instruktør',
+  'Betaling avtales direkte med deltakerne',
   'Ingen Dintero-oppsett',
 ] as const
 
 const PRO_FEATURES = [
+  'Alt i Start',
   'Kortbetaling og Vipps i checkout',
   'Automatiske utbetalinger via Dintero',
   'Servicegebyr håndteres av plattformen',
@@ -100,139 +110,170 @@ const BillingPage = () => {
       <MobileTeacherHeader />
 
       <PageShell narrow="centered" title="Abonnement">
-        <div className="space-y-10">
-          <SettingsSection title="Plan">
-            <Card>
-              <CardContent className="space-y-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-base font-medium text-foreground">
-                      {planLabel(currentSeller?.subscription_plan)}
-                    </p>
-                    <p className="mt-1 text-sm text-foreground-muted">
-                      {statusLabel(currentSeller?.subscription_status)}
-                      {renewsAt ? ` · Fornyes ${renewsAt}` : ''}
-                    </p>
-                  </div>
-                  <div className="flex size-10 items-center justify-center rounded-md bg-muted text-foreground-muted">
-                    <CreditCard className="size-5" aria-hidden />
-                  </div>
-                </div>
-
-                {isPro ? (
-                  <Button
-                    type="button"
-                    onClick={handleManage}
-                    loading={portalLoading}
-                    loadingText="Åpner"
-                  >
-                    <ExternalLink className="size-4" aria-hidden />
-                    Administrer abonnement
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    onClick={handleUpgrade}
-                    loading={checkoutLoading}
-                    loadingText="Åpner"
-                  >
-                    Oppgrader til Pro
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          </SettingsSection>
-
-          <SettingsSection title="Velg plan">
-            <div className="grid gap-4 md:grid-cols-2">
-              <PlanOption
-                name="Start"
-                price="0 kr/mnd"
-                description="For instruktører som vil ta påmeldinger og håndtere betaling selv."
-                features={START_FEATURES}
-                active={!isPro}
-              />
-              <PlanOption
-                name="Pro"
-                price="Fra 499 kr/mnd eks. mva"
-                description="For instruktører og studioer som vil ta betalt automatisk."
-                features={PRO_FEATURES}
-                active={isPro}
-                action={
-                  isPro ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={handleManage}
-                      loading={portalLoading}
-                      loadingText="Åpner"
-                    >
-                      <ExternalLink className="size-4" aria-hidden />
-                      Administrer
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      onClick={handleUpgrade}
-                      loading={checkoutLoading}
-                      loadingText="Åpner"
-                    >
-                      Oppgrader
-                    </Button>
-                  )
-                }
-              />
-            </div>
-          </SettingsSection>
-
-          {isPro && !hasStripeCustomer && (
-            <p className="text-sm text-foreground-muted">
-              Abonnementet er aktivt, men mangler Stripe-kunde. Kontakt support for fakturering.
-            </p>
-          )}
-        </div>
+        <BillingPlanSections
+          plan={currentSeller?.subscription_plan}
+          status={currentSeller?.subscription_status}
+          renewsAt={renewsAt}
+          missingStripeCustomer={isPro && !hasStripeCustomer}
+          onUpgrade={handleUpgrade}
+          onManage={handleManage}
+          checkoutLoading={checkoutLoading}
+          portalLoading={portalLoading}
+        />
       </PageShell>
     </main>
+  )
+}
+
+/**
+ * Presentational plan UI — current-plan summary + Start/Pro comparison.
+ * Exported so /dev/billing-preview can render the states without auth.
+ */
+export function BillingPlanSections({
+  plan,
+  status,
+  renewsAt,
+  missingStripeCustomer,
+  onUpgrade,
+  onManage,
+  checkoutLoading,
+  portalLoading,
+}: {
+  plan: SubscriptionPlan
+  status: SubscriptionStatus
+  renewsAt: string | null
+  missingStripeCustomer?: boolean
+  onUpgrade: () => void
+  onManage: () => void
+  checkoutLoading: boolean
+  portalLoading: boolean
+}) {
+  const isPro = plan === 'pro'
+  const needsAttention = isPro && status === 'past_due'
+
+  return (
+    <div className="space-y-10">
+      <SettingsSection title="Plan">
+        <Card>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-base font-medium text-foreground">{planLabel(plan)}</p>
+                <p
+                  className={
+                    needsAttention
+                      ? 'mt-1 text-sm font-medium text-warning'
+                      : 'mt-1 text-sm text-foreground-muted'
+                  }
+                >
+                  {statusLine(plan, status, renewsAt)}
+                </p>
+              </div>
+              {isPro && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="shrink-0"
+                  onClick={onManage}
+                  loading={portalLoading}
+                  loadingText="Åpner"
+                >
+                  Administrer abonnement
+                  <ExternalLink className="size-4" aria-hidden />
+                </Button>
+              )}
+            </div>
+
+            {missingStripeCustomer && (
+              <p className="border-t border-border-subtle pt-4 text-sm text-foreground-muted">
+                Abonnementet er aktivt, men mangler Stripe-kunde. Kontakt support for fakturering.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </SettingsSection>
+
+      <SettingsSection title="Velg plan">
+        <div className="grid gap-4 md:grid-cols-2">
+          <PlanOption
+            name="Start"
+            price="Gratis"
+            description="For instruktører som vil ta påmeldinger og håndtere betaling selv."
+            features={START_FEATURES}
+            active={!isPro}
+          />
+          <PlanOption
+            name="Pro"
+            price={`Fra ${formatKroner(499)}`}
+            priceSub="/mnd eks. mva"
+            description="For instruktører og studioer som vil ta betalt automatisk."
+            features={PRO_FEATURES}
+            active={isPro}
+            emphasized
+            action={
+              !isPro && (
+                <Button
+                  type="button"
+                  className="w-full"
+                  onClick={onUpgrade}
+                  loading={checkoutLoading}
+                  loadingText="Åpner"
+                >
+                  Oppgrader til Pro
+                </Button>
+              )
+            }
+          />
+        </div>
+      </SettingsSection>
+    </div>
   )
 }
 
 function PlanOption({
   name,
   price,
+  priceSub,
   description,
   features,
   active,
+  emphasized,
   action,
 }: {
   name: string
   price: string
+  priceSub?: string
   description: string
   features: readonly string[]
   active: boolean
+  emphasized?: boolean
   action?: ReactNode
 }) {
   return (
-    <Card className={active ? 'border-foreground/25' : undefined}>
+    <Card className={emphasized ? 'border-surface-tinted-border bg-surface-tinted' : undefined}>
       <CardContent className="flex h-full flex-col gap-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-medium text-foreground">{name}</h2>
-              {active && (
-                <Badge variant="neutral" size="sm">
-                  Nåværende
-                </Badge>
-              )}
-            </div>
-            <p className="mt-2 text-2xl font-medium tracking-tight text-foreground">{price}</p>
-            <p className="mt-2 text-sm text-foreground-muted">{description}</p>
+        <div>
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-base font-medium text-foreground">{name}</h3>
+            {active && (
+              <Badge variant="outline" size="sm">
+                Nåværende plan
+              </Badge>
+            )}
           </div>
+          <div className="mt-3 flex items-baseline gap-1.5">
+            <span className="text-2xl font-medium tabular-nums tracking-tight text-foreground">
+              {price}
+            </span>
+            {priceSub && <span className="text-sm text-foreground-muted">{priceSub}</span>}
+          </div>
+          <p className="mt-2 text-sm text-foreground-muted">{description}</p>
         </div>
 
-        <ul className="space-y-2 text-sm text-foreground">
+        <ul className="space-y-2.5 text-sm text-foreground">
           {features.map((feature) => (
-            <li key={feature} className="flex gap-2">
-              <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+            <li key={feature} className="flex gap-2.5">
+              <Check className="mt-0.5 size-4 shrink-0 text-foreground" aria-hidden />
               <span>{feature}</span>
             </li>
           ))}
