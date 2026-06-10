@@ -8,3 +8,27 @@
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
+
+## Database Migrations (read before any schema/DB work)
+
+This repo runs in **multiple Conductor workspaces across machines**, all pointing at **one shared remote Supabase**. The recurring failure mode: a migration gets applied to the remote DB but its `.sql` file never lands on `origin/main`, so `main` drifts behind the database and every new workspace inherits the gap (`supabase db push` then fails with *"Remote migration versions not found in local migrations directory"*).
+
+**A migration is DONE only when its file is committed and on `origin/main` — not when `db push` (or `apply_migration`) succeeds.** Applying to the DB is half the job; the file is the other half.
+
+When you create or apply a migration, you MUST:
+
+1. **Write the file** under `supabase/migrations/<UTC-timestamp>_<snake_name>.sql`. Pick a timestamp **strictly greater** than the latest existing one — check first:
+   ```bash
+   ls supabase/migrations | sort | tail -3
+   ```
+   Reusing/duplicating a timestamp collides with another workspace's migration. Match the existing style: SECURITY DEFINER + `REVOKE ALL … FROM PUBLIC` + explicit `GRANT EXECUTE … TO anon, authenticated` for public RPCs (see `20260519161052_public_storefront_seller_ids`).
+2. **Commit the file** in the same change as the code that depends on it. Never leave a migration applied-but-uncommitted.
+3. **Get it onto `main`.** Before this workspace is merged or discarded, the migration file must reach `origin/main` (via the branch's PR/merge). If you `db push` from a workspace, treat the work as unfinished until the file is on `main`.
+4. **State it explicitly** in your final message when a change includes a migration: that it still needs to be applied to remote and/or land on `main`, so it isn't forgotten.
+
+If `db push` fails because remote has versions not present locally:
+- It means `main` is **behind** the remote DB — recover the missing migration files into `supabase/migrations/` and commit them to `main` so files match the database.
+- **Do NOT** run `supabase migration repair --status reverted …` (the CLI's suggestion) — it rewrites the remote history table and causes drift. Reconcile by getting the files into the repo instead.
+- The files for already-applied migrations are recoverable from Conductor checkpoint refs (`git for-each-ref refs/conductor-checkpoints`). Already-applied migrations are **skipped** by `db push` (it keys on the version timestamp), so committing them to `main` is safe and won't re-run them.
+
+To audit drift at any time: `supabase migration list` — anything shown as *remote only* is a file missing from the repo; fix it before doing more DB work.
