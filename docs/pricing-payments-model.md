@@ -246,6 +246,8 @@ Ordered so each phase ships independently and de-risks the next.
 > Added 2026-06-10: persistent Start/Pro badge in the teacher sidebar, Start-specific
 > dashboard payment panel, and direct `/settings/payouts` guard for free sellers.
 > Public landing pricing copy now matches Start/manual vs Pro/Dintero.
+> Follow-up: `get_seller_operational` now hydrates `uses_integrated_payments`
+> from the DB-generated predicate for member-only app surfaces.
 > Remaining: richer contextual upgrade prompts.
 - Tier selection + upgrade prompts (trigger on the manual-payment pain: "Get paid automatically — upgrade to Pro").
 - Pricing page; in-app plan badge; settings → billing (Stripe customer-portal link).

@@ -1281,6 +1281,7 @@ export type Database = {
           subscription_plan: string
           subscription_status: string
           updated_at: string
+          uses_integrated_payments: boolean
         }[]
       }
       get_seller_private: {

@@ -140,10 +140,9 @@ export async function updateSeller(
       subscription_status: operational?.subscription_status ?? 'none',
       subscription_current_period_end: operational?.subscription_current_period_end ?? null,
       subscription_provider: null,
-      subscription_customer_id: null,
+      subscription_customer_id: operational?.subscription_customer_id ?? null,
       subscription_external_id: null,
-      uses_integrated_payments:
-        operational?.subscription_plan === 'pro' && !!row.dintero_onboarding_complete,
+      uses_integrated_payments: operational?.uses_integrated_payments ?? false,
       updated_at: operational?.updated_at ?? row.created_at,
     },
     error: null,
@@ -165,6 +164,7 @@ export interface SellerOperational {
   subscription_status: SubscriptionStatus
   subscription_current_period_end: string | null
   subscription_customer_id: string | null
+  uses_integrated_payments: boolean
   // subscription_provider / subscription_external_id are deliberately not
   // returned by the RPC — the portal only needs the customer id.
   updated_at: string | null
