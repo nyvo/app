@@ -1,4 +1,5 @@
 import { supabase, typedFrom } from '@/lib/supabase'
+import { extractEdgeError } from '@/lib/edge-errors'
 import type { Signup, SignupInsert, Profile, Course } from '@/types/database'
 
 // Signup with joined course, profile, and (for drop-ins) session data.
@@ -262,7 +263,8 @@ export async function createFreeSignup(input: {
     })
 
     if (error) {
-      return { data: null, error: new Error(error.message || 'Kunne ikke fullføre påmelding') }
+      const { message } = await extractEdgeError(error)
+      return { data: null, error: new Error(message || 'Kunne ikke fullføre påmelding') }
     }
     if (data?.error) {
       return { data: null, error: new Error(data.error) }
@@ -292,7 +294,8 @@ export async function createManualSignup(input: {
     })
 
     if (error) {
-      return { data: null, error: new Error(error.message || 'Kunne ikke fullføre påmelding') }
+      const { message } = await extractEdgeError(error)
+      return { data: null, error: new Error(message || 'Kunne ikke fullføre påmelding') }
     }
     if (data?.error) {
       return { data: null, error: new Error(data.error) }
