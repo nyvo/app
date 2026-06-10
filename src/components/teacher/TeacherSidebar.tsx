@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { isProSeller } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 import { accountDisplayName } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import {
   Sidebar,
   SidebarContent,
@@ -81,13 +82,15 @@ export const TeacherSidebar = () => {
   const navigate = useNavigate();
   const { signOut, profile, currentSeller } = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
+  const isSeller = profile?.role === 'seller';
+  const isPro = isProSeller(currentSeller);
   // "Betalingskonto" (Dintero onboarding) is a Pro surface — hidden for
   // free-tier sellers, who never touch Dintero. Becomes the upgrade entry
   // point when plans ship in the UI.
   const navItems =
     profile?.role === 'buyer'
       ? BUYER_NAV_ITEMS
-      : isProSeller(currentSeller)
+      : isPro
         ? SELLER_NAV_ITEMS
         : SELLER_NAV_ITEMS.filter((item) => item.href !== routes.settingsPayouts);
   const displayName = accountDisplayName({
@@ -116,6 +119,17 @@ export const TeacherSidebar = () => {
         >
           Openspot
         </Link>
+        {isSeller && (
+          <Link
+            to={routes.settingsBilling}
+            className="mx-3 mb-2 flex items-center justify-between rounded-md border border-sidebar-border px-3 py-2 text-sm outline-none transition-colors duration-150 hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-white/20"
+          >
+            <span className="font-medium text-sidebar-foreground-muted">Plan</span>
+            <Badge variant={isPro ? 'success' : 'neutral'} shape="pill" size="sm">
+              {isPro ? 'Pro' : 'Start'}
+            </Badge>
+          </Link>
+        )}
       </SidebarHeader>
 
       <SidebarContent>

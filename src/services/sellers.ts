@@ -164,8 +164,9 @@ export interface SellerOperational {
   subscription_plan: SubscriptionPlan
   subscription_status: SubscriptionStatus
   subscription_current_period_end: string | null
+  subscription_customer_id: string | null
   // subscription_provider / subscription_external_id are deliberately not
-  // returned by the RPC — billing linkage is server-side only.
+  // returned by the RPC — the portal only needs the customer id.
   updated_at: string | null
 }
 

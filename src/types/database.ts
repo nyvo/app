@@ -1276,6 +1276,7 @@ export type Database = {
           dintero_onboarding_status: string
           dintero_seller_id: string
           seller_type: string
+          subscription_customer_id: string | null
           subscription_current_period_end: string | null
           subscription_plan: string
           subscription_status: string

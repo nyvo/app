@@ -161,6 +161,7 @@ async function hydrateSellerOperational(seller: Seller): Promise<Seller> {
     subscription_plan: data.subscription_plan,
     subscription_status: data.subscription_status,
     subscription_current_period_end: data.subscription_current_period_end,
+    subscription_customer_id: data.subscription_customer_id ?? seller.subscription_customer_id,
     updated_at: data.updated_at,
   }
 }
