@@ -20,12 +20,7 @@ function planLabel(plan: SubscriptionPlan): string {
   return plan === 'pro' ? 'Pro' : 'Start'
 }
 
-function statusLine(
-  plan: SubscriptionPlan,
-  status: SubscriptionStatus,
-  renewsAt: string | null,
-): string {
-  if (plan !== 'pro') return 'Gratis'
+function proStatusLine(status: SubscriptionStatus, renewsAt: string | null): string {
   if (status === 'past_due') return 'Betaling krever oppfølging'
   if (status === 'canceled') return 'Avsluttet'
   if (status === 'active') return renewsAt ? `Aktiv · Fornyes ${renewsAt}` : 'Aktiv'
@@ -158,7 +153,14 @@ export function BillingPlanSections({
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-base font-medium text-foreground">{planLabel(plan)}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-base font-medium text-foreground">{planLabel(plan)}</p>
+                  {!isPro && (
+                    <Badge variant="neutral" size="sm">
+                      Gratis
+                    </Badge>
+                  )}
+                </div>
                 <p
                   className={
                     needsAttention
@@ -166,7 +168,9 @@ export function BillingPlanSections({
                       : 'mt-1 text-sm text-foreground-muted'
                   }
                 >
-                  {statusLine(plan, status, renewsAt)}
+                  {isPro
+                    ? proStatusLine(status, renewsAt)
+                    : 'Kontoen tar imot påmeldinger. Betaling avtaler du direkte med deltakerne.'}
                 </p>
               </div>
               {isPro && (
@@ -183,6 +187,24 @@ export function BillingPlanSections({
                 </Button>
               )}
             </div>
+
+            {!isPro && (
+              <div className="flex flex-col gap-3 border-t border-border-subtle pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-foreground-muted">
+                  Få betalt automatisk med kort og Vipps i checkout.
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="shrink-0"
+                  onClick={onUpgrade}
+                  loading={checkoutLoading}
+                  loadingText="Åpner"
+                >
+                  Oppgrader til Pro
+                </Button>
+              </div>
+            )}
 
             {missingStripeCustomer && (
               <p className="border-t border-border-subtle pt-4 text-sm text-foreground-muted">
