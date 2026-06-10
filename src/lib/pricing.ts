@@ -10,13 +10,17 @@
 
 const SERVICE_FEE_RATE = 0.05 // 5%
 
+// Bounds for the service fee (NOK) — must match the backend.
+const SERVICE_FEE_MIN_NOK = 9
+const SERVICE_FEE_MAX_NOK = 149
+
 /**
  * Calculate the service fee for a given course price.
- * Returns 0 for free courses.
+ * Clamped to [min, max]; returns 0 for free courses.
  */
 export function calculateServiceFee(price: number | null): number {
   if (!price || price <= 0) return 0
-  return Math.round(price * SERVICE_FEE_RATE)
+  return Math.min(SERVICE_FEE_MAX_NOK, Math.max(SERVICE_FEE_MIN_NOK, Math.round(price * SERVICE_FEE_RATE)))
 }
 
 /**

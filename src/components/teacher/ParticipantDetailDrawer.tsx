@@ -100,6 +100,8 @@ function paymentBadge(status: PaymentStatus): { label: string; variant: BadgeVar
   if (status === 'paid') return { label: 'Betalt', variant: 'success' };
   if (status === 'pending') return { label: 'Venter', variant: 'warning' };
   if (status === 'failed') return { label: 'Mislykket', variant: 'destructive' };
+  // Manual-payment signup — settled directly with the studio, outside the platform.
+  if (status === 'external') return { label: 'Betales direkte', variant: 'warning' };
   return { label: 'Refundert', variant: 'neutral' };
 }
 
@@ -237,7 +239,8 @@ export function ParticipantDetailDrawer({
   const isPaid =
     paymentStatus === 'paid' && signup.amount_paid != null && signup.amount_paid > 0;
   const canRefund = isPaid && !!signup.dintero_transaction_id;
-  const canMarkResolved = paymentStatus === 'pending' || paymentStatus === 'failed';
+  const canMarkResolved =
+    paymentStatus === 'pending' || paymentStatus === 'failed' || paymentStatus === 'external';
   // The action menu now holds only high-impact actions (copy moved inline onto the
   // contact rows). A cancelled signup with nothing to refund has none — disable.
   const hasActions = !isCancelled || canRefund;

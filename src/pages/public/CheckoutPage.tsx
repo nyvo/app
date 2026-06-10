@@ -17,7 +17,7 @@ import { calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
 import { fetchPublicCourseBySlug, resolveCourseImage, singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { createDinteroSession } from '@/services/checkout';
-import { createFreeSignup, checkCourseAvailability } from '@/services/signups';
+import { createFreeSignup, createManualSignup, checkCourseAvailability } from '@/services/signups';
 import { supabase } from '@/lib/supabase';
 import type { AvailableTicketType } from '@/types/database';
 
@@ -138,11 +138,15 @@ const CheckoutPage = () => {
   }, [slug, courseSlug, searchParams, navigate]);
 
   const isFree = !course?.price || course.price <= 0;
+  // Paid course on a seller without integrated payments → manual branch:
+  // record the signup, no Dintero iframe, payment arranged with the studio.
+  const isManual = !isFree && !(course?.seller?.uses_integrated_payments ?? false);
   const isCancelled = course?.status === 'cancelled';
   const isFull =
     course?.max_participants != null && course.spots_available <= 0;
+  // Free and manual signups need no payment rails; integrated needs Dintero.
   const paymentReady =
-    isFree || (course?.seller?.dintero_onboarding_complete ?? false);
+    isFree || isManual || (course?.seller?.dintero_onboarding_complete ?? false);
 
   const selectedTier = tiers.find((t) => t.id === selectedTierId) ?? null;
   const isDropInSelected = selectedTier?.ticket_kind === 'drop_in';
@@ -177,8 +181,9 @@ const CheckoutPage = () => {
   }, [isDropInSelected, course?.id]);
 
   // ── Pricing ─────────────────────────────────────────────────────────────
+  // No service fee on manual courses — the platform isn't in the money flow.
   const tierPrice = selectedTier?.price ?? course?.price ?? 0;
-  const fee = calculateServiceFee(tierPrice);
+  const fee = isManual ? 0 : calculateServiceFee(tierPrice);
   const total = tierPrice + fee;
 
   // ── Form validity ───────────────────────────────────────────────────────
@@ -214,7 +219,7 @@ const CheckoutPage = () => {
   const [sessionError, setSessionError] = useState<string | null>(null);
 
   async function handleAdvanceToPayment() {
-    if (isFree || !course || !slug || !selectedTier || submitting) return;
+    if (isFree || isManual || !course || !slug || !selectedTier || submitting) return;
     setSubmitting(true);
     setSessionError(null);
     setEmailMessage(null);
@@ -278,6 +283,28 @@ const CheckoutPage = () => {
     window.location.href = `/checkout/success?free=true&org=${slug}`;
   }
 
+  // ── Manual signup submit (paid course, payment arranged with the studio) ──
+  async function handleManualSubmit() {
+    if (!course || !slug || !selectedTier || submitting) return;
+    setSubmitting(true);
+    setEmailMessage(null);
+    const { error: signupErr } = await createManualSignup({
+      courseId: course.id,
+      ticketTypeId: selectedTier.id,
+      courseSessionId: isDropInSelected ? dropInSessionId ?? undefined : undefined,
+      participantName: formatPersonName(form.name),
+      participantEmail: form.email.trim(),
+      participantPhone: form.phone.trim() || undefined,
+      participantNote: form.note.trim() || undefined,
+    });
+    if (signupErr) {
+      toast.error(friendlyError(signupErr, 'Kunne ikke fullføre påmelding. Prøv igjen.'));
+      setSubmitting(false);
+      return;
+    }
+    window.location.href = `/checkout/success?manual=true&org=${slug}`;
+  }
+
   // ── States ──────────────────────────────────────────────────────────────
   if (loading) {
     return <CheckoutSkeleton />;
@@ -333,7 +360,7 @@ const CheckoutPage = () => {
           <div className="space-y-6 max-w-[552px] min-w-0">
             {step === 'contact' || isFree ? (
               <>
-                <CheckoutStepHeader step={1} />
+                <CheckoutStepHeader step={1} showSteps={!isFree && !isManual} />
 
                 <div className="px-2 sm:px-6">
                   <div className="space-y-4">
@@ -412,14 +439,21 @@ const CheckoutPage = () => {
                 </div>
 
                 <div className="px-2 sm:px-6 space-y-2">
-                  {isFree ? (
-                    <Button
-                      className="w-full"
-                      disabled={!formValid || submitting || !paymentReady || isFull || isCancelled}
-                      onClick={handleFreeSubmit}
-                    >
-                      Bekreft påmelding
-                    </Button>
+                  {isFree || isManual ? (
+                    <>
+                      <Button
+                        className="w-full"
+                        disabled={!formValid || submitting || !paymentReady || isFull || isCancelled}
+                        onClick={isFree ? handleFreeSubmit : handleManualSubmit}
+                      >
+                        Bekreft påmelding
+                      </Button>
+                      {isManual && (
+                        <p className="text-sm text-foreground-muted text-center">
+                          Betaling avtales direkte med studioet.
+                        </p>
+                      )}
+                    </>
                   ) : (
                     <>
                       <Button
@@ -466,6 +500,7 @@ const CheckoutPage = () => {
                 fee={fee}
                 total={total}
                 isFree={isFree}
+                isManual={isManual}
               />
             </div>
           </aside>
@@ -482,9 +517,18 @@ const CHECKOUT_STEPS = ['Kontakt', 'Betaling'] as const;
 
 /** Visual progress for the two in-checkout stages: the Kontakt form (1) and
  * the Betaling iframe (2). Ticket choice happened on the course page and isn't
- * counted — a single-class booking shouldn't read as a 3-step funnel. */
-function CheckoutStepHeader({ step }: { step: 1 | 2 }) {
+ * counted — a single-class booking shouldn't read as a 3-step funnel.
+ * Free and manual signups have no Betaling stage at all → `showSteps=false`
+ * renders just the title. */
+function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps?: boolean }) {
   const currentIndex = step - 1;
+  if (!showSteps) {
+    return (
+      <div className="px-2 sm:px-6">
+        <h1 className="text-base font-medium tracking-tight text-foreground">Påmelding</h1>
+      </div>
+    );
+  }
   return (
     <div className="px-2 sm:px-6">
       <h1 className="text-base font-medium tracking-tight text-foreground">Påmelding</h1>
@@ -655,6 +699,7 @@ function CheckoutSummary({
   fee,
   total,
   isFree,
+  isManual,
 }: {
   course: PublicCourseWithDetails;
   selectedTier: AvailableTicketType | null;
@@ -662,6 +707,7 @@ function CheckoutSummary({
   fee: number;
   total: number;
   isFree: boolean;
+  isManual: boolean;
 }) {
   const meta = buildMeta(course);
   const img = resolveCourseImage(course);
@@ -700,12 +746,14 @@ function CheckoutSummary({
                       {formatKroner(subtotal)}
                     </span>
                   </div>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-foreground-muted">Tjenestegebyr</span>
-                    <span className="tabular-nums text-foreground-muted">
-                      {formatKroner(fee)}
-                    </span>
-                  </div>
+                  {!isManual && (
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-foreground-muted">Tjenestegebyr</span>
+                      <span className="tabular-nums text-foreground-muted">
+                        {formatKroner(fee)}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="border-t border-border" />
               </>
@@ -719,10 +767,17 @@ function CheckoutSummary({
           </>
         )}
 
-        {!isFree && (
+        {!isFree && !isManual && (
           <div className="space-y-2 border-t border-border pt-4">
             <p className="text-center text-xs text-foreground-muted">Sikker betaling</p>
             <DinteroPaymentBadge variant="logomark" className="mx-auto w-full max-w-[280px]" />
+          </div>
+        )}
+        {isManual && (
+          <div className="border-t border-border pt-4">
+            <p className="text-center text-xs text-foreground-muted">
+              Betaling avtales direkte med studioet – du betaler ikke noe her.
+            </p>
           </div>
         )}
       </div>

@@ -45,6 +45,7 @@ export const routes = {
 
   // Settings
   settingsProfile: '/settings/profile',
+  settingsBilling: '/settings/billing',
   settingsPayouts: '/settings/payouts',
 
   // ─── Public team / course pages (flat slug at root) ───────────────────

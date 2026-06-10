@@ -125,6 +125,13 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
       settings: {},
       seller_type: 'individual',
       organization_number: null,
+      subscription_plan: 'free',
+      subscription_status: 'none',
+      subscription_current_period_end: null,
+      subscription_provider: null,
+      subscription_customer_id: null,
+      subscription_external_id: null,
+      uses_integrated_payments: false,
       created_at: (s.created_at ?? null) as string | null,
       updated_at: (s.created_at ?? null) as string | null,
     }
@@ -136,9 +143,9 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
 }
 
 // Hydrate operational fields (Dintero IDs, onboarding status, seller_type,
-// updated_at) for a single seller via the member-gated RPC. Returns the
-// seller unchanged on RPC failure or non-member access — UI degrades to
-// the public columns only.
+// subscription plan/status, updated_at) for a single seller via the
+// member-gated RPC. Returns the seller unchanged on RPC failure or
+// non-member access — UI degrades to the public columns only.
 async function hydrateSellerOperational(seller: Seller): Promise<Seller> {
   const { data, error } = await fetchSellerOperational(seller.id)
   if (error) {
@@ -151,6 +158,11 @@ async function hydrateSellerOperational(seller: Seller): Promise<Seller> {
     dintero_seller_id: data.dintero_seller_id,
     dintero_onboarding_status: data.dintero_onboarding_status,
     seller_type: data.seller_type,
+    subscription_plan: data.subscription_plan,
+    subscription_status: data.subscription_status,
+    subscription_current_period_end: data.subscription_current_period_end,
+    subscription_customer_id: data.subscription_customer_id ?? seller.subscription_customer_id,
+    uses_integrated_payments: data.uses_integrated_payments,
     updated_at: data.updated_at,
   }
 }
@@ -455,6 +467,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       settings: {},
       seller_type: sellerType,
       organization_number: null,
+      subscription_plan: 'free',
+      subscription_status: 'none',
+      subscription_current_period_end: null,
+      subscription_provider: null,
+      subscription_customer_id: null,
+      subscription_external_id: null,
+      uses_integrated_payments: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }

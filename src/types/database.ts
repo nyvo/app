@@ -657,7 +657,14 @@ export type Database = {
           phone: string | null
           seller_type: string
           settings: Json | null
+          subscription_current_period_end: string | null
+          subscription_customer_id: string | null
+          subscription_external_id: string | null
+          subscription_plan: string
+          subscription_provider: string | null
+          subscription_status: string
           updated_at: string | null
+          uses_integrated_payments: boolean
         }
         Insert: {
           closed_at?: string | null
@@ -675,6 +682,12 @@ export type Database = {
           phone?: string | null
           seller_type?: string
           settings?: Json | null
+          subscription_current_period_end?: string | null
+          subscription_customer_id?: string | null
+          subscription_external_id?: string | null
+          subscription_plan?: string
+          subscription_provider?: string | null
+          subscription_status?: string
           updated_at?: string | null
         }
         Update: {
@@ -693,6 +706,12 @@ export type Database = {
           phone?: string | null
           seller_type?: string
           settings?: Json | null
+          subscription_current_period_end?: string | null
+          subscription_customer_id?: string | null
+          subscription_external_id?: string | null
+          subscription_plan?: string
+          subscription_provider?: string | null
+          subscription_status?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -1257,7 +1276,12 @@ export type Database = {
           dintero_onboarding_status: string
           dintero_seller_id: string
           seller_type: string
+          subscription_customer_id: string | null
+          subscription_current_period_end: string | null
+          subscription_plan: string
+          subscription_status: string
           updated_at: string
+          uses_integrated_payments: boolean
         }[]
       }
       get_seller_private: {
@@ -1379,7 +1403,7 @@ export type Database = {
       course_format: "single" | "series"
       course_status: "draft" | "upcoming" | "active" | "completed" | "cancelled"
       delivery_mode: "in_person" | "online"
-      payment_status: "pending" | "paid" | "failed" | "refunded"
+      payment_status: "pending" | "paid" | "failed" | "refunded" | "external"
       seller_member_role: "owner" | "admin"
       signup_status: "confirmed" | "cancelled" | "course_cancelled"
       ticket_audience_t: "standard" | "student" | "senior" | "staff"
@@ -1517,7 +1541,7 @@ export const Constants = {
       course_format: ["single", "series"],
       course_status: ["draft", "upcoming", "active", "completed", "cancelled"],
       delivery_mode: ["in_person", "online"],
-      payment_status: ["pending", "paid", "failed", "refunded"],
+      payment_status: ["pending", "paid", "failed", "refunded", "external"],
       seller_member_role: ["owner", "admin"],
       signup_status: ["confirmed", "cancelled", "course_cancelled"],
       ticket_audience_t: ["standard", "student", "senior", "staff"],

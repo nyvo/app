@@ -33,21 +33,26 @@ export async function deliverBookingConfirmations(
   signupId: string,
   attempt: BookingAttempt,
   amountNok: number,
+  opts?: { amountLabel?: string },
 ): Promise<void> {
   // Free signups (amountNok === 0) still get a confirmation — a free trial
   // class is a real booking the buyer + studio want to know about.
   if (!attempt.participant_name) return
 
-  await notifyBookingCreated(supabase, signupId, attempt, amountNok)
-  await sendSellerBookingEmail(supabase, signupId, attempt, amountNok)
-  await sendOrderConfirmEmail(supabase, signupId, attempt, amountNok)
+  // Manual-payment signups override the label ("… betales direkte til
+  // studioet") so a paid course never reads as "Gratis" in the emails.
+  const amountLabel =
+    opts?.amountLabel ?? (amountNok > 0 ? formatKroner(amountNok) : 'Gratis')
+
+  await notifyBookingCreated(supabase, signupId, attempt)
+  await sendSellerBookingEmail(supabase, signupId, attempt, amountLabel)
+  await sendOrderConfirmEmail(supabase, signupId, attempt, amountLabel)
 }
 
 async function notifyBookingCreated(
   supabase: SupabaseClient,
   signupId: string,
   attempt: BookingAttempt,
-  amountNok: number,
 ): Promise<void> {
   if (!attempt.participant_name) return
 
@@ -76,7 +81,7 @@ async function sendSellerBookingEmail(
   supabase: SupabaseClient,
   signupId: string,
   attempt: BookingAttempt,
-  amountNok: number,
+  amountLabel: string,
 ): Promise<void> {
   if (!attempt.participant_name) return
 
@@ -127,7 +132,7 @@ async function sendSellerBookingEmail(
         buyerName: attempt.participant_name,
         courseTitle: course.title,
         courseStart: formatCourseStart(course.start_date, course.time_schedule),
-        amount: amountNok > 0 ? formatKroner(amountNok) : 'Gratis',
+        amount: amountLabel,
         bookingId: shortBookingId(signupId),
         buyerEmail: attempt.participant_email ?? undefined,
       },
@@ -155,7 +160,7 @@ async function sendOrderConfirmEmail(
   supabase: SupabaseClient,
   signupId: string,
   attempt: BookingAttempt,
-  amountNok: number,
+  amountLabel: string,
 ): Promise<void> {
   if (!attempt.participant_email || !attempt.participant_name) return
 
@@ -192,7 +197,7 @@ async function sendOrderConfirmEmail(
       courseTitle: course.title,
       courseStart: formatCourseStart(course.start_date, course.time_schedule),
       courseLocation: course.location ?? undefined,
-      amount: amountNok > 0 ? formatKroner(amountNok) : 'Gratis',
+      amount: amountLabel,
       bookingId: shortBookingId(signupId),
     },
   })

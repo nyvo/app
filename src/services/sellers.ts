@@ -138,9 +138,14 @@ export async function fetchStudioLocation(
   }
 }
 
+/**
+ * Browser-side seller update. Deliberately narrowed to the columns the
+ * authenticated role holds an UPDATE grant on — everything else on sellers
+ * is server-controlled (service-role edge functions / DEFINER RPCs).
+ */
 export async function updateSeller(
   id: string,
-  updates: SellerUpdate
+  updates: Pick<SellerUpdate, 'name' | 'logo_url'>
 ): Promise<{ data: Seller | null; error: Error | null }> {
   const { data, error } = await typedFrom('sellers')
     .update(updates)
@@ -170,8 +175,15 @@ export async function updateSeller(
       dintero_contract_url: null,
       dintero_onboarding_status: operational?.dintero_onboarding_status ?? null,
       settings: {},
-      seller_type: operational?.seller_type ?? updates.seller_type ?? 'individual',
+      seller_type: operational?.seller_type ?? 'individual',
       organization_number: null,
+      subscription_plan: operational?.subscription_plan ?? 'free',
+      subscription_status: operational?.subscription_status ?? 'none',
+      subscription_current_period_end: operational?.subscription_current_period_end ?? null,
+      subscription_provider: null,
+      subscription_customer_id: operational?.subscription_customer_id ?? null,
+      subscription_external_id: null,
+      uses_integrated_payments: operational?.uses_integrated_payments ?? false,
       updated_at: operational?.updated_at ?? row.created_at,
     },
     error: null,
@@ -182,10 +194,20 @@ export async function updateSeller(
  * Operational seller fields that are not part of the public storefront
  * grant set. Fetched via a member-gated RPC; returns null for non-members.
  */
+export type SubscriptionPlan = 'free' | 'pro'
+export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'none'
+
 export interface SellerOperational {
   dintero_seller_id: string | null
   dintero_onboarding_status: string | null
   seller_type: string
+  subscription_plan: SubscriptionPlan
+  subscription_status: SubscriptionStatus
+  subscription_current_period_end: string | null
+  subscription_customer_id: string | null
+  uses_integrated_payments: boolean
+  // subscription_provider / subscription_external_id are deliberately not
+  // returned by the RPC — the portal only needs the customer id.
   updated_at: string | null
 }
 

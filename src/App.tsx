@@ -20,6 +20,7 @@ const SchedulePage = lazy(() => import('./pages/teacher/SchedulePage'));
 const CoursesPage = lazy(() => import('./pages/teacher/CoursesPage'));
 const CoursePage = lazy(() => import('./pages/teacher/CoursePage'));
 const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage'));
+const BillingPage = lazy(() => import('./pages/teacher/BillingPage'));
 const PaymentsPage = lazy(() => import('./pages/teacher/PaymentsPage'));
 const StudioPage = lazy(() => import('./pages/teacher/StudioPage'));
 const CollaborationPage = lazy(() => import('./pages/teacher/CollaborationPage'));
@@ -51,6 +52,8 @@ const CheckoutReworkPreview = lazy(() => import('./pages/dev/CheckoutReworkPrevi
 const CheckoutFormReworkPreview = lazy(() => import('./pages/dev/CheckoutFormReworkPreview'));
 const DetailReworkPreview = lazy(() => import('./pages/dev/DetailReworkPreview'));
 const ModalsButtonsToastsPreview = lazy(() => import('./pages/dev/ModalsButtonsToastsPreview'));
+const TierPreview = lazy(() => import('./pages/dev/TierPreview'));
+const BillingPreview = lazy(() => import('./pages/dev/BillingPreview'));
 
 // Public team page at root: only renders if the slug is NOT a reserved word.
 // Reserved words 404 (since they should hit a literal route higher in the
@@ -118,6 +121,7 @@ function AppRoutes() {
             <Route path="courses/:id" element={<CoursePage />} />
             <Route path="studio" element={<StudioPage />} />
             <Route path="collaboration" element={<CollaborationPage />} />
+            <Route path="settings/billing" element={<BillingPage />} />
             <Route path="settings/payouts" element={<PaymentsPage />} />
           </Route>
         </Route>
@@ -141,6 +145,8 @@ function AppRoutes() {
             <Route path="/dev/checkout-form-rework" element={<CheckoutFormReworkPreview />} />
             <Route path="/dev/detail-rework" element={<DetailReworkPreview />} />
             <Route path="/dev/modals-buttons-toasts" element={<ModalsButtonsToastsPreview />} />
+            <Route path="/dev/tier-preview" element={<TierPreview />} />
+            <Route path="/dev/billing-preview" element={<BillingPreview />} />
           </>
         )}
 

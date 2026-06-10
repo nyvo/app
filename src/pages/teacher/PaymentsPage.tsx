@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Check } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { useAuth } from '@/contexts/AuthContext';
+import { routes } from '@/lib/routes';
+import { isProSeller } from '@/lib/payments';
 import { supabase } from '@/lib/supabase';
 import {
   createDinteroSeller,
@@ -45,6 +48,7 @@ const DINTERO_BACKOFFICE_URL = 'https://backoffice.dintero.com/';
  */
 const PaymentsPage = () => {
   const { currentSeller, refreshSellers } = useAuth();
+  const isPro = isProSeller(currentSeller);
 
   const onboardingStatus =
     (currentSeller?.dintero_onboarding_status as DinteroOnboardingStatus | null) || null;
@@ -56,7 +60,7 @@ const PaymentsPage = () => {
   // get_seller_private RPC, which checks membership server-side.
   const [contractUrl, setContractUrl] = useState<string | null>(null);
   useEffect(() => {
-    if (!currentSeller?.id || isConnected) {
+    if (!currentSeller?.id || isConnected || !isPro) {
       setContractUrl(null);
       return;
     }
@@ -71,7 +75,7 @@ const PaymentsPage = () => {
       setContractUrl(row?.dintero_contract_url ?? null);
     })();
     return () => { cancelled = true };
-  }, [currentSeller?.id, isConnected, onboardingStatus]);
+  }, [currentSeller?.id, isConnected, onboardingStatus, isPro]);
 
   const [form, setForm] = useState<OnboardingFormState>({
     organizationNumber: '',
@@ -150,11 +154,38 @@ const PaymentsPage = () => {
   // Refresh when coming back from Dintero's hosted KYC (?dintero_return=1).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('dintero_return') === '1' && currentSeller?.id) {
+    if (params.get('dintero_return') === '1' && currentSeller?.id && isPro) {
       void handleCheckStatus();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSeller?.id]);
+  }, [currentSeller?.id, isPro]);
+
+  if (!isPro) {
+    return (
+      <main className="flex-1 min-h-full overflow-y-auto bg-background">
+        <MobileTeacherHeader />
+
+        <PageShell narrow="centered" title="Betalingskonto">
+          <Card>
+            <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-base font-medium text-foreground">
+                  Integrerte betalinger er Pro
+                </p>
+                <p className="mt-1 text-base text-foreground-muted">
+                  Start-kontoer tar imot påmeldinger med betaling avtalt direkte med instruktør.
+                  Oppgrader til Pro for kortbetaling, servicegebyr og automatiske utbetalinger.
+                </p>
+              </div>
+              <Button asChild className="shrink-0">
+                <Link to={routes.settingsBilling}>Se abonnement</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </PageShell>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-background">

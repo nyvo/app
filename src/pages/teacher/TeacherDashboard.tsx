@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { Link } from 'react-router-dom';
 import { routes } from '@/lib/routes';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
@@ -27,6 +29,7 @@ import { toast } from 'sonner';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { formatRelativeTimePast } from '@/utils/dateFormatting';
 import { useMultiTableSubscription } from '@/hooks/use-realtime-subscription';
+import { isProSeller } from '@/lib/payments';
 import type {
   Course as DashboardCourse,
   CourseStyleType as DashboardCourseType,
@@ -74,6 +77,7 @@ function dayLabel(dateStr?: string): string {
 
 const TeacherDashboard = () => {
   const { currentSeller } = useAuth();
+  const isPro = isProSeller(currentSeller);
   const [dashboardCourses, setDashboardCourses] = useState<DashboardCourse[] | null>(null);
   const [recentSignupsRaw, setRecentSignupsRaw] = useState<SignupWithDetails[] | null>(null);
   const [incomeSeries, setIncomeSeries] = useState<IncomeSeries | null>(null);
@@ -109,12 +113,14 @@ const TeacherDashboard = () => {
       fetchCourses(currentSeller.id),
       fetchNextSessions(currentSeller.id, ROW_LIMIT),
       fetchRecentSignups(currentSeller.id, ROW_LIMIT),
-      fetchIncomeSeries(currentSeller.id, incomeRangeRef.current),
+      isPro
+        ? fetchIncomeSeries(currentSeller.id, incomeRangeRef.current)
+        : Promise.resolve({ data: null, error: null }),
     ]);
 
     processDashboardResults(nextSessionsResult, signupsResult);
-    if (incomeResult.data) setIncomeSeries(incomeResult.data);
-  }, [currentSeller?.id]);
+    if (isPro && incomeResult.data) setIncomeSeries(incomeResult.data);
+  }, [currentSeller?.id, isPro]);
 
   // Drawer actions mirror the course page; refetch refreshes the recent list.
   const handleCancelEnrollment = async (signupId: string, refund: boolean) => {
@@ -200,7 +206,10 @@ const TeacherDashboard = () => {
   // Income chart — refetches whenever the range toggle changes, independent
   // of the main dashboard loader so toggling Uke/Måned/År stays snappy.
   useEffect(() => {
-    if (!currentSeller?.id) return;
+    if (!currentSeller?.id || !isPro) {
+      setIncomeSeries(null);
+      return;
+    }
     let isActive = true;
     fetchIncomeSeries(currentSeller.id, incomeRange).then((result) => {
       if (!isActive) return;
@@ -210,7 +219,7 @@ const TeacherDashboard = () => {
     return () => {
       isActive = false;
     };
-  }, [currentSeller?.id, incomeRange]);
+  }, [currentSeller?.id, incomeRange, isPro]);
 
   return (
     <div className="flex-1 overflow-y-auto bg-background h-full">
@@ -228,12 +237,16 @@ const TeacherDashboard = () => {
             />
           ) : (
             <div className="space-y-8">
-              <IncomeChart
-                series={incomeSeries}
-                isLoading={incomeSeries === null}
-                range={incomeRange}
-                onRangeChange={setIncomeRange}
-              />
+              {isPro ? (
+                <IncomeChart
+                  series={incomeSeries}
+                  isLoading={incomeSeries === null}
+                  range={incomeRange}
+                  onRangeChange={setIncomeRange}
+                />
+              ) : (
+                <ManualPaymentsPanel />
+              )}
 
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <UpcomingCoursesSection courses={dashboardCourses} isLoading={isLoading} />
@@ -260,6 +273,31 @@ const TeacherDashboard = () => {
     </div>
   );
 };
+
+function ManualPaymentsPanel() {
+  return (
+    <section className="rounded-xl border border-border bg-background p-6 sm:p-8">
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <p className="text-base font-medium text-foreground-muted">Betalinger</p>
+            <Badge variant="neutral" size="sm">Start</Badge>
+          </div>
+          <h2 className="mt-2 text-2xl font-medium tracking-tight text-foreground">
+            Betaling avtales direkte med instruktør
+          </h2>
+        </div>
+        <Button asChild variant="secondary">
+          <Link to={routes.settingsBilling}>Se Pro</Link>
+        </Button>
+      </header>
+      <p className="mt-4 max-w-2xl text-base text-foreground-muted">
+        Påmeldinger registreres i Openspot, men Vipps, faktura eller annen betaling skjer utenfor plattformen.
+        Pro aktiverer kortbetaling, servicegebyr og automatiske utbetalinger.
+      </p>
+    </section>
+  );
+}
 
 // ─── Neste kurs ───────────────────────────────────────────────────────────
 

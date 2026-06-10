@@ -56,12 +56,19 @@ Deno.serve(async (req) => {
 
     const { data: seller, error: sellerError } = await supabase
       .from('sellers')
-      .select('id, name, dintero_seller_id, dintero_approval_id, dintero_contract_url, dintero_onboarding_status')
+      .select('id, name, dintero_seller_id, dintero_approval_id, dintero_contract_url, dintero_onboarding_status, subscription_plan, subscription_status')
       .eq('id', body.sellerId)
       .single()
 
     if (sellerError || !seller) {
       return errorResponse('Seller not found', 404, req)
+    }
+
+    // INV-1 (phase 3): only sellers with an active Pro subscription may become
+    // Dintero payout destinations — registration is what triggers the
+    // per-seller cost, so it is strictly gated behind a paying sub.
+    if (seller.subscription_plan !== 'pro' || seller.subscription_status !== 'active') {
+      return errorResponse('Integrert betaling krever et aktivt Pro-abonnement', 403, req)
     }
 
     // Already active — nothing to do

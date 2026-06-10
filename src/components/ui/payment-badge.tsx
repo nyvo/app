@@ -12,6 +12,9 @@ const config: Record<PaymentStatus, { variant: BadgeVariant; label: string }> = 
   pending:  { variant: 'warning',     label: 'Venter betaling' },
   failed:   { variant: 'destructive', label: 'Betaling feilet' },
   refunded: { variant: 'neutral',     label: 'Refundert' },
+  // Manual-payment signup (free-tier seller): money changes hands outside the
+  // platform. Stays visible until the teacher marks it paid (mark-payment-resolved).
+  external: { variant: 'warning',     label: 'Betales direkte' },
 };
 
 interface PaymentBadgeProps {
