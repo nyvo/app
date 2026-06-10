@@ -236,14 +236,14 @@ const LandingPage = () => {
             <PricingTier
               tier={{
                 name: 'Start',
-                description: 'Alt du trenger for å komme i gang.',
+                description: 'For instruktører som vil ta påmeldinger uten betalingsoppsett.',
                 price: 'Gratis',
                 features: [
                   'Ubegrenset antall kurs og deltakere',
-                  'Vipps og kort',
-                  'Automatiske kvitteringer og påminnelser',
                   'Egen studioside',
-                  'Refusjoner og avbestillinger',
+                  'Påmeldinger rett inn i oversikten',
+                  'Betaling avtales direkte med instruktør',
+                  'Ingen Dintero-oppsett',
                 ],
                 cta: PRELAUNCH
                   ? { label: 'Ta kontakt', to: '#varsle' }
@@ -254,15 +254,15 @@ const LandingPage = () => {
             <PricingTier
               tier={{
                 name: 'Pro',
-                description: 'For studioer i full drift.',
-                price: formatKroner(500),
-                priceSub: '/ mnd',
+                description: 'For instruktører og studioer som vil ta betalt automatisk.',
+                price: formatKroner(499),
+                priceSub: '/ mnd eks. mva',
                 features: [
                   'Alt i Start',
-                  'Lavere transaksjonsavgift',
-                  'Fiken-integrasjon for regnskap',
-                  'Egne maler for e-post',
-                  'Prioritert kundestøtte',
+                  'Vipps og kort i checkout',
+                  'Automatiske utbetalinger via Dintero',
+                  '0 % lærerprovisjon',
+                  'Servicegebyr håndteres av plattformen',
                 ],
                 cta: PRELAUNCH
                   ? { label: 'Ta kontakt', to: '#varsle' }

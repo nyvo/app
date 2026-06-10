@@ -245,7 +245,8 @@ Ordered so each phase ships independently and de-risks the next.
 > Partial: current plan + upgrade/manage billing surface exists at `/settings/billing`.
 > Added 2026-06-10: persistent Start/Pro badge in the teacher sidebar, Start-specific
 > dashboard payment panel, and direct `/settings/payouts` guard for free sellers.
-> Remaining: public pricing page and richer upgrade prompts.
+> Public landing pricing copy now matches Start/manual vs Pro/Dintero.
+> Remaining: richer contextual upgrade prompts.
 - Tier selection + upgrade prompts (trigger on the manual-payment pain: "Get paid automatically — upgrade to Pro").
 - Pricing page; in-app plan badge; settings → billing (Stripe customer-portal link).
 - Checkout fee display already capped via Phase 0.
