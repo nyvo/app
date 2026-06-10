@@ -20,6 +20,7 @@ const SchedulePage = lazy(() => import('./pages/teacher/SchedulePage'));
 const CoursesPage = lazy(() => import('./pages/teacher/CoursesPage'));
 const CoursePage = lazy(() => import('./pages/teacher/CoursePage'));
 const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage'));
+const BillingPage = lazy(() => import('./pages/teacher/BillingPage'));
 const PaymentsPage = lazy(() => import('./pages/teacher/PaymentsPage'));
 const StudioPage = lazy(() => import('./pages/teacher/StudioPage'));
 const CollaborationPage = lazy(() => import('./pages/teacher/CollaborationPage'));
@@ -118,6 +119,7 @@ function AppRoutes() {
             <Route path="courses/:id" element={<CoursePage />} />
             <Route path="studio" element={<StudioPage />} />
             <Route path="collaboration" element={<CollaborationPage />} />
+            <Route path="settings/billing" element={<BillingPage />} />
             <Route path="settings/payouts" element={<PaymentsPage />} />
           </Route>
         </Route>

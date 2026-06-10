@@ -658,6 +658,7 @@ export type Database = {
           seller_type: string
           settings: Json | null
           subscription_current_period_end: string | null
+          subscription_customer_id: string | null
           subscription_external_id: string | null
           subscription_plan: string
           subscription_provider: string | null
@@ -682,6 +683,7 @@ export type Database = {
           seller_type?: string
           settings?: Json | null
           subscription_current_period_end?: string | null
+          subscription_customer_id?: string | null
           subscription_external_id?: string | null
           subscription_plan?: string
           subscription_provider?: string | null
@@ -705,6 +707,7 @@ export type Database = {
           seller_type?: string
           settings?: Json | null
           subscription_current_period_end?: string | null
+          subscription_customer_id?: string | null
           subscription_external_id?: string | null
           subscription_plan?: string
           subscription_provider?: string | null

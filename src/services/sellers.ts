@@ -140,6 +140,7 @@ export async function updateSeller(
       subscription_status: operational?.subscription_status ?? 'none',
       subscription_current_period_end: operational?.subscription_current_period_end ?? null,
       subscription_provider: null,
+      subscription_customer_id: null,
       subscription_external_id: null,
       uses_integrated_payments:
         operational?.subscription_plan === 'pro' && !!row.dintero_onboarding_complete,

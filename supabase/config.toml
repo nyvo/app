@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.create-manual-signup]
 verify_jwt = false
 
+[functions.stripe-billing-webhook]
+verify_jwt = false
+
 [functions.sync-dintero-seller-statuses]
 verify_jwt = false
 

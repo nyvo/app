@@ -1,6 +1,6 @@
 # Pricing & Payments Model — Implementation Plan
 
-> Status: **Plan only — not implemented.** Captures the model agreed in discussion (June 2026).
+> Status: **Implementation in progress.** Captures the model agreed in discussion (June 2026).
 > Reviewed 2026-06-09 against the codebase (all §3/§9 claims verified, minor line drift only) and
 > fresh Dintero/MVA/competitor research; amendments folded in. Billing provider decided: **Stripe Billing** (Phase 5).
 > Location note: saved under `.context/` (gitignored). Move into the repo (e.g. `docs/`) if you want it version-controlled.
@@ -160,7 +160,7 @@ Ordered so each phase ships independently and de-risks the next.
   - `subscription_plan text` CHECK in (`'free'`, `'pro'`) default `'free'`.
   - `subscription_status text` CHECK in (`'active'`, `'past_due'`, `'canceled'`, `'none'`) default `'none'`.
   - `subscription_current_period_end timestamptz` (for grace handling).
-  - `subscription_provider`, `subscription_external_id` for the billing system (Stripe — Phase 5).
+  - `subscription_provider`, `subscription_customer_id`, `subscription_external_id` for the billing system (Stripe — Phase 5).
 - Helper RPC / update `get_seller_operational` to expose plan + status.
 - **Acceptance:** every seller has a plan; defaults to free; queryable for gating.
 
@@ -212,6 +212,10 @@ Ordered so each phase ships independently and de-risks the next.
   Dintero session or touches money.
 
 ### Phase 5 — Subscription billing (collect the Pro fee, see §2.1: 499 solo / 999 studio)
+> ✅ **Implemented in code 2026-06-10; not live-verified.** Added Stripe Checkout,
+> customer portal, webhook sync, `subscription_customer_id`, and `/settings/billing`.
+> Requires Stripe price ids + webhook secret in Supabase secrets, then test-mode
+> checkout/webhook verification before production.
 - **Decision (June 2026): Stripe Billing.** Rationale:
   - Cost is a wash (~2.5% of sub revenue either way: Stripe NO 1,5% + 1,80 kr + 0,7% Billing fee
     vs Dintero ~1–1,5 kr + ~1,95–2,49%).
@@ -230,13 +234,16 @@ Ordered so each phase ships independently and de-risks the next.
     Dintero per account — ask, and confirm it's included in the Split Payout agreement; no add-on
     fee is published).
   - **Manual invoicing (Fiken)** only as a stopgap if Stripe onboarding ever blocks launch.
-- Set `subscription_provider='stripe'`, `subscription_external_id` = Stripe subscription id
+- Set `subscription_provider='stripe'`, `subscription_customer_id` = Stripe customer id,
+  `subscription_external_id` = Stripe subscription id
   (Phase 2 columns are provider-agnostic — switching later is a data migration, not a schema change).
 - Webhook updates `subscription_status`; lapse → Phase 3 gating.
 - Handle MVA on the Pro fee (inclusive vs exclusive — see open items; Stripe supports incl-MVA pricing).
 - **Acceptance:** a teacher can subscribe, status reflects in `sellers`, lapse flips status and triggers Phase 3 gating.
 
 ### Phase 6 — UI/UX
+> Partial: current plan + upgrade/manage billing surface exists at `/settings/billing`.
+> Remaining: public pricing page and richer upgrade prompts.
 - Tier selection + upgrade prompts (trigger on the manual-payment pain: "Get paid automatically — upgrade to Pro").
 - Pricing page; in-app plan badge; settings → billing (Stripe customer-portal link).
 - Checkout fee display already capped via Phase 0.

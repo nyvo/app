@@ -6,6 +6,7 @@
 --   subscription_status                active | past_due | canceled | none
 --   subscription_current_period_end    grace handling on lapse
 --   subscription_provider/external_id  billing-system linkage (Stripe)
+--   subscription_customer_id           added in 20260610130000 for customer portal sessions
 --
 -- Defaults put every existing and new seller on the free tier with no sub.
 ALTER TABLE public.sellers

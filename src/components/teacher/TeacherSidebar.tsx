@@ -58,6 +58,7 @@ const SELLER_NAV_ITEMS: NavItem[] = [
   { icon: BookOpen02Icon, label: 'Kurs', href: routes.courses },
   { icon: Building03Icon, label: 'Studio', href: routes.studio },
   { icon: UserGroupIcon, label: 'Samarbeid', href: routes.collaboration },
+  { icon: CreditCardIcon, label: 'Abonnement', href: routes.settingsBilling },
   { icon: CreditCardIcon, label: 'Betalingskonto', href: routes.settingsPayouts },
 ];
 

@@ -1,0 +1,113 @@
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
+import {
+  handleCors,
+  errorResponse,
+  successResponse,
+  verifyAuthAndOrgMembership,
+} from '../_shared/auth.ts'
+import {
+  createStripeCheckoutSession,
+  createStripeCustomer,
+} from '../_shared/stripe.ts'
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:5173'
+
+interface RequestBody {
+  sellerId: string
+}
+
+function priceIdForSellerType(sellerType: string | null): string {
+  const solo = Deno.env.get('STRIPE_PRO_SOLO_PRICE_ID') || Deno.env.get('STRIPE_PRO_PRICE_ID') || ''
+  const studio = Deno.env.get('STRIPE_PRO_STUDIO_PRICE_ID') || solo
+  return sellerType === 'business' ? studio : solo
+}
+
+Deno.serve(async (req: Request) => {
+  const corsResponse = handleCors(req)
+  if (corsResponse) return corsResponse
+
+  try {
+    const body = (await req.json()) as RequestBody
+    if (!body.sellerId) {
+      return errorResponse('Missing sellerId', 400, req)
+    }
+
+    const authz = await verifyAuthAndOrgMembership(req, body.sellerId, ['owner'])
+    if (!authz.authenticated) {
+      return errorResponse('Du må være innlogget.', 401, req)
+    }
+    if (!authz.authorized || !authz.userId) {
+      return errorResponse('Du har ikke tilgang til dette studioet.', 403, req)
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    const { data: seller, error: sellerError } = await supabase
+      .from('sellers')
+      .select('id, name, seller_type, subscription_plan, subscription_status, subscription_customer_id')
+      .eq('id', body.sellerId)
+      .single()
+
+    if (sellerError || !seller) {
+      return errorResponse('Studioet finnes ikke.', 404, req)
+    }
+
+    if (seller.subscription_plan === 'pro' && ['active', 'past_due'].includes(seller.subscription_status)) {
+      return errorResponse('Studioet har allerede Pro.', 409, req)
+    }
+
+    const priceId = priceIdForSellerType(seller.seller_type)
+    if (!priceId) {
+      return errorResponse('Stripe price is not configured', 500, req)
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('email, name')
+      .eq('id', authz.userId)
+      .single()
+
+    if (profileError || !profile?.email) {
+      return errorResponse('Fant ikke e-post for kontoen.', 400, req)
+    }
+
+    let customerId = seller.subscription_customer_id as string | null
+    if (!customerId) {
+      const customer = await createStripeCustomer({
+        email: profile.email,
+        name: seller.name || profile.name || profile.email,
+        sellerId: seller.id,
+        userId: authz.userId,
+      })
+      customerId = customer.id
+
+      const { error: updateError } = await supabase
+        .from('sellers')
+        .update({
+          subscription_provider: 'stripe',
+          subscription_customer_id: customerId,
+        })
+        .eq('id', seller.id)
+
+      if (updateError) {
+        return errorResponse('Kunne ikke lagre Stripe-kunde.', 500, req)
+      }
+    }
+
+    const session = await createStripeCheckoutSession({
+      customerId,
+      priceId,
+      sellerId: seller.id,
+      successUrl: `${siteUrl}/settings/billing?stripe=success`,
+      cancelUrl: `${siteUrl}/settings/billing?stripe=cancelled`,
+    })
+
+    return successResponse({ url: session.url }, 200, req)
+  } catch (error) {
+    console.error('create-stripe-checkout-session error:', error)
+    return errorResponse('Kunne ikke starte abonnement. Prøv igjen.', 500, req)
+  }
+})
