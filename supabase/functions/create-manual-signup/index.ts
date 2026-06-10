@@ -108,7 +108,7 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Seller not found', 404, req)
     }
     if (seller.uses_integrated_payments) {
-      return errorResponse('Dette studioet bruker integrert betaling — bruk vanlig betaling', 400, req)
+      return errorResponse('Dette studioet bruker integrert betaling. Last inn siden på nytt.', 400, req)
     }
 
     // Resolve the ticket tier: an explicit ticketTypeId from the booking UI,

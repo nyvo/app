@@ -360,7 +360,7 @@ const CheckoutPage = () => {
           <div className="space-y-6 max-w-[552px] min-w-0">
             {step === 'contact' || isFree ? (
               <>
-                <CheckoutStepHeader step={1} />
+                <CheckoutStepHeader step={1} showSteps={!isFree && !isManual} />
 
                 <div className="px-2 sm:px-6">
                   <div className="space-y-4">
@@ -517,9 +517,18 @@ const CHECKOUT_STEPS = ['Kontakt', 'Betaling'] as const;
 
 /** Visual progress for the two in-checkout stages: the Kontakt form (1) and
  * the Betaling iframe (2). Ticket choice happened on the course page and isn't
- * counted — a single-class booking shouldn't read as a 3-step funnel. */
-function CheckoutStepHeader({ step }: { step: 1 | 2 }) {
+ * counted — a single-class booking shouldn't read as a 3-step funnel.
+ * Free and manual signups have no Betaling stage at all → `showSteps=false`
+ * renders just the title. */
+function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps?: boolean }) {
   const currentIndex = step - 1;
+  if (!showSteps) {
+    return (
+      <div className="px-2 sm:px-6">
+        <h1 className="text-base font-medium tracking-tight text-foreground">Påmelding</h1>
+      </div>
+    );
+  }
   return (
     <div className="px-2 sm:px-6">
       <h1 className="text-base font-medium tracking-tight text-foreground">Påmelding</h1>
@@ -767,7 +776,7 @@ function CheckoutSummary({
         {isManual && (
           <div className="border-t border-border pt-4">
             <p className="text-center text-xs text-foreground-muted">
-              Betaling avtales direkte med studioet — du betaler ikke noe her.
+              Betaling avtales direkte med studioet – du betaler ikke noe her.
             </p>
           </div>
         )}

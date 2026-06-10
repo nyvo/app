@@ -8,8 +8,13 @@ import { cn } from '@/lib/utils';
  * enabled), we'd thread the seller's Dintero account ID through here.
  *
  * Note: Dintero CDN caches the SVG and updates ~1h after profile changes.
+ *
+ * Configured via VITE_DINTERO_ACCOUNT_ID; falls back to the sandbox account
+ * (T-prefix) so dev/preview keeps working. Set the production account id
+ * (P-prefix) in the deploy environment before go-live.
  */
-const DINTERO_ACCOUNT_ID = 'T11116559';
+const DINTERO_ACCOUNT_ID: string =
+  import.meta.env.VITE_DINTERO_ACCOUNT_ID || 'T11116559';
 
 interface DinteroPaymentBadgeProps {
   /** SVG source width. Higher = sharper at large display sizes; 600 is enough. */

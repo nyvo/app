@@ -173,7 +173,7 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
             {ticketPrice > 0 && !usesIntegratedPayments && (
               <div className="border-t border-border pt-4">
                 <p className="text-center text-xs text-foreground-muted">
-                  Betaling avtales med instruktør.
+                  Betaling avtales direkte med studioet.
                 </p>
               </div>
             )}
