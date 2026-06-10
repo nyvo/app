@@ -52,6 +52,7 @@ const CheckoutReworkPreview = lazy(() => import('./pages/dev/CheckoutReworkPrevi
 const CheckoutFormReworkPreview = lazy(() => import('./pages/dev/CheckoutFormReworkPreview'));
 const DetailReworkPreview = lazy(() => import('./pages/dev/DetailReworkPreview'));
 const ModalsButtonsToastsPreview = lazy(() => import('./pages/dev/ModalsButtonsToastsPreview'));
+const TierPreview = lazy(() => import('./pages/dev/TierPreview'));
 
 // Public team page at root: only renders if the slug is NOT a reserved word.
 // Reserved words 404 (since they should hit a literal route higher in the
@@ -143,6 +144,7 @@ function AppRoutes() {
             <Route path="/dev/checkout-form-rework" element={<CheckoutFormReworkPreview />} />
             <Route path="/dev/detail-rework" element={<DetailReworkPreview />} />
             <Route path="/dev/modals-buttons-toasts" element={<ModalsButtonsToastsPreview />} />
+            <Route path="/dev/tier-preview" element={<TierPreview />} />
           </>
         )}
 
