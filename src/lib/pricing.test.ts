@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { calculateServiceFee, calculateTotalPrice } from './pricing'
 import {
   calculatePricing,
-  SERVICE_FEE_RATE,
   SERVICE_FEE_MIN_NOK,
   SERVICE_FEE_MAX_NOK,
 } from '../../supabase/functions/_shared/pricing.ts'
@@ -68,11 +67,11 @@ describe('backend calculatePricing (shared edge-function math)', () => {
     }
   })
 
-  it('keeps the platform commission term at 5% of base, independent of the fee clamp', () => {
-    for (const base of [50, 500, 6000]) {
-      const p = calculatePricing(base)
-      expect(p.platformFee - p.serviceFeeInOre).toBe(Math.round(p.basePriceInOre * SERVICE_FEE_RATE))
-    }
+  it('does not take a platform commission from the teacher course line', () => {
+    const p = calculatePricing(500)
+    expect('platformFee' in p).toBe(false)
+    expect(p.basePriceInOre).toBe(50_000)
+    expect(p.serviceFeeInOre).toBe(2_500)
   })
 })
 

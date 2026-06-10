@@ -14,12 +14,9 @@ export const SERVICE_FEE_RATE = 0.05 // 5%
 export const SERVICE_FEE_MIN_NOK = 9
 export const SERVICE_FEE_MAX_NOK = 149
 
-/** Platform fee rate taken from the teacher's revenue (percentage of base price) */
-export const PLATFORM_FEE_RATE = 0.05 // 5%
-
 /**
  * Calculate pricing breakdown for a given base price.
- * Returns all values in both NOK and øre (Stripe's smallest unit).
+ * Returns all values in both NOK and øre (Dintero's smallest unit).
  */
 export function calculatePricing(basePrice: number) {
   const serviceFeeNok =
@@ -30,7 +27,6 @@ export function calculatePricing(basePrice: number) {
   const priceInOre = Math.round(totalPrice * 100)
   const basePriceInOre = Math.round(basePrice * 100)
   const serviceFeeInOre = Math.round(serviceFeeNok * 100)
-  const platformFee = Math.round(basePriceInOre * PLATFORM_FEE_RATE) + serviceFeeInOre
 
   return {
     serviceFeeNok,
@@ -38,6 +34,5 @@ export function calculatePricing(basePrice: number) {
     priceInOre,
     basePriceInOre,
     serviceFeeInOre,
-    platformFee,
   }
 }

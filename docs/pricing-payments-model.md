@@ -95,7 +95,7 @@ under-charged studios. Recommended tiered structure (all **eks. mva**):
 What exists:
 - Dintero split payout fully wired: `create-dintero-session`, `dintero-webhook`,
   `finalize-dintero-transaction`, `create-dintero-seller`, settlements, sweeps.
-- `_shared/pricing.ts` `calculatePricing()` — canonical fee math (5% service + 5% platform commission).
+- `_shared/pricing.ts` `calculatePricing()` — canonical fee math for the capped student service fee.
 - `src/lib/pricing.ts` — **frontend duplicate** of the rate; must stay in sync.
 - ✅ Verified: the 5% rates live **only** in these two files + the session splits — no hidden fee
   math in finalize/webhook/sweep/refund/email code. Phase 0/1 touch surface is exactly §5's list.
@@ -107,11 +107,9 @@ What exists:
 What's missing:
 - No subscription / plan concept on `sellers` (no `subscription_status`, `plan`, etc.).
 - No fee cap/floor (flat 5% everywhere).
-- The current split sends a 5% slice to a phantom `payout_destination_id: 'platform'` and the
-  service-fee line splits 100% to `'platform'` — **a registered destination that doesn't exist**
-  (see `create-dintero-session/index.ts:339-367`). Dintero does *not* reject unknown destinations —
-  it **postpones the payout** "until the issue with the seller has been resolved", so those slices
-  would sit in limbo at Dintero (sandbox-only today). Needs cleanup as part of moving to 0% commission.
+- ✅ Phase 1 cleanup removed the old phantom `payout_destination_id: 'platform'` split.
+  The course line now goes 100% to the teacher and the service-fee line goes to the configured
+  `DINTERO_PLATFORM_PAYOUT_DESTINATION_ID`. This still needs sandbox transaction verification.
 - No off-platform/manual-payment signup path for paid courses (free tier).
 - No subscription billing mechanism for the Pro fee.
 
@@ -129,6 +127,10 @@ Ordered so each phase ships independently and de-risks the next.
 - **Acceptance:** 6 000 kr course shows ≤149 kr fee; 150 kr drop-in shows ≥9 kr; checkout total = base + capped fee; Dintero order `amount` matches sum of item lines.
 
 ### Phase 1 — Move to 0% teacher commission + fix the `platform` split
+> ✅ **Implemented 2026-06-10.** `calculatePricing()` now only carries the capped
+> student service fee; `create-dintero-session` splits the course line 100% to the
+> teacher and the service-fee line to `DINTERO_PLATFORM_PAYOUT_DESTINATION_ID`.
+> Still requires Dintero-side verification with a real sandbox transaction.
 - Course line: split **100% to the teacher's `dintero_seller_id`** (drop the 5% `'platform'` slice).
 - Service fee line: **split 100% to the platform's own registered payout destination.**
   ⚠️ The earlier "no split → remainder stays with the platform" assumption is **not supported by

@@ -36,6 +36,7 @@ import {
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:5173'
+const platformPayoutDestinationId = Deno.env.get('DINTERO_PLATFORM_PAYOUT_DESTINATION_ID') || ''
 
 interface SessionRequestBody {
   courseId: string
@@ -299,8 +300,13 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const { serviceFeeNok, totalPrice, priceInOre, basePriceInOre, serviceFeeInOre, platformFee } =
+    const { serviceFeeNok, totalPrice, priceInOre, basePriceInOre, serviceFeeInOre } =
       calculatePricing(typedTier.price)
+
+    if (serviceFeeInOre > 0 && !platformPayoutDestinationId) {
+      console.error('DINTERO_PLATFORM_PAYOUT_DESTINATION_ID is not configured')
+      return errorResponse('Payment configuration is incomplete', 500, req)
+    }
 
     // Persist the attempt. Its id becomes merchant_reference on the Dintero
     // session, and the ticket-type snapshot fields are write-once context for
@@ -343,10 +349,9 @@ Deno.serve(async (req: Request) => {
     // item at checkout (transparency + aligns with Norwegian consumer
     // disclosure norms).
     //
-    //  Line 1 — Course: base price, split 95% teacher / 5% platform.
-    //  Line 2 — Servicegebyr: 5% of base (min. 9 kr, maks. 149 kr) added on top, 100% platform.
-    const platformShareOnCourse = platformFee - serviceFeeInOre
-    const teacherShareOnCourse = basePriceInOre - platformShareOnCourse
+    //  Line 1 — Course: base price, split 100% to the teacher.
+    //  Line 2 — Servicegebyr: 5% of base (min. 9 kr, maks. 149 kr) added on top,
+    //  split 100% to the platform's registered Dintero payout destination.
 
     const orderItems = [
       {
@@ -356,8 +361,7 @@ Deno.serve(async (req: Request) => {
         quantity: 1,
         amount: basePriceInOre,
         splits: [
-          { payout_destination_id: seller.dintero_seller_id, amount: teacherShareOnCourse },
-          { payout_destination_id: 'platform', amount: platformShareOnCourse },
+          { payout_destination_id: seller.dintero_seller_id, amount: basePriceInOre },
         ],
       },
     ]
@@ -370,7 +374,7 @@ Deno.serve(async (req: Request) => {
         quantity: 1,
         amount: serviceFeeInOre,
         splits: [
-          { payout_destination_id: 'platform', amount: serviceFeeInOre },
+          { payout_destination_id: platformPayoutDestinationId, amount: serviceFeeInOre },
         ],
       })
     }
