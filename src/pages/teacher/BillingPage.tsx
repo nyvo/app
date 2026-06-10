@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { CreditCard, ExternalLink } from '@/lib/icons'
+import { Check, CreditCard, ExternalLink } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { PageShell } from '@/components/teacher/PageShell'
@@ -28,6 +30,18 @@ function formatBillingDate(value: string): string {
     year: 'numeric',
   }).format(new Date(value))
 }
+
+const START_FEATURES = [
+  'Påmeldinger og kurslenker',
+  'Betaling avtales direkte med instruktør',
+  'Ingen Dintero-oppsett',
+] as const
+
+const PRO_FEATURES = [
+  'Kortbetaling og Vipps i checkout',
+  'Automatiske utbetalinger via Dintero',
+  'Servicegebyr håndteres av plattformen',
+] as const
 
 const BillingPage = () => {
   const { currentSeller, refreshSellers } = useAuth()
@@ -129,6 +143,48 @@ const BillingPage = () => {
             </Card>
           </SettingsSection>
 
+          <SettingsSection title="Velg plan">
+            <div className="grid gap-4 md:grid-cols-2">
+              <PlanOption
+                name="Start"
+                price="0 kr/mnd"
+                description="For instruktører som vil ta påmeldinger og håndtere betaling selv."
+                features={START_FEATURES}
+                active={!isPro}
+              />
+              <PlanOption
+                name="Pro"
+                price="Fra 499 kr/mnd eks. mva"
+                description="For instruktører og studioer som vil ta betalt automatisk."
+                features={PRO_FEATURES}
+                active={isPro}
+                action={
+                  isPro ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleManage}
+                      loading={portalLoading}
+                      loadingText="Åpner"
+                    >
+                      <ExternalLink className="size-4" aria-hidden />
+                      Administrer
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={handleUpgrade}
+                      loading={checkoutLoading}
+                      loadingText="Åpner"
+                    >
+                      Oppgrader
+                    </Button>
+                  )
+                }
+              />
+            </div>
+          </SettingsSection>
+
           {isPro && !hasStripeCustomer && (
             <p className="text-sm text-foreground-muted">
               Abonnementet er aktivt, men mangler Stripe-kunde. Kontakt support for fakturering.
@@ -137,6 +193,54 @@ const BillingPage = () => {
         </div>
       </PageShell>
     </main>
+  )
+}
+
+function PlanOption({
+  name,
+  price,
+  description,
+  features,
+  active,
+  action,
+}: {
+  name: string
+  price: string
+  description: string
+  features: readonly string[]
+  active: boolean
+  action?: ReactNode
+}) {
+  return (
+    <Card className={active ? 'border-foreground/25' : undefined}>
+      <CardContent className="flex h-full flex-col gap-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-medium text-foreground">{name}</h2>
+              {active && (
+                <Badge variant="neutral" size="sm">
+                  Nåværende
+                </Badge>
+              )}
+            </div>
+            <p className="mt-2 text-2xl font-medium tracking-tight text-foreground">{price}</p>
+            <p className="mt-2 text-sm text-foreground-muted">{description}</p>
+          </div>
+        </div>
+
+        <ul className="space-y-2 text-sm text-foreground">
+          {features.map((feature) => (
+            <li key={feature} className="flex gap-2">
+              <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+
+        {action && <div className="mt-auto pt-1">{action}</div>}
+      </CardContent>
+    </Card>
   )
 }
 
