@@ -27,8 +27,10 @@ export interface SignupWithProfile extends Signup {
 
 // Signup row as the buyer dashboard needs it: course details plus the
 // public storefront identity (seller name/logo via column grants, team slug
-// via the public teams policy). `teams` embeds as an array (1:N in PostgREST
-// even though ownership is 1:1 in the current model) — take the first.
+// via the public teams policy). The teams embed must name the ownership FK
+// (`teams!teams_owner_seller_id_fkey`) — sellers↔teams is otherwise
+// ambiguous (PGRST201) because team_affiliations adds a many-to-many path.
+// Ownership is 1:1, so PostgREST returns an object, not an array.
 // Explicit column list, not `*` — the buyer owns these rows, but future
 // signup columns must not silently start flowing to the client.
 export interface BuyerSignup extends Pick<Signup,
@@ -38,7 +40,7 @@ export interface BuyerSignup extends Pick<Signup,
     seller: {
       name: string
       logo_url: string | null
-      teams: { slug: string }[]
+      team: { slug: string } | null
     } | null
   }) | null
 }
@@ -70,7 +72,7 @@ export async function fetchMySignups(
       dintero_transaction_id, dintero_merchant_reference,
       course:courses(
         id, title, slug, start_date, end_date, time_schedule, location, image_url,
-        seller:sellers(name, logo_url, teams(slug))
+        seller:sellers(name, logo_url, team:teams!teams_owner_seller_id_fkey(slug))
       )
     `)
     .eq('buyer_id', userId)
