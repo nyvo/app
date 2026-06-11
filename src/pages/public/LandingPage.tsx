@@ -30,7 +30,7 @@ function ProductFrame({
   return (
     <div className={`relative isolate overflow-hidden rounded-2xl bg-muted ${padding}`}>
       <Grain opacity={0.6} baseFrequency={0.7} />
-      <div className="relative overflow-hidden rounded-lg border border-border bg-background shadow-[0_30px_60px_-15px_rgba(0,0,0,0.18)]">
+      <div className="relative overflow-hidden rounded-lg border border-border bg-background shadow-soft">
         {children}
       </div>
     </div>
@@ -73,11 +73,19 @@ const LandingPage = () => {
           {PRELAUNCH ? (
             <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-12">
               <div>
+                <motion.p
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="mb-4 text-xs font-medium text-foreground-muted"
+                >
+                  Bygget i Norge
+                </motion.p>
                 <motion.h1
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-3xl font-medium tracking-tight text-foreground md:text-4xl"
+                  className="font-serif text-4xl font-medium text-foreground md:text-5xl"
                 >
                   Driv ditt yogastudio enklere.
                 </motion.h1>
@@ -103,11 +111,19 @@ const LandingPage = () => {
             </div>
           ) : (
             <div className="mx-auto max-w-2xl text-center">
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="mb-4 text-xs font-medium text-foreground-muted"
+              >
+                Bygget i Norge
+              </motion.p>
               <motion.h1
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="text-3xl font-medium tracking-tight text-foreground md:text-4xl"
+                className="font-serif text-4xl font-medium text-foreground md:text-5xl"
               >
                 Driv ditt yogastudio enklere.
               </motion.h1>
@@ -155,6 +171,7 @@ const LandingPage = () => {
       {/* 2. SPLIT — Public studio page (text left / product right) */}
       {/* ============================================================ */}
       <FeatureSplit
+        eyebrow="Synlighet"
         title="Deltakerne finner deg."
         description="Del kursene dine med én lenke."
         align="left"
@@ -172,6 +189,7 @@ const LandingPage = () => {
       {/* 3. SPLIT — Booking + Dintero (product left / text right) */}
       {/* ============================================================ */}
       <FeatureSplit
+        eyebrow="Påmelding og betaling"
         title="Enkel påmelding."
         description="Deltakeren velger time og betaler — alt på én side."
         bullets={[
@@ -194,6 +212,7 @@ const LandingPage = () => {
       {/* 5. WIDE — Teacher dashboard (centered text + full-width product) */}
       {/* ============================================================ */}
       <FeatureWide
+        eyebrow="Oversikt"
         title="Inntekter og påmeldinger på ett sted."
         body="Hver påmelding havner i oversikten."
       >
@@ -218,7 +237,8 @@ const LandingPage = () => {
             transition={scrollTransition}
             className="mx-auto mb-16 max-w-2xl text-center"
           >
-            <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+            <p className="mb-3 text-xs font-medium text-foreground-muted">Pris</p>
+            <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
               Enkel og forutsigbar pris.
             </h2>
             <p className="mt-3 text-base text-foreground-muted">
@@ -285,20 +305,25 @@ const LandingPage = () => {
             viewport={{ once: true, margin: '-100px' }}
             variants={scrollVariants}
             transition={scrollTransition}
-            className="flex flex-col items-center justify-between gap-8 rounded-3xl bg-muted px-8 py-16 md:flex-row md:gap-12 md:px-16 md:py-20"
+            className="relative isolate flex flex-col items-center justify-between gap-8 overflow-hidden rounded-3xl bg-chrome px-8 py-16 md:flex-row md:gap-12 md:px-16 md:py-20"
           >
-            <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+            {/* Dark chrome band — the same surface as the app's sidebar/toasts,
+                so the landing page literally previews the product's chrome. */}
+            <Grain opacity={0.4} baseFrequency={0.7} blend="soft-light" />
+            <h2 className="relative font-serif text-3xl font-medium text-chrome-foreground md:text-4xl">
               {PRELAUNCH ? 'Bli med fra start.' : 'Klar?'}
             </h2>
-            {PRELAUNCH ? (
-              <Button asChild size="cta">
-                <a href={`mailto:${COMPANY.email}`}>Ta kontakt</a>
-              </Button>
-            ) : (
-              <Button asChild size="cta">
-                <Link to="/auth">Kom i gang</Link>
-              </Button>
-            )}
+            <div className="relative">
+              {PRELAUNCH ? (
+                <Button asChild size="cta">
+                  <a href={`mailto:${COMPANY.email}`}>Ta kontakt</a>
+                </Button>
+              ) : (
+                <Button asChild size="cta">
+                  <Link to="/auth">Kom i gang</Link>
+                </Button>
+              )}
+            </div>
           </motion.div>
         </div>
       </section>
@@ -385,6 +410,7 @@ const LandingPage = () => {
 // portrait-ish aspect (4:3 or 5:4) on the ScreenshotSlot inside.
 // =============================================================================
 function FeatureSplit({
+  eyebrow,
   title,
   description,
   bullets,
@@ -393,6 +419,7 @@ function FeatureSplit({
   frameTight = false,
   children,
 }: {
+  eyebrow?: string;
   title: string;
   description: string;
   bullets?: string[];
@@ -416,7 +443,10 @@ function FeatureSplit({
             transition={scrollTransition}
             className={`lg:col-span-5 ${align === 'right' ? 'lg:order-2' : ''}`}
           >
-            <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+            {eyebrow && (
+              <p className="mb-3 text-xs font-medium text-foreground-muted">{eyebrow}</p>
+            )}
+            <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
               {title}
             </h2>
             <p className="mt-3 text-base text-foreground-muted">{description}</p>
@@ -453,10 +483,12 @@ function FeatureSplit({
 // visually deserves to be big (here: the dashboard).
 // =============================================================================
 function FeatureWide({
+  eyebrow,
   title,
   body,
   children,
 }: {
+  eyebrow?: string;
   title: string;
   body: string;
   children: React.ReactNode;
@@ -472,7 +504,10 @@ function FeatureWide({
           transition={scrollTransition}
           className="mx-auto mb-12 max-w-xl text-center"
         >
-          <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+          {eyebrow && (
+            <p className="mb-3 text-xs font-medium text-foreground-muted">{eyebrow}</p>
+          )}
+          <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
             {title}
           </h2>
           <p className="mt-2 text-base text-foreground-muted">{body}</p>
@@ -521,7 +556,7 @@ function PricingTier({ tier }: { tier: Tier }) {
 
       <div className="mb-8 border-b border-border pb-8">
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-medium tabular-nums tracking-tight text-foreground">
+          <span className="font-serif text-4xl font-medium text-foreground">
             {tier.price}
           </span>
           {tier.priceSub && (

@@ -42,7 +42,7 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
         )}
 
         <div className="min-w-0 flex-1 pt-0.5">
-          <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-foreground leading-tight">
+          <h1 className="text-3xl sm:text-4xl font-medium text-foreground leading-tight">
             {organization.name}
           </h1>
 

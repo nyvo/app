@@ -13,13 +13,13 @@ const TermsPage = () => {
       {/* Terms Content */}
       <main className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-3xl space-y-10">
-          <h1 className="text-3xl font-medium tracking-tight text-foreground">
+          <h1 className="text-3xl font-medium text-foreground">
             Vilkår for påmelding
           </h1>
 
           <div className="space-y-8">
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">1. Hvem du handler med</h2>
+              <h2 className="text-lg font-medium text-foreground">1. Hvem du handler med</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Openspot driftes av {COMPANY.legalName}, org.nr. {COMPANY.organizationNumber}.
                 Registrert adresse er {COMPANY.registeredAddress}.
@@ -33,7 +33,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">2. Hva Openspot er</h2>
+              <h2 className="text-lg font-medium text-foreground">2. Hva Openspot er</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Openspot er en digital påmeldings- og betalingsplattform for kurs, timer og arrangementer.
                 Studioer og arrangører bruker Openspot til å vise kurs, ta imot påmeldinger og håndtere betaling.
@@ -45,7 +45,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">3. Påmelding og betaling</h2>
+              <h2 className="text-lg font-medium text-foreground">3. Påmelding og betaling</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Før du betaler ser du kursnavn, pris, eventuell tjenesteavgift og totalbeløp.
                 Ved påmelding godtar du å betale beløpet som vises i checkout.
@@ -61,7 +61,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">4. Levering</h2>
+              <h2 className="text-lg font-medium text-foreground">4. Levering</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 For kurs, timer og arrangementer skjer levering på datoen, tidspunktet og stedet som vises
                 på kurssiden og i bekreftelsen du mottar på e-post.
@@ -73,7 +73,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">5. Avbestilling, angrerett og refusjon</h2>
+              <h2 className="text-lg font-medium text-foreground">5. Avbestilling, angrerett og refusjon</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Trenger du å avbestille, tar du kontakt med studioet eller arrangøren du har meldt deg på hos.
                 Du kan også sende en e-post til {COMPANY.email}, så hjelper vi deg videre.
@@ -90,7 +90,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">6. Klager</h2>
+              <h2 className="text-lg font-medium text-foreground">6. Klager</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Hvis noe er feil med en betaling, påmelding eller tjenesten, kan du klage til{' '}
                 <a href={`mailto:${COMPANY.email}`} className="underline underline-offset-2">
@@ -105,7 +105,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">7. Ansvar</h2>
+              <h2 className="text-lg font-medium text-foreground">7. Ansvar</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Deltakelse på kurs skjer på eget ansvar. Studioet eller arrangøren er ansvarlig for
                 gjennomføring av kurset, innholdet i undervisningen og praktisk informasjon om oppmøte.
@@ -116,7 +116,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 id="personvern" className="scroll-mt-24 text-lg font-medium tracking-tight text-foreground">8. Personvern</h2>
+              <h2 id="personvern" className="scroll-mt-24 text-lg font-medium text-foreground">8. Personvern</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi behandler personopplysningene dine etter gjeldende personvernlovgivning.
                 Opplysninger brukes til å administrere påmelding, betaling, kvittering og kommunikasjon
@@ -131,7 +131,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">9. Endringer</h2>
+              <h2 className="text-lg font-medium text-foreground">9. Endringer</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi kan oppdatere vilkårene ved behov. Vesentlige endringer publiseres på denne siden
                 eller sendes til berørte brukere på e-post.

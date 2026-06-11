@@ -147,7 +147,7 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
                   )}
                   <div className="flex items-baseline justify-between gap-3 border-t border-border pt-3">
                     <dt className="text-base font-medium text-foreground">Totalt</dt>
-                    <dd className="text-xl font-medium tabular-nums tracking-tight text-foreground">
+                    <dd className="text-xl font-medium tabular-nums text-foreground">
                       {formatKroner(total)}
                     </dd>
                   </div>
@@ -155,7 +155,7 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
               ) : (
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-base font-medium text-foreground">{selectedTile.label}</span>
-                  <span className="text-xl font-medium tracking-tight text-foreground">Gratis</span>
+                  <span className="text-xl font-medium text-foreground">Gratis</span>
                 </div>
               )
             )}

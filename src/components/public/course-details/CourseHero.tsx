@@ -100,7 +100,7 @@ export function CourseHero({ course }: CourseHeroProps) {
         )}
 
         {/* Title — display tier on the public surface (text-5xl max, per tokens) */}
-        <h1 className="font-medium tracking-tight text-foreground text-3xl sm:text-5xl">
+        <h1 className="font-medium text-foreground text-3xl sm:text-5xl">
           {course.title}
         </h1>
 
