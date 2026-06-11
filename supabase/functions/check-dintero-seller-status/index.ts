@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
     const { data: seller, error: sellerError } = await supabase
       .from('sellers')
       .select(
-        'id, dintero_seller_id, dintero_approval_id, dintero_contract_url, dintero_onboarding_status, dintero_onboarding_complete',
+        'id, dintero_seller_id, dintero_approval_id, dintero_contract_url, dintero_onboarding_status, dintero_onboarding_complete, organization_number',
       )
       .eq('id', body.organizationId)
       .single()
@@ -58,6 +58,22 @@ Deno.serve(async (req) => {
     }
 
     if (seller.dintero_onboarding_status === 'ACTIVE') {
+      // Backfill: sellers onboarded before organization_number was persisted
+      // locally heal themselves here — fetch the approval once and store it.
+      if (!seller.organization_number) {
+        try {
+          const approval = await getSellerApproval(seller.dintero_approval_id)
+          if (approval.organization_number) {
+            await supabase
+              .from('sellers')
+              .update({ organization_number: approval.organization_number })
+              .eq('id', body.organizationId)
+          }
+        } catch (err) {
+          // Best-effort — status reporting must not fail on a backfill miss.
+          console.warn('org-number backfill failed:', err)
+        }
+      }
       return successResponse({
         onboardingComplete: true,
         status: 'ACTIVE',
@@ -78,6 +94,10 @@ Deno.serve(async (req) => {
         dintero_onboarding_status: caseStatus,
         dintero_onboarding_complete: onboardingComplete,
         dintero_contract_url: contractUrl,
+        // Keep the local org-nr reference in sync with the KYC'd approval.
+        ...(approval.organization_number
+          ? { organization_number: approval.organization_number }
+          : {}),
       })
       .eq('id', body.organizationId)
 

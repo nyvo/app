@@ -9,6 +9,10 @@ export interface RefundReceiptProps {
   amount: string
   refundDate: string
   bookingId: string
+  /** Pre-formatted org number, e.g. "987 654 321". */
+  arrangorOrgNumber?: string
+  /** Set when the email's replyTo routes to the arrangør. */
+  arrangorEmail?: string
 }
 
 export const RefundReceipt = ({
@@ -18,6 +22,8 @@ export const RefundReceipt = ({
   amount,
   refundDate,
   bookingId,
+  arrangorOrgNumber,
+  arrangorEmail,
 }: RefundReceiptProps) => (
   <EmailLayout preview={`Refusjon utbetalt — ${amount}`}>
     <Heading as="h1" style={styles.h1}>
@@ -41,12 +47,22 @@ export const RefundReceipt = ({
       <Text style={styles.detailLabel}>Kurs</Text>
       <Text style={styles.detailValue}>{courseTitle}</Text>
 
-      <Text style={styles.detailLabel}>Studio</Text>
-      <Text style={styles.detailValue}>{studioName}</Text>
+      <Text style={styles.detailLabel}>Arrangør</Text>
+      <Text style={styles.detailValue}>
+        {studioName}
+        {arrangorOrgNumber ? ` · org.nr ${arrangorOrgNumber}` : ''}
+      </Text>
 
       <Text style={styles.detailLabel}>Referanse</Text>
       <Text style={styles.detailValueLast}>{bookingId}</Text>
     </Section>
+
+    {arrangorEmail ? (
+      <Text style={styles.paragraphMuted}>
+        Spørsmål om refusjonen? Svar på denne e-posten, så når du arrangøren
+        direkte.
+      </Text>
+    ) : null}
   </EmailLayout>
 )
 
@@ -57,6 +73,8 @@ RefundReceipt.PreviewProps = {
   amount: '1 200 kr',
   refundDate: '17. mai 2026',
   bookingId: 'LY-2829',
+  arrangorOrgNumber: '987 654 321',
+  arrangorEmail: 'hei@lysyoga.no',
 } satisfies RefundReceiptProps
 
 export default RefundReceipt

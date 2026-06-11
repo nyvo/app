@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { MoreVertical } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
@@ -32,35 +33,59 @@ import { supabase } from '@/lib/supabase';
 import type { TeamInviteLink } from '@/types/database';
 
 // ---------------------------------------------------------------------------
-// Studio-page display UI — split by seller type.
+// Samarbeid — lives as a section on the Studio page (it's storefront
+// management: what shows on which page). Split by seller type:
 //
 // Business / studio (owner side):
-//   - Invite link.
+//   - Invite link panel ("Inviter en instruktør").
 //   - Instructors whose courses show on this studio page.
 //
 // Individual teacher (member side):
 //   - The studio page their courses show on.
 //   - "Stopp visning" action.
 //
-// Empty state for individuals: courses are not shown on a studio page.
+// Joining via /join/:code lands here at /studio#samarbeid — the section
+// scrolls itself into view so the join flow ends with visible confirmation.
 // ---------------------------------------------------------------------------
 
 export function AffiliationsSection() {
   const { currentSeller, currentTeam } = useAuth();
+  const { hash } = useLocation();
+  const anchorRef = useRef<HTMLDivElement>(null);
   const isBusiness = currentSeller?.seller_type === 'business';
 
+  useEffect(() => {
+    if (hash === '#samarbeid') {
+      anchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [hash]);
+
   if (!currentSeller) return null;
+  if (isBusiness && !currentTeam) return null;
 
-  if (isBusiness) {
-    if (!currentTeam) return null;
-    return <BusinessView teamId={currentTeam.id} />;
-  }
-
-  return <IndividualView sellerId={currentSeller.id} />;
+  return (
+    <div ref={anchorRef} id="samarbeid" className="scroll-mt-10">
+      {isBusiness && currentTeam ? (
+        <SettingsSection
+          title="Samarbeid"
+          description="Inviter instruktører til å vise kursene sine på studiosiden din."
+        >
+          <BusinessView teamId={currentTeam.id} />
+        </SettingsSection>
+      ) : (
+        <SettingsSection
+          title="Samarbeid"
+          description="Vis kursene dine på et studios side."
+        >
+          <IndividualView sellerId={currentSeller.id} />
+        </SettingsSection>
+      )}
+    </div>
+  );
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// Business view — invite link + connected instructors
+// Business view — invite card + connected instructors
 // ───────────────────────────────────────────────────────────────────────────
 
 function BusinessView({ teamId }: { teamId: string }) {
@@ -103,33 +128,40 @@ function BusinessView({ teamId }: { teamId: string }) {
     ) ?? null;
 
   return (
-    <div className="space-y-10">
-      <SettingsSection title="Invitasjonslenke">
-        <Card>
-          <CardContent>
+    <div className="space-y-6">
+      <Card>
+        <CardContent>
+          <h3 className="text-base font-medium tracking-tight text-foreground">
+            Inviter en instruktør
+          </h3>
+          <p className="mt-1 max-w-2xl text-base text-foreground-muted">
+            Del lenken på SMS eller Messenger. Den kan brukes av flere
+            instruktører, og alle publiserte kurs vises automatisk på
+            studiosiden.
+          </p>
+          <div className="mt-4">
             <InviteLinkPanel teamId={teamId} />
-          </CardContent>
-        </Card>
-      </SettingsSection>
+          </div>
+        </CardContent>
+      </Card>
 
-      <SettingsSection
-        title="Instruktører"
-        action={
-          visibleAffiliates === null ? (
+      <div>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="text-sm font-medium text-foreground">Instruktører</p>
+          {visibleAffiliates === null ? (
             <Skeleton className="h-6 w-20 rounded-full" aria-hidden="true" />
           ) : visibleAffiliates.length > 0 ? (
             <Badge variant="neutral" shape="pill" size="md">
               {formatInstructorCount(visibleAffiliates.length)}
             </Badge>
-          ) : null
-        }
-      >
+          ) : null}
+        </div>
         <AffiliatesList
           affiliates={visibleAffiliates}
           loading={loadingAffiliates}
           onRevoke={handleRevoke}
         />
-      </SettingsSection>
+      </div>
     </div>
   );
 }
@@ -203,11 +235,12 @@ function IndividualView({ sellerId }: { sellerId: string }) {
       ) : (
         <Card>
           <CardContent>
-            <h2 className="text-base font-medium tracking-tight text-foreground">
+            <h3 className="text-base font-medium tracking-tight text-foreground">
               Kursene dine vises på {host.name}
-            </h2>
+            </h3>
             <p className="mt-1 max-w-2xl text-base text-foreground-muted">
-              Utkast og avsluttede kurs vises ikke. Du kan stoppe visningen når som helst.
+              Alle publiserte kurs vises automatisk — utkast og avsluttede kurs
+              vises ikke. Du kan stoppe visningen når som helst.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Button variant="secondary" onClick={() => setConfirmLeave(true)}>
@@ -337,7 +370,7 @@ function InstructorActionsMenu({
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// Invite link panel — replaces the old email invite form
+// Invite link panel — copy is the primary action; regenerate invalidates
 // ───────────────────────────────────────────────────────────────────────────
 
 function InviteLinkPanel({ teamId }: { teamId: string }) {
@@ -381,7 +414,7 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
       return;
     }
     setLink(data);
-    toast.success('Ny lenke laget');
+    toast.success('Ny lenke laget — den gamle virker ikke lenger');
   };
 
   const fullUrl = link ? `${window.location.host}/join/${link.code}` : '';
@@ -433,11 +466,7 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
           onFocus={(e) => e.currentTarget.select()}
           aria-label="Invitasjonslenke"
         />
-        <Button
-          type="button"
-          onClick={() => void handleCopy()}
-          variant="secondary"
-        >
+        <Button type="button" onClick={() => void handleCopy()}>
           {copied ? 'Kopiert' : 'Kopier lenke'}
         </Button>
       </div>

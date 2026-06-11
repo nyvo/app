@@ -78,6 +78,10 @@ Deno.serve(async (req: Request) => {
           .update({
             dintero_onboarding_status: caseStatus,
             dintero_onboarding_complete: caseStatus === 'ACTIVE',
+            // Keep the local org-nr reference in sync with the KYC'd approval.
+            ...(approval.organization_number
+              ? { organization_number: approval.organization_number }
+              : {}),
           })
           .eq('id', seller.id)
 

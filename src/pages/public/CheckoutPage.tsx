@@ -450,7 +450,7 @@ const CheckoutPage = () => {
                       </Button>
                       {isManual && (
                         <p className="text-sm text-foreground-muted text-center">
-                          Betaling avtales direkte med studioet.
+                          Betaling avtales direkte med {course.seller?.name ?? 'studioet'}.
                         </p>
                       )}
                     </>
@@ -465,6 +465,11 @@ const CheckoutPage = () => {
                       </Button>
                       {sessionError && (
                         <p className="text-sm text-danger text-center">{sessionError}</p>
+                      )}
+                      {course.seller?.name && (
+                        <p className="text-sm text-foreground-muted text-center">
+                          Påmeldingen er hos {course.seller.name}.
+                        </p>
                       )}
                     </>
                   )}

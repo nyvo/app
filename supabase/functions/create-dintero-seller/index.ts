@@ -97,10 +97,13 @@ Deno.serve(async (req) => {
     // payout_destination_id and payout_reference.
     const sellerId = seller.id
 
+    // Normalize "987 654 321" → "987654321" before sending/persisting.
+    const organizationNumber = body.organizationNumber.replace(/\s+/g, '')
+
     const approvalRequest: DinteroSellerApprovalRequest = {
       country_code: 'NO',
       currency: 'NOK',
-      organization_number: body.organizationNumber,
+      organization_number: organizationNumber,
       payout_destination_id: sellerId,
       payout_reference: sellerId,
       bank_accounts: [
@@ -126,6 +129,9 @@ Deno.serve(async (req) => {
         dintero_contract_url: contractUrl,
         dintero_onboarding_status: approval.case_status || 'PENDING',
         dintero_onboarding_complete: approval.case_status === 'ACTIVE',
+        // Persisted so receipts/emails can identify the legal seller —
+        // Dintero holds the KYC'd identity, we keep the org-nr reference.
+        organization_number: organizationNumber,
       })
       .eq('id', body.sellerId)
 

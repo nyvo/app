@@ -1594,6 +1594,7 @@ export type NotificationType =
   | "dintero_seller.approved"
   | "dintero_seller.rejected"
   | "team.invite_accepted"
+  | "affiliation.joined"
 
 export type AvailableTicketType =
   Database["public"]["Functions"]["available_ticket_types"]["Returns"][number]

@@ -29,7 +29,7 @@ import {
 import { enqueueNotification } from '../_shared/notifications.ts'
 import { sendEmail } from '../_shared/email.ts'
 import { formatKroner, formatNorwegianDate, shortBookingId } from '../_shared/format.ts'
-import { deliverBookingConfirmations } from '../_shared/booking-notifications.ts'
+import { deliverBookingConfirmations, resolveArrangorIdentity } from '../_shared/booking-notifications.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -575,29 +575,29 @@ Deno.serve(async (req: Request) => {
         // event — firing on the request side would email before the refund
         // is real. Best-effort: errors logged, never block the webhook ack.
         if (signupBefore?.participant_email && signupBefore.participant_name) {
-          const [{ data: course }, { data: seller }] = await Promise.all([
+          const [{ data: course }, arrangor] = await Promise.all([
             supabase
               .from('courses')
               .select('title')
               .eq('id', signupBefore.course_id)
               .maybeSingle(),
-            supabase
-              .from('sellers')
-              .select('name')
-              .eq('id', signupBefore.seller_id)
-              .maybeSingle(),
+            resolveArrangorIdentity(supabase, signupBefore.seller_id),
           ])
-          if (course?.title && seller?.name) {
+          if (course?.title && arrangor) {
             const result = await sendEmail({
               template: 'refund-receipt',
               to: signupBefore.participant_email,
+              // Refund questions go to the arrangør — the seller of record.
+              replyTo: arrangor.contactEmail ?? undefined,
               props: {
                 buyerName: signupBefore.participant_name,
-                studioName: seller.name,
+                studioName: arrangor.name,
                 courseTitle: course.title,
                 amount: formatKroner(refundAmountNok),
                 refundDate: formatNorwegianDate(new Date()),
                 bookingId: shortBookingId(signupBefore.id),
+                arrangorOrgNumber: arrangor.orgNumber ?? undefined,
+                arrangorEmail: arrangor.contactEmail ?? undefined,
               },
             })
             if (result.error) {

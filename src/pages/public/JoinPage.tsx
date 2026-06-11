@@ -23,7 +23,7 @@ import type { LookupTeamInviteLinkResult } from '@/types/database';
 //   2. In another team     → "Forlat og bli med" with the leaving team named
 //   3. Logged out          → "Logg inn" + "Opprett konto" (return after auth)
 //   4. Expired / not_found → message, single "Tilbake" ghost
-//   5. Already a member    → message + "Til samarbeid"
+//   5. Already a member    → message + link to /studio#samarbeid
 //
 // The join page DOES the "leave current team and switch" confirm — there's no
 // async "pending invite" state in the dashboard, by design.
@@ -179,7 +179,9 @@ export default function JoinPage() {
 
     switch (data.status) {
       case 'joined':
-        navigate(routes.collaboration, { replace: true });
+        // Land on the Samarbeid section so the join ends with visible
+        // confirmation ("Kursene dine vises på …") instead of a bare page.
+        navigate(routes.studioSamarbeid, { replace: true });
         return;
       case 'already_member':
         setPhase({ kind: 'already_member' });
@@ -324,7 +326,7 @@ export default function JoinPage() {
         <p className="text-base text-foreground-muted mb-8">
           Du er allerede medlem av {team.team_name}.
         </p>
-        <Button size="cta" className="w-full" onClick={() => navigate(routes.collaboration)}>
+        <Button size="cta" className="w-full" onClick={() => navigate(routes.studioSamarbeid)}>
           Min side
         </Button>
       </Shell>

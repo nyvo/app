@@ -24,6 +24,12 @@ export interface OrderConfirmEmailProps {
   /** Pre-formatted via formatKroner, e.g. "1 200 kr" */
   amount: string
   bookingId: string
+  /** Pre-formatted via formatOrgNumber, e.g. "987 654 321". The arrangør's
+   * legal identity anchor — the receipt is where it lives, not the UI. */
+  arrangorOrgNumber?: string
+  /** When set, the email's replyTo routes to the arrangør and the template
+   * renders the "svar på denne e-posten" contact line. */
+  arrangorEmail?: string
 }
 
 export interface RefundReceiptEmailProps {
@@ -35,6 +41,10 @@ export interface RefundReceiptEmailProps {
   /** Pre-formatted Norwegian date, e.g. "17. mai 2026" */
   refundDate: string
   bookingId: string
+  /** Pre-formatted via formatOrgNumber, e.g. "987 654 321" */
+  arrangorOrgNumber?: string
+  /** When set, replyTo routes to the arrangør; renders the contact line. */
+  arrangorEmail?: string
 }
 
 export interface ClassReminderEmailProps {

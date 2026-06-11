@@ -23,7 +23,6 @@ const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage
 const BillingPage = lazy(() => import('./pages/teacher/BillingPage'));
 const PaymentsPage = lazy(() => import('./pages/teacher/PaymentsPage'));
 const StudioPage = lazy(() => import('./pages/teacher/StudioPage'));
-const CollaborationPage = lazy(() => import('./pages/teacher/CollaborationPage'));
 const PublicCoursesPage = lazy(() => import('./pages/public/PublicCoursesPage'));
 const PublicCourseDetailPage = lazy(() => import('./pages/public/PublicCourseDetailPage'));
 const CheckoutPage = lazy(() => import('./pages/public/CheckoutPage'));
@@ -120,7 +119,9 @@ function AppRoutes() {
             <Route path="courses" element={<CoursesPage />} />
             <Route path="courses/:id" element={<CoursePage />} />
             <Route path="studio" element={<StudioPage />} />
-            <Route path="collaboration" element={<CollaborationPage />} />
+            {/* Samarbeid moved into the Studio page (2026-06). Old links and
+                stale notification action_urls keep resolving. */}
+            <Route path="collaboration" element={<Navigate to="/studio#samarbeid" replace />} />
             <Route path="settings/billing" element={<BillingPage />} />
             <Route path="settings/payouts" element={<PaymentsPage />} />
           </Route>
