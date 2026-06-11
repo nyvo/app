@@ -184,12 +184,12 @@ function RoleChooser() {
           {([
             {
               value: 'buyer' as const,
-              title: 'Delta på klasser',
-              body: 'Finn klasser hos studioer i nærheten.',
+              title: 'Jeg vil melde meg på kurs',
+              body: 'Finn kurs og klasser hos lærere og studioer.',
             },
             {
               value: 'seller' as const,
-              title: 'Hold kurs',
+              title: 'Jeg tilbyr kurs',
               body: 'Lag kurs og ta imot påmeldinger.',
             },
           ]).map((opt) => {
