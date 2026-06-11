@@ -283,7 +283,11 @@ export default function JoinPage() {
         <Button
           size="cta"
           className="w-full"
-          onClick={() => navigate('/auth', { state: { from: location } })}
+          // Studio invites are for instructors → seller intent skips the role
+          // chooser; `next` brings the user back here after onboarding.
+          onClick={() =>
+            navigate(`/auth?intent=seller&next=${encodeURIComponent(location.pathname)}`)
+          }
         >
           Logg inn
         </Button>

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { ProtectedRoute } from './ProtectedRoute'
 
 // useAuth is the only dependency that decides this guard's behavior.
@@ -89,5 +89,38 @@ describe('ProtectedRoute', () => {
     })
     expect(screen.getByText('onboarding page')).toBeInTheDocument()
     expect(screen.queryByText('protected content')).not.toBeInTheDocument()
+  })
+
+  // Deep-link preservation: the guarded target rides along as ?next= so
+  // onboarding can return the user there on completion.
+  it('carries the deep-link target as ?next= on the onboarding redirect', () => {
+    function OnboardingProbe() {
+      const location = useLocation()
+      return <div>onboarding search: {location.search}</div>
+    }
+    mockUseAuth.mockReturnValue({
+      isInitialized: true,
+      isLoading: false,
+      user,
+      profile: { onboarding_completed_at: null },
+    })
+    render(
+      <MemoryRouter initialEntries={['/protected?tab=2']}>
+        <Routes>
+          <Route
+            path="/protected"
+            element={
+              <ProtectedRoute>
+                <div>protected content</div>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/onboarding" element={<OnboardingProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    expect(
+      screen.getByText(`onboarding search: ?next=${encodeURIComponent('/protected?tab=2')}`),
+    ).toBeInTheDocument()
   })
 })

@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { AUTH_ROUTES } from '@/lib/auth-routes'
+import { AUTH_ROUTES, resolvePostAuthDestination } from '@/lib/auth-routes'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -29,7 +29,14 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!profile.onboarding_completed_at) {
-    return <Navigate to={AUTH_ROUTES.onboarding} replace />
+    // Carry the deep-link target as `?next=` so it survives onboarding
+    // instead of being flattened to /overview on completion.
+    return (
+      <Navigate
+        to={resolvePostAuthDestination(profile, location.pathname + location.search)}
+        replace
+      />
+    )
   }
 
   return <>{children}</>

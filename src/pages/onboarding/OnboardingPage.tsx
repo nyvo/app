@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Check, ChevronLeft, LogOut } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,7 @@ import { logger } from '@/lib/logger'
 import { cn, formatPersonName, resolveDisplayName } from '@/lib/utils'
 import { stepVariants } from '@/lib/motion'
 import { toast } from 'sonner'
-import { AUTH_ROUTES } from '@/lib/auth-routes'
+import { AUTH_ROUTES, parseAuthIntent, sanitizeNextPath } from '@/lib/auth-routes'
 import type { UserRole } from '@/types/database'
 
 /**
@@ -20,6 +20,11 @@ import type { UserRole } from '@/types/database'
  *   profile.role === 'buyer'  + !completed     → BuyerSetup
  *   profile.role === 'seller' + !completed     → SellerType → SellerProfile
  *   onboarding_completed_at !== null           → redirect /overview
+ *
+ * `?intent=buyer|seller` (set by the entry door: seller CTA, invite link,
+ * booking surface) pre-sets the role and skips the RoleChooser — the chooser
+ * only renders for context-free signups (direct /auth visits). `?next=`
+ * preserves a deep-link target (e.g. /join/:code) through completion.
  *
  * Preview iteration history lives at /dev/onboarding-preview. This file
  * is the production wiring. Visual rules: studio-design §16.2 sectioned
@@ -55,7 +60,34 @@ function generateSlug(name: string): string {
 }
 
 export default function OnboardingPage() {
-  const { user, profile, isInitialized, isLoading, signOut } = useAuth()
+  const { user, profile, isInitialized, isLoading, signOut, setRole } = useAuth()
+  const [searchParams] = useSearchParams()
+
+  const intent = parseAuthIntent(searchParams.get('intent'))
+  const nextPath = sanitizeNextPath(searchParams.get('next')) ?? AUTH_ROUTES.dashboard
+
+  // Entry-context intent pre-sets the role so the chooser is skipped. Applied
+  // at most once per mount (the ref) — if the user later backs out to the
+  // chooser via setRole(null), the intent must not re-apply and trap them.
+  // While the write is in flight we render nothing instead of flashing the
+  // chooser; on failure we fall back to the chooser silently.
+  const intentAppliedRef = useRef(false)
+  const [resolvingIntent, setResolvingIntent] = useState(() => intent !== null)
+  useEffect(() => {
+    if (!intent || intentAppliedRef.current) return
+    if (!profile || profile.onboarding_completed_at) return
+    intentAppliedRef.current = true
+    if (profile.role !== null) {
+      // Role already chosen in an earlier session — never override it.
+      setResolvingIntent(false)
+      return
+    }
+    void (async () => {
+      const { error } = await setRole(intent)
+      if (error) logger.error('Onboarding: intent role pre-set failed', error)
+      setResolvingIntent(false)
+    })()
+  }, [intent, profile, setRole])
 
   // Auth gate. ProtectedRoute can't wrap this route because it lives outside
   // TeacherLayout; do the redirect inline.
@@ -70,7 +102,7 @@ export default function OnboardingPage() {
   }
 
   if (profile.onboarding_completed_at) {
-    return <Navigate to={AUTH_ROUTES.dashboard} replace />
+    return <Navigate to={nextPath} replace />
   }
 
   return (
@@ -93,11 +125,11 @@ export default function OnboardingPage() {
             className="absolute inset-0 flex"
           >
             {profile.role === null ? (
-              <RoleChooser />
+              resolvingIntent ? null : <RoleChooser />
             ) : profile.role === 'buyer' ? (
-              <BuyerSetup />
+              <BuyerSetup nextPath={nextPath} />
             ) : (
-              <SellerFlow />
+              <SellerFlow nextPath={nextPath} />
             )}
           </motion.div>
         </AnimatePresence>
@@ -152,12 +184,12 @@ function RoleChooser() {
           {([
             {
               value: 'buyer' as const,
-              title: 'Delta på klasser',
-              body: 'Finn klasser hos studioer i nærheten.',
+              title: 'Jeg vil melde meg på kurs',
+              body: 'Finn kurs og klasser hos lærere og studioer.',
             },
             {
               value: 'seller' as const,
-              title: 'Hold kurs',
+              title: 'Jeg tilbyr kurs',
               body: 'Lag kurs og ta imot påmeldinger.',
             },
           ]).map((opt) => {
@@ -200,7 +232,7 @@ function RoleChooser() {
 // Step 2a — Buyer setup
 // ---------------------------------------------------------------------------
 
-function BuyerSetup() {
+function BuyerSetup({ nextPath }: { nextPath: string }) {
   const { profile, completeBuyerOnboarding, setRole } = useAuth()
   const navigate = useNavigate()
 
@@ -241,7 +273,7 @@ function BuyerSetup() {
       setSaving(false)
       return
     }
-    navigate(AUTH_ROUTES.dashboard, { replace: true })
+    navigate(nextPath, { replace: true })
   }
 
   return (
@@ -295,7 +327,7 @@ function BuyerSetup() {
 // Step 2b — Seller flow (Type → Profile + URL)
 // ---------------------------------------------------------------------------
 
-function SellerFlow() {
+function SellerFlow({ nextPath }: { nextPath: string }) {
   const { setRole } = useAuth()
   const [stage, setStage] = useState<'type' | 'profile'>('type')
   const [direction, setDirection] = useState(1)
@@ -332,7 +364,7 @@ function SellerFlow() {
               onBack={() => { void exitToRole() }}
             />
           ) : (
-            <SellerProfile kind={kind} onBack={goBackToType} />
+            <SellerProfile kind={kind} onBack={goBackToType} nextPath={nextPath} />
           )}
         </motion.div>
       </AnimatePresence>
@@ -408,7 +440,15 @@ function SellerType({
   )
 }
 
-function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void }) {
+function SellerProfile({
+  kind,
+  onBack,
+  nextPath,
+}: {
+  kind: SellerKind
+  onBack: () => void
+  nextPath: string
+}) {
   const { profile, ensureSeller, markOnboardingComplete } = useAuth()
   const navigate = useNavigate()
   const nameLabel = kind === 'studio' ? 'Studionavn' : 'Profilnavn'
@@ -456,9 +496,9 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
     const { error: stampError } = await markOnboardingComplete()
     if (stampError) {
       logger.error('Onboarding: markOnboardingComplete failed', stampError)
-      // Non-fatal — the seller is created, just route to dashboard.
+      // Non-fatal — the seller is created, just route onward.
     }
-    navigate(AUTH_ROUTES.dashboard, { replace: true })
+    navigate(nextPath, { replace: true })
   }
 
   return (

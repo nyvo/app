@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation, type Location } from 'react-router-dom'
+import { Link, useNavigate, useLocation, useSearchParams, type Location } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
@@ -6,7 +6,12 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useFormValidation } from '@/hooks/use-form-validation'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { AuthFormField } from '@/components/auth/AuthFormField'
-import { AUTH_ROUTES, resolvePostAuthDestination } from '@/lib/auth-routes'
+import {
+  AUTH_ROUTES,
+  parseAuthIntent,
+  resolvePostAuthDestination,
+  sanitizeNextPath,
+} from '@/lib/auth-routes'
 import { AUTH_VALIDATION, AUTH_ERRORS, AUTH_PLACEHOLDERS } from '@/lib/auth-messages'
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { Separator } from '@/components/ui/separator'
@@ -29,15 +34,25 @@ const ROUTES = AUTH_ROUTES
 const AuthPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { sendMagicLink, user, profile, isLoading: authLoading } = useAuth()
 
   const locationState = location.state as { email?: string; from?: Location } | null
   const prefillEmail = locationState?.email ?? ''
-  const redirectAfterLogin = locationState?.from?.pathname ?? ROUTES.dashboard
+  // Entry context: `?intent=` says which door the user came through (seller
+  // CTA, invite link, booking surface) so onboarding can skip the role
+  // chooser. `?next=` / router state preserve the deep-link target.
+  const intent = parseAuthIntent(searchParams.get('intent'))
+  const fromLocation = locationState?.from
+  const redirectAfterLogin =
+    sanitizeNextPath(searchParams.get('next')) ??
+    (fromLocation ? `${fromLocation.pathname}${fromLocation.search ?? ''}` : null) ??
+    ROUTES.dashboard
   // Provider-side redirect (magic link / OAuth) must come back through the
-  // callback so the post-auth gate runs once, with `next` preserving the
-  // deep-link target if there was one.
-  const callbackUrl = `${window.location.origin}${ROUTES.callback}?next=${encodeURIComponent(redirectAfterLogin)}`
+  // callback so the post-auth gate runs once, with `next` and `intent`
+  // riding the URL — the magic link may open in a fresh browser context, so
+  // nothing in component state survives to the other side.
+  const callbackUrl = `${window.location.origin}${ROUTES.callback}?next=${encodeURIComponent(redirectAfterLogin)}${intent ? `&intent=${intent}` : ''}`
 
   // Two-step: identify (enter email) → sent (enter OTP / click email link)
   const [step, setStep] = useState<'identify' | 'sent'>('identify')
@@ -64,10 +79,13 @@ const AuthPage = () => {
   const [isResending, setIsResending] = useState(false)
 
   useEffect(() => {
-    if (user && !authLoading) {
-      navigate(resolvePostAuthDestination(profile, redirectAfterLogin), { replace: true })
+    // Wait for the profile before resolving — navigating on a not-yet-loaded
+    // profile would bounce an already-onboarded returning user through
+    // /onboarding before re-navigating to the dashboard.
+    if (user && !authLoading && profile) {
+      navigate(resolvePostAuthDestination(profile, redirectAfterLogin, intent), { replace: true })
     }
-  }, [user, profile, authLoading, navigate, redirectAfterLogin])
+  }, [user, profile, authLoading, navigate, redirectAfterLogin, intent])
 
   // Auto-verify once the user types all 6 digits.
   // Note: `isVerifying` is intentionally NOT in deps — flipping it inside the
