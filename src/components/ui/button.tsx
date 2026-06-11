@@ -41,8 +41,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary — indigo brand; subtle darken on hover
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        // Primary — indigo brand; subtle darken on hover. Focus uses a light
+        // inner border (base's dark border-foreground is ~1.8:1 on the fill).
+        default:
+          "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:border-primary-foreground/80",
         outline:
           "border-border bg-background shadow-xs hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-border dark:bg-surface-on-dark dark:hover:bg-surface-on-dark",
         "outline-soft":
@@ -54,7 +56,7 @@ const buttonVariants = cva(
         soft:
           "bg-muted text-foreground hover:bg-active aria-expanded:bg-active",
         destructive:
-          "bg-danger text-danger-foreground hover:bg-danger/90 focus-visible:border-danger/40 focus-visible:ring-danger/20",
+          "bg-danger text-danger-foreground hover:bg-danger/90 focus-visible:border-danger-foreground/80",
         link: "text-primary underline-offset-4 hover:underline",
         plain:
           "bg-transparent border-transparent text-foreground-muted hover:bg-transparent hover:text-foreground",

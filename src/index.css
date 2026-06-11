@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "@fontsource-variable/geist";
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap');
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
@@ -27,7 +26,6 @@
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', sans-serif;
-  --font-serif: 'EB Garamond', Georgia, serif;
 
   /* Surfaces — `--background` (page canvas) and `--surface` (cards/panels)
      share value in light mode but differ in role; would diverge in dark. */
@@ -82,9 +80,7 @@
   --color-info-foreground: var(--info-foreground);
   --color-info-subtle: var(--info-subtle);
 
-  /* Selection */
-  --color-selection: var(--selection);
-  --color-selection-foreground: var(--selection-foreground);
+  /* Selected-state tint */
   --color-selection-light: var(--selection-light);
 
   /* Structure */
@@ -111,13 +107,16 @@
        xs   12 / 16 / +0.0025em    — captions, KPI labels, chips
        sm   14 / 20 / 0            — meta, labels, controls, dense UI
        base 16 / 24 / 0            — app body (DEFAULT)
+       lg   18 / 28 / 0            — dialog/sheet titles, lead paragraphs
        xl   20 / 28 / -0.005em     — h3 / large card titles
        2xl  24 / 30 / -0.01em      — h2 / page titles
        3xl  30 / 36 / -0.015em     — h1 / hero on dashboard
+       4xl  36 / 40 / -0.02em      — marketing display, mid tier
        5xl  48 / 52 / -0.025em     — display, 1 per landing hero
 
-     Display caps at 48px. Sub-12px / 18px / 40px / 72px not exposed —
-     use the canonical tier. For sub-12px, prefer `text-[11px]` arbitrary.
+     Display caps at 48px — 6xl+ are unset below and won't compile.
+     Sub-12px / 40px / 72px not exposed — use the canonical tier.
+     For sub-12px, prefer `text-[11px]` arbitrary.
      ──────────────────────────────────────────────────────────── */
 
   --text-xs: 12px;
@@ -129,6 +128,9 @@
 
   --text-base: 16px;
   --text-base--line-height: calc(24/16);
+
+  --text-lg: 18px;
+  --text-lg--line-height: calc(28/18);
 
   --text-xl: 20px;
   --text-xl--line-height: calc(28/20);
@@ -142,9 +144,19 @@
   --text-3xl--line-height: calc(36/30);
   --text-3xl--letter-spacing: -0.015em;
 
+  --text-4xl: 36px;
+  --text-4xl--line-height: calc(40/36);
+  --text-4xl--letter-spacing: -0.02em;
+
   --text-5xl: 48px;
   --text-5xl--line-height: calc(52/48);
   --text-5xl--letter-spacing: -0.025em;
+
+  /* Hard cap — display ends at 5xl. */
+  --text-6xl: initial;
+  --text-7xl: initial;
+  --text-8xl: initial;
+  --text-9xl: initial;
 }
 
 :root {
@@ -225,16 +237,14 @@
   --info-foreground: var(--neutral-1);
   --info-subtle: oklch(0.95 0.03 270);
 
-  /* Selection */
-  --selection: oklch(0.515 0.237 270);
-  --selection-foreground: oklch(0.985 0 0);
+  /* Selected-state tint (cards, steppers) — NOT text ::selection (that uses --muted) */
   --selection-light: oklch(0.515 0.237 270 / 8%);
 
   /* Structure */
   --border: var(--neutral-7);                         /* visible divider (was neutral-6, too faint on white) */
   --border-subtle: var(--neutral-6);
   --input: var(--neutral-7);                          /* crisp field edge */
-  --ring: var(--primary);                             /* indigo focus ring */
+  --ring: var(--foreground);                          /* neutral focus ring — matches button.tsx focus style; never brand-colored */
 
   /* Dark chrome — Slate-dark surface scale for chrome that stays dark in BOTH
      app themes (sidebar, toast, future overlays). Single source of truth so
@@ -329,16 +339,14 @@
   --info-foreground: var(--neutral-1);
   --info-subtle: oklch(0.30 0.05 270);
 
-  /* Selection */
-  --selection: oklch(0.560 0.220 270);
-  --selection-foreground: oklch(0.985 0 0);
+  /* Selected-state tint */
   --selection-light: oklch(0.560 0.220 270 / 12%);
 
   /* Structure */
   --border: var(--neutral-7);
   --border-subtle: var(--neutral-6);
   --input: var(--neutral-7);
-  --ring: var(--primary);
+  --ring: var(--foreground);                          /* neutral focus ring, see :root */
   --chart-1: oklch(0.809 0.105 266);
   --chart-2: oklch(0.623 0.200 268);
   --chart-3: oklch(0.546 0.237 270);   /* = primary */
@@ -392,6 +400,20 @@
     scrollbar-color: var(--foreground) transparent;
   }
 
+  /* Reduced motion — covers CSS animations/transitions (tw-animate-css,
+     animate-in/out in popover, dropdown, sheet, …). framer-motion variants
+     are handled separately in lib/motion.ts. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   /* Override browser autofill styles */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
@@ -414,13 +436,15 @@
 @layer components {
   /* ── App utilities — not part of the preset, reused across the app ── */
 
-  /* Focus Ring — opt-in helper for custom clickable surfaces */
+  /* Focus Ring — opt-in helper for custom clickable surfaces.
+     2px neutral ring, same weight as the `focus-visible:ring-2 ring-ring`
+     pattern used across components. */
   .focus-ring {
     outline: none;
   }
   .focus-ring:focus-visible {
     --tw-ring-color: var(--ring);
-    --tw-ring-shadow: 0 0 0 3px var(--tw-ring-color);
+    --tw-ring-shadow: 0 0 0 2px var(--tw-ring-color);
     box-shadow: var(--tw-ring-shadow);
   }
 

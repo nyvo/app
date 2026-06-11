@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { Grain } from '@/components/ui/grain';
+import { Grain } from '@/components/public/Grain';
 import { DinteroPaymentBadge } from '@/components/public/DinteroPaymentBadge';
 import { formatKroner } from '@/lib/utils';
 import { COMPANY } from '@/lib/company';
