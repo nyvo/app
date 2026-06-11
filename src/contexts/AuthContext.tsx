@@ -5,6 +5,7 @@ import type { Profile, Seller, SellerMemberRole, Team, UserRole } from '@/types/
 import { logger } from '@/lib/logger'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
 import { fetchSellerOperational } from '@/services/sellers'
+import { claimMySignups } from '@/services/signups'
 
 // Type for seller membership with seller data
 interface SellerMembership {
@@ -222,6 +223,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false
     }
     setProfile(userProfile)
+
+    // Claim historical guest bookings by verified-email match. Fire-and-forget
+    // at session start — the buyer dashboard re-reads on mount, so a claim
+    // that lands after the first render is picked up on the next visit.
+    // Failures are swallowed: claiming is a background convenience, never a
+    // blocker for login. (Buyer onboarding awaits its own claim before
+    // prefill — see BuyerSetup.)
+    void claimMySignups().then(({ error }) => {
+      if (error) logger.error('claim_my_signups failed (background):', error)
+    })
 
     const { sellers: loadedSellers, memberships } = await fetchSellersData(userId)
     setSellers(loadedSellers)
