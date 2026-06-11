@@ -1,5 +1,12 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from './empty'
 
 interface EmptyStateProps {
   title: string
@@ -29,21 +36,29 @@ export const EmptyState = React.memo(function EmptyState({
   const isCompact = variant === 'compact'
 
   return (
-    <div
+    <Empty
       className={cn(
-        'flex flex-col items-center px-4 text-center mx-auto max-w-sm',
+        'mx-auto max-w-sm border-0 bg-transparent p-0 px-4 text-center',
         isCompact ? 'py-8' : 'py-12',
         className,
       )}
     >
-      <p className="text-sm font-medium text-foreground">{title}</p>
-      {description && (
-        <p className="mt-1 text-sm text-foreground-muted">{description}</p>
+      <EmptyHeader className="gap-1">
+        <EmptyTitle className="text-sm font-medium tracking-normal text-foreground">
+          {title}
+        </EmptyTitle>
+        {description && (
+          <EmptyDescription className="text-sm/normal text-foreground-muted">
+            {description}
+          </EmptyDescription>
+        )}
+      </EmptyHeader>
+      {(action || inlineLink) && (
+        <EmptyContent className={cn('gap-3', isCompact ? 'mt-0' : 'mt-2')}>
+          {action}
+          {inlineLink && <div className="text-sm">{inlineLink}</div>}
+        </EmptyContent>
       )}
-      {action && <div className={cn(isCompact ? 'mt-4' : 'mt-6')}>{action}</div>}
-      {inlineLink && (
-        <div className="mt-3 text-sm">{inlineLink}</div>
-      )}
-    </div>
+    </Empty>
   )
 })

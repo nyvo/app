@@ -27,7 +27,3 @@ export function parseRooms(value: unknown): Room[] {
   }
   return rooms
 }
-
-export function roomCapacity(rooms: Room[], name: string): number | null {
-  return rooms.find((room) => room.name === name)?.capacity ?? null
-}

@@ -54,11 +54,3 @@ export const routes = {
   publicCourse: (teamSlug: string, courseSlug: string) =>
     `/${teamSlug}/${courseSlug}`,
 } as const;
-
-/**
- * Build the post-login destination based on intent. The default lands on
- * the dashboard; future buyer flows might want to deep-link elsewhere.
- */
-export function postLoginDestination(): string {
-  return routes.dashboard;
-}

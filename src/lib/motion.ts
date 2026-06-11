@@ -20,17 +20,6 @@ export const pageTransition: Transition = {
   ease,
 };
 
-export const tabVariants: Variants = {
-  initial: { opacity: 0, y: 3 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -3 },
-};
-
-export const tabTransition: Transition = {
-  duration: dur(140),
-  ease,
-};
-
 export const authPageVariants: Variants = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
@@ -46,11 +35,6 @@ export const scrollVariants: Variants = {
   visible: { opacity: 1, y: 0 },
 };
 
-export const scrollFadeVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-};
-
 export const scrollStaggerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
@@ -63,22 +47,6 @@ export const scrollStaggerVariants: Variants = {
 
 export const scrollTransition: Transition = {
   duration: dur(600),
-  ease,
-};
-
-export const slideVariants: Variants = {
-  enter: { opacity: 0, x: 24 },
-  center: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -24 },
-};
-
-export const slideTransition: Transition = {
-  duration: dur(200),
-  ease,
-};
-
-export const slideTransitionFast: Transition = {
-  duration: dur(80),
   ease,
 };
 

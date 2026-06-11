@@ -7,7 +7,8 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Badge, type badgeVariants } from '@/components/ui/badge';
+import { PaymentBadge } from '@/components/ui/payment-badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import {
   DropdownMenu,
@@ -16,7 +17,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { VariantProps } from 'class-variance-authority';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatKroner, cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -86,23 +86,6 @@ function formatNorwegianShort(input: string | null | undefined): string {
     hour12: false,
   }).format(d);
   return `${datePart}, kl. ${timePart}`;
-}
-
-type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
-
-function signupBadge(status: SignupStatus): { label: string; variant: BadgeVariant } {
-  if (status === 'cancelled') return { label: 'Avbestilt', variant: 'neutral' };
-  if (status === 'course_cancelled') return { label: 'Kurs avlyst', variant: 'warning' };
-  return { label: 'Påmeldt', variant: 'success' };
-}
-
-function paymentBadge(status: PaymentStatus): { label: string; variant: BadgeVariant } {
-  if (status === 'paid') return { label: 'Betalt', variant: 'success' };
-  if (status === 'pending') return { label: 'Venter', variant: 'warning' };
-  if (status === 'failed') return { label: 'Mislykket', variant: 'destructive' };
-  // Manual-payment signup — settled directly with the studio, outside the platform.
-  if (status === 'external') return { label: 'Betales direkte', variant: 'warning' };
-  return { label: 'Refundert', variant: 'neutral' };
 }
 
 // Map Dintero's `payment_product` slug (e.g. `payex.creditcard`, `vipps.vipps`)
@@ -249,9 +232,13 @@ export function ParticipantDetailDrawer({
     signup.amount_paid != null ? signup.amount_paid : signup.ticket_type?.price ?? null;
   const priceStrike = paymentStatus === 'refunded';
   const paymentMethod = paymentMethodLabel(signup.payment_product);
-
-  const signupB = signupBadge(status);
-  const paymentB = paymentBadge(paymentStatus);
+  const signupLabel = status === 'cancelled' ? 'Avbestilt' : undefined;
+  const paymentLabel =
+    paymentStatus === 'pending'
+      ? 'Venter'
+      : paymentStatus === 'failed'
+        ? 'Mislykket'
+        : undefined;
 
   const runAction = async (fn: () => Promise<void>) => {
     setLoading(true);
@@ -298,10 +285,10 @@ export function ParticipantDetailDrawer({
             {/* Status mini-cards */}
             <div className="grid grid-cols-2 gap-3">
               <StatusTile label="Påmelding">
-                <Badge variant={signupB.variant} shape="pill" size="sm">{signupB.label}</Badge>
+                <StatusBadge status={status} customLabel={signupLabel} />
               </StatusTile>
               <StatusTile label="Betaling">
-                <Badge variant={paymentB.variant} shape="pill" size="sm">{paymentB.label}</Badge>
+                <PaymentBadge status={paymentStatus} customLabel={paymentLabel} visibility="always" />
               </StatusTile>
             </div>
 

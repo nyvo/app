@@ -43,13 +43,12 @@ Already has the most responsive work; bugs here cost real bookings.
   `CheckoutPage` (`/:slug/:courseSlug/pamelding`), `CheckoutSuccessPage`,
   `AuthPage`, `JoinPage`, `AboutPage`, `TermsPage`, `PrivacyPage`, `NotFoundPage`,
   `OnboardingPage`.
-- Components: `components/public/marketing/*` (PublicNav, PublicFooter),
-  `components/public/studio/*` (StudioHero, CourseShelf, FeaturedCourse,
-  CourseCard, StudioMonthGrid, StudioMonthSchedule, StudioScheduleStrip),
+- Components:
+  `components/public/studio/*` (CourseCard, StudioMonthGrid, StudioMonthSchedule),
   `components/public/course-details/*` (CourseHero, CourseSessions, LocationCard,
-  BookingRailLite, OtherCoursesShelf), `components/public/schedule/*`.
-- Chrome: there is **no shared public layout** — pages compose `PublicNav` /
-  `PublicFooter` themselves. Verify nav/footer behave identically across pages.
+  BookingRailLite).
+- Chrome: there is **no shared public layout** — public pages compose their own
+  page chrome.
 
 ### B. Teacher / dashboard app (authenticated, behind `TeacherLayout`)
 Desktop-first historically — **this is where the risk concentration is** (most
@@ -140,7 +139,6 @@ overridden below `md`) and doesn't force horizontal scroll at 320–375.
 **Non-responsive `grid-cols-N`** (verify they don't crush on phone):
 - `components/teacher/ParticipantDetailDrawer.tsx:296` — `grid-cols-2` inside a
   drawer that's `w-3/4` on mobile.
-- `components/ui/time-picker.tsx:140` — `grid-cols-4` in a `w-[280px]` popover.
 - `components/public/studio/StudioMonthGrid.tsx:112,118` — `grid-cols-7` calendar
   (7 cols is intrinsic to a month grid; check legibility at 320, not reflow).
 
@@ -153,7 +151,7 @@ MobileTeacherHeader instances at lines 71/560/632), `StudioPage`, `PaymentsPage`
 **Heaviest existing responsive files** (regression-check these still work — they
 carry the most breakpoint logic, so they're easiest to subtly break):
 `LandingPage` (26 responsive prefixes), `CheckoutPage` (11), `sidebar.tsx` (9),
-`PublicCourseDetailPage` (8), `OnboardingPage` (8), `StudioHero`/`CourseShelf` (7).
+`PublicCourseDetailPage` (8), `OnboardingPage` (8).
 
 ---
 
