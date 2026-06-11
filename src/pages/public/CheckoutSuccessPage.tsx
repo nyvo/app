@@ -198,7 +198,7 @@ const CheckoutSuccessPage = () => {
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
             <Spinner size="lg" className="text-foreground" />
           </div>
-          <p className="mb-3 text-3xl font-medium tracking-tight text-foreground">Bekrefter betaling</p>
+          <p className="mb-3 text-3xl font-medium text-foreground">Bekrefter betaling</p>
           <p className="text-base text-foreground-muted">
             {isLongWait
               ? 'Det tar litt lenger tid enn vanlig. Du får bekreftelsen på e-post om vi ikke blir ferdige her.'
@@ -246,7 +246,7 @@ const CheckoutSuccessPage = () => {
           >
             <Clock className="size-6" strokeWidth={2.5} />
           </div>
-          <h1 className="mb-3 text-3xl font-medium tracking-tight text-foreground">
+          <h1 className="mb-3 text-3xl font-medium text-foreground">
             Betalingen er bekreftet
           </h1>
           <p className="mb-8 text-base text-foreground-muted">
@@ -275,7 +275,7 @@ const CheckoutSuccessPage = () => {
           >
             <X className="size-6" strokeWidth={2.5} />
           </div>
-          <h1 className="mb-3 text-3xl font-medium tracking-tight text-foreground">
+          <h1 className="mb-3 text-3xl font-medium text-foreground">
             Betalingen gikk ikke gjennom
           </h1>
           <p className="mb-8 text-base text-foreground-muted">
@@ -317,7 +317,7 @@ const CheckoutSuccessPage = () => {
                     >
                       <Check className="size-6" strokeWidth={2.5} />
                     </div>
-                    <h1 className="mt-4 text-3xl font-medium tracking-tight text-foreground">Du er påmeldt</h1>
+                    <h1 className="mt-4 text-3xl font-medium text-foreground">Du er påmeldt</h1>
                     <p className="mt-2 text-base text-foreground-muted">
                       {signup
                         ? `Vi har sendt en bekreftelse til ${signup.participant_email}.`

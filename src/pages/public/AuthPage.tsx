@@ -148,7 +148,7 @@ const AuthPage = () => {
     return (
       <AuthLayout title="" customContent>
         <div className="mb-8 w-full space-y-2 text-center">
-          <h1 className="text-2xl font-medium tracking-tight text-foreground">
+          <h1 className="text-2xl font-medium text-foreground">
             Sjekk e-posten din
           </h1>
           <p className="text-base text-foreground-muted">

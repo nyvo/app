@@ -113,7 +113,7 @@ export function FeaturedCourse({ course, viewingSlug, viewingName }: FeaturedCou
           )}
 
           {/* Display title */}
-          <h3 className="font-medium text-foreground text-3xl leading-tight tracking-tight sm:text-5xl">
+          <h3 className="font-medium text-foreground text-3xl leading-tight sm:text-5xl">
             {course.title}
           </h3>
 

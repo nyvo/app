@@ -11,7 +11,7 @@ const PrivacyPage = () => {
 
       <main className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-3xl space-y-10">
-          <h1 className="text-3xl font-medium tracking-tight text-foreground">
+          <h1 className="text-3xl font-medium text-foreground">
             Personvernerklæring
           </h1>
 
@@ -21,7 +21,7 @@ const PrivacyPage = () => {
 
           <div className="space-y-8">
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">Hvem er ansvarlig</h2>
+              <h2 className="text-lg font-medium text-foreground">Hvem er ansvarlig</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Openspot driftes av Framio AS, org.nr. 935 967 511, som er behandlingsansvarlig for personopplysningene dine.
               </p>
@@ -31,7 +31,7 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">Hva vi lagrer</h2>
+              <h2 className="text-lg font-medium text-foreground">Hva vi lagrer</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Når du oppretter konto lagrer vi e-postadresse, navn og telefonnummer.
               </p>
@@ -50,7 +50,7 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">Hvorfor vi lagrer det</h2>
+              <h2 className="text-lg font-medium text-foreground">Hvorfor vi lagrer det</h2>
               <ul className="space-y-2 text-base text-foreground-muted leading-relaxed list-disc pl-5">
                 <li>For å gi deg tilgang til kontoen din og kursene du har booket</li>
                 <li>For å sende bekreftelser, kvitteringer og påminnelser</li>
@@ -62,7 +62,7 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">Hvem vi deler med</h2>
+              <h2 className="text-lg font-medium text-foreground">Hvem vi deler med</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi selger aldri data. Vi deler kun med tjenester vi trenger for å drive Openspot:
               </p>
@@ -77,7 +77,7 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">Hvor lenge vi lagrer</h2>
+              <h2 className="text-lg font-medium text-foreground">Hvor lenge vi lagrer</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi lagrer ikke data lenger enn vi trenger det.
               </p>
@@ -87,7 +87,7 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">Rettighetene dine</h2>
+              <h2 className="text-lg font-medium text-foreground">Rettighetene dine</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Du kan når som helst:
               </p>
@@ -105,7 +105,7 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">Sikkerhet</h2>
+              <h2 className="text-lg font-medium text-foreground">Sikkerhet</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 All data er kryptert i bevegelse og i ro. Tilgang til personopplysninger er begrenset til ansatte som trenger det for å gjøre jobben sin.
               </p>
@@ -115,14 +115,14 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">Endringer</h2>
+              <h2 className="text-lg font-medium text-foreground">Endringer</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi kan oppdatere denne erklæringen. Større endringer varsler vi om på e-post.
               </p>
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">Kontakt</h2>
+              <h2 className="text-lg font-medium text-foreground">Kontakt</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Spørsmål om personvern? Send en e-post til{' '}
                 <a href="mailto:hei@framio.no" className="underline underline-offset-2">hei@framio.no</a>.

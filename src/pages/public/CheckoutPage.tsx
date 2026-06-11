@@ -525,13 +525,13 @@ function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps
   if (!showSteps) {
     return (
       <div className="px-2 sm:px-6">
-        <h1 className="text-base font-medium tracking-tight text-foreground">Påmelding</h1>
+        <h1 className="text-base font-medium text-foreground">Påmelding</h1>
       </div>
     );
   }
   return (
     <div className="px-2 sm:px-6">
-      <h1 className="text-base font-medium tracking-tight text-foreground">Påmelding</h1>
+      <h1 className="text-base font-medium text-foreground">Påmelding</h1>
       <ol className="mt-4 flex items-center">
         {CHECKOUT_STEPS.map((label, i) => {
           const done = i < currentIndex;
@@ -725,7 +725,7 @@ function CheckoutSummary({
           )}
           <div className="min-w-0">
             <p className="truncate text-sm text-foreground-muted">{course.seller?.name}</p>
-            <h3 className="mt-0.5 text-base font-medium tracking-tight text-foreground">
+            <h3 className="mt-0.5 text-base font-medium text-foreground">
               {course.title}
             </h3>
             {meta && (
@@ -760,7 +760,7 @@ function CheckoutSummary({
             )}
             <div className="flex items-baseline justify-between gap-3">
               <span className="text-base font-medium text-foreground">Totalt</span>
-              <span className="text-xl font-medium tabular-nums tracking-tight text-foreground">
+              <span className="text-xl font-medium tabular-nums text-foreground">
                 {formatKroner(total)}
               </span>
             </div>

@@ -77,7 +77,7 @@ const LandingPage = () => {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-3xl font-medium tracking-tight text-foreground md:text-4xl"
+                  className="text-3xl font-medium text-foreground md:text-4xl"
                 >
                   Driv ditt yogastudio enklere.
                 </motion.h1>
@@ -107,7 +107,7 @@ const LandingPage = () => {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="text-3xl font-medium tracking-tight text-foreground md:text-4xl"
+                className="text-3xl font-medium text-foreground md:text-4xl"
               >
                 Driv ditt yogastudio enklere.
               </motion.h1>
@@ -218,7 +218,7 @@ const LandingPage = () => {
             transition={scrollTransition}
             className="mx-auto mb-16 max-w-2xl text-center"
           >
-            <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+            <h2 className="text-2xl font-medium text-foreground md:text-3xl">
               Enkel og forutsigbar pris.
             </h2>
             <p className="mt-3 text-base text-foreground-muted">
@@ -287,7 +287,7 @@ const LandingPage = () => {
             transition={scrollTransition}
             className="flex flex-col items-center justify-between gap-8 rounded-3xl bg-muted px-8 py-16 md:flex-row md:gap-12 md:px-16 md:py-20"
           >
-            <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+            <h2 className="text-2xl font-medium text-foreground md:text-3xl">
               {PRELAUNCH ? 'Bli med fra start.' : 'Klar?'}
             </h2>
             {PRELAUNCH ? (
@@ -416,7 +416,7 @@ function FeatureSplit({
             transition={scrollTransition}
             className={`lg:col-span-5 ${align === 'right' ? 'lg:order-2' : ''}`}
           >
-            <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+            <h2 className="text-2xl font-medium text-foreground md:text-3xl">
               {title}
             </h2>
             <p className="mt-3 text-base text-foreground-muted">{description}</p>
@@ -472,7 +472,7 @@ function FeatureWide({
           transition={scrollTransition}
           className="mx-auto mb-12 max-w-xl text-center"
         >
-          <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+          <h2 className="text-2xl font-medium text-foreground md:text-3xl">
             {title}
           </h2>
           <p className="mt-2 text-base text-foreground-muted">{body}</p>
@@ -521,7 +521,7 @@ function PricingTier({ tier }: { tier: Tier }) {
 
       <div className="mb-8 border-b border-border pb-8">
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-medium tabular-nums tracking-tight text-foreground">
+          <span className="text-3xl font-medium tabular-nums text-foreground">
             {tier.price}
           </span>
           {tier.priceSub && (
