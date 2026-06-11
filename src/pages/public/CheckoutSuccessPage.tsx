@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { PageState } from '@/components/page-state/page-state';
 import { supabase } from '@/lib/supabase';
 import { finalizeDinteroTransaction } from '@/services/checkout';
+import { claimMySignups } from '@/services/signups';
+import { useAuth } from '@/contexts/AuthContext';
+import { AUTH_ROUTES } from '@/lib/auth-routes';
 import { formatKroner } from '@/lib/utils';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { toLocalDate } from '@/utils/dateUtils';
@@ -62,8 +65,65 @@ interface SignupDetails {
   };
 }
 
+// Post-booking account offer (buyer accounts V2): guest checkouts get a
+// one-click magic link that lands on /overview, where claim-by-verified-email
+// collects this and any earlier bookings. The email is locked to the
+// booking's participant_email — claiming matches on the verified auth email,
+// so the link must go to exactly that address. Logged-in users never see
+// this; their booking is claimed directly (see the claim effect in the page).
+function BookingOverviewOffer({ email }: { email: string }) {
+  const { sendMagicLink } = useAuth();
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+  const handleSend = async () => {
+    setState('sending');
+    const callbackUrl = `${window.location.origin}${AUTH_ROUTES.callback}?next=${encodeURIComponent(AUTH_ROUTES.dashboard)}&intent=buyer`;
+    const { error } = await sendMagicLink(email, callbackUrl);
+    if (error) {
+      logger.error('Receipt: magic link send failed', error);
+      setState('error');
+      return;
+    }
+    setState('sent');
+  };
+
+  return (
+    <div className="mt-8 rounded-lg border border-border bg-muted p-5">
+      <p className="text-base font-medium text-foreground">
+        Få oversikt over påmeldingene dine
+      </p>
+      {state === 'sent' ? (
+        <p className="mt-1.5 text-sm text-foreground-muted">
+          Lenke sendt til {email}. Sjekk innboksen din.
+        </p>
+      ) : (
+        <>
+          <p className="mt-1.5 text-sm text-foreground-muted">
+            Logg inn med {email}, så samler vi påmeldingene dine på ett sted.
+          </p>
+          {state === 'error' && (
+            <p className="mt-1.5 text-sm text-danger">
+              Kunne ikke sende lenken. Prøv igjen.
+            </p>
+          )}
+          <Button
+            type="button"
+            variant="default"
+            onClick={() => { void handleSend(); }}
+            loading={state === 'sending'}
+            className="mt-4"
+          >
+            Send innloggingslenke
+          </Button>
+        </>
+      )}
+    </div>
+  );
+}
+
 const CheckoutSuccessPage = () => {
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const transactionId = searchParams.get('transaction_id');
   const merchantReference = searchParams.get('ref');
   const orgSlugFromUrl = searchParams.get('org');
@@ -174,6 +234,16 @@ const CheckoutSuccessPage = () => {
       cancelled = true;
     };
   }, [hasReceiptLookupIds, transactionId, merchantReference, isFreeSignup]);
+
+  // A logged-in user's fresh booking is still a guest row (checkout never
+  // threads buyer_id) — claim it on the spot so it shows on /overview
+  // immediately instead of waiting for the next session start.
+  useEffect(() => {
+    if (!user || !signup) return;
+    void claimMySignups().then(({ error: claimError }) => {
+      if (claimError) logger.error('Receipt: claim_my_signups failed', claimError);
+    });
+  }, [user, signup]);
 
   // Format a YYYY-MM-DD date as "Mandag 2. februar". Returns null on bad input
   // so callers can fall back gracefully instead of rendering "Ikke angitt".
@@ -375,6 +445,18 @@ const CheckoutSuccessPage = () => {
                           <span className="font-medium text-foreground tabular-nums">{shortRef(signup.id)}</span>
                         </div>
                       </div>
+                      {/* Account offer — guests get a magic link to collect
+                          their bookings; logged-in users go straight to the
+                          (auto-claimed) overview. */}
+                      {user ? (
+                        <div className="mt-8">
+                          <Button asChild variant="default" className="w-full">
+                            <Link to={AUTH_ROUTES.dashboard}>Se påmeldingene dine</Link>
+                          </Button>
+                        </div>
+                      ) : (
+                        <BookingOverviewOffer email={signup.participant_email} />
+                      )}
                     </>
                   )}
 

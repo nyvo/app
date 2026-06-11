@@ -23,6 +23,87 @@ export interface SignupWithProfile extends Signup {
   ticket_type?: { price: number } | null
 }
 
+// --- Buyer-side (claimed bookings) -----------------------------------------
+
+// Signup row as the buyer dashboard needs it: course details plus the
+// public storefront identity (seller name/logo via column grants, team slug
+// via the public teams policy). `teams` embeds as an array (1:N in PostgREST
+// even though ownership is 1:1 in the current model) — take the first.
+// Explicit column list, not `*` — the buyer owns these rows, but future
+// signup columns must not silently start flowing to the client.
+export interface BuyerSignup extends Pick<Signup,
+  'id' | 'status' | 'amount_paid' | 'created_at'
+  | 'dintero_transaction_id' | 'dintero_merchant_reference'> {
+  course: (Pick<Course, 'id' | 'title' | 'slug' | 'start_date' | 'end_date' | 'time_schedule' | 'location' | 'image_url'> & {
+    seller: {
+      name: string
+      logo_url: string | null
+      teams: { slug: string }[]
+    } | null
+  }) | null
+}
+
+// Backfill signups.buyer_id for the current user by verified-email match.
+// SECURITY DEFINER RPC (migration 20260611192342) — idempotent, never touches
+// already-claimed rows. Returns how many rows were claimed.
+export async function claimMySignups(): Promise<{ count: number; error: Error | null }> {
+  const { data, error } = await (supabase.rpc as unknown as (
+    fn: string
+  ) => ReturnType<typeof supabase.rpc>)('claim_my_signups')
+
+  if (error) {
+    return { count: 0, error: error as Error }
+  }
+  return { count: (data as unknown as number) ?? 0, error: null }
+}
+
+// All signups claimed by the given user, newest first. Scoped on buyer_id
+// explicitly — the SELECT RLS also exposes member rows to seller members,
+// and this list must only ever show the user's own bookings.
+export async function fetchMySignups(
+  userId: string
+): Promise<{ data: BuyerSignup[] | null; error: Error | null }> {
+  const { data, error } = await supabase
+    .from('signups')
+    .select(`
+      id, status, amount_paid, created_at,
+      dintero_transaction_id, dintero_merchant_reference,
+      course:courses(
+        id, title, slug, start_date, end_date, time_schedule, location, image_url,
+        seller:sellers(name, logo_url, teams(slug))
+      )
+    `)
+    .eq('buyer_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    return { data: null, error: error as Error }
+  }
+  return { data: data as unknown as BuyerSignup[], error: null }
+}
+
+// Contact fields from the user's freshest claimed signup — prefills the
+// buyer onboarding form so a post-booking signup is zero-typing.
+export async function fetchLatestClaimedContact(
+  userId: string
+): Promise<{ data: { participant_name: string; participant_phone: string | null } | null; error: Error | null }> {
+  const { data, error } = await supabase
+    .from('signups')
+    .select('participant_name, participant_phone')
+    .eq('buyer_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) {
+    return { data: null, error: error as Error }
+  }
+  return {
+    data: data as { participant_name: string; participant_phone: string | null } | null,
+    error: null,
+  }
+}
+
 export async function fetchRecentSignups(
   sellerId: string,
   limit: number = 4

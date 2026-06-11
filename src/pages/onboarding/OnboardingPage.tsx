@@ -11,6 +11,7 @@ import { cn, formatPersonName, resolveDisplayName } from '@/lib/utils'
 import { stepVariants } from '@/lib/motion'
 import { toast } from 'sonner'
 import { AUTH_ROUTES, parseAuthIntent, sanitizeNextPath } from '@/lib/auth-routes'
+import { claimMySignups, fetchLatestClaimedContact } from '@/services/signups'
 import type { UserRole } from '@/types/database'
 
 /**
@@ -232,17 +233,66 @@ function RoleChooser() {
 // Step 2a — Buyer setup
 // ---------------------------------------------------------------------------
 
+// Await the email claim before the form mounts so the freshest claimed
+// signup can prefill name/phone (zero-typing for post-booking signups).
+// Renders nothing while resolving — same quiet gap as resolvingIntent above.
+// Claim/fetch failures degrade to the profile/email prefill silently.
 function BuyerSetup({ nextPath }: { nextPath: string }) {
+  const { user } = useAuth()
+  const [claimed, setClaimed] = useState<
+    { name: string; phone: string | null } | null | undefined
+  >(undefined)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      if (!user) {
+        setClaimed(null)
+        return
+      }
+      const { error } = await claimMySignups()
+      if (cancelled) return
+      if (error) logger.error('Onboarding: claim_my_signups failed', error)
+      const { data } = await fetchLatestClaimedContact(user.id)
+      if (cancelled) return
+      setClaimed(data ? { name: data.participant_name, phone: data.participant_phone } : null)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [user])
+
+  if (claimed === undefined) return null
+  return (
+    <BuyerSetupForm
+      nextPath={nextPath}
+      claimedName={claimed?.name ?? null}
+      claimedPhone={claimed?.phone ?? null}
+    />
+  )
+}
+
+function BuyerSetupForm({
+  nextPath,
+  claimedName,
+  claimedPhone,
+}: {
+  nextPath: string
+  claimedName: string | null
+  claimedPhone: string | null
+}) {
   const { profile, completeBuyerOnboarding, setRole } = useAuth()
   const navigate = useNavigate()
 
+  // Prefill priority: a name the user already saved on the profile, then the
+  // freshest claimed booking, then the email-derived fallback.
   const prefillName = useMemo(
-    () => resolveDisplayName(profile?.name, profile?.email),
-    [profile],
+    () => profile?.name?.trim() || claimedName || resolveDisplayName(profile?.name, profile?.email),
+    [profile, claimedName],
   )
 
   const [name, setName] = useState(() => prefillName)
-  const [phone, setPhone] = useState(() => profile?.phone || '')
+  const [phone, setPhone] = useState(() => profile?.phone || claimedPhone || '')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
 

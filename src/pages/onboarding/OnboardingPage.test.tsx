@@ -9,6 +9,13 @@ vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
 }))
 
+// BuyerSetup awaits the email claim + prefill fetch before mounting its form;
+// stub both so the buyer branch resolves instantly with no claimed signup.
+vi.mock('@/services/signups', () => ({
+  claimMySignups: vi.fn(async () => ({ count: 0, error: null })),
+  fetchLatestClaimedContact: vi.fn(async () => ({ data: null, error: null })),
+}))
+
 const user = { id: 'u1' }
 
 function authState(overrides: Record<string, unknown>) {
