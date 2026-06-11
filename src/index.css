@@ -39,6 +39,12 @@
   --color-surface-on-dark: var(--surface-on-dark);
   --color-border-on-dark: var(--border-on-dark);
 
+  /* Chrome — the shared dark-Slate surface (sidebar, toasts). Exposed for
+     marketing dark bands: the landing page previews the app's chrome. */
+  --color-chrome: var(--chrome-surface);
+  --color-chrome-foreground: var(--chrome-foreground);
+  --color-chrome-foreground-muted: var(--chrome-foreground-muted);
+
   /* Sidebar — permanently-dark warm rail (same in both app themes) */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
