@@ -87,8 +87,15 @@ const PaymentsPage = () => {
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!currentSeller?.id) return;
-      if (!form.organizationNumber.trim()) {
+      const organizationNumber = form.organizationNumber.replace(/\s+/g, '');
+      if (!organizationNumber) {
         toast.error('Skriv inn organisasjonsnummer');
+        return;
+      }
+      // Norwegian org numbers are exactly 9 digits — catch typos before the
+      // Dintero round-trip rejects them with a less helpful error.
+      if (!/^\d{9}$/.test(organizationNumber)) {
+        toast.error('Organisasjonsnummer har 9 siffer');
         return;
       }
 
@@ -96,7 +103,7 @@ const PaymentsPage = () => {
       const autoApprove = new URLSearchParams(window.location.search).get('auto_approve') === '1';
       const { data, error } = await createDinteroSeller({
         sellerId: currentSeller.id,
-        organizationNumber: form.organizationNumber.trim(),
+        organizationNumber,
         sandboxAutoApprove: autoApprove,
       });
       setSubmitting(false);

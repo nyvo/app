@@ -26,6 +26,7 @@ const ICON_MAP: Record<NotificationType, LucideIcon> = {
   'dintero_seller.approved': CheckCircle,
   'dintero_seller.rejected': XCircle,
   'team.invite_accepted': Users,
+  'affiliation.joined': UserPlus,
 }
 
 export function getNotificationIcon(type: string): LucideIcon {
@@ -50,6 +51,7 @@ const STATUS_MAP: Record<NotificationType, NotificationStatus> = {
   'dintero_seller.approved': 'success',
   'dintero_seller.rejected': 'danger',
   'team.invite_accepted': 'neutral',
+  'affiliation.joined': 'neutral',
 }
 
 export function getNotificationStatus(type: string): NotificationStatus {

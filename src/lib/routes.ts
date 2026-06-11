@@ -39,9 +39,10 @@ export const routes = {
   coursesWithDrawer: (id: string) => `/courses?kurs=${id}`,
   course: (id: string) => `/courses/${id}`,
 
-  // Studio (seller's storefront management)
+  // Studio (seller's storefront management — includes the Samarbeid section;
+  // the old /collaboration route redirects here, see App.tsx)
   studio: '/studio',
-  collaboration: '/collaboration',
+  studioSamarbeid: '/studio#samarbeid',
 
   // Settings
   settingsProfile: '/settings/profile',

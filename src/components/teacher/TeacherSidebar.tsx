@@ -6,7 +6,6 @@ import {
   Calendar03Icon,
   BookOpen02Icon,
   Building03Icon,
-  UserGroupIcon,
   CreditCardIcon,
   UserCircleIcon,
   Settings01Icon,
@@ -49,16 +48,16 @@ interface NavItem {
   href: string;
 }
 
-// Seller sidebar — 6 single-level items: home, schedule, courses, the
-// storefront (Studio), team (Samarbeid), payouts. Personal account settings
-// (Innstillinger) live in the footer account menu, not here — they're
-// low-frequency and belong under the user's identity. No nested groups.
+// Seller sidebar — single-level items: home, schedule, courses, the
+// storefront (Studio — Samarbeid lives there as a section), payouts.
+// Personal account settings (Innstillinger) live in the footer account
+// menu, not here — they're low-frequency and belong under the user's
+// identity. No nested groups.
 const SELLER_NAV_ITEMS: NavItem[] = [
   { icon: Home01Icon, label: 'Hjem', href: routes.dashboard },
   { icon: Calendar03Icon, label: 'Timeplan', href: routes.schedule },
   { icon: BookOpen02Icon, label: 'Kurs', href: routes.courses },
   { icon: Building03Icon, label: 'Studio', href: routes.studio },
-  { icon: UserGroupIcon, label: 'Samarbeid', href: routes.collaboration },
   { icon: CreditCardIcon, label: 'Abonnement', href: routes.settingsBilling },
   { icon: CreditCardIcon, label: 'Betalingskonto', href: routes.settingsPayouts },
 ];

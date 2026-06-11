@@ -19,7 +19,54 @@
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { enqueueNotification } from './notifications.ts'
 import { sendEmail } from './email.ts'
-import { formatCourseStart, formatKroner, shortBookingId } from './format.ts'
+import { formatCourseStart, formatKroner, formatOrgNumber, shortBookingId } from './format.ts'
+
+/** Arrangør identity for buyer-facing receipts: display name, formatted
+ * org number (legal anchor), and a contact e-mail for replyTo. Contact
+ * falls back to the first owner member's profile e-mail when the seller
+ * row has no dedicated address — most solo studios never set one. */
+export interface ArrangorIdentity {
+  name: string
+  orgNumber: string | null
+  contactEmail: string | null
+}
+
+export async function resolveArrangorIdentity(
+  supabase: SupabaseClient,
+  sellerId: string,
+): Promise<ArrangorIdentity | null> {
+  const { data: seller } = await supabase
+    .from('sellers')
+    .select('name, email, organization_number')
+    .eq('id', sellerId)
+    .maybeSingle()
+  if (!seller?.name) return null
+
+  let contactEmail: string | null = seller.email ?? null
+  if (!contactEmail) {
+    const { data: owners } = await supabase
+      .from('seller_members')
+      .select('profile:profiles(email)')
+      .eq('seller_id', sellerId)
+      .eq('role', 'owner')
+      .limit(1)
+    const profile = owners?.[0]?.profile as
+      | { email: string | null }
+      | { email: string | null }[]
+      | null
+      | undefined
+    const row = Array.isArray(profile) ? profile[0] : profile
+    contactEmail = row?.email ?? null
+  }
+
+  return {
+    name: seller.name,
+    orgNumber: seller.organization_number
+      ? formatOrgNumber(seller.organization_number)
+      : null,
+    contactEmail,
+  }
+}
 
 type BookingAttempt = {
   seller_id: string
@@ -174,31 +221,32 @@ async function sendOrderConfirmEmail(
     .maybeSingle()
   if (existing?.confirmation_sent_at) return
 
-  const [{ data: course }, { data: seller }] = await Promise.all([
+  const [{ data: course }, arrangor] = await Promise.all([
     supabase
       .from('courses')
       .select('title, start_date, time_schedule, location')
       .eq('id', attempt.course_id)
       .maybeSingle(),
-    supabase
-      .from('sellers')
-      .select('name')
-      .eq('id', attempt.seller_id)
-      .maybeSingle(),
+    resolveArrangorIdentity(supabase, attempt.seller_id),
   ])
-  if (!course?.title || !seller?.name) return
+  if (!course?.title || !arrangor) return
 
   const result = await sendEmail({
     template: 'order-confirm',
     to: attempt.participant_email,
+    // Buyer replies (refund/cancellation questions) go to the arrangør —
+    // the actual seller of record — never to the platform inbox.
+    replyTo: arrangor.contactEmail ?? undefined,
     props: {
       buyerName: attempt.participant_name,
-      studioName: seller.name,
+      studioName: arrangor.name,
       courseTitle: course.title,
       courseStart: formatCourseStart(course.start_date, course.time_schedule),
       courseLocation: course.location ?? undefined,
       amount: amountLabel,
       bookingId: shortBookingId(signupId),
+      arrangorOrgNumber: arrangor.orgNumber ?? undefined,
+      arrangorEmail: arrangor.contactEmail ?? undefined,
     },
   })
 

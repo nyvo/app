@@ -51,3 +51,14 @@ export function formatNorwegianDate(input: Date | string): string {
 export function shortBookingId(uuid: string): string {
   return uuid.replace(/-/g, '').slice(-6).toUpperCase()
 }
+
+/**
+ * Norwegian organisasjonsnummer display format: 9 digits in groups of 3.
+ * Example: "987654321" → "987 654 321". Non-9-digit input passes through
+ * unchanged (already formatted, or foreign).
+ */
+export function formatOrgNumber(orgNumber: string): string {
+  const digits = orgNumber.replace(/\s+/g, '')
+  if (!/^\d{9}$/.test(digits)) return orgNumber
+  return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`
+}

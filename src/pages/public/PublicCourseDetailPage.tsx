@@ -157,6 +157,7 @@ export default function PublicCourseDetailPage() {
                     />
                   </section>
                 )}
+                {course.seller && <ArrangorSection seller={course.seller} />}
               </div>
 
               <aside>
@@ -180,6 +181,39 @@ export default function PublicCourseDetailPage() {
 }
 
 // ── Sub-components ──────────────────────────────────────────────────────
+
+/** Who you're booking with — the seller of record. Quiet identity block in
+ * the Eventbrite "By X" tradition: avatar + name linking to the arrangør's
+ * own storefront. Org number and contact details live on the receipt, not
+ * here — the page brand carries the identity. */
+function ArrangorSection({ seller }: { seller: NonNullable<PublicCourseWithDetails['seller']> }) {
+  return (
+    <section className="border-t border-border pt-8">
+      <p className="mb-3 text-sm font-medium text-foreground-muted">Arrangør</p>
+      {seller.slug ? (
+        <Link
+          to={`/${seller.slug}`}
+          className="group inline-flex max-w-full items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15"
+        >
+          <UserAvatar size="lg" name={seller.name} src={seller.logo_url} className="shrink-0" />
+          <span className="min-w-0">
+            <span className="block truncate text-base font-medium text-foreground underline-offset-4 transition-colors group-hover:underline">
+              {seller.name}
+            </span>
+            <span className="block text-sm text-foreground-muted">Se alle kurs</span>
+          </span>
+        </Link>
+      ) : (
+        <div className="inline-flex max-w-full items-center gap-3">
+          <UserAvatar size="lg" name={seller.name} src={seller.logo_url} className="shrink-0" />
+          <span className="min-w-0 truncate text-base font-medium text-foreground">
+            {seller.name}
+          </span>
+        </div>
+      )}
+    </section>
+  );
+}
 
 function CourseImage({ course }: { course: PublicCourseWithDetails }) {
   const img = resolveCourseImage(course);
