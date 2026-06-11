@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "@fontsource-variable/geist";
+@import "@fontsource-variable/eb-garamond"; /* self-hosted — no Google CDN (GDPR + render-blocking) */
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
@@ -26,6 +27,7 @@
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', sans-serif;
+  --font-serif: 'EB Garamond Variable', Georgia, serif; /* marketing display only — never in the dashboard */
 
   /* Surfaces — `--background` (page canvas) and `--surface` (cards/panels)
      share value in light mode but differ in role; would diverge in dark. */
@@ -36,6 +38,12 @@
   --color-surface-tinted-border: var(--surface-tinted-border);
   --color-surface-on-dark: var(--surface-on-dark);
   --color-border-on-dark: var(--border-on-dark);
+
+  /* Chrome — the shared dark-Slate surface (sidebar, toasts). Exposed for
+     marketing dark bands: the landing page previews the app's chrome. */
+  --color-chrome: var(--chrome-surface);
+  --color-chrome-foreground: var(--chrome-foreground);
+  --color-chrome-foreground-muted: var(--chrome-foreground-muted);
 
   /* Sidebar — permanently-dark warm rail (same in both app themes) */
   --color-sidebar: var(--sidebar);
@@ -95,60 +103,69 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Radius — explicit integer px (was multiplier-derived fractional px,
+     which renders soft on 1× displays). Values snap to the nearest integer
+     of the previous rendered sizes, so no visual jump. Buttons/pills stay
+     `rounded-full` — these are surface radii. */
+  --radius-sm: 4px;    /* tight chips, mini thumbs */
+  --radius-md: 6px;    /* inputs */
+  --radius-lg: 8px;    /* list rows, badges, image thumbs */
+  --radius-xl: 10px;   /* cards, panels, dialogs (THE surface radius) */
+  --radius-2xl: 12px;  /* large marketing surfaces, product frames */
+  --radius-3xl: 16px;  /* oversized marketing bands */
+  --radius-4xl: 20px;  /* reserved — hero-scale surfaces */
 
-  /* ── Type scale (Studio canonical, per design-model.yaml) ────
+  /* ── Type scale (Studio canonical) ──────────────────────────
+       Sizes in rem so user font-size preferences scale the UI
+       (px comments assume the 16px default).
+
        xs   12 / 16 / +0.0025em    — captions, KPI labels, chips
        sm   14 / 20 / 0            — meta, labels, controls, dense UI
        base 16 / 24 / 0            — app body (DEFAULT)
-       lg   18 / 28 / 0            — dialog/sheet titles, lead paragraphs
+       lg   18 / 28 / -0.0025em    — lead paragraphs, legal-page h2s
        xl   20 / 28 / -0.005em     — h3 / large card titles
        2xl  24 / 30 / -0.01em      — h2 / page titles
        3xl  30 / 36 / -0.015em     — h1 / hero on dashboard
-       4xl  36 / 40 / -0.02em      — marketing display, mid tier
+       4xl  36 / 44 / -0.02em      — public h1 / mobile display
        5xl  48 / 52 / -0.025em     — display, 1 per landing hero
 
      Display caps at 48px — 6xl+ are unset below and won't compile.
-     Sub-12px / 40px / 72px not exposed — use the canonical tier.
+     Per-size letter-spacing is part of the token — do NOT add
+     `tracking-*` utilities on top of these.
      For sub-12px, prefer `text-[11px]` arbitrary.
      ──────────────────────────────────────────────────────────── */
 
-  --text-xs: 12px;
+  --text-xs: 0.75rem;
   --text-xs--line-height: calc(16/12);
   --text-xs--letter-spacing: 0.0025em;
 
-  --text-sm: 14px;
+  --text-sm: 0.875rem;
   --text-sm--line-height: calc(20/14);
 
-  --text-base: 16px;
+  --text-base: 1rem;
   --text-base--line-height: calc(24/16);
 
-  --text-lg: 18px;
+  --text-lg: 1.125rem;
   --text-lg--line-height: calc(28/18);
+  --text-lg--letter-spacing: -0.0025em;
 
-  --text-xl: 20px;
+  --text-xl: 1.25rem;
   --text-xl--line-height: calc(28/20);
   --text-xl--letter-spacing: -0.005em;
 
-  --text-2xl: 24px;
+  --text-2xl: 1.5rem;
   --text-2xl--line-height: calc(30/24);
   --text-2xl--letter-spacing: -0.01em;
 
-  --text-3xl: 30px;
+  --text-3xl: 1.875rem;
   --text-3xl--line-height: calc(36/30);
   --text-3xl--letter-spacing: -0.015em;
 
-  --text-4xl: 36px;
-  --text-4xl--line-height: calc(40/36);
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: calc(44/36);
   --text-4xl--letter-spacing: -0.02em;
 
-  --text-5xl: 48px;
+  --text-5xl: 3rem;
   --text-5xl--line-height: calc(52/48);
   --text-5xl--letter-spacing: -0.025em;
 
@@ -187,7 +204,7 @@
   --amber-3:  oklch(0.972 0.067 100);
   --amber-11: oklch(0.557 0.131 65);
   --red-3:    oklch(0.946 0.024 17);
-  --red-11:   oklch(0.563 0.226 25);
+  --red-11:   oklch(0.540 0.215 25);   /* darkened from L 0.563 — 4.36:1 on red-3 failed AA for 12px pill text */
 
   /* ── LAYER 2 · SEMANTIC TOKENS (consume these in components) ──
      All values reference Layer 1 primitives. Don't hard-code OKLCH here. */
@@ -233,7 +250,7 @@
   --danger: var(--red-11);
   --danger-foreground: var(--neutral-1);
   --danger-subtle: var(--red-3);
-  --info: oklch(0.55 0.18 270);
+  --info: oklch(0.520 0.180 270);      /* darkened from L 0.55 — 4.33:1 on info-subtle failed AA */
   --info-foreground: var(--neutral-1);
   --info-subtle: oklch(0.95 0.03 270);
 
@@ -270,7 +287,6 @@
   --chart-3: oklch(0.546 0.237 270);   /* = primary */
   --chart-4: oklch(0.488 0.230 271);
   --chart-5: oklch(0.424 0.190 272);
-  --radius: 0.45rem;
 }
 
 .dark {

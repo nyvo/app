@@ -8,12 +8,21 @@ import { useId } from 'react';
 type GrainProps = {
   opacity?: number;
   baseFrequency?: number;
+  /** `multiply` darkens — for light surfaces. `soft-light` lifts/speckles — for dark surfaces (chrome bands). */
+  blend?: 'multiply' | 'soft-light' | 'overlay';
   className?: string;
+};
+
+const BLEND_CLASS: Record<NonNullable<GrainProps['blend']>, string> = {
+  multiply: 'mix-blend-multiply',
+  'soft-light': 'mix-blend-soft-light',
+  overlay: 'mix-blend-overlay',
 };
 
 export function Grain({
   opacity = 0.35,
   baseFrequency = 0.9,
+  blend = 'multiply',
   className = '',
 }: GrainProps) {
   const reactId = useId();
@@ -22,7 +31,7 @@ export function Grain({
   return (
     <div
       aria-hidden
-      className={`pointer-events-none absolute inset-0 mix-blend-multiply ${className}`}
+      className={`pointer-events-none absolute inset-0 ${BLEND_CLASS[blend]} ${className}`}
       style={{ opacity }}
     >
       <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">

@@ -202,7 +202,7 @@ function CourseHeader({
 }) {
   return (
     <header className="space-y-3">
-      <h1 className="text-3xl font-medium tracking-tight text-foreground">
+      <h1 className="text-3xl font-medium text-foreground">
         {course.title}
       </h1>
       <MetaStrip course={course} nextSessionDate={nextSessionDate} sessions={sessions} />

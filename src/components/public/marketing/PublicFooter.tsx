@@ -17,7 +17,7 @@ export function PublicFooter({ studioName, maxWidthClassName = 'max-w-6xl' }: Pu
         <div className="flex flex-col gap-10 md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
             <Link to="/" className="inline-flex items-center group">
-              <span className="text-base font-medium tracking-tight text-foreground">Openspot</span>
+              <span className="text-base font-medium text-foreground">Openspot</span>
             </Link>
             <p className="max-w-sm text-base text-foreground-muted leading-relaxed">
               Påmeldingsplattform for kurs, timer og arrangementer. Drevet av små studioer i Norge.
@@ -31,7 +31,9 @@ export function PublicFooter({ studioName, maxWidthClassName = 'max-w-6xl' }: Pu
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-border flex items-center justify-between text-base text-foreground-disabled">
+        {/* Readable content (legal entity, copyright) — never `foreground-disabled`
+            here: 1.91:1 on white fails WCAG for text. */}
+        <div className="mt-10 pt-6 border-t border-border flex items-center justify-between text-sm text-foreground-muted">
           <span>© {new Date().getFullYear()} Openspot</span>
           <span className="font-medium">Laget i Norge</span>
         </div>

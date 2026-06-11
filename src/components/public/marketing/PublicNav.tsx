@@ -37,7 +37,7 @@ export function PublicNav({ studioName, studioSlug, overlay = false }: PublicNav
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center group">
-          <span className="text-base font-medium tracking-tight text-foreground">Openspot</span>
+          <span className="text-base font-medium text-foreground">Openspot</span>
         </Link>
 
         {studioName && studioSlug && (
