@@ -1,5 +1,18 @@
 import '@testing-library/jest-dom'
 
+// jsdom has no matchMedia; src/lib/motion.ts queries prefers-reduced-motion
+// at module scope, so any component test touching motion needs this stub.
+window.matchMedia ??= ((query: string) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener: vi.fn(),
+  removeListener: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+})) as typeof window.matchMedia
+
 // Mock Supabase client for tests
 const mockQueryBuilder = () => ({
   select: vi.fn().mockReturnThis(),

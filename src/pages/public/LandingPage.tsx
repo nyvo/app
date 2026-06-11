@@ -142,7 +142,7 @@ const LandingPage = () => {
                 className="mt-8"
               >
                 <Button asChild size="cta">
-                  <Link to="/auth">Kom i gang</Link>
+                  <Link to="/auth?intent=seller">Kom i gang</Link>
                 </Button>
               </motion.div>
             </div>
@@ -267,7 +267,7 @@ const LandingPage = () => {
                 ],
                 cta: PRELAUNCH
                   ? { label: 'Ta kontakt', to: '#varsle' }
-                  : { label: 'Start gratis', to: '/auth' },
+                  : { label: 'Start gratis', to: '/auth?intent=seller' },
                 caption: PRELAUNCH ? 'Kommer snart.' : 'Ingen kort nødvendig.',
               }}
             />
@@ -286,7 +286,7 @@ const LandingPage = () => {
                 ],
                 cta: PRELAUNCH
                   ? { label: 'Ta kontakt', to: '#varsle' }
-                  : { label: 'Velg Pro', to: '/auth' },
+                  : { label: 'Velg Pro', to: '/auth?intent=seller' },
                 caption: PRELAUNCH ? 'Kommer snart.' : 'Ingen bindingstid.',
               }}
             />
@@ -320,7 +320,7 @@ const LandingPage = () => {
                 </Button>
               ) : (
                 <Button asChild size="cta">
-                  <Link to="/auth">Kom i gang</Link>
+                  <Link to="/auth?intent=seller">Kom i gang</Link>
                 </Button>
               )}
             </div>

@@ -3,7 +3,12 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { useAuth } from '@/contexts/AuthContext'
-import { AUTH_ROUTES, resolvePostAuthDestination } from '@/lib/auth-routes'
+import {
+  AUTH_ROUTES,
+  parseAuthIntent,
+  resolvePostAuthDestination,
+  sanitizeNextPath,
+} from '@/lib/auth-routes'
 
 /**
  * Magic-link / OAuth callback handler.
@@ -33,19 +38,26 @@ const AuthCallbackPage = () => {
     }
   }, [])
 
+  // `?next=` preserves a deep-link target from before login; `?intent=`
+  // carries the entry-context role so onboarding can skip the role chooser.
+  // Both rode the provider redirect URL set by AuthPage. Extracted as
+  // primitives — `searchParams` gets a fresh object identity per render,
+  // which would re-trigger the effect needlessly.
+  const next = sanitizeNextPath(searchParams.get('next')) ?? AUTH_ROUTES.dashboard
+  const intent = parseAuthIntent(searchParams.get('intent'))
+
   // Once auth has initialized, resolve the right destination from the
-  // profile state. `?next=` preserves a deep-link target from before login.
+  // profile state.
   useEffect(() => {
     if (errorMessage) return
     if (!isInitialized) return
     if (user) {
-      const next = searchParams.get('next') ?? AUTH_ROUTES.dashboard
-      navigate(resolvePostAuthDestination(profile, next), { replace: true })
+      navigate(resolvePostAuthDestination(profile, next, intent), { replace: true })
     } else {
       // Initialized but no user — token failed silently or wasn't present.
       setErrorMessage('Lenken er utløpt eller fungerer ikke.')
     }
-  }, [isInitialized, user, profile, searchParams, errorMessage, navigate])
+  }, [isInitialized, user, profile, next, intent, errorMessage, navigate])
 
   if (errorMessage) {
     return (
