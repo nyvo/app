@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatKroner, isValidPhone } from './utils'
+import { foldNorwegian, formatCoursePrice, formatKroner, isValidPhone } from './utils'
 
 describe('formatKroner', () => {
   it('returns "0 kr" for 0', () => {
@@ -33,6 +33,18 @@ describe('formatKroner', () => {
     const result = formatKroner(1299.5)
     expect(result).toContain('kr')
     expect(result).toMatch(/1\s?299/)
+  })
+})
+
+describe('formatCoursePrice', () => {
+  it('renders free course prices as Gratis', () => {
+    expect(formatCoursePrice(null)).toBe('Gratis')
+    expect(formatCoursePrice(undefined)).toBe('Gratis')
+    expect(formatCoursePrice(0)).toBe('Gratis')
+  })
+
+  it('delegates paid prices to kroner formatting', () => {
+    expect(formatCoursePrice(500)).toBe('500 kr')
   })
 })
 
@@ -71,5 +83,16 @@ describe('isValidPhone', () => {
 
   it('rejects a + with no digits', () => {
     expect(isValidPhone('+')).toBe(false)
+  })
+})
+
+describe('foldNorwegian', () => {
+  it('folds Norwegian letters for search matching', () => {
+    expect(foldNorwegian('Mårten Sønnergård Ægir')).toBe('marten sonnergard aegir')
+  })
+
+  it('allows ASCII queries to match folded Norwegian text', () => {
+    expect(foldNorwegian('Sønnergård').includes(foldNorwegian('sonner'))).toBe(true)
+    expect(foldNorwegian('Ægir').includes(foldNorwegian('aeg'))).toBe(true)
   })
 })

@@ -24,7 +24,3 @@ export const AUTH_PLACEHOLDERS = {
   studioName: '',
   fullName: '',
 } as const
-
-export const AUTH_HINTS = {
-  studioNameHelper: 'Vises på din offentlige side. Du kan endre det senere.',
-} as const

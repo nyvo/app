@@ -70,17 +70,18 @@ export function isValidPhone(phone: string): boolean {
  *
  * Required for every Studio search input over user-typed text (see
  * `studio-design § 20`): plain `.toLowerCase().includes(q)` fails on names
- * like `Mårten Sønnergård` when the user types `morten sonner`. NFD splits
- * accented characters into base + combining mark, then `\p{Diacritic}` strips
- * the marks — so `å → a`, `ø → o`, `æ → ae`-ish (æ has no decomposition, but
- * it still folds consistently against itself). Combine with
- * `toLocaleLowerCase('nb-NO')` so the casing rules respect Norwegian.
+ * like `Mårten Sønnergård` when the user types `sonner`. NFD splits accented
+ * characters into base + combining mark, then `\p{Diacritic}` strips the marks
+ * (`å → a`). Norwegian `ø` and `æ` do not decompose under NFD, so they are
+ * transliterated explicitly.
  */
 export function foldNorwegian(value: string): string {
   return value
     .toLocaleLowerCase('nb-NO')
     .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '');
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/ø/g, 'o')
+    .replace(/æ/g, 'ae');
 }
 
 /**
