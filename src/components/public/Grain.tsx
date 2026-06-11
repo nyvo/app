@@ -1,5 +1,10 @@
 import { useId } from 'react';
 
+/**
+ * Grain — expression-layer texture (SVG fractal noise overlay).
+ * Marketing/public surfaces only; lives outside components/ui on purpose
+ * so the dashboard can't pick it up as a shared primitive.
+ */
 type GrainProps = {
   opacity?: number;
   baseFrequency?: number;
