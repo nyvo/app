@@ -946,6 +946,7 @@ export type Database = {
           code: string
           created_at: string
           created_by: string | null
+          expires_at: string
           id: string
           revoked_at: string | null
           team_id: string
@@ -954,6 +955,7 @@ export type Database = {
           code: string
           created_at?: string
           created_by?: string | null
+          expires_at?: string
           id?: string
           revoked_at?: string | null
           team_id: string
@@ -962,6 +964,7 @@ export type Database = {
           code?: string
           created_at?: string
           created_by?: string | null
+          expires_at?: string
           id?: string
           revoked_at?: string | null
           team_id?: string
@@ -1199,6 +1202,7 @@ export type Database = {
           code: string
           created_at: string
           created_by: string | null
+          expires_at: string
           id: string
           revoked_at: string | null
           team_id: string

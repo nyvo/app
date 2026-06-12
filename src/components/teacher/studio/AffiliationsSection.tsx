@@ -470,9 +470,12 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
           {copied ? 'Kopiert' : 'Kopier lenke'}
         </Button>
       </div>
+      <p className="mt-3 text-sm text-foreground-muted">
+        Lenken er gyldig i 30 dager. Lager du en ny, slutter den gamle å virke.
+      </p>
       <button
         type="button"
-        className="mt-3 text-base text-foreground-muted underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
+        className="mt-2 text-base text-foreground-muted underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
         disabled={creating}
         onClick={() => void handleRegenerate()}
       >

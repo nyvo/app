@@ -263,7 +263,9 @@ function renderNotification(input: NotificationInput): RenderedNotification {
 // Studio owners and admins should know about studio events. Teachers don't
 // (yet) — they don't act on bookings or payouts. Tweak the role filter here
 // to extend fan-out later.
-const NOTIFIABLE_ROLES = ['owner', 'admin']
+// seller_members is owner-only (CHECK since 20260606140000); kept as an
+// array so a future role model only has to change this constant.
+const NOTIFIABLE_ROLES = ['owner']
 
 async function resolveRecipients(
   client: SupabaseClient,

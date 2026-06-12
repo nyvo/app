@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       return errorResponse('organizationId is required', 400, req)
     }
 
-    const auth = await verifyAuthAndOrgMembership(req, body.organizationId, ['owner', 'admin'])
+    const auth = await verifyAuthAndOrgMembership(req, body.organizationId, ['owner'])
     if (!auth.authenticated) return errorResponse(auth.error || 'Not authenticated', 401, req)
     if (!auth.authorized) return errorResponse(auth.error || 'Not authorized', 403, req)
 

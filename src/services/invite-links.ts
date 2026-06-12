@@ -30,6 +30,10 @@ export async function fetchActiveInviteLink(
     .select('*')
     .eq('team_id', teamId)
     .is('revoked_at', null)
+    // Expired links are dead server-side (lookup/redeem return 'expired');
+    // excluding them here makes the panel lazily mint a fresh one instead of
+    // showing a link that no longer works.
+    .gt('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
