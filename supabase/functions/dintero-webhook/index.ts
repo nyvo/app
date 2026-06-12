@@ -479,9 +479,16 @@ Deno.serve(async (req: Request) => {
           await captureIfAuthorized(transaction.id, transaction.amount)
         } catch (captureErr) {
           const message = captureErr instanceof Error ? captureErr.message : 'Unknown'
+          // AUDIT H2: this signup was created by this very transaction and the
+          // buyer was never told it succeeded (the receipt page shows the
+          // payment-failed state) — cancel it so it stops consuming capacity
+          // and the seller roster doesn't show a confirmed-but-unpaid student.
+          // NOTE: the payment-link branch above deliberately keeps its
+          // pre-existing signup confirmed — that booking predates the payment
+          // and the buyer can retry the link.
           await supabase
             .from('signups')
-            .update({ payment_status: 'failed' })
+            .update({ payment_status: 'failed', status: 'cancelled' })
             .eq('id', signupResult.signup_id)
           await supabase
             .from('payment_attempts')
