@@ -8,19 +8,23 @@
 //   AUTHORIZED           → capacity check via create_signup_if_available, then capture or void
 //   CAPTURED             → idempotent no-op if signup already paid
 //   REFUNDED             → cancel signup + mark refunded
-//   PARTIALLY_REFUNDED   → mark refunded, keep signup confirmed
+//   PARTIALLY_REFUNDED   → record refunded amount, signup STAYS confirmed (spot is kept)
 //   AUTHORIZATION_VOIDED → no-op
 //   FAILED / DECLINED    → mark payment_status=failed on existing signup (payment-link flow only)
 //
 // Idempotency: processed_webhook_events.event_id = `${transactionId}:${status}` — since
 // Dintero's callback_url lacks a subscription-style event_delivery UUID, we synthesize
-// a deterministic key from the state we're about to write.
+// a deterministic key from the state we're about to write. PARTIALLY_REFUNDED keys
+// additionally carry the cumulative refunded øre (`:{ore}` suffix): a transaction can
+// be partially refunded several times, and each distinct refund must be processed
+// while true redeliveries (same cumulative sum) still dedupe.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient, SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import {
   captureIfAuthorized,
   getTransaction,
+  sumRefundedOre,
   voidTransaction,
   verifyCallbackSignatureDetailed,
   signCallbackForTest,
@@ -70,13 +74,12 @@ function extractFromBody(body: CallbackBody): CallbackPayload {
 
 async function claimEvent(
   supabase: SupabaseClient,
-  transactionId: string,
-  status: string,
+  eventId: string,
+  eventType: string,
 ): Promise<boolean> {
-  const eventId = `${transactionId}:${status}`
   const { error } = await supabase
     .from('processed_webhook_events')
-    .insert({ event_id: eventId, event_type: `dintero.${status}`, result: { status: 'processing' }, processed_at: null })
+    .insert({ event_id: eventId, event_type: eventType, result: { status: 'processing' }, processed_at: null })
   if (error) {
     if (error.code === '23505') return false
     // Other errors: log and allow processing to continue; downstream idempotency is safe.
@@ -87,11 +90,9 @@ async function claimEvent(
 
 async function markEventResult(
   supabase: SupabaseClient,
-  transactionId: string,
-  status: string,
+  eventId: string,
   result: Record<string, unknown>,
 ): Promise<void> {
-  const eventId = `${transactionId}:${status}`
   await supabase
     .from('processed_webhook_events')
     .update({ result, processed_at: new Date().toISOString() })
@@ -264,7 +265,21 @@ Deno.serve(async (req: Request) => {
   const status = transaction.status
   const merchantReference = payload.merchantReference || transaction.merchant_reference || null
 
-  const claimed = await claimEvent(supabase, transaction.id, status)
+  // Cumulative refunded øre from the transaction's event log. Needed both for
+  // the refund branches (transaction.amount is the ORDER amount, not the
+  // refunded amount) and for the PARTIALLY_REFUNDED idempotency key, where
+  // distinct sequential partial refunds must not dedupe against each other.
+  const refundedOre =
+    status === 'REFUNDED' || status === 'PARTIALLY_REFUNDED'
+      ? sumRefundedOre(transaction)
+      : null
+
+  const eventKey =
+    status === 'PARTIALLY_REFUNDED'
+      ? `${transaction.id}:${status}:${refundedOre ?? 'unknown'}`
+      : `${transaction.id}:${status}`
+
+  const claimed = await claimEvent(supabase, eventKey, `dintero.${status}`)
   if (!claimed) {
     return new Response(JSON.stringify({ status: 'already_processed' }), { status: 200 })
   }
@@ -273,7 +288,7 @@ Deno.serve(async (req: Request) => {
     switch (status) {
       case 'AUTHORIZED': {
         if (!merchantReference) {
-          await markEventResult(supabase, transaction.id, status, {
+          await markEventResult(supabase, eventKey, {
             error: 'missing_merchant_reference',
           })
           return new Response('Missing merchant_reference', { status: 400 })
@@ -286,7 +301,7 @@ Deno.serve(async (req: Request) => {
           .single()
 
         if (!attempt) {
-          await markEventResult(supabase, transaction.id, status, {
+          await markEventResult(supabase, eventKey, {
             error: 'payment_attempt_not_found',
             merchant_reference: merchantReference,
           })
@@ -317,7 +332,7 @@ Deno.serve(async (req: Request) => {
             })
             .eq('id', attempt.id)
 
-          await markEventResult(supabase, transaction.id, status, {
+          await markEventResult(supabase, eventKey, {
             type: 'amount_mismatch',
             merchant_reference: merchantReference,
             expected_amount_ore: expectedAmountOre,
@@ -359,7 +374,7 @@ Deno.serve(async (req: Request) => {
               transaction.id,
               amountNok,
             )
-            await markEventResult(supabase, transaction.id, status, {
+            await markEventResult(supabase, eventKey, {
               type: 'payment_link',
               error: 'capture_failed',
               message,
@@ -388,7 +403,7 @@ Deno.serve(async (req: Request) => {
 
           await deliverBookingConfirmations(supabase, attempt.existing_signup_id, attempt, amountNok)
 
-          await markEventResult(supabase, transaction.id, status, {
+          await markEventResult(supabase, eventKey, {
             type: 'payment_link',
             signup_id: attempt.existing_signup_id,
             status: 'confirmed',
@@ -406,7 +421,7 @@ Deno.serve(async (req: Request) => {
             .from('payment_attempts')
             .update({ status: 'voided' })
             .eq('id', attempt.id)
-          await markEventResult(supabase, transaction.id, status, {
+          await markEventResult(supabase, eventKey, {
             type: 'embedded',
             error: 'attempt_missing_ticket_type',
           })
@@ -454,7 +469,7 @@ Deno.serve(async (req: Request) => {
             .update({ status: 'voided' })
             .eq('id', attempt.id)
 
-          await markEventResult(supabase, transaction.id, status, {
+          await markEventResult(supabase, eventKey, {
             type: 'embedded',
             status: 'voided',
             error: errorType,
@@ -466,7 +481,7 @@ Deno.serve(async (req: Request) => {
         // transaction (the other path won). The winner has already captured
         // and fired side effects — exit without re-doing the work.
         if (signupResult.status === 'already_processed') {
-          await markEventResult(supabase, transaction.id, status, {
+          await markEventResult(supabase, eventKey, {
             type: 'embedded',
             signup_id: signupResult.signup_id,
             status: 'already_processed',
@@ -501,7 +516,7 @@ Deno.serve(async (req: Request) => {
             transaction.id,
             amountNok,
           )
-          await markEventResult(supabase, transaction.id, status, {
+          await markEventResult(supabase, eventKey, {
             type: 'embedded',
             signup_id: signupResult.signup_id,
             status: 'capture_failed',
@@ -517,7 +532,7 @@ Deno.serve(async (req: Request) => {
 
         await deliverBookingConfirmations(supabase, signupResult.signup_id, attempt, amountNok)
 
-        await markEventResult(supabase, transaction.id, status, {
+        await markEventResult(supabase, eventKey, {
           type: 'embedded',
           signup_id: signupResult.signup_id,
           status: 'confirmed',
@@ -527,12 +542,15 @@ Deno.serve(async (req: Request) => {
 
       case 'CAPTURED': {
         // Idempotent follow-up — our capture call likely triggered this. No-op.
-        await markEventResult(supabase, transaction.id, status, { type: 'captured_echo' })
+        await markEventResult(supabase, eventKey, { type: 'captured_echo' })
         return new Response('OK', { status: 200 })
       }
 
       case 'REFUNDED': {
-        const refundAmountNok = transaction.amount / 100
+        // Prefer the event-log sum (actual refunded money). transaction.amount
+        // is the order amount — for a FULL refund the two normally coincide,
+        // so it stays as fallback when the event log is unusable.
+        const refundAmountNok = (refundedOre ?? transaction.amount) / 100
 
         // Read current state BEFORE the update. If refunded_at is already set,
         // this webhook is the echo of an app-initiated refund (the owner used
@@ -569,9 +587,9 @@ Deno.serve(async (req: Request) => {
             sellerId: signupBefore.seller_id,
             signupId: signupBefore.id,
             courseId: signupBefore.course_id,
-            // Synthetic refund key — stable per (transaction, amount) so
-            // webhook retries dedupe but distinct partial refunds don't.
-            refundId: `${transaction.id}:${transaction.amount}`,
+            // Synthetic refund key — stable per (transaction, refunded amount)
+            // so webhook retries dedupe but distinct refunds don't.
+            refundId: `${transaction.id}:${refundedOre ?? transaction.amount}`,
             buyerName: signupBefore.participant_name,
             amount: refundAmountNok,
           })
@@ -617,12 +635,28 @@ Deno.serve(async (req: Request) => {
           }
         }
 
-        await markEventResult(supabase, transaction.id, status, { type: 'refund_full' })
+        await markEventResult(supabase, eventKey, { type: 'refund_full' })
         return new Response('OK', { status: 200 })
       }
 
       case 'PARTIALLY_REFUNDED': {
-        const refundAmountNok = transaction.amount / 100
+        // The refunded amount only exists in the event log here — falling back
+        // to transaction.amount would record the FULL order amount for a
+        // partial refund. If the event log is unusable, throw: the outer catch
+        // releases the idempotency claim and Dintero retries, instead of us
+        // persisting a number we know is wrong.
+        if (refundedOre === null) {
+          throw new Error(
+            `PARTIALLY_REFUNDED ${transaction.id}: no usable REFUND events — cannot derive refunded amount`,
+          )
+        }
+        const refundAmountNok = refundedOre / 100
+
+        // The signup STAYS confirmed and keeps its spot: a partial refund is a
+        // price adjustment (goodwill, discount-after-the-fact), not a
+        // cancellation. The refund_implies_cancel trigger only force-cancels
+        // full refunds (refund_amount >= amount_paid) — migration
+        // 20260613130000. refund_amount is the cumulative refunded total.
         await supabase
           .from('signups')
           .update({
@@ -631,7 +665,10 @@ Deno.serve(async (req: Request) => {
             refunded_at: new Date().toISOString(),
           })
           .eq('dintero_transaction_id', transaction.id)
-        await markEventResult(supabase, transaction.id, status, { type: 'refund_partial' })
+        await markEventResult(supabase, eventKey, {
+          type: 'refund_partial',
+          refunded_ore: refundedOre,
+        })
         return new Response('OK', { status: 200 })
       }
 
@@ -665,7 +702,7 @@ Deno.serve(async (req: Request) => {
             .update({ status: 'failed' })
             .eq('id', merchantReference)
         }
-        await markEventResult(supabase, transaction.id, status, { type: 'payment_failed' })
+        await markEventResult(supabase, eventKey, { type: 'payment_failed' })
         return new Response('OK', { status: 200 })
       }
 
@@ -681,12 +718,12 @@ Deno.serve(async (req: Request) => {
             .eq('id', merchantReference)
             .in('status', ['pending', 'authorized'])
         }
-        await markEventResult(supabase, transaction.id, status, { type: 'voided' })
+        await markEventResult(supabase, eventKey, { type: 'voided' })
         return new Response('OK', { status: 200 })
       }
 
       default: {
-        await markEventResult(supabase, transaction.id, status, { type: 'unhandled', status })
+        await markEventResult(supabase, eventKey, { type: 'unhandled', status })
         return new Response('OK', { status: 200 })
       }
     }
@@ -701,7 +738,7 @@ Deno.serve(async (req: Request) => {
       await supabase
         .from('processed_webhook_events')
         .delete()
-        .eq('event_id', `${transaction.id}:${status}`)
+        .eq('event_id', eventKey)
         .is('processed_at', null)
     } catch (_releaseErr) {
       // Non-fatal — the row will be swept or retried; surfacing the original

@@ -69,6 +69,17 @@ export interface DinteroSessionResponse {
   url: string
 }
 
+// Entry in the transaction's event log. Per the Checkout API spec, `amount`
+// on a CAPTURE/REFUND event is the "Amount captured or refunded" (øre) —
+// the transaction's top-level `amount` stays the ORDER amount and never
+// reflects refunds.
+export interface DinteroTransactionEvent {
+  event?: string
+  success?: boolean
+  amount?: number
+  created_at?: string
+}
+
 export interface DinteroTransaction {
   id: string
   status:
@@ -87,6 +98,32 @@ export interface DinteroTransaction {
   session_id?: string
   payment_product?: string
   metadata?: Record<string, unknown>
+  events?: DinteroTransactionEvent[]
+}
+
+/**
+ * Total refunded amount in øre, summed from successful REFUND entries in the
+ * transaction's event log. This is the only place Dintero exposes refunded
+ * amounts — `transaction.amount` is the order amount, NOT the refunded amount.
+ *
+ * Returns null when the amount cannot be derived (no events array, no REFUND
+ * events, or a REFUND event without a numeric amount). Callers must treat
+ * null as "unknown", never as zero.
+ */
+export function sumRefundedOre(transaction: DinteroTransaction): number | null {
+  if (!Array.isArray(transaction.events)) return null
+  let sum = 0
+  let found = false
+  for (const ev of transaction.events) {
+    if (ev?.event !== 'REFUND') continue
+    if (ev.success === false) continue
+    // A completed refund with no usable amount poisons the sum — bail out
+    // rather than silently undercounting.
+    if (typeof ev.amount !== 'number' || !Number.isFinite(ev.amount)) return null
+    sum += ev.amount
+    found = true
+  }
+  return found ? sum : null
 }
 
 export interface DinteroBankAccount {
