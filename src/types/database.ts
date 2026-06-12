@@ -1173,67 +1173,26 @@ export type Database = {
         Args: { p_course_session_id: string }
         Returns: number
       }
-      create_course_idempotent: {
+      create_signup_if_available: {
         Args: {
-          p_delivery_mode?: string
-          p_description?: string
-          p_duration?: number
-          p_end_date?: string
-          p_format?: string
-          p_idempotency_key: string
-          p_image_url?: string
-          p_instructor_id?: string
-          p_level?: string
-          p_location?: string
-          p_max_participants?: number
-          p_price?: number
+          p_amount_paid: number
+          p_buyer_id?: string
+          p_course_id: string
+          p_course_session_id?: string
+          p_dintero_merchant_reference: string
+          p_dintero_session_id: string
+          p_dintero_transaction_id: string
+          p_note?: string
+          p_participant_email: string
+          p_participant_name: string
+          p_participant_phone: string
+          p_payment_product?: string
+          p_payment_status?: string
           p_seller_id: string
-          p_start_date?: string
-          p_status?: string
-          p_style_id?: string
-          p_time_schedule?: string
-          p_title: string
-          p_total_weeks?: number
+          p_ticket_type_id: string
         }
         Returns: Json
       }
-      create_signup_if_available:
-        | {
-            Args: {
-              p_amount_paid: number
-              p_buyer_id?: string
-              p_course_id: string
-              p_course_session_id?: string
-              p_dintero_merchant_reference: string
-              p_dintero_session_id: string
-              p_dintero_transaction_id: string
-              p_participant_email: string
-              p_participant_name: string
-              p_participant_phone: string
-              p_seller_id: string
-              p_ticket_type_id: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_amount_paid: number
-              p_buyer_id?: string
-              p_course_id: string
-              p_course_session_id?: string
-              p_dintero_merchant_reference: string
-              p_dintero_session_id: string
-              p_dintero_transaction_id: string
-              p_note?: string
-              p_participant_email: string
-              p_participant_name: string
-              p_participant_phone: string
-              p_payment_product?: string
-              p_seller_id: string
-              p_ticket_type_id: string
-            }
-            Returns: Json
-          }
       create_team_invite_link: {
         Args: { p_team_id: string }
         Returns: {
@@ -1269,6 +1228,10 @@ export type Database = {
           team_slug: string
           was_created: boolean
         }[]
+      }
+      find_seller_by_owner_email: {
+        Args: { p_email: string }
+        Returns: string
       }
       get_seller_operational: {
         Args: { p_seller_id: string }

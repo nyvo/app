@@ -154,32 +154,19 @@ export async function inviteAffiliateByEmail(input: {
 }): Promise<{ error: Error | null }> {
   const normalized = input.email.trim().toLowerCase();
 
-  // Resolve email → user_id → seller_members.seller_id. Pick the seller
-  // where the user is owner (one row per user under the current model).
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id')
-    .ilike('email', normalized)
-    .maybeSingle();
+  // Resolve email → owner's seller via the find_seller_by_owner_email RPC.
+  // A direct profiles SELECT can't work here: RLS only exposes the caller's
+  // own profile row, so the old lookup always came back empty. The RPC runs
+  // SECURITY DEFINER, is rate-limited, and returns only the seller_id.
+  const { data: sellerId, error: lookupError } = await supabase.rpc(
+    'find_seller_by_owner_email',
+    { p_email: normalized },
+  );
 
-  if (profileError) return { error: profileError as Error };
-  if (!profile) {
-    return { error: new Error('Fant ingen bruker med denne e-postadressen.') };
+  if (lookupError) return { error: lookupError as Error };
+  if (!sellerId) {
+    return { error: new Error('Fant ingen virksomhet med denne e-postadressen.') };
   }
-
-  const { data: membership, error: memberError } = await supabase
-    .from('seller_members')
-    .select('seller_id')
-    .eq('user_id', (profile as { id: string }).id)
-    .eq('role', 'owner')
-    .maybeSingle();
-
-  if (memberError) return { error: memberError as Error };
-  if (!membership) {
-    return { error: new Error('Brukeren har ingen virksomhet å invitere ennå.') };
-  }
-
-  const sellerId = (membership as { seller_id: string }).seller_id;
 
   // Insert the invite. RLS rejects if (a) caller isn't team admin, or (b)
   // seller_id matches the team's owner_seller_id (self-invite).

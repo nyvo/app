@@ -319,9 +319,14 @@ Deno.serve(async (req: Request) => {
         await captureIfAuthorized(transactionId, transaction.amount)
       } catch (err) {
         console.error('finalize-dintero-transaction: capture failed (embedded)', err)
+        // AUDIT H2: the signup was created by this very transaction and the
+        // buyer sees the payment-failed state — cancel it so it stops
+        // consuming capacity and never reads as a confirmed unpaid booking.
+        // (The payment-link branch keeps its pre-existing signup confirmed —
+        // that booking predates the payment and the link can be retried.)
         await supabase
           .from('signups')
-          .update({ payment_status: 'failed' })
+          .update({ payment_status: 'failed', status: 'cancelled' })
           .eq('id', signupResult.signup_id)
         await supabase
           .from('payment_attempts')
