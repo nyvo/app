@@ -37,8 +37,10 @@ interface SignupDetails {
   // capture-failed / refunded / cancelled row.
   payment_status?: string | null;
   status?: string | null;
-  participant_name: string;
-  participant_email: string;
+  // Masked (k•••@example.com) — the anon receipt lookup never returns the
+  // full address; the claim magic link is sent server-side by
+  // send-booking-claim-link, which resolves the address itself.
+  participant_email_masked: string;
   amount_paid: number;
   // The next four fields are filled by migration 20260426010000.
   // Older RPC deploys return undefined; the page renders graceful fallbacks.
@@ -67,20 +69,33 @@ interface SignupDetails {
 
 // Post-booking account offer (buyer accounts V2): guest checkouts get a
 // one-click magic link that lands on /overview, where claim-by-verified-email
-// collects this and any earlier bookings. The email is locked to the
-// booking's participant_email — claiming matches on the verified auth email,
-// so the link must go to exactly that address. Logged-in users never see
-// this; their booking is claimed directly (see the claim effect in the page).
-function BookingOverviewOffer({ email }: { email: string }) {
-  const { sendMagicLink } = useAuth();
+// collects this and any earlier bookings. The link must go to exactly the
+// booking's participant_email — claiming matches on the verified auth email —
+// but the anon receipt API only exposes a masked address, so the send happens
+// server-side: send-booking-claim-link resolves the real address from the
+// transaction pair. Logged-in users never see this; their booking is claimed
+// directly (see the claim effect in the page).
+interface BookingOverviewOfferProps {
+  emailMasked: string;
+  transactionId: string;
+  merchantReference: string;
+}
+
+function BookingOverviewOffer({ emailMasked, transactionId, merchantReference }: BookingOverviewOfferProps) {
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
   const handleSend = async () => {
     setState('sending');
     const callbackUrl = `${window.location.origin}${AUTH_ROUTES.callback}?next=${encodeURIComponent(AUTH_ROUTES.dashboard)}&intent=buyer`;
-    const { error } = await sendMagicLink(email, callbackUrl);
+    const { error } = await supabase.functions.invoke('send-booking-claim-link', {
+      body: {
+        transactionId,
+        merchantReference,
+        redirectTo: callbackUrl,
+      },
+    });
     if (error) {
-      logger.error('Receipt: magic link send failed', error);
+      logger.error('Receipt: claim link send failed', error);
       setState('error');
       return;
     }
@@ -94,12 +109,12 @@ function BookingOverviewOffer({ email }: { email: string }) {
       </p>
       {state === 'sent' ? (
         <p className="mt-1.5 text-sm text-foreground-muted">
-          Lenke sendt til {email}. Sjekk innboksen din.
+          Lenke sendt til {emailMasked}. Sjekk innboksen din.
         </p>
       ) : (
         <>
           <p className="mt-1.5 text-sm text-foreground-muted">
-            Logg inn med {email}, så samler vi påmeldingene dine på ett sted.
+            Logg inn med {emailMasked}, så samler vi påmeldingene dine på ett sted.
           </p>
           {state === 'error' && (
             <p className="mt-1.5 text-sm text-danger">
@@ -390,7 +405,7 @@ const CheckoutSuccessPage = () => {
                     <h1 className="mt-4 text-3xl font-medium text-foreground">Du er påmeldt</h1>
                     <p className="mt-2 text-base text-foreground-muted">
                       {signup
-                        ? `Vi har sendt en bekreftelse til ${signup.participant_email}.`
+                        ? `Vi har sendt en bekreftelse til ${signup.participant_email_masked}.`
                         : 'Vi har sendt en bekreftelse til e-posten din.'}
                     </p>
                     {isManualSignup && (
@@ -455,7 +470,11 @@ const CheckoutSuccessPage = () => {
                           </Button>
                         </div>
                       ) : (
-                        <BookingOverviewOffer email={signup.participant_email} />
+                        <BookingOverviewOffer
+                          emailMasked={signup.participant_email_masked}
+                          transactionId={transactionId ?? ''}
+                          merchantReference={merchantReference ?? ''}
+                        />
                       )}
                     </>
                   )}
