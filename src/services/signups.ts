@@ -281,18 +281,22 @@ export async function checkCourseAvailability(
 
   const total = (course as unknown as { max_participants: number })?.max_participants || 0
 
-  // Count confirmed signups
-  const { count, error: countError } = await supabase
-    .from('signups')
-    .select('*', { count: 'exact', head: true })
-    .eq('course_id', courseId)
-    .eq('status', 'confirmed')
+  // Count confirmed signups via the public counts RPC. A direct count on
+  // `signups` only works for seller members — anon (guest checkout) has no
+  // SELECT on the table, so the old direct count errored and the checkout
+  // pre-check read every paid course as "Kurset er fullt" for logged-out
+  // buyers.
+  const { data: counts, error: countError } = await supabase.rpc(
+    'public_signup_counts',
+    { p_course_ids: [courseId] },
+  )
 
   if (countError) {
     return { available: 0, total, error: countError as Error }
   }
 
-  const confirmed = count || 0
+  const confirmed = (counts as { course_id: string; confirmed_count: number }[] | null)
+    ?.find((c) => c.course_id === courseId)?.confirmed_count ?? 0
   const available = Math.max(0, total - confirmed)
 
   return { available, total, error: null }
