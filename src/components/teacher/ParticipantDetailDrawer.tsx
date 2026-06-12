@@ -129,6 +129,19 @@ type ActivityEvent = {
   timestamp: string;
 };
 
+/**
+ * Partial refund (price adjustment): money went back but the booking stays
+ * confirmed and keeps its spot — must not be presented as a full refund.
+ */
+function isPartiallyRefunded(signup: SignupWithProfile): boolean {
+  return (
+    signup.refund_amount != null &&
+    signup.amount_paid != null &&
+    signup.amount_paid > 0 &&
+    signup.refund_amount < signup.amount_paid
+  );
+}
+
 function buildActivity(signup: SignupWithProfile): ActivityEvent[] {
   const events: ActivityEvent[] = [];
 
@@ -171,7 +184,7 @@ function buildActivity(signup: SignupWithProfile): ActivityEvent[] {
     events.push({
       icon: RefreshCw,
       label: signup.refund_amount
-        ? `Refundert · ${formatKroner(signup.refund_amount)}`
+        ? `${isPartiallyRefunded(signup) ? 'Delvis refundert' : 'Refundert'} · ${formatKroner(signup.refund_amount)}`
         : 'Refundert',
       timestamp: formatNorwegianShort(signup.refunded_at),
     });
@@ -230,7 +243,10 @@ export function ParticipantDetailDrawer({
 
   const expectedPrice =
     signup.amount_paid != null ? signup.amount_paid : signup.ticket_type?.price ?? null;
-  const priceStrike = paymentStatus === 'refunded';
+  // Partially refunded bookings stay confirmed and keep their spot — don't
+  // strike the price or present them as fully refunded.
+  const isPartialRefund = paymentStatus === 'refunded' && isPartiallyRefunded(signup);
+  const priceStrike = paymentStatus === 'refunded' && !isPartialRefund;
   const paymentMethod = paymentMethodLabel(signup.payment_product);
   const signupLabel = status === 'cancelled' ? 'Avbestilt' : undefined;
   const paymentLabel =
@@ -238,7 +254,9 @@ export function ParticipantDetailDrawer({
       ? 'Venter'
       : paymentStatus === 'failed'
         ? 'Mislykket'
-        : undefined;
+        : isPartialRefund
+          ? 'Delvis refundert'
+          : undefined;
 
   const runAction = async (fn: () => Promise<void>) => {
     setLoading(true);
