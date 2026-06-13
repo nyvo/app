@@ -1,9 +1,21 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
-import { UserAvatar } from '@/components/ui/user-avatar';
-import { DateBadge } from '@/components/ui/date-badge';
+import {
+  ManualPaymentsPanel,
+  RecentSignupsSection,
+  UpcomingCoursesSection,
+} from '@/pages/teacher/TeacherDashboard';
+import type { SignupWithDetails } from '@/services/signups';
+import type { Course as DashboardCourse } from '@/types/dashboard';
 import type { IncomePoint, IncomeRange, IncomeSeries } from '@/services/income';
+
+/**
+ * Dev preview for the dashboard overview states — renders the REAL section
+ * components from TeacherDashboard (not a mock copy, which drifted) for the
+ * Pro, Start, empty and loading states. Same pattern as BillingPreview.
+ */
 
 // ─── Mock data ────────────────────────────────────────────────────────────
 
@@ -33,106 +45,163 @@ function buildMockIncome(range: IncomeRange): IncomeSeries {
   return { range, points, total, previousTotal: Math.round(total * 0.84) };
 }
 
-const NEXT_COURSES = [
+function isoDateOffset(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const NEXT_COURSES: DashboardCourse[] = [
   {
     id: 'morning-flow',
     title: 'Morning Flow',
-    dateStr: '2026-05-22',
-    when: 'kl. 09:00',
-    capacity: '8 / 10',
+    subtitle: 'Enkeltkurs',
+    time: '09:00',
+    type: 'event',
+    date: isoDateOffset(0),
+    signups: 8,
+    capacity: 10,
   },
   {
     id: 'vinyasa',
     title: 'Vinyasa Flow — vårsemester',
-    dateStr: '2026-05-23',
-    when: 'kl. 18:00',
-    capacity: '12 / 14',
+    subtitle: 'Kursrekke',
+    time: '18:00',
+    type: 'course-series',
+    date: isoDateOffset(1),
+    signups: 12,
+    capacity: 14,
+  },
+  {
+    id: 'yin',
+    title: 'Yin Yoga',
+    subtitle: 'Enkeltkurs',
+    time: '20:00',
+    type: 'event',
+    date: isoDateOffset(3),
+    signups: 4,
+    capacity: 12,
   },
 ];
 
-const RECENT_SIGNUPS = [
-  { id: '1', name: 'Olav Hansen', course: 'Morning Flow', when: '2 t' },
-  { id: '2', name: 'Mari Eriksen', course: 'Vinyasa Flow', when: '5 t' },
-  { id: '3', name: 'Anne Sørensen', course: 'Yin Yoga', when: 'i går' },
+function hoursAgo(hours: number): string {
+  return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+}
+
+// Only the fields the SignupRow + drawer-less preview reads; the full
+// SignupWithDetails row shape comes from the DB and is irrelevant here.
+function mockSignup(
+  id: string,
+  name: string,
+  courseTitle: string,
+  createdHoursAgo: number,
+  paymentStatus = 'paid',
+): SignupWithDetails {
+  return {
+    id,
+    participant_name: name,
+    created_at: hoursAgo(createdHoursAgo),
+    payment_status: paymentStatus,
+    profile: { id, name, email: '' },
+    course: { title: courseTitle },
+    course_session: null,
+  } as unknown as SignupWithDetails;
+}
+
+const RECENT_SIGNUPS: SignupWithDetails[] = [
+  mockSignup('1', 'Olav Hansen', 'Morning Flow', 2),
+  // Pending payment — exercises the exception-only PaymentBadge in the row.
+  mockSignup('2', 'Mari Eriksen', 'Vinyasa Flow — vårsemester', 5, 'pending'),
+  mockSignup('3', 'Anne Sørensen', 'Yin Yoga', 26),
 ];
+
+/** All-zero series — exercises the chart's "Ingen inntekt" in-plot message. */
+function buildZeroIncome(range: IncomeRange): IncomeSeries {
+  const base = buildMockIncome(range);
+  return {
+    ...base,
+    points: base.points.map((p) => ({ ...p, amount: 0, previousAmount: 0 })),
+    total: 0,
+    previousTotal: 0,
+  };
+}
 
 // ─── Preview ──────────────────────────────────────────────────────────────
 
 export default function DashboardPreview() {
   const [range, setRange] = useState<IncomeRange>('month');
   const incomeSeries = buildMockIncome(range);
+  const noop = () => {};
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <header className="mb-12">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Oversikt</h1>
-        </header>
-
-        <div className="space-y-12">
-          <IncomeChart
-            series={incomeSeries}
-            isLoading={false}
-            range={range}
-            onRangeChange={setRange}
-          />
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <section className="flex flex-col">
-              <h2 className="mb-3 text-xl font-medium tracking-tight text-foreground">
-                Neste kurs
-              </h2>
-              <div className="flex min-h-56 flex-1 flex-col rounded-xl border border-border bg-background p-3">
-                <div className="space-y-1">
-                  {NEXT_COURSES.map((course) => (
-                    <Link
-                      key={course.id}
-                      to={`/courses/${course.id}`}
-                      className="flex items-center gap-3 rounded-lg p-3 no-underline outline-none transition-colors duration-150 hover:bg-muted focus-visible:bg-muted"
-                    >
-                      <DateBadge dateStr={course.dateStr} size="sm" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-base font-medium text-foreground">{course.title}</p>
-                        <p className="truncate text-base text-foreground-muted">{course.when}</p>
-                      </div>
-                      <span className="shrink-0 text-base tabular-nums text-foreground-muted">
-                        {course.capacity}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="flex flex-col">
-              <h2 className="mb-3 text-xl font-medium tracking-tight text-foreground">
-                Siste påmeldinger
-              </h2>
-              <div className="flex min-h-56 flex-1 flex-col rounded-xl border border-border bg-background p-3">
-                <div className="space-y-1">
-                  {RECENT_SIGNUPS.map((signup) => (
-                    <div
-                      key={signup.id}
-                      className="flex items-center gap-3 rounded-lg p-3 transition-colors duration-150 hover:bg-muted"
-                    >
-                      <UserAvatar name={signup.name} size="lg" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-base font-medium text-foreground">{signup.name}</p>
-                        <p className="truncate text-base text-foreground-muted">
-                          Meldte seg på {signup.course}
-                        </p>
-                      </div>
-                      <span className="shrink-0 text-base tabular-nums text-foreground-muted">
-                        {signup.when}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
+      <div className="mx-auto w-full max-w-6xl space-y-16 px-4 py-10 sm:px-6 lg:px-8">
+        <PreviewState label="Pro – med data">
+          <div className="space-y-8">
+            <IncomeChart
+              series={incomeSeries}
+              isLoading={false}
+              range={range}
+              onRangeChange={setRange}
+            />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
+              <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />
+            </div>
           </div>
-        </div>
+        </PreviewState>
+
+        <PreviewState label="Start (gratis)">
+          <div className="space-y-8">
+            <ManualPaymentsPanel />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
+              <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />
+            </div>
+          </div>
+        </PreviewState>
+
+        <PreviewState label="Tomt – ingen inntekt, kurs eller påmeldinger">
+          <div className="space-y-8">
+            <IncomeChart
+              series={buildZeroIncome(range)}
+              isLoading={false}
+              range={range}
+              onRangeChange={setRange}
+            />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <UpcomingCoursesSection courses={[]} isLoading={false} />
+              <RecentSignupsSection signups={[]} isLoading={false} onSelect={noop} />
+            </div>
+          </div>
+        </PreviewState>
+
+        <PreviewState label="Laster">
+          <div className="space-y-8">
+            <IncomeChart
+              series={null}
+              isLoading
+              range={range}
+              onRangeChange={setRange}
+            />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <UpcomingCoursesSection courses={null} isLoading />
+              <RecentSignupsSection signups={null} isLoading onSelect={noop} />
+            </div>
+          </div>
+        </PreviewState>
       </div>
     </div>
+  );
+}
+
+function PreviewState({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <section>
+      <Badge variant="neutral" size="sm" className="mb-6">
+        {label}
+      </Badge>
+      {children}
+    </section>
   );
 }

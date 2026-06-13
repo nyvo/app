@@ -94,8 +94,11 @@
   /* Structure */
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-ring-subtle: var(--ring-subtle);
+  --color-sidebar-ring: var(--sidebar-ring);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -260,8 +263,13 @@
   /* Structure */
   --border: var(--neutral-7);                         /* visible divider (was neutral-6, too faint on white) */
   --border-subtle: var(--neutral-6);
+  --border-strong: var(--neutral-8);                  /* hover/emphasis edge on interactive surfaces (Radix step-8 role) */
   --input: var(--neutral-7);                          /* crisp field edge */
   --ring: var(--foreground);                          /* neutral focus ring — matches button.tsx focus style; never brand-colored */
+  --ring-subtle: color-mix(in oklab, var(--foreground) 15%, transparent);
+                                                      /* soft focus halo — replaces the raw `ring-foreground/15` idiom.
+                                                         Never the only focus cue: pair with a second change
+                                                         (border-foreground on fields, bg-muted on rows). */
 
   /* Dark chrome — Slate-dark surface scale for chrome that stays dark in BOTH
      app themes (sidebar, toast, future overlays). Single source of truth so
@@ -272,6 +280,8 @@
   --chrome-foreground:       oklch(0.985 0 0);        /* strong/active text */
   --chrome-foreground-muted: oklch(0.770 0.010 270);  /* ≈ slate-11, muted text */
   --chrome-border:           oklch(1 0 0 / 0.12);
+  --chrome-ring:             oklch(1 0 0 / 0.35);     /* focus ring on dark chrome — border (12%) is too
+                                                         faint for focus; 35% reads clearly on slate-3 */
 
   /* Sidebar — consumes the dark-chrome scale (neutral rail, no brand). */
   --sidebar: var(--chrome-surface);
@@ -281,6 +291,7 @@
   --sidebar-active: var(--chrome-active);
   --sidebar-active-foreground: var(--chrome-foreground);
   --sidebar-border: var(--chrome-border);
+  --sidebar-ring: var(--chrome-ring);
 
   --chart-1: oklch(0.809 0.105 266);
   --chart-2: oklch(0.623 0.200 268);
@@ -361,8 +372,10 @@
   /* Structure */
   --border: var(--neutral-7);
   --border-subtle: var(--neutral-6);
+  --border-strong: var(--neutral-8);
   --input: var(--neutral-7);
   --ring: var(--foreground);                          /* neutral focus ring, see :root */
+  /* --ring-subtle inherits from :root — tracks --foreground automatically */
   --chart-1: oklch(0.809 0.105 266);
   --chart-2: oklch(0.623 0.200 268);
   --chart-3: oklch(0.546 0.237 270);   /* = primary */

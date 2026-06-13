@@ -65,7 +65,7 @@ export function EntityCard({
           {subtitle && (
             <p className="truncate text-base text-foreground-muted">{subtitle}</p>
           )}
-          {meta && <p className="mt-3 text-base text-foreground-muted">{meta}</p>}
+          {meta && <p className="mt-3 text-sm text-foreground-muted">{meta}</p>}
         </div>
       </div>
     </>
@@ -77,7 +77,7 @@ export function EntityCard({
         to={to}
         className={cn(
           'block rounded-xl border border-border bg-background p-6 no-underline outline-none transition-colors duration-150',
-          'hover:border-foreground/15 focus-visible:ring-2 focus-visible:ring-foreground/15',
+          'hover:border-border-strong focus-visible:border-border-strong focus-visible:ring-2 focus-visible:ring-ring-subtle',
           className,
         )}
       >
@@ -95,28 +95,28 @@ export function EntityCard({
           <div className="-mx-6 mt-6 border-t border-border" aria-hidden="true" />
           <div className="mt-6 flex items-center gap-2">
             {actions?.map((action) =>
-            action.to ? (
-              <Button key={action.key} asChild variant="secondary">
-                <Link to={action.to}>{action.label}</Link>
-              </Button>
-            ) : (
-              <Button
-                key={action.key}
-                type="button"
-                variant="secondary"
-                onClick={action.onClick}
-              >
-                {action.label}
-              </Button>
-            ),
-          )}
+              action.to ? (
+                <Button key={action.key} asChild variant="secondary">
+                  <Link to={action.to}>{action.label}</Link>
+                </Button>
+              ) : (
+                <Button
+                  key={action.key}
+                  type="button"
+                  variant="secondary"
+                  onClick={action.onClick}
+                >
+                  {action.label}
+                </Button>
+              ),
+            )}
             {externalHref && (
               <a
                 href={externalHref}
                 target="_blank"
                 rel="noreferrer noopener"
                 aria-label={externalLabel}
-                className="ml-auto inline-flex size-8 items-center justify-center rounded-full text-foreground-muted outline-none transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
+                className="ml-auto inline-flex size-8 items-center justify-center rounded-full text-foreground-muted outline-none transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle"
               >
                 <ExternalLink className="size-4" />
               </a>
