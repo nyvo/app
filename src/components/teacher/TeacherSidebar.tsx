@@ -6,6 +6,7 @@ import {
   Calendar03Icon,
   BookOpen02Icon,
   Building03Icon,
+  BankIcon,
   CreditCardIcon,
   UserCircleIcon,
   Settings01Icon,
@@ -59,7 +60,7 @@ const SELLER_NAV_ITEMS: NavItem[] = [
   { icon: BookOpen02Icon, label: 'Kurs', href: routes.courses },
   { icon: Building03Icon, label: 'Studio', href: routes.studio },
   { icon: CreditCardIcon, label: 'Abonnement', href: routes.settingsBilling },
-  { icon: CreditCardIcon, label: 'Betalingskonto', href: routes.settingsPayouts },
+  { icon: BankIcon, label: 'Betalingskonto', href: routes.settingsPayouts },
 ];
 
 // Buyer sidebar — minimal. Until the buyer dashboard build-out (deferred
@@ -114,14 +115,14 @@ export const TeacherSidebar = () => {
       <SidebarHeader>
         <Link
           to={routes.dashboard}
-          className="flex h-12 items-center rounded-md px-3 text-base font-medium tracking-tight text-sidebar-foreground outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+          className="flex h-12 items-center rounded-md px-3 text-base font-medium tracking-tight text-sidebar-foreground outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
           Openspot
         </Link>
         {isSeller && (
           <Link
             to={routes.settingsBilling}
-            className="mx-3 mb-2 flex items-center justify-between rounded-md border border-sidebar-border px-3 py-2 text-sm outline-none transition-colors duration-150 hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-white/20"
+            className="mx-3 mb-2 flex items-center justify-between rounded-md border border-sidebar-border px-3 py-2 text-sm outline-none transition-colors duration-150 hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring"
           >
             <span className="font-medium text-sidebar-foreground-muted">Plan</span>
             <Badge variant={isPro ? 'success' : 'neutral'} shape="pill" size="sm">

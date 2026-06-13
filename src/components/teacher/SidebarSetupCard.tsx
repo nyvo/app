@@ -43,7 +43,7 @@ export function SidebarSetupCard() {
           className={cn(
             'flex items-center justify-between gap-2 rounded-md px-3 py-2 transition-colors duration-150',
             'text-sidebar-foreground-muted hover:bg-sidebar-accent hover:text-sidebar-foreground',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
             isActive && 'bg-sidebar-accent text-sidebar-foreground',
           )}
         >
@@ -70,7 +70,7 @@ export function SidebarSetupCard() {
         aria-label={`Kom i gang — ${completedCount} av ${totalCount} fullført`}
         className={cn(
           'block rounded-md px-3 py-2 transition-colors duration-150',
-          'hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
+          'hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
           isActive && 'bg-sidebar-accent',
         )}
       >

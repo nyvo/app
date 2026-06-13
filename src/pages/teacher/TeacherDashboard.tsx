@@ -11,6 +11,8 @@ import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailD
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
 import { fetchIncomeSeries, type IncomeRange, type IncomeSeries } from '@/services/income';
 import { DateBadge } from '@/components/ui/date-badge';
+import { PaymentBadge } from '@/components/ui/payment-badge';
+import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -274,24 +276,29 @@ const TeacherDashboard = () => {
   );
 };
 
-function ManualPaymentsPanel() {
+/**
+ * Free-tier replacement for the income chart. Exported (with the section
+ * components below) so /dev/dashboard-preview can render the real states
+ * without auth — same pattern as BillingPlanSections.
+ */
+export function ManualPaymentsPanel() {
   return (
     <section className="rounded-xl border border-border bg-background p-6 sm:p-8">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <p className="text-base font-medium text-foreground-muted">Betalinger</p>
-            <Badge variant="neutral" size="sm">Start</Badge>
-          </div>
-          <h2 className="mt-2 text-2xl font-medium tracking-tight text-foreground">
-            Betaling avtales direkte med instruktør
-          </h2>
+      {/* Header anatomy mirrors IncomeChart: muted label row left, control
+          right, hero line below — the two cards swap for each other by tier. */}
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium text-foreground-muted">Betalinger</p>
+          <Badge variant="neutral" size="sm">Start</Badge>
         </div>
-        <Button asChild variant="secondary">
+        <Button asChild variant="secondary" className="shrink-0">
           <Link to={routes.settingsBilling}>Se Pro</Link>
         </Button>
       </header>
-      <p className="mt-4 max-w-2xl text-base text-foreground-muted">
+      <h2 className="mt-2 text-xl font-medium tracking-tight text-foreground">
+        Betaling avtales direkte med instruktør
+      </h2>
+      <p className="mt-3 max-w-2xl text-base text-foreground-muted">
         Påmeldinger registreres i Openspot, men Vipps, faktura eller annen betaling skjer utenfor plattformen.
         Pro aktiverer kortbetaling, servicegebyr og automatiske utbetalinger.
       </p>
@@ -301,7 +308,7 @@ function ManualPaymentsPanel() {
 
 // ─── Neste kurs ───────────────────────────────────────────────────────────
 
-function UpcomingCoursesSection({
+export function UpcomingCoursesSection({
   courses,
   isLoading,
 }: {
@@ -323,6 +330,11 @@ function UpcomingCoursesSection({
               variant="compact"
               title="Ingen kommende kurs"
               description="Opprett et kurs for å fylle timeplanen."
+              action={
+                <Button asChild variant="secondary">
+                  <Link to={routes.coursesNew}>Opprett kurs</Link>
+                </Button>
+              }
             />
           </div>
         ) : (
@@ -349,7 +361,7 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="flex items-center gap-3 rounded-lg p-3 no-underline outline-none transition-colors duration-150 hover:bg-muted focus-visible:bg-muted"
+      className="flex items-center gap-3 rounded-lg p-3 no-underline outline-none transition-colors duration-150 hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle"
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
@@ -367,7 +379,7 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
 
 // ─── Siste påmeldinger ────────────────────────────────────────────────────
 
-function RecentSignupsSection({
+export function RecentSignupsSection({
   signups,
   isLoading,
   onSelect,
@@ -417,12 +429,17 @@ function SignupRow({
   const name = signup.profile?.name || signup.participant_name || 'Ukjent deltaker';
   const courseTitle = signup.course?.title;
   const when = signup.created_at ? formatRelativeTimePast(signup.created_at) : '';
+  // Exception-only badge (silent on paid) — mirrors the course participants
+  // list so the same entity gets the same treatment. On exception rows the
+  // badge is the one trailing token on mobile; the timestamp yields (it
+  // remains in the participant drawer).
+  const hasExceptionBadge = !!signup.payment_status && signup.payment_status !== 'paid';
 
   return (
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="flex w-full items-center gap-3 rounded-lg p-3 text-left outline-none transition-colors duration-150 cursor-pointer hover:bg-muted focus-visible:bg-muted"
+      className="flex w-full items-center gap-3 rounded-lg p-3 text-left outline-none transition-colors duration-150 cursor-pointer hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle"
     >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
@@ -431,7 +448,17 @@ function SignupRow({
           {courseTitle ?? 'Ny påmelding'}
         </p>
       </div>
-      <span className="shrink-0 text-sm tabular-nums text-foreground-muted">{when}</span>
+      {signup.payment_status && (
+        <PaymentBadge status={signup.payment_status} className="shrink-0" />
+      )}
+      <span
+        className={cn(
+          'shrink-0 text-sm tabular-nums text-foreground-muted',
+          hasExceptionBadge && 'hidden sm:inline',
+        )}
+      >
+        {when}
+      </span>
     </button>
   );
 }
@@ -439,6 +466,8 @@ function SignupRow({
 // ─── Loading skeleton ─────────────────────────────────────────────────────
 
 function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
+  // Mirrors the real row anatomy (leading 40px block + two 24px text lines +
+  // trailing meta) so the list doesn't jump in height when data lands.
   return (
     <div className="space-y-1">
       {Array.from({ length: ROW_LIMIT }).map((_, i) => (
@@ -446,10 +475,11 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
           <Skeleton
             className={variant === 'course' ? 'size-10 rounded-lg' : 'size-10 rounded-full'}
           />
-          <div className="min-w-0 flex-1">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="mt-1.5 h-3 w-24" />
+          <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
+            <Skeleton className="h-3.5 w-32" />
+            <Skeleton className="h-3.5 w-24" />
           </div>
+          <Skeleton className="h-3.5 w-8 shrink-0" />
         </div>
       ))}
     </div>

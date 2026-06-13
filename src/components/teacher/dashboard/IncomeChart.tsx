@@ -105,12 +105,16 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
 
   const points: IncomePoint[] = series?.points ?? buildPlaceholderPoints(range)
   const hasIncome = points.some((p) => p.amount > 0)
+  // Zero state per the analytics convention (Patreon/Airbnb earnings): the
+  // frame, grid and flat zero-line stay so layout never jumps — only a short
+  // muted message lands in the plot centre.
+  const showEmptyMessage = !isLoading && series !== null && !hasIncome
 
   return (
     <section className="rounded-xl border border-border bg-background p-6 sm:p-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-base font-medium text-foreground-muted">Inntekt</p>
+          <p className="text-sm font-medium text-foreground-muted">Inntekt</p>
           <div className="mt-2 flex items-baseline gap-3">
             {isLoading ? (
               <Skeleton className="h-9 w-40" />
@@ -129,7 +133,15 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
         <QuietRangeToggle value={range} onChange={onRangeChange} />
       </header>
 
-      <div className="mt-6">
+      <div className="relative mt-6">
+        {showEmptyMessage && (
+          <p
+            className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center text-sm text-foreground-muted"
+            role="status"
+          >
+            Ingen inntekt i denne perioden
+          </p>
+        )}
         <ChartContainer
           config={CHART_CONFIG}
           className="aspect-auto h-[220px] w-full sm:h-[260px]"
@@ -170,7 +182,9 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
             <Area
               type="monotone"
               dataKey="amount"
-              stroke={STROKE}
+              // Flat zero-line stays neutral (reference: Airbnb earnings) —
+              // a saturated line under "no income" reads as data.
+              stroke={hasIncome ? STROKE : 'var(--color-border)'}
               strokeWidth={2}
               fill={`url(#${gradientId})`}
               fillOpacity={1}
@@ -211,7 +225,7 @@ function QuietRangeToggle({
             onClick={() => onChange(opt.key)}
             className={cn(
               'rounded-md px-2 py-1 text-sm font-medium outline-none transition-colors duration-150',
-              'focus-visible:ring-2 focus-visible:ring-foreground/15',
+              'focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle',
               isActive
                 ? 'bg-muted text-foreground'
                 : 'text-foreground-muted hover:text-foreground',
@@ -240,7 +254,7 @@ function IncomeTooltip({
   const point = payload[0]?.payload
   if (!point) return null
   return (
-    <div className="min-w-[180px] rounded-lg border border-border-subtle bg-background px-3 py-2 text-sm shadow-xl">
+    <div className="min-w-[180px] rounded-lg border border-border-subtle bg-background px-3 py-2 text-sm shadow-soft">
       <div className="text-foreground-muted">Sum hittil</div>
       <div className="mt-1.5 flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-1.5">
