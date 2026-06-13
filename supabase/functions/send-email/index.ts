@@ -22,6 +22,8 @@ import SupportMessage, { type SupportMessageProps } from './templates/support-me
 import SessionRescheduled, { type SessionRescheduledProps } from './templates/session-rescheduled.tsx'
 import CourseMessage, { type CourseMessageProps } from './templates/course-message.tsx'
 import BookingNotification, { type BookingNotificationProps } from './templates/booking-notification.tsx'
+import CourseCancelled, { type CourseCancelledProps } from './templates/course-cancelled.tsx'
+import SignupCancelled, { type SignupCancelledProps } from './templates/signup-cancelled.tsx'
 
 const resendApiKey = Deno.env.get('RESEND_API_KEY') || ''
 const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || ''
@@ -37,6 +39,8 @@ type EmailTemplate =
   | 'session-rescheduled'
   | 'course-message'
   | 'booking-notification'
+  | 'course-cancelled'
+  | 'signup-cancelled'
 
 interface SendEmailRequest {
   template: EmailTemplate
@@ -49,6 +53,8 @@ interface SendEmailRequest {
     | SessionRescheduledProps
     | CourseMessageProps
     | BookingNotificationProps
+    | CourseCancelledProps
+    | SignupCancelledProps
   /** Optional override for the auto-generated subject line */
   subject?: string
   /** Optional reply-to address, used for support messages. */
@@ -73,6 +79,10 @@ function defaultSubject(template: EmailTemplate, props: SendEmailRequest['props'
       return (props as CourseMessageProps).subject
     case 'booking-notification':
       return `Ny påmelding — ${(props as BookingNotificationProps).courseTitle}`
+    case 'course-cancelled':
+      return `Avlyst: ${(props as CourseCancelledProps).courseTitle}`
+    case 'signup-cancelled':
+      return `Avmeldt: ${(props as SignupCancelledProps).courseTitle}`
   }
 }
 
@@ -92,6 +102,10 @@ function renderTemplate(template: EmailTemplate, props: SendEmailRequest['props'
       return CourseMessage(props as CourseMessageProps)
     case 'booking-notification':
       return BookingNotification(props as BookingNotificationProps)
+    case 'course-cancelled':
+      return CourseCancelled(props as CourseCancelledProps)
+    case 'signup-cancelled':
+      return SignupCancelled(props as SignupCancelledProps)
   }
 }
 
@@ -126,7 +140,7 @@ Deno.serve(async (req: Request) => {
     return errorResponse('Missing required fields: template, to, props', 400, req)
   }
 
-  if (!['order-confirm', 'refund-receipt', 'class-reminder', 'support-message', 'session-rescheduled', 'course-message', 'booking-notification'].includes(template)) {
+  if (!['order-confirm', 'refund-receipt', 'class-reminder', 'support-message', 'session-rescheduled', 'course-message', 'booking-notification', 'course-cancelled', 'signup-cancelled'].includes(template)) {
     return errorResponse(`Unknown template: ${template}`, 400, req)
   }
 

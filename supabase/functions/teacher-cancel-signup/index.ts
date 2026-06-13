@@ -11,6 +11,9 @@ import {
   successResponse,
 } from '../_shared/auth.ts'
 import { getTransaction, refundTransaction } from '../_shared/dintero.ts'
+import { sendEmail } from '../_shared/email.ts'
+import { formatCourseStart } from '../_shared/format.ts'
+import { resolveArrangorIdentity } from '../_shared/booking-notifications.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -158,6 +161,45 @@ Deno.serve(async (req: Request) => {
 
     if (updateError) {
       return errorResponse('Failed to update signup status', 500, req)
+    }
+
+    // Notify the participant — only on a fresh cancellation WITHOUT a refund.
+    // The refund path already emails the buyer: the REFUNDED webhook sends a
+    // refund-receipt once the money actually moves, and doubling up here would
+    // two-email every refund-cancel. The refund-only path (already-cancelled
+    // signup) sends nothing for the same reason. Best-effort: the cancellation
+    // is committed; a failed email never fails the request.
+    if (!alreadyCancelled && !refundSucceeded && signup.participant_email) {
+      try {
+        const arrangor = await resolveArrangorIdentity(supabase, course.seller_id)
+        if (arrangor) {
+          const sendResult = await sendEmail({
+            template: 'signup-cancelled',
+            to: signup.participant_email,
+            // Buyer replies go to the arrangør — the seller of record.
+            replyTo: arrangor.contactEmail ?? undefined,
+            props: {
+              buyerName: signup.participant_name || '',
+              studioName: arrangor.name,
+              courseTitle: course.title,
+              courseStart: formatCourseStart(course.start_date, course.time_schedule) || undefined,
+              paymentNote:
+                signup.payment_status === 'external'
+                  ? `Har du betalt direkte til ${arrangor.name}, ta kontakt med dem om tilbakebetaling.`
+                  : undefined,
+              arrangorEmail: arrangor.contactEmail ?? undefined,
+            },
+          })
+          if (sendResult.error) {
+            console.error('[teacher-cancel-signup] participant email failed', {
+              signupId: signup.id,
+              error: sendResult.error,
+            })
+          }
+        }
+      } catch (err) {
+        console.error('[teacher-cancel-signup] participant email failed', err)
+      }
     }
 
     return successResponse({

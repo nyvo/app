@@ -26,6 +26,9 @@ import {
   refundTransaction,
   voidTransaction,
 } from '../_shared/dintero.ts'
+import { sendEmail } from '../_shared/email.ts'
+import { formatKroner } from '../_shared/format.ts'
+import { resolveArrangorIdentity } from '../_shared/booking-notifications.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -136,6 +139,16 @@ Deno.serve(async (req: Request) => {
       const participantName = signup.participant_name || ''
       const participantEmail = signup.participant_email || ''
       const transactionId = signup.dintero_transaction_id as string | null
+      // Email eligibility: only signups that transition out of 'confirmed' in
+      // THIS run get notified, so re-running the (idempotent) cancellation
+      // never re-sends. Rows already 'course_cancelled' from a previous pass
+      // were either notified then or belong to a pre-notification cancel.
+      const participant = {
+        participant_name: participantName,
+        participant_email: participantEmail,
+        payment_status: (signup.payment_status as string | null) ?? null,
+        was_confirmed: signup.status === 'confirmed',
+      }
 
       // Free or paymentless signup — just mark cancelled.
       if (!transactionId) {
@@ -147,12 +160,24 @@ Deno.serve(async (req: Request) => {
             updated_at: new Date().toISOString(),
           })
           .eq('id', signup.id)
-        return { kind: 'no_payment', signup_id: signup.id }
+        return { kind: 'no_payment', signup_id: signup.id, ...participant }
       }
 
-      // Already fully handled on a previous run.
+      // Money already handled — fully refunded on a previous run, or partially
+      // refunded earlier (partial refunds keep status='confirmed', so this row
+      // can still be on its first cancellation pass). Make sure the row
+      // reaches a terminal state either way; the remainder of a partial
+      // refund stays a manual/backoffice decision — never auto-refund here.
       if (signup.refunded_at || signup.payment_status === 'refunded') {
-        return { kind: 'already_handled', signup_id: signup.id }
+        await supabase
+          .from('signups')
+          .update({
+            status: 'course_cancelled',
+            cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', signup.id)
+        return { kind: 'already_handled', signup_id: signup.id, ...participant }
       }
 
       // Source of truth is the live Dintero transaction state, not our cached
@@ -188,7 +213,12 @@ Deno.serve(async (req: Request) => {
               updated_at: new Date().toISOString(),
             })
             .eq('id', signup.id)
-          return { kind: 'refunded', signup_id: signup.id, amount: signup.amount_paid || 0 }
+          return {
+            kind: 'refunded',
+            signup_id: signup.id,
+            amount: signup.amount_paid || 0,
+            ...participant,
+          }
         } catch (err) {
           return {
             kind: 'refund_failed',
@@ -212,7 +242,7 @@ Deno.serve(async (req: Request) => {
               updated_at: new Date().toISOString(),
             })
             .eq('id', signup.id)
-          return { kind: 'voided', signup_id: signup.id }
+          return { kind: 'voided', signup_id: signup.id, ...participant }
         } catch (err) {
           return {
             kind: 'void_failed',
@@ -234,7 +264,7 @@ Deno.serve(async (req: Request) => {
           updated_at: new Date().toISOString(),
         })
         .eq('id', signup.id)
-      return { kind: 'no_action_needed', signup_id: signup.id }
+      return { kind: 'no_action_needed', signup_id: signup.id, ...participant }
     })
 
     const refundResults = await Promise.allSettled(refundPromises)
@@ -281,6 +311,95 @@ Deno.serve(async (req: Request) => {
           break
         }
         // no_payment / no_action_needed — nothing to count
+      }
+    }
+
+    // Notify participants — best-effort, after money handling (the email's
+    // refund note must describe what actually happened). Eligible: signups
+    // that transitioned out of 'confirmed' in this run (incl. free/manual —
+    // they have no Dintero transaction but still lose their course), with an
+    // email on file. Failed refunds/voids/lookups are NOT emailed this run:
+    // their rows stay 'confirmed', so the re-run that completes the money
+    // handling sends their (single) email with the correct refund note.
+    // 'already_handled' rows that were still confirmed (partially refunded
+    // earlier) get the email with no money line — their refund receipt
+    // already arrived separately.
+    if (body.notify_participants !== false) {
+      type NotifiableKind =
+        | 'no_payment'
+        | 'refunded'
+        | 'voided'
+        | 'no_action_needed'
+        | 'already_handled'
+      const notifiableKinds: NotifiableKind[] = [
+        'no_payment',
+        'refunded',
+        'voided',
+        'no_action_needed',
+        'already_handled',
+      ]
+      const notifiable = refundResults
+        .filter(
+          (r): r is PromiseFulfilledResult<{
+            kind: string
+            signup_id: string
+            amount?: number
+            participant_name?: string
+            participant_email?: string
+            payment_status?: string | null
+            was_confirmed?: boolean
+          }> => r.status === 'fulfilled',
+        )
+        .map((r) => r.value)
+        .filter((v) =>
+          (notifiableKinds as string[]).includes(v.kind) &&
+          v.was_confirmed === true &&
+          !!v.participant_email,
+        )
+
+      if (notifiable.length > 0) {
+        const arrangor = await resolveArrangorIdentity(supabase, course.seller_id)
+        if (arrangor) {
+          // Sequential — keeps Resend rate-limit happy on long lists.
+          for (const v of notifiable) {
+            const to = v.participant_email
+            if (!to) continue
+            const kind = v.kind as NotifiableKind
+            const refundNote =
+              kind === 'refunded'
+                ? `Du får ${formatKroner(v.amount || 0)} tilbake til kortet du betalte med. Kvitteringen kommer i en egen e-post.`
+                : kind === 'voided'
+                  ? 'Reservasjonen på kortet ditt er annullert — du er ikke belastet.'
+                  : kind !== 'already_handled' && v.payment_status === 'external'
+                    ? `Har du betalt direkte til ${arrangor.name}, ta kontakt med dem om tilbakebetaling.`
+                    : undefined
+            const sendResult = await sendEmail({
+              template: 'course-cancelled',
+              to,
+              // Buyer replies go to the arrangør — the seller of record.
+              replyTo: arrangor.contactEmail ?? undefined,
+              props: {
+                buyerName: v.participant_name || '',
+                studioName: arrangor.name,
+                courseTitle: course.title,
+                refundNote,
+                arrangorEmail: arrangor.contactEmail ?? undefined,
+              },
+            })
+            if (sendResult.error) {
+              console.error('[cancel-course] participant email failed', {
+                signupId: v.signup_id,
+                error: sendResult.error,
+              })
+            } else {
+              results.notifications_sent++
+            }
+          }
+        } else {
+          console.error('[cancel-course] could not resolve arrangør identity — no participant emails sent', {
+            sellerId: course.seller_id,
+          })
+        }
       }
     }
 

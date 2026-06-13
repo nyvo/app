@@ -87,6 +87,28 @@ export interface BookingNotificationEmailProps {
   buyerEmail?: string
 }
 
+export interface CourseCancelledEmailProps {
+  buyerName: string
+  studioName: string
+  courseTitle: string
+  /** Optional pre-formatted money line for this participant's situation. */
+  refundNote?: string
+  /** When set, replyTo routes to the arrangør; renders the contact line. */
+  arrangorEmail?: string
+}
+
+export interface SignupCancelledEmailProps {
+  buyerName: string
+  studioName: string
+  courseTitle: string
+  /** Pre-formatted Norwegian date/time, e.g. "onsdag 28. mai kl. 18:00" */
+  courseStart?: string
+  /** Optional pre-formatted money line for this participant's situation. */
+  paymentNote?: string
+  /** When set, replyTo routes to the arrangør; renders the contact line. */
+  arrangorEmail?: string
+}
+
 export interface SupportMessageEmailProps {
   userId: string
   senderName?: string
@@ -112,6 +134,8 @@ export type SendEmailInput =
   | { template: 'session-rescheduled'; to: string; props: SessionRescheduledEmailProps; subject?: string; replyTo?: string }
   | { template: 'course-message'; to: string; props: CourseMessageEmailProps; subject?: string; replyTo?: string }
   | { template: 'booking-notification'; to: string; props: BookingNotificationEmailProps; subject?: string; replyTo?: string }
+  | { template: 'course-cancelled'; to: string; props: CourseCancelledEmailProps; subject?: string; replyTo?: string }
+  | { template: 'signup-cancelled'; to: string; props: SignupCancelledEmailProps; subject?: string; replyTo?: string }
 
 export interface SendEmailResult {
   id?: string
