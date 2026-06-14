@@ -16,7 +16,10 @@ import { extractEdgeError } from '@/lib/edge-errors';
 import { toast } from 'sonner';
 
 const TeacherProfilePage = () => {
-  const { profile, refreshSellers } = useAuth();
+  const { profile, refreshSellers, sellers } = useAuth();
+  // Seller membership is authoritative for user type (matches DashboardRouter);
+  // profiles.role is only a UX hint. Buyers have no studio/public page.
+  const isSeller = sellers.length > 0;
 
   // State for form fields - initialized from auth context
   const [name, setName] = useState('');
@@ -186,7 +189,9 @@ const TeacherProfilePage = () => {
                       aria-describedby="profile-name-hint"
                     />
                     <p id="profile-name-hint" className="text-sm text-foreground-muted">
-                      Brukes bare på kontoen din. Den offentlige siden viser studionavnet.
+                      {isSeller
+                        ? 'Brukes bare på kontoen din. Den offentlige siden viser studionavnet.'
+                        : 'Brukes når du melder deg på kurs.'}
                     </p>
                   </div>
 

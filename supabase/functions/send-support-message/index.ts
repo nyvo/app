@@ -20,10 +20,18 @@ interface SupportMessageRequest {
   signupId?: string | null
 }
 
+// Union of the seller AND buyer subject lists rendered in HelpPage.tsx.
+// Both client lists must stay a subset of this set — a subject not listed here
+// is rejected with 400. Buyer-only: 'Påmeldingene mine', 'Betaling og kvittering'.
 const SUBJECTS = new Set([
+  // Seller
   'Kurs og påmeldinger',
   'Betaling og utbetaling',
   'Studio og innstillinger',
+  // Buyer
+  'Påmeldingene mine',
+  'Betaling og kvittering',
+  // Shared
   'Innlogging og konto',
   'Annet',
 ])
