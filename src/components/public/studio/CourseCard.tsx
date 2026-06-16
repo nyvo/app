@@ -81,11 +81,11 @@ function extractTime(timeSchedule: string | null): string {
 function formatSummary(course: PublicCourseWithDetails): string {
   if (course.delivery_mode === 'online') return 'Nettkurs';
   if (course.format === 'series') {
-    return course.total_weeks ? `Kursrekke · ${course.total_weeks} uker` : 'Kursrekke';
+    return course.total_weeks ? `Kursrekke over ${course.total_weeks} uker` : 'Kursrekke';
   }
   const days = singleDayCount(course);
-  if (days > 1) return `Kurs · ${days} dager`;
-  return course.duration ? `Enkelttime · ${course.duration} min` : 'Enkelttime';
+  if (days > 1) return `Kurs over ${days} dager`;
+  return course.duration ? `Enkelttime, ${course.duration} min` : 'Enkelttime';
 }
 
 /**
@@ -223,8 +223,7 @@ export function CourseCard({ course, ratio = 'portrait', className, viewingSlug,
         {(dateChip || time) && (
           <div className="inline-flex items-baseline gap-1.5 text-sm font-medium tabular-nums text-foreground-muted">
             {dateChip && <span>{dateChip.label}</span>}
-            {dateChip && time && <span className="text-foreground-disabled">·</span>}
-            {time && <span>{time}</span>}
+            {time && <span>kl. {time}</span>}
           </div>
         )}
 

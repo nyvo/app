@@ -274,9 +274,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
     whenLine || courseData.location ? (
       <>
         {whenLine}
-        {whenLine && courseData.location && (
-          <span className="text-foreground-disabled mx-2">·</span>
-        )}
+        {whenLine && courseData.location && ', '}
         {courseData.location}
       </>
     ) : undefined;

@@ -197,7 +197,10 @@ export default function HelpPage() {
                         <SelectGroup>
                           {signups.map((signup) => (
                             <SelectItem key={signup.id} value={signup.id}>
-                              {signup.participantName} · {signup.participantEmail}
+                              <span className="flex flex-col leading-tight">
+                                <span>{signup.participantName}</span>
+                                <span className="text-xs text-foreground-muted">{signup.participantEmail}</span>
+                              </span>
                             </SelectItem>
                           ))}
                         </SelectGroup>

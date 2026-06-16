@@ -237,7 +237,7 @@ export function ImageField({
       {hiddenInput}
       {pickerButton}
       {displayUrl && onRemove && (
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-3 text-sm">
           <Button
             type="button"
             variant="plain"
@@ -246,7 +246,6 @@ export function ImageField({
           >
             {changeLabel}
           </Button>
-          <span aria-hidden="true" className="text-foreground-disabled">·</span>
           <Button
             type="button"
             variant="plain"

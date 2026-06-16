@@ -244,7 +244,7 @@ export function SessionsModal({
         {view === 'reschedule' && editing && (
           <div className="space-y-4">
             <p className="text-sm text-foreground-muted">
-              {formatNorwegianDate(editing.session_date)} · kl.{' '}
+              {formatNorwegianDate(editing.session_date)} kl.{' '}
               {shortTime(editing.start_time)}
             </p>
 

@@ -185,7 +185,7 @@ export function CourseOverviewTab({
         <Card>
           <CardContent className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
             <p className="text-base font-medium text-foreground">
-              Kursrekke · {course.totalWeeks} {course.totalWeeks === 1 ? 'uke' : 'uker'}
+              Kursrekke over {course.totalWeeks} {course.totalWeeks === 1 ? 'uke' : 'uker'}
             </p>
             {sessionCount > 1 && (
               <Button variant="secondary" onClick={onOpenKursplan} className="shrink-0">
@@ -202,7 +202,7 @@ export function CourseOverviewTab({
         <Card>
           <CardContent className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
             <p className="text-base font-medium text-foreground">
-              Enkeltkurs · {sessionCount} {sessionCount === 1 ? 'dag' : 'dager'}
+              Enkeltkurs over {sessionCount} {sessionCount === 1 ? 'dag' : 'dager'}
             </p>
             <Button variant="secondary" onClick={onOpenKursplan} className="shrink-0">
               Se kursplan

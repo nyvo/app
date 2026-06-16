@@ -390,7 +390,7 @@ const CheckoutSuccessPage = () => {
             const courseImage = signup?.course.image_url ?? null;
             const isFree = isFreeSignup || (signup?.amount_paid ?? 0) === 0;
             const bookedAt = signup?.created_at ? new Date(signup.created_at) : new Date();
-            const whenLine = [dateLong, time ? `kl. ${time}` : null].filter(Boolean).join(' · ');
+            const whenLine = [dateLong, time ? `kl. ${time}` : null].filter(Boolean).join(' ');
 
             return (
               <>

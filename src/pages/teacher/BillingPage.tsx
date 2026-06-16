@@ -23,7 +23,7 @@ function planLabel(plan: SubscriptionPlan): string {
 function proStatusLine(status: SubscriptionStatus, renewsAt: string | null): string {
   if (status === 'past_due') return 'Betaling krever oppfølging'
   if (status === 'canceled') return 'Avsluttet'
-  if (status === 'active') return renewsAt ? `Aktiv · Fornyes ${renewsAt}` : 'Aktiv'
+  if (status === 'active') return renewsAt ? `Aktiv, fornyes ${renewsAt}` : 'Aktiv'
   return 'Ingen aktiv betaling'
 }
 

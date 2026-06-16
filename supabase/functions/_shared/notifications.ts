@@ -24,6 +24,13 @@ function formatKroner(amount: number | null | undefined): string {
   return `${(amount ?? 0).toLocaleString('nb-NO')} kr`
 }
 
+// Team roles → Norwegian labels for notification copy (maps the
+// `seller_member_role` enum; unknown values fall back to the raw string).
+const ROLE_LABELS: Record<string, string> = {
+  owner: 'eier',
+  admin: 'administrator',
+}
+
 // ---------- Event taxonomy ----------
 
 export type NotificationInput =
@@ -248,7 +255,7 @@ function renderNotification(input: NotificationInput): RenderedNotification {
         action_required: false,
         dedupe_key: `team.invite_accepted:${input.teamMemberId}:${input.sellerId}`,
         title: 'Nytt teammedlem',
-        body: `${input.memberName} · ${input.role}`,
+        body: `${input.memberName} ble lagt til som ${ROLE_LABELS[input.role] ?? input.role}`,
         action_url: '/studio',
         metadata: {
           team_member_id: input.teamMemberId,

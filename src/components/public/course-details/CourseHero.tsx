@@ -61,10 +61,10 @@ export function CourseHero({ course }: CourseHeroProps) {
       ? `${startShort} – ${endShort}`
       : null;
 
-  // Combined "I dag · kl. 17:30 (60 min)" — single home for next-session info
+  // Combined "I dag kl. 17:30 (60 min)" — single home for next-session info
   // plus duration. "per gang" wording removed.
   let whenLabel = '';
-  if (relativeDate && time) whenLabel = `${relativeDate} · kl. ${time}`;
+  if (relativeDate && time) whenLabel = `${relativeDate} kl. ${time}`;
   else if (relativeDate) whenLabel = relativeDate;
   else if (time) whenLabel = `kl. ${time}`;
   if (whenLabel && course.duration) whenLabel += ` (${course.duration} min)`;

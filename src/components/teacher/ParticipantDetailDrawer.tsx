@@ -184,7 +184,7 @@ function buildActivity(signup: SignupWithProfile): ActivityEvent[] {
     events.push({
       icon: RefreshCw,
       label: signup.refund_amount
-        ? `${isPartiallyRefunded(signup) ? 'Delvis refundert' : 'Refundert'} · ${formatKroner(signup.refund_amount)}`
+        ? `${isPartiallyRefunded(signup) ? 'Delvis refundert' : 'Refundert'} ${formatKroner(signup.refund_amount)}`
         : 'Refundert',
       timestamp: formatNorwegianShort(signup.refunded_at),
     });
