@@ -58,7 +58,7 @@ interface StripeRequestOptions {
   method?: 'GET' | 'POST'
   // Act on a connected account (Connect) — sets the Stripe-Account header.
   stripeAccount?: string
-  // Stripe-Idempotency-Key header — safe retries for POSTs (e.g. PaymentIntent create).
+  // Idempotency-Key header — safe retries for POSTs (e.g. PaymentIntent create).
   idempotencyKey?: string
 }
 
@@ -95,13 +95,28 @@ async function stripeRequest<T>(
 
   const response = await fetch(url, init)
 
-  const payload = await response.json().catch(() => null)
+  // Parse the body once. A non-JSON 2xx (gateway/outage page) must surface as a real error
+  // rather than returning `null as T` and crashing the caller on the first field access.
+  const text = await response.text()
+  let payload: unknown = null
+  if (text) {
+    try {
+      payload = JSON.parse(text)
+    } catch {
+      payload = null
+    }
+  }
+
   if (!response.ok) {
     const message =
       payload && typeof payload === 'object' && 'error' in payload
         ? (payload as { error?: { message?: string } }).error?.message
         : null
     throw new Error(message || `Stripe request failed: ${response.status}`)
+  }
+
+  if (payload === null) {
+    throw new Error(`Stripe returned a non-JSON body for ${path} (status ${response.status})`)
   }
 
   return payload as T
@@ -244,6 +259,8 @@ export interface StripeAccountLink {
 }
 
 export interface StripeLoginLink {
+  object?: 'login_link'
+  created?: number
   url: string
 }
 
@@ -289,6 +306,7 @@ export interface StripeList<T> {
   object: 'list'
   data: T[]
   has_more: boolean
+  url: string
 }
 
 // --- Onboarding / connected accounts (platform-context calls) ---
@@ -315,7 +333,10 @@ export async function createConnectedAccount(params: {
   // sellers.organization_number because Stripe never echoes company.tax_id back).
   const company =
     params.organizationNumber || params.businessName
-      ? { tax_id: params.organizationNumber, name: params.businessName }
+      ? {
+          ...(params.organizationNumber ? { tax_id: params.organizationNumber } : {}),
+          ...(params.businessName ? { name: params.businessName } : {}),
+        }
       : undefined
 
   return stripeRequest<StripeConnectedAccount>('/accounts', {
@@ -387,14 +408,16 @@ export async function createPaymentIntent(params: {
   sellerAccountId: string
   attemptId: string
   currency?: string
-  captureMethod?: 'manual' | 'automatic'
 }): Promise<StripePaymentIntent> {
   return stripeRequest<StripePaymentIntent>(
     '/payment_intents',
     {
       amount: params.amount,
       currency: params.currency ?? 'nok',
-      capture_method: params.captureMethod ?? 'manual',
+      // Manual capture is mandatory — the capacity-check pattern (C1) captures in the webhook.
+      // Not parameterized so it can't be bypassed. The frontend confirms via Stripe Elements,
+      // so we never pass confirm: true here.
+      capture_method: 'manual',
       on_behalf_of: params.sellerAccountId,
       transfer_data: { destination: params.sellerAccountId },
       application_fee_amount: params.applicationFeeAmount,
@@ -441,7 +464,10 @@ export async function refundPaymentIntent(params: {
   return stripeRequest<StripeRefund>('/refunds', {
     payment_intent: params.paymentIntentId,
     amount: params.amount,
-    reverse_transfer: params.reverseTransfer,
-    refund_application_fee: params.refundApplicationFee,
+    // Default true per C6: the supported mode is a full refund where the studio's transfer is
+    // reversed and the platform service fee is returned. Pass false only to deliberately have
+    // the platform absorb the refund.
+    reverse_transfer: params.reverseTransfer ?? true,
+    refund_application_fee: params.refundApplicationFee ?? true,
   })
 }
