@@ -4,6 +4,11 @@ verify_jwt = false
 [functions.create-dintero-session]
 verify_jwt = false
 
+# Public Stripe Connect checkout (guest buyers) — same unauthenticated posture as
+# create-dintero-session; abuse is rate-limited inside. Stripe migration Phase 2.
+[functions.create-stripe-connect-session]
+verify_jwt = false
+
 [functions.create-free-signup]
 verify_jwt = false
 
