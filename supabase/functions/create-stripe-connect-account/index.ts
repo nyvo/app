@@ -63,11 +63,12 @@ Deno.serve(async (req: Request) => {
     let accountId = seller.stripe_account_id
 
     if (!accountId) {
+      // Don't prefill business details — Stripe collects and validates them in hosted
+      // onboarding. Prefilling a stored org number can fail Stripe's validation (e.g. the
+      // 999999999 placeholder); in-app org-number capture is a C7 follow-up.
       const account = await createConnectedAccount({
         sellerId: seller.id,
         email: seller.email ?? undefined,
-        businessName: seller.name ?? undefined,
-        organizationNumber: seller.organization_number || undefined,
       })
       accountId = account.id
 
