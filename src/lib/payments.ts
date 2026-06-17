@@ -22,3 +22,16 @@ export function sellerNeedsDinteroSetup(
 ): boolean {
   return isProSeller(seller) && !seller?.dintero_onboarding_complete
 }
+
+export type PaymentProvider = 'dintero' | 'stripe' | 'both'
+
+/**
+ * Which payment integration seller onboarding uses, from VITE_PAYMENT_PROVIDER.
+ * Defaults to 'dintero' (the live provider) for any unset/unknown value.
+ * 'stripe' and 'both' switch seller onboarding to Stripe Connect during the
+ * migration overlap. See .context/plans/dintero-to-stripe-migration.md.
+ */
+export function getPaymentProvider(): PaymentProvider {
+  const value = import.meta.env.VITE_PAYMENT_PROVIDER
+  return value === 'stripe' || value === 'both' ? value : 'dintero'
+}

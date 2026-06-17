@@ -174,6 +174,9 @@ export async function updateSeller(
       dintero_approval_id: null,
       dintero_contract_url: null,
       dintero_onboarding_status: operational?.dintero_onboarding_status ?? null,
+      stripe_account_id: operational?.stripe_account_id ?? null,
+      stripe_account_status: operational?.stripe_account_status ?? null,
+      stripe_onboarding_complete: operational?.stripe_onboarding_complete ?? false,
       settings: {},
       seller_type: operational?.seller_type ?? 'individual',
       organization_number: null,
@@ -200,6 +203,9 @@ export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'none'
 export interface SellerOperational {
   dintero_seller_id: string | null
   dintero_onboarding_status: string | null
+  stripe_account_id: string | null
+  stripe_account_status: string | null
+  stripe_onboarding_complete: boolean
   seller_type: string
   subscription_plan: SubscriptionPlan
   subscription_status: SubscriptionStatus
