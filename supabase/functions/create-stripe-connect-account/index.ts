@@ -21,12 +21,12 @@ import {
   handleCors,
   errorResponse,
   successResponse,
+  isAllowedOrigin,
 } from '../_shared/auth.ts'
 import { createConnectedAccount, createAccountLink } from '../_shared/stripe.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:5173'
 
 interface ConnectRequest {
   sellerId: string
@@ -85,12 +85,19 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Hosted Express onboarding link. ?stripe=refresh fires when the link expires
-    // (we re-mint it); ?stripe=return when the teacher finishes the hosted flow.
+    // Return the teacher to the app origin they started from (validated against the allowlist),
+    // falling back to SITE_URL. Using the caller's origin makes local dev + staging work, not
+    // just the single SITE_URL value. ?stripe=refresh re-mints an expired link; ?stripe=return
+    // fires when the teacher finishes the hosted flow.
+    const origin = req.headers.get('origin')
+    const baseUrl = isAllowedOrigin(origin)
+      ? (origin as string)
+      : (Deno.env.get('SITE_URL') || 'http://localhost:5173')
+
     const accountLink = await createAccountLink({
       accountId,
-      refreshUrl: `${siteUrl}/settings/payouts?stripe=refresh`,
-      returnUrl: `${siteUrl}/settings/payouts?stripe=return`,
+      refreshUrl: `${baseUrl}/settings/payouts?stripe=refresh`,
+      returnUrl: `${baseUrl}/settings/payouts?stripe=return`,
     })
 
     return successResponse({ url: accountLink.url }, 200, req)

@@ -157,6 +157,22 @@ export function getCorsHeaders(origin?: string | null): Record<string, string> {
 }
 
 /**
+ * True when `origin` is an allowed app origin — a whitelisted prod origin
+ * (ALLOWED_ORIGIN env + built-in defaults) or a localhost dev origin. Use this to
+ * safely echo the caller's origin into redirect URLs (e.g. a Stripe return_url)
+ * instead of trusting it blindly.
+ */
+export function isAllowedOrigin(origin: string | null | undefined): boolean {
+  if (!origin) return false
+  const envEntries = (Deno.env.get('ALLOWED_ORIGIN') || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+  const whitelist = Array.from(new Set([...envEntries, ...DEFAULT_WHITELIST]))
+  return whitelist.includes(origin) || LOCAL_DEV_ORIGIN_PATTERN.test(origin)
+}
+
+/**
  * Create an error response with proper CORS headers.
  * Pass the Request to echo the caller's origin (required for localhost dev
  * and any non-primary allowed origin). Falls back to the primary origin
