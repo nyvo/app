@@ -1,5 +1,9 @@
-// Minimal Stripe Billing REST helper for Supabase Edge Functions.
-// Uses fetch instead of stripe-node so functions stay Deno-native.
+// Minimal Stripe REST helper for Supabase Edge Functions (Deno-native — fetch, no stripe-node).
+// Covers two integrations that share STRIPE_SECRET_KEY:
+//   1. Stripe Billing (Pro subscription) — customers, checkout/portal sessions, webhook verify.
+//   2. Stripe Connect (marketplace) — Express onboarding, destination-charge PaymentIntents
+//      (manual capture + on_behalf_of; see .context/plans/dintero-to-stripe-migration.md C1/C6/C7),
+//      refunds, and settlement reporting.
 
 const STRIPE_API_BASE = 'https://api.stripe.com/v1'
 
@@ -37,7 +41,11 @@ export interface StripeSubscription {
 
 function appendParams(params: URLSearchParams, key: string, value: unknown): void {
   if (value === undefined || value === null) return
-  if (typeof value === 'object' && !Array.isArray(value)) {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => appendParams(params, `${key}[${index}]`, item))
+    return
+  }
+  if (typeof value === 'object') {
     for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
       appendParams(params, `${key}[${childKey}]`, childValue)
     }
@@ -46,27 +54,46 @@ function appendParams(params: URLSearchParams, key: string, value: unknown): voi
   params.append(key, String(value))
 }
 
+interface StripeRequestOptions {
+  method?: 'GET' | 'POST'
+  // Act on a connected account (Connect) — sets the Stripe-Account header.
+  stripeAccount?: string
+  // Stripe-Idempotency-Key header — safe retries for POSTs (e.g. PaymentIntent create).
+  idempotencyKey?: string
+}
+
 async function stripeRequest<T>(
   path: string,
   body: Record<string, unknown>,
+  options: StripeRequestOptions = {},
 ): Promise<T> {
   if (!stripeSecretKey) {
     throw new Error('STRIPE_SECRET_KEY is not configured')
   }
 
+  const method = options.method ?? 'POST'
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(body)) {
     appendParams(params, key, value)
   }
 
-  const response = await fetch(`${STRIPE_API_BASE}${path}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${stripeSecretKey}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: params,
-  })
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${stripeSecretKey}`,
+  }
+  if (options.stripeAccount) headers['Stripe-Account'] = options.stripeAccount
+  if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey
+
+  let url = `${STRIPE_API_BASE}${path}`
+  const init: RequestInit = { method, headers }
+  if (method === 'GET') {
+    const query = params.toString()
+    if (query) url += `?${query}`
+  } else {
+    headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    init.body = params
+  }
+
+  const response = await fetch(url, init)
 
   const payload = await response.json().catch(() => null)
   if (!response.ok) {
@@ -190,4 +217,231 @@ export async function verifyStripeSignature(params: {
   const expected = bytesToHex(digest)
 
   return signatures.some((signature) => timingSafeEqual(signature, expected))
+}
+
+// ---------------------------------------------------------------------------
+// Stripe Connect (marketplace) — Express onboarding, destination charges, settlements.
+// Shares STRIPE_SECRET_KEY with Billing above. Plan: .context/plans/dintero-to-stripe-migration.md.
+// ---------------------------------------------------------------------------
+
+export interface StripeConnectedAccount {
+  id: string
+  charges_enabled: boolean
+  payouts_enabled: boolean
+  details_submitted: boolean
+  requirements?: {
+    currently_due?: string[]
+    past_due?: string[]
+    pending_verification?: string[]
+    disabled_reason?: string | null
+  }
+  capabilities?: Record<string, string>
+}
+
+export interface StripeAccountLink {
+  url: string
+  expires_at: number
+}
+
+export interface StripeLoginLink {
+  url: string
+}
+
+export interface StripePaymentIntent {
+  id: string
+  status: string
+  client_secret?: string
+  amount: number
+  currency: string
+  amount_capturable?: number
+  amount_received?: number
+  latest_charge?: string
+  on_behalf_of?: string | null
+  metadata?: Record<string, string>
+}
+
+export interface StripeRefund {
+  id: string
+  status: string
+  amount: number
+}
+
+export interface StripeMoney {
+  amount: number
+  currency: string
+}
+
+export interface StripeBalance {
+  available: StripeMoney[]
+  pending: StripeMoney[]
+}
+
+export interface StripePayout {
+  id: string
+  amount: number
+  currency: string
+  status: string
+  arrival_date: number
+  created: number
+}
+
+export interface StripeList<T> {
+  object: 'list'
+  data: T[]
+  has_more: boolean
+}
+
+// --- Onboarding / connected accounts (platform-context calls) ---
+
+/**
+ * Create an Express connected account. Vipps is deferred until the private preview is
+ * enrolled, so the default capabilities are card_payments + transfers; add 'vipps_payments'
+ * to `capabilities` once the platform is granted preview access (plan C2).
+ */
+export async function createConnectedAccount(params: {
+  sellerId: string
+  country?: string
+  email?: string
+  businessType?: 'individual' | 'company'
+  businessName?: string
+  organizationNumber?: string
+  capabilities?: string[]
+}): Promise<StripeConnectedAccount> {
+  const requested = params.capabilities ?? ['card_payments', 'transfers']
+  const capabilities: Record<string, { requested: boolean }> = {}
+  for (const capability of requested) capabilities[capability] = { requested: true }
+
+  // Prefill the org number/name only when provided (plan C7 — we still keep our own copy on
+  // sellers.organization_number because Stripe never echoes company.tax_id back).
+  const company =
+    params.organizationNumber || params.businessName
+      ? { tax_id: params.organizationNumber, name: params.businessName }
+      : undefined
+
+  return stripeRequest<StripeConnectedAccount>('/accounts', {
+    type: 'express',
+    country: params.country ?? 'NO',
+    email: params.email,
+    business_type: params.businessType,
+    company,
+    capabilities,
+    metadata: { seller_id: params.sellerId },
+  })
+}
+
+/** Hosted Express onboarding link the studio is redirected to. */
+export async function createAccountLink(params: {
+  accountId: string
+  refreshUrl: string
+  returnUrl: string
+}): Promise<StripeAccountLink> {
+  return stripeRequest<StripeAccountLink>('/account_links', {
+    account: params.accountId,
+    refresh_url: params.refreshUrl,
+    return_url: params.returnUrl,
+    type: 'account_onboarding',
+  })
+}
+
+/** Current account state — drives stripe_onboarding_complete / stripe_account_status. */
+export async function retrieveAccount(accountId: string): Promise<StripeConnectedAccount> {
+  return stripeRequest<StripeConnectedAccount>(`/accounts/${accountId}`, {}, { method: 'GET' })
+}
+
+/** Single-use link into the studio's Express dashboard. */
+export async function createLoginLink(accountId: string): Promise<StripeLoginLink> {
+  return stripeRequest<StripeLoginLink>(`/accounts/${accountId}/login_links`, {})
+}
+
+// --- Settlements (connected-account context via the Stripe-Account header) ---
+
+export async function retrieveBalance(accountId: string): Promise<StripeBalance> {
+  return stripeRequest<StripeBalance>('/balance', {}, { method: 'GET', stripeAccount: accountId })
+}
+
+export async function listPayouts(params: {
+  accountId: string
+  limit?: number
+}): Promise<StripeList<StripePayout>> {
+  return stripeRequest<StripeList<StripePayout>>(
+    '/payouts',
+    { limit: params.limit ?? 10 },
+    { method: 'GET', stripeAccount: params.accountId },
+  )
+}
+
+// --- Payments: destination charge, manual capture, on_behalf_of (plan C1/C4/C6/C7) ---
+
+/**
+ * Create the buyer-facing PaymentIntent. The charge is owned by the PLATFORM (destination
+ * charge), so this is a platform-context call — no Stripe-Account header.
+ * - capture_method 'manual' (C1): authorize now; capture in the webhook after the capacity check.
+ * - on_behalf_of (C7): the studio is the merchant of record (its statement descriptor + VAT).
+ * - application_fee_amount: the platform service fee, pulled back automatically.
+ * - metadata.attempt_id (C4): round-trips on every webhook event.
+ * Idempotency-Key = attemptId so a retried create returns the same PaymentIntent.
+ */
+export async function createPaymentIntent(params: {
+  amount: number
+  applicationFeeAmount: number
+  sellerAccountId: string
+  attemptId: string
+  currency?: string
+  captureMethod?: 'manual' | 'automatic'
+}): Promise<StripePaymentIntent> {
+  return stripeRequest<StripePaymentIntent>(
+    '/payment_intents',
+    {
+      amount: params.amount,
+      currency: params.currency ?? 'nok',
+      capture_method: params.captureMethod ?? 'manual',
+      on_behalf_of: params.sellerAccountId,
+      transfer_data: { destination: params.sellerAccountId },
+      application_fee_amount: params.applicationFeeAmount,
+      automatic_payment_methods: { enabled: true },
+      metadata: { attempt_id: params.attemptId },
+    },
+    { idempotencyKey: params.attemptId },
+  )
+}
+
+/** Capture an authorized (requires_capture) PaymentIntent. Omit amount to capture in full. */
+export async function capturePaymentIntent(
+  paymentIntentId: string,
+  amountToCapture?: number,
+): Promise<StripePaymentIntent> {
+  return stripeRequest<StripePaymentIntent>(
+    `/payment_intents/${paymentIntentId}/capture`,
+    amountToCapture !== undefined ? { amount_to_capture: amountToCapture } : {},
+  )
+}
+
+/** Cancel/void an uncaptured PaymentIntent (no capacity, abandoned checkout, etc.). */
+export async function cancelPaymentIntent(paymentIntentId: string): Promise<StripePaymentIntent> {
+  return stripeRequest<StripePaymentIntent>(`/payment_intents/${paymentIntentId}/cancel`, {})
+}
+
+export async function retrievePaymentIntent(paymentIntentId: string): Promise<StripePaymentIntent> {
+  return stripeRequest<StripePaymentIntent>(`/payment_intents/${paymentIntentId}`, {}, { method: 'GET' })
+}
+
+/**
+ * Refund a captured charge.
+ * - reverseTransfer=true claws the funds back proportionally from the studio (plan C6).
+ * - refundApplicationFee=true also returns the platform service fee to the buyer.
+ * Omit `amount` for a full refund. Partial refunds are not exposed in the UI yet (C6),
+ * so the typical call is a full refund with both flags true.
+ */
+export async function refundPaymentIntent(params: {
+  paymentIntentId: string
+  amount?: number
+  reverseTransfer?: boolean
+  refundApplicationFee?: boolean
+}): Promise<StripeRefund> {
+  return stripeRequest<StripeRefund>('/refunds', {
+    payment_intent: params.paymentIntentId,
+    amount: params.amount,
+    reverse_transfer: params.reverseTransfer,
+    refund_application_fee: params.refundApplicationFee,
+  })
 }
