@@ -223,12 +223,23 @@ const PaymentsPage = () => {
 
   const handleOpenStripeDashboard = useCallback(async () => {
     if (!currentSeller?.id) return;
+    // Open the tab synchronously inside the click gesture so the browser doesn't popup-block it
+    // (window.open after an await is treated as untrusted). We point the already-open tab at the
+    // single-use dashboard URL once it arrives — the blank tab also hides the fetch latency.
+    const dashboardTab = window.open('about:blank', '_blank');
     const { data, error } = await getStripeSettlements(currentSeller.id);
     if (error || !data?.dashboardUrl) {
+      dashboardTab?.close();
       toast.error('Kunne ikke åpne Stripe akkurat nå. Prøv igjen.');
       return;
     }
-    window.open(data.dashboardUrl, '_blank', 'noopener,noreferrer');
+    if (dashboardTab) {
+      dashboardTab.opener = null;
+      dashboardTab.location.href = data.dashboardUrl;
+    } else {
+      // Popup blocked despite the synchronous open — fall back to a direct open.
+      window.open(data.dashboardUrl, '_blank', 'noopener,noreferrer');
+    }
   }, [currentSeller?.id]);
 
   // Re-check status when returning from Stripe (?stripe=return); re-mint an
