@@ -750,6 +750,7 @@ export type Database = {
           seller_id: string
           seller_notified_at: string | null
           status: Database["public"]["Enums"]["signup_status"]
+          stripe_payment_intent_id: string | null
           ticket_audience_snapshot: Database["public"]["Enums"]["ticket_audience_t"]
           ticket_kind_snapshot: Database["public"]["Enums"]["ticket_kind_t"]
           ticket_label_snapshot: string
@@ -780,6 +781,7 @@ export type Database = {
           seller_id: string
           seller_notified_at?: string | null
           status?: Database["public"]["Enums"]["signup_status"]
+          stripe_payment_intent_id?: string | null
           ticket_audience_snapshot: Database["public"]["Enums"]["ticket_audience_t"]
           ticket_kind_snapshot: Database["public"]["Enums"]["ticket_kind_t"]
           ticket_label_snapshot: string
@@ -810,6 +812,7 @@ export type Database = {
           seller_id?: string
           seller_notified_at?: string | null
           status?: Database["public"]["Enums"]["signup_status"]
+          stripe_payment_intent_id?: string | null
           ticket_audience_snapshot?: Database["public"]["Enums"]["ticket_audience_t"]
           ticket_kind_snapshot?: Database["public"]["Enums"]["ticket_kind_t"]
           ticket_label_snapshot?: string
