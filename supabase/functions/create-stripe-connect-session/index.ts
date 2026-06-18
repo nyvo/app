@@ -179,6 +179,9 @@ Deno.serve(async (req: Request) => {
     if (!seller.stripe_account_id || !seller.stripe_onboarding_complete) {
       return errorResponse('Payment is not set up for this seller', 400, req)
     }
+    // Capture into a non-null const here, where the guard above has narrowed the type. The
+    // narrowing is otherwise lost across the many awaits before createPaymentIntent is called.
+    const stripeAccountId: string = seller.stripe_account_id
 
     // INV-1: integrated checkout requires an active Pro subscription. uses_integrated_payments
     // is the derived predicate (pro + active/past_due + onboarded with either provider).
@@ -307,7 +310,7 @@ Deno.serve(async (req: Request) => {
       paymentIntent = await createPaymentIntent({
         amount: priceInOre,
         applicationFeeAmount: serviceFeeInOre,
-        sellerAccountId: seller.stripe_account_id,
+        sellerAccountId: stripeAccountId,
         attemptId: merchantReference,
       })
     } catch (piError) {

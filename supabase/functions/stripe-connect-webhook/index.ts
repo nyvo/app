@@ -187,11 +187,26 @@ Deno.serve(async (req: Request) => {
           try { await cancelPaymentIntent(pi.id) } catch (_e) { /* non-fatal */ }
           await supabase
             .from('payment_attempts')
-            .update({ stripe_payment_intent_id: pi.id, status: 'voided' })
+            .update({ stripe_payment_intent_id: pi.id, status: 'voided', payment_product: 'stripe' })
             .eq('id', attempt.id)
           await markEventResult(supabase, eventKey, {
             type: 'amount_mismatch', expected_amount_ore: expectedAmountOre, pi_amount_ore: pi.amount,
           })
+          return new Response('OK', { status: 200 })
+        }
+
+        const amountNok = pi.amount / 100
+
+        // Defensive: every attempt created by create-stripe-connect-session has a ticket_type_id.
+        // Guard BEFORE marking the attempt 'authorized', so a malformed attempt never produces a
+        // spurious authorized->voided transition in the audit trail.
+        if (!attempt.ticket_type_id) {
+          try { await cancelPaymentIntent(pi.id) } catch (_e) { /* non-fatal */ }
+          await supabase
+            .from('payment_attempts')
+            .update({ stripe_payment_intent_id: pi.id, status: 'voided', payment_product: 'stripe' })
+            .eq('id', attempt.id)
+          await markEventResult(supabase, eventKey, { type: 'embedded', error: 'attempt_missing_ticket_type' })
           return new Response('OK', { status: 200 })
         }
 
@@ -200,16 +215,6 @@ Deno.serve(async (req: Request) => {
           .from('payment_attempts')
           .update({ stripe_payment_intent_id: pi.id, status: 'authorized', payment_product: 'stripe' })
           .eq('id', attempt.id)
-
-        const amountNok = pi.amount / 100
-
-        // Defensive: every attempt created by create-stripe-connect-session has a ticket_type_id.
-        if (!attempt.ticket_type_id) {
-          try { await cancelPaymentIntent(pi.id) } catch (_e) { /* non-fatal */ }
-          await supabase.from('payment_attempts').update({ status: 'voided' }).eq('id', attempt.id)
-          await markEventResult(supabase, eventKey, { type: 'embedded', error: 'attempt_missing_ticket_type' })
-          return new Response('OK', { status: 200 })
-        }
 
         // Atomic capacity check + signup mint (stripe:pi: advisory lock dedupes retries).
         const { data: signupResult, error: signupRpcError } = await supabase.rpc('create_signup_if_available', {
@@ -237,8 +242,17 @@ Deno.serve(async (req: Request) => {
         }
 
         if (!signupResult || !signupResult.success) {
-          // No capacity, or a duplicate confirmed signup — cancel the auth, void the attempt.
           const errorType = (signupResult && signupResult.error) || 'unknown'
+          // Unique-index race backstop: the RPC's dedup SELECT missed a concurrent INSERT and the
+          // partial unique index on signups.stripe_payment_intent_id fired — the signup WAS minted
+          // (and captured) by the race winner. Treat as idempotent success: do NOT cancel the PI
+          // (it's captured; the cancel would silently fail) or void the attempt. This is the
+          // caller invariant documented in the create_signup_if_available migration.
+          if (errorType === 'already_signed_up') {
+            await markEventResult(supabase, eventKey, { type: 'embedded', status: 'already_signed_up_race' })
+            return new Response('OK', { status: 200 })
+          }
+          // Genuine capacity/validation reject — cancel the auth, void the attempt.
           try { await cancelPaymentIntent(pi.id) } catch (_e) { /* non-fatal */ }
           await supabase.from('payment_attempts').update({ status: 'voided' }).eq('id', attempt.id)
           await markEventResult(supabase, eventKey, { type: 'embedded', status: 'voided', error: errorType })
@@ -265,7 +279,13 @@ Deno.serve(async (req: Request) => {
             .from('signups')
             .update({ payment_status: 'failed', status: 'cancelled' })
             .eq('id', signupResult.signup_id)
-          await supabase.from('payment_attempts').update({ status: 'failed' }).eq('id', attempt.id)
+          const { error: failUpdateErr } = await supabase
+            .from('payment_attempts').update({ status: 'failed' }).eq('id', attempt.id)
+          if (failUpdateErr) {
+            // Don't finalize the claim with a half-written state — throw so the outer catch
+            // releases it and Stripe retries.
+            throw new Error(`Failed to mark attempt failed after capture error: ${failUpdateErr.message}`)
+          }
           await notifyPaymentFailed(supabase, signupResult.signup_id, attempt, pi.id, amountNok)
           await markEventResult(supabase, eventKey, {
             type: 'embedded', signup_id: signupResult.signup_id, status: 'capture_failed', error: message,
@@ -312,6 +332,9 @@ Deno.serve(async (req: Request) => {
             .from('signups')
             .update({ payment_status: 'refunded', refund_amount: refundAmountNok, refunded_at: new Date().toISOString() })
             .eq('stripe_payment_intent_id', piId)
+            // Only touch a signup that still holds its spot — a belated charge.refunded must not
+            // overwrite a row already fully-refunded + cancelled.
+            .eq('status', 'confirmed')
           await markEventResult(supabase, eventKey, { type: 'refund_partial', refunded_ore: charge.amount_refunded })
           return new Response('OK', { status: 200 })
         }
