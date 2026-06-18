@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Clock, Calendar, ChevronLeft } from '@/lib/icons';
+import { Clock, Calendar, Building } from '@/lib/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -14,6 +14,7 @@ import {
 import { cn } from '@/lib/utils';
 import { LocationCard } from '@/components/public/course-details/LocationCard';
 import { BookingRailLite } from '@/components/public/course-details/BookingRailLite';
+import { AccountControl } from '@/components/public/AccountControl';
 import { RichTextContent } from '@/components/ui/rich-text-content';
 import { PageState } from '@/components/page-state/page-state';
 import { resolveCourseImage, fetchPublicCourseBySlug, type PublicCourseWithDetails } from '@/services/publicCourses';
@@ -21,16 +22,10 @@ import { fetchSellerBySlug } from '@/services/sellers';
 import { supabase } from '@/lib/supabase';
 import type { CourseSession } from '@/types/database';
 
-interface DetailNavState {
-  fromSlug?: string;
-  fromName?: string | null;
-}
-
 export default function PublicCourseDetailPage() {
   const { slug, courseSlug } = useParams<{ slug: string; courseSlug: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const navState = (location.state ?? null) as DetailNavState | null;
 
   const [course, setCourse] = useState<PublicCourseWithDetails | null>(null);
   const [sessions, setSessions] = useState<CourseSession[]>([]);
@@ -89,24 +84,29 @@ export default function PublicCourseDetailPage() {
     return () => { active = false; };
   }, [slug, courseSlug, navigate, location.state]);
 
-  // Back link: prefer the viewing storefront (state) over the canonical
-  // owner. Direct-link visitors get the owner.
-  const backHref = navState?.fromSlug
-    ? `/${navState.fromSlug}`
-    : course?.seller?.slug
-      ? `/${course.seller.slug}`
-      : '/';
-  const backLabel = navState?.fromName ?? course?.seller?.name ?? null;
   const nextSessionDate = course
     ? resolveNextSessionDate(sessions) ?? course.start_date
     : null;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
-        <Link to="/" className="flex select-none items-center">
-          <span className="text-base font-medium text-foreground">Openspot</span>
-        </Link>
+      <header className="w-full py-6">
+        <div className="mx-auto flex w-full max-w-[1100px] items-center justify-between px-4 sm:px-6 lg:px-8">
+          {course?.seller ? (
+            <Link
+              to={`/${course.seller.slug}`}
+              className="group inline-flex items-center gap-2.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              <StudioMark name={course.seller.name} logoUrl={course.seller.logo_url} />
+              <span className="text-base font-medium text-foreground">{course.seller.name}</span>
+            </Link>
+          ) : loading ? (
+            <Skeleton className="h-8 w-40 rounded-full" />
+          ) : (
+            <span />
+          )}
+          <AccountControl />
+        </div>
       </header>
 
       <main className="flex-1">
@@ -116,16 +116,6 @@ export default function PublicCourseDetailPage() {
 
         {!loading && !error && course && (
           <div className="mx-auto max-w-[1100px] w-full px-4 sm:px-6 lg:px-8 pb-16 animate-in fade-in duration-150">
-            {backLabel && (
-              <Link
-                to={backHref}
-                className="mb-8 inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors"
-              >
-                <ChevronLeft className="size-4" strokeWidth={1.75} />
-                {backLabel}
-              </Link>
-            )}
-
             <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-6 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
               <div className="space-y-8 max-w-[640px] min-w-0">
                 <div className="space-y-6">
@@ -164,9 +154,8 @@ export default function PublicCourseDetailPage() {
                 <div className="md:sticky md:top-10">
                   <BookingRailLite
                     course={course}
+                    sessions={sessions}
                     studioSlug={slug || ''}
-                    dropInSublabel={course.allows_drop_in ? buildDropInSublabel(sessions) : null}
-                    metaLabel={buildCardMeta(course, nextSessionDate)}
                     seriesStarted={course.format === 'series' && hasSeriesStarted(sessions, course.duration)}
                     remainingSessions={countRemainingSessions(sessions, course.duration)}
                   />
@@ -181,6 +170,26 @@ export default function PublicCourseDetailPage() {
 }
 
 // ── Sub-components ──────────────────────────────────────────────────────
+
+/** Small studio mark for the header lockup — logo image, or a neutral Building
+ * fallback (matches StudioMasthead). */
+function StudioMark({ name, logoUrl }: { name: string; logoUrl: string | null }) {
+  if (logoUrl) {
+    return (
+      <span className="size-8 shrink-0 overflow-hidden rounded-lg bg-surface ring-1 ring-border" aria-hidden>
+        <img src={logoUrl} alt="" className="size-full object-cover" />
+      </span>
+    );
+  }
+  return (
+    <span
+      className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground-muted ring-1 ring-border"
+      aria-label={name}
+    >
+      <Building className="size-4" strokeWidth={1.5} />
+    </span>
+  );
+}
 
 /** Who you're booking with — the seller of record. Quiet identity block in
  * the Eventbrite "By X" tradition: avatar + name linking to the arrangør's
@@ -446,13 +455,6 @@ function formatFullDate(dateStr: string): string {
   return `${WEEKDAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
 }
 
-function buildCardMeta(course: PublicCourseWithDetails, nextSessionDate: string | null): string | null {
-  const dateLabel = formatRelativeDate(nextSessionDate);
-  const timeRange = resolveTimeRange(course.time_schedule, course.duration);
-  if (dateLabel && timeRange) return `${dateLabel} · ${timeRange}`;
-  return dateLabel || timeRange || null;
-}
-
 /** A session is "remaining" when it isn't cancelled and hasn't ended yet —
  * a class that's underway but not over still counts. Mirrors the SQL in
  * `available_ticket_types` (migration 20260520160000) so the prorated price
@@ -507,13 +509,4 @@ function findNextUpcomingSession(sessions: CourseSession[]): CourseSession | nul
 
 function resolveNextSessionDate(sessions: CourseSession[]): string | null {
   return findNextUpcomingSession(sessions)?.session_date ?? null;
-}
-
-function buildDropInSublabel(sessions: CourseSession[]): string | null {
-  const next = findNextUpcomingSession(sessions);
-  if (!next) return null;
-  const dateLabel = formatRelativeDate(next.session_date);
-  const time = next.start_time ? next.start_time.slice(0, 5) : null;
-  if (dateLabel && time) return `${dateLabel} · ${time}`;
-  return dateLabel || time || null;
 }

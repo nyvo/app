@@ -2,16 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FieldError } from '@/components/ui/field-error';
-import { PageState } from '@/components/page-state/page-state';
-import { DinteroPaymentBadge } from '@/components/public/DinteroPaymentBadge';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { embedDinteroCheckout, type DinteroCheckoutInstance } from '@/lib/dintero';
-import { ChevronLeft, Check } from '@/lib/icons';
+import { ChevronLeft, ChevronDown, Lock } from '@/lib/icons';
 import { formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
 import { calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
@@ -60,6 +57,9 @@ const CheckoutPage = () => {
   // Two-step in-place flow: 'contact' shows the kontaktinfo form, 'payment'
   // swaps that block for the live Dintero iframe. No route change.
   const [step, setStep] = useState<'contact' | 'payment'>('contact');
+  // Below md the filled summary column is hidden, so a collapsible bar carries
+  // the full summary (identity, date/time, price) — nothing dropped on tablet.
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   // Load Inter font for the checkout surface only — needed to exact-match
   // Dintero's iframe typography on titles like "Kontaktinfo". Cleaned up
@@ -151,8 +151,11 @@ const CheckoutPage = () => {
   const selectedTier = tiers.find((t) => t.id === selectedTierId) ?? null;
   const isDropInSelected = selectedTier?.ticket_kind === 'drop_in';
 
-  // Drop-in flow: pick the next available session automatically. Same model
-  // as BookingPanel — we don't expose a session picker to the buyer.
+  // Drop-in flow: honour the session the buyer picked on the course page
+  // (?okt=<id>) when it's still a bookable upcoming session, otherwise fall
+  // back to the next available one. The booking card pins a specific date, so
+  // its selection must carry through here rather than being silently overridden.
+  const requestedSessionId = searchParams.get('okt');
   const [dropInSessionId, setDropInSessionId] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -170,15 +173,18 @@ const CheckoutPage = () => {
         .neq('status', 'cancelled')
         .order('session_date', { ascending: true })
         .order('start_time', { ascending: true })
-        .limit(1);
+        .limit(50);
       if (cancelled) return;
-      const first = (data as { id: string }[] | null)?.[0];
-      setDropInSessionId(first?.id ?? null);
+      const rows = (data as { id: string }[] | null) ?? [];
+      const requested = requestedSessionId
+        ? rows.find((r) => r.id === requestedSessionId)
+        : undefined;
+      setDropInSessionId(requested?.id ?? rows[0]?.id ?? null);
     })();
     return () => {
       cancelled = true;
     };
-  }, [isDropInSelected, course?.id]);
+  }, [isDropInSelected, course?.id, requestedSessionId]);
 
   // ── Pricing ─────────────────────────────────────────────────────────────
   // No service fee on manual courses — the platform isn't in the money flow.
@@ -306,297 +312,400 @@ const CheckoutPage = () => {
   }
 
   // ── States ──────────────────────────────────────────────────────────────
+  const close = () => {
+    if (slug && courseSlug) navigate(`/${slug}/${courseSlug}`);
+    else navigate(-1);
+  };
+
   if (loading) {
-    return <CheckoutSkeleton />;
+    return (
+      <CheckoutModalShell onClose={close}>
+        <CheckoutLoadingBody />
+      </CheckoutModalShell>
+    );
   }
   if (error || !course) {
-    return <PageState variant="public-course" />;
+    return (
+      <CheckoutModalShell onClose={close}>
+        <div className="py-6 text-center">
+          <p className="text-base font-medium text-foreground">Fant ikke kurset</p>
+          <p className="mt-1 text-sm text-foreground-muted">
+            Kurset finnes ikke lenger, eller lenken er feil.
+          </p>
+          <Button variant="outline" className="mt-5" onClick={close}>
+            Tilbake
+          </Button>
+        </div>
+      </CheckoutModalShell>
+    );
   }
 
-  const backHref = `/${slug}/${courseSlug}`;
+  // Paid + integrated payments is the only branch with a real payment step;
+  // free and manuell collapse to a single confirm screen with no stepper.
+  const stepped = !isFree && !isManual;
+  const onPayment = stepped && step === 'payment';
+  const blocked = isCancelled || isFull || !paymentReady;
 
-  return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
-        <Link to={`/${slug}`} className="flex select-none items-center">
-          <span className="text-base font-medium text-foreground">Openspot</span>
-        </Link>
-      </header>
-      <div className="mx-auto max-w-5xl w-full px-4 sm:px-6 lg:px-8 pb-16">
+  const header = (
+    <>
+      {onPayment && (
         <button
           type="button"
+          aria-label="Tilbake"
           onClick={() => {
-            if (step === 'payment') {
-              setStep('contact');
-              setSession(null);
-              setSessionError(null);
-            } else {
-              navigate(backHref);
-            }
+            setStep('contact');
+            setSession(null);
+            setSessionError(null);
           }}
-          className="mb-8 px-2 sm:px-6 inline-flex items-center gap-1.5 text-base text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+          className="-ml-1 flex size-8 shrink-0 items-center justify-center rounded-full text-foreground-muted transition-colors hover:bg-muted hover:text-foreground"
         >
-          <ChevronLeft className="size-4" strokeWidth={1.75} />
-          Tilbake
+          <ChevronLeft className="size-5" strokeWidth={1.75} />
         </button>
+      )}
+      <DialogTitle className="text-base font-medium text-foreground">Påmelding</DialogTitle>
+      {stepped && <MiniStepper onPayment={onPayment} />}
+    </>
+  );
 
-        {isCancelled && (
-          <Alert variant="warning" className="mb-8">
-            <AlertDescription>Kurset er avlyst.</AlertDescription>
-          </Alert>
-        )}
-        {!isCancelled && isFull && (
-          <Alert variant="warning" className="mb-8">
-            <AlertDescription>Kurset er fullt.</AlertDescription>
-          </Alert>
-        )}
-        {!isCancelled && !isFull && !paymentReady && (
-          <Alert variant="warning" className="mb-8">
-            <AlertDescription>Påmelding åpner snart. Studioet fullfører oppsettet.</AlertDescription>
-          </Alert>
-        )}
-
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-6 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
-          <div className="space-y-6 max-w-[552px] min-w-0">
-            {step === 'contact' || isFree ? (
-              <>
-                <CheckoutStepHeader step={1} showSteps={!isFree && !isManual} />
-
-                <div className="px-2 sm:px-6">
-                  <div className="space-y-4">
-                    <Field label="Navn" htmlFor="name">
-                      <Input
-                        id="name"
-                        type="text"
-                        autoComplete="name"
-                        value={form.name}
-                        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                      />
-                    </Field>
-                    <Field label="E-post" htmlFor="email">
-                      <Input
-                        id="email"
-                        type="email"
-                        autoComplete="email"
-                        value={form.email}
-                        onChange={(e) => {
-                          setForm((f) => ({ ...f, email: e.target.value }));
-                          if (emailMessage || sessionError) {
-                            setEmailMessage(null);
-                            setSessionError(null);
-                          }
-                        }}
-                        onBlur={() => setEmailTouched(true)}
-                        aria-invalid={!!emailError}
-                        aria-describedby={emailError ? 'email-error' : undefined}
-                        className={emailError ? 'border-danger bg-danger-subtle' : undefined}
-                      />
-                      {emailError && <FieldError id="email-error">{emailError}</FieldError>}
-                    </Field>
-                    <Field label="Telefon" htmlFor="phone">
-                      <Input
-                        id="phone"
-                        type="tel"
-                        autoComplete="tel"
-                        value={form.phone}
-                        onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                        onBlur={() => setPhoneTouched(true)}
-                        aria-invalid={!!phoneError}
-                        aria-describedby={phoneError ? 'phone-error' : undefined}
-                        className={phoneError ? 'border-danger bg-danger-subtle' : undefined}
-                      />
-                      {phoneError && <FieldError id="phone-error">{phoneError}</FieldError>}
-                    </Field>
-                    <Field label="Melding (valgfritt)" htmlFor="note">
-                      <Textarea
-                        id="note"
-                        value={form.note}
-                        onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-                        placeholder="Allergier, skader eller annet vi bør vite."
-                        rows={4}
-                      />
-                    </Field>
-                    <label className="flex items-start gap-3 cursor-pointer text-sm text-foreground pt-1">
-                      <Checkbox
-                        checked={form.terms}
-                        onCheckedChange={(v) =>
-                          setForm((f) => ({ ...f, terms: v === true }))
-                        }
-                        className="mt-0.5"
-                      />
-                      <span>
-                        Jeg godtar{' '}
-                        <Link
-                          to="/terms"
-                          className="underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
-                        >
-                          vilkår og angrerett
-                        </Link>
-                        .
-                      </span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="px-2 sm:px-6 space-y-2">
-                  {isFree || isManual ? (
-                    <>
-                      <Button
-                        className="w-full"
-                        disabled={!formValid || submitting || !paymentReady || isFull || isCancelled}
-                        onClick={isFree ? handleFreeSubmit : handleManualSubmit}
-                      >
-                        Bekreft påmelding
-                      </Button>
-                      {isManual && (
-                        <p className="text-sm text-foreground-muted text-center">
-                          Betaling avtales direkte med {course.seller?.name ?? 'studioet'}.
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        className="w-full"
-                        disabled={!formValid || submitting || !paymentReady || isFull || isCancelled}
-                        onClick={handleAdvanceToPayment}
-                      >
-                        {submitting ? 'Et øyeblikk…' : 'Fortsett til betaling'}
-                      </Button>
-                      {sessionError && (
-                        <p className="text-sm text-danger text-center">{sessionError}</p>
-                      )}
-                      {course.seller?.name && (
-                        <p className="text-sm text-foreground-muted text-center">
-                          Påmeldingen er hos {course.seller.name}.
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                <CheckoutStepHeader step={2} />
-
-                <div id="payment" className="scroll-mt-6">
-                  <DinteroEmbed
-                    sid={session?.sid ?? null}
-                    enabled={true}
-                    loading={false}
-                    errorMessage={sessionError}
-                    onPaymentAuthorized={(transactionId) => {
-                      if (!session) return;
-                      const ref = encodeURIComponent(session.merchantReference);
-                      window.location.href = `/checkout/success?transaction_id=${transactionId}&ref=${ref}&org=${slug}`;
-                    }}
-                  />
-                </div>
-              </>
-            )}
+  return (
+    <CheckoutModalShell
+      onClose={close}
+      header={header}
+      summary={
+        <SummaryPanel
+          course={course}
+          selectedTier={selectedTier}
+          subtotal={tierPrice}
+          fee={fee}
+          total={total}
+          isFree={isFree}
+          isManual={isManual}
+        />
+      }
+    >
+      {/* mobile/tablet (< md) — the filled summary column is hidden, so a
+          collapsible bar carries the full summary, nothing dropped. */}
+      <div className="mb-6 overflow-hidden rounded-xl border border-border md:hidden">
+        <button
+          type="button"
+          onClick={() => setSummaryOpen((o) => !o)}
+          aria-expanded={summaryOpen}
+          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-sm"
+        >
+          <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+            {summaryOpen ? 'Skjul sammendrag' : 'Vis sammendrag'}
+            <ChevronDown
+              className={cn('size-4 transition-transform', summaryOpen && 'rotate-180')}
+              strokeWidth={1.75}
+            />
+          </span>
+          <span className="font-medium tabular-nums text-foreground">{formatKroner(total)}</span>
+        </button>
+        {summaryOpen && (
+          <div className="border-t border-border p-4">
+            <SummaryContent
+              course={course}
+              selectedTier={selectedTier}
+              subtotal={tierPrice}
+              fee={fee}
+              total={total}
+              isFree={isFree}
+              isManual={isManual}
+            />
           </div>
-
-          <aside>
-            <div className="md:sticky md:top-10">
-              <CheckoutSummary
-                course={course}
-                selectedTier={selectedTier}
-                subtotal={tierPrice}
-                fee={fee}
-                total={total}
-                isFree={isFree}
-                isManual={isManual}
-              />
-            </div>
-          </aside>
-        </div>
+        )}
       </div>
 
-    </div>
+      {isCancelled && (
+        <Alert variant="warning" className="mb-6">
+          <AlertDescription>Kurset er avlyst.</AlertDescription>
+        </Alert>
+      )}
+      {!isCancelled && isFull && (
+        <Alert variant="warning" className="mb-6">
+          <AlertDescription>Kurset er fullt.</AlertDescription>
+        </Alert>
+      )}
+      {!isCancelled && !isFull && !paymentReady && (
+        <Alert variant="warning" className="mb-6">
+          <AlertDescription>Påmelding åpner snart. Studioet fullfører oppsettet.</AlertDescription>
+        </Alert>
+      )}
+
+      {onPayment ? (
+        <section>
+          <h2 className="text-base font-medium text-foreground">Betaling</h2>
+          <p className="mt-1 text-sm text-foreground-muted">Betal med Vipps eller kort.</p>
+          <div id="payment" className="mt-6 scroll-mt-6">
+            <DinteroEmbed
+              sid={session?.sid ?? null}
+              enabled={true}
+              loading={false}
+              errorMessage={sessionError}
+              onPaymentAuthorized={(transactionId) => {
+                if (!session) return;
+                const ref = encodeURIComponent(session.merchantReference);
+                window.location.href = `/checkout/success?transaction_id=${transactionId}&ref=${ref}&org=${slug}`;
+              }}
+            />
+          </div>
+          <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-foreground-muted">
+            <Lock className="size-3.5" strokeWidth={1.75} />
+            Sikker betaling
+          </p>
+        </section>
+      ) : (
+        <section>
+          <h2 className="text-base font-medium text-foreground">Hvem melder vi på?</h2>
+
+          <div className="mt-6 space-y-4">
+            <FloatingField
+              id="co-name"
+              label="Navn"
+              autoComplete="name"
+              value={form.name}
+              onChange={(v) => setForm((f) => ({ ...f, name: v }))}
+            />
+            <FloatingField
+              id="co-email"
+              label="E-post"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={form.email}
+              onChange={(v) => {
+                setForm((f) => ({ ...f, email: v }));
+                if (emailMessage || sessionError) {
+                  setEmailMessage(null);
+                  setSessionError(null);
+                }
+              }}
+              onBlur={() => setEmailTouched(true)}
+              error={emailError}
+            />
+            <FloatingField
+              id="co-phone"
+              label="Telefon"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={form.phone}
+              onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
+              onBlur={() => setPhoneTouched(true)}
+              error={phoneError}
+            />
+            <FloatingField
+              id="co-note"
+              label="Melding til studioet (valgfritt)"
+              multiline
+              rows={3}
+              muted
+              value={form.note}
+              onChange={(v) => setForm((f) => ({ ...f, note: v }))}
+            />
+          </div>
+
+          {(isFree || isManual) && (
+            <div className="mt-8 space-y-2">
+              <h2 className="text-base font-medium text-foreground">Betaling</h2>
+              <div className="rounded-2xl bg-muted p-4">
+                <p className="text-sm text-foreground">
+                  {isFree
+                    ? 'Dette er et gratis kurs.'
+                    : 'Studioet sender deg betalingsinformasjon på e-post.'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-8">
+            <label className="flex cursor-pointer items-start gap-3 text-sm text-foreground">
+              <Checkbox
+                checked={form.terms}
+                onCheckedChange={(v) => setForm((f) => ({ ...f, terms: v === true }))}
+                className="mt-0.5"
+              />
+              <span>
+                Jeg godtar{' '}
+                <Link
+                  to="/terms"
+                  className="underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+                >
+                  vilkårene
+                </Link>
+                .
+              </span>
+            </label>
+
+            <Button
+              size="cta"
+              className="mt-4 w-full"
+              disabled={!formValid || submitting || blocked}
+              onClick={isFree ? handleFreeSubmit : isManual ? handleManualSubmit : handleAdvanceToPayment}
+            >
+              {submitting
+                ? 'Et øyeblikk…'
+                : isFree || isManual
+                  ? 'Meld meg på'
+                  : 'Fortsett til betaling'}
+            </Button>
+            {sessionError && (
+              <p className="mt-2 text-center text-sm text-danger">{sessionError}</p>
+            )}
+          </div>
+        </section>
+      )}
+    </CheckoutModalShell>
   );
 };
 
 // ── Sub-components ───────────────────────────────────────────────────────
 
-const CHECKOUT_STEPS = ['Kontakt', 'Betaling'] as const;
-
-/** Visual progress for the two in-checkout stages: the Kontakt form (1) and
- * the Betaling iframe (2). Ticket choice happened on the course page and isn't
- * counted — a single-class booking shouldn't read as a 3-step funnel.
- * Free and manual signups have no Betaling stage at all → `showSteps=false`
- * renders just the title. */
-function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps?: boolean }) {
-  const currentIndex = step - 1;
-  if (!showSteps) {
-    return (
-      <div className="px-2 sm:px-6">
-        <h1 className="text-base font-medium text-foreground">Påmelding</h1>
-      </div>
-    );
-  }
+/**
+ * The checkout modal: a centered Dialog with the /dev/checkout-3 split layout —
+ * the step on the left (header pinned, body scrolls), the filled neutral summary
+ * on the right. Closing it returns to the course page.
+ */
+function CheckoutModalShell({
+  onClose,
+  header,
+  summary,
+  children,
+}: {
+  onClose: () => void;
+  header?: React.ReactNode;
+  summary?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="px-2 sm:px-6">
-      <h1 className="text-base font-medium text-foreground">Påmelding</h1>
-      <ol className="mt-4 flex items-center">
-        {CHECKOUT_STEPS.map((label, i) => {
-          const done = i < currentIndex;
-          const current = i === currentIndex;
-          const isLast = i === CHECKOUT_STEPS.length - 1;
-          return (
-            <li key={label} className={cn('flex items-center', !isLast && 'flex-1')}>
-              <div className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums transition-colors',
-                    done && 'bg-primary text-primary-foreground',
-                    current && 'bg-primary text-primary-foreground ring-4 ring-selection-light',
-                    !done && !current && 'border border-border text-foreground-muted',
-                  )}
-                >
-                  {done ? <Check className="size-3.5" strokeWidth={2.5} /> : i + 1}
-                </span>
-                <span
-                  className={cn(
-                    'whitespace-nowrap text-xs sm:text-sm',
-                    current
-                      ? 'font-medium text-foreground'
-                      : done
-                        ? 'text-foreground'
-                        : 'text-foreground-muted',
-                  )}
-                >
-                  {label}
-                </span>
-              </div>
-              {!isLast && (
-                <span
-                  aria-hidden
-                  className={cn('mx-2 h-px flex-1 sm:mx-3', done ? 'bg-primary' : 'bg-border')}
-                />
-              )}
-            </li>
-          );
-        })}
-      </ol>
+    <Dialog
+      open
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
+      <DialogContent className="flex max-h-[calc(100dvh-3rem)] gap-0 overflow-hidden p-0 sm:max-w-[840px]">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex shrink-0 items-center gap-3 border-b border-border px-6 py-4 pr-14 md:pr-6">
+            {header ?? <DialogTitle className="text-base font-medium text-foreground">Påmelding</DialogTitle>}
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">{children}</div>
+        </div>
+        {summary}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Header breadcrumb for the paid two-step flow (Kontakt → Betaling). */
+function MiniStepper({ onPayment }: { onPayment: boolean }) {
+  return (
+    <nav aria-label="Fremdrift" className="ml-auto flex items-center gap-2 text-xs">
+      <span className={cn(onPayment ? 'text-foreground-muted' : 'font-medium text-foreground')}>Kontakt</span>
+      <span aria-hidden className={cn('h-px w-4', onPayment ? 'bg-primary' : 'bg-border')} />
+      <span className={cn(onPayment ? 'font-medium text-foreground' : 'text-foreground-muted')}>Betaling</span>
+    </nav>
+  );
+}
+
+/**
+ * Floating-label field (public-page style — the label rests inside the input,
+ * then shrinks to the top-left on focus/fill). Controlled, with inline error.
+ */
+function FloatingField({
+  id,
+  label,
+  type = 'text',
+  value,
+  onChange,
+  onBlur,
+  autoComplete,
+  inputMode,
+  multiline = false,
+  rows = 3,
+  error,
+  muted = false,
+}: {
+  id: string;
+  label: string;
+  type?: string;
+  value: string;
+  onChange: (v: string) => void;
+  onBlur?: () => void;
+  autoComplete?: string;
+  inputMode?: 'text' | 'numeric' | 'tel' | 'email';
+  multiline?: boolean;
+  rows?: number;
+  error?: string | null;
+  /** Optional field — recedes to a borderless grey fill at rest, and becomes a
+   *  normal white bordered field on focus or once it has content, so it doesn't
+   *  read as required next to the mandatory fields. */
+  muted?: boolean;
+}) {
+  const fieldBase = cn(
+    'peer w-full rounded-lg border bg-surface px-3.5 text-base text-foreground placeholder-transparent transition-colors focus:outline-none focus:ring-2',
+    error
+      ? 'border-danger bg-danger-subtle focus:border-danger focus:ring-danger/30'
+      : muted
+        ? 'border-transparent bg-muted focus:border-foreground focus:bg-surface focus:ring-ring/30 [&:not(:placeholder-shown)]:border-border [&:not(:placeholder-shown)]:bg-surface'
+        : 'border-border focus:border-foreground focus:ring-ring/30',
+  );
+  const floats =
+    'peer-focus:top-2 peer-focus:translate-y-0 peer-focus:text-xs peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-xs';
+  return (
+    <div>
+      <div className="relative">
+        {multiline ? (
+          <textarea
+            id={id}
+            rows={rows}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlur}
+            placeholder=" "
+            aria-invalid={!!error}
+            className={cn(fieldBase, 'pb-2 pt-6')}
+          />
+        ) : (
+          <input
+            id={id}
+            type={type}
+            inputMode={inputMode}
+            autoComplete={autoComplete}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlur}
+            placeholder=" "
+            aria-invalid={!!error}
+            aria-describedby={error ? `${id}-error` : undefined}
+            className={cn(fieldBase, 'h-14 pb-1 pt-5')}
+          />
+        )}
+        <label
+          htmlFor={id}
+          className={cn(
+            'pointer-events-none absolute left-3.5 text-base text-foreground-muted transition-all',
+            multiline ? 'top-4' : 'top-1/2 -translate-y-1/2',
+            floats,
+          )}
+        >
+          {label}
+        </label>
+      </div>
+      {error && <FieldError id={`${id}-error`}>{error}</FieldError>}
     </div>
   );
 }
 
-function Field({
-  label,
-  htmlFor,
-  children,
-}: {
-  label: string;
-  htmlFor: string;
-  children: React.ReactNode;
-}) {
+/** Loading placeholder shaped for the modal body. */
+function CheckoutLoadingBody() {
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={htmlFor} className="text-sm font-medium text-foreground">
-        {label}
-      </label>
-      {children}
+    <div className="space-y-4">
+      <Skeleton className="h-5 w-44" />
+      <Skeleton className="h-14 w-full rounded-lg" />
+      <Skeleton className="h-14 w-full rounded-lg" />
+      <Skeleton className="h-14 w-full rounded-lg" />
+      <Skeleton className="mt-4 h-11 w-full rounded-full" />
     </div>
   );
 }
@@ -697,7 +806,13 @@ function DinteroEmbed({
   return <div ref={containerRef} />;
 }
 
-function CheckoutSummary({
+/**
+ * The summary content — identity, type/time meta, then the price breakdown.
+ * Shared by the desktop side panel and the mobile/tablet collapsible so the two
+ * can't drift and neither drops information. A free booking totals to "0 kr"
+ * (formatKroner), never "Gratis".
+ */
+function SummaryContent({
   course,
   selectedTier,
   subtotal,
@@ -718,96 +833,58 @@ function CheckoutSummary({
   const img = resolveCourseImage(course);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-soft">
-      <div className="p-5 space-y-5">
-        {/* Course header — thumbnail + identity, so the buyer can see what
-            they're paying for, like Airbnb/Expedia checkout summaries. */}
-        <div className="flex gap-3">
-          {img && (
-            <div className="size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-              <img src={img} alt="" className="size-full object-cover" />
-            </div>
-          )}
-          <div className="min-w-0">
-            <p className="truncate text-sm text-foreground-muted">{course.seller?.name}</p>
-            <h3 className="mt-0.5 text-base font-medium text-foreground">
-              {course.title}
-            </h3>
-            {meta && (
-              <p className="mt-1 text-sm text-foreground-muted">{meta}</p>
-            )}
+    <div className="space-y-5">
+      <div className="flex gap-3">
+        {img && (
+          <div className="size-14 shrink-0 overflow-hidden rounded-lg bg-surface">
+            <img src={img} alt="" className="size-full object-cover" />
           </div>
+        )}
+        <div className="min-w-0">
+          <p className="truncate text-sm text-foreground-muted">{course.seller?.name}</p>
+          <h3 className="mt-0.5 text-base font-medium leading-snug text-foreground">{course.title}</h3>
+          {meta && <p className="mt-1 text-sm text-foreground-muted">{meta}</p>}
         </div>
-
-        {selectedTier && (
-          <>
-            <div className="border-t border-border" />
-            {!isFree && (
-              <>
-                <div className="space-y-2 text-base">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-foreground">{selectedTier.label}</span>
-                    <span className="tabular-nums text-foreground">
-                      {formatKroner(subtotal)}
-                    </span>
-                  </div>
-                  {!isManual && (
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-foreground-muted">Tjenestegebyr</span>
-                      <span className="tabular-nums text-foreground-muted">
-                        {formatKroner(fee)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="border-t border-border" />
-              </>
-            )}
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-base font-medium text-foreground">Totalt</span>
-              <span className="text-xl font-medium tabular-nums text-foreground">
-                {formatKroner(total)}
-              </span>
-            </div>
-          </>
-        )}
-
-        {!isFree && !isManual && (
-          <div className="space-y-2 border-t border-border pt-4">
-            <p className="text-center text-xs text-foreground-muted">Sikker betaling</p>
-            <DinteroPaymentBadge variant="logomark" className="mx-auto w-full max-w-[280px]" />
-          </div>
-        )}
-        {isManual && (
-          <div className="border-t border-border pt-4">
-            <p className="text-center text-xs text-foreground-muted">
-              Betaling avtales direkte med studioet – du betaler ikke noe her.
-            </p>
-          </div>
-        )}
       </div>
+
+      {selectedTier && (
+        <>
+          <div className="border-t border-border" />
+          {!isFree && (
+            <>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-foreground">{selectedTier.label}</span>
+                  <span className="tabular-nums text-foreground">{formatKroner(subtotal)}</span>
+                </div>
+                {!isManual && (
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-foreground-muted">Tjenestegebyr</span>
+                    <span className="tabular-nums text-foreground-muted">{formatKroner(fee)}</span>
+                  </div>
+                )}
+              </div>
+              <div className="border-t border-border" />
+            </>
+          )}
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-base font-medium text-foreground">Totalt</span>
+            <span className="text-xl font-medium tabular-nums text-foreground">{formatKroner(total)}</span>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-function CheckoutSkeleton() {
+/** The right column on desktop (≥ md) — SummaryContent on a filled bg-muted
+ *  panel running the full modal height. Below md it's hidden in favour of the
+ *  collapsible summary in the body. */
+function SummaryPanel(props: React.ComponentProps<typeof SummaryContent>) {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-6 pb-16">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="mt-8 h-10 w-2/3 max-w-md" />
-        <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
-          <div className="space-y-6 max-w-[560px]">
-            <Skeleton className="h-20 w-full rounded-lg" />
-            <Skeleton className="h-9 w-full" />
-            <Skeleton className="h-9 w-full" />
-            <Skeleton className="h-9 w-full" />
-            <Skeleton className="h-44 w-full rounded-xl" />
-          </div>
-          <Skeleton className="hidden lg:block h-72 w-full rounded-xl" />
-        </div>
-      </div>
-    </div>
+    <aside className="hidden w-[300px] shrink-0 bg-muted p-6 md:block">
+      <SummaryContent {...props} />
+    </aside>
   );
 }
 
@@ -825,13 +902,15 @@ function buildMeta(course: PublicCourseWithDetails): string | null {
   const m = course.time_schedule?.match(/(\d{1,2}:\d{2})/);
   const time = m ? m[1] : null;
   const dateStr = course.next_session?.session_date ?? course.start_date;
+  // With a time, the schedule is the useful line — the format is already
+  // conveyed by the ticket label in the summary, so no "type · time" chain.
   if (course.format === 'series' && dateStr && time) {
     const d = new Date(dateStr);
     if (!isNaN(d.getTime())) {
-      return `${typeLabel} · ${SHORT_WEEKDAYS[d.getDay()]} kl. ${time}`;
+      return `${SHORT_WEEKDAYS[d.getDay()]} kl. ${time}`;
     }
   }
-  if (time) return `${typeLabel} · kl. ${time}`;
+  if (time) return `kl. ${time}`;
   return typeLabel;
 }
 

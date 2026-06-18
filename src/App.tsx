@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation, type Location } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -53,6 +53,17 @@ const DetailReworkPreview = lazy(() => import('./pages/dev/DetailReworkPreview')
 const ModalsButtonsToastsPreview = lazy(() => import('./pages/dev/ModalsButtonsToastsPreview'));
 const TierPreview = lazy(() => import('./pages/dev/TierPreview'));
 const BillingPreview = lazy(() => import('./pages/dev/BillingPreview'));
+const AccountAffordancePreview = lazy(() => import('./pages/dev/AccountAffordancePreview'));
+const BuyerFramePreview = lazy(() => import('./pages/dev/BuyerFramePreview'));
+const StorefrontHeaderPreview = lazy(() => import('./pages/dev/StorefrontHeaderPreview'));
+const BookingCardPreview = lazy(() => import('./pages/dev/BookingCardPreview'));
+const BookingCardFreshPreview = lazy(() => import('./pages/dev/BookingCardFreshPreview'));
+const BookingCardV3Preview = lazy(() => import('./pages/dev/BookingCardV3Preview'));
+const BookingCardV4Preview = lazy(() => import('./pages/dev/BookingCardV4Preview'));
+const BookingCardV5Preview = lazy(() => import('./pages/dev/BookingCardV5Preview'));
+const CheckoutV2Preview = lazy(() => import('./pages/dev/CheckoutV2Preview'));
+const CheckoutV3Preview = lazy(() => import('./pages/dev/CheckoutV3Preview'));
+const BookingModalPreview = lazy(() => import('./pages/dev/BookingModalPreview'));
 
 // Public team page at root: only renders if the slug is NOT a reserved word.
 // Reserved words 404 (since they should hit a literal route higher in the
@@ -81,9 +92,20 @@ function RootRoute() {
 }
 
 function AppRoutes() {
+  // Checkout (`/pamelding`) opens as a modal OVER the course page when launched
+  // from the booking rail: the rail navigates with `state.backgroundLocation`,
+  // so the main <Routes> keep rendering the detail page underneath while a
+  // second <Routes> renders the checkout modal on top. Direct loads / refreshes
+  // have no backgroundLocation and fall through to the flat /pamelding route
+  // below, which renders the same modal over a dimmed backdrop — so the Dintero
+  // redirect, refresh and deep-links all keep working.
+  const location = useLocation();
+  const backgroundLocation = (location.state as { backgroundLocation?: Location } | null)
+    ?.backgroundLocation;
+
   return (
     <>
-      <Routes>
+      <Routes location={backgroundLocation ?? location}>
         {/* Public Routes */}
         <Route path="/" element={<RootRoute />} />
         <Route
@@ -148,6 +170,17 @@ function AppRoutes() {
             <Route path="/dev/modals-buttons-toasts" element={<ModalsButtonsToastsPreview />} />
             <Route path="/dev/tier-preview" element={<TierPreview />} />
             <Route path="/dev/billing-preview" element={<BillingPreview />} />
+            <Route path="/dev/account-affordance" element={<AccountAffordancePreview />} />
+            <Route path="/dev/buyer-frame" element={<BuyerFramePreview />} />
+            <Route path="/dev/storefront-header" element={<StorefrontHeaderPreview />} />
+            <Route path="/dev/booking-card" element={<BookingCardPreview />} />
+            <Route path="/dev/booking-card-2" element={<BookingCardFreshPreview />} />
+            <Route path="/dev/booking-card-3" element={<BookingCardV3Preview />} />
+            <Route path="/dev/booking-card-4" element={<BookingCardV4Preview />} />
+            <Route path="/dev/booking-card-5" element={<BookingCardV5Preview />} />
+            <Route path="/dev/checkout-2" element={<CheckoutV2Preview />} />
+            <Route path="/dev/checkout-3" element={<CheckoutV3Preview />} />
+            <Route path="/dev/booking-modal" element={<BookingModalPreview />} />
           </>
         )}
 
@@ -183,6 +216,24 @@ function AppRoutes() {
         {/* 404 Catch-all */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+
+      {/* Checkout modal layer — only when launched over a background page. Its
+          own Suspense keeps the lazy checkout chunk from blanking the page
+          underneath while it loads. */}
+      {backgroundLocation && (
+        <Suspense fallback={null}>
+          <Routes>
+            <Route
+              path="/:slug/:courseSlug/pamelding"
+              element={
+                <FlatTeamRoute>
+                  <CheckoutPage />
+                </FlatTeamRoute>
+              }
+            />
+          </Routes>
+        </Suspense>
+      )}
     </>
   );
 }

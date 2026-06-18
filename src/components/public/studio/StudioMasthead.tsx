@@ -1,5 +1,6 @@
 import { ArrowUpRight, Building, MapPin } from '@/lib/icons';
 import { cn } from '@/lib/utils';
+import { AccountControl } from '@/components/public/AccountControl';
 import type { PublicSeller } from '@/services/sellers';
 import { directionsUrl, type StudioLocation } from './studioFacts';
 
@@ -63,6 +64,11 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
               </a>
             </div>
           )}
+        </div>
+
+        {/* Buyer-account affordance — top-right, aligned to the brand lockup */}
+        <div className="shrink-0 pt-0.5">
+          <AccountControl />
         </div>
       </div>
     </header>

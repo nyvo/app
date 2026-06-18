@@ -83,9 +83,14 @@ const TermsPage = () => {
                 studioet eller arrangøren refunderes betalt kursavgift.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Angreretten kan være begrenset for kurs, timer og arrangementer som skjer på en bestemt dato
-                eller i en bestemt periode. Hvis du er usikker på hva som gjelder for din påmelding, kontakt
-                oss eller arrangøren før du betaler.
+                For kurs, timer og arrangementer som skjer på en bestemt dato eller i en bestemt periode,
+                kan angreretten være begrenset eller ikke gjelde. Dette følger av unntaket for
+                fritidsaktiviteter i angrerettloven § 22. For øvrige tjenester gjelder normalt den
+                lovbestemte angrefristen på 14 dager.
+              </p>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Hva som gjelder, avhenger av den enkelte påmeldingen. Er du usikker, ta kontakt med oss
+                eller arrangøren før du betaler.
               </p>
             </section>
 

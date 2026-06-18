@@ -1,22 +1,27 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DinteroPaymentBadge } from '@/components/public/DinteroPaymentBadge';
-import { calculateServiceFee, calculateTotalPrice } from '@/lib/pricing';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { formatKroner, cn } from '@/lib/utils';
+import { toLocalDate } from '@/utils/dateUtils';
 import { singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
+import type { CourseSession } from '@/types/database';
 
 interface BookingRailLiteProps {
   course: PublicCourseWithDetails;
+  /** Course sessions (date + time). Drives the date rows and the "Se alle
+   * datoer" dialog. Optional so dev previews can mount without session data. */
+  sessions?: CourseSession[];
   studioSlug: string;
   /** Optional override for the CTA target. Defaults to /:slug/:courseSlug/pamelding. */
   checkoutHref?: string;
-  /** Sublabel for the drop-in tile — typically the next available session date. */
-  dropInSublabel?: string | null;
-  /** Compact meta line shown under the course title (e.g. "13. april · 06:45–07:30"). */
-  metaLabel?: string | null;
-  /** True when the first session has already ended. The package tile stays
+  /** True when the first session has already ended. The package stays
    * available but is prorated to the sessions that are still ahead. */
   seriesStarted?: boolean;
   /** Non-cancelled sessions whose end is still in the future. Used to prorate
@@ -27,259 +32,377 @@ interface BookingRailLiteProps {
 
 export type TicketId = 'main' | 'drop-in' | 'free';
 
-interface TicketTile {
+interface Tile {
   id: TicketId;
-  label: string;
-  sublabel: string | null;
   amount: number;
 }
 
 /**
- * Booking rail for the course detail page. Holds ticket selection and
- * routes to the checkout page with the chosen ticket as a query param.
- * Per the modern conversion-optimized pattern: decide here, identify +
- * pay on /pamelding.
+ * Step 1 of booking — the choice only. Care.com "Select dates and schedule"
+ * model: the page hero owns the title and price detail; this rail leads with
+ * "Velg kurstype" and the available options, flat on the page canvas (no card
+ * box, no box around each option). The price breakdown, service fee and total
+ * live on step 2 (/pamelding), where the form and payment sit together.
  *
- * Visual model (premium, per Navan/Airbnb/Zapier references):
- *  - The page hero owns the title, so the card leads with context + choice,
- *    not a duplicated title or price.
- *  - A single big "Totalt" near the CTA is the price focal point — the price
- *    is never repeated as a standalone hero.
- *  - Ticket choice uses brand-tinted selectable rows (not a heavy ring).
- *  - Soft elevation (`shadow-soft`) lifts the card off the flat white page.
+ *  - One option (single series, or a free class) → shown directly.
+ *  - Package + drop-in → a Kurspakke/Drop-in toggle.
+ *  - Drop-in → one selectable row per upcoming session, each routing to
+ *    checkout with that session pinned (?billett=drop-in&okt=<id>).
  */
-export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublabel, metaLabel, seriesStarted = false, remainingSessions = 0 }: BookingRailLiteProps) {
+export function BookingRailLite({
+  course,
+  sessions = [],
+  studioSlug,
+  checkoutHref,
+  seriesStarted = false,
+  remainingSessions = 0,
+}: BookingRailLiteProps) {
+  const [mode, setMode] = useState<'package' | 'dropin'>('package');
+  const [datesOpen, setDatesOpen] = useState(false);
+
   const spotsLeft = course.spots_available;
   const lowStock = spotsLeft > 0 && spotsLeft <= 3;
   const soldOut = spotsLeft === 0;
 
-  const tiles = buildTiles(course, dropInSublabel ?? null, seriesStarted, remainingSessions);
-  const closed = !soldOut && tiles.length === 0 && seriesStarted;
-  const [selectedId, setSelectedId] = useState<TicketId>(tiles[0]?.id ?? 'main');
+  const isFree = !course.price || course.price === 0;
+  const isSeries = course.format === 'series';
 
-  const selectedTile = tiles.find((t) => t.id === selectedId) ?? tiles[0] ?? null;
-  const ticketPrice = selectedTile?.amount ?? 0;
-  // Manual-payment sellers (no integrated Dintero): no service fee — the
-  // platform isn't in the money flow. Payment is arranged with the studio.
-  const usesIntegratedPayments = course.seller?.uses_integrated_payments ?? false;
-  const serviceFee = usesIntegratedPayments ? calculateServiceFee(ticketPrice) : 0;
-  const total = usesIntegratedPayments ? calculateTotalPrice(ticketPrice) : ticketPrice;
+  const tiles = buildTiles(course, seriesStarted, remainingSessions);
+  const mainTile = tiles.find((t) => t.id === 'main' || t.id === 'free') ?? null;
+  const dropInTile = tiles.find((t) => t.id === 'drop-in') ?? null;
+  const closed = !soldOut && tiles.length === 0 && seriesStarted;
+
+  const upcoming = sessions.filter((s) => isUpcoming(s, course.duration));
+  const previewRows = upcoming.slice(0, 3);
+  const hasMore = upcoming.length > previewRows.length;
 
   const baseHref = checkoutHref ?? `/${studioSlug}/${course.slug}/pamelding`;
-  // Always pass the ticket selection — when the series has started, the only
-  // remaining tile may be drop-in, and the checkout page needs to know that
-  // rather than defaulting to the (no-longer-offered) main tier.
-  const href = selectedTile ? `${baseHref}?billett=${selectedTile.id}` : baseHref;
+  const tierHref = (id: TicketId) => `${baseHref}?billett=${id}`;
+  const dropInHref = (sessionId: string) =>
+    `${baseHref}?billett=drop-in&okt=${sessionId}`;
+
+  // ── Closed states ───────────────────────────────────────────────────────
+  if (soldOut) {
+    return (
+      <div className="space-y-3">
+        <h3 className="text-lg font-medium text-foreground">Fullt</h3>
+        <p className="text-sm text-foreground-muted">
+          Alle plasser på dette kurset er tatt.
+        </p>
+        {course.seller?.name && (
+          <Button asChild variant="outline" size="cta" className="mt-1 w-full">
+            <Link to={`/${studioSlug}`}>Se andre kurs</Link>
+          </Button>
+        )}
+      </div>
+    );
+  }
+  if (closed) {
+    return (
+      <div className="space-y-3">
+        <h3 className="text-lg font-medium text-foreground">Påmelding stengt</h3>
+        <p className="text-sm text-foreground-muted">Kurset har startet.</p>
+      </div>
+    );
+  }
+
+  const hasToggle = !!mainTile && !!dropInTile && !isFree;
+  const dropInActive = !!dropInTile && (mode === 'dropin' || !mainTile);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-soft">
-      <div className="p-6 space-y-5">
-        {/* Context — the "when" as a labeled booking-summary field (the
-            Navan/Airbnb idiom), not a verbatim echo of the hero meta. The card
-            is sticky, so this stays visible after the hero scrolls away. */}
-        {(metaLabel || lowStock) && (
-          <div className="flex items-start justify-between gap-3">
-            {metaLabel ? (
-              <div className="min-w-0">
-                <p className="text-xs text-foreground-muted">Når</p>
-                <p className="mt-0.5 text-base font-medium text-foreground tabular-nums truncate">
-                  {metaLabel}
-                </p>
-              </div>
-            ) : (
-              <span aria-hidden />
-            )}
-            {lowStock && (
-              <Badge variant="warning" shape="pill" size="sm">
-                {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
-              </Badge>
-            )}
-          </div>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-lg font-medium text-foreground">Velg kurstype</h3>
+        {lowStock && (
+          <Badge variant="warning" shape="pill" size="sm">
+            {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
+          </Badge>
         )}
+      </div>
 
-        {soldOut ? (
-          <div className="rounded-xl bg-muted px-4 py-6 text-center space-y-1">
-            <p className="text-base font-medium text-foreground">Kurset er fullt</p>
-            {course.seller?.name && (
-              <Link
-                to={`/${studioSlug}`}
-                className="text-sm text-foreground-muted underline decoration-foreground-disabled underline-offset-2 hover:text-foreground hover:decoration-foreground transition-colors"
-              >
-                Se andre kurs fra {course.seller.name}
-              </Link>
-            )}
-          </div>
-        ) : closed ? (
-          <div className="rounded-xl bg-muted px-4 py-6 text-center space-y-1">
-            <p className="text-base font-medium text-foreground">Påmelding stengt</p>
-            <p className="text-sm text-foreground-muted">Kurset har startet.</p>
-          </div>
-        ) : (
-          <>
-            {/* Choice — only when there's a real one. A single ticket type is
-                conveyed by the price breakdown below, no selector needed. */}
-            {tiles.length > 1 && (
-              <div className="space-y-2" role="radiogroup" aria-label="Velg billett">
-                {tiles.map((tile) => (
-                  <TicketTileButton
-                    key={tile.id}
-                    tile={tile}
-                    selected={selectedId === tile.id}
-                    onSelect={() => setSelectedId(tile.id)}
+      {hasToggle && (
+        <TicketToggle mode={mode} onChange={setMode} mainLabel={isSeries ? 'Kurspakke' : singleCourseLabel(course)} />
+      )}
+
+      {dropInActive && dropInTile ? (
+        <div>
+          {previewRows.length > 0 ? (
+            <div className="divide-y divide-border">
+              {previewRows.map((s) => (
+                <div key={s.id} className="py-4 first:pt-0">
+                  <Option
+                    title={formatSessionDate(s.session_date)}
+                    inlineTime={sessionTimeRange(s.start_time, course.duration)}
+                    priceLabel={formatKroner(dropInTile.amount)}
+                    href={dropInHref(s.id)}
+                    align="center"
+                    dense
                   />
-                ))}
-              </div>
-            )}
-
-            {/* Price — line items + one prominent total (the focal price). */}
-            {selectedTile && (
-              ticketPrice > 0 ? (
-                <dl className="space-y-2.5">
-                  <div className="flex items-baseline justify-between gap-3 text-base">
-                    <dt className="text-foreground-muted">{selectedTile.label}</dt>
-                    <dd className="tabular-nums text-foreground">{formatKroner(ticketPrice)}</dd>
-                  </div>
-                  {serviceFee > 0 && (
-                    <div className="flex items-baseline justify-between gap-3 text-base">
-                      <dt className="text-foreground-muted">Tjenestegebyr</dt>
-                      <dd className="tabular-nums text-foreground-muted">{formatKroner(serviceFee)}</dd>
-                    </div>
-                  )}
-                  <div className="flex items-baseline justify-between gap-3 border-t border-border pt-3">
-                    <dt className="text-base font-medium text-foreground">Totalt</dt>
-                    <dd className="text-xl font-medium tabular-nums text-foreground">
-                      {formatKroner(total)}
-                    </dd>
-                  </div>
-                </dl>
-              ) : (
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-base font-medium text-foreground">{selectedTile.label}</span>
-                  <span className="text-xl font-medium text-foreground">Gratis</span>
                 </div>
-              )
-            )}
+              ))}
+            </div>
+          ) : (
+            <Option
+              title="Drop-in"
+              priceLabel={formatKroner(dropInTile.amount)}
+              href={tierHref('drop-in')}
+              align="center"
+            />
+          )}
+          {hasMore && (
+            <button
+              type="button"
+              onClick={() => setDatesOpen(true)}
+              className="mt-3 text-sm font-medium text-primary underline"
+            >
+              Se alle {upcoming.length} datoer
+            </button>
+          )}
+        </div>
+      ) : (
+        mainTile && (
+          <Option
+            title={course.title}
+            dateRows={previewRows.map((s) => ({
+              date: formatSessionDate(s.session_date),
+              time: sessionTimeRange(s.start_time, course.duration),
+            }))}
+            onSeeAll={hasMore ? () => setDatesOpen(true) : undefined}
+            seeAllCount={upcoming.length}
+            priceLabel={mainTile.id === 'free' ? 'Gratis' : formatKroner(mainTile.amount)}
+            href={tierHref(mainTile.id)}
+          />
+        )
+      )}
 
-            <Button asChild size="cta" className="w-full">
-              <Link to={href}>Reserver</Link>
-            </Button>
+      <AllDatesDialog
+        open={datesOpen}
+        onOpenChange={setDatesOpen}
+        sessions={upcoming}
+        duration={course.duration}
+        selectable={dropInActive}
+        hrefFor={dropInHref}
+      />
+    </div>
+  );
+}
 
-            {ticketPrice > 0 && usesIntegratedPayments && (
-              <div className="space-y-2 border-t border-border pt-4">
-                <p className="text-center text-xs text-foreground-muted">Sikker betaling</p>
-                <DinteroPaymentBadge variant="logomark" className="mx-auto w-full max-w-[280px]" />
-              </div>
+function TicketToggle({
+  mode,
+  onChange,
+  mainLabel,
+}: {
+  mode: 'package' | 'dropin';
+  onChange: (m: 'package' | 'dropin') => void;
+  mainLabel: string;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Velg billett"
+      className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1"
+    >
+      {(['package', 'dropin'] as const).map((m) => {
+        const selected = mode === m;
+        return (
+          <button
+            key={m}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(m)}
+            className={cn(
+              'rounded-full px-3 py-2 text-sm font-medium transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+              selected
+                ? 'bg-surface text-foreground shadow-xs'
+                : 'text-foreground-muted hover:text-foreground',
             )}
-            {ticketPrice > 0 && !usesIntegratedPayments && (
-              <div className="border-t border-border pt-4">
-                <p className="text-center text-xs text-foreground-muted">
-                  Betaling avtales direkte med studioet.
-                </p>
-              </div>
-            )}
-          </>
+          >
+            {m === 'package' ? mainLabel : 'Drop-in'}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** A bare option row — no box. Info left, price + Velg right. */
+function Option({
+  title,
+  inlineTime,
+  dateRows,
+  onSeeAll,
+  seeAllCount,
+  priceLabel,
+  href,
+  align = 'start',
+  dense = false,
+}: {
+  title: string;
+  inlineTime?: string | null;
+  dateRows?: { date: string; time: string | null }[];
+  onSeeAll?: () => void;
+  seeAllCount?: number;
+  priceLabel: string;
+  href: string;
+  align?: 'start' | 'center';
+  dense?: boolean;
+}) {
+  // Carry the current page as backgroundLocation so checkout opens as a modal
+  // over the course page rather than replacing it.
+  const location = useLocation();
+  return (
+    <div className={cn('flex justify-between gap-4', align === 'center' ? 'items-center' : 'items-start')}>
+      <div className="min-w-0">
+        <p
+          className={cn(
+            'flex flex-wrap items-baseline gap-x-2 text-foreground',
+            dense ? 'text-sm' : 'text-base font-medium',
+          )}
+        >
+          <span>{title}</span>
+          {inlineTime && (
+            <span className="text-sm font-normal tabular-nums text-foreground-muted">{inlineTime}</span>
+          )}
+        </p>
+        {dateRows && dateRows.length > 0 && (
+          <ul className="mt-2 space-y-1.5 text-sm text-foreground">
+            {dateRows.map((row, i) => (
+              <li key={i} className="flex items-baseline gap-x-2">
+                <span>{row.date}</span>
+                {row.time && <span className="tabular-nums text-foreground-muted">{row.time}</span>}
+              </li>
+            ))}
+          </ul>
         )}
+        {onSeeAll && (
+          <button onClick={onSeeAll} className="mt-2 text-sm font-medium text-primary underline">
+            Se alle {seeAllCount} datoer
+          </button>
+        )}
+      </div>
+      <div className="flex w-20 shrink-0 flex-col items-stretch gap-2">
+        <span className="text-center text-sm font-medium tabular-nums text-foreground">{priceLabel}</span>
+        <Button asChild size="default" className="w-full">
+          <Link to={href} state={{ backgroundLocation: location }}>Velg</Link>
+        </Button>
       </div>
     </div>
   );
 }
 
-function TicketTileButton({
-  tile,
-  selected,
-  onSelect,
+function AllDatesDialog({
+  open,
+  onOpenChange,
+  sessions,
+  duration,
+  selectable,
+  hrefFor,
 }: {
-  tile: TicketTile;
-  selected: boolean;
-  onSelect: () => void;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  sessions: CourseSession[];
+  duration: number | null;
+  selectable: boolean;
+  hrefFor: (sessionId: string) => string;
 }) {
+  const location = useLocation();
   return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      onClick={onSelect}
-      className={cn(
-        'ios-ease w-full rounded-xl border px-3.5 py-2.5 text-left',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
-        selected
-          ? 'border-primary bg-selection-light'
-          : 'border-border hover:border-foreground-muted hover:bg-muted/40',
-      )}
-    >
-      <div className="flex items-center gap-3">
-        {/* Radio indicator — brand dot, not a black ring */}
-        <span
-          className={cn(
-            'flex size-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors',
-            selected ? 'border-primary' : 'border-input',
-          )}
-          aria-hidden
-        >
-          <span
-            className={cn(
-              'size-2 rounded-full bg-primary transition-transform duration-150 ease-out',
-              selected ? 'scale-100' : 'scale-0',
-            )}
-          />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-base font-medium text-foreground truncate">{tile.label}</p>
-          {tile.sublabel && (
-            <p className="text-xs text-foreground-muted truncate">{tile.sublabel}</p>
-          )}
-        </div>
-        <span className="shrink-0 text-base font-medium text-foreground tabular-nums whitespace-nowrap">
-          {formatKroner(tile.amount)}
-        </span>
-      </div>
-    </button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{selectable ? 'Velg dato' : 'Alle datoer'}</DialogTitle>
+        </DialogHeader>
+        <ul className="divide-y divide-border">
+          {sessions.map((s) => {
+            const time = sessionTimeRange(s.start_time, duration);
+            return (
+              <li
+                key={s.id}
+                className="flex items-center justify-between gap-3 py-3 text-sm text-foreground first:pt-0 last:pb-0"
+              >
+                <span className="flex items-baseline gap-3">
+                  <span className="font-medium">{formatSessionDate(s.session_date)}</span>
+                  {time && <span className="tabular-nums text-foreground-muted">{time}</span>}
+                </span>
+                {selectable && (
+                  <Button asChild size="default" className="px-4">
+                    <Link
+                      to={hrefFor(s.id)}
+                      state={{ backgroundLocation: location }}
+                      onClick={() => onOpenChange(false)}
+                    >
+                      Velg
+                    </Link>
+                  </Button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-/** Label + sublabel for the "whole course" ticket. A series buys every week
- * ("Hele kurspakken · N uker"); a single buys one class ("Enkelttime"), or —
- * when it spans consecutive days — the whole multi-day course
- * ("Hele kurset · N dager"). */
-function wholeTicket(
-  course: PublicCourseWithDetails,
-  isSeries: boolean,
-): { label: string; sublabel: string | null } {
-  if (isSeries) {
-    return {
-      label: 'Hele kurspakken',
-      sublabel: course.total_weeks ? `${course.total_weeks} uker` : null,
-    };
-  }
-  const days = singleDayCount(course);
-  return days > 1
-    ? { label: 'Hele kurset', sublabel: `${days} dager` }
-    : { label: 'Enkelttime', sublabel: null };
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+const WEEKDAYS = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'] as const;
+const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
+
+/** "Tirsdag 16. jun" — capitalized weekday, abbreviated month. */
+function formatSessionDate(dateStr: string): string {
+  const d = toLocalDate(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return `${WEEKDAYS[d.getDay()]} ${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
 }
 
+/** "06:15–07:00" from start time + duration. Mirrors the page's MetaStrip. */
+function sessionTimeRange(startTime: string | null, durationMinutes: number | null): string | null {
+  if (!startTime) return null;
+  const start = startTime.slice(0, 5);
+  if (!durationMinutes || durationMinutes <= 0) return start;
+  const [h, m] = start.split(':').map(Number);
+  const total = h * 60 + m + durationMinutes;
+  const endH = Math.floor(total / 60) % 24;
+  const endM = total % 60;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${start}–${pad(endH)}:${pad(endM)}`;
+}
+
+/** A session is "upcoming" when it isn't cancelled and hasn't ended yet — a
+ * class underway but not over still counts. Mirrors `isSessionRemaining` in
+ * PublicCourseDetailPage and the SQL in `available_ticket_types`. */
+function isUpcoming(s: CourseSession, durationMinutes: number | null): boolean {
+  if (s.status === 'cancelled') return false;
+  const startMs = new Date(`${s.session_date}T${s.start_time ?? '00:00:00'}`).getTime();
+  if (isNaN(startMs)) return false;
+  return startMs + (durationMinutes ?? 60) * 60000 > Date.now();
+}
+
+/** Single (non-series) course: the whole-course label. */
+function singleCourseLabel(course: PublicCourseWithDetails): string {
+  return singleDayCount(course) > 1 ? 'Hele kurset' : 'Enkelttime';
+}
+
+/** Ticket ids + amounts. Free → one free tile; otherwise a main tile (prorated
+ * for a started series) plus drop-in when the course offers it. The card shows
+ * the bare ticket price — the service fee and total are computed on step 2. */
 function buildTiles(
   course: PublicCourseWithDetails,
-  dropInSublabel: string | null,
   seriesStarted: boolean,
   remainingSessions: number,
-): TicketTile[] {
+): Tile[] {
   const isFree = !course.price || course.price === 0;
   const isSeries = course.format === 'series';
 
-  // Free courses still show a tile so the booking card has the same shape
-  // as paid flows — single row, "0 kr" via formatKroner.
-  if (isFree) {
-    const { label, sublabel } = wholeTicket(course, isSeries);
-    return [{ id: 'free', label, sublabel, amount: 0 }];
-  }
+  if (isFree) return [{ id: 'free', amount: 0 }];
 
-  const tiles: TicketTile[] = [];
+  const tiles: Tile[] = [];
 
-  // Series + started: prorate the package to the sessions that are still
-  // ahead. The per-week package rate is price ÷ total_weeks, mirroring the
-  // SQL in available_ticket_types. The package stays available down to the
-  // very last session — drop-in shows alongside it when offered. Teachers
-  // opt out entirely via course.accepts_late_signups.
+  // Series + started: prorate the package to the sessions still ahead. The
+  // per-week rate is price ÷ total_weeks, mirroring `available_ticket_types`.
+  // Teachers opt out of late signups via course.accepts_late_signups.
   if (isSeries && seriesStarted) {
     if (
       course.accepts_late_signups
@@ -289,25 +412,14 @@ function buildTiles(
       && course.price
     ) {
       const perWeek = Math.round(course.price / course.total_weeks);
-      tiles.push({
-        id: 'main',
-        label: 'Kurspakke',
-        sublabel: `${remainingSessions} ${remainingSessions === 1 ? 'uke' : 'uker'} igjen`,
-        amount: perWeek * remainingSessions,
-      });
+      tiles.push({ id: 'main', amount: perWeek * remainingSessions });
     }
   } else {
-    const { label, sublabel } = wholeTicket(course, isSeries);
-    tiles.push({ id: 'main', label, sublabel, amount: course.price ?? 0 });
+    tiles.push({ id: 'main', amount: course.price ?? 0 });
   }
 
   if (course.allows_drop_in && course.drop_in_price) {
-    tiles.push({
-      id: 'drop-in',
-      label: 'Drop-in',
-      sublabel: dropInSublabel ?? 'Per gang',
-      amount: course.drop_in_price,
-    });
+    tiles.push({ id: 'drop-in', amount: course.drop_in_price });
   }
 
   return tiles;
