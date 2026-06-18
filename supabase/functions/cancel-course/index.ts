@@ -26,6 +26,11 @@ import {
   refundTransaction,
   voidTransaction,
 } from '../_shared/dintero.ts'
+import {
+  retrievePaymentIntent,
+  refundPaymentIntent,
+  cancelPaymentIntent,
+} from '../_shared/stripe.ts'
 import { sendEmail } from '../_shared/email.ts'
 import { formatKroner } from '../_shared/format.ts'
 import { resolveArrangorIdentity } from '../_shared/booking-notifications.ts'
@@ -139,6 +144,7 @@ Deno.serve(async (req: Request) => {
       const participantName = signup.participant_name || ''
       const participantEmail = signup.participant_email || ''
       const transactionId = signup.dintero_transaction_id as string | null
+      const stripePaymentIntentId = signup.stripe_payment_intent_id as string | null
       // Email eligibility: only signups that transition out of 'confirmed' in
       // THIS run get notified, so re-running the (idempotent) cancellation
       // never re-sends. Rows already 'course_cancelled' from a previous pass
@@ -148,6 +154,108 @@ Deno.serve(async (req: Request) => {
         participant_email: participantEmail,
         payment_status: (signup.payment_status as string | null) ?? null,
         was_confirmed: signup.status === 'confirmed',
+      }
+
+      // Money already handled — fully refunded on a previous run, or partially
+      // refunded earlier (partial refunds keep status='confirmed', so this row
+      // can still be on its first cancellation pass). Make sure the row reaches
+      // a terminal state either way; the remainder of a partial refund stays a
+      // manual/backoffice decision — never auto-refund here. Checked first so it
+      // applies to both providers.
+      if (signup.refunded_at || signup.payment_status === 'refunded') {
+        await supabase
+          .from('signups')
+          .update({
+            status: 'course_cancelled',
+            cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', signup.id)
+        return { kind: 'already_handled', signup_id: signup.id, ...participant }
+      }
+
+      // Stripe-paid signup — route on the live PaymentIntent status (mirrors the Dintero branch
+      // below): succeeded => full refund (reverse transfer + application fee, C6);
+      // requires_capture => cancel the uncaptured auth; anything else => terminal no-op.
+      if (stripePaymentIntentId) {
+        let piStatus: string
+        try {
+          const pi = await retrievePaymentIntent(stripePaymentIntentId)
+          piStatus = pi.status
+        } catch (err) {
+          return {
+            kind: 'lookup_failed',
+            signup_id: signup.id,
+            participant_name: participantName,
+            participant_email: participantEmail,
+            error: err instanceof Error ? err.message : 'retrievePaymentIntent failed',
+          }
+        }
+
+        if (piStatus === 'succeeded') {
+          try {
+            await refundPaymentIntent({
+              paymentIntentId: stripePaymentIntentId,
+              reverseTransfer: true,
+              refundApplicationFee: true,
+            })
+            await supabase
+              .from('signups')
+              .update({
+                status: 'course_cancelled',
+                cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
+                payment_status: 'refunded',
+                refund_amount: signup.amount_paid || 0,
+                refunded_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', signup.id)
+            return { kind: 'refunded', signup_id: signup.id, amount: signup.amount_paid || 0, ...participant }
+          } catch (err) {
+            return {
+              kind: 'refund_failed',
+              signup_id: signup.id,
+              participant_name: participantName,
+              participant_email: participantEmail,
+              error: err instanceof Error ? err.message : 'Stripe refund failed',
+            }
+          }
+        }
+
+        if (piStatus === 'requires_capture') {
+          try {
+            await cancelPaymentIntent(stripePaymentIntentId)
+            await supabase
+              .from('signups')
+              .update({
+                status: 'course_cancelled',
+                cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
+                payment_status: 'voided',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', signup.id)
+            return { kind: 'voided', signup_id: signup.id, ...participant }
+          } catch (err) {
+            return {
+              kind: 'void_failed',
+              signup_id: signup.id,
+              participant_name: participantName,
+              participant_email: participantEmail,
+              error: err instanceof Error ? err.message : 'Stripe cancel failed',
+            }
+          }
+        }
+
+        // canceled / processing / already refunded at Stripe — nothing to do; terminalize.
+        await supabase
+          .from('signups')
+          .update({
+            status: 'course_cancelled',
+            cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', signup.id)
+        return { kind: 'no_action_needed', signup_id: signup.id, ...participant }
       }
 
       // Free or paymentless signup — just mark cancelled.
@@ -161,23 +269,6 @@ Deno.serve(async (req: Request) => {
           })
           .eq('id', signup.id)
         return { kind: 'no_payment', signup_id: signup.id, ...participant }
-      }
-
-      // Money already handled — fully refunded on a previous run, or partially
-      // refunded earlier (partial refunds keep status='confirmed', so this row
-      // can still be on its first cancellation pass). Make sure the row
-      // reaches a terminal state either way; the remainder of a partial
-      // refund stays a manual/backoffice decision — never auto-refund here.
-      if (signup.refunded_at || signup.payment_status === 'refunded') {
-        await supabase
-          .from('signups')
-          .update({
-            status: 'course_cancelled',
-            cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', signup.id)
-        return { kind: 'already_handled', signup_id: signup.id, ...participant }
       }
 
       // Source of truth is the live Dintero transaction state, not our cached

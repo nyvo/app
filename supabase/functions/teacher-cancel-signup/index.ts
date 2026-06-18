@@ -11,6 +11,7 @@ import {
   successResponse,
 } from '../_shared/auth.ts'
 import { getTransaction, refundTransaction } from '../_shared/dintero.ts'
+import { retrievePaymentIntent, refundPaymentIntent } from '../_shared/stripe.ts'
 import { sendEmail } from '../_shared/email.ts'
 import { formatCourseStart } from '../_shared/format.ts'
 import { resolveArrangorIdentity } from '../_shared/booking-notifications.ts'
@@ -90,15 +91,16 @@ Deno.serve(async (req: Request) => {
     // never double-refunds: a transaction that's already REFUNDED (e.g. from a
     // prior attempt whose DB write failed) is just reconciled, not refunded again.
     // We do not rely on Dintero's over-refund guard alone.
-    const wantsRefund =
+    const refundRequested =
       body.refund === true &&
-      !!signup.dintero_transaction_id &&
       signup.payment_status !== 'refunded' &&
       !signup.refunded_at
 
     let refundSucceeded = false
 
-    if (wantsRefund) {
+    if (refundRequested && signup.dintero_transaction_id) {
+      // Reconcile against the LIVE Dintero transaction state (not cached payment_status) so a
+      // retry is idempotent and never double-refunds.
       let txStatus: string
       try {
         txStatus = (await getTransaction(signup.dintero_transaction_id)).status
@@ -130,6 +132,40 @@ Deno.serve(async (req: Request) => {
       }
       // AUTHORIZED / AUTHORIZATION_VOIDED / FAILED / DECLINED: no captured funds to
       // return — proceed with the cancellation without a refund.
+    } else if (refundRequested && signup.stripe_payment_intent_id) {
+      // Stripe path: reconcile against the live PaymentIntent. A captured (succeeded) PI gets a
+      // full refund with the transfer reversed + application fee returned (C6). requires_capture
+      // / canceled means no captured funds — proceed without a refund. The charge.refunded
+      // webhook sends the buyer's refund-receipt once the money actually moves.
+      let piStatus: string
+      try {
+        piStatus = (await retrievePaymentIntent(signup.stripe_payment_intent_id)).status
+      } catch (err) {
+        const m = err instanceof Error ? err.message : 'ukjent feil'
+        return errorResponse(
+          `Kunne ikke kontrollere betalingen hos Stripe (${m}). Påmeldingen er ikke endret – prøv igjen.`,
+          502,
+          req,
+        )
+      }
+
+      if (piStatus === 'succeeded') {
+        try {
+          await refundPaymentIntent({
+            paymentIntentId: signup.stripe_payment_intent_id,
+            reverseTransfer: true,
+            refundApplicationFee: true,
+          })
+          refundSucceeded = true
+        } catch (err) {
+          const m = err instanceof Error ? err.message : 'Stripe refund failed'
+          return errorResponse(
+            `Refusjon feilet: ${m}. Påmeldingen er ikke endret – prøv igjen.`,
+            500,
+            req,
+          )
+        }
+      }
     }
 
     const updateData: Record<string, unknown> = {
