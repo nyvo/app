@@ -60,6 +60,50 @@ export async function createDinteroSession(
   }
 }
 
+interface StripeSessionResult {
+  /** PaymentIntent client secret — passed to Stripe Elements to confirm payment. */
+  clientSecret: string
+  paymentIntentId: string
+  /** payment_attempts id (= metadata.attempt_id) — carried to the success page as ref. */
+  attemptId: string
+}
+
+/**
+ * Create a Stripe Connect checkout session (manual-capture PaymentIntent) via edge function.
+ * Stripe counterpart to createDinteroSession — identical params + { data, error, status }
+ * envelope (status drives inline-vs-toast handling: 409 = duplicate, other 4xx = validation).
+ */
+export async function createStripeSession(
+  params: CreateSessionParams,
+): Promise<{ data: StripeSessionResult | null; error: Error | null; status: number }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('create-stripe-connect-session', {
+      body: params,
+    })
+
+    if (error) {
+      const { status, message } = await extractEdgeError(error)
+      return {
+        data: null,
+        error: new Error(message || 'Kunne ikke opprette betaling'),
+        status,
+      }
+    }
+
+    if (data?.error) {
+      return { data: null, error: new Error(data.error), status: 0 }
+    }
+
+    return { data: data as StripeSessionResult, error: null, status: 200 }
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err : new Error('Ukjent feil'),
+      status: 0,
+    }
+  }
+}
+
 interface FinalizeResult {
   signup_id: string
   status: 'confirmed' | 'already_processed'

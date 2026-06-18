@@ -11,12 +11,15 @@ import { FieldError } from '@/components/ui/field-error';
 import { PageState } from '@/components/page-state/page-state';
 import { DinteroPaymentBadge } from '@/components/public/DinteroPaymentBadge';
 import { embedDinteroCheckout, type DinteroCheckoutInstance } from '@/lib/dintero';
+import { Elements, PaymentElement, useStripe as useStripeHook, useElements } from '@stripe/react-stripe-js';
+import { getStripe } from '@/lib/stripe';
+import { getPaymentProvider } from '@/lib/payments';
 import { ChevronLeft, Check } from '@/lib/icons';
 import { formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
 import { calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
 import { fetchPublicCourseBySlug, resolveCourseImage, singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
-import { createDinteroSession } from '@/services/checkout';
+import { createDinteroSession, createStripeSession } from '@/services/checkout';
 import { createFreeSignup, createManualSignup, checkCourseAvailability } from '@/services/signups';
 import { supabase } from '@/lib/supabase';
 import type { AvailableTicketType } from '@/types/database';
@@ -218,6 +221,13 @@ const CheckoutPage = () => {
   const [session, setSession] = useState<DinteroSessionRef | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
 
+  // Payment provider for new checkouts (VITE_PAYMENT_PROVIDER). 'stripe'/'both' route to the
+  // Stripe Elements path; 'dintero' (default) keeps the existing iframe flow.
+  const stripeEnabled = getPaymentProvider() !== 'dintero';
+  const [stripeSession, setStripeSession] = useState<
+    { clientSecret: string; paymentIntentId: string; attemptId: string; tierId: string } | null
+  >(null);
+
   async function handleAdvanceToPayment() {
     if (isFree || isManual || !course || !slug || !selectedTier || submitting) return;
     setSubmitting(true);
@@ -231,7 +241,7 @@ const CheckoutPage = () => {
       return;
     }
 
-    const { data, error: payErr, status } = await createDinteroSession({
+    const sessionParams = {
       courseId: course.id,
       organizationSlug: slug,
       ticketTypeId: selectedTier.id,
@@ -240,7 +250,11 @@ const CheckoutPage = () => {
       customerName: formatPersonName(form.name),
       customerPhone: form.phone.trim() || undefined,
       customerNote: form.note.trim() || undefined,
-    });
+    };
+
+    const { data, error: payErr, status } = stripeEnabled
+      ? await createStripeSession(sessionParams)
+      : await createDinteroSession(sessionParams);
     if (payErr || !data) {
       // 4xx errors from the edge function are already user-friendly Norwegian.
       // 5xx / network / unknown fall through friendlyError.
@@ -254,11 +268,20 @@ const CheckoutPage = () => {
       return;
     }
 
-    setSession({
-      sid: data.sid,
-      merchantReference: data.merchantReference,
-      tierId: selectedTier.id,
-    });
+    if ('clientSecret' in data) {
+      setStripeSession({
+        clientSecret: data.clientSecret,
+        paymentIntentId: data.paymentIntentId,
+        attemptId: data.attemptId,
+        tierId: selectedTier.id,
+      });
+    } else {
+      setSession({
+        sid: data.sid,
+        merchantReference: data.merchantReference,
+        tierId: selectedTier.id,
+      });
+    }
     setStep('payment');
     setSubmitting(false);
   }
@@ -329,6 +352,7 @@ const CheckoutPage = () => {
             if (step === 'payment') {
               setStep('contact');
               setSession(null);
+              setStripeSession(null);
               setSessionError(null);
             } else {
               navigate(backHref);
@@ -480,17 +504,26 @@ const CheckoutPage = () => {
                 <CheckoutStepHeader step={2} />
 
                 <div id="payment" className="scroll-mt-6">
-                  <DinteroEmbed
-                    sid={session?.sid ?? null}
-                    enabled={true}
-                    loading={false}
-                    errorMessage={sessionError}
-                    onPaymentAuthorized={(transactionId) => {
-                      if (!session) return;
-                      const ref = encodeURIComponent(session.merchantReference);
-                      window.location.href = `/checkout/success?transaction_id=${transactionId}&ref=${ref}&org=${slug}`;
-                    }}
-                  />
+                  {stripeEnabled ? (
+                    <StripeEmbed
+                      clientSecret={stripeSession?.clientSecret ?? null}
+                      total={total}
+                      errorMessage={sessionError}
+                      returnUrl={`${window.location.origin}/checkout/success?ref=${encodeURIComponent(stripeSession?.attemptId ?? '')}&org=${slug}`}
+                    />
+                  ) : (
+                    <DinteroEmbed
+                      sid={session?.sid ?? null}
+                      enabled={true}
+                      loading={false}
+                      errorMessage={sessionError}
+                      onPaymentAuthorized={(transactionId) => {
+                        if (!session) return;
+                        const ref = encodeURIComponent(session.merchantReference);
+                        window.location.href = `/checkout/success?transaction_id=${transactionId}&ref=${ref}&org=${slug}`;
+                      }}
+                    />
+                  )}
                 </div>
               </>
             )}
@@ -695,6 +728,91 @@ function DinteroEmbed({
 
   // Sticky container: Dintero's iframe will render into this div.
   return <div ref={containerRef} />;
+}
+
+/**
+ * Stripe Elements payment block. Mounts the PaymentElement once the PaymentIntent client secret
+ * is available; the "Betal" button confirms and Stripe redirects to `returnUrl`. With manual
+ * capture the authorization redirects as redirect_status=succeeded — capture happens server-side
+ * in stripe-connect-webhook. Mirrors DinteroEmbed's placeholder/error states.
+ */
+function StripeEmbed({
+  clientSecret,
+  total,
+  returnUrl,
+  errorMessage,
+}: {
+  clientSecret: string | null;
+  total: number;
+  returnUrl: string;
+  errorMessage: string | null;
+}) {
+  if (errorMessage) {
+    return (
+      <Alert variant="error">
+        <AlertDescription>{errorMessage}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!clientSecret) {
+    return (
+      <div className="rounded-xl border border-border bg-surface p-5">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full mt-3" />
+        <Skeleton className="h-11 w-full mt-4 rounded-full" />
+      </div>
+    );
+  }
+
+  return (
+    <Elements
+      stripe={getStripe()}
+      options={{
+        clientSecret,
+        appearance: {
+          theme: 'stripe',
+          variables: { fontFamily: 'Inter, system-ui, sans-serif', borderRadius: '8px' },
+        },
+      }}
+    >
+      <StripePaymentForm total={total} returnUrl={returnUrl} />
+    </Elements>
+  );
+}
+
+function StripePaymentForm({ total, returnUrl }: { total: number; returnUrl: string }) {
+  const stripe = useStripeHook();
+  const elements = useElements();
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setSubmitting(true);
+    setErrorMsg(null);
+    // On success Stripe redirects to returnUrl; we only reach past this on an immediate
+    // validation/decline error.
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: { return_url: returnUrl },
+    });
+    if (error) {
+      setErrorMsg(friendlyError(error, 'Betalingen kunne ikke fullføres. Prøv igjen.'));
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <PaymentElement />
+      {errorMsg && <p className="text-sm text-danger">{errorMsg}</p>}
+      <Button type="submit" className="w-full" loading={submitting} disabled={!stripe || !elements}>
+        {`Betal ${formatKroner(total)}`}
+      </Button>
+    </form>
+  );
 }
 
 function CheckoutSummary({
