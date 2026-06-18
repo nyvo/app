@@ -20,6 +20,11 @@ verify_jwt = false
 [functions.stripe-billing-webhook]
 verify_jwt = false
 
+# Stripe Connect marketplace webhook (destination-charge events). Stripe signs via the
+# Stripe-Signature header, not a Supabase JWT. Stripe migration Phase 2.
+[functions.stripe-connect-webhook]
+verify_jwt = false
+
 [functions.sync-dintero-seller-statuses]
 verify_jwt = false
 
