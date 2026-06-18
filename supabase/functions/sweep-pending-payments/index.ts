@@ -15,6 +15,11 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { listTransactionsForSession, type DinteroTransaction } from '../_shared/dintero.ts'
+import {
+  retrievePaymentIntent,
+  capturePaymentIntent,
+  cancelPaymentIntent,
+} from '../_shared/stripe.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -116,6 +121,99 @@ Deno.serve(async (req: Request) => {
           summary.marked_failed++
         } else {
           // Unexpected status — leave alone, next sweep will retry.
+          summary.still_pending++
+        }
+      } catch (_err) {
+        summary.errors++
+      }
+    }
+
+    // ── Stripe orphans ──────────────────────────────────────────────────────
+    // Backstop for the rare case stripe-connect-webhook never captured a
+    // requires_capture PI (endpoint down past Stripe's multi-day retry window).
+    // Mirrors the webhook's amount_capturable_updated handler; idempotent via
+    // create_signup_if_available's stripe:pi: advisory lock.
+    const { data: stripeOrphans, error: stripeErr } = await supabase
+      .from('payment_attempts')
+      .select('id, stripe_payment_intent_id, seller_id, course_id, ticket_type_id, participant_name, participant_email, participant_phone, note, course_session_id')
+      .eq('status', 'pending')
+      .not('stripe_payment_intent_id', 'is', null)
+      .lt('created_at', graceCutoff)
+      .gt('created_at', abandonCutoff)
+
+    if (stripeErr) {
+      // Don't fail the whole sweep — the Dintero pass already ran.
+      console.error('sweep: failed to load stripe orphans:', stripeErr.message)
+    }
+
+    summary.checked += stripeOrphans?.length || 0
+
+    for (const attempt of stripeOrphans || []) {
+      try {
+        const piId = attempt.stripe_payment_intent_id as string
+        let pi
+        try {
+          pi = await retrievePaymentIntent(piId)
+        } catch (_err) {
+          summary.errors++
+          continue
+        }
+
+        if (pi.status === 'requires_capture') {
+          // Webhook never captured — run the capacity check + capture here.
+          if (!attempt.ticket_type_id) {
+            try { await cancelPaymentIntent(piId) } catch (_e) { /* non-fatal */ }
+            await supabase.from('payment_attempts').update({ status: 'voided', payment_product: 'stripe' }).eq('id', attempt.id)
+            summary.marked_failed++
+            continue
+          }
+          const { data: signupResult, error: rpcErr } = await supabase.rpc('create_signup_if_available', {
+            p_seller_id: attempt.seller_id,
+            p_course_id: attempt.course_id,
+            p_ticket_type_id: attempt.ticket_type_id,
+            p_participant_name: attempt.participant_name,
+            p_participant_email: attempt.participant_email,
+            p_participant_phone: attempt.participant_phone,
+            p_amount_paid: pi.amount / 100,
+            p_dintero_transaction_id: null,
+            p_dintero_session_id: null,
+            p_dintero_merchant_reference: null,
+            p_course_session_id: attempt.course_session_id,
+            p_note: attempt.note ?? null,
+            p_payment_product: 'stripe',
+            p_stripe_payment_intent_id: piId,
+          })
+          if (rpcErr) { summary.errors++; continue } // transient — retry next sweep
+
+          // already_signed_up = the signup exists (race/retry); fall through to capture.
+          if ((!signupResult || !signupResult.success) && signupResult?.error !== 'already_signed_up') {
+            // Genuine capacity/validation reject — cancel the auth + void the attempt.
+            try { await cancelPaymentIntent(piId) } catch (_e) { /* non-fatal */ }
+            await supabase.from('payment_attempts').update({ status: 'voided' }).eq('id', attempt.id)
+            summary.marked_failed++
+            continue
+          }
+
+          // Signup exists (created / already_processed / already_signed_up) → ensure captured.
+          try {
+            await capturePaymentIntent(piId)
+          } catch (_err) {
+            summary.errors++ // auth still valid — retry next sweep
+            continue
+          }
+          await supabase.from('payment_attempts').update({ status: 'captured', payment_product: 'stripe' }).eq('id', attempt.id)
+          summary.finalized++
+        } else if (pi.status === 'succeeded') {
+          // Already captured by the webhook (which mints the signup before capturing) but the
+          // attempt was left pending — reconcile the attempt row.
+          await supabase.from('payment_attempts').update({ status: 'captured', payment_product: 'stripe' }).eq('id', attempt.id)
+          summary.finalized++
+        } else if (pi.status === 'canceled') {
+          await supabase.from('payment_attempts').update({ status: 'voided', payment_product: 'stripe' }).eq('id', attempt.id)
+          summary.marked_failed++
+        } else {
+          // requires_payment_method / requires_confirmation / requires_action / processing —
+          // buyer never completed. Leave pending; the abandon window eventually drops it.
           summary.still_pending++
         }
       } catch (_err) {
