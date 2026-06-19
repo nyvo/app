@@ -28,6 +28,7 @@ import {
 } from '../_shared/dintero.ts'
 import {
   retrievePaymentIntent,
+  retrieveCharge,
   refundPaymentIntent,
   cancelPaymentIntent,
 } from '../_shared/stripe.ts'
@@ -159,9 +160,15 @@ Deno.serve(async (req: Request) => {
       // Money already handled — fully refunded on a previous run, or partially
       // refunded earlier (partial refunds keep status='confirmed', so this row
       // can still be on its first cancellation pass). Make sure the row reaches
-      // a terminal state either way; the remainder of a partial refund stays a
-      // manual/backoffice decision — never auto-refund here. Checked first so it
-      // applies to both providers.
+      // a terminal state either way. Checked first so it applies to both providers.
+      // A PARTIAL prior refund (0 < refund_amount < amount_paid) is NOT made-whole by
+      // cancelling the course: terminalize the row but surface it for a manual remainder
+      // refund (Option A — no partial-refund automation), rather than silently counting it
+      // as already handled.
+      const amountPaidNum = Number(signup.amount_paid || 0)
+      const refundAmtNum = Number(signup.refund_amount || 0)
+      const isPartialPriorRefund =
+        refundAmtNum > 0 && amountPaidNum > 0 && refundAmtNum < amountPaidNum
       if (signup.refunded_at || signup.payment_status === 'refunded') {
         await supabase
           .from('signups')
@@ -171,6 +178,15 @@ Deno.serve(async (req: Request) => {
             updated_at: new Date().toISOString(),
           })
           .eq('id', signup.id)
+        if (isPartialPriorRefund) {
+          return {
+            kind: 'refund_failed',
+            signup_id: signup.id,
+            participant_name: participantName,
+            participant_email: participantEmail,
+            error: `Delrefusjon allerede utført (${formatKroner(refundAmtNum)} av ${formatKroner(amountPaidNum)}). Restbeløpet må refunderes manuelt.`,
+          }
+        }
         return { kind: 'already_handled', signup_id: signup.id, ...participant }
       }
 
@@ -179,9 +195,11 @@ Deno.serve(async (req: Request) => {
       // requires_capture => cancel the uncaptured auth; anything else => terminal no-op.
       if (stripePaymentIntentId) {
         let piStatus: string
+        let latestChargeId: string | null = null
         try {
           const pi = await retrievePaymentIntent(stripePaymentIntentId)
           piStatus = pi.status
+          latestChargeId = pi.latest_charge ?? null
         } catch (err) {
           return {
             kind: 'lookup_failed',
@@ -193,13 +211,37 @@ Deno.serve(async (req: Request) => {
         }
 
         if (piStatus === 'succeeded') {
+          // Reconcile against the live charge before refunding. The already-handled guard above
+          // only catches refunds we recorded in the DB; a refund that moved at Stripe but whose
+          // DB write failed is invisible there and would be re-issued here (Stripe then rejects it
+          // → false failure). A fully-refunded charge => idempotent success (reconcile, don't
+          // re-refund); a partial one => surface for a manual remainder (Option A).
+          let alreadyRefunded = false
+          if (latestChargeId) {
+            try {
+              const charge = await retrieveCharge(latestChargeId)
+              if (charge.amount_refunded >= charge.amount) {
+                alreadyRefunded = true
+              } else if (charge.amount_refunded > 0) {
+                return {
+                  kind: 'refund_failed',
+                  signup_id: signup.id,
+                  participant_name: participantName,
+                  participant_email: participantEmail,
+                  error: 'Delrefusjon allerede utført hos Stripe. Restbeløpet må refunderes manuelt.',
+                }
+              }
+            } catch (_e) { /* charge lookup failed — fall through and attempt the refund */ }
+          }
           try {
-            await refundPaymentIntent({
-              paymentIntentId: stripePaymentIntentId,
-              reverseTransfer: true,
-              refundApplicationFee: true,
-            })
-            await supabase
+            if (!alreadyRefunded) {
+              await refundPaymentIntent({
+                paymentIntentId: stripePaymentIntentId,
+                reverseTransfer: true,
+                refundApplicationFee: true,
+              })
+            }
+            const { error: updErr } = await supabase
               .from('signups')
               .update({
                 status: 'course_cancelled',
@@ -210,6 +252,16 @@ Deno.serve(async (req: Request) => {
                 updated_at: new Date().toISOString(),
               })
               .eq('id', signup.id)
+            if (updErr) {
+              // Money was returned but the row write failed — never count this as a clean refund.
+              return {
+                kind: 'refund_failed',
+                signup_id: signup.id,
+                participant_name: participantName,
+                participant_email: participantEmail,
+                error: `Refusjon utført, men databaseoppdatering feilet (${updErr.message}). Krever manuell avstemming.`,
+              }
+            }
             return { kind: 'refunded', signup_id: signup.id, amount: signup.amount_paid || 0, ...participant }
           } catch (err) {
             return {
@@ -225,15 +277,24 @@ Deno.serve(async (req: Request) => {
         if (piStatus === 'requires_capture') {
           try {
             await cancelPaymentIntent(stripePaymentIntentId)
-            await supabase
+            const { error: updErr } = await supabase
               .from('signups')
               .update({
                 status: 'course_cancelled',
                 cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
-                payment_status: 'voided',
+                payment_status: 'failed',
                 updated_at: new Date().toISOString(),
               })
               .eq('id', signup.id)
+            if (updErr) {
+              return {
+                kind: 'void_failed',
+                signup_id: signup.id,
+                participant_name: participantName,
+                participant_email: participantEmail,
+                error: `Reservasjon annullert, men databaseoppdatering feilet (${updErr.message}). Krever manuell avstemming.`,
+              }
+            }
             return { kind: 'voided', signup_id: signup.id, ...participant }
           } catch (err) {
             return {
@@ -293,7 +354,7 @@ Deno.serve(async (req: Request) => {
       if (txStatus === 'CAPTURED' || txStatus === 'PARTIALLY_CAPTURED') {
         try {
           await refundTransaction(transactionId, amountOre, 'requested_by_customer')
-          await supabase
+          const { error: updErr } = await supabase
             .from('signups')
             .update({
               status: 'course_cancelled',
@@ -304,6 +365,15 @@ Deno.serve(async (req: Request) => {
               updated_at: new Date().toISOString(),
             })
             .eq('id', signup.id)
+          if (updErr) {
+            return {
+              kind: 'refund_failed',
+              signup_id: signup.id,
+              participant_name: participantName,
+              participant_email: participantEmail,
+              error: `Refusjon utført, men databaseoppdatering feilet (${updErr.message}). Krever manuell avstemming.`,
+            }
+          }
           return {
             kind: 'refunded',
             signup_id: signup.id,
@@ -324,15 +394,24 @@ Deno.serve(async (req: Request) => {
       if (txStatus === 'AUTHORIZED') {
         try {
           await voidTransaction(transactionId)
-          await supabase
+          const { error: updErr } = await supabase
             .from('signups')
             .update({
               status: 'course_cancelled',
               cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
-              payment_status: 'voided',
+              payment_status: 'failed',
               updated_at: new Date().toISOString(),
             })
             .eq('id', signup.id)
+          if (updErr) {
+            return {
+              kind: 'void_failed',
+              signup_id: signup.id,
+              participant_name: participantName,
+              participant_email: participantEmail,
+              error: `Reservasjon annullert, men databaseoppdatering feilet (${updErr.message}). Krever manuell avstemming.`,
+            }
+          }
           return { kind: 'voided', signup_id: signup.id, ...participant }
         } catch (err) {
           return {

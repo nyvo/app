@@ -11,7 +11,7 @@ import {
   successResponse,
 } from '../_shared/auth.ts'
 import { getTransaction, refundTransaction } from '../_shared/dintero.ts'
-import { retrievePaymentIntent, refundPaymentIntent } from '../_shared/stripe.ts'
+import { retrievePaymentIntent, retrieveCharge, refundPaymentIntent, cancelPaymentIntent } from '../_shared/stripe.ts'
 import { sendEmail } from '../_shared/email.ts'
 import { formatCourseStart } from '../_shared/format.ts'
 import { resolveArrangorIdentity } from '../_shared/booking-notifications.ts'
@@ -97,6 +97,17 @@ Deno.serve(async (req: Request) => {
       !signup.refunded_at
 
     let refundSucceeded = false
+    // Set when an uncaptured Stripe authorization is voided — no captured funds to refund, but the
+    // card hold is released as part of the cancellation.
+    let authVoided = false
+    // A partial refund issued out-of-band leaves the row payment_status='refunded' while still
+    // confirmed; refundRequested is false for it (don't double-refund), but the buyer is NOT made
+    // whole — surface it for manual handling rather than silently reporting "no refund" (Option A).
+    const amountPaidNum = Number(signup.amount_paid || 0)
+    const refundAmtNum = Number(signup.refund_amount || 0)
+    const partialRemainderPending =
+      body.refund === true &&
+      refundAmtNum > 0 && amountPaidNum > 0 && refundAmtNum < amountPaidNum
 
     if (refundRequested && signup.dintero_transaction_id) {
       // Reconcile against the LIVE Dintero transaction state (not cached payment_status) so a
@@ -133,13 +144,16 @@ Deno.serve(async (req: Request) => {
       // AUTHORIZED / AUTHORIZATION_VOIDED / FAILED / DECLINED: no captured funds to
       // return — proceed with the cancellation without a refund.
     } else if (refundRequested && signup.stripe_payment_intent_id) {
-      // Stripe path: reconcile against the live PaymentIntent. A captured (succeeded) PI gets a
-      // full refund with the transfer reversed + application fee returned (C6). requires_capture
-      // / canceled means no captured funds — proceed without a refund. The charge.refunded
-      // webhook sends the buyer's refund-receipt once the money actually moves.
+      // Stripe path: reconcile against the live PaymentIntent. succeeded => full refund (reverse
+      // transfer + application fee, C6); requires_capture => void the uncaptured authorization so
+      // the buyer's card hold is released (no captured funds to refund); canceled/other => nothing
+      // to do. The charge.refunded webhook sends the buyer's refund-receipt once the money moves.
       let piStatus: string
+      let latestChargeId: string | null = null
       try {
-        piStatus = (await retrievePaymentIntent(signup.stripe_payment_intent_id)).status
+        const pi = await retrievePaymentIntent(signup.stripe_payment_intent_id)
+        piStatus = pi.status
+        latestChargeId = pi.latest_charge ?? null
       } catch (err) {
         const m = err instanceof Error ? err.message : 'ukjent feil'
         return errorResponse(
@@ -150,17 +164,53 @@ Deno.serve(async (req: Request) => {
       }
 
       if (piStatus === 'succeeded') {
-        try {
-          await refundPaymentIntent({
-            paymentIntentId: signup.stripe_payment_intent_id,
-            reverseTransfer: true,
-            refundApplicationFee: true,
-          })
+        // Reconcile against the live charge: a charge already fully refunded (e.g. a prior attempt
+        // whose DB write failed) is an idempotent success, not a refund to repeat (Stripe would
+        // reject it → false failure). A partial prior refund is surfaced for manual handling.
+        let alreadyRefunded = false
+        if (latestChargeId) {
+          try {
+            const charge = await retrieveCharge(latestChargeId)
+            if (charge.amount_refunded >= charge.amount) {
+              alreadyRefunded = true
+            } else if (charge.amount_refunded > 0) {
+              return errorResponse(
+                'En delrefusjon er allerede utført hos Stripe. Restbeløpet må refunderes manuelt.',
+                409,
+                req,
+              )
+            }
+          } catch (_e) { /* charge lookup failed — fall through and attempt the refund */ }
+        }
+        if (alreadyRefunded) {
           refundSucceeded = true
+        } else {
+          try {
+            await refundPaymentIntent({
+              paymentIntentId: signup.stripe_payment_intent_id,
+              reverseTransfer: true,
+              refundApplicationFee: true,
+            })
+            refundSucceeded = true
+          } catch (err) {
+            const m = err instanceof Error ? err.message : 'Stripe refund failed'
+            return errorResponse(
+              `Refusjon feilet: ${m}. Påmeldingen er ikke endret – prøv igjen.`,
+              500,
+              req,
+            )
+          }
+        }
+      } else if (piStatus === 'requires_capture') {
+        // Authorized but never captured — no funds to refund, but the card hold is live. Void it
+        // (mirrors cancel-course) so the hold is released as part of the cancellation.
+        try {
+          await cancelPaymentIntent(signup.stripe_payment_intent_id)
+          authVoided = true
         } catch (err) {
-          const m = err instanceof Error ? err.message : 'Stripe refund failed'
+          const m = err instanceof Error ? err.message : 'Stripe cancel failed'
           return errorResponse(
-            `Refusjon feilet: ${m}. Påmeldingen er ikke endret – prøv igjen.`,
+            `Kunne ikke annullere reservasjonen hos Stripe (${m}). Påmeldingen er ikke endret – prøv igjen.`,
             500,
             req,
           )
@@ -182,6 +232,10 @@ Deno.serve(async (req: Request) => {
       updateData.payment_status = 'refunded'
       updateData.refund_amount = signup.amount_paid || 0
       updateData.refunded_at = new Date().toISOString()
+    } else if (authVoided) {
+      // Uncaptured auth was voided — buyer was never charged. Mark 'failed' (no captured funds);
+      // 'voided' is not a member of the payment_status enum (mirrors the webhook capture-failure path).
+      updateData.payment_status = 'failed'
     }
     if (body.reason) {
       const existingNote = typeof signup.note === 'string' ? signup.note : ''
@@ -246,7 +300,9 @@ Deno.serve(async (req: Request) => {
         ? alreadyCancelled
           ? 'Refusjon behandlet.'
           : 'Påmelding avmeldt. Refusjon vil bli behandlet.'
-        : 'Påmelding avmeldt.',
+        : partialRemainderPending
+          ? 'Påmelding avmeldt. En delrefusjon er allerede utført — restbeløpet må refunderes manuelt.'
+          : 'Påmelding avmeldt.',
     }, 200, req)
   } catch (error) {
     console.error('teacher-cancel-signup error:', error)

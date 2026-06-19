@@ -275,6 +275,10 @@ Deno.serve(async (req: Request) => {
           const message = captureErr instanceof Error ? captureErr.message : 'Unknown'
           // The signup was created by this PI and the buyer was never told it succeeded — cancel
           // it so it stops consuming capacity and the roster isn't confirmed-but-unpaid.
+          // This path is terminal (event finalized below, attempt → 'failed', sweep skips it), so
+          // release the buyer's authorization hold now instead of letting it sit ~7 days until
+          // auto-expiry. Best-effort: if the cancel fails the auth still expires on its own.
+          try { await cancelPaymentIntent(pi.id) } catch (_e) { /* non-fatal — auth auto-expires */ }
           await supabase
             .from('signups')
             .update({ payment_status: 'failed', status: 'cancelled' })
@@ -403,7 +407,14 @@ Deno.serve(async (req: Request) => {
         const pi = event.data.object as unknown as StripePaymentIntent
         const attemptId = pi.metadata?.attempt_id
         if (attemptId) {
-          await supabase.from('payment_attempts').update({ status: 'failed' }).eq('id', attemptId)
+          // Only flip a still-pending attempt. A decline is meaningful only before authorization;
+          // a stale/out-of-order payment_failed must never overwrite an 'authorized' or 'captured'
+          // attempt (Stripe does not guarantee event ordering). Mirrors the canceled handler's guard.
+          await supabase
+            .from('payment_attempts')
+            .update({ status: 'failed' })
+            .eq('id', attemptId)
+            .in('status', ['pending'])
         }
         await markEventResult(supabase, eventKey, { type: 'payment_failed' })
         return new Response('OK', { status: 200 })

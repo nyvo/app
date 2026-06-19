@@ -129,17 +129,23 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── Stripe orphans ──────────────────────────────────────────────────────
-    // Backstop for the rare case stripe-connect-webhook never captured a
-    // requires_capture PI (endpoint down past Stripe's multi-day retry window).
-    // Mirrors the webhook's amount_capturable_updated handler; idempotent via
-    // create_signup_if_available's stripe:pi: advisory lock.
+    // Backstop for when stripe-connect-webhook never captured a requires_capture PI — endpoint
+    // down past Stripe's retry window, OR the function was killed mid-flight after minting the
+    // signup but before capturing (leaving the attempt stuck at 'authorized'). We therefore sweep
+    // BOTH 'pending' and 'authorized' attempts, and — crucially — do NOT apply the 24h abandon
+    // floor to capturable PIs: a manual-capture authorization is valid ~7 days, far longer than the
+    // 24h floor, so the exact disaster this pass exists for must stay reachable for the whole auth
+    // lifetime. The 24h floor is applied (below) only to PIs the buyer never completed. Capture
+    // idempotency is enforced by Stripe's single-capture rule (a second capture is rejected), NOT
+    // by the RPC's stripe:pi: advisory lock (which serializes only the signup mint) — the
+    // capture-race branch below treats an already-captured PI as success.
+    const abandonCutoffMs = Date.now() - ABANDON_HOURS * 60 * 60 * 1000
     const { data: stripeOrphans, error: stripeErr } = await supabase
       .from('payment_attempts')
-      .select('id, stripe_payment_intent_id, seller_id, course_id, ticket_type_id, participant_name, participant_email, participant_phone, note, course_session_id')
-      .eq('status', 'pending')
+      .select('id, status, created_at, stripe_payment_intent_id, seller_id, course_id, ticket_type_id, participant_name, participant_email, participant_phone, note, course_session_id')
+      .in('status', ['pending', 'authorized'])
       .not('stripe_payment_intent_id', 'is', null)
       .lt('created_at', graceCutoff)
-      .gt('created_at', abandonCutoff)
 
     if (stripeErr) {
       // Don't fail the whole sweep — the Dintero pass already ran.
@@ -160,8 +166,29 @@ Deno.serve(async (req: Request) => {
         }
 
         if (pi.status === 'requires_capture') {
-          // Webhook never captured — run the capacity check + capture here.
+          // Webhook never captured — run the capacity check + capture here, regardless of age
+          // (up to Stripe's ~7-day auth window). Recovers both 'pending' attempts and the
+          // 'authorized' attempts left behind by a webhook killed between mint and capture.
           if (!attempt.ticket_type_id) {
+            try { await cancelPaymentIntent(piId) } catch (_e) { /* non-fatal */ }
+            await supabase.from('payment_attempts').update({ status: 'voided', payment_product: 'stripe' }).eq('id', attempt.id)
+            summary.marked_failed++
+            continue
+          }
+          // Don't capture a dead booking: the course was cancelled/unpublished, OR a signup
+          // already exists for this PI and was cancelled (teacher cancelled during the
+          // webhook-missed window, or cancel-course's own void failed and left the row confirmed).
+          // The RPC's course-cancelled guard is bypassed on the dedup ('already_processed') path,
+          // so we check both here. Best-effort backstop; the cancel paths' live-PI reconcile remains
+          // the authoritative protection — but this prevents charging for a cancelled course/booking.
+          const [{ data: existingSignup }, { data: courseRow }] = await Promise.all([
+            supabase.from('signups').select('status').eq('stripe_payment_intent_id', piId).maybeSingle(),
+            supabase.from('courses').select('status').eq('id', attempt.course_id).maybeSingle(),
+          ])
+          const bookingDead =
+            courseRow?.status === 'cancelled' || courseRow?.status === 'draft' ||
+            (!!existingSignup && (existingSignup.status === 'cancelled' || existingSignup.status === 'course_cancelled'))
+          if (bookingDead) {
             try { await cancelPaymentIntent(piId) } catch (_e) { /* non-fatal */ }
             await supabase.from('payment_attempts').update({ status: 'voided', payment_product: 'stripe' }).eq('id', attempt.id)
             summary.marked_failed++
@@ -189,7 +216,7 @@ Deno.serve(async (req: Request) => {
           if ((!signupResult || !signupResult.success) && signupResult?.error !== 'already_signed_up') {
             // Genuine capacity/validation reject — cancel the auth + void the attempt.
             try { await cancelPaymentIntent(piId) } catch (_e) { /* non-fatal */ }
-            await supabase.from('payment_attempts').update({ status: 'voided' }).eq('id', attempt.id)
+            await supabase.from('payment_attempts').update({ status: 'voided', payment_product: 'stripe' }).eq('id', attempt.id)
             summary.marked_failed++
             continue
           }
@@ -198,6 +225,15 @@ Deno.serve(async (req: Request) => {
           try {
             await capturePaymentIntent(piId)
           } catch (_err) {
+            // The webhook may have captured this PI concurrently (the advisory lock serializes the
+            // mint, not the capture). If it's now succeeded, that's success — not an error.
+            let recheck: { status: string } | null = null
+            try { recheck = await retrievePaymentIntent(piId) } catch (_e) { recheck = null }
+            if (recheck?.status === 'succeeded') {
+              await supabase.from('payment_attempts').update({ status: 'captured', payment_product: 'stripe' }).eq('id', attempt.id)
+              summary.finalized++
+              continue
+            }
             summary.errors++ // auth still valid — retry next sweep
             continue
           }
@@ -205,16 +241,25 @@ Deno.serve(async (req: Request) => {
           summary.finalized++
         } else if (pi.status === 'succeeded') {
           // Already captured by the webhook (which mints the signup before capturing) but the
-          // attempt was left pending — reconcile the attempt row.
+          // attempt was left pending/authorized — reconcile the attempt row.
           await supabase.from('payment_attempts').update({ status: 'captured', payment_product: 'stripe' }).eq('id', attempt.id)
           summary.finalized++
         } else if (pi.status === 'canceled') {
           await supabase.from('payment_attempts').update({ status: 'voided', payment_product: 'stripe' }).eq('id', attempt.id)
           summary.marked_failed++
-        } else {
-          // requires_payment_method / requires_confirmation / requires_action / processing —
-          // buyer never completed. Leave pending; the abandon window eventually drops it.
+        } else if (pi.status === 'processing') {
+          // Async settlement in flight — never abandon; a later sweep sees succeeded/canceled.
           summary.still_pending++
+        } else {
+          // requires_payment_method / requires_confirmation / requires_action — buyer never
+          // completed. Abandon only once past the 24h floor; until then a retry may still finish.
+          const createdMs = attempt.created_at ? new Date(attempt.created_at as string).getTime() : Date.now()
+          if (createdMs < abandonCutoffMs) {
+            await supabase.from('payment_attempts').update({ status: 'failed', payment_product: 'stripe' }).eq('id', attempt.id)
+            summary.marked_failed++
+          } else {
+            summary.still_pending++
+          }
         }
       } catch (_err) {
         summary.errors++
