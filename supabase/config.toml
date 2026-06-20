@@ -19,6 +19,11 @@ verify_jwt = false
 [functions.stripe-connect-webhook]
 verify_jwt = false
 
+# Stripe Connect connected-account events (Destination 2: account.updated / payout.paid).
+# Stripe signs via the Stripe-Signature header, not a Supabase JWT. Stripe migration Phase 5.
+[functions.stripe-connect-account-events]
+verify_jwt = false
+
 [functions.sweep-pending-payments]
 verify_jwt = false
 
