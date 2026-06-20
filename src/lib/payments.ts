@@ -26,12 +26,12 @@ export function sellerNeedsDinteroSetup(
 export type PaymentProvider = 'dintero' | 'stripe' | 'both'
 
 /**
- * Which payment integration seller onboarding uses, from VITE_PAYMENT_PROVIDER.
- * Defaults to 'dintero' (the live provider) for any unset/unknown value.
- * 'stripe' and 'both' switch seller onboarding to Stripe Connect during the
- * migration overlap. See .context/plans/dintero-to-stripe-migration.md.
+ * Which payment integration checkout + seller onboarding use, from VITE_PAYMENT_PROVIDER.
+ * Phase-4 cutover (2026-06-20): defaults to 'stripe' — Stripe Connect is now the live provider.
+ * Roll back by setting VITE_PAYMENT_PROVIDER='dintero' (or 'both' for the overlap), no redeploy of
+ * code needed. Dintero is removed entirely in Phase 6. See .context/plans/dintero-to-stripe-migration.md.
  */
 export function getPaymentProvider(): PaymentProvider {
   const value = import.meta.env.VITE_PAYMENT_PROVIDER
-  return value === 'stripe' || value === 'both' ? value : 'dintero'
+  return value === 'dintero' || value === 'both' ? value : 'stripe'
 }
