@@ -13,6 +13,8 @@
 //       signup confirmed, record refund) : full (cancel + refund receipt).
 //   payment_intent.payment_failed            → mark attempt failed (embedded declines: no signup).
 //   payment_intent.canceled                  → mark attempt voided.
+//   refund.updated / charge.refund.updated   → on a FAILED refund, revert the optimistic
+//       'refunded' state (money never moved); the booking stays cancelled, seller re-refunds.
 //
 // Idempotency: processed_webhook_events.event_id = `stripe:${event.id}` (C5 — Stripe event ids
 // are globally unique). The create_signup_if_available RPC adds a second guard (stripe:pi: lock).
@@ -429,6 +431,49 @@ Deno.serve(async (req: Request) => {
             .in('status', ['pending', 'authorized'])
         }
         await markEventResult(supabase, eventKey, { type: 'voided' })
+        return new Response('OK', { status: 200 })
+      }
+
+      case 'refund.updated':
+      case 'charge.refund.updated': {
+        // charge.refunded is the canonical "money moved" event (a refund that SUCCEEDED). Here we
+        // only act on a terminal FAILURE: the cancel/refund paths optimistically mark the signup
+        // 'refunded' the moment Stripe accepts the refund (2xx), but a refund can later fail — e.g.
+        // the connected account lacked balance for the reverse_transfer, or the bank rejected it.
+        // succeeded / pending / requires_action are no-ops here (charge.refunded handles success).
+        const refund = event.data.object as unknown as {
+          id: string; status: string; payment_intent: string | null; failure_reason?: string | null
+        }
+        if (refund.status !== 'failed' && refund.status !== 'canceled') {
+          await markEventResult(supabase, eventKey, { type: 'refund_update', status: refund.status })
+          return new Response('OK', { status: 200 })
+        }
+        const piId = refund.payment_intent
+        if (!piId) {
+          await markEventResult(supabase, eventKey, { type: 'refund_failed', error: 'missing_payment_intent' })
+          return new Response('OK', { status: 200 })
+        }
+        // Revert the optimistic refunded state so the row reflects reality — the money is still
+        // captured. The booking stays cancelled (that decision is independent of the refund); a
+        // cancelled-but-still-'paid' row is the dashboard signal that the seller must re-issue the
+        // refund manually. Idempotent: the payment_status guard makes a replay a no-op, and only a
+        // row we actually marked 'refunded' is touched.
+        const { data: reverted } = await supabase
+          .from('signups')
+          .update({ payment_status: 'paid', refund_amount: null, refunded_at: null })
+          .eq('stripe_payment_intent_id', piId)
+          .eq('payment_status', 'refunded')
+          .select('id')
+        if (reverted && reverted.length > 0) {
+          console.error('[stripe-connect-webhook] refund FAILED — reverted optimistic refund state; needs manual re-refund', {
+            paymentIntentId: piId, refundId: refund.id, reason: refund.failure_reason ?? null,
+            signupIds: reverted.map((r) => r.id),
+          })
+        }
+        await markEventResult(supabase, eventKey, {
+          type: 'refund_failed', status: refund.status, reason: refund.failure_reason ?? null,
+          reverted: reverted?.length ?? 0,
+        })
         return new Response('OK', { status: 200 })
       }
 
