@@ -1,17 +1,13 @@
 // Sends the post-booking "få oversikt" magic link for a guest checkout.
 //
-// Audit fix C2: the receipt RPC (get_signup_by_dintero_id) no longer returns
-// the participant's email to anonymous callers — the success page only gets a
-// masked variant for display. But the buyer-accounts claim flow still needs a
-// magic link sent to the *exact* booking email. This function looks the
-// address up server-side from the same (transaction_id, merchant_reference)
-// pair the receipt page already holds, and triggers Supabase's OTP email —
-// the full address never crosses the anon API.
+// The credential is possession of the Stripe payment_intent_id from the
+// success URL query param. The function looks up the signup server-side
+// and triggers Supabase's OTP email — the full address never crosses the
+// anon API.
 //
-// No JWT (guest checkout); the credential is possession of the transaction
-// pair, same as the receipt itself. Defense in depth: per-IP and
-// per-transaction rate limits, guests only (claimed signups have buyer_id),
-// and the response never contains the email.
+// No JWT (guest checkout); defense in depth: per-IP and per-PI rate limits,
+// guests only (claimed signups have buyer_id), and the response never
+// contains the email.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
@@ -21,8 +17,7 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
 
 interface SendClaimLinkRequest {
-  transactionId: string
-  merchantReference: string
+  paymentIntentId: string
   // Validated by Supabase Auth against the project's redirect allowlist.
   redirectTo?: string
 }
@@ -33,9 +28,9 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body: SendClaimLinkRequest = await req.json()
-    const { transactionId, merchantReference, redirectTo } = body
+    const { paymentIntentId, redirectTo } = body
 
-    if (!transactionId || !merchantReference) {
+    if (!paymentIntentId) {
       return errorResponse('Missing required fields', 400, req)
     }
 
@@ -51,19 +46,18 @@ Deno.serve(async (req: Request) => {
     if (ipAllowed === false) {
       return errorResponse('For mange forsøk. Prøv igjen om litt.', 429, req)
     }
-    const { data: txnAllowed, error: txnLimitErr } = await supabase.rpc('check_rate_limit', {
-      p_key: `claim-link:txn:${transactionId}`, p_limit: 3, p_window_seconds: 3600,
+    const { data: piAllowed, error: piLimitErr } = await supabase.rpc('check_rate_limit', {
+      p_key: `claim-link:pi:${paymentIntentId}`, p_limit: 3, p_window_seconds: 3600,
     })
-    if (txnLimitErr) console.error('check_rate_limit (txn) failed:', txnLimitErr)
-    if (txnAllowed === false) {
+    if (piLimitErr) console.error('check_rate_limit (pi) failed:', piLimitErr)
+    if (piAllowed === false) {
       return errorResponse('For mange forsøk. Prøv igjen om litt.', 429, req)
     }
 
     const { data: signup, error: signupError } = await supabase
       .from('signups')
       .select('id, participant_email, payment_status, status, buyer_id')
-      .eq('dintero_transaction_id', transactionId)
-      .eq('dintero_merchant_reference', merchantReference)
+      .eq('stripe_payment_intent_id', paymentIntentId)
       .maybeSingle()
 
     if (signupError) {
@@ -71,7 +65,7 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Noe gikk galt. Prøv igjen.', 500, req)
     }
     // One generic error for every reject: this endpoint must not act as an
-    // oracle for which transaction pairs exist or what state they are in.
+    // oracle for which PI values exist or what state they are in.
     if (
       !signup ||
       signup.buyer_id !== null || // already claimed by an account

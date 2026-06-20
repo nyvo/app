@@ -581,7 +581,6 @@ function makeMockCourse(variant: Variant): PublicCourseWithDetails {
       name: 'InSPIRE Yogastudio',
       slug: 'mock-studio',
       logo_url: null,
-      dintero_onboarding_complete: true,
       stripe_onboarding_complete: true,
       uses_integrated_payments: true,
       default_course_image_url: null,

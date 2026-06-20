@@ -58,10 +58,6 @@ function SignupRow({ signup }: { signup: BuyerSignup }) {
 
   const isCancelled = signup.status === 'cancelled'
   const isCourseCancelled = signup.status === 'course_cancelled'
-  const hasReceipt = Boolean(signup.dintero_transaction_id && signup.dintero_merchant_reference)
-  const receiptUrl = hasReceipt
-    ? `${routes.checkoutSuccess}?transaction_id=${encodeURIComponent(signup.dintero_transaction_id!)}&ref=${encodeURIComponent(signup.dintero_merchant_reference!)}`
-    : null
 
   const courseUrl = teamSlug && course?.slug ? routes.publicCourse(teamSlug, course.slug) : null
 
@@ -119,14 +115,6 @@ function SignupRow({ signup }: { signup: BuyerSignup }) {
           <p className="text-sm font-medium text-foreground tabular-nums">
             {signup.amount_paid === 0 ? 'Gratis' : formatKroner(signup.amount_paid)}
           </p>
-        )}
-        {receiptUrl && (
-          <Link
-            to={receiptUrl}
-            className="mt-0.5 inline-block text-sm text-foreground-muted hover:text-foreground hover:underline underline-offset-2"
-          >
-            Kvittering
-          </Link>
         )}
       </div>
     </li>

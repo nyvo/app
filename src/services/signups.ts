@@ -34,8 +34,7 @@ export interface SignupWithProfile extends Signup {
 // Explicit column list, not `*` — the buyer owns these rows, but future
 // signup columns must not silently start flowing to the client.
 export interface BuyerSignup extends Pick<Signup,
-  'id' | 'status' | 'amount_paid' | 'created_at'
-  | 'dintero_transaction_id' | 'dintero_merchant_reference'> {
+  'id' | 'status' | 'amount_paid' | 'created_at'> {
   course: (Pick<Course, 'id' | 'title' | 'slug' | 'start_date' | 'end_date' | 'time_schedule' | 'location' | 'image_url'> & {
     seller: {
       name: string
@@ -69,7 +68,6 @@ export async function fetchMySignups(
     .from('signups')
     .select(`
       id, status, amount_paid, created_at,
-      dintero_transaction_id, dintero_merchant_reference,
       course:courses(
         id, title, slug, start_date, end_date, time_schedule, location, image_url,
         seller:sellers(name, logo_url, team:teams!teams_owner_seller_id_fkey(slug))
@@ -302,7 +300,7 @@ export async function checkCourseAvailability(
   return { available, total, error: null }
 }
 
-// Teacher-initiated cancellation with optional Dintero refund
+// Teacher-initiated cancellation with optional refund
 export async function teacherCancelSignup(
   signupId: string,
   options?: { refund?: boolean; reason?: string }
@@ -397,7 +395,7 @@ export async function createManualSignup(input: {
   }
 }
 
-// Mark a signup's payment as resolved (received outside Dintero — cash,
+// Mark a signup's payment as resolved (received outside the platform — cash,
 // bank transfer, Vipps direct). Routed through an edge function so the
 // org-membership check + current-state guard run server-side instead of
 // relying solely on RLS.

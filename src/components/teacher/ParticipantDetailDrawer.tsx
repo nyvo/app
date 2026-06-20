@@ -89,19 +89,11 @@ function formatNorwegianShort(input: string | null | undefined): string {
 }
 
 // Map `payment_product` slug to a display label. Stripe sets 'stripe';
-// legacy Dintero slugs are kept as a fallback so existing signups still
-// display sensibly. Unknown products fall back to a humanised tail segment.
+// unknown products fall back to a humanised tail segment.
 function paymentMethodLabel(product: string | null | undefined): string | null {
   if (!product) return null;
   const map: Record<string, string> = {
     'stripe': 'Kort',
-    // Legacy Dintero slugs — kept for historical signups
-    'vipps.vipps': 'Vipps',
-    'payex.creditcard': 'Kort',
-    'payex.visa': 'Visa',
-    'payex.mastercard': 'Mastercard',
-    'payex.applepay': 'Apple Pay',
-    'payex.googlepay': 'Google Pay',
   };
   if (map[product]) return map[product];
   const tail = product.split('.').pop() ?? product;
@@ -153,9 +145,8 @@ function buildActivity(signup: SignupWithProfile): ActivityEvent[] {
   // without a processor transaction id — i.e. teacher used "Merk som betalt"
   // on a row that was pending. Stripe creates the signup atomically at
   // capture, so stripe_payment_intent_id present means atomic payment.
-  // dintero_transaction_id is preserved for historical signups.
   const paidAtomically =
-    isPaid && (!!signup.dintero_transaction_id || !!signup.stripe_payment_intent_id);
+    isPaid && !!signup.stripe_payment_intent_id;
 
   if (signup.created_at) {
     events.push({
@@ -168,7 +159,7 @@ function buildActivity(signup: SignupWithProfile): ActivityEvent[] {
   }
 
   // Separate payment event only when the signup existed before payment —
-  // i.e. manually marked paid (no Dintero txn id). updated_at is the
+  // i.e. manually marked paid (no Stripe txn id). updated_at is the
   // teacher's action timestamp in that case.
   if (isPaid && !paidAtomically) {
     events.push({
@@ -232,11 +223,9 @@ export function ParticipantDetailDrawer({
   const isCancelled = status === 'cancelled' || status === 'course_cancelled';
   const isPaid =
     paymentStatus === 'paid' && signup.amount_paid != null && signup.amount_paid > 0;
-  // Refundable when paid through a processor. Stripe sets stripe_payment_intent_id;
-  // legacy Dintero signups set dintero_transaction_id. teacher-cancel-signup
-  // handles both paths symmetrically.
+  // Refundable when paid through Stripe (stripe_payment_intent_id present).
   const canRefund =
-    isPaid && (!!signup.dintero_transaction_id || !!signup.stripe_payment_intent_id);
+    isPaid && !!signup.stripe_payment_intent_id;
   const canMarkResolved =
     paymentStatus === 'pending' || paymentStatus === 'failed' || paymentStatus === 'external';
   // The action menu now holds only high-impact actions (copy moved inline onto the

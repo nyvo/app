@@ -128,9 +128,6 @@ Deno.serve(async (req: Request) => {
       p_participant_email: participantEmail.trim(),
       p_participant_phone: participantPhone.trim(),
       p_amount_paid: 0,
-      p_dintero_transaction_id: null,
-      p_dintero_session_id: null,
-      p_dintero_merchant_reference: null,
       p_note: participantNote?.trim() || null,
     })
 
