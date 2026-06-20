@@ -71,6 +71,9 @@ const CheckoutSuccessPage = () => {
   // The webhook captures + mints the signup async; here we poll get_signup_by_stripe_id.
   const paymentIntentId = searchParams.get('payment_intent');
   const isStripe = Boolean(paymentIntentId);
+  // The attempt id round-trips in the return URL (?ref=…) — used to read the attempt's terminal
+  // status when no signup is minted (capacity-reject void after authorize).
+  const attemptRef = searchParams.get('ref');
 
   const [loading, setLoading] = useState(true);
   const [signup, setSignup] = useState<SignupDetails | null>(null);
@@ -126,6 +129,23 @@ const CheckoutSuccessPage = () => {
           // max-retries fallback below shows the softer "tar litt tid" state.
         }
 
+        // No signup yet — if the payment attempt was voided/failed (the manual-capture
+        // capacity-reject race: the course filled between authorize and capture, so the webhook
+        // cancelled the PI and never minted a signup), the buyer is NOT enrolled and was NOT
+        // charged. Surface that instead of the optimistic "we're processing" fallback below.
+        if (attemptRef) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: attemptStatus } = await (supabase.rpc as any)('get_payment_attempt_status', {
+            p_attempt_id: attemptRef,
+          });
+          if (cancelled) return;
+          if (attemptStatus === 'voided' || attemptStatus === 'failed') {
+            setPaymentFailed(true);
+            setLoading(false);
+            return;
+          }
+        }
+
         // If last attempt failed, show softer message
         if (attempt === maxRetries - 1) {
           logger.warn('Signup not found after max retries:', {
@@ -146,7 +166,7 @@ const CheckoutSuccessPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [isStripe, paymentIntentId]);
+  }, [isStripe, paymentIntentId, attemptRef]);
 
   // A logged-in user's fresh booking is still a guest row (checkout never
   // threads buyer_id) — claim it on the spot so it shows on /overview
@@ -228,10 +248,10 @@ const CheckoutSuccessPage = () => {
             <Clock className="size-6" strokeWidth={2.5} />
           </div>
           <h1 className="mb-3 text-3xl font-medium text-foreground">
-            Betalingen er bekreftet
+            Vi behandler påmeldingen din
           </h1>
           <p className="mb-8 text-base text-foreground-muted">
-            Det tar litt tid – vi sender deg en e-post når påmeldingen er klar.
+            Det tar litt lenger tid enn vanlig. Du får en bekreftelse på e-post så snart betalingen er gjennomført.
           </p>
           <Button asChild variant="default">
             <Link to={failedStudioUrl}>
