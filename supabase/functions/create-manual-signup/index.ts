@@ -4,8 +4,8 @@
 // with the studio ("betaling avtales med instruktør").
 //
 // Mirrors create-free-signup's server-side verification + rate limiting; the
-// capacity RPC additionally enforces seller-is-not-integrated, so an
-// integrated (Pro + Dintero) seller's paid courses can never be booked here.
+// capacity RPC additionally enforces seller-is-not-integrated (uses_integrated_payments),
+// so an integrated (Pro + Stripe) seller's paid courses can never be booked here.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
