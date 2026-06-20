@@ -1,8 +1,8 @@
 // Retry safety net for post-payment side effects (buyer order-confirm email,
 // seller booking.created notification).
 //
-// Inline delivery happens in dintero-webhook + finalize-dintero-transaction
-// success paths. Anything they miss — Resend timeout, edge function crash
+// Inline delivery happens in the stripe-connect-webhook success path.
+// Anything it misses — Resend timeout, edge function crash
 // between INSERT and email, transient DB hiccup — leaves
 // signups.confirmation_sent_at NULL. This cron picks those up every 5 min
 // and retries until the column is set.

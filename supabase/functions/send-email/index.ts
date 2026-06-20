@@ -1,7 +1,7 @@
 // send-email — single dispatcher for all transactional emails.
 //
-// Service-role only: invoked from other Edge Functions (dintero-webhook,
-// finalize-dintero-transaction, sweep-pending-payments, cron jobs).
+// Service-role only: invoked from other Edge Functions (stripe-connect-webhook,
+// sweep-pending-payments, cron jobs).
 // The frontend never calls this directly — user-triggered emails route
 // through their own purpose-built Edge Function which validates the
 // caller's authority, then forwards to this dispatcher via the

@@ -27,8 +27,8 @@ const cronSecret = Deno.env.get('DINTERO_CRON_SECRET') || ''
 // Grace window: don't touch attempts younger than this (gives the client's own
 // finalize call a chance to run first without us racing it).
 const GRACE_MINUTES = 2
-// Abandonment window: attempts older than this with no Dintero transaction are
-// treated as abandoned (customer closed the iframe without paying).
+// Abandonment window: attempts older than this whose buyer never completed the
+// Stripe payment are treated as abandoned.
 const ABANDON_HOURS = 24
 
 Deno.serve(async (req: Request) => {
@@ -74,7 +74,7 @@ Deno.serve(async (req: Request) => {
       .lt('created_at', graceCutoff)
 
     if (stripeErr) {
-      // Don't fail the whole sweep — the Dintero pass already ran.
+      // Don't fail the whole sweep — log and continue.
       console.error('sweep: failed to load stripe orphans:', stripeErr.message)
     }
 
