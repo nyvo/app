@@ -364,8 +364,6 @@ export type Database = {
           course_id: string
           course_session_id: string | null
           created_at: string
-          dintero_session_id: string | null
-          dintero_transaction_id: string | null
           existing_signup_id: string | null
           id: string
           note: string | null
@@ -392,8 +390,6 @@ export type Database = {
           course_id: string
           course_session_id?: string | null
           created_at?: string
-          dintero_session_id?: string | null
-          dintero_transaction_id?: string | null
           existing_signup_id?: string | null
           id?: string
           note?: string | null
@@ -420,8 +416,6 @@ export type Database = {
           course_id?: string
           course_session_id?: string | null
           created_at?: string
-          dintero_session_id?: string | null
-          dintero_transaction_id?: string | null
           existing_signup_id?: string | null
           id?: string
           note?: string | null
@@ -644,11 +638,6 @@ export type Database = {
         Row: {
           closed_at: string | null
           created_at: string | null
-          dintero_approval_id: string | null
-          dintero_contract_url: string | null
-          dintero_onboarding_complete: boolean
-          dintero_onboarding_status: string | null
-          dintero_seller_id: string | null
           email: string | null
           id: string
           logo_url: string | null
@@ -672,11 +661,6 @@ export type Database = {
         Insert: {
           closed_at?: string | null
           created_at?: string | null
-          dintero_approval_id?: string | null
-          dintero_contract_url?: string | null
-          dintero_onboarding_complete?: boolean
-          dintero_onboarding_status?: string | null
-          dintero_seller_id?: string | null
           email?: string | null
           id?: string
           logo_url?: string | null
@@ -699,11 +683,6 @@ export type Database = {
         Update: {
           closed_at?: string | null
           created_at?: string | null
-          dintero_approval_id?: string | null
-          dintero_contract_url?: string | null
-          dintero_onboarding_complete?: boolean
-          dintero_onboarding_status?: string | null
-          dintero_seller_id?: string | null
           email?: string | null
           id?: string
           logo_url?: string | null
@@ -734,9 +713,6 @@ export type Database = {
           course_id: string
           course_session_id: string | null
           created_at: string | null
-          dintero_merchant_reference: string | null
-          dintero_session_id: string | null
-          dintero_transaction_id: string | null
           id: string
           note: string | null
           package_end_date: string | null
@@ -765,9 +741,6 @@ export type Database = {
           course_id: string
           course_session_id?: string | null
           created_at?: string | null
-          dintero_merchant_reference?: string | null
-          dintero_session_id?: string | null
-          dintero_transaction_id?: string | null
           id?: string
           note?: string | null
           package_end_date?: string | null
@@ -796,9 +769,6 @@ export type Database = {
           course_id?: string
           course_session_id?: string | null
           created_at?: string | null
-          dintero_merchant_reference?: string | null
-          dintero_session_id?: string | null
-          dintero_transaction_id?: string | null
           id?: string
           note?: string | null
           package_end_date?: string | null
@@ -1252,9 +1222,10 @@ export type Database = {
       get_seller_operational: {
         Args: { p_seller_id: string }
         Returns: {
-          dintero_onboarding_status: string
-          dintero_seller_id: string
           seller_type: string
+          stripe_account_id: string | null
+          stripe_account_status: string | null
+          stripe_onboarding_complete: boolean
           subscription_customer_id: string | null
           subscription_current_period_end: string | null
           subscription_plan: string
@@ -1266,15 +1237,9 @@ export type Database = {
       get_seller_private: {
         Args: { p_seller_id: string }
         Returns: {
-          dintero_approval_id: string
-          dintero_contract_url: string
           organization_number: string
           phone: string
         }[]
-      }
-      get_signup_by_dintero_id: {
-        Args: { p_merchant_reference?: string; p_transaction_id?: string }
-        Returns: Json
       }
       is_platform_admin: { Args: { user_uuid: string }; Returns: boolean }
       is_seller_member: {
@@ -1569,9 +1534,6 @@ export type NotificationType =
   | "payment.failed"
   | "refund.completed"
   | "payout.sent"
-  | "dintero_seller.action_required"
-  | "dintero_seller.approved"
-  | "dintero_seller.rejected"
   | "team.invite_accepted"
   | "affiliation.joined"
 

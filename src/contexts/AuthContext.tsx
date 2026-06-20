@@ -81,11 +81,10 @@ async function fetchProfileData(userId: string): Promise<Profile | null> {
 
 async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], memberships: SellerMembership[] }> {
   // Explicit column list — only the public grant set is selected here.
-  // Operational fields (dintero_seller_id, dintero_onboarding_status,
-  // seller_type, updated_at) are hydrated separately via
+  // Operational fields (seller_type, updated_at) are hydrated separately via
   // get_seller_operational for the active seller.
-  // Sensitive fields (dintero_approval_id, dintero_contract_url, phone,
-  // organization_number) remain gated behind get_seller_private.
+  // Sensitive fields (phone, organization_number) remain gated behind
+  // get_seller_private.
   const { data: memberships, error: memberError } = await supabase
     .from('seller_members')
     .select(`
@@ -95,7 +94,7 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
         name,
         logo_url,
         created_at,
-        dintero_onboarding_complete
+        stripe_onboarding_complete
       )
     `)
     .eq('user_id', userId)
@@ -118,14 +117,9 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
       closed_at: null,
       email: null,
       phone: null,
-      dintero_seller_id: null,
-      dintero_approval_id: null,
-      dintero_contract_url: null,
-      dintero_onboarding_status: null,
-      dintero_onboarding_complete: (s.dintero_onboarding_complete ?? false) as boolean,
       stripe_account_id: null,
       stripe_account_status: null,
-      stripe_onboarding_complete: false,
+      stripe_onboarding_complete: (s.stripe_onboarding_complete ?? false) as boolean,
       settings: {},
       seller_type: 'individual',
       organization_number: null,
@@ -146,10 +140,9 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
   return { sellers, memberships: typedMemberships }
 }
 
-// Hydrate operational fields (Dintero IDs, onboarding status, seller_type,
-// subscription plan/status, updated_at) for a single seller via the
-// member-gated RPC. Returns the seller unchanged on RPC failure or
-// non-member access — UI degrades to the public columns only.
+// Hydrate operational fields (seller_type, subscription plan/status, updated_at)
+// for a single seller via the member-gated RPC. Returns the seller unchanged on
+// RPC failure or non-member access — UI degrades to the public columns only.
 async function hydrateSellerOperational(seller: Seller): Promise<Seller> {
   const { data, error } = await fetchSellerOperational(seller.id)
   if (error) {
@@ -159,8 +152,6 @@ async function hydrateSellerOperational(seller: Seller): Promise<Seller> {
   if (!data) return seller
   return {
     ...seller,
-    dintero_seller_id: data.dintero_seller_id,
-    dintero_onboarding_status: data.dintero_onboarding_status,
     stripe_account_id: data.stripe_account_id,
     stripe_account_status: data.stripe_account_status,
     stripe_onboarding_complete: data.stripe_onboarding_complete,
@@ -380,9 +371,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setTeamsBySellerId(teamMap)
 
     if (currentSellerRef.current) {
-      // Update currentSeller with fresh data (e.g. after Dintero onboarding).
+      // Update currentSeller with fresh data (e.g. after Stripe onboarding).
       // Hydrate operational fields via the member-gated RPC so consumers
-      // (PaymentsPage, AffiliationsSection) see fresh dintero status / seller_type.
+      // (PaymentsPage, AffiliationsSection) see fresh seller_type.
       const freshSeller = loadedSellers.find((s) => s.id === currentSellerRef.current?.id)
       if (freshSeller) {
         const hydrated = await hydrateSellerOperational(freshSeller)
@@ -476,11 +467,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       closed_at: null,
       email: null,
       phone: null,
-      dintero_seller_id: null,
-      dintero_approval_id: null,
-      dintero_contract_url: null,
-      dintero_onboarding_status: null,
-      dintero_onboarding_complete: false,
       stripe_account_id: null,
       stripe_account_status: null,
       stripe_onboarding_complete: false,
