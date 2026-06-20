@@ -154,10 +154,13 @@ function buildActivity(signup: SignupWithProfile): ActivityEvent[] {
   // into one truthful finalisation event.
   //
   // A signup is "separable" (signup pre-existed payment) only when paid
-  // without a Dintero transaction id — i.e. teacher used "Merk som betalt"
-  // on a row that was pending. Payment-link flows are rare enough that
-  // joining payment_attempts to detect them isn't worth the cost.
-  const paidAtomically = isPaid && !!signup.dintero_transaction_id;
+  // without a processor transaction id — i.e. teacher used "Merk som betalt"
+  // on a row that was pending. Both Dintero and Stripe create the signup
+  // atomically at capture, so either id present means atomic payment. Payment-
+  // link flows are rare enough that joining payment_attempts to detect them
+  // isn't worth the cost.
+  const paidAtomically =
+    isPaid && (!!signup.dintero_transaction_id || !!signup.stripe_payment_intent_id);
 
   if (signup.created_at) {
     events.push({
@@ -234,7 +237,11 @@ export function ParticipantDetailDrawer({
   const isCancelled = status === 'cancelled' || status === 'course_cancelled';
   const isPaid =
     paymentStatus === 'paid' && signup.amount_paid != null && signup.amount_paid > 0;
-  const canRefund = isPaid && !!signup.dintero_transaction_id;
+  // Refundable when paid through either processor. Dintero sets
+  // dintero_transaction_id; Stripe sets stripe_payment_intent_id (the other is
+  // null). teacher-cancel-signup handles both paths symmetrically.
+  const canRefund =
+    isPaid && (!!signup.dintero_transaction_id || !!signup.stripe_payment_intent_id);
   const canMarkResolved =
     paymentStatus === 'pending' || paymentStatus === 'failed' || paymentStatus === 'external';
   // The action menu now holds only high-impact actions (copy moved inline onto the

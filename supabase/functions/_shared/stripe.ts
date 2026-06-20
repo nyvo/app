@@ -283,6 +283,14 @@ export interface StripeRefund {
   amount: number
 }
 
+export interface StripeCharge {
+  id: string
+  amount: number
+  amount_refunded: number
+  refunded: boolean
+  payment_intent: string | null
+}
+
 export interface StripeMoney {
   amount: number
   currency: string
@@ -446,6 +454,16 @@ export async function cancelPaymentIntent(paymentIntentId: string): Promise<Stri
 
 export async function retrievePaymentIntent(paymentIntentId: string): Promise<StripePaymentIntent> {
   return stripeRequest<StripePaymentIntent>(`/payment_intents/${paymentIntentId}`, {}, { method: 'GET' })
+}
+
+/**
+ * Retrieve a charge to inspect its live refund state. Used by the cancel/refund paths to
+ * reconcile against Stripe before issuing a refund: a fully-refunded charge (amount_refunded
+ * >= amount) is an idempotent success, not a refund to repeat; a partially-refunded charge
+ * (0 < amount_refunded < amount) is surfaced for manual handling (no partial refunds in the UI).
+ */
+export async function retrieveCharge(chargeId: string): Promise<StripeCharge> {
+  return stripeRequest<StripeCharge>(`/charges/${chargeId}`, {}, { method: 'GET' })
 }
 
 /**

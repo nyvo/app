@@ -317,7 +317,11 @@ export async function teacherCancelSignup(
     })
 
     if (error) {
-      return { data: null, error: new Error(error.message || 'Kunne ikke avbestille deltaker') }
+      // supabase-js wraps a non-2xx as a generic FunctionsHttpError; the edge function's
+      // Norwegian message (e.g. the 409 partial-remainder notice, or a 500/502 Stripe error)
+      // lives on error.context and is only readable via extractEdgeError.
+      const { message } = await extractEdgeError(error)
+      return { data: null, error: new Error(message || 'Kunne ikke avbestille deltaker') }
     }
 
     if (data?.error) {

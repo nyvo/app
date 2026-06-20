@@ -146,6 +146,10 @@ const CheckoutSuccessPage = () => {
   // Manual signups (paid course, free-tier seller) confirm like free signups:
   // no Dintero transaction to look up — payment is arranged with the studio.
   const isManualSignup = searchParams.get('manual') === 'true';
+  // Stripe checkout returns with ?payment_intent=pi_… (Stripe appends it to our return_url).
+  // The webhook captures + mints the signup async; here we just poll get_signup_by_stripe_id.
+  const paymentIntentId = searchParams.get('payment_intent');
+  const isStripe = Boolean(paymentIntentId) && !transactionId;
   const hasReceiptLookupIds = Boolean(transactionId && merchantReference);
 
   const [loading, setLoading] = useState(true);
@@ -158,11 +162,12 @@ const CheckoutSuccessPage = () => {
   useEffect(() => {
     let cancelled = false;
     async function fetchSignupDetails() {
-      if (!hasReceiptLookupIds) {
+      if (!hasReceiptLookupIds && !isStripe) {
         if (!isFreeSignup && !isManualSignup && (transactionId || merchantReference)) {
-          logger.warn('Missing paired Dintero identifiers for receipt lookup', {
+          logger.warn('Missing paired identifiers for receipt lookup', {
             hasTransactionId: Boolean(transactionId),
             hasMerchantReference: Boolean(merchantReference),
+            hasPaymentIntent: Boolean(paymentIntentId),
           });
           setBookingFailed(true);
         }
@@ -170,10 +175,10 @@ const CheckoutSuccessPage = () => {
         return;
       }
 
-      // Client-driven finalization: tell the server to capture + create the signup.
-      // Idempotent — short-circuits if already processed. This is the primary path;
-      // the polling loop below is a safety net in case the call fails mid-flight.
-      if (transactionId) {
+      // Dintero only: client-driven finalize (capture + signup), idempotent. Stripe captures in
+      // stripe-connect-webhook on payment_intent.amount_capturable_updated — here we just poll
+      // for the minted signup (the poll below is the shared safety net for both).
+      if (!isStripe && transactionId) {
         const { error: finalizeError } = await finalizeDinteroTransaction(
           transactionId,
           merchantReference,
@@ -198,14 +203,16 @@ const CheckoutSuccessPage = () => {
 
         // Server-side lookup via SECURITY DEFINER RPC — avoids exposing
         // all paid signups through a broad SELECT RLS policy.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error: fetchError } = await (supabase.rpc as any)(
-          'get_signup_by_dintero_id',
-          {
-            p_transaction_id: transactionId,
-            p_merchant_reference: merchantReference,
-          }
-        );
+        const { data, error: fetchError } = isStripe
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ? await (supabase.rpc as any)('get_signup_by_stripe_id', {
+              p_payment_intent_id: paymentIntentId,
+            })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          : await (supabase.rpc as any)('get_signup_by_dintero_id', {
+              p_transaction_id: transactionId,
+              p_merchant_reference: merchantReference,
+            });
         if (cancelled) return;
 
         if (data && !fetchError) {
@@ -248,7 +255,7 @@ const CheckoutSuccessPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [hasReceiptLookupIds, transactionId, merchantReference, isFreeSignup]);
+  }, [hasReceiptLookupIds, isStripe, paymentIntentId, transactionId, merchantReference, isFreeSignup]);
 
   // A logged-in user's fresh booking is still a guest row (checkout never
   // threads buyer_id) — claim it on the spot so it shows on /overview
@@ -469,6 +476,11 @@ const CheckoutSuccessPage = () => {
                             <Link to={AUTH_ROUTES.dashboard}>Se påmeldingene dine</Link>
                           </Button>
                         </div>
+                      ) : isStripe ? (
+                        // Guest claim-link for Stripe is a follow-up — send-booking-claim-link
+                        // resolves the buyer email from the Dintero transaction pair. The receipt
+                        // (confirmation email already sent) stands on its own meanwhile.
+                        null
                       ) : (
                         <BookingOverviewOffer
                           emailMasked={signup.participant_email_masked}
