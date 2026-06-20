@@ -1,20 +1,19 @@
-// Cron-triggered sweep for orphaned payment attempts.
+// Cron-triggered sweep for orphaned Stripe payment attempts.
 //
-// Primary finalization happens client-side (CheckoutSuccessPage calls
-// finalize-dintero-transaction). This cron catches the edge case where the
-// customer paid but the client never completed the finalize call — closed
-// tab, crashed browser, dropped network between iframe success and redirect.
+// Primary finalization happens via the stripe-connect-webhook. This cron
+// catches the edge case where the webhook was down or the function was
+// killed mid-flight after minting the signup but before capturing — leaving
+// the attempt stuck at 'pending' or 'authorized'.
 //
-// For each payment_attempt still `pending` after a short grace window, we
-// ask Dintero whether a transaction was created for that session. If yes
-// and it's AUTHORIZED or CAPTURED, we run finalize (idempotent). If the
-// transaction is terminally failed/voided, we mark the attempt failed. If
-// no transaction exists at all after 24h, the customer abandoned the
-// iframe — mark failed so the row stops showing up in this sweep.
+// For each payment_attempt with a stripe_payment_intent_id still pending/
+// authorized after a short grace window, we check the live PaymentIntent
+// status at Stripe. requires_capture => run the capacity check + capture
+// (idempotent). succeeded => reconcile the attempt row. canceled/failed =>
+// mark the attempt voided/failed. Buyers who never complete the payment
+// flow are abandoned after 24h.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { listTransactionsForSession, type DinteroTransaction } from '../_shared/dintero.ts'
 import {
   retrievePaymentIntent,
   capturePaymentIntent,
@@ -46,86 +45,13 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     const graceCutoff = new Date(Date.now() - GRACE_MINUTES * 60 * 1000).toISOString()
-    const abandonCutoff = new Date(Date.now() - ABANDON_HOURS * 60 * 60 * 1000).toISOString()
-
-    const { data: orphans, error } = await supabase
-      .from('payment_attempts')
-      .select('id, dintero_session_id, created_at')
-      .eq('status', 'pending')
-      .not('dintero_session_id', 'is', null)
-      .lt('created_at', graceCutoff)
-      .gt('created_at', abandonCutoff)
-
-    if (error) {
-      return new Response(`Failed to load pending attempts: ${error.message}`, { status: 500 })
-    }
 
     const summary = {
-      checked: orphans?.length || 0,
+      checked: 0,
       finalized: 0,
       marked_failed: 0,
       still_pending: 0,
       errors: 0,
-    }
-
-    for (const attempt of orphans || []) {
-      try {
-        let transactions: DinteroTransaction[]
-        try {
-          transactions = await listTransactionsForSession(attempt.dintero_session_id!)
-        } catch (_err) {
-          // Dintero-side error — try again next sweep.
-          summary.errors++
-          continue
-        }
-
-        // No transaction → customer opened the iframe but never paid.
-        if (transactions.length === 0) {
-          summary.still_pending++
-          continue
-        }
-
-        // Take the most recent transaction for this session.
-        const txn = transactions[0]
-
-        if (txn.status === 'AUTHORIZED' || txn.status === 'CAPTURED') {
-          // Delegate to the finalize endpoint — same logic the client would run.
-          const resp = await fetch(
-            `${supabaseUrl}/functions/v1/finalize-dintero-transaction`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${supabaseServiceKey}`,
-              },
-              body: JSON.stringify({
-                transaction_id: txn.id,
-                merchant_reference: attempt.id,
-              }),
-            },
-          )
-          if (resp.ok) {
-            summary.finalized++
-          } else {
-            summary.errors++
-          }
-        } else if (
-          txn.status === 'FAILED' ||
-          txn.status === 'DECLINED' ||
-          txn.status === 'AUTHORIZATION_VOIDED'
-        ) {
-          await supabase
-            .from('payment_attempts')
-            .update({ status: 'failed', dintero_transaction_id: txn.id })
-            .eq('id', attempt.id)
-          summary.marked_failed++
-        } else {
-          // Unexpected status — leave alone, next sweep will retry.
-          summary.still_pending++
-        }
-      } catch (_err) {
-        summary.errors++
-      }
     }
 
     // ── Stripe orphans ──────────────────────────────────────────────────────
