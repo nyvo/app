@@ -1,11 +1,5 @@
-[functions.dintero-webhook]
-verify_jwt = false
-
-[functions.create-dintero-session]
-verify_jwt = false
-
-# Public Stripe Connect checkout (guest buyers) — same unauthenticated posture as
-# create-dintero-session; abuse is rate-limited inside. Stripe migration Phase 2.
+# Public Stripe Connect checkout (guest buyers) — unauthenticated posture;
+# abuse is rate-limited inside. Stripe migration Phase 2.
 [functions.create-stripe-connect-session]
 verify_jwt = false
 
@@ -23,12 +17,6 @@ verify_jwt = false
 # Stripe Connect marketplace webhook (destination-charge events). Stripe signs via the
 # Stripe-Signature header, not a Supabase JWT. Stripe migration Phase 2.
 [functions.stripe-connect-webhook]
-verify_jwt = false
-
-[functions.sync-dintero-seller-statuses]
-verify_jwt = false
-
-[functions.finalize-dintero-transaction]
 verify_jwt = false
 
 [functions.sweep-pending-payments]

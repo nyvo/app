@@ -27,7 +27,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCourseDetail } from '@/hooks/use-course-detail';
 import { publishCourse, unpublishCourse } from '@/services/courses';
 import { friendlyError } from '@/lib/error-messages';
-import { sellerNeedsDinteroSetup } from '@/lib/payments';
+import { sellerNeedsPaymentSetup } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 import type { CourseSession } from '@/types/database';
 
@@ -161,7 +161,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
 
   const handlePublish = async () => {
     if (!courseId) return;
-    if (sellerNeedsDinteroSetup(currentSeller)) {
+    if (sellerNeedsPaymentSetup(currentSeller)) {
       setShowPublishDialog(true);
       return;
     }
@@ -292,8 +292,8 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
       {/* Body — scrollable */}
       <div className="flex-1 overflow-y-auto">
         {/* Payment alert — page-scoped inline. Pro sellers only: free-tier
-            sellers publish without Dintero (manual payments). */}
-        {sellerNeedsDinteroSetup(currentSeller) && (
+            sellers publish without Stripe onboarding (manual payments). */}
+        {sellerNeedsPaymentSetup(currentSeller) && (
           <div className="px-6 pt-6">
             <Alert variant="warning">
               <div>
@@ -305,7 +305,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
                 <AlertDescription variant="warning">
                   {courseData.status === 'draft'
                     ? 'Sett opp betalinger for å publisere kurset.'
-                    : 'Du kan ikke motta kortbetalinger før Dintero-oppsettet er fullført.'}
+                    : 'Du kan ikke motta kortbetalinger før betalingsoppsettet er fullført.'}
                 </AlertDescription>
                 <div className="mt-3">
                   <Button

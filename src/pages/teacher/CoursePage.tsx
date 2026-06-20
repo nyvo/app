@@ -51,7 +51,7 @@ import {
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { useAuth } from '@/contexts/AuthContext';
 import { friendlyError } from '@/lib/error-messages';
-import { isProSeller, sellerNeedsDinteroSetup } from '@/lib/payments';
+import { isProSeller, sellerNeedsPaymentSetup } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 import { cn, formatKroner } from '@/lib/utils';
 import type {
@@ -225,20 +225,20 @@ const CoursePage = () => {
   };
 
   // Publish readiness — mirrors required PublishChecklist items on the
-  // Oversikt tab. Description and location are client-side UX gates; Dintero is also
-  // enforced by the DB trigger (enforce_course_publish_requires_dintero) —
-  // for Pro sellers only. Free-tier sellers publish without Dintero (manual payments).
+  // Oversikt tab. Description and location are client-side UX gates; payment
+  // setup is also enforced by the DB trigger — for Pro sellers only. Free-tier
+  // sellers publish without Stripe onboarding (manual payments).
   const publishReadiness = useMemo(() => {
     const hasImage = !!courseData?.imageUrl;
     const hasDescription = !!courseData?.description;
     const hasLocation = !!courseData?.location;
-    const hasDintero = !sellerNeedsDinteroSetup(currentSeller);
+    const hasPaymentSetup = !sellerNeedsPaymentSetup(currentSeller);
     return {
       hasImage,
       hasDescription,
       hasLocation,
-      hasDintero,
-      ready: hasDescription && hasLocation && hasDintero,
+      hasPaymentSetup,
+      ready: hasDescription && hasLocation && hasPaymentSetup,
     };
   }, [courseData?.imageUrl, courseData?.description, courseData?.location, currentSeller]);
 
@@ -482,12 +482,12 @@ const CoursePage = () => {
     }
   };
 
-  // Publish flow — mirrors CourseDrawer. The DB trigger
-  // enforce_course_publish_requires_dintero is the authoritative gate; this
-  // client check just keeps teachers out of a guaranteed-to-fail request.
+  // Publish flow — mirrors CourseDrawer. The DB trigger is the authoritative
+  // gate; this client check just keeps teachers out of a guaranteed-to-fail
+  // request.
   const handlePublish = async () => {
     if (!courseId || !courseData) return;
-    if (sellerNeedsDinteroSetup(currentSeller)) {
+    if (sellerNeedsPaymentSetup(currentSeller)) {
       setShowPublishDialog(true);
       return;
     }
@@ -723,9 +723,9 @@ const CoursePage = () => {
               course={courseData}
               enrolledCount={participantKpis.confirmed}
               revenue={participantKpis.revenue}
-              dinteroOnboardingStatus={currentSeller?.dintero_onboarding_status ?? null}
-              dinteroOnboardingComplete={currentSeller?.dintero_onboarding_complete ?? false}
-              dinteroRequired={isProSeller(currentSeller)}
+              paymentSetupStatus={currentSeller?.stripe_account_status ?? null}
+              paymentSetupComplete={currentSeller?.stripe_onboarding_complete ?? false}
+              paymentSetupRequired={isProSeller(currentSeller)}
               allowsDropIn={settingsAllowsDropIn}
               onAllowsDropInChange={handleToggleDropIn}
               dropInPrice={settingsDropInPrice}
@@ -733,9 +733,9 @@ const CoursePage = () => {
               acceptsLateSignups={settingsAcceptsLateSignups}
               onAcceptsLateSignupsChange={handleToggleAcceptsLateSignups}
               onOpenKursplan={() => setSessionsModalOpen(true)}
-              onSetupDinteroClick={() => navigate(routes.settingsPayouts)}
+              onSetupPaymentsClick={() => navigate(routes.settingsPayouts)}
               onJumpToField={(field) => {
-                if (field === 'dintero') {
+                if (field === 'payments') {
                   navigate(routes.settingsPayouts);
                   return;
                 }

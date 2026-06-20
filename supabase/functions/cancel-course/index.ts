@@ -1,16 +1,18 @@
-// Teacher-initiated course cancellation with bulk Dintero refunds.
+// Teacher-initiated course cancellation with bulk Stripe refunds.
 //
 // Idempotency: safe to re-run on an already-cancelled course. Each invocation
-// re-scans every signup linked to a Dintero transaction and finishes whatever
-// state transition is still needed (refund / void / no-op). That matters
-// because the first call can fail mid-batch — e.g. a Dintero refund times out
-// for one buyer — leaving the rest unprocessed. Re-running picks up where the
-// previous call left off without double-refunding or stomping done rows.
+// re-scans every signup and finishes whatever state transition is still needed
+// (refund / void / no-op). That matters because the first call can fail
+// mid-batch — e.g. a Stripe refund times out for one buyer — leaving the rest
+// unprocessed. Re-running picks up where the previous call left off without
+// double-refunding or stomping done rows.
 //
-// Per-signup routing is driven by the live Dintero transaction status, not
+// Per-signup routing is driven by the live Stripe PaymentIntent status, not
 // our cached `payment_status`, so we correctly handle signups stuck in
-// AUTHORIZED-but-not-CAPTURED (e.g. from an earlier capture failure) by
-// voiding instead of attempting a refund on a non-captured authorization.
+// requires_capture (e.g. from an earlier capture failure) by cancelling instead
+// of attempting a refund on an uncaptured authorization. Dintero is
+// decommissioned (Phase 6); legacy Dintero signups are marked cancelled without
+// a refund attempt.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
@@ -21,11 +23,6 @@ import {
   errorResponse,
   successResponse,
 } from '../_shared/auth.ts'
-import {
-  getTransaction,
-  refundTransaction,
-  voidTransaction,
-} from '../_shared/dintero.ts'
 import {
   retrievePaymentIntent,
   retrieveCharge,
@@ -118,7 +115,7 @@ Deno.serve(async (req: Request) => {
     // Pull every signup tied to this course in a state that may still need
     // money handling. `confirmed` = first cancel pass. `course_cancelled` =
     // a previous pass already flipped status but possibly failed on the
-    // Dintero side; we re-check those too.
+    // payment side; we re-check those too.
     const { data: signups, error: signupsError } = await supabase
       .from('signups')
       .select('*')
@@ -144,7 +141,6 @@ Deno.serve(async (req: Request) => {
     const refundPromises = (signups || []).map(async (signup) => {
       const participantName = signup.participant_name || ''
       const participantEmail = signup.participant_email || ''
-      const transactionId = signup.dintero_transaction_id as string | null
       const stripePaymentIntentId = signup.stripe_payment_intent_id as string | null
       // Email eligibility: only signups that transition out of 'confirmed' in
       // THIS run get notified, so re-running the (idempotent) cancellation
@@ -190,8 +186,8 @@ Deno.serve(async (req: Request) => {
         return { kind: 'already_handled', signup_id: signup.id, ...participant }
       }
 
-      // Stripe-paid signup — route on the live PaymentIntent status (mirrors the Dintero branch
-      // below): succeeded => full refund (reverse transfer + application fee, C6);
+      // Stripe-paid signup — route on the live PaymentIntent status: succeeded => full refund
+      // (reverse transfer + application fee, C6);
       // requires_capture => cancel the uncaptured auth; anything else => terminal no-op.
       if (stripePaymentIntentId) {
         let piStatus: string
@@ -319,113 +315,8 @@ Deno.serve(async (req: Request) => {
         return { kind: 'no_action_needed', signup_id: signup.id, ...participant }
       }
 
-      // Free or paymentless signup — just mark cancelled.
-      if (!transactionId) {
-        await supabase
-          .from('signups')
-          .update({
-            status: 'course_cancelled',
-            cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', signup.id)
-        return { kind: 'no_payment', signup_id: signup.id, ...participant }
-      }
-
-      // Source of truth is the live Dintero transaction state, not our cached
-      // payment_status. Handles AUTHORIZED-but-not-CAPTURED (capture failure
-      // mid-flight) correctly — those need void, not refund.
-      let txStatus: string
-      try {
-        const tx = await getTransaction(transactionId)
-        txStatus = tx.status
-      } catch (err) {
-        return {
-          kind: 'lookup_failed',
-          signup_id: signup.id,
-          participant_name: participantName,
-          participant_email: participantEmail,
-          error: err instanceof Error ? err.message : 'getTransaction failed',
-        }
-      }
-
-      const amountOre = Math.round(Number(signup.amount_paid || 0) * 100)
-
-      if (txStatus === 'CAPTURED' || txStatus === 'PARTIALLY_CAPTURED') {
-        try {
-          await refundTransaction(transactionId, amountOre, 'requested_by_customer')
-          const { error: updErr } = await supabase
-            .from('signups')
-            .update({
-              status: 'course_cancelled',
-              cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
-              payment_status: 'refunded',
-              refund_amount: signup.amount_paid || 0,
-              refunded_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', signup.id)
-          if (updErr) {
-            return {
-              kind: 'refund_failed',
-              signup_id: signup.id,
-              participant_name: participantName,
-              participant_email: participantEmail,
-              error: `Refusjon utført, men databaseoppdatering feilet (${updErr.message}). Krever manuell avstemming.`,
-            }
-          }
-          return {
-            kind: 'refunded',
-            signup_id: signup.id,
-            amount: signup.amount_paid || 0,
-            ...participant,
-          }
-        } catch (err) {
-          return {
-            kind: 'refund_failed',
-            signup_id: signup.id,
-            participant_name: participantName,
-            participant_email: participantEmail,
-            error: err instanceof Error ? err.message : 'Dintero refund failed',
-          }
-        }
-      }
-
-      if (txStatus === 'AUTHORIZED') {
-        try {
-          await voidTransaction(transactionId)
-          const { error: updErr } = await supabase
-            .from('signups')
-            .update({
-              status: 'course_cancelled',
-              cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
-              payment_status: 'failed',
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', signup.id)
-          if (updErr) {
-            return {
-              kind: 'void_failed',
-              signup_id: signup.id,
-              participant_name: participantName,
-              participant_email: participantEmail,
-              error: `Reservasjon annullert, men databaseoppdatering feilet (${updErr.message}). Krever manuell avstemming.`,
-            }
-          }
-          return { kind: 'voided', signup_id: signup.id, ...participant }
-        } catch (err) {
-          return {
-            kind: 'void_failed',
-            signup_id: signup.id,
-            participant_name: participantName,
-            participant_email: participantEmail,
-            error: err instanceof Error ? err.message : 'Dintero void failed',
-          }
-        }
-      }
-
-      // REFUNDED / AUTHORIZATION_VOIDED / FAILED / DECLINED — nothing to do at
-      // Dintero. Just make sure the signup row is in a terminal state.
+      // Non-Stripe signup — free, manually marked paid, or a legacy Dintero booking. Dintero is
+      // decommissioned (Phase 6), so no refund is attempted; just mark the row cancelled.
       await supabase
         .from('signups')
         .update({
@@ -434,7 +325,7 @@ Deno.serve(async (req: Request) => {
           updated_at: new Date().toISOString(),
         })
         .eq('id', signup.id)
-      return { kind: 'no_action_needed', signup_id: signup.id, ...participant }
+      return { kind: 'no_payment', signup_id: signup.id, ...participant }
     })
 
     const refundResults = await Promise.allSettled(refundPromises)
@@ -487,7 +378,7 @@ Deno.serve(async (req: Request) => {
     // Notify participants — best-effort, after money handling (the email's
     // refund note must describe what actually happened). Eligible: signups
     // that transitioned out of 'confirmed' in this run (incl. free/manual —
-    // they have no Dintero transaction but still lose their course), with an
+    // they have no captured payment but still lose their course), with an
     // email on file. Failed refunds/voids/lookups are NOT emailed this run:
     // their rows stay 'confirmed', so the re-run that completes the money
     // handling sends their (single) email with the correct refund note.

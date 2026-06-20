@@ -1,8 +1,7 @@
 // Shared email-send helper for Edge Functions.
 //
-// Internal callers (dintero-webhook, finalize-dintero-transaction, cron
-// jobs) use this to dispatch transactional emails via the send-email
-// function. The frontend never calls send-email directly — user-triggered
+// Internal callers (stripe-connect-webhook, cron jobs) use this to dispatch
+// transactional emails via the send-email function. The frontend never calls send-email directly — user-triggered
 // flows route through their own purpose-built function which validates
 // the caller's authority, then forwards here.
 //

@@ -84,9 +84,9 @@ export const TeacherSidebar = () => {
   const { isMobile, setOpenMobile } = useSidebar();
   const isSeller = profile?.role === 'seller';
   const isPro = isProSeller(currentSeller);
-  // "Betalingskonto" (Dintero onboarding) is a Pro surface — hidden for
-  // free-tier sellers, who never touch Dintero. Becomes the upgrade entry
-  // point when plans ship in the UI.
+  // "Betalingskonto" (Stripe onboarding) is a Pro surface — hidden for
+  // free-tier sellers, who never touch Stripe Connect. Becomes the upgrade
+  // entry point when plans ship in the UI.
   const navItems =
     profile?.role === 'buyer'
       ? BUYER_NAV_ITEMS

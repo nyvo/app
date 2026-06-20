@@ -38,13 +38,13 @@ function formatBillingDate(value: string): string {
 const START_FEATURES = [
   'Påmeldinger og kurslenker',
   'Betaling avtales direkte med deltakerne',
-  'Ingen Dintero-oppsett',
+  'Ingen betalingsoppsett nødvendig',
 ] as const
 
 const PRO_FEATURES = [
   'Alt i Start',
   'Kortbetaling og Vipps i checkout',
-  'Automatiske utbetalinger via Dintero',
+  'Automatiske utbetalinger via Stripe',
   'Servicegebyr håndteres av plattformen',
 ] as const
 

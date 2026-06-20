@@ -88,24 +88,20 @@ function formatNorwegianShort(input: string | null | undefined): string {
   return `${datePart}, kl. ${timePart}`;
 }
 
-// Map Dintero's `payment_product` slug (e.g. `payex.creditcard`, `vipps.vipps`)
-// to a display label. Unknown products fall back to a humanised tail segment
-// so new Dintero offerings don't render as blank.
+// Map `payment_product` slug to a display label. Stripe sets 'stripe';
+// legacy Dintero slugs are kept as a fallback so existing signups still
+// display sensibly. Unknown products fall back to a humanised tail segment.
 function paymentMethodLabel(product: string | null | undefined): string | null {
   if (!product) return null;
   const map: Record<string, string> = {
+    'stripe': 'Kort',
+    // Legacy Dintero slugs — kept for historical signups
     'vipps.vipps': 'Vipps',
     'payex.creditcard': 'Kort',
     'payex.visa': 'Visa',
     'payex.mastercard': 'Mastercard',
     'payex.applepay': 'Apple Pay',
     'payex.googlepay': 'Google Pay',
-    'payex.swish': 'Swish',
-    'instabank.finance': 'Instabank',
-    'instabank.invoice': 'Instabank faktura',
-    'instabank.installment': 'Instabank delbetaling',
-    'collectorbank.invoice': 'Walley faktura',
-    'collectorbank.partpayment': 'Walley delbetaling',
   };
   if (map[product]) return map[product];
   const tail = product.split('.').pop() ?? product;
@@ -148,17 +144,16 @@ function buildActivity(signup: SignupWithProfile): ActivityEvent[] {
   const isPaid =
     signup.payment_status === 'paid' && !!signup.amount_paid && signup.amount_paid > 0;
 
-  // Dintero embedded checkout creates the signup row *after* capture, so
-  // payment and signup confirmation are atomic. Showing them as separate
-  // events implies a lifecycle that doesn't exist in our model. Collapse
-  // into one truthful finalisation event.
+  // Stripe checkout creates the signup row *after* capture, so payment and
+  // signup confirmation are atomic. Showing them as separate events implies
+  // a lifecycle that doesn't exist in our model. Collapse into one truthful
+  // finalisation event.
   //
   // A signup is "separable" (signup pre-existed payment) only when paid
   // without a processor transaction id — i.e. teacher used "Merk som betalt"
-  // on a row that was pending. Both Dintero and Stripe create the signup
-  // atomically at capture, so either id present means atomic payment. Payment-
-  // link flows are rare enough that joining payment_attempts to detect them
-  // isn't worth the cost.
+  // on a row that was pending. Stripe creates the signup atomically at
+  // capture, so stripe_payment_intent_id present means atomic payment.
+  // dintero_transaction_id is preserved for historical signups.
   const paidAtomically =
     isPaid && (!!signup.dintero_transaction_id || !!signup.stripe_payment_intent_id);
 
@@ -237,9 +232,9 @@ export function ParticipantDetailDrawer({
   const isCancelled = status === 'cancelled' || status === 'course_cancelled';
   const isPaid =
     paymentStatus === 'paid' && signup.amount_paid != null && signup.amount_paid > 0;
-  // Refundable when paid through either processor. Dintero sets
-  // dintero_transaction_id; Stripe sets stripe_payment_intent_id (the other is
-  // null). teacher-cancel-signup handles both paths symmetrically.
+  // Refundable when paid through a processor. Stripe sets stripe_payment_intent_id;
+  // legacy Dintero signups set dintero_transaction_id. teacher-cancel-signup
+  // handles both paths symmetrically.
   const canRefund =
     isPaid && (!!signup.dintero_transaction_id || !!signup.stripe_payment_intent_id);
   const canMarkResolved =

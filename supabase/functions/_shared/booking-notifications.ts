@@ -1,5 +1,5 @@
-// Buyer + seller side-effects fired after a paid signup. Called by both
-// the webhook and finalize-dintero-transaction in their success paths
+// Buyer + seller side-effects fired after a paid signup. Called by
+// the stripe-connect-webhook in its success path
 // (best-effort, fast UX), and again by the send-pending-confirmations
 // cron as a retry safety net for any signup where the inline call failed
 // (Resend hiccup, crash between INSERT and email, etc.).
