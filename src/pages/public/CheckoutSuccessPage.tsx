@@ -6,7 +6,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { PageState } from '@/components/page-state/page-state';
 import { supabase } from '@/lib/supabase';
-import { finalizeDinteroTransaction } from '@/services/checkout';
 import { claimMySignups } from '@/services/signups';
 import { useAuth } from '@/contexts/AuthContext';
 import { AUTH_ROUTES } from '@/lib/auth-routes';
@@ -33,8 +32,6 @@ function shortRef(id: string): string {
 
 interface SignupDetails {
   id: string;
-  // Returned by get_signup_by_dintero_id so the receipt never confirms a
-  // capture-failed / refunded / cancelled row.
   payment_status?: string | null;
   status?: string | null;
   // Masked (k•••@example.com) — the anon receipt lookup never returns the
@@ -42,8 +39,6 @@ interface SignupDetails {
   // send-booking-claim-link, which resolves the address itself.
   participant_email_masked: string;
   amount_paid: number;
-  // The next four fields are filled by migration 20260426010000.
-  // Older RPC deploys return undefined; the page renders graceful fallbacks.
   created_at?: string | null;
   course: {
     id: string;
@@ -54,10 +49,7 @@ interface SignupDetails {
     image_url?: string | null;
     /**
      * Studio identity — RPC populates this from the seller (legal/billing
-     * entity) plus the slug from the team owned by that seller. The seller
-     * name and logo_url come from `sellers`; `team_slug` is the public URL
-     * fragment. Seller email is intentionally not returned to anonymous
-     * receipt lookups.
+     * entity) plus the slug from the team owned by that seller.
      */
     seller: {
       name: string;
@@ -67,90 +59,18 @@ interface SignupDetails {
   };
 }
 
-// Post-booking account offer (buyer accounts V2): guest checkouts get a
-// one-click magic link that lands on /overview, where claim-by-verified-email
-// collects this and any earlier bookings. The link must go to exactly the
-// booking's participant_email — claiming matches on the verified auth email —
-// but the anon receipt API only exposes a masked address, so the send happens
-// server-side: send-booking-claim-link resolves the real address from the
-// transaction pair. Logged-in users never see this; their booking is claimed
-// directly (see the claim effect in the page).
-interface BookingOverviewOfferProps {
-  emailMasked: string;
-  transactionId: string;
-  merchantReference: string;
-}
-
-function BookingOverviewOffer({ emailMasked, transactionId, merchantReference }: BookingOverviewOfferProps) {
-  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
-
-  const handleSend = async () => {
-    setState('sending');
-    const callbackUrl = `${window.location.origin}${AUTH_ROUTES.callback}?next=${encodeURIComponent(AUTH_ROUTES.dashboard)}&intent=buyer`;
-    const { error } = await supabase.functions.invoke('send-booking-claim-link', {
-      body: {
-        transactionId,
-        merchantReference,
-        redirectTo: callbackUrl,
-      },
-    });
-    if (error) {
-      logger.error('Receipt: claim link send failed', error);
-      setState('error');
-      return;
-    }
-    setState('sent');
-  };
-
-  return (
-    <div className="mt-8 rounded-lg border border-border bg-muted p-5">
-      <p className="text-base font-medium text-foreground">
-        Få oversikt over påmeldingene dine
-      </p>
-      {state === 'sent' ? (
-        <p className="mt-1.5 text-sm text-foreground-muted">
-          Lenke sendt til {emailMasked}. Sjekk innboksen din.
-        </p>
-      ) : (
-        <>
-          <p className="mt-1.5 text-sm text-foreground-muted">
-            Logg inn med {emailMasked}, så samler vi påmeldingene dine på ett sted.
-          </p>
-          {state === 'error' && (
-            <p className="mt-1.5 text-sm text-danger">
-              Kunne ikke sende lenken. Prøv igjen.
-            </p>
-          )}
-          <Button
-            type="button"
-            variant="default"
-            onClick={() => { void handleSend(); }}
-            loading={state === 'sending'}
-            className="mt-4"
-          >
-            Send innloggingslenke
-          </Button>
-        </>
-      )}
-    </div>
-  );
-}
-
 const CheckoutSuccessPage = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const transactionId = searchParams.get('transaction_id');
-  const merchantReference = searchParams.get('ref');
   const orgSlugFromUrl = searchParams.get('org');
   const isFreeSignup = searchParams.get('free') === 'true';
   // Manual signups (paid course, free-tier seller) confirm like free signups:
-  // no Dintero transaction to look up — payment is arranged with the studio.
+  // payment is arranged with the studio.
   const isManualSignup = searchParams.get('manual') === 'true';
   // Stripe checkout returns with ?payment_intent=pi_… (Stripe appends it to our return_url).
-  // The webhook captures + mints the signup async; here we just poll get_signup_by_stripe_id.
+  // The webhook captures + mints the signup async; here we poll get_signup_by_stripe_id.
   const paymentIntentId = searchParams.get('payment_intent');
-  const isStripe = Boolean(paymentIntentId) && !transactionId;
-  const hasReceiptLookupIds = Boolean(transactionId && merchantReference);
+  const isStripe = Boolean(paymentIntentId);
 
   const [loading, setLoading] = useState(true);
   const [signup, setSignup] = useState<SignupDetails | null>(null);
@@ -162,34 +82,12 @@ const CheckoutSuccessPage = () => {
   useEffect(() => {
     let cancelled = false;
     async function fetchSignupDetails() {
-      if (!hasReceiptLookupIds && !isStripe) {
-        if (!isFreeSignup && !isManualSignup && (transactionId || merchantReference)) {
-          logger.warn('Missing paired identifiers for receipt lookup', {
-            hasTransactionId: Boolean(transactionId),
-            hasMerchantReference: Boolean(merchantReference),
-            hasPaymentIntent: Boolean(paymentIntentId),
-          });
-          setBookingFailed(true);
-        }
+      if (!isStripe) {
         setLoading(false);
         return;
       }
 
-      // Dintero only: client-driven finalize (capture + signup), idempotent. Stripe captures in
-      // stripe-connect-webhook on payment_intent.amount_capturable_updated — here we just poll
-      // for the minted signup (the poll below is the shared safety net for both).
-      if (!isStripe && transactionId) {
-        const { error: finalizeError } = await finalizeDinteroTransaction(
-          transactionId,
-          merchantReference,
-        );
-        if (finalizeError) {
-          logger.warn('Finalize call failed, falling back to poll:', finalizeError.message);
-        }
-      }
-
-      // Poll for the signup (fast on the happy path since finalize already created it).
-      // Keeps a safety net for webhook-driven deliveries and retries.
+      // Poll for the signup — the webhook captures + creates the signup async.
       const maxRetries = 12;
       const delays = [500, 1000, 2000, 2000, 4000, 4000, 4000, 8000, 8000, 8000, 8000, 8000];
 
@@ -203,16 +101,10 @@ const CheckoutSuccessPage = () => {
 
         // Server-side lookup via SECURITY DEFINER RPC — avoids exposing
         // all paid signups through a broad SELECT RLS policy.
-        const { data, error: fetchError } = isStripe
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ? await (supabase.rpc as any)('get_signup_by_stripe_id', {
-              p_payment_intent_id: paymentIntentId,
-            })
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          : await (supabase.rpc as any)('get_signup_by_dintero_id', {
-              p_transaction_id: transactionId,
-              p_merchant_reference: merchantReference,
-            });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error: fetchError } = await (supabase.rpc as any)('get_signup_by_stripe_id', {
+          p_payment_intent_id: paymentIntentId,
+        });
         if (cancelled) return;
 
         if (data && !fetchError) {
@@ -237,8 +129,7 @@ const CheckoutSuccessPage = () => {
         // If last attempt failed, show softer message
         if (attempt === maxRetries - 1) {
           logger.warn('Signup not found after max retries:', {
-            transactionId,
-            merchantReference,
+            paymentIntentId,
             attempts: maxRetries,
             lastError: fetchError?.message || 'No data returned',
           });
@@ -255,7 +146,7 @@ const CheckoutSuccessPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [hasReceiptLookupIds, isStripe, paymentIntentId, transactionId, merchantReference, isFreeSignup]);
+  }, [isStripe, paymentIntentId]);
 
   // A logged-in user's fresh booking is still a guest row (checkout never
   // threads buyer_id) — claim it on the spot so it shows on /overview
@@ -279,9 +170,7 @@ const CheckoutSuccessPage = () => {
 
   if (loading) {
     // Two tiers only — the headline stays the same; after ~8 attempts we
-    // add a quiet line acknowledging the longer wait (Studio § 10 threshold
-    // gradient). Verbose cycling labels ("Vent litt", "Dette tar litt tid")
-    // were noise dressed up as progress.
+    // add a quiet line acknowledging the longer wait.
     const isLongWait = attemptCount > 8;
 
     return (
@@ -467,26 +356,14 @@ const CheckoutSuccessPage = () => {
                           <span className="font-medium text-foreground tabular-nums">{shortRef(signup.id)}</span>
                         </div>
                       </div>
-                      {/* Account offer — guests get a magic link to collect
-                          their bookings; logged-in users go straight to the
+                      {/* Account offer — logged-in users go straight to the
                           (auto-claimed) overview. */}
-                      {user ? (
+                      {user && (
                         <div className="mt-8">
                           <Button asChild variant="default" className="w-full">
                             <Link to={AUTH_ROUTES.dashboard}>Se påmeldingene dine</Link>
                           </Button>
                         </div>
-                      ) : isStripe ? (
-                        // Guest claim-link for Stripe is a follow-up — send-booking-claim-link
-                        // resolves the buyer email from the Dintero transaction pair. The receipt
-                        // (confirmation email already sent) stands on its own meanwhile.
-                        null
-                      ) : (
-                        <BookingOverviewOffer
-                          emailMasked={signup.participant_email_masked}
-                          transactionId={transactionId ?? ''}
-                          merchantReference={merchantReference ?? ''}
-                        />
                       )}
                     </>
                   )}

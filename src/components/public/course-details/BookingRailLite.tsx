@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DinteroPaymentBadge } from '@/components/public/DinteroPaymentBadge';
 import { calculateServiceFee, calculateTotalPrice } from '@/lib/pricing';
 import { formatKroner, cn } from '@/lib/utils';
 import { singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
@@ -59,7 +58,7 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
 
   const selectedTile = tiles.find((t) => t.id === selectedId) ?? tiles[0] ?? null;
   const ticketPrice = selectedTile?.amount ?? 0;
-  // Manual-payment sellers (no integrated Dintero): no service fee — the
+  // Manual-payment sellers (no integrated payments): no service fee — the
   // platform isn't in the money flow. Payment is arranged with the studio.
   const usesIntegratedPayments = course.seller?.uses_integrated_payments ?? false;
   const serviceFee = usesIntegratedPayments ? calculateServiceFee(ticketPrice) : 0;
@@ -165,9 +164,8 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
             </Button>
 
             {ticketPrice > 0 && usesIntegratedPayments && (
-              <div className="space-y-2 border-t border-border pt-4">
+              <div className="border-t border-border pt-4">
                 <p className="text-center text-xs text-foreground-muted">Sikker betaling</p>
-                <DinteroPaymentBadge variant="logomark" className="mx-auto w-full max-w-[280px]" />
               </div>
             )}
             {ticketPrice > 0 && !usesIntegratedPayments && (

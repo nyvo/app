@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -9,17 +9,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FieldError } from '@/components/ui/field-error';
 import { PageState } from '@/components/page-state/page-state';
-import { DinteroPaymentBadge } from '@/components/public/DinteroPaymentBadge';
-import { embedDinteroCheckout, type DinteroCheckoutInstance } from '@/lib/dintero';
 import { Elements, PaymentElement, useStripe as useStripeHook, useElements } from '@stripe/react-stripe-js';
 import { getStripe } from '@/lib/stripe';
-import { getPaymentProvider } from '@/lib/payments';
 import { ChevronLeft, Check } from '@/lib/icons';
 import { formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
 import { calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
 import { fetchPublicCourseBySlug, resolveCourseImage, singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
-import { createDinteroSession, createStripeSession } from '@/services/checkout';
+import { createStripeSession } from '@/services/checkout';
 import { createFreeSignup, createManualSignup, checkCourseAvailability } from '@/services/signups';
 import { supabase } from '@/lib/supabase';
 import type { AvailableTicketType } from '@/types/database';
@@ -32,16 +29,10 @@ interface FormState {
   terms: boolean;
 }
 
-interface DinteroSessionRef {
-  sid: string;
-  merchantReference: string;
-  tierId: string; // tracks which tier the session was created for
-}
-
 /**
  * Combined checkout page: kontaktinfo + betaling on one route. Replaces the
- * BookingPanel step-1 / step-2 split. The Dintero iframe loads lazily once
- * the form is valid + a tier is selected; selecting a different tier via
+ * BookingPanel step-1 / step-2 split. The Stripe Elements block loads lazily
+ * once the form is valid + a tier is selected; selecting a different tier via
  * "Endre" destroys the existing session and re-creates with the new one.
  */
 const CheckoutPage = () => {
@@ -61,12 +52,12 @@ const CheckoutPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [emailMessage, setEmailMessage] = useState<string | null>(null);
   // Two-step in-place flow: 'contact' shows the kontaktinfo form, 'payment'
-  // swaps that block for the live Dintero iframe. No route change.
+  // swaps that block for the live Stripe Elements block. No route change.
   const [step, setStep] = useState<'contact' | 'payment'>('contact');
 
   // Load Inter font for the checkout surface only — needed to exact-match
-  // Dintero's iframe typography on titles like "Kontaktinfo". Cleaned up
-  // on unmount so the rest of the app continues using Geist.
+  // Stripe's Elements typography on titles. Cleaned up on unmount so the
+  // rest of the app continues using Geist.
   useEffect(() => {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
@@ -142,14 +133,14 @@ const CheckoutPage = () => {
 
   const isFree = !course?.price || course.price <= 0;
   // Paid course on a seller without integrated payments → manual branch:
-  // record the signup, no Dintero iframe, payment arranged with the studio.
+  // record the signup, no payment iframe, payment arranged with the studio.
   const isManual = !isFree && !(course?.seller?.uses_integrated_payments ?? false);
   const isCancelled = course?.status === 'cancelled';
   const isFull =
     course?.max_participants != null && course.spots_available <= 0;
-  // Free and manual signups need no payment rails; integrated needs Dintero.
+  // Free and manual signups need no payment rails; integrated needs Stripe onboarding complete.
   const paymentReady =
-    isFree || isManual || (course?.seller?.dintero_onboarding_complete ?? false);
+    isFree || isManual || (course?.seller?.stripe_onboarding_complete ?? false);
 
   const selectedTier = tiers.find((t) => t.id === selectedTierId) ?? null;
   const isDropInSelected = selectedTier?.ticket_kind === 'drop_in';
@@ -214,20 +205,14 @@ const CheckoutPage = () => {
       : null;
   const emailError = emailFormatError || emailMessage;
 
-  // ── Dintero session creation, triggered by the "Fortsett til betaling"
-  //    click handler below. Living in a handler (vs useEffect on step change)
-  //    lets us validate against the server BEFORE advancing the step — a 409
-  //    or "fullt" stays the user on the form with the right error visible.
-  const [session, setSession] = useState<DinteroSessionRef | null>(null);
+  // ── Stripe session state ─────────────────────────────────────────────────
   const [sessionError, setSessionError] = useState<string | null>(null);
-
-  // Payment provider for new checkouts (VITE_PAYMENT_PROVIDER). 'stripe'/'both' route to the
-  // Stripe Elements path; 'dintero' (default) keeps the existing iframe flow.
-  const stripeEnabled = getPaymentProvider() !== 'dintero';
   const [stripeSession, setStripeSession] = useState<
     { clientSecret: string; paymentIntentId: string; attemptId: string; tierId: string } | null
   >(null);
 
+  // ── Advance to payment step — validates against the server BEFORE advancing
+  //    so a 409 or "fullt" stays on the form with the right error visible.
   async function handleAdvanceToPayment() {
     if (isFree || isManual || !course || !slug || !selectedTier || submitting) return;
     setSubmitting(true);
@@ -252,9 +237,7 @@ const CheckoutPage = () => {
       customerNote: form.note.trim() || undefined,
     };
 
-    const { data, error: payErr, status } = stripeEnabled
-      ? await createStripeSession(sessionParams)
-      : await createDinteroSession(sessionParams);
+    const { data, error: payErr, status } = await createStripeSession(sessionParams);
     if (payErr || !data) {
       // 4xx errors from the edge function are already user-friendly Norwegian.
       // 5xx / network / unknown fall through friendlyError.
@@ -268,20 +251,12 @@ const CheckoutPage = () => {
       return;
     }
 
-    if ('clientSecret' in data) {
-      setStripeSession({
-        clientSecret: data.clientSecret,
-        paymentIntentId: data.paymentIntentId,
-        attemptId: data.attemptId,
-        tierId: selectedTier.id,
-      });
-    } else {
-      setSession({
-        sid: data.sid,
-        merchantReference: data.merchantReference,
-        tierId: selectedTier.id,
-      });
-    }
+    setStripeSession({
+      clientSecret: data.clientSecret,
+      paymentIntentId: data.paymentIntentId,
+      attemptId: data.attemptId,
+      tierId: selectedTier.id,
+    });
     setStep('payment');
     setSubmitting(false);
   }
@@ -351,7 +326,6 @@ const CheckoutPage = () => {
           onClick={() => {
             if (step === 'payment') {
               setStep('contact');
-              setSession(null);
               setStripeSession(null);
               setSessionError(null);
             } else {
@@ -504,26 +478,12 @@ const CheckoutPage = () => {
                 <CheckoutStepHeader step={2} />
 
                 <div id="payment" className="scroll-mt-6">
-                  {stripeEnabled ? (
-                    <StripeEmbed
-                      clientSecret={stripeSession?.clientSecret ?? null}
-                      total={total}
-                      errorMessage={sessionError}
-                      returnUrl={`${window.location.origin}/checkout/success?ref=${encodeURIComponent(stripeSession?.attemptId ?? '')}&org=${slug}`}
-                    />
-                  ) : (
-                    <DinteroEmbed
-                      sid={session?.sid ?? null}
-                      enabled={true}
-                      loading={false}
-                      errorMessage={sessionError}
-                      onPaymentAuthorized={(transactionId) => {
-                        if (!session) return;
-                        const ref = encodeURIComponent(session.merchantReference);
-                        window.location.href = `/checkout/success?transaction_id=${transactionId}&ref=${ref}&org=${slug}`;
-                      }}
-                    />
-                  )}
+                  <StripeEmbed
+                    clientSecret={stripeSession?.clientSecret ?? null}
+                    total={total}
+                    errorMessage={sessionError}
+                    returnUrl={`${window.location.origin}/checkout/success?ref=${encodeURIComponent(stripeSession?.attemptId ?? '')}&org=${slug}`}
+                  />
                 </div>
               </>
             )}
@@ -554,7 +514,7 @@ const CheckoutPage = () => {
 const CHECKOUT_STEPS = ['Kontakt', 'Betaling'] as const;
 
 /** Visual progress for the two in-checkout stages: the Kontakt form (1) and
- * the Betaling iframe (2). Ticket choice happened on the course page and isn't
+ * the Betaling block (2). Ticket choice happened on the course page and isn't
  * counted — a single-class booking shouldn't read as a 3-step funnel.
  * Free and manual signups have no Betaling stage at all → `showSteps=false`
  * renders just the title. */
@@ -635,106 +595,10 @@ function Field({
 }
 
 /**
- * Inline Dintero iframe container. When `enabled=false` (form invalid),
- * renders a greyed placeholder with a helper line. When `sid` is set,
- * mounts the embed via `embedDinteroCheckout`.
- */
-function DinteroEmbed({
-  sid,
-  enabled,
-  loading,
-  errorMessage,
-  onPaymentAuthorized,
-}: {
-  sid: string | null;
-  enabled: boolean;
-  loading: boolean;
-  errorMessage: string | null;
-  onPaymentAuthorized: (transactionId: string) => void;
-}) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const checkoutRef = useRef<DinteroCheckoutInstance | null>(null);
-  const [embedError, setEmbedError] = useState<string | null>(null);
-
-  // Read onPaymentAuthorized through a ref so a fresh inline-arrow identity from
-  // the parent doesn't land in the effect deps and tear down + re-embed the
-  // iframe mid-payment. Same callbackRef pattern as use-realtime-subscription.
-  const onPaymentAuthorizedRef = useRef(onPaymentAuthorized);
-  useEffect(() => {
-    onPaymentAuthorizedRef.current = onPaymentAuthorized;
-  }, [onPaymentAuthorized]);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container || !sid) return;
-    let disposed = false;
-    embedDinteroCheckout({
-      container,
-      sid,
-      onPaymentAuthorized: (transactionId) => onPaymentAuthorizedRef.current(transactionId),
-      onPaymentError: (msg) => setEmbedError(msg),
-      onSessionCancel: () => {
-        // No-op: user can still adjust the form above. Iframe stays mounted
-        // until they navigate away.
-      },
-    })
-      .then((instance) => {
-        if (disposed) {
-          instance.destroy?.();
-          return;
-        }
-        checkoutRef.current = instance;
-      })
-      .catch((err: unknown) => {
-        const msg = friendlyError(err, 'Kunne ikke laste betaling.');
-        setEmbedError(msg);
-      });
-    return () => {
-      disposed = true;
-      checkoutRef.current?.destroy?.();
-      checkoutRef.current = null;
-      container.innerHTML = '';
-    };
-  }, [sid]);
-
-  if (errorMessage || embedError) {
-    return (
-      <Alert variant="error">
-        <AlertDescription>{errorMessage ?? embedError}</AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (!enabled) {
-    return (
-      <div className="rounded-xl border border-border bg-surface p-5 opacity-50">
-        <p className="text-base text-foreground-muted">
-          Fyll ut kontaktinfo og godta vilkår.
-        </p>
-      </div>
-    );
-  }
-
-  if (loading || !sid) {
-    return (
-      <div className="rounded-xl border border-border bg-surface p-5">
-        <Skeleton className="h-11 w-full rounded-full" />
-        <Skeleton className="h-9 w-1/3 mt-4 mx-auto" />
-        <Skeleton className="h-10 w-full mt-4" />
-        <Skeleton className="h-10 w-full mt-3" />
-      </div>
-    );
-  }
-
-  // Sticky container: Dintero's iframe will render into this div.
-  return <div ref={containerRef} />;
-}
-
-/**
  * Stripe Elements payment block. Mounts the PaymentElement once the PaymentIntent client secret
  * is available; the "Betal" button confirms and Stripe redirects to `returnUrl`. With manual
  * capture the authorization redirects as redirect_status=succeeded — capture happens server-side
- * in stripe-connect-webhook. Mirrors DinteroEmbed's placeholder/error states.
+ * in stripe-connect-webhook.
  */
 function StripeEmbed({
   clientSecret,
@@ -891,9 +755,8 @@ function CheckoutSummary({
         )}
 
         {!isFree && !isManual && (
-          <div className="space-y-2 border-t border-border pt-4">
+          <div className="border-t border-border pt-4">
             <p className="text-center text-xs text-foreground-muted">Sikker betaling</p>
-            <DinteroPaymentBadge variant="logomark" className="mx-auto w-full max-w-[280px]" />
           </div>
         )}
         {isManual && (

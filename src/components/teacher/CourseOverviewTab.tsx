@@ -19,14 +19,13 @@ interface CourseOverviewTabProps {
   enrolledCount: number;
   /** Actual paid revenue (sum of amount_paid on paid signups) — "Inntekt" KPI. */
   revenue: number;
-  /** Raw Dintero onboarding status (PENDING | WAITING_FOR_DECLARATION |
-   *  WAITING_FOR_SIGNATURE | ACTIVE | DECLINED | TERMINATED | null) */
-  dinteroOnboardingStatus: string | null;
-  dinteroOnboardingComplete: boolean;
-  /** Whether Dintero setup is a publish requirement for this seller (Pro only).
-   *  Free-tier sellers publish without Dintero — the checklist row and the
-   *  waiting-for-approval banner are hidden for them. */
-  dinteroRequired: boolean;
+  /** Raw Stripe account status (pending | restricted | rejected | enabled | null) */
+  paymentSetupStatus: string | null;
+  paymentSetupComplete: boolean;
+  /** Whether payment setup is a publish requirement for this seller (Pro only).
+   *  Free-tier sellers publish without Stripe onboarding — the checklist row
+   *  and the waiting-for-approval banner are hidden for them. */
+  paymentSetupRequired: boolean;
   allowsDropIn: boolean;
   onAllowsDropInChange: (next: boolean) => void;
   dropInPrice: number;
@@ -35,21 +34,17 @@ interface CourseOverviewTabProps {
   onAcceptsLateSignupsChange: (next: boolean) => void;
   /** Opens the Kursplan modal — used by Kommende/Pågår and Ferdig. */
   onOpenKursplan: () => void;
-  /** Routes to /innstillinger/utbetaling. Used by the Dintero checklist row. */
-  onSetupDinteroClick: () => void;
+  /** Routes to /innstillinger/utbetaling. Used by the payment checklist row. */
+  onSetupPaymentsClick: () => void;
   /** Caller decides what each checklist row navigates to (image/description/
-   *  location → Rediger tab; dintero → onSetupDinteroClick). */
+   *  location → Rediger tab; payments → onSetupPaymentsClick). */
   onJumpToField: (key: ChecklistItemKey) => void;
   /** Total session rows on the course — drives whether the "Se kursplan"
    *  button shows (multi-session: a series, or a multi-day single). */
   sessionCount: number;
 }
 
-const WAITING_STATUSES = new Set([
-  'PENDING',
-  'WAITING_FOR_DECLARATION',
-  'WAITING_FOR_SIGNATURE',
-]);
+const WAITING_STATUSES = new Set(['pending', 'restricted']);
 
 function formatNorwegianDate(input: string | null | undefined): string {
   if (!input) return '';
@@ -66,9 +61,9 @@ export function CourseOverviewTab({
   course,
   enrolledCount,
   revenue,
-  dinteroOnboardingStatus,
-  dinteroRequired,
-  dinteroOnboardingComplete,
+  paymentSetupStatus,
+  paymentSetupRequired,
+  paymentSetupComplete,
   allowsDropIn,
   onAllowsDropInChange,
   dropInPrice,
@@ -76,7 +71,7 @@ export function CourseOverviewTab({
   acceptsLateSignups,
   onAcceptsLateSignupsChange,
   onOpenKursplan,
-  onSetupDinteroClick,
+  onSetupPaymentsClick,
   onJumpToField,
   sessionCount,
 }: CourseOverviewTabProps) {
@@ -87,12 +82,12 @@ export function CourseOverviewTab({
   // (incl. the `completed` end-state) work directly off it.
   const status = course.status;
 
-  const isWaitingForDintero =
-    dinteroRequired &&
+  const isWaitingForPaymentSetup =
+    paymentSetupRequired &&
     status === 'draft' &&
-    !dinteroOnboardingComplete &&
-    dinteroOnboardingStatus !== null &&
-    WAITING_STATUSES.has(dinteroOnboardingStatus);
+    !paymentSetupComplete &&
+    paymentSetupStatus !== null &&
+    WAITING_STATUSES.has(paymentSetupStatus);
 
   // Drop-in and late-signups are both series-only concepts (the RPC ignores
   // them for single courses), so the whole section is hidden on enkelttime.
@@ -117,11 +112,11 @@ export function CourseOverviewTab({
         price={course.price}
       />
 
-      {isWaitingForDintero && (
+      {isWaitingForPaymentSetup && (
         <InfoBanner
-          title="Venter på godkjenning fra Dintero."
+          title="Venter på godkjenning fra Stripe."
           sub="Vi varsler deg på e-post når den er godkjent. Det tar vanligvis 1–2 virkedager."
-          action={{ label: 'Se status', onClick: onSetupDinteroClick }}
+          action={{ label: 'Se status', onClick: onSetupPaymentsClick }}
         />
       )}
 
@@ -147,12 +142,12 @@ export function CourseOverviewTab({
               description: 'Adressen vises på kurssiden og i bekreftelsen.',
               done: !!course.location,
             },
-            ...(dinteroRequired
+            ...(paymentSetupRequired
               ? [{
-                  key: 'dintero' as const,
+                  key: 'payments' as const,
                   title: 'Sett opp utbetaling',
                   description: 'Påkrevd for å ta imot påmeldinger.',
-                  done: dinteroOnboardingComplete,
+                  done: paymentSetupComplete,
                 }]
               : []),
           ]}

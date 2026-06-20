@@ -101,7 +101,7 @@ function makeMockCourses(): PublicCourseWithDetails[] {
     seller_id: 'mock',
     spots_available: 8,
     seller: { name: 'Mock Studio', slug: 'mock', logo_url: null, dintero_onboarding_complete: false,
-    uses_integrated_payments: false, default_course_image_url: null },
+      stripe_onboarding_complete: false, uses_integrated_payments: false, default_course_image_url: null },
     instructor_name: null,
     instructor: null,
     instructors: [],

@@ -1,13 +1,10 @@
 import {
-  AlertTriangle,
-  CheckCircle,
   CreditCard,
   RefreshCw,
   User,
   UserPlus,
   Users,
   Wallet,
-  XCircle,
   type LucideIcon,
 } from '@/lib/icons'
 import type { NotificationType } from '@/types/database'
@@ -16,15 +13,12 @@ import type { NotificationType } from '@/types/database'
  * Type → leading-glyph map. The glyph signals the event class; the plate
  * tint (see STATUS_MAP) signals severity.
  */
-const ICON_MAP: Record<NotificationType, LucideIcon> = {
+const ICON_MAP: Partial<Record<NotificationType, LucideIcon>> = {
   'booking.created': User,
   'booking.waitlist_promoted': UserPlus,
   'payment.failed': CreditCard,
   'refund.completed': RefreshCw,
   'payout.sent': Wallet,
-  'dintero_seller.action_required': AlertTriangle,
-  'dintero_seller.approved': CheckCircle,
-  'dintero_seller.rejected': XCircle,
   'team.invite_accepted': Users,
   'affiliation.joined': UserPlus,
 }
@@ -41,15 +35,12 @@ export function getNotificationIcon(type: string): LucideIcon {
  */
 export type NotificationStatus = 'success' | 'warning' | 'danger' | 'neutral'
 
-const STATUS_MAP: Record<NotificationType, NotificationStatus> = {
+const STATUS_MAP: Partial<Record<NotificationType, NotificationStatus>> = {
   'booking.created': 'success',
   'booking.waitlist_promoted': 'success',
   'payment.failed': 'danger',
   'refund.completed': 'neutral',
   'payout.sent': 'success',
-  'dintero_seller.action_required': 'warning',
-  'dintero_seller.approved': 'success',
-  'dintero_seller.rejected': 'danger',
   'team.invite_accepted': 'neutral',
   'affiliation.joined': 'neutral',
 }

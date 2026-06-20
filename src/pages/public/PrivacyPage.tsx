@@ -39,7 +39,7 @@ const PrivacyPage = () => {
                 Når du booker et kurs lagrer vi navn, e-postadresse, telefonnummer og hvilke kurs du har meldt deg på.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Når du betaler håndteres betalingen av Dintero. Vi lagrer ikke kortdetaljer. Vi lagrer kvitteringsinformasjon (navn, beløp, dato og kurs) i fem år, slik bokføringsloven krever.
+                Når du betaler håndteres betalingen av Stripe. Vi lagrer ikke kortdetaljer. Vi lagrer kvitteringsinformasjon (navn, beløp, dato og kurs) i fem år, slik bokføringsloven krever.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Når du er lærer eller studio lagrer vi i tillegg organisasjonsnummer, logo og kontoinformasjon for utbetaling.
@@ -68,7 +68,7 @@ const PrivacyPage = () => {
               </p>
               <ul className="space-y-2 text-base text-foreground-muted leading-relaxed list-disc pl-5">
                 <li>Supabase – database og innlogging, innenfor EU/EØS</li>
-                <li>Dintero – betaling, norsk leverandør</li>
+                <li>Stripe – betaling</li>
                 <li>Resend – utsending av e-post</li>
               </ul>
               <p className="text-base text-foreground-muted leading-relaxed">

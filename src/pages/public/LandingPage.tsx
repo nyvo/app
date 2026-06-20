@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Check } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Grain } from '@/components/public/Grain';
-import { DinteroPaymentBadge } from '@/components/public/DinteroPaymentBadge';
 import { formatKroner } from '@/lib/utils';
 import { COMPANY } from '@/lib/company';
 import {
@@ -186,7 +185,7 @@ const LandingPage = () => {
       </FeatureSplit>
 
       {/* ============================================================ */}
-      {/* 3. SPLIT — Booking + Dintero (product left / text right) */}
+      {/* 3. SPLIT — Booking + Stripe (product left / text right) */}
       {/* ============================================================ */}
       <FeatureSplit
         eyebrow="Påmelding og betaling"
@@ -225,7 +224,7 @@ const LandingPage = () => {
       </FeatureWide>
 
       {/* ============================================================ */}
-      {/* 7. PRICING — transparent, Dintero mentioned */}
+      {/* 7. PRICING — transparent, Stripe mentioned */}
       {/* ============================================================ */}
       <section id="pricing" className="bg-background py-24 md:py-32">
         <div className="mx-auto max-w-6xl px-6">
@@ -263,7 +262,7 @@ const LandingPage = () => {
                   'Egen studioside',
                   'Påmeldinger rett inn i oversikten',
                   'Betaling avtales direkte med instruktør',
-                  'Ingen Dintero-oppsett',
+                  'Ingen betalingsoppsett nødvendig',
                 ],
                 cta: PRELAUNCH
                   ? { label: 'Ta kontakt', to: '#varsle' }
@@ -280,7 +279,7 @@ const LandingPage = () => {
                 features: [
                   'Alt i Start',
                   'Vipps og kort i checkout',
-                  'Automatiske utbetalinger via Dintero',
+                  'Automatiske utbetalinger via Stripe',
                   '0 % lærerprovisjon',
                   'Servicegebyr håndteres av plattformen',
                 ],
@@ -329,7 +328,7 @@ const LandingPage = () => {
       </section>
 
       {/* ============================================================ */}
-      {/* 9. FOOTER — Framio AS, org.nr (Dintero-approval critical) */}
+      {/* 9. FOOTER — Framio AS, org.nr */}
       {/* ============================================================ */}
       <footer className="bg-background pt-20 pb-12">
         <div className="mx-auto max-w-6xl px-6">
@@ -395,7 +394,6 @@ const LandingPage = () => {
             <p className="text-base text-foreground-muted">
               © {new Date().getFullYear()} Openspot. Laget av {COMPANY.legalName}.
             </p>
-            <DinteroPaymentBadge className="max-w-md" />
           </div>
         </div>
       </footer>

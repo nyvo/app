@@ -38,8 +38,8 @@ const MESSAGE_PATTERNS: [RegExp, string][] = [
     'Sjekk nettforbindelsen og prøv igjen.'],
   [/row-level security/i,
     'Du har ikke tilgang. Prøv å logge inn på nytt.'],
-  [/dintero_onboarding_required/i,
-    'Du må fullføre Dintero-oppsettet før du kan publisere kurset.'],
+  [/stripe_onboarding_required|payment_setup_required/i,
+    'Fullfør betalingsoppsettet før du publiserer kurset.'],
   [/JWT expired|invalid token/i,
     'Økten din har utløpt. Logg inn på nytt.'],
   // Card payment errors

@@ -65,7 +65,7 @@ export function useSetupProgress({
     // Required steps. Pro sellers must connect payouts (the KYC long pole)
     // before anything else; free-tier sellers handle payment off-platform,
     // so their only required step is publishing a course — the checklist
-    // must never dead-end on a Dintero step they can't (and shouldn't) do.
+    // must never dead-end on a payments step they can't (and shouldn't) do.
     // A course can be published with a free-typed location, so a saved
     // studio address is polish, not a publish blocker → it lives below.
     const isPro = isProSeller(seller)
@@ -75,7 +75,7 @@ export function useSetupProgress({
             id: 'payments' as const,
             title: 'Aktiver betalinger',
             description: 'Koble til en betalingsløsning så du kan motta betaling fra elever.',
-            isComplete: !!seller?.dintero_onboarding_complete,
+            isComplete: !!seller?.stripe_onboarding_complete,
             actionLabel: 'Aktiver',
             actionOnClick: onConnectPayments,
             icon: CreditCard,

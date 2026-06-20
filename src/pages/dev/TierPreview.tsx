@@ -18,22 +18,22 @@ const SURFACES = [
   {
     name: 'Dashboard',
     start: 'Manual payment panel, external-payment signups, no income chart.',
-    pro: 'Income chart, paid/refunded revenue, Dintero-backed payment states.',
+    pro: 'Income chart, paid/refunded revenue, Stripe-backed payment states.',
   },
   {
     name: 'Checkout',
-    start: 'Signup confirmation only. No iframe, no service fee, no platform money flow.',
-    pro: 'Dintero iframe, Vipps/card, capped service fee, platform fee split.',
+    start: 'Signup confirmation only. No payment, no service fee, no platform money flow.',
+    pro: 'Stripe Elements, Vipps/card, capped service fee, platform fee split.',
   },
   {
     name: 'Payouts',
     start: 'Locked surface with upgrade path.',
-    pro: 'Dintero onboarding/status/backoffice.',
+    pro: 'Stripe onboarding/status/Express dashboard.',
   },
   {
     name: 'Publish',
-    start: 'Priced courses can publish without Dintero.',
-    pro: 'Dintero is required before publishing integrated-payment courses.',
+    start: 'Priced courses can publish without payment setup.',
+    pro: 'Stripe onboarding is required before publishing integrated-payment courses.',
   },
 ] as const
 
@@ -278,7 +278,7 @@ function PlanInspector() {
           </div>
           <ul className="mt-4 space-y-2 text-sm">
             <Feature label="Vipps og kort" />
-            <Feature label="Dintero split payout" />
+            <Feature label="Stripe split payout" />
             <Feature label="0 % lærerprovisjon" />
           </ul>
           <Button className="mt-4 w-full">Oppgrader til Pro</Button>
@@ -321,11 +321,11 @@ function PayoutSurface() {
       eyebrow="Betalingskonto"
       title="Locked until Pro"
       badge="Contextual upgrade"
-      body="Opening the payout route as Start explains why Dintero is hidden and sends the teacher to billing."
+      body="Opening the payout route as Start explains why Stripe Connect is hidden and sends the teacher to billing."
       rows={[
         ['Start', 'Upgrade prompt'],
-        ['Pro inactive', 'Dintero setup'],
-        ['Pro active', 'Backoffice link'],
+        ['Pro inactive', 'Stripe setup'],
+        ['Pro active', 'Express dashboard link'],
       ]}
     />
   )
@@ -338,11 +338,11 @@ function PublishSurface() {
       eyebrow="Publisering"
       title="Gate by payment mode"
       badge="Server backed"
-      body="Start can publish priced courses because payment is external. Pro keeps the Dintero requirement before integrated checkout."
+      body="Start can publish priced courses because payment is external. Pro requires Stripe onboarding before integrated checkout."
       rows={[
         ['Start priced course', 'Can publish'],
-        ['Pro without Dintero', 'Blocked'],
-        ['Pro with Dintero', 'Can publish'],
+        ['Pro without Stripe', 'Blocked'],
+        ['Pro with Stripe', 'Can publish'],
       ]}
     />
   )

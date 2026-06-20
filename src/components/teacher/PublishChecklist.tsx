@@ -3,7 +3,7 @@ import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { Check } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 
-export type ChecklistItemKey = 'image' | 'description' | 'location' | 'dintero';
+export type ChecklistItemKey = 'image' | 'description' | 'location' | 'payments';
 
 export interface ChecklistItem {
   key: ChecklistItemKey;
