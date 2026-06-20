@@ -25,6 +25,7 @@ import {
   verifyStripeSignature,
   capturePaymentIntent,
   cancelPaymentIntent,
+  retrieveCharge,
   type StripeEvent,
   type StripePaymentIntent,
 } from '../_shared/stripe.ts'
@@ -442,37 +443,61 @@ Deno.serve(async (req: Request) => {
         // the connected account lacked balance for the reverse_transfer, or the bank rejected it.
         // succeeded / pending / requires_action are no-ops here (charge.refunded handles success).
         const refund = event.data.object as unknown as {
-          id: string; status: string; payment_intent: string | null; failure_reason?: string | null
+          id: string; status: string; payment_intent: string | null; charge: string | null; failure_reason?: string | null
         }
         if (refund.status !== 'failed' && refund.status !== 'canceled') {
           await markEventResult(supabase, eventKey, { type: 'refund_update', status: refund.status })
           return new Response('OK', { status: 200 })
         }
         const piId = refund.payment_intent
-        if (!piId) {
-          await markEventResult(supabase, eventKey, { type: 'refund_failed', error: 'missing_payment_intent' })
+        if (!piId || !refund.charge) {
+          await markEventResult(supabase, eventKey, { type: 'refund_failed', error: 'missing_payment_intent_or_charge' })
           return new Response('OK', { status: 200 })
         }
-        // Revert the optimistic refunded state so the row reflects reality — the money is still
-        // captured. The booking stays cancelled (that decision is independent of the refund); a
-        // cancelled-but-still-'paid' row is the dashboard signal that the seller must re-issue the
-        // refund manually. Idempotent: the payment_status guard makes a replay a no-op, and only a
-        // row we actually marked 'refunded' is touched.
-        const { data: reverted } = await supabase
+        // A charge can carry MULTIPLE refunds. Read the LIVE charge: only when NOTHING actually
+        // refunded (amount_refunded === 0) do we fully revert the optimistic state — otherwise an
+        // earlier refund (e.g. a dashboard partial) succeeded and we must NOT erase its accounting.
+        // Throw on a charge-retrieve failure so Stripe retries rather than us guessing the truth.
+        let charge
+        try {
+          charge = await retrieveCharge(refund.charge)
+        } catch (err) {
+          throw new Error(`refund reconcile: retrieveCharge ${refund.charge} failed: ${err instanceof Error ? err.message : 'unknown'}`)
+        }
+
+        if (charge.amount_refunded === 0) {
+          // Nothing moved — fully revert the optimistic refunded state so the row reflects reality
+          // (money still captured). The booking stays cancelled (independent of the refund); a
+          // cancelled-but-'paid' row is the seller's signal to re-issue the refund manually.
+          // Idempotent: the payment_status guard makes a replay a no-op.
+          const { data: reverted } = await supabase
+            .from('signups')
+            .update({ payment_status: 'paid', refund_amount: null, refunded_at: null })
+            .eq('stripe_payment_intent_id', piId)
+            .eq('payment_status', 'refunded')
+            .select('id')
+          if (reverted && reverted.length > 0) {
+            console.error('[stripe-connect-webhook] refund FAILED, nothing refunded — reverted optimistic state; needs manual re-refund', {
+              paymentIntentId: piId, refundId: refund.id, reason: refund.failure_reason ?? null,
+              signupIds: reverted.map((r) => r.id),
+            })
+          }
+          await markEventResult(supabase, eventKey, {
+            type: 'refund_failed', status: refund.status, reason: refund.failure_reason ?? null,
+            reverted: reverted?.length ?? 0,
+          })
+          return new Response('OK', { status: 200 })
+        }
+
+        // An earlier refund DID succeed on this charge (this failed one was an additional attempt) —
+        // keep the row 'refunded' and reconcile refund_amount to what actually moved; never erase it.
+        await supabase
           .from('signups')
-          .update({ payment_status: 'paid', refund_amount: null, refunded_at: null })
+          .update({ refund_amount: charge.amount_refunded / 100 })
           .eq('stripe_payment_intent_id', piId)
           .eq('payment_status', 'refunded')
-          .select('id')
-        if (reverted && reverted.length > 0) {
-          console.error('[stripe-connect-webhook] refund FAILED — reverted optimistic refund state; needs manual re-refund', {
-            paymentIntentId: piId, refundId: refund.id, reason: refund.failure_reason ?? null,
-            signupIds: reverted.map((r) => r.id),
-          })
-        }
         await markEventResult(supabase, eventKey, {
-          type: 'refund_failed', status: refund.status, reason: refund.failure_reason ?? null,
-          reverted: reverted?.length ?? 0,
+          type: 'refund_failed_partial_kept', status: refund.status, refunded_ore: charge.amount_refunded,
         })
         return new Response('OK', { status: 200 })
       }
