@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm run test:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run build)",
+      "Bash(npm run smoke:public)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx playwright test:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git stash list)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh issue list:*)",
+      "Bash(supabase migration list:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(rg:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(sort:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "J=$(cat); SID=$(printf '%s' \"$J\" | jq -r '.session_id // \"nosession\"'); F=$(printf '%s' \"$J\" | jq -r '.tool_input.file_path // .tool_response.filePath // empty'); case \"$F\" in *.ts|*.tsx) touch \"/tmp/claude-tsc-dirty-$SID\";; esac; true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "J=$(cat); SID=$(printf '%s' \"$J\" | jq -r '.session_id // \"nosession\"'); M=\"/tmp/claude-tsc-dirty-$SID\"; [ -f \"$M\" ] || exit 0; OUT=$(npx tsc --noEmit 2>&1); CODE=$?; if [ $CODE -ne 0 ]; then echo \"TypeScript typecheck failed — fix before finishing:\" >&2; printf '%s' \"$OUT\" >&2; exit 2; fi; rm -f \"$M\"; exit 0",
+            "timeout": 120,
+            "statusMessage": "Typechecking changed TypeScript"
+          }
+        ]
+      }
+    ]
+  }
+}
