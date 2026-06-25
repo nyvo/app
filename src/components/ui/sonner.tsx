@@ -6,22 +6,22 @@ import { cn } from "@/lib/utils"
 // scale as the title so they sit on the same optical line; no button chrome.
 const toastActionClassName =
   "!ml-auto !shrink-0 !h-auto !min-h-0 !rounded-none !border-0 !bg-transparent " +
-  "!p-0 !text-sm !font-medium !text-background !underline !underline-offset-2 " +
+  "!p-0 !text-sm !font-medium !text-chrome-foreground !underline !underline-offset-2 " +
   "!shadow-none hover:!bg-transparent hover:!opacity-90"
 
 const toastClassName =
   "flex w-[calc(100vw-2rem)] items-start gap-3 rounded-2xl " +
-  "bg-[var(--toast-surface)] px-5 py-4 text-background " +
-  "shadow-[0_10px_30px_-6px_rgb(0_0_0/0.22)] ring-1 ring-background/10 " +
+  "bg-[var(--toast-surface)] px-5 py-4 text-chrome-foreground " +
+  "shadow-float ring-1 ring-chrome-foreground/10 " +
   "sm:w-[380px]"
 
 const toastIconClassName =
   "flex size-5 shrink-0 items-center justify-center rounded-full " +
-  "bg-background/15 text-background [&_svg]:size-3.5 [&_svg]:stroke-[2.5]"
+  "bg-chrome-foreground/15 text-chrome-foreground [&_svg]:size-3.5 [&_svg]:stroke-[2.5]"
 
 const errorToastIconClassName =
   "flex size-5 shrink-0 items-center justify-center rounded-full " +
-  "bg-danger/30 text-background [&_svg]:size-3.5 [&_svg]:stroke-[2.5]"
+  "bg-danger/30 text-chrome-foreground [&_svg]:size-3.5 [&_svg]:stroke-[2.5]"
 
 const Toaster = ({ toastOptions, ...props }: ToasterProps) => {
   return (
@@ -40,11 +40,11 @@ const Toaster = ({ toastOptions, ...props }: ToasterProps) => {
           ...toastOptions?.classNames,
           toast: cn(toastClassName, toastOptions?.classNames?.toast),
           title: cn(
-            "text-sm font-medium leading-snug text-background",
+            "text-sm font-medium leading-snug text-chrome-foreground",
             toastOptions?.classNames?.title,
           ),
           description: cn(
-            "mt-0.5 text-xs leading-5 text-background/70",
+            "mt-0.5 text-xs leading-5 text-chrome-foreground/70",
             toastOptions?.classNames?.description,
           ),
           icon: cn(toastIconClassName, toastOptions?.classNames?.icon),

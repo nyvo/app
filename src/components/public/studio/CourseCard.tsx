@@ -200,7 +200,7 @@ export function CourseCard({ course, ratio = 'portrait', className, viewingSlug,
         {/* Eyebrow — course kind + commitment, single muted tier */}
         <p className={cn(
           'text-xs leading-tight',
-          isDisabled ? 'text-foreground-disabled' : 'text-foreground-muted',
+          'text-foreground-muted',
         )}>
           {formatSummary(course)}
         </p>
@@ -223,7 +223,7 @@ export function CourseCard({ course, ratio = 'portrait', className, viewingSlug,
         {(dateChip || time) && (
           <div className="inline-flex items-baseline gap-1.5 text-sm font-medium tabular-nums text-foreground-muted">
             {dateChip && <span>{dateChip.label}</span>}
-            {dateChip && time && <span className="text-foreground-disabled">·</span>}
+            {dateChip && time && <span className="text-foreground-muted">·</span>}
             {time && <span>{time}</span>}
           </div>
         )}

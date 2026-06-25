@@ -59,7 +59,7 @@ export function CourseSessions({ sessions }: CourseSessionsProps) {
             <span
               className={cn(
                 'text-sm font-medium',
-                dim ? 'text-foreground-muted' : 'text-foreground-muted',
+                dim ? 'text-foreground-muted' : 'text-foreground',
               )}
             >
               {day}
