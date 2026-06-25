@@ -13,8 +13,10 @@ const config: Record<PaymentStatus, { variant: BadgeVariant; label: string }> = 
   failed:   { variant: 'destructive', label: 'Betaling feilet' },
   refunded: { variant: 'neutral',     label: 'Refundert' },
   // Manual-payment signup (free-tier seller): money changes hands outside the
-  // platform. Stays visible until the teacher marks it paid (mark-payment-resolved).
-  external: { variant: 'warning',     label: 'Betales direkte' },
+  // platform. Neutral, not warning — it's the normal state on free (every
+  // direct-pay signup is 'external'), so amber would read as a false alarm.
+  // Stays visible until the teacher marks it paid (mark-payment-resolved).
+  external: { variant: 'neutral',     label: 'Betales direkte' },
 };
 
 interface PaymentBadgeProps {

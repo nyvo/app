@@ -110,6 +110,7 @@ export function CourseOverviewTab({
         capacity={course.capacity}
         revenue={revenue}
         price={course.price}
+        isPro={paymentSetupRequired}
       />
 
       {isWaitingForPaymentSetup && (
@@ -229,24 +230,28 @@ export function CourseOverviewTab({
 
 // ─── KPI spine ─────────────────────────────────────────────────────────
 
-function CourseKpis({
+export function CourseKpis({
   enrolled,
   capacity,
   revenue,
   price,
+  isPro,
 }: {
   enrolled: number;
   capacity: number;
   revenue: number;
   price: number;
+  isPro: boolean;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div className={cn('grid grid-cols-1 gap-3', isPro ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
       <KpiCard
         label="Påmeldte"
         value={capacity > 0 ? `${enrolled} / ${capacity}` : String(enrolled)}
       />
-      <KpiCard label="Inntekt" value={formatKroner(revenue)} />
+      {/* Inntekt is integrated-payment revenue — always 0 kr on free, so omit it
+          there rather than show a dead metric. */}
+      {isPro && <KpiCard label="Inntekt" value={formatKroner(revenue)} />}
       <KpiCard label="Pris" value={price > 0 ? formatKroner(price) : 'Gratis'} />
     </div>
   );
