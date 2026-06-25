@@ -51,14 +51,15 @@ function StatusPill({ tone }: { tone: StatusTone }) {
 
 /**
  * Payments page — a single flat "payout account" surface (modeled on Copilot's
- * Payout account screen): page title + subtitle + divider, then one block of
- * account name + status badge + a sentence + a single primary action. The
- * content is driven by the seller's Stripe Connect onboarding state:
+ * Payout account screen): page title with an inline status badge, then a
+ * subtitle and a divider; below it a short sub-headline, a one-sentence
+ * description, and a single primary action. The content is driven by the
+ * seller's Stripe Connect onboarding state:
  *
  *   • !isPro                   → upsell: card payments are a Pro feature
  *   • Pro, not started         → "Kom i gang" (hosted Stripe onboarding)
- *   • Pro, started, !connected → "Fortsett hos Stripe" (+ rejected sub-case)
- *   • Pro, connected           → "Åpne Stripe-panelet" (Express dashboard)
+ *   • Pro, started, !connected → "Fortsett oppsettet" (+ rejected sub-case)
+ *   • Pro, connected           → "Se oversikt" (Stripe Express dashboard)
  *
  * No balance / settlements UI — the merchant manages all of that on Stripe's
  * own Express dashboard. Status re-syncs automatically on return from Stripe
@@ -137,23 +138,23 @@ const PaymentsPage = () => {
   }, [currentSeller?.id, isPro]);
 
   // ─── One view-model per onboarding state, rendered by the flat layout below ───
-  let name: string;
+  let subhead: string;
   let tone: StatusTone;
   let desc: string;
   let action: ReactNode;
 
   if (!isPro) {
-    name = 'Kortbetaling';
+    subhead = 'Ta betalt med kort';
     tone = PRO_LOCKED_BADGE;
     desc =
-      'I dag avtaler du betaling direkte med deltakerne. Oppgrader til Pro for å ta betalt med kort og få automatiske utbetalinger.';
+      'I dag avtaler du betaling direkte med deltakerne. Med Pro får du kortbetaling og automatiske utbetalinger.';
     action = (
       <Button asChild>
         <Link to={routes.settingsBilling}>Oppgrader til Pro</Link>
       </Button>
     );
   } else if (!stripeStarted && !stripeConnected) {
-    name = 'Utbetalingskonto';
+    subhead = 'Sett opp utbetalinger';
     tone = NOT_STARTED_BADGE;
     desc =
       'Vi sender deg til Stripe for å bekrefte virksomheten og legge til kontonummeret utbetalingene skal gå til.';
@@ -163,30 +164,36 @@ const PaymentsPage = () => {
       </Button>
     );
   } else if (stripeStarted && !stripeConnected) {
-    name = 'Stripe-konto';
     if (stripeStatus === 'rejected') {
+      subhead = 'Søknaden ble avslått';
       tone = STRIPE_STATUS_BADGE.rejected;
-      desc = 'Søknaden ble avslått. Ta gjerne kontakt på hei@openspot.no, så hjelper vi deg.';
+      desc = 'Ta gjerne kontakt på hei@openspot.no, så hjelper vi deg.';
       action = (
         <Button asChild>
           <a href="mailto:hei@openspot.no">Kontakt oss</a>
         </Button>
       );
     } else {
-      tone = stripeStatus === 'restricted' ? STRIPE_STATUS_BADGE.restricted : STRIPE_STATUS_BADGE.pending;
-      desc = 'Fullfør oppsettet hos Stripe. Når kontoen er klar, aktiverer vi utbetalinger automatisk.';
+      subhead = 'Fullfør oppsettet';
+      if (stripeStatus === 'restricted') {
+        tone = STRIPE_STATUS_BADGE.restricted;
+        desc = 'Stripe mangler litt informasjon. Vi aktiverer utbetalinger så snart alt er på plass.';
+      } else {
+        tone = STRIPE_STATUS_BADGE.pending;
+        desc = 'Vi aktiverer utbetalinger automatisk når kontoen er klar hos Stripe.';
+      }
       action = (
         <Button onClick={handleStartStripe} loading={stripeLoading} loadingText="Åpner">
-          Fortsett hos Stripe
+          Fortsett oppsettet
         </Button>
       );
     }
   } else {
-    name = 'Stripe-konto';
+    subhead = 'Utbetalingene er klare';
     tone = STRIPE_STATUS_BADGE.enabled;
     desc =
-      'Stripe håndterer utbetalingene direkte til bankkontoen din. Saldo, utbetalinger og innstillinger ser du i Stripe-panelet.';
-    action = <Button onClick={handleOpenStripeDashboard}>Åpne Stripe-panelet</Button>;
+      'Stripe håndterer utbetalingene direkte til bankkontoen din. Saldo, utbetalinger og innstillinger finner du i oversikten.';
+    action = <Button onClick={handleOpenStripeDashboard}>Se oversikt</Button>;
   }
 
   return (
@@ -195,15 +202,13 @@ const PaymentsPage = () => {
 
       <PageShell
         narrow="centered"
-        title="Betalingskonto"
+        title="Utbetalingskonto"
+        badge={<StatusPill tone={tone} />}
         description="Slik får du betalt for kursene dine."
       >
         <div className="border-t border-border-subtle pt-8">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-base font-medium text-foreground">{name}</span>
-            <StatusPill tone={tone} />
-          </div>
-          <p className="mt-2 max-w-prose text-base text-foreground-muted">{desc}</p>
+          <h2 className="text-base font-medium tracking-tight text-foreground">{subhead}</h2>
+          <p className="mt-1 max-w-prose text-base text-foreground-muted">{desc}</p>
           <div className="mt-5">{action}</div>
         </div>
       </PageShell>

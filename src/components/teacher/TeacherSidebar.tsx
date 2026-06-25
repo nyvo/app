@@ -1,12 +1,11 @@
 import { useEffect } from 'react';
-import { ChevronsUpDown } from '@/lib/icons';
+import { ChevronsUpDown, ChevronRight } from '@/lib/icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Home01Icon,
   Calendar03Icon,
   BookOpen02Icon,
   Building03Icon,
-  BankIcon,
   CreditCardIcon,
   UserCircleIcon,
   Settings01Icon,
@@ -18,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { isProSeller } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 import { accountDisplayName } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Sidebar,
   SidebarContent,
@@ -59,8 +58,7 @@ const SELLER_NAV_ITEMS: NavItem[] = [
   { icon: Calendar03Icon, label: 'Timeplan', href: routes.schedule },
   { icon: BookOpen02Icon, label: 'Kurs', href: routes.courses },
   { icon: Building03Icon, label: 'Studio', href: routes.studio },
-  { icon: CreditCardIcon, label: 'Abonnement', href: routes.settingsBilling },
-  { icon: BankIcon, label: 'Betalingskonto', href: routes.settingsPayouts },
+  { icon: CreditCardIcon, label: 'Utbetalingskonto', href: routes.settingsPayouts },
 ];
 
 // Buyer sidebar — minimal. Until the buyer dashboard build-out (deferred
@@ -84,9 +82,9 @@ export const TeacherSidebar = () => {
   const { isMobile, setOpenMobile } = useSidebar();
   const isSeller = profile?.role === 'seller';
   const isPro = isProSeller(currentSeller);
-  // "Betalingskonto" (Stripe onboarding) is a Pro surface — hidden for
-  // free-tier sellers, who never touch Stripe Connect. Becomes the upgrade
-  // entry point when plans ship in the UI.
+  // "Utbetalingskonto" (Stripe onboarding) is a Pro surface — hidden for
+  // free-tier sellers, who never touch Stripe Connect. Free sellers get the
+  // upgrade prompt via the plan card in the footer instead.
   const navItems =
     profile?.role === 'buyer'
       ? BUYER_NAV_ITEMS
@@ -119,17 +117,6 @@ export const TeacherSidebar = () => {
         >
           Openspot
         </Link>
-        {isSeller && (
-          <Link
-            to={routes.settingsBilling}
-            className="mx-3 mb-2 flex items-center justify-between rounded-md border border-sidebar-border px-3 py-2 text-sm outline-none transition-colors duration-150 hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-          >
-            <span className="font-medium text-sidebar-foreground-muted">Plan</span>
-            <Badge variant={isPro ? 'success' : 'neutral'} shape="pill" size="sm">
-              {isPro ? 'Pro' : 'Start'}
-            </Badge>
-          </Link>
-        )}
       </SidebarHeader>
 
       <SidebarContent>
@@ -157,6 +144,29 @@ export const TeacherSidebar = () => {
       </SidebarContent>
 
       <SidebarFooter>
+        {isSeller &&
+          (isPro ? (
+            <Link
+              to={routes.settingsBilling}
+              className="rounded-lg bg-sidebar-accent px-3 py-2.5 outline-none transition-colors duration-150 hover:bg-sidebar-active focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+            >
+              <div className="text-sm font-medium text-sidebar-foreground">Pro</div>
+              <div className="mt-1 flex items-center justify-between text-[13px] text-sidebar-foreground-muted">
+                <span>Administrer abonnement</span>
+                <ChevronRight className="size-3.5 shrink-0" />
+              </div>
+            </Link>
+          ) : (
+            <div className="rounded-lg bg-sidebar-accent px-3 py-2.5">
+              <div className="text-sm font-medium text-sidebar-foreground">Start</div>
+              <p className="mt-1 text-[13px] text-sidebar-foreground-muted">
+                Få kortbetaling og automatiske utbetalinger med Pro.
+              </p>
+              <Button asChild className="mt-2.5 w-full">
+                <Link to={routes.settingsBilling}>Oppgrader til Pro</Link>
+              </Button>
+            </div>
+          ))}
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
