@@ -42,7 +42,6 @@ export default function BillingPreview() {
             plan="pro"
             status="past_due"
             renewsAt={null}
-            missingStripeCustomer
             onUpgrade={noop}
             onManage={noop}
             checkoutLoading={false}

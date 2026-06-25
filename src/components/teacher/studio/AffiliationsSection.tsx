@@ -9,7 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { SettingsSection } from '@/components/teacher/SettingsSection';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,21 +63,21 @@ export function AffiliationsSection() {
   if (isBusiness && !currentTeam) return null;
 
   return (
-    <div ref={anchorRef} id="samarbeid" className="scroll-mt-10">
+    <div ref={anchorRef} id="samarbeid" className="scroll-mt-10 space-y-6">
       {isBusiness && currentTeam ? (
-        <SettingsSection
-          title="Samarbeid"
-          description="Inviter instruktører til å vise kursene sine på studiosiden din."
-        >
+        <>
+          <p className="text-sm text-foreground-muted">
+            Inviter instruktører til å vise kursene sine på studiosiden din.
+          </p>
           <BusinessView teamId={currentTeam.id} />
-        </SettingsSection>
+        </>
       ) : (
-        <SettingsSection
-          title="Samarbeid"
-          description="Vis kursene dine på et studios side."
-        >
+        <>
+          <p className="text-sm text-foreground-muted">
+            Vis kursene dine på et studios side.
+          </p>
           <IndividualView sellerId={currentSeller.id} />
-        </SettingsSection>
+        </>
       )}
     </div>
   );

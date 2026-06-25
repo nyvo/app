@@ -2,10 +2,10 @@ import { useEffect } from 'react';
 import { ChevronsUpDown } from '@/lib/icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  Home01Icon,
+  DashboardSquare02Icon,
   Calendar03Icon,
-  BookOpen02Icon,
-  Building03Icon,
+  Folder01Icon,
+  Home01Icon,
   CreditCardIcon,
   UserCircleIcon,
   Settings01Icon,
@@ -54,10 +54,10 @@ interface NavItem {
 // menu, not here — they're low-frequency and belong under the user's
 // identity. No nested groups.
 const SELLER_NAV_ITEMS: NavItem[] = [
-  { icon: Home01Icon, label: 'Hjem', href: routes.dashboard },
+  { icon: DashboardSquare02Icon, label: 'Hjem', href: routes.dashboard },
   { icon: Calendar03Icon, label: 'Timeplan', href: routes.schedule },
-  { icon: BookOpen02Icon, label: 'Kurs', href: routes.courses },
-  { icon: Building03Icon, label: 'Studio', href: routes.studio },
+  { icon: Folder01Icon, label: 'Kurs', href: routes.courses },
+  { icon: Home01Icon, label: 'Studio', href: routes.studio },
   { icon: CreditCardIcon, label: 'Utbetalingskonto', href: routes.settingsPayouts },
 ];
 
