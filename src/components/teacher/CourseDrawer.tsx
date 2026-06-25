@@ -275,7 +275,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
       <>
         {whenLine}
         {whenLine && courseData.location && (
-          <span className="text-foreground-disabled mx-2">·</span>
+          <span className="text-foreground-muted mx-2">·</span>
         )}
         {courseData.location}
       </>
@@ -309,7 +309,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
                 </AlertDescription>
                 <div className="mt-3">
                   <Button
-                    variant="secondary"
+                    variant="default"
                     onClick={() => navigate(routes.settingsPayouts)}
                   >
                     Fullfør oppsettet

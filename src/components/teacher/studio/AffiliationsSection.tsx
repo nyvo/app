@@ -243,11 +243,11 @@ function IndividualView({ sellerId }: { sellerId: string }) {
               vises ikke. Du kan stoppe visningen når som helst.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <Button variant="secondary" onClick={() => setConfirmLeave(true)}>
+              <Button variant="destructive" onClick={() => setConfirmLeave(true)}>
                 Stopp visning
               </Button>
               {hostUrl && (
-                <Button asChild>
+                <Button variant="secondary" asChild>
                   <a href={hostUrl} target="_blank" rel="noopener noreferrer">
                     Vis studiosiden
                   </a>
@@ -447,7 +447,7 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
         </p>
         <Button
           type="button"
-          variant="secondary"
+          variant="default"
           disabled={creating}
           onClick={() => void handleRegenerate()}
         >

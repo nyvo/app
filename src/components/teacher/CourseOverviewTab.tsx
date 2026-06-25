@@ -183,7 +183,7 @@ export function CourseOverviewTab({
               Kursrekke · {course.totalWeeks} {course.totalWeeks === 1 ? 'uke' : 'uker'}
             </p>
             {sessionCount > 1 && (
-              <Button variant="secondary" onClick={onOpenKursplan} className="shrink-0">
+              <Button variant="default" onClick={onOpenKursplan} className="shrink-0">
                 Se kursplan
               </Button>
             )}
@@ -199,7 +199,7 @@ export function CourseOverviewTab({
             <p className="text-base font-medium text-foreground">
               Enkeltkurs · {sessionCount} {sessionCount === 1 ? 'dag' : 'dager'}
             </p>
-            <Button variant="secondary" onClick={onOpenKursplan} className="shrink-0">
+            <Button variant="default" onClick={onOpenKursplan} className="shrink-0">
               Se kursplan
             </Button>
           </CardContent>
@@ -305,11 +305,11 @@ function BaseBanner({
         {icon}
       </div>
       <div className="flex-1 min-w-0 text-foreground">
-        <p className="text-base font-medium">{title}</p>
+        <p className="text-base font-medium text-foreground">{title}</p>
         <p className="text-base text-foreground-muted mt-0.5">{sub}</p>
       </div>
       {action && (
-        <Button variant="secondary" onClick={action.onClick} className="shrink-0">
+        <Button variant="default" onClick={action.onClick} className="shrink-0">
           {action.label}
         </Button>
       )}
@@ -334,7 +334,7 @@ function EndStateSection({
           <p className="text-base text-foreground-muted mt-0.5">{sub}</p>
         </div>
         {action && (
-          <Button variant="secondary" onClick={action.onClick}>
+          <Button variant="default" onClick={action.onClick}>
             {action.label}
           </Button>
         )}
@@ -463,7 +463,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange }: DropInTogg
               aria-invalid={priceError || undefined}
               className="h-8 w-[120px] pr-9 tabular-nums"
             />
-            <span className="pointer-events-none absolute right-3 text-sm text-foreground/60 select-none">
+            <span className="pointer-events-none absolute right-3 text-sm text-foreground-muted select-none">
               kr
             </span>
           </div>

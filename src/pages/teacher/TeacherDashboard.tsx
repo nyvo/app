@@ -291,7 +291,7 @@ export function ManualPaymentsPanel() {
           <p className="text-sm font-medium text-foreground-muted">Betalinger</p>
           <Badge variant="neutral" size="sm">Start</Badge>
         </div>
-        <Button asChild variant="secondary" className="shrink-0">
+        <Button asChild variant="default" className="shrink-0">
           <Link to={routes.settingsBilling}>Se Pro</Link>
         </Button>
       </header>
@@ -331,7 +331,7 @@ export function UpcomingCoursesSection({
               title="Ingen kommende kurs"
               description="Opprett et kurs for å fylle timeplanen."
               action={
-                <Button asChild variant="secondary">
+                <Button asChild variant="default">
                   <Link to={routes.coursesNew}>Opprett kurs</Link>
                 </Button>
               }

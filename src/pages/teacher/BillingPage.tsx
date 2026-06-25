@@ -176,7 +176,7 @@ export function BillingPlanSections({
               {isPro && (
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="default"
                   className="shrink-0"
                   onClick={onManage}
                   loading={portalLoading}
@@ -195,7 +195,7 @@ export function BillingPlanSections({
                 </p>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="default"
                   className="shrink-0"
                   onClick={onUpgrade}
                   loading={checkoutLoading}
@@ -292,10 +292,10 @@ function PlanOption({
           <p className="mt-2 text-sm text-foreground-muted">{description}</p>
         </div>
 
-        <ul className="space-y-2.5 text-sm text-foreground">
+        <ul className="space-y-2.5 text-sm text-foreground-muted">
           {features.map((feature) => (
             <li key={feature} className="flex gap-2.5">
-              <Check className="mt-0.5 size-4 shrink-0 text-foreground" aria-hidden />
+              <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
               <span>{feature}</span>
             </li>
           ))}
