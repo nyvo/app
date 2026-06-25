@@ -202,6 +202,23 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0
 }
 
+const LIVE_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing', 'past_due'])
+
+/**
+ * Live (billable) subscriptions for a customer — active, trialing or past_due.
+ * Deliberately EXCLUDES 'incomplete' / 'canceled' so an abandoned checkout never
+ * blocks a legitimate retry. Used to enforce one subscription per seller before
+ * opening a new checkout, since the DB plan flag lags the webhook.
+ */
+export async function listLiveSubscriptions(customerId: string): Promise<StripeSubscription[]> {
+  const list = await stripeRequest<StripeList<StripeSubscription>>(
+    '/subscriptions',
+    { customer: customerId, limit: 100 },
+    { method: 'GET' },
+  )
+  return (list.data ?? []).filter((sub) => LIVE_SUBSCRIPTION_STATUSES.has(sub.status))
+}
+
 export async function verifyStripeSignature(params: {
   payload: string
   signatureHeader: string | null

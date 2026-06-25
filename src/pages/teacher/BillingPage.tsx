@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Check, ExternalLink, Sparkles } from '@/lib/icons'
@@ -55,9 +55,13 @@ const BillingPage = () => {
     ? formatBillingDate(currentSeller.subscription_current_period_end)
     : null
 
+  // StrictMode (dev) double-invokes effects; the toast + refresh must run once
+  // per checkout return, so dedupe with a ref.
+  const stripeResultHandled = useRef(false)
   useEffect(() => {
     const stripeResult = searchParams.get('stripe')
-    if (!stripeResult) return
+    if (!stripeResult || stripeResultHandled.current) return
+    stripeResultHandled.current = true
 
     if (stripeResult === 'success') {
       toast.success('Abonnementet er aktivert')
