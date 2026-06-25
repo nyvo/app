@@ -148,7 +148,7 @@ export const TeacherSidebar = () => {
           (isPro ? (
             <Link
               to={routes.settingsBilling}
-              className="rounded-lg bg-sidebar-accent px-3 py-2.5 outline-none transition-colors duration-150 hover:bg-sidebar-active focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+              className="rounded-lg border border-border-subtle bg-background px-3 py-2.5 outline-none transition-colors duration-150 hover:border-border focus-visible:ring-2 focus-visible:ring-sidebar-ring"
             >
               <div className="text-sm font-medium text-sidebar-foreground">Pro</div>
               <div className="mt-1 flex items-center justify-between text-[13px] text-sidebar-foreground-muted">
@@ -157,7 +157,7 @@ export const TeacherSidebar = () => {
               </div>
             </Link>
           ) : (
-            <div className="rounded-lg bg-sidebar-accent px-3 py-2.5">
+            <div className="rounded-lg border border-border-subtle bg-background px-3 py-2.5">
               <div className="text-sm font-medium text-sidebar-foreground">Start</div>
               <p className="mt-1 text-[13px] text-sidebar-foreground-muted">
                 Få kortbetaling og automatiske utbetalinger med Pro.
