@@ -17,7 +17,7 @@ Source of truth is `src/index.css` — a 3-layer OKLCH system: primitives (`--ne
 - **Primary = periwinkle** (`oklch(0.540 0.150 274)` light, `0.555` dark). White button text is AA-verified — keep any primary change in the 0.45–0.55 L band.
 - **Beige** (`--beige` / `-foreground` / `-border`, `bg-beige`) is the **one warm accent**. Highlight surfaces only (upsell, callouts) — **never a button/action**, never frequent, or it competes with periwinkle as a second brand colour.
 - **Interaction overlays — `--hover` / `--pressed` (`bg-hover` / `bg-pressed`)** are `--foreground` ink at 6% / 12% alpha. Because they reference `--foreground`, one token **adapts to any surface and theme** (darkens light-mode hovers on the grey rail or a white card; lightens dark-mode hovers). Prefer these for hover/active *fills* over baking a per-surface opaque token. The sidebar's `--sidebar-accent`/`-active` alias them.
-- **Sidebar is a light `--neutral-3` rail** with dark text (was dark chrome). `--chrome-*` stays dark — it's now only for toasts + marketing dark bands, not the sidebar.
+- **Sidebar is a white rail** — `--sidebar` aliases `--background`, separated by a `--border-subtle` divider, with nav items and the plan/account cards on light `--muted` / translucent `--hover` fills (was dark chrome). `--chrome-*` stays dark — now only for toasts + marketing dark bands, not the sidebar.
 
 ## Database Migrations (read before any schema/DB work)
 

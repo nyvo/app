@@ -37,13 +37,14 @@
   --color-surface-tinted-border: var(--surface-tinted-border);
   --color-surface-on-dark: var(--surface-on-dark);
 
-  /* Chrome — the shared dark-Slate surface (sidebar, toasts). Exposed for
-     marketing dark bands: the landing page previews the app's chrome. */
+  /* Chrome — the dark surface for toasts + marketing dark bands (the landing
+     page previews the app's chrome). No longer the sidebar — that's a light rail now. */
   --color-chrome: var(--chrome-surface);
   --color-chrome-foreground: var(--chrome-foreground);
   --color-chrome-foreground-muted: var(--chrome-foreground-muted);
 
-  /* Sidebar — permanently-dark warm rail (same in both app themes) */
+  /* Sidebar — light rail tracking the app surface (white in light, dark in dark),
+     border-separated; items + cards use translucent --hover / --muted fills */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-foreground-muted: var(--sidebar-foreground-muted);
@@ -294,14 +295,15 @@
   --chrome-ring:             oklch(1 0 0 / 0.35);     /* focus ring on dark chrome — border (12%) is too
                                                          faint for focus; 35% reads clearly on slate-3 */
 
-  /* Sidebar — light neutral rail (neutral-3). Dark text; hover/active are
-     translucent ink so they adapt to the rail AND the white plan card. The
-     --chrome-* scale stays dark for toasts/marketing; the sidebar no longer uses it. */
-  --sidebar: var(--neutral-3);
+  /* Sidebar — white rail (= page canvas), separated only by a border. The nav
+     items and the plan card carry the light-neutral fill (hover = --hover,
+     active + card = --muted); the rail itself stays white so it never reads
+     heavy. --chrome-* stays dark for toasts/marketing. */
+  --sidebar: var(--background);
   --sidebar-foreground: var(--foreground);
   --sidebar-foreground-muted: var(--foreground-muted);
   --sidebar-accent: var(--hover);
-  --sidebar-active: var(--pressed);
+  --sidebar-active: var(--muted);
   --sidebar-active-foreground: var(--foreground);
   --sidebar-border: var(--border-subtle);
   --sidebar-ring: var(--ring);

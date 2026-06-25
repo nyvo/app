@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ChevronsUpDown, ChevronRight } from '@/lib/icons';
+import { ChevronsUpDown } from '@/lib/icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Home01Icon,
@@ -144,36 +144,29 @@ export const TeacherSidebar = () => {
       </SidebarContent>
 
       <SidebarFooter>
-        {isSeller &&
-          (isPro ? (
-            <Link
-              to={routes.settingsBilling}
-              className="rounded-lg border border-border-subtle bg-background px-3 py-2.5 outline-none transition-colors duration-150 hover:border-border focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-            >
-              <div className="text-sm font-medium text-sidebar-foreground">Pro</div>
-              <div className="mt-1 flex items-center justify-between text-[13px] text-sidebar-foreground-muted">
-                <span>Administrer abonnement</span>
-                <ChevronRight className="size-3.5 shrink-0" />
-              </div>
-            </Link>
-          ) : (
-            <div className="rounded-lg border border-border-subtle bg-background px-3 py-2.5">
-              <div className="text-sm font-medium text-sidebar-foreground">Start</div>
-              <p className="mt-1 text-[13px] text-sidebar-foreground-muted">
-                Få kortbetaling og automatiske utbetalinger med Pro.
-              </p>
-              <Button asChild className="mt-2.5 w-full">
-                <Link to={routes.settingsBilling}>Oppgrader til Pro</Link>
-              </Button>
-            </div>
-          ))}
+        {/* Free sellers get the upsell card; Pro folds plan + billing into the
+            account menu below (no standalone card → no doubled bottom cards). */}
+        {isSeller && !isPro && (
+          <div className="rounded-lg bg-muted px-3 py-2.5">
+            <div className="text-sm font-medium text-sidebar-foreground">Start</div>
+            <p className="mt-1 text-[13px] text-sidebar-foreground-muted">
+              Få kortbetaling og automatiske utbetalinger med Pro.
+            </p>
+            <Button asChild className="mt-2.5 w-full">
+              <Link to={routes.settingsBilling}>Oppgrader til Pro</Link>
+            </Button>
+          </div>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="text-sidebar-foreground-muted hover:bg-sidebar-accent hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-foreground">
-                  <span className="flex-1 truncate">{displayName || 'Konto'}</span>
-                  <ChevronsUpDown className="ml-auto size-4" />
+                <SidebarMenuButton className="h-auto py-1.5 text-sidebar-foreground-muted hover:bg-sidebar-accent hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-foreground">
+                  <div className="grid flex-1 min-w-0 text-left leading-tight">
+                    <span className="truncate text-sidebar-foreground">{displayName || 'Konto'}</span>
+                    {isPro && <span className="text-xs">Pro</span>}
+                  </div>
+                  <ChevronsUpDown className="ml-auto size-4 shrink-0" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -195,12 +188,18 @@ export const TeacherSidebar = () => {
                         {displayName}
                       </span>
                       <span className="text-sm truncate text-foreground-muted">
-                        {profile?.email}
+                        {isPro ? 'Pro' : 'Start'}
                       </span>
                     </div>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to={routes.settingsBilling}>
+                    <HugeiconsIcon icon={CreditCardIcon} size={16} strokeWidth={1.75} />
+                    Abonnement
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to={routes.settingsProfile}>
                     <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={1.75} />
