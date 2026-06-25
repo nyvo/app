@@ -3,7 +3,7 @@ import { logger } from '@/lib/logger';
 import { Link } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Sparkles } from '@/lib/icons';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
@@ -247,7 +247,7 @@ const TeacherDashboard = () => {
                   onRangeChange={setIncomeRange}
                 />
               ) : (
-                <ManualPaymentsPanel />
+                <LockedIncomeCard />
               )}
 
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -277,32 +277,61 @@ const TeacherDashboard = () => {
 };
 
 /**
- * Free-tier replacement for the income chart. Exported (with the section
- * components below) so /dev/dashboard-preview can render the real states
- * without auth — same pattern as BillingPlanSections.
+ * Free-tier replacement for the income chart: the SAME card frame, but the
+ * chart is a faint decorative ghost behind a Pro upsell — no fabricated
+ * numbers, since a free seller has no integrated income to show. Exported
+ * (with the section components below) so /dev/dashboard-preview can render
+ * the real states without auth — same pattern as BillingPlanSections.
  */
-export function ManualPaymentsPanel() {
+export function LockedIncomeCard() {
   return (
     <section className="rounded-xl border border-border bg-background p-6 sm:p-8">
-      {/* Header anatomy mirrors IncomeChart: muted label row left, control
-          right, hero line below — the two cards swap for each other by tier. */}
-      <header className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-foreground-muted">Betalinger</p>
-          <Badge variant="neutral" size="sm">Start</Badge>
-        </div>
-        <Button asChild variant="default" className="shrink-0">
-          <Link to={routes.settingsBilling}>Se Pro</Link>
-        </Button>
+      <header className="flex items-center justify-between gap-4">
+        <p className="text-sm font-medium text-foreground-muted">Inntekt</p>
+        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
+          <Sparkles className="size-3 fill-current" aria-hidden />
+          Pro
+        </span>
       </header>
-      <h2 className="mt-2 text-xl font-medium tracking-tight text-foreground">
-        Betaling avtales direkte med instruktør
-      </h2>
-      <p className="mt-3 max-w-2xl text-base text-foreground-muted">
-        Påmeldinger registreres i Openspot, men Vipps, faktura eller annen betaling skjer utenfor plattformen.
-        Pro aktiverer kortbetaling, servicegebyr og automatiske utbetalinger.
-      </p>
+      <div className="relative mt-6 h-[220px] sm:h-[260px]">
+        <GhostSparkline className="absolute inset-0 h-full w-full text-border" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+          <p className="max-w-xs text-sm text-foreground-muted">
+            Lås opp inntektsoversikt med Pro.
+          </p>
+          <Button asChild>
+            <Link to={routes.settingsBilling}>Oppgrader til Pro</Link>
+          </Button>
+        </div>
+      </div>
     </section>
+  );
+}
+
+/** Decorative, dataless income curve — sets the "chart goes here" frame
+ *  behind the Pro upsell without implying real numbers. */
+function GhostSparkline({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 400 200" preserveAspectRatio="none" aria-hidden>
+      <defs>
+        <linearGradient id="locked-income-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.16" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M0,140 C40,135 70,95 110,100 C150,105 180,60 220,72 C260,84 300,45 340,52 C370,57 388,40 400,34 L400,200 L0,200 Z"
+        fill="url(#locked-income-fill)"
+      />
+      <path
+        d="M0,140 C40,135 70,95 110,100 C150,105 180,60 220,72 C260,84 300,45 340,52 C370,57 388,40 400,34"
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity="0.3"
+        strokeWidth="2"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
   );
 }
 
