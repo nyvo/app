@@ -201,7 +201,7 @@
   --neutral-8:  oklch(0.794 0 0);
   --neutral-9:  oklch(0.645 0 0);
   --neutral-10: oklch(0.611 0 0);
-  --neutral-11: oklch(0.502 0 0);   /* WCAG 1.4.3 AA on white (~4.7:1) */
+  --neutral-11: oklch(0.550 0 0);   /* secondary-text grey — lifted from 0.502 for clearer primary/secondary hierarchy; 4.9:1 AA on white */
   --neutral-12: oklch(0.241 0 0);
 
   /* Status — jade (success) / amber (warning) / red (danger) */
@@ -327,7 +327,7 @@
   --neutral-8:  oklch(0.489 0 0);
   --neutral-9:  oklch(0.537 0 0);
   --neutral-10: oklch(0.583 0 0);
-  --neutral-11: oklch(0.769 0 0);
+  --neutral-11: oklch(0.640 0 0);   /* secondary-text grey (dark) — lowered from 0.769 to match the light primary/secondary separation; 5.6:1 AA on dark canvas */
   --neutral-12: oklch(0.949 0 0);
 
   /* Status — dark mode */
