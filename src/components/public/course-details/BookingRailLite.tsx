@@ -170,7 +170,7 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
             )}
             {ticketPrice > 0 && !usesIntegratedPayments && (
               <div className="border-t border-border pt-4">
-                <p className="text-center text-xs text-foreground-muted">
+                <p className="text-center text-sm text-foreground-muted">
                   Betaling avtales direkte med studioet.
                 </p>
               </div>
@@ -224,7 +224,7 @@ function TicketTileButton({
         <div className="min-w-0 flex-1">
           <p className="text-base font-medium text-foreground truncate">{tile.label}</p>
           {tile.sublabel && (
-            <p className="text-xs text-foreground-muted truncate">{tile.sublabel}</p>
+            <p className="text-sm text-foreground-muted truncate">{tile.sublabel}</p>
           )}
         </div>
         <span className="shrink-0 text-base font-medium text-foreground tabular-nums whitespace-nowrap">

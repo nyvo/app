@@ -147,7 +147,7 @@ function ConfirmContent({
                     {item.name}
                   </p>
                   {item.meta ? (
-                    <p className="mt-0.5 truncate text-xs text-foreground-muted">
+                    <p className="mt-0.5 truncate text-sm text-foreground-muted">
                       {item.meta}
                     </p>
                   ) : null}
