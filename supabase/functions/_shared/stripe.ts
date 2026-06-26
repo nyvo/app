@@ -35,7 +35,10 @@ export interface StripeSubscription {
   id: string
   customer: string
   status: string
+  // Recent API versions report current_period_end on the item, not the sub.
   current_period_end?: number
+  cancel_at_period_end?: boolean
+  items?: { data?: Array<{ current_period_end?: number }> }
   metadata?: Record<string, string>
 }
 

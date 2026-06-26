@@ -179,6 +179,7 @@ export async function updateSeller(
       subscription_plan: operational?.subscription_plan ?? 'free',
       subscription_status: operational?.subscription_status ?? 'none',
       subscription_current_period_end: operational?.subscription_current_period_end ?? null,
+      subscription_cancel_at_period_end: operational?.subscription_cancel_at_period_end ?? false,
       subscription_provider: null,
       subscription_customer_id: operational?.subscription_customer_id ?? null,
       subscription_external_id: null,
@@ -204,6 +205,7 @@ export interface SellerOperational {
   subscription_plan: SubscriptionPlan
   subscription_status: SubscriptionStatus
   subscription_current_period_end: string | null
+  subscription_cancel_at_period_end: boolean
   subscription_customer_id: string | null
   uses_integrated_payments: boolean
   // subscription_provider / subscription_external_id are deliberately not

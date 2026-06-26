@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { PageShell } from '@/components/teacher/PageShell'
-import { SettingsSection } from '@/components/teacher/SettingsSection'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn, formatKroner } from '@/lib/utils'
 import { createStripeCheckoutSession, createStripePortalSession } from '@/services/billing'
@@ -17,10 +16,20 @@ type SubscriptionPlan = string | null | undefined
 type SubscriptionStatus = string | null | undefined
 
 /** Subscription state → a short status line for the Pro summary row. */
-function subscriptionStatusLine(status: SubscriptionStatus, renewsAt: string | null): string {
-  if (status === 'past_due') return 'Betaling feilet. Oppdater kortet for å beholde Pro.'
-  if (status === 'canceled') return renewsAt ? `Du har Pro ut ${renewsAt}` : 'Avsluttet'
-  if (status === 'active') return renewsAt ? `Fornyes automatisk ${renewsAt}` : 'Aktiv'
+export function subscriptionStatusLine(
+  status: SubscriptionStatus,
+  renewsAt: string | null,
+  cancelAtPeriodEnd: boolean,
+): string {
+  if (status === 'past_due') return 'Betaling feilet – oppdater kortet for å beholde Pro'
+  if (status === 'active') {
+    if (cancelAtPeriodEnd) {
+      return renewsAt
+        ? `Abonnementet ditt utgår ${renewsAt}`
+        : 'Abonnementet ditt utgår ved periodeslutt'
+    }
+    return renewsAt ? `Fornyes automatisk ${renewsAt}` : 'Aktiv'
+  }
   return 'Ingen aktiv betaling'
 }
 
@@ -108,6 +117,7 @@ const BillingPage = () => {
           plan={currentSeller?.subscription_plan}
           status={currentSeller?.subscription_status}
           renewsAt={renewsAt}
+          cancelAtPeriodEnd={currentSeller?.subscription_cancel_at_period_end ?? false}
           onUpgrade={handleUpgrade}
           onManage={handleManage}
           checkoutLoading={checkoutLoading}
@@ -126,6 +136,8 @@ export function BillingPlanSections({
   plan,
   status,
   renewsAt,
+  cancelAtPeriodEnd = false,
+  yearly,
   onUpgrade,
   onManage,
   checkoutLoading,
@@ -134,13 +146,21 @@ export function BillingPlanSections({
   plan: SubscriptionPlan
   status: SubscriptionStatus
   renewsAt: string | null
+  cancelAtPeriodEnd?: boolean
+  /** When set, free sellers get a Månedlig/Årlig toggle on the Pro card. */
+  yearly?: { price: string; priceSub: string }
   onUpgrade: () => void
   onManage: () => void
   checkoutLoading: boolean
   portalLoading: boolean
 }) {
   const isPro = plan === 'pro'
-  const statusLine = subscriptionStatusLine(status, renewsAt)
+  const statusLine = subscriptionStatusLine(status, renewsAt, cancelAtPeriodEnd)
+
+  const [interval, setInterval] = useState<'month' | 'year'>('month')
+  const showInterval = !!yearly && !isPro
+  const proPrice = showInterval && interval === 'year' ? yearly.price : formatKroner(499)
+  const proPriceSub = showInterval && interval === 'year' ? yearly.priceSub : '/mnd'
 
   const startOption = (
     <PlanOption
@@ -154,8 +174,8 @@ export function BillingPlanSections({
   const proOption = (
     <PlanOption
       name="Pro"
-      price={`Fra ${formatKroner(499)}`}
-      priceSub="/mnd eks. mva"
+      price={proPrice}
+      priceSub={proPriceSub}
       description="For instruktører og studioer som vil ta betalt automatisk."
       features={PRO_FEATURES}
       active={isPro}
@@ -176,46 +196,86 @@ export function BillingPlanSections({
   )
 
   return (
-    <SettingsSection title="Plan">
-      <div className="space-y-6">
-        {/* Pro only: the live subscription's status + billing management. This
-            is the account's state, not a duplicate of the plan-choice cards. */}
-        {isPro && (
-          <div className="flex flex-col gap-3 border-b border-border-subtle pb-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-sm text-foreground-muted">{statusLine}</p>
-            </div>
-            <Button
-              type="button"
-              variant="secondary"
-              className="shrink-0"
-              onClick={onManage}
-              loading={portalLoading}
-              loadingText="Åpner"
-            >
-              Administrer abonnement
-              <ExternalLink className="size-4" aria-hidden />
-            </Button>
-          </div>
-        )}
-
-        <div className="grid gap-4 md:grid-cols-2">
-          {isPro ? (
-            <>
-              {startOption}
-              {proOption}
-            </>
-          ) : (
-            <>
-              <PlanColumn>{startOption}</PlanColumn>
-              <PlanColumn featured label="Anbefalt">
-                {proOption}
-              </PlanColumn>
-            </>
+    <div className="space-y-6">
+      {/* Free sellers: "Velg plan" anchors the row; the Månedlig/Årlig toggle
+          (when yearly pricing is configured) sits on the right. */}
+      {!isPro && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-medium text-foreground">Velg plan</h2>
+          {showInterval && (
+            <IntervalToggle interval={interval} onChange={setInterval} />
           )}
         </div>
+      )}
+
+      {/* Pro only: the live subscription's status + billing management. */}
+      {isPro && (
+        <div className="flex flex-col gap-3 border-b border-border-subtle pb-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm text-foreground-muted">{statusLine}</p>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            className="shrink-0"
+            onClick={onManage}
+            loading={portalLoading}
+            loadingText="Åpner"
+          >
+            Administrer abonnement
+            <ExternalLink className="size-4" aria-hidden />
+          </Button>
+        </div>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {isPro ? (
+          <>
+            {startOption}
+            {proOption}
+          </>
+        ) : (
+          <>
+            <PlanColumn>{startOption}</PlanColumn>
+            <PlanColumn featured label="Anbefalt">
+              {proOption}
+            </PlanColumn>
+          </>
+        )}
       </div>
-    </SettingsSection>
+
+      <p className="text-sm text-foreground-muted">Alle priser er eks. mva.</p>
+    </div>
+  )
+}
+
+/** Segmented Månedlig/Årlig switch — active segment is a white pill. */
+function IntervalToggle({
+  interval,
+  onChange,
+}: {
+  interval: 'month' | 'year'
+  onChange: (next: 'month' | 'year') => void
+}) {
+  return (
+    <div className="inline-flex items-center rounded-full bg-muted p-0.5 text-sm">
+      {(['month', 'year'] as const).map((value) => (
+        <button
+          key={value}
+          type="button"
+          onClick={() => onChange(value)}
+          aria-pressed={interval === value}
+          className={cn(
+            'rounded-full px-3 py-1 font-medium transition-colors',
+            interval === value
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-foreground-muted hover:text-foreground',
+          )}
+        >
+          {value === 'month' ? 'Månedlig' : 'Årlig'}
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -280,7 +340,7 @@ function PlanOption({
             )}
           </div>
           <div className="mt-3 flex items-baseline gap-1.5">
-            <span className="text-2xl font-medium tabular-nums tracking-tight text-foreground">
+            <span className="whitespace-nowrap text-2xl font-medium tabular-nums tracking-tight text-foreground">
               {price}
             </span>
             {priceSub && <span className="text-sm text-foreground-muted">{priceSub}</span>}
