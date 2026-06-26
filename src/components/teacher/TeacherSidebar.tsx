@@ -54,7 +54,7 @@ interface NavItem {
 // menu, not here — they're low-frequency and belong under the user's
 // identity. No nested groups.
 const SELLER_NAV_ITEMS: NavItem[] = [
-  { icon: DashboardSquare02Icon, label: 'Hjem', href: routes.dashboard },
+  { icon: DashboardSquare02Icon, label: 'Oversikt', href: routes.dashboard },
   { icon: Calendar03Icon, label: 'Timeplan', href: routes.schedule },
   { icon: Folder01Icon, label: 'Kurs', href: routes.courses },
   { icon: Home01Icon, label: 'Studio', href: routes.studio },

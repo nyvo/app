@@ -1,8 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
 import { routes } from '@/lib/routes'
-import { SidebarSeparator } from '@/components/ui/sidebar'
+import { SidebarMenuButton, SidebarSeparator } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 import { useSellerSetupStatus } from '@/hooks/use-seller-setup-status'
 
@@ -25,6 +23,12 @@ export function SidebarSetupCard() {
   const remainingOptional = optionalSteps.filter((step) => !step.isComplete).length
   const isActive = location.pathname === routes.getStarted
 
+  // Overall setup completion (required + optional) — drives the progress ring
+  // on the quiet "Oppsett" entry once the required steps are done.
+  const overallTotal = totalCount + optionalSteps.length
+  const overallDone = completedCount + (optionalSteps.length - remainingOptional)
+  const overallProgress = overallTotal > 0 ? (overallDone / overallTotal) * 100 : 0
+
   // Hold until the first fetch resolves — otherwise the card paints its
   // required-progress phase before flipping to the quiet "polish" phase.
   if (isLoading) return null
@@ -37,24 +41,15 @@ export function SidebarSetupCard() {
     return (
       <div className="mt-2">
         <SidebarSeparator className="mx-0 mb-2" />
-        <Link
-          to={routes.getStarted}
-          aria-label="Gjør studioet ferdig"
-          className={cn(
-            'flex items-center justify-between gap-2 rounded-md px-3 py-2 transition-colors duration-150',
-            'text-sidebar-foreground-muted hover:bg-sidebar-accent hover:text-sidebar-foreground',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
-            isActive && 'bg-sidebar-accent text-sidebar-foreground',
-          )}
-        >
-          <span className="text-sm font-medium">Gjør studioet ferdig</span>
-          <HugeiconsIcon
-            icon={ArrowRight01Icon}
-            size={16}
-            strokeWidth={1.75}
-            className="shrink-0"
-          />
-        </Link>
+        <SidebarMenuButton asChild isActive={isActive} tooltip="Oppsett">
+          <Link
+            to={routes.getStarted}
+            aria-label={`Oppsett — ${overallDone} av ${overallTotal} fullført`}
+          >
+            <ProgressRing progress={overallProgress} />
+            <span>Oppsett</span>
+          </Link>
+        </SidebarMenuButton>
       </div>
     )
   }
@@ -94,5 +89,46 @@ export function SidebarSetupCard() {
         </div>
       </Link>
     </div>
+  )
+}
+
+/** Small circular progress indicator — the filled arc shows setup completion. */
+function ProgressRing({ progress }: { progress: number }) {
+  const size = 16
+  const stroke = 2
+  const r = (size - stroke) / 2
+  const circumference = 2 * Math.PI * r
+  const clamped = Math.min(Math.max(progress, 0), 100)
+  const offset = circumference * (1 - clamped / 100)
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      className="shrink-0 -rotate-90"
+      aria-hidden
+    >
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        strokeWidth={stroke}
+        stroke="currentColor"
+        className="text-sidebar-border"
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        stroke="currentColor"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        className="text-sidebar-foreground transition-[stroke-dashoffset] duration-300"
+      />
+    </svg>
   )
 }
