@@ -244,7 +244,9 @@ export function BillingPlanSections({
         )}
       </div>
 
-      <p className="text-sm text-foreground-muted">Alle priser er eks. mva.</p>
+      <div className="rounded-lg bg-muted px-4 py-3 text-center text-sm font-medium text-foreground">
+        Alle priser er eks. mva.
+      </div>
     </div>
   )
 }

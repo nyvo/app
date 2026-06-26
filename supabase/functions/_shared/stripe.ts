@@ -154,6 +154,13 @@ export async function createStripeCheckoutSession(params: {
     'line_items[0][price]': params.priceId,
     'line_items[0][quantity]': 1,
     allow_promotion_codes: true,
+    // 25% MVA via Stripe Tax. Prices are ex-VAT (dashboard "Include in prices
+    // → No"), so tax is added on top. Collect + persist the buyer's address so
+    // Stripe can locate the sale (Norway), and let B2B buyers add their org-nr.
+    automatic_tax: { enabled: true },
+    billing_address_collection: 'required',
+    customer_update: { address: 'auto' },
+    tax_id_collection: { enabled: true },
     client_reference_id: params.sellerId,
     success_url: params.successUrl,
     cancel_url: params.cancelUrl,
