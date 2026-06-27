@@ -9,6 +9,7 @@ import {
 import {
   createStripeCheckoutSession,
   createStripeCustomer,
+  listLiveSubscriptions,
 } from '../_shared/stripe.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
@@ -94,6 +95,16 @@ Deno.serve(async (req: Request) => {
 
       if (updateError) {
         return errorResponse('Kunne ikke lagre Stripe-kunde.', 500, req)
+      }
+    }
+
+    // Source-of-truth guard against the DB plan flag lagging the webhook: if
+    // Stripe already has a live subscription for this customer, don't open a
+    // second checkout — prevents accidental double-subscribe / double-billing.
+    if (customerId) {
+      const liveSubs = await listLiveSubscriptions(customerId)
+      if (liveSubs.length > 0) {
+        return errorResponse('Studioet har allerede et aktivt abonnement.', 409, req)
       }
     }
 

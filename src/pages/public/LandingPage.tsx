@@ -273,6 +273,7 @@ const LandingPage = () => {
             <PricingTier
               tier={{
                 name: 'Pro',
+                recommended: true,
                 description: 'For instruktører og studioer som vil ta betalt automatisk.',
                 price: formatKroner(499),
                 priceSub: '/ mnd eks. mva',
@@ -536,6 +537,8 @@ type Tier = {
   features: string[];
   cta: { label: string; to: string };
   caption?: string;
+  /** The emphasized tier: its CTA stays primary, others render secondary. */
+  recommended?: boolean;
 };
 
 function PricingTier({ tier }: { tier: Tier }) {
@@ -577,7 +580,11 @@ function PricingTier({ tier }: { tier: Tier }) {
         ))}
       </ul>
 
-      <Button asChild className="mt-auto h-12 w-full">
+      <Button
+        asChild
+        variant={tier.recommended ? 'default' : 'secondary'}
+        className="mt-auto h-12 w-full"
+      >
         <a href={tier.cta.to}>{tier.cta.label}</a>
       </Button>
       {tier.caption && (

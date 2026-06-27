@@ -221,7 +221,7 @@ export function StudioDayList({ courses, viewingSlug, viewingName, headerAction 
                     // Sized so a desktop row shows ~7 days with the next card
                     // cut by the viewport edge — the cut card signals scroll.
                     'shrink-0 w-28 sm:w-34 rounded-2xl px-2 py-4 flex flex-col items-center gap-1.5 transition-[background-color,opacity]',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
                     // Fill-only states, no borders: the dark neutral fill IS
                     // the selection and moves with it; today is marked by the
                     // "I dag" label. Active = soft tile, inactive = dimmed.
@@ -339,7 +339,7 @@ function ClassRow({
         className={cn(
           'group flex items-center gap-4 sm:gap-5 py-5',
           '-mx-3 px-3 rounded-xl transition-colors hover:bg-muted/50',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
         )}
         aria-disabled={isDisabled || undefined}
       >
@@ -381,7 +381,7 @@ function ClassRow({
             className={cn(
               'inline-flex h-8 items-center rounded-full px-3.5 text-sm font-medium transition-colors duration-150',
               isDisabled
-                ? 'bg-muted text-foreground-disabled'
+                ? 'bg-muted text-foreground-muted'
                 : 'bg-muted text-foreground group-hover:bg-foreground group-hover:text-background',
             )}
             aria-hidden

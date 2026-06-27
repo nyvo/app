@@ -89,7 +89,7 @@ export function NotificationsPopover() {
       {hasUnseen && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute right-2 top-2 size-2 rounded-full bg-danger ring-2 ring-background"
+          className="pointer-events-none absolute right-2 top-2 size-2 rounded-full bg-primary ring-2 ring-background"
         />
       )}
     </button>

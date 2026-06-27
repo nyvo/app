@@ -61,14 +61,17 @@ async function syncSubscription(
   const sellerId = subscription.metadata?.seller_id ?? null
   const sellerStatus = stripeStatusToSellerStatus(subscription.status)
   const nextPlan = sellerStatus === 'canceled' || sellerStatus === 'none' ? 'free' : 'pro'
-  const currentPeriodEnd = subscription.current_period_end
-    ? new Date(subscription.current_period_end * 1000).toISOString()
-    : null
+  // Recent Stripe API versions moved current_period_end onto the subscription
+  // item; fall back to the subscription-level field for older versions.
+  const periodEndUnix =
+    subscription.items?.data?.[0]?.current_period_end ?? subscription.current_period_end ?? null
+  const currentPeriodEnd = periodEndUnix ? new Date(periodEndUnix * 1000).toISOString() : null
 
   const update = {
     subscription_plan: nextPlan,
     subscription_status: sellerStatus,
     subscription_current_period_end: currentPeriodEnd,
+    subscription_cancel_at_period_end: subscription.cancel_at_period_end ?? false,
     subscription_provider: 'stripe',
     subscription_customer_id: subscription.customer,
     subscription_external_id: subscription.id,
@@ -141,6 +144,7 @@ Deno.serve(async (req: Request) => {
           .update({
             subscription_plan: 'pro',
             subscription_status: 'active',
+            subscription_cancel_at_period_end: false,
             subscription_provider: 'stripe',
             subscription_customer_id: customerId,
             subscription_external_id: subscriptionId,

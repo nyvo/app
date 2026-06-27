@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Check, ExternalLink, Plus, X } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
+import { PageTab, PageTabs } from '@/components/ui/page-tabs';
 import { FieldError } from '@/components/ui/field-error';
 import { ImageField } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,6 @@ import type { PlaceDetails } from '@/services/places';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
-import { SettingsSection } from '@/components/teacher/SettingsSection';
 import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/use-locations';
@@ -40,6 +40,7 @@ const StudioPage = () => {
         action={
           currentTeam?.slug ? (
             <Button
+              variant="secondary"
               onClick={() => window.open(`/${currentTeam.slug}`, '_blank')}
             >
               <ExternalLink className="size-4" />
@@ -76,6 +77,13 @@ function StudioPublicSettings({
   const { locations, isLoading: loadingLocations, refetch } = useLocations(seller.id);
   const primaryLocation = locations[0] ?? null;
   const additionalLocations = locations.slice(1);
+
+  const { hash } = useLocation();
+  const [tab, setTab] = useState<'profil' | 'sted' | 'samarbeid'>('profil');
+  // Joining a studio lands at /studio#samarbeid — open that tab directly.
+  useEffect(() => {
+    if (hash === '#samarbeid') setTab('samarbeid');
+  }, [hash]);
 
   const [savingPhoto, setSavingPhoto] = useState(false);
   const [logoUrl, setLogoUrl] = useState(seller.logo_url);
@@ -286,7 +294,11 @@ function StudioPublicSettings({
       setPlaceError(null);
     }
 
-    if (blocked) return;
+    if (blocked) {
+      // Surface the offending field by jumping to its tab.
+      setTab(!trimmedName || !trimmedSlug ? 'profil' : 'sted');
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -405,15 +417,46 @@ function StudioPublicSettings({
   };
 
   return (
-    <div className="space-y-10">
-      <SettingsSection
-        title="Studioprofil"
-        description="Vises på den offentlige studiosiden din."
-      >
-        <Card>
-          <CardContent className="space-y-6">
-            <div className="grid gap-3">
-              <span className="text-sm font-medium text-foreground">Profilbilde</span>
+    <div>
+      <PageTabs ariaLabel="Studioseksjoner" className="mb-8">
+        <PageTab
+          active={tab === 'profil'}
+          onClick={() => setTab('profil')}
+          id="studio-tab-profil"
+          ariaControls="studio-panel-profil"
+        >
+          Profil
+        </PageTab>
+        <PageTab
+          active={tab === 'sted'}
+          onClick={() => setTab('sted')}
+          id="studio-tab-sted"
+          ariaControls="studio-panel-sted"
+        >
+          Sted
+        </PageTab>
+        <PageTab
+          active={tab === 'samarbeid'}
+          onClick={() => setTab('samarbeid')}
+          id="studio-tab-samarbeid"
+          ariaControls="studio-panel-samarbeid"
+        >
+          Samarbeid
+        </PageTab>
+      </PageTabs>
+
+      {tab === 'profil' && (
+        <div
+          role="tabpanel"
+          id="studio-panel-profil"
+          aria-labelledby="studio-tab-profil"
+          className="space-y-6"
+        >
+          <p className="text-sm text-foreground-muted">
+            Vises på den offentlige studiosiden din.
+          </p>
+          <div className="grid gap-3">
+            <span className="text-sm font-medium text-foreground">Profilbilde</span>
               <ImageField
                 variant="avatar"
                 value={logoUrl}
@@ -465,19 +508,22 @@ function StudioPublicSettings({
               </InputGroup>
               {slugError && <FieldError id="studio-slug-error">{slugError}</FieldError>}
             </div>
-          </CardContent>
-        </Card>
-      </SettingsSection>
+        </div>
+      )}
 
-      <SettingsSection
-        title="Sted og rom"
-        description="Brukes når du lager kurs, og vises til deltakerne som skal møte opp."
-      >
-        <Card>
-          <CardContent className="space-y-6">
-            <div className="grid gap-2">
-              <label
-                htmlFor="studio-place-name"
+      {tab === 'sted' && (
+        <div
+          role="tabpanel"
+          id="studio-panel-sted"
+          aria-labelledby="studio-tab-sted"
+          className="space-y-6"
+        >
+          <p className="text-sm text-foreground-muted">
+            Brukes når du lager kurs, og vises til deltakerne som skal møte opp.
+          </p>
+          <div className="grid gap-2">
+            <label
+              htmlFor="studio-place-name"
                 data-error={!!placeError || undefined}
                 className="text-sm font-medium text-foreground data-[error=true]:text-danger"
               >
@@ -656,14 +702,21 @@ function StudioPublicSettings({
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
-      </SettingsSection>
+        </div>
+      )}
 
-      <AffiliationsSection />
+      {tab === 'samarbeid' && (
+        <div
+          role="tabpanel"
+          id="studio-panel-samarbeid"
+          aria-labelledby="studio-tab-samarbeid"
+        >
+          <AffiliationsSection />
+        </div>
+      )}
 
       <DirtyFormBar
-        visible={isDirty}
+        visible={isDirty && tab !== 'samarbeid'}
         isSaving={isSaving}
         onSave={handleSave}
         onCancel={handleCancel}

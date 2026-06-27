@@ -126,6 +126,7 @@ export {
   Shield,
   Smartphone,
   Smile,
+  Sparkles,
   Star,
   StickyNote,
   Ticket,

@@ -96,7 +96,7 @@ export function DirtyFormBar({
             // floating bottom chrome (see studio-design components.md § Toast).
             "flex items-center gap-4 rounded-2xl bg-surface py-2 pr-2 pl-5",
             "text-foreground ring-1 ring-foreground/10",
-            "shadow-[0_10px_30px_-6px_rgb(0_0_0/0.22)]",
+            "shadow-float",
             // Slide-up entry. Matches toast motion (200ms slide-up + fade).
             "animate-in fade-in-0 slide-in-from-bottom-2 duration-200 ease-out",
             className,

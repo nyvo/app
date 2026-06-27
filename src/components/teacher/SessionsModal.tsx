@@ -228,7 +228,7 @@ export function SessionsModal({
                     </div>
                   </div>
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     onClick={() => startReschedule(s)}
                     disabled={editDisabled}
                     className="shrink-0"

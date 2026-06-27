@@ -228,7 +228,7 @@ export function StudioMonthSchedule({ courses, viewingSlug, viewingName }: Studi
                 aria-pressed={isSelected}
                 className={cn(
                   'shrink-0 w-28 rounded-lg border border-border px-4 py-3 text-left transition-colors',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
                   isSelected
                     ? 'bg-muted'
                     : hasClasses
@@ -328,7 +328,7 @@ export function StudioMonthSchedule({ courses, viewingSlug, viewingName }: Studi
                   state={{ fromSlug, fromName }}
                   className={cn(
                     'group flex items-center justify-between gap-4 py-5',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40 rounded-sm',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 rounded-sm',
                   )}
                   aria-disabled={isDisabled || undefined}
                 >

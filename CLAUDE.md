@@ -9,6 +9,16 @@
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
+## Design tokens
+
+Source of truth is `src/index.css` — a 3-layer OKLCH system: primitives (`--neutral-*`, `--jade/amber/red-*`) → semantic tokens (`--foreground`, `--primary`, `--success`…) → Tailwind `@theme` utilities. Consume semantic tokens in components, never primitives directly; build hierarchy through spacing + the tier gaps (surface → border → muted-text → foreground), not bold weights.
+
+- **Neutral = pure-neutral grey (chroma 0).** Deliberately de-tinted from Radix Slate to kill the cold blue cast. Do **not** re-introduce a hue on the neutral ramp. Lightness steps are accessibility-tuned (`--neutral-11` is AA on white) — change hue/chroma, never the L values.
+- **Primary = periwinkle** (`oklch(0.540 0.150 274)` light, `0.555` dark). White button text is AA-verified — keep any primary change in the 0.45–0.55 L band.
+- **Beige** (`--beige` / `-foreground` / `-border`, `bg-beige`) is the **one warm accent**. Highlight surfaces only (upsell, callouts) — **never a button/action**, never frequent, or it competes with periwinkle as a second brand colour.
+- **Interaction overlays — `--hover` / `--pressed` (`bg-hover` / `bg-pressed`)** are `--foreground` ink at 6% / 12% alpha. Because they reference `--foreground`, one token **adapts to any surface and theme** (darkens light-mode hovers on the grey rail or a white card; lightens dark-mode hovers). Prefer these for hover/active *fills* over baking a per-surface opaque token. The sidebar's `--sidebar-accent`/`-active` alias them.
+- **Sidebar is a white rail** — `--sidebar` aliases `--background`, separated by a `--border-subtle` divider, with nav items and the plan/account cards on light `--muted` / translucent `--hover` fills (was dark chrome). `--chrome-*` stays dark — now only for toasts + marketing dark bands, not the sidebar.
+
 ## Database Migrations (read before any schema/DB work)
 
 This repo runs in **multiple Conductor workspaces across machines**, all pointing at **one shared remote Supabase**. The recurring failure mode: a migration gets applied to the remote DB but its `.sql` file never lands on `origin/main`, so `main` drifts behind the database and every new workspace inherits the gap (`supabase db push` then fails with *"Remote migration versions not found in local migrations directory"*).

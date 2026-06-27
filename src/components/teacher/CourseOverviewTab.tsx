@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react';
-import { Clock } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -110,6 +109,7 @@ export function CourseOverviewTab({
         capacity={course.capacity}
         revenue={revenue}
         price={course.price}
+        isPro={paymentSetupRequired}
       />
 
       {isWaitingForPaymentSetup && (
@@ -229,24 +229,28 @@ export function CourseOverviewTab({
 
 // ─── KPI spine ─────────────────────────────────────────────────────────
 
-function CourseKpis({
+export function CourseKpis({
   enrolled,
   capacity,
   revenue,
   price,
+  isPro,
 }: {
   enrolled: number;
   capacity: number;
   revenue: number;
   price: number;
+  isPro: boolean;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div className={cn('grid grid-cols-1 gap-3', isPro ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
       <KpiCard
         label="Påmeldte"
         value={capacity > 0 ? `${enrolled} / ${capacity}` : String(enrolled)}
       />
-      <KpiCard label="Inntekt" value={formatKroner(revenue)} />
+      {/* Inntekt is integrated-payment revenue — always 0 kr on free, so omit it
+          there rather than show a dead metric. */}
+      {isPro && <KpiCard label="Inntekt" value={formatKroner(revenue)} />}
       <KpiCard label="Pris" value={price > 0 ? formatKroner(price) : 'Gratis'} />
     </div>
   );
@@ -273,43 +277,13 @@ interface BannerProps {
 
 function InfoBanner({ title, sub, action }: BannerProps) {
   return (
-    <BaseBanner
-      title={title}
-      sub={sub}
-      action={action}
-      tone="info"
-      icon={<Clock className="size-5" />}
-    />
-  );
-}
-
-function BaseBanner({
-  title,
-  sub,
-  action,
-  tone,
-  icon,
-}: BannerProps & { tone: 'warning' | 'info'; icon: React.ReactNode }) {
-  const toneClasses =
-    tone === 'warning'
-      ? 'bg-warning-subtle border-warning/20 text-warning'
-      : 'bg-info-subtle border-info/20 text-info';
-  return (
-    <div
-      className={cn(
-        'flex items-center gap-4 rounded-md border px-4 py-3.5',
-        toneClasses,
-      )}
-    >
-      <div className={cn('shrink-0', tone === 'warning' ? 'text-warning' : 'text-info')}>
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0 text-foreground">
-        <p className="text-base font-medium">{title}</p>
+    <div className="flex items-center gap-4 rounded-xl bg-muted px-5 py-4">
+      <div className="min-w-0 flex-1">
+        <p className="text-base font-medium text-foreground">{title}</p>
         <p className="text-base text-foreground-muted mt-0.5">{sub}</p>
       </div>
       {action && (
-        <Button variant="secondary" onClick={action.onClick} className="shrink-0">
+        <Button onClick={action.onClick} className="shrink-0">
           {action.label}
         </Button>
       )}
@@ -463,7 +437,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange }: DropInTogg
               aria-invalid={priceError || undefined}
               className="h-8 w-[120px] pr-9 tabular-nums"
             />
-            <span className="pointer-events-none absolute right-3 text-sm text-foreground/60 select-none">
+            <span className="pointer-events-none absolute right-3 text-sm text-foreground-muted select-none">
               kr
             </span>
           </div>

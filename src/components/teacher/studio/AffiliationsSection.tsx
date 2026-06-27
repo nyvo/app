@@ -9,7 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { SettingsSection } from '@/components/teacher/SettingsSection';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,21 +63,21 @@ export function AffiliationsSection() {
   if (isBusiness && !currentTeam) return null;
 
   return (
-    <div ref={anchorRef} id="samarbeid" className="scroll-mt-10">
+    <div ref={anchorRef} id="samarbeid" className="scroll-mt-10 space-y-6">
       {isBusiness && currentTeam ? (
-        <SettingsSection
-          title="Samarbeid"
-          description="Inviter instruktører til å vise kursene sine på studiosiden din."
-        >
+        <>
+          <p className="text-sm text-foreground-muted">
+            Inviter instruktører til å vise kursene sine på studiosiden din.
+          </p>
           <BusinessView teamId={currentTeam.id} />
-        </SettingsSection>
+        </>
       ) : (
-        <SettingsSection
-          title="Samarbeid"
-          description="Vis kursene dine på et studios side."
-        >
+        <>
+          <p className="text-sm text-foreground-muted">
+            Vis kursene dine på et studios side.
+          </p>
           <IndividualView sellerId={currentSeller.id} />
-        </SettingsSection>
+        </>
       )}
     </div>
   );
@@ -243,11 +242,11 @@ function IndividualView({ sellerId }: { sellerId: string }) {
               vises ikke. Du kan stoppe visningen når som helst.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <Button variant="secondary" onClick={() => setConfirmLeave(true)}>
+              <Button variant="destructive" onClick={() => setConfirmLeave(true)}>
                 Stopp visning
               </Button>
               {hostUrl && (
-                <Button asChild>
+                <Button variant="secondary" asChild>
                   <a href={hostUrl} target="_blank" rel="noopener noreferrer">
                     Vis studiosiden
                   </a>
@@ -447,7 +446,7 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
         </p>
         <Button
           type="button"
-          variant="secondary"
+          variant="default"
           disabled={creating}
           onClick={() => void handleRegenerate()}
         >
@@ -466,7 +465,7 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
           onFocus={(e) => e.currentTarget.select()}
           aria-label="Invitasjonslenke"
         />
-        <Button type="button" onClick={() => void handleCopy()}>
+        <Button type="button" variant="secondary" onClick={() => void handleCopy()}>
           {copied ? 'Kopiert' : 'Kopier lenke'}
         </Button>
       </div>

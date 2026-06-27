@@ -728,8 +728,8 @@ function CheckoutSummary({
               <>
                 <div className="space-y-2 text-base">
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-foreground">{selectedTier.label}</span>
-                    <span className="tabular-nums text-foreground">
+                    <span className="text-foreground-muted">{selectedTier.label}</span>
+                    <span className="tabular-nums text-foreground-muted">
                       {formatKroner(subtotal)}
                     </span>
                   </div>
@@ -761,7 +761,7 @@ function CheckoutSummary({
         )}
         {isManual && (
           <div className="border-t border-border pt-4">
-            <p className="text-center text-xs text-foreground-muted">
+            <p className="text-center text-sm text-foreground-muted">
               Betaling avtales direkte med studioet – du betaler ikke noe her.
             </p>
           </div>

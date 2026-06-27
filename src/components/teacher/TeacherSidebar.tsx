@@ -2,11 +2,10 @@ import { useEffect } from 'react';
 import { ChevronsUpDown } from '@/lib/icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  Home01Icon,
+  DashboardSquare02Icon,
   Calendar03Icon,
-  BookOpen02Icon,
-  Building03Icon,
-  BankIcon,
+  Folder01Icon,
+  Home01Icon,
   CreditCardIcon,
   UserCircleIcon,
   Settings01Icon,
@@ -18,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { isProSeller } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 import { accountDisplayName } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Sidebar,
   SidebarContent,
@@ -55,12 +54,11 @@ interface NavItem {
 // menu, not here — they're low-frequency and belong under the user's
 // identity. No nested groups.
 const SELLER_NAV_ITEMS: NavItem[] = [
-  { icon: Home01Icon, label: 'Hjem', href: routes.dashboard },
+  { icon: DashboardSquare02Icon, label: 'Oversikt', href: routes.dashboard },
   { icon: Calendar03Icon, label: 'Timeplan', href: routes.schedule },
-  { icon: BookOpen02Icon, label: 'Kurs', href: routes.courses },
-  { icon: Building03Icon, label: 'Studio', href: routes.studio },
-  { icon: CreditCardIcon, label: 'Abonnement', href: routes.settingsBilling },
-  { icon: BankIcon, label: 'Betalingskonto', href: routes.settingsPayouts },
+  { icon: Folder01Icon, label: 'Kurs', href: routes.courses },
+  { icon: Home01Icon, label: 'Studio', href: routes.studio },
+  { icon: CreditCardIcon, label: 'Utbetalingskonto', href: routes.settingsPayouts },
 ];
 
 // Buyer sidebar — minimal. Until the buyer dashboard build-out (deferred
@@ -84,9 +82,9 @@ export const TeacherSidebar = () => {
   const { isMobile, setOpenMobile } = useSidebar();
   const isSeller = profile?.role === 'seller';
   const isPro = isProSeller(currentSeller);
-  // "Betalingskonto" (Stripe onboarding) is a Pro surface — hidden for
-  // free-tier sellers, who never touch Stripe Connect. Becomes the upgrade
-  // entry point when plans ship in the UI.
+  // "Utbetalingskonto" (Stripe onboarding) is a Pro surface — hidden for
+  // free-tier sellers, who never touch Stripe Connect. Free sellers get the
+  // upgrade prompt via the plan card in the footer instead.
   const navItems =
     profile?.role === 'buyer'
       ? BUYER_NAV_ITEMS
@@ -119,17 +117,6 @@ export const TeacherSidebar = () => {
         >
           Openspot
         </Link>
-        {isSeller && (
-          <Link
-            to={routes.settingsBilling}
-            className="mx-3 mb-2 flex items-center justify-between rounded-md border border-sidebar-border px-3 py-2 text-sm outline-none transition-colors duration-150 hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-          >
-            <span className="font-medium text-sidebar-foreground-muted">Plan</span>
-            <Badge variant={isPro ? 'success' : 'neutral'} shape="pill" size="sm">
-              {isPro ? 'Pro' : 'Start'}
-            </Badge>
-          </Link>
-        )}
       </SidebarHeader>
 
       <SidebarContent>
@@ -157,13 +144,29 @@ export const TeacherSidebar = () => {
       </SidebarContent>
 
       <SidebarFooter>
+        {/* Free sellers get the upsell card; Pro folds plan + billing into the
+            account menu below (no standalone card → no doubled bottom cards). */}
+        {isSeller && !isPro && (
+          <div className="rounded-lg bg-muted px-3 py-2.5">
+            <div className="text-sm font-medium text-sidebar-foreground">Start</div>
+            <p className="mt-1 text-[13px] text-sidebar-foreground-muted">
+              Få kortbetaling og automatiske utbetalinger med Pro.
+            </p>
+            <Button asChild className="mt-2.5 w-full">
+              <Link to={routes.settingsBilling}>Oppgrader til Pro</Link>
+            </Button>
+          </div>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="text-sidebar-foreground-muted hover:bg-sidebar-accent hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-foreground">
-                  <span className="flex-1 truncate">{displayName || 'Konto'}</span>
-                  <ChevronsUpDown className="ml-auto size-4" />
+                <SidebarMenuButton className="h-auto py-1.5 text-sidebar-foreground-muted hover:bg-sidebar-accent hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-foreground">
+                  <div className="grid flex-1 min-w-0 text-left leading-tight">
+                    <span className="truncate text-sidebar-foreground">{displayName || 'Konto'}</span>
+                    {isPro && <span className="text-xs">Pro</span>}
+                  </div>
+                  <ChevronsUpDown className="ml-auto size-4 shrink-0" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -185,12 +188,18 @@ export const TeacherSidebar = () => {
                         {displayName}
                       </span>
                       <span className="text-sm truncate text-foreground-muted">
-                        {profile?.email}
+                        {isPro ? 'Pro' : 'Start'}
                       </span>
                     </div>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to={routes.settingsBilling}>
+                    <HugeiconsIcon icon={CreditCardIcon} size={16} strokeWidth={1.75} />
+                    Abonnement
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to={routes.settingsProfile}>
                     <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={1.75} />

@@ -22,7 +22,7 @@ import type { ReactNode } from 'react';
  *     </div>
  *   </PageShell>
  *
- * Heading size matches the reference (Betalingskonto): text-base. The label →
+ * Heading size matches the reference (Utbetalingskonto): text-base. The label →
  * content gap is 16px; sections are separated by the parent's larger
  * `space-y-10`, so groups read as distinct units (bigger gap between than
  * within — the rhythm that signals what belongs together).

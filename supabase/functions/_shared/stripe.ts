@@ -35,7 +35,10 @@ export interface StripeSubscription {
   id: string
   customer: string
   status: string
+  // Recent API versions report current_period_end on the item, not the sub.
   current_period_end?: number
+  cancel_at_period_end?: boolean
+  items?: { data?: Array<{ current_period_end?: number }> }
   metadata?: Record<string, string>
 }
 
@@ -151,6 +154,13 @@ export async function createStripeCheckoutSession(params: {
     'line_items[0][price]': params.priceId,
     'line_items[0][quantity]': 1,
     allow_promotion_codes: true,
+    // 25% MVA via Stripe Tax. Prices are ex-VAT (dashboard "Include in prices
+    // → No"), so tax is added on top. Collect + persist the buyer's address so
+    // Stripe can locate the sale (Norway), and let B2B buyers add their org-nr.
+    automatic_tax: { enabled: true },
+    billing_address_collection: 'required',
+    customer_update: { address: 'auto' },
+    tax_id_collection: { enabled: true },
     client_reference_id: params.sellerId,
     success_url: params.successUrl,
     cancel_url: params.cancelUrl,
@@ -200,6 +210,23 @@ function timingSafeEqual(a: string, b: string): boolean {
     diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
   }
   return diff === 0
+}
+
+const LIVE_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing', 'past_due'])
+
+/**
+ * Live (billable) subscriptions for a customer — active, trialing or past_due.
+ * Deliberately EXCLUDES 'incomplete' / 'canceled' so an abandoned checkout never
+ * blocks a legitimate retry. Used to enforce one subscription per seller before
+ * opening a new checkout, since the DB plan flag lags the webhook.
+ */
+export async function listLiveSubscriptions(customerId: string): Promise<StripeSubscription[]> {
+  const list = await stripeRequest<StripeList<StripeSubscription>>(
+    '/subscriptions',
+    { customer: customerId, limit: 100 },
+    { method: 'GET' },
+  )
+  return (list.data ?? []).filter((sub) => LIVE_SUBSCRIPTION_STATUSES.has(sub.status))
 }
 
 export async function verifyStripeSignature(params: {

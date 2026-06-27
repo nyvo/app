@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Check } from '@/lib/icons';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,22 +16,55 @@ import {
 import { friendlyError } from '@/lib/error-messages';
 import { toast } from 'sonner';
 
-const STRIPE_STATUS_LABEL: Record<string, string> = {
-  pending: 'Venter på fullføring',
-  restricted: 'Mangler informasjon',
-  rejected: 'Avslått',
-  enabled: 'Aktiv',
+type StatusTone = {
+  variant: 'success' | 'warning' | 'destructive' | 'neutral';
+  /** Subtle same-hue border ring — the Copilot-style badge anatomy. */
+  ring: string;
+  label: string;
 };
 
+// Stripe Connect account status → badge tone + Norwegian label.
+const STRIPE_STATUS_BADGE: Record<'pending' | 'restricted' | 'rejected' | 'enabled', StatusTone> = {
+  pending: { variant: 'warning', ring: 'border-warning/30', label: 'Venter på fullføring' },
+  restricted: { variant: 'warning', ring: 'border-warning/30', label: 'Mangler informasjon' },
+  rejected: { variant: 'destructive', ring: 'border-danger/25', label: 'Avslått' },
+  enabled: { variant: 'success', ring: 'border-success/30', label: 'Aktiv' },
+};
+
+const NOT_STARTED_BADGE: StatusTone = { variant: 'neutral', ring: 'border-foreground-muted/20', label: 'Ikke satt opp' };
+const PRO_LOCKED_BADGE: StatusTone = { variant: 'neutral', ring: 'border-foreground-muted/20', label: 'Pro-funksjon' };
+
+function StatusPill({ tone }: { tone: StatusTone }) {
+  return (
+    <Badge
+      variant={tone.variant}
+      shape="pill"
+      size="sm"
+      className={tone.ring}
+      role="status"
+      aria-label={`Status: ${tone.label}`}
+    >
+      {tone.label}
+    </Badge>
+  );
+}
+
 /**
- * Payments page. Three states based on the seller's Stripe Connect onboarding:
+ * Payments page — a single flat "payout account" surface (modeled on Copilot's
+ * Payout account screen): page title with an inline status badge, then a
+ * subtitle and a divider; below it a short sub-headline, a one-sentence
+ * description, and a single primary action. The content is driven by the
+ * seller's Stripe Connect onboarding state:
  *
- *   1. !stripeStarted && !stripeConnected → minimal onboarding CTA
- *   2.  stripeStarted && !stripeConnected → "fullfør hos Stripe" with status + buttons
- *   3.  stripeConnected                  → success state + link to Stripe dashboard
+ *   • !isPro                   → upsell: card payments are a Pro feature
+ *   • Pro, not started         → "Kom i gang" (hosted Stripe onboarding)
+ *   • Pro, started, !connected → "Fortsett oppsettet" (+ rejected sub-case)
+ *   • Pro, connected           → "Se oversikt" (Stripe Express dashboard)
  *
- * No balance / settlements / transactions display — the merchant manages all of
- * that on Stripe's own Express dashboard.
+ * No balance / settlements UI — the merchant manages all of that on Stripe's
+ * own Express dashboard. Status re-syncs automatically on return from Stripe
+ * (?stripe=return) and server-side via the account.updated webhook, so there
+ * is no manual "check status" control.
  */
 const PaymentsPage = () => {
   const { currentSeller, refreshSellers } = useAuth();
@@ -41,7 +74,6 @@ const PaymentsPage = () => {
   const stripeStarted = !!currentSeller?.stripe_account_id;
   const stripeStatus = currentSeller?.stripe_account_status ?? null;
   const [stripeLoading, setStripeLoading] = useState(false);
-  const [stripeChecking, setStripeChecking] = useState(false);
 
   const handleStartStripe = useCallback(async () => {
     if (!currentSeller?.id) return;
@@ -59,9 +91,7 @@ const PaymentsPage = () => {
 
   const handleCheckStripe = useCallback(async () => {
     if (!currentSeller?.id) return;
-    setStripeChecking(true);
     const { data, error } = await refreshStripeConnectStatus(currentSeller.id);
-    setStripeChecking(false);
     if (error) {
       toast.error('Kunne ikke sjekke status. Prøv igjen.');
       return;
@@ -70,7 +100,7 @@ const PaymentsPage = () => {
     if (data?.onboarding_complete) {
       toast.success('Utbetalinger er klare');
     } else if (data?.status === 'rejected') {
-      toast.error('Søknaden ble avslått. Send en e-post til hei@openspot.no.');
+      toast.error('Søknaden ble avslått. Ta gjerne kontakt på hei@openspot.no.');
     } else {
       toast('Oppsettet er ikke fullført ennå.');
     }
@@ -107,131 +137,79 @@ const PaymentsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSeller?.id, isPro]);
 
-  if (!isPro) {
-    return (
-      <main className="flex-1 min-h-full overflow-y-auto bg-background">
-        <MobileTeacherHeader />
+  // ─── One view-model per onboarding state, rendered by the flat layout below ───
+  let subhead: string;
+  let tone: StatusTone;
+  let desc: string;
+  let action: ReactNode;
 
-        <PageShell narrow="centered" title="Betalingskonto">
-          <Card>
-            <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="text-base font-medium text-foreground">
-                  Integrerte betalinger er Pro
-                </p>
-                <p className="mt-1 text-base text-foreground-muted">
-                  Start-kontoer tar imot påmeldinger med betaling avtalt direkte med instruktør.
-                  Oppgrader til Pro for kortbetaling, servicegebyr og automatiske utbetalinger.
-                </p>
-              </div>
-              <Button asChild className="shrink-0">
-                <Link to={routes.settingsBilling}>Se abonnement</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </PageShell>
-      </main>
+  if (!isPro) {
+    subhead = 'Ta betalt med kort';
+    tone = PRO_LOCKED_BADGE;
+    desc =
+      'I dag avtaler du betaling direkte med deltakerne. Med Pro får du kortbetaling og automatiske utbetalinger.';
+    action = (
+      <Button asChild>
+        <Link to={routes.settingsBilling}>Oppgrader til Pro</Link>
+      </Button>
     );
+  } else if (!stripeStarted && !stripeConnected) {
+    subhead = 'Sett opp utbetalinger';
+    tone = NOT_STARTED_BADGE;
+    desc =
+      'Vi sender deg til Stripe for å bekrefte virksomheten og legge til kontonummeret utbetalingene skal gå til.';
+    action = (
+      <Button onClick={handleStartStripe} loading={stripeLoading} loadingText="Starter">
+        Kom i gang
+      </Button>
+    );
+  } else if (stripeStarted && !stripeConnected) {
+    if (stripeStatus === 'rejected') {
+      subhead = 'Søknaden ble avslått';
+      tone = STRIPE_STATUS_BADGE.rejected;
+      desc = 'Ta gjerne kontakt på hei@openspot.no, så hjelper vi deg.';
+      action = (
+        <Button asChild>
+          <a href="mailto:hei@openspot.no">Kontakt oss</a>
+        </Button>
+      );
+    } else {
+      subhead = 'Fullfør oppsettet';
+      if (stripeStatus === 'restricted') {
+        tone = STRIPE_STATUS_BADGE.restricted;
+        desc = 'Stripe mangler litt informasjon. Vi aktiverer utbetalinger så snart alt er på plass.';
+      } else {
+        tone = STRIPE_STATUS_BADGE.pending;
+        desc = 'Vi aktiverer utbetalinger automatisk når kontoen er klar hos Stripe.';
+      }
+      action = (
+        <Button onClick={handleStartStripe} loading={stripeLoading} loadingText="Åpner">
+          Fortsett oppsettet
+        </Button>
+      );
+    }
+  } else {
+    subhead = 'Utbetalingene er klare';
+    tone = STRIPE_STATUS_BADGE.enabled;
+    desc =
+      'Stripe håndterer utbetalingene direkte til bankkontoen din. Saldo, utbetalinger og innstillinger finner du i oversikten.';
+    action = <Button variant="secondary" onClick={handleOpenStripeDashboard}>Se oversikt</Button>;
   }
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
       <MobileTeacherHeader />
 
-      <PageShell narrow="centered" title="Betalingskonto">
-        <div className="space-y-8">
-          {/* ─── Not started — single CTA; Stripe collects the details in hosted onboarding ─── */}
-          {!stripeStarted && !stripeConnected && (
-            <section className="space-y-6">
-              <div>
-                <h2 className="text-base font-medium tracking-tight text-foreground">Sett opp utbetalinger</h2>
-                <p className="mt-1 text-base text-foreground-muted">
-                  Vi bruker Stripe til å håndtere utbetalinger. Du fullfører oppsettet hos dem.
-                </p>
-              </div>
-              <Card>
-                <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-base text-foreground">
-                    Du blir sendt til Stripe for å bekrefte virksomheten og legge til kontonummeret utbetalingene skal gå til.
-                  </p>
-                  <Button
-                    className="shrink-0"
-                    onClick={handleStartStripe}
-                    loading={stripeLoading}
-                    loadingText="Starter"
-                  >
-                    Kom i gang
-                  </Button>
-                </CardContent>
-              </Card>
-            </section>
-          )}
-
-          {/* ─── In progress ─── */}
-          {stripeStarted && !stripeConnected && (
-            <section className="space-y-6">
-              <div>
-                <h2 className="text-base font-medium tracking-tight text-foreground">Fullfør hos Stripe</h2>
-                <p className="mt-1 text-base text-foreground-muted">
-                  Status: {stripeStatus ? (STRIPE_STATUS_LABEL[stripeStatus] ?? 'Venter') : 'Venter'}.
-                </p>
-              </div>
-              <Card>
-                <CardContent>
-                  {stripeStatus === 'rejected' ? (
-                    <p className="text-base text-foreground">
-                      Søknaden ble avslått. Kontakt oss på hei@openspot.no for hjelp.
-                    </p>
-                  ) : (
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-base text-foreground">
-                        Fullfør oppsettet hos Stripe. Når kontoen er klar, aktiverer vi utbetalinger automatisk.
-                      </p>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Button
-                          variant="ghost"
-                          onClick={handleCheckStripe}
-                          loading={stripeChecking}
-                          loadingText="Sjekker"
-                        >
-                          Sjekk status
-                        </Button>
-                        <Button onClick={handleStartStripe} loading={stripeLoading} loadingText="Åpner">
-                          Fortsett hos Stripe
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </section>
-          )}
-
-          {/* ─── Active — success card with a link into the Express dashboard ─── */}
-          {stripeConnected && (
-            <section>
-              <Card>
-                <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground-muted">
-                    <Check className="size-5" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-base font-medium text-foreground">
-                      Utbetalinger er klare
-                    </p>
-                    <p className="mt-1 text-base text-foreground-muted">
-                      Stripe håndterer utbetalingene direkte til bankkontoen din. Saldo, utbetalinger og innstillinger ser du i Stripe-panelet.
-                    </p>
-                    <div className="mt-4">
-                      <Button onClick={handleOpenStripeDashboard}>
-                        Åpne Stripe-panelet
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-          )}
+      <PageShell
+        narrow="centered"
+        title="Utbetalingskonto"
+        badge={<StatusPill tone={tone} />}
+        description="Slik får du betalt for kursene dine."
+      >
+        <div className="border-t border-border-subtle pt-8">
+          <h2 className="text-base font-medium tracking-tight text-foreground">{subhead}</h2>
+          <p className="mt-1 max-w-prose text-base text-foreground-muted">{desc}</p>
+          <div className="mt-5">{action}</div>
         </div>
       </PageShell>
     </main>

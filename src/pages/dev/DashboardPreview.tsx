@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
 import {
-  ManualPaymentsPanel,
+  LockedIncomeCard,
   RecentSignupsSection,
   UpcomingCoursesSection,
 } from '@/pages/teacher/TeacherDashboard';
@@ -153,7 +153,7 @@ export default function DashboardPreview() {
 
         <PreviewState label="Start (gratis)">
           <div className="space-y-8">
-            <ManualPaymentsPanel />
+            <LockedIncomeCard />
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
               <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />

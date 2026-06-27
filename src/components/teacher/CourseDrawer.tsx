@@ -275,7 +275,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
       <>
         {whenLine}
         {whenLine && courseData.location && (
-          <span className="text-foreground-disabled mx-2">·</span>
+          <span className="text-foreground-muted mx-2">·</span>
         )}
         {courseData.location}
       </>
@@ -309,7 +309,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
                 </AlertDescription>
                 <div className="mt-3">
                   <Button
-                    variant="secondary"
+                    variant="default"
                     onClick={() => navigate(routes.settingsPayouts)}
                   >
                     Fullfør oppsettet
@@ -575,7 +575,7 @@ function ScheduleQuickView({
       </div>
 
       <div className="border-t border-border px-6 py-4 bg-background">
-        <Button asChild className="w-full">
+        <Button asChild variant="secondary" className="w-full">
           <Link to={routes.course(courseId)} onClick={onClose}>
             Åpne kursside
           </Link>

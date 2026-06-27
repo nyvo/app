@@ -133,7 +133,7 @@ export function StudioMonthGrid({ courses, onSelectDay }: StudioMonthGridProps) 
               aria-label={`${cell.getDate()}. ${MONTHS[cell.getMonth()]}${hasClasses ? `, ${count} klasser` : ''}`}
               className={cn(
                 'group relative flex aspect-square flex-col items-center justify-center rounded-md text-sm transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
                 isSelected
                   ? 'bg-foreground text-background'
                   : isToday

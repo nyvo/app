@@ -25,7 +25,6 @@
    ============================================================ */
 
 @theme inline {
-  --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', sans-serif;
   --font-serif: 'EB Garamond Variable', Georgia, serif; /* marketing display only — never in the dashboard */
 
@@ -37,15 +36,15 @@
   --color-surface-tinted: var(--surface-tinted);
   --color-surface-tinted-border: var(--surface-tinted-border);
   --color-surface-on-dark: var(--surface-on-dark);
-  --color-border-on-dark: var(--border-on-dark);
 
-  /* Chrome — the shared dark-Slate surface (sidebar, toasts). Exposed for
-     marketing dark bands: the landing page previews the app's chrome. */
+  /* Chrome — the dark surface for toasts + marketing dark bands (the landing
+     page previews the app's chrome). No longer the sidebar — that's a light rail now. */
   --color-chrome: var(--chrome-surface);
   --color-chrome-foreground: var(--chrome-foreground);
   --color-chrome-foreground-muted: var(--chrome-foreground-muted);
 
-  /* Sidebar — permanently-dark warm rail (same in both app themes) */
+  /* Sidebar — light rail tracking the app surface (white in light, dark in dark),
+     border-separated; items + cards use translucent --hover / --muted fills */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-foreground-muted: var(--sidebar-foreground-muted);
@@ -62,9 +61,6 @@
   /* Brand / interaction */
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-primary-muted-foreground: var(--primary-muted-foreground);
-  --color-brand: var(--brand);
-  --color-brand-foreground: var(--brand-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
@@ -73,6 +69,15 @@
   /* Hover/active fill (subtle, not a status) */
   --color-muted: var(--muted);
   --color-active: var(--neutral-3);
+
+  /* Translucent interaction overlays — ink at low alpha, adapt to surface + theme */
+  --color-hover: var(--hover);
+  --color-pressed: var(--pressed);
+
+  /* Beige — warm highlight surface only (upsell/callouts); never an action */
+  --color-beige: var(--beige);
+  --color-beige-foreground: var(--beige-foreground);
+  --color-beige-border: var(--beige-border);
 
   /* Status — solid (alert dialog, toast, button) + subtle (pill, banner) */
   --color-success: var(--success);
@@ -116,7 +121,6 @@
   --radius-xl: 10px;   /* cards, panels, dialogs (THE surface radius) */
   --radius-2xl: 12px;  /* large marketing surfaces, product frames */
   --radius-3xl: 16px;  /* oversized marketing bands */
-  --radius-4xl: 20px;  /* reserved — hero-scale surfaces */
 
   /* ── Type scale (Studio canonical) ──────────────────────────
        Sizes in rem so user font-size preferences scale the UI
@@ -185,21 +189,21 @@
      tokens below. Adding a new color = define here first.
      ──────────────────────────────────────────────────────────── */
 
-  /* Neutral — Radix Slate (light mode), cool hue ~250–286. Cool neutral chosen
-     app-wide: pairs with the indigo primary and shares temperature with the
-     dark Slate chrome (sidebar, toast) for one coherent system. */
-  --neutral-1:  oklch(0.991 0.001 286);
-  --neutral-2:  oklch(0.983 0.003 286);
-  --neutral-3:  oklch(0.956 0.004 286);
-  --neutral-4:  oklch(0.932 0.005 286);
-  --neutral-5:  oklch(0.910 0.007 277);
-  --neutral-6:  oklch(0.887 0.010 286);
-  --neutral-7:  oklch(0.853 0.011 280);
-  --neutral-8:  oklch(0.794 0.016 278);
-  --neutral-9:  oklch(0.645 0.016 278);
-  --neutral-10: oklch(0.611 0.015 273);
-  --neutral-11: oklch(0.502 0.014 264);   /* WCAG 1.4.3 AA on white (~4.7:1) */
-  --neutral-12: oklch(0.241 0.010 248);
+  /* Neutral — pure-neutral grey (chroma 0). De-tinted from Radix Slate to kill the
+     cold blue cast; the only warm note in the system is --beige (accent only).
+     Lightness ramp preserved, so every contrast ratio is unchanged. */
+  --neutral-1:  oklch(0.991 0 0);
+  --neutral-2:  oklch(0.983 0 0);
+  --neutral-3:  oklch(0.956 0 0);
+  --neutral-4:  oklch(0.932 0 0);
+  --neutral-5:  oklch(0.910 0 0);
+  --neutral-6:  oklch(0.887 0 0);
+  --neutral-7:  oklch(0.853 0 0);
+  --neutral-8:  oklch(0.794 0 0);
+  --neutral-9:  oklch(0.645 0 0);
+  --neutral-10: oklch(0.611 0 0);
+  --neutral-11: oklch(0.550 0 0);   /* secondary-text grey — lifted from 0.502 for clearer primary/secondary hierarchy; 4.9:1 AA on white */
+  --neutral-12: oklch(0.241 0 0);
 
   /* Status — jade (success) / amber (warning) / red (danger) */
   --jade-3:   oklch(0.953 0.034 158);
@@ -219,20 +223,16 @@
   --surface-tinted: oklch(0.97 0.03 270);
   --surface-tinted-border: oklch(0.9 0.04 270);
   --surface-on-dark: oklch(1 0 0 / 0.06);          /* faint elevated surface over bg-primary */
-  --border-on-dark: oklch(1 0 0 / 0.15);           /* subtle border over bg-primary */
 
   /* Foreground */
   --foreground: var(--neutral-12);
   --foreground-muted: var(--neutral-11);             /* WCAG AA on bg */
   --foreground-disabled: var(--neutral-8);
 
-  /* Brand / interaction — indigo (#3a4dec). White text = 6.1:1 AA. */
-  --primary: oklch(0.515 0.237 270);
+  /* Brand / interaction — periwinkle (#5564c4). White text = 5.2:1 AA. */
+  --primary: oklch(0.540 0.150 274);
   --primary-foreground: oklch(0.985 0 0);
   --toast-surface: var(--chrome-surface);             /* shared dark-chrome surface */
-  --primary-muted-foreground: oklch(1 0 0 / 0.7);
-  --brand: oklch(0.515 0.237 270);
-  --brand-foreground: oklch(1 0 0);
   --secondary: var(--neutral-3);
   --secondary-foreground: var(--neutral-12);
   --accent: var(--neutral-3);
@@ -258,7 +258,19 @@
   --info-subtle: oklch(0.95 0.03 270);
 
   /* Selected-state tint (cards, steppers) — NOT text ::selection (that uses --muted) */
-  --selection-light: oklch(0.515 0.237 270 / 8%);
+  --selection-light: oklch(0.540 0.150 274 / 8%);
+
+  /* Beige — the one warm accent on the pure-neutral system. Highlight surfaces
+     only (upsell, callouts); never a button/action. */
+  --beige: oklch(0.935 0.022 80);
+  --beige-foreground: oklch(0.320 0.022 70);
+  --beige-border: oklch(0.885 0.028 78);
+
+  /* Interaction overlays — --foreground ink at low alpha. Adapts to any surface
+     AND theme (dark text darkens light-mode hovers; light text lightens dark-mode
+     hovers), so one token works on the rail, white cards, anywhere. */
+  --hover: color-mix(in oklab, var(--foreground) 6%, transparent);
+  --pressed: color-mix(in oklab, var(--foreground) 12%, transparent);
 
   /* Structure */
   --border: var(--neutral-7);                         /* visible divider (was neutral-6, too faint on white) */
@@ -283,15 +295,18 @@
   --chrome-ring:             oklch(1 0 0 / 0.35);     /* focus ring on dark chrome — border (12%) is too
                                                          faint for focus; 35% reads clearly on slate-3 */
 
-  /* Sidebar — consumes the dark-chrome scale (neutral rail, no brand). */
-  --sidebar: var(--chrome-surface);
-  --sidebar-foreground: var(--chrome-foreground);
-  --sidebar-foreground-muted: var(--chrome-foreground-muted);
-  --sidebar-accent: var(--chrome-hover);
-  --sidebar-active: var(--chrome-active);
-  --sidebar-active-foreground: var(--chrome-foreground);
-  --sidebar-border: var(--chrome-border);
-  --sidebar-ring: var(--chrome-ring);
+  /* Sidebar — white rail (= page canvas), separated only by a border. The nav
+     items and the plan card carry the light-neutral fill (hover = --hover,
+     active + card = --muted); the rail itself stays white so it never reads
+     heavy. --chrome-* stays dark for toasts/marketing. */
+  --sidebar: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-foreground-muted: var(--foreground-muted);
+  --sidebar-accent: var(--hover);
+  --sidebar-active: var(--muted);
+  --sidebar-active-foreground: var(--foreground);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: var(--ring);
 
   --chart-1: oklch(0.809 0.105 266);
   --chart-2: oklch(0.623 0.200 268);
@@ -303,19 +318,19 @@
 .dark {
   /* ── PRIMITIVES (dark mode — warm Stone dark, indigo accents) ── */
 
-  /* Neutral — Radix Slate dark (1 = darkest, 12 = lightest, mirroring light roles). */
-  --neutral-1:  oklch(0.179 0.004 286);
-  --neutral-2:  oklch(0.213 0.004 264);
-  --neutral-3:  oklch(0.252 0.006 271);
-  --neutral-4:  oklch(0.283 0.007 248);
-  --neutral-5:  oklch(0.312 0.008 256);
-  --neutral-6:  oklch(0.347 0.010 254);
-  --neutral-7:  oklch(0.399 0.012 253);
-  --neutral-8:  oklch(0.489 0.016 252);
-  --neutral-9:  oklch(0.537 0.015 262);
-  --neutral-10: oklch(0.583 0.015 267);
-  --neutral-11: oklch(0.769 0.010 258);
-  --neutral-12: oklch(0.949 0.003 264);
+  /* Neutral — pure-neutral grey (dark, chroma 0). Mirrors the light ramp, de-tinted. */
+  --neutral-1:  oklch(0.179 0 0);
+  --neutral-2:  oklch(0.213 0 0);
+  --neutral-3:  oklch(0.252 0 0);
+  --neutral-4:  oklch(0.283 0 0);
+  --neutral-5:  oklch(0.312 0 0);
+  --neutral-6:  oklch(0.347 0 0);
+  --neutral-7:  oklch(0.399 0 0);
+  --neutral-8:  oklch(0.489 0 0);
+  --neutral-9:  oklch(0.537 0 0);
+  --neutral-10: oklch(0.583 0 0);
+  --neutral-11: oklch(0.640 0 0);   /* secondary-text grey (dark) — lowered from 0.769 to match the light primary/secondary separation; 5.6:1 AA on dark canvas */
+  --neutral-12: oklch(0.949 0 0);
 
   /* Status — dark mode */
   --jade-3:   oklch(0.270 0.040 165);
@@ -332,20 +347,16 @@
   --surface-tinted: oklch(0.27 0.04 270);
   --surface-tinted-border: oklch(0.38 0.06 270);
   --surface-on-dark: oklch(1 0 0 / 0.06);
-  --border-on-dark: oklch(1 0 0 / 0.15);
 
   /* Foreground */
   --foreground: var(--neutral-12);
   --foreground-muted: var(--neutral-11);
   --foreground-disabled: var(--neutral-8);
 
-  /* Brand / interaction — indigo, brighter on dark (~5:1 white text AA). */
-  --primary: oklch(0.560 0.220 270);
+  /* Brand / interaction — periwinkle, slightly brighter on dark (~4.9:1 white text AA). */
+  --primary: oklch(0.555 0.150 274);
   --primary-foreground: oklch(0.985 0 0);
   /* --toast-surface inherits the shared --chrome-surface from :root (dark in both themes) */
-  --primary-muted-foreground: oklch(1 0 0 / 0.7);
-  --brand: oklch(0.560 0.220 270);
-  --brand-foreground: oklch(0.985 0 0);
   --secondary: var(--neutral-3);
   --secondary-foreground: var(--neutral-12);
   --accent: var(--neutral-3);
@@ -367,7 +378,12 @@
   --info-subtle: oklch(0.30 0.05 270);
 
   /* Selected-state tint */
-  --selection-light: oklch(0.560 0.220 270 / 12%);
+  --selection-light: oklch(0.555 0.150 274 / 12%);
+
+  /* Beige — warm accent (dark) */
+  --beige: oklch(0.300 0.018 78);
+  --beige-foreground: oklch(0.900 0.015 80);
+  --beige-border: oklch(0.360 0.020 78);
 
   /* Structure */
   --border: var(--neutral-7);
@@ -492,6 +508,9 @@
     box-shadow:
       0 1px 2px rgb(16 24 40 / 0.04),
       0 6px 20px -6px rgb(16 24 40 / 0.10);
+  }
+  .shadow-float {
+    box-shadow: 0 10px 30px -6px rgb(0 0 0 / 0.22);
   }
 
 

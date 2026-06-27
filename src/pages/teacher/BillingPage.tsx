@@ -1,29 +1,37 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Check, ExternalLink } from '@/lib/icons'
+import { Check, ExternalLink, Sparkles } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { PageShell } from '@/components/teacher/PageShell'
-import { SettingsSection } from '@/components/teacher/SettingsSection'
 import { useAuth } from '@/contexts/AuthContext'
-import { formatKroner } from '@/lib/utils'
+import { cn, formatKroner } from '@/lib/utils'
 import { createStripeCheckoutSession, createStripePortalSession } from '@/services/billing'
 import { toast } from 'sonner'
 
 type SubscriptionPlan = string | null | undefined
 type SubscriptionStatus = string | null | undefined
 
-function planLabel(plan: SubscriptionPlan): string {
-  return plan === 'pro' ? 'Pro' : 'Start'
-}
-
-function proStatusLine(status: SubscriptionStatus, renewsAt: string | null): string {
-  if (status === 'past_due') return 'Betaling krever oppfølging'
-  if (status === 'canceled') return 'Avsluttet'
-  if (status === 'active') return renewsAt ? `Aktiv · Fornyes ${renewsAt}` : 'Aktiv'
+/** Subscription state → a short status line for the Pro summary row. */
+export function subscriptionStatusLine(
+  status: SubscriptionStatus,
+  renewsAt: string | null,
+  cancelAtPeriodEnd: boolean,
+): string {
+  // past_due is surfaced as a dedicated warning alert (see BillingPlanSections),
+  // not as this muted status line.
+  if (status === 'active') {
+    if (cancelAtPeriodEnd) {
+      return renewsAt
+        ? `Abonnementet ditt utgår ${renewsAt}`
+        : 'Abonnementet ditt utgår ved periodeslutt'
+    }
+    return renewsAt ? `Fornyes automatisk ${renewsAt}` : 'Fornyes automatisk'
+  }
   return 'Ingen aktiv betaling'
 }
 
@@ -55,14 +63,23 @@ const BillingPage = () => {
   const [portalLoading, setPortalLoading] = useState(false)
 
   const isPro = currentSeller?.subscription_plan === 'pro'
-  const hasStripeCustomer = !!currentSeller?.subscription_customer_id
+  const isPastDue = isPro && currentSeller?.subscription_status === 'past_due'
   const renewsAt = currentSeller?.subscription_current_period_end
     ? formatBillingDate(currentSeller.subscription_current_period_end)
     : null
+  const statusLine = subscriptionStatusLine(
+    currentSeller?.subscription_status,
+    renewsAt,
+    currentSeller?.subscription_cancel_at_period_end ?? false,
+  )
 
+  // StrictMode (dev) double-invokes effects; the toast + refresh must run once
+  // per checkout return, so dedupe with a ref.
+  const stripeResultHandled = useRef(false)
   useEffect(() => {
     const stripeResult = searchParams.get('stripe')
-    if (!stripeResult) return
+    if (!stripeResult || stripeResultHandled.current) return
+    stripeResultHandled.current = true
 
     if (stripeResult === 'success') {
       toast.success('Abonnementet er aktivert')
@@ -104,12 +121,30 @@ const BillingPage = () => {
     <main className="min-h-full flex-1 overflow-y-auto bg-background">
       <MobileTeacherHeader />
 
-      <PageShell narrow="centered" title="Abonnement">
+      <PageShell
+        narrow="centered"
+        title="Abonnement"
+        description={isPro && !isPastDue ? statusLine : undefined}
+        action={
+          // past_due drops this header action — the "Oppdater" CTA in the alert
+          // is the single primary action (both open the same Stripe portal).
+          isPro && !isPastDue ? (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleManage}
+              loading={portalLoading}
+              loadingText="Åpner"
+            >
+              Administrer abonnement
+              <ExternalLink className="size-4" aria-hidden />
+            </Button>
+          ) : undefined
+        }
+      >
         <BillingPlanSections
           plan={currentSeller?.subscription_plan}
           status={currentSeller?.subscription_status}
-          renewsAt={renewsAt}
-          missingStripeCustomer={isPro && !hasStripeCustomer}
           onUpgrade={handleUpgrade}
           onManage={handleManage}
           checkoutLoading={checkoutLoading}
@@ -127,127 +162,195 @@ const BillingPage = () => {
 export function BillingPlanSections({
   plan,
   status,
-  renewsAt,
-  missingStripeCustomer,
+  yearly,
   onUpgrade,
   onManage,
   checkoutLoading,
   portalLoading,
 }: {
   plan: SubscriptionPlan
-  status: SubscriptionStatus
-  renewsAt: string | null
-  missingStripeCustomer?: boolean
+  status?: SubscriptionStatus
+  /** When set, free sellers get a Månedlig/Årlig toggle on the Pro card. */
+  yearly?: { price: string; priceSub: string; savings?: string }
   onUpgrade: () => void
-  onManage: () => void
+  onManage?: () => void
   checkoutLoading: boolean
-  portalLoading: boolean
+  portalLoading?: boolean
 }) {
   const isPro = plan === 'pro'
-  const needsAttention = isPro && status === 'past_due'
+  const isPastDue = isPro && status === 'past_due'
+
+  const [interval, setInterval] = useState<'month' | 'year'>('month')
+  const showInterval = !!yearly && !isPro
+  const proPrice = showInterval && interval === 'year' ? yearly.price : formatKroner(499)
+  const proPriceSub = showInterval && interval === 'year' ? yearly.priceSub : '/mnd'
+
+  const startOption = (
+    <PlanOption
+      name="Start"
+      price="Gratis"
+      description="For instruktører som vil ta påmeldinger og håndtere betaling selv."
+      features={START_FEATURES}
+      active={!isPro}
+    />
+  )
+  const proOption = (
+    <PlanOption
+      name="Pro"
+      price={proPrice}
+      priceSub={proPriceSub}
+      description="For instruktører og studioer som vil ta betalt automatisk."
+      features={PRO_FEATURES}
+      active={isPro}
+      action={
+        !isPro && (
+          <Button
+            type="button"
+            className="w-full"
+            onClick={onUpgrade}
+            loading={checkoutLoading}
+            loadingText="Åpner"
+          >
+            Oppgrader til Pro
+          </Button>
+        )
+      }
+    />
+  )
+
+  const cards = (
+    <div className="grid gap-4 md:grid-cols-2">
+      {isPro ? (
+        <>
+          {startOption}
+          {proOption}
+        </>
+      ) : (
+        <>
+          <PlanColumn>{startOption}</PlanColumn>
+          <PlanColumn featured label="Anbefalt">
+            {proOption}
+          </PlanColumn>
+        </>
+      )}
+    </div>
+  )
+
+  // Cards + price footnote read as one unit (tight gap), so the disclaimer
+  // stays anchored to the prices it qualifies rather than floating alone.
+  const cardsAndNote = (
+    <div className="space-y-4">
+      {cards}
+      <p className="text-sm text-foreground-muted">Alle priser eks. mva.</p>
+    </div>
+  )
 
   return (
-    <div className="space-y-10">
-      <SettingsSection title="Plan">
-        <Card>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-base font-medium text-foreground">{planLabel(plan)}</p>
-                  {!isPro && (
-                    <Badge variant="neutral" size="sm">
-                      Gratis
-                    </Badge>
-                  )}
-                </div>
-                <p
-                  className={
-                    needsAttention
-                      ? 'mt-1 text-sm font-medium text-warning'
-                      : 'mt-1 text-sm text-foreground-muted'
-                  }
-                >
-                  {isPro
-                    ? proStatusLine(status, renewsAt)
-                    : 'Kontoen tar imot påmeldinger. Betaling avtaler du direkte med deltakerne.'}
-                </p>
-              </div>
-              {isPro && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="shrink-0"
-                  onClick={onManage}
-                  loading={portalLoading}
-                  loadingText="Åpner"
-                >
-                  Administrer abonnement
-                  <ExternalLink className="size-4" aria-hidden />
-                </Button>
-              )}
-            </div>
+    <div className="space-y-8">
+      {isPastDue && onManage && (
+        <Alert variant="warning" icon={false} className="border-transparent bg-muted">
+          <AlertTitle className="text-base">Betalingen mislyktes</AlertTitle>
+          <AlertDescription className="text-base text-foreground">
+            Oppdater betalingsmåten for å beholde Pro-abonnementet.
+          </AlertDescription>
+          <div className="mt-3">
+            <Button
+              type="button"
+              onClick={onManage}
+              loading={portalLoading}
+              loadingText="Åpner"
+            >
+              Oppdater
+            </Button>
+          </div>
+        </Alert>
+      )}
 
-            {!isPro && (
-              <div className="flex flex-col gap-3 border-t border-border-subtle pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-foreground-muted">
-                  Få betalt automatisk med kort og Vipps i checkout.
-                </p>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="shrink-0"
-                  onClick={onUpgrade}
-                  loading={checkoutLoading}
-                  loadingText="Åpner"
-                >
-                  Oppgrader til Pro
-                </Button>
-              </div>
+      {isPro ? (
+        cardsAndNote
+      ) : (
+        // "Velg plan" + the cards form one group: the header binds to the cards
+        // below it (16px) and is separated from the page header above by the
+        // outer rhythm, so it reads as the section anchor instead of floating.
+        <section>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-medium text-foreground">Velg plan</h2>
+            {showInterval && (
+              <IntervalToggle
+                interval={interval}
+                onChange={setInterval}
+                savings={yearly?.savings}
+              />
             )}
+          </div>
+          <div className="mt-4">{cardsAndNote}</div>
+        </section>
+      )}
+    </div>
+  )
+}
 
-            {missingStripeCustomer && (
-              <p className="border-t border-border-subtle pt-4 text-sm text-foreground-muted">
-                Abonnementet er aktivt, men mangler Stripe-kunde. Kontakt support for fakturering.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </SettingsSection>
+/** Segmented Månedlig/Årlig switch — active segment is a white pill. The yearly
+ *  segment carries the savings nudge so the cheaper option sells itself. */
+function IntervalToggle({
+  interval,
+  onChange,
+  savings,
+}: {
+  interval: 'month' | 'year'
+  onChange: (next: 'month' | 'year') => void
+  savings?: string
+}) {
+  return (
+    <div className="inline-flex items-center rounded-full bg-muted p-0.5 text-sm">
+      {(['month', 'year'] as const).map((value) => (
+        <button
+          key={value}
+          type="button"
+          onClick={() => onChange(value)}
+          aria-pressed={interval === value}
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-medium transition-colors',
+            interval === value
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-foreground-muted hover:text-foreground',
+          )}
+        >
+          {value === 'month' ? 'Månedlig' : 'Årlig'}
+          {value === 'year' && savings && <span className="text-success">{savings}</span>}
+        </button>
+      ))}
+    </div>
+  )
+}
 
-      <SettingsSection title="Velg plan">
-        <div className="grid gap-4 md:grid-cols-2">
-          <PlanOption
-            name="Start"
-            price="Gratis"
-            description="For instruktører som vil ta påmeldinger og håndtere betaling selv."
-            features={START_FEATURES}
-            active={!isPro}
-          />
-          <PlanOption
-            name="Pro"
-            price={`Fra ${formatKroner(499)}`}
-            priceSub="/mnd eks. mva"
-            description="For instruktører og studioer som vil ta betalt automatisk."
-            features={PRO_FEATURES}
-            active={isPro}
-            emphasized
-            action={
-              !isPro && (
-                <Button
-                  type="button"
-                  className="w-full"
-                  onClick={onUpgrade}
-                  loading={checkoutLoading}
-                  loadingText="Åpner"
-                >
-                  Oppgrader til Pro
-                </Button>
-              )
-            }
-          />
+/**
+ * Wraps the featured plan: the SAME card as every tier, sitting inside an outer
+ * frame whose header caps it with "Mest populær". Non-featured columns reserve
+ * the header height (desktop) so the inner cards line up.
+ */
+function PlanColumn({
+  featured,
+  label,
+  children,
+}: {
+  featured?: boolean
+  label?: string
+  children: ReactNode
+}) {
+  return (
+    <div className="flex flex-col">
+      {featured ? (
+        <div className="flex h-10 items-center justify-center gap-1.5 rounded-t-2xl bg-muted text-sm font-medium text-foreground">
+          <Sparkles className="size-3.5 fill-current" aria-hidden />
+          {label}
         </div>
-      </SettingsSection>
+      ) : (
+        <div className="hidden h-10 md:block" aria-hidden />
+      )}
+      <div className={cn('flex-1', featured && 'rounded-b-2xl bg-muted p-1.5 pt-0')}>
+        {children}
+      </div>
     </div>
   )
 }
@@ -259,7 +362,6 @@ function PlanOption({
   description,
   features,
   active,
-  emphasized,
   action,
 }: {
   name: string
@@ -268,23 +370,22 @@ function PlanOption({
   description: string
   features: readonly string[]
   active: boolean
-  emphasized?: boolean
   action?: ReactNode
 }) {
   return (
-    <Card className={emphasized ? 'border-surface-tinted-border bg-surface-tinted' : undefined}>
+    <Card className="h-full border-border">
       <CardContent className="flex h-full flex-col gap-5">
         <div>
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-base font-medium text-foreground">{name}</h3>
             {active && (
-              <Badge variant="outline" size="sm">
-                Nåværende plan
+              <Badge variant="neutral" size="sm" className="text-foreground">
+                Aktiv plan
               </Badge>
             )}
           </div>
           <div className="mt-3 flex items-baseline gap-1.5">
-            <span className="text-2xl font-medium tabular-nums tracking-tight text-foreground">
+            <span className="whitespace-nowrap text-2xl font-medium tabular-nums tracking-tight text-foreground">
               {price}
             </span>
             {priceSub && <span className="text-sm text-foreground-muted">{priceSub}</span>}
@@ -292,10 +393,10 @@ function PlanOption({
           <p className="mt-2 text-sm text-foreground-muted">{description}</p>
         </div>
 
-        <ul className="space-y-2.5 text-sm text-foreground">
+        <ul className="space-y-2.5 text-sm text-foreground-muted">
           {features.map((feature) => (
             <li key={feature} className="flex gap-2.5">
-              <Check className="mt-0.5 size-4 shrink-0 text-foreground" aria-hidden />
+              <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
               <span>{feature}</span>
             </li>
           ))}

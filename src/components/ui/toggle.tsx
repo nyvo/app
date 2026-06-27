@@ -11,7 +11,7 @@ const toggleVariants = cva(
       variant: {
         default: "bg-transparent",
         outline: "border border-border bg-transparent shadow-xs hover:bg-muted",
-        pill: "rounded-md text-xs px-3 py-1.5 bg-transparent border border-transparent text-foreground-muted transition-colors duration-150 ease-out hover:text-foreground hover:bg-surface hover:border-border aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:border-transparent aria-pressed:hover:bg-primary/90 aria-pressed:hover:border-transparent data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-transparent",
+        pill: "rounded-md text-sm px-3 py-1.5 bg-transparent border border-transparent text-foreground-muted transition-colors duration-150 ease-out hover:text-foreground hover:bg-surface hover:border-border aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:border-transparent aria-pressed:hover:bg-primary/90 aria-pressed:hover:border-transparent data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-transparent",
         segmented:
           "h-8 min-w-0 rounded-md px-3 text-xs font-medium bg-transparent text-foreground-muted transition-colors duration-150 ease-out hover:text-foreground aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:shadow-xs aria-pressed:hover:bg-primary/90 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-xs data-[state=on]:hover:bg-primary/90",
       },

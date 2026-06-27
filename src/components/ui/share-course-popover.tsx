@@ -84,7 +84,7 @@ export function ShareCoursePopover({
             <p className="font-medium text-foreground">
               {copied ? 'Lenke kopiert' : 'Kopier lenke'}
             </p>
-            <p className="text-xs text-foreground-muted truncate">{cleanUrl}</p>
+            <p className="text-sm text-foreground-muted truncate">{cleanUrl}</p>
           </div>
         </button>
 

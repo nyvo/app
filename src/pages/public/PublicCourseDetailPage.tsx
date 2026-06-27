@@ -138,7 +138,7 @@ export default function PublicCourseDetailPage() {
                 </div>
                 {course.description && (
                   <section className="border-t border-border pt-8">
-                    <p className="mb-2 text-sm font-medium text-foreground-muted">
+                    <p className="mb-2 text-sm font-medium text-foreground">
                       Om kurset
                     </p>
                     <RichTextContent
@@ -189,7 +189,7 @@ export default function PublicCourseDetailPage() {
 function ArrangorSection({ seller }: { seller: NonNullable<PublicCourseWithDetails['seller']> }) {
   return (
     <section className="border-t border-border pt-8">
-      <p className="mb-3 text-sm font-medium text-foreground-muted">Arrangør</p>
+      <p className="mb-3 text-sm font-medium text-foreground">Arrangør</p>
       {seller.slug ? (
         <Link
           to={`/${seller.slug}`}

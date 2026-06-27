@@ -71,7 +71,7 @@ function RadioGroupCardItem({
       <div className="flex-1 min-w-0">
         <h3 className="text-sm font-medium text-foreground">{title}</h3>
         {description && (
-          <p className="mt-0.5 text-xs text-foreground-muted leading-relaxed">{description}</p>
+          <p className="mt-0.5 text-sm text-foreground-muted leading-relaxed">{description}</p>
         )}
       </div>
       <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm border-2 border-border text-transparent transition-colors group-data-checked/radio-card:border-foreground group-data-checked/radio-card:bg-foreground group-data-checked/radio-card:text-background">
