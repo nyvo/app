@@ -5,6 +5,7 @@ import { Check, ExternalLink, Sparkles } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { PageShell } from '@/components/teacher/PageShell'
 import { useAuth } from '@/contexts/AuthContext'
@@ -21,14 +22,15 @@ export function subscriptionStatusLine(
   renewsAt: string | null,
   cancelAtPeriodEnd: boolean,
 ): string {
-  if (status === 'past_due') return 'Betaling feilet – oppdater kortet for å beholde Pro'
+  // past_due is surfaced as a dedicated warning alert (see BillingPlanSections),
+  // not as this muted status line.
   if (status === 'active') {
     if (cancelAtPeriodEnd) {
       return renewsAt
         ? `Abonnementet ditt utgår ${renewsAt}`
         : 'Abonnementet ditt utgår ved periodeslutt'
     }
-    return renewsAt ? `Fornyes automatisk ${renewsAt}` : 'Aktiv'
+    return renewsAt ? `Fornyes automatisk ${renewsAt}` : 'Fornyes automatisk'
   }
   return 'Ingen aktiv betaling'
 }
@@ -60,9 +62,16 @@ const BillingPage = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
 
+  const isPro = currentSeller?.subscription_plan === 'pro'
+  const isPastDue = isPro && currentSeller?.subscription_status === 'past_due'
   const renewsAt = currentSeller?.subscription_current_period_end
     ? formatBillingDate(currentSeller.subscription_current_period_end)
     : null
+  const statusLine = subscriptionStatusLine(
+    currentSeller?.subscription_status,
+    renewsAt,
+    currentSeller?.subscription_cancel_at_period_end ?? false,
+  )
 
   // StrictMode (dev) double-invokes effects; the toast + refresh must run once
   // per checkout return, so dedupe with a ref.
@@ -112,12 +121,28 @@ const BillingPage = () => {
     <main className="min-h-full flex-1 overflow-y-auto bg-background">
       <MobileTeacherHeader />
 
-      <PageShell narrow="centered" title="Abonnement">
+      <PageShell
+        narrow="centered"
+        title="Abonnement"
+        description={isPro && !isPastDue ? statusLine : undefined}
+        action={
+          isPro ? (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleManage}
+              loading={portalLoading}
+              loadingText="Åpner"
+            >
+              Administrer abonnement
+              <ExternalLink className="size-4" aria-hidden />
+            </Button>
+          ) : undefined
+        }
+      >
         <BillingPlanSections
           plan={currentSeller?.subscription_plan}
           status={currentSeller?.subscription_status}
-          renewsAt={renewsAt}
-          cancelAtPeriodEnd={currentSeller?.subscription_cancel_at_period_end ?? false}
           onUpgrade={handleUpgrade}
           onManage={handleManage}
           checkoutLoading={checkoutLoading}
@@ -135,8 +160,6 @@ const BillingPage = () => {
 export function BillingPlanSections({
   plan,
   status,
-  renewsAt,
-  cancelAtPeriodEnd = false,
   yearly,
   onUpgrade,
   onManage,
@@ -144,18 +167,16 @@ export function BillingPlanSections({
   portalLoading,
 }: {
   plan: SubscriptionPlan
-  status: SubscriptionStatus
-  renewsAt: string | null
-  cancelAtPeriodEnd?: boolean
+  status?: SubscriptionStatus
   /** When set, free sellers get a Månedlig/Årlig toggle on the Pro card. */
-  yearly?: { price: string; priceSub: string }
+  yearly?: { price: string; priceSub: string; savings?: string }
   onUpgrade: () => void
-  onManage: () => void
+  onManage?: () => void
   checkoutLoading: boolean
-  portalLoading: boolean
+  portalLoading?: boolean
 }) {
   const isPro = plan === 'pro'
-  const statusLine = subscriptionStatusLine(status, renewsAt, cancelAtPeriodEnd)
+  const isPastDue = isPro && status === 'past_due'
 
   const [interval, setInterval] = useState<'month' | 'year'>('month')
   const showInterval = !!yearly && !isPro
@@ -195,69 +216,88 @@ export function BillingPlanSections({
     />
   )
 
-  return (
-    <div className="space-y-6">
-      {/* Free sellers: "Velg plan" anchors the row; the Månedlig/Årlig toggle
-          (when yearly pricing is configured) sits on the right. */}
-      {!isPro && (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-medium text-foreground">Velg plan</h2>
-          {showInterval && (
-            <IntervalToggle interval={interval} onChange={setInterval} />
-          )}
-        </div>
-      )}
-
-      {/* Pro only: the live subscription's status + billing management. */}
-      {isPro && (
-        <div className="flex flex-col gap-3 border-b border-border-subtle pb-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm text-foreground-muted">{statusLine}</p>
-          </div>
-          <Button
-            type="button"
-            variant="secondary"
-            className="shrink-0"
-            onClick={onManage}
-            loading={portalLoading}
-            loadingText="Åpner"
-          >
-            Administrer abonnement
-            <ExternalLink className="size-4" aria-hidden />
-          </Button>
-        </div>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2">
-        {isPro ? (
-          <>
-            {startOption}
+  const cards = (
+    <div className="grid gap-4 md:grid-cols-2">
+      {isPro ? (
+        <>
+          {startOption}
+          {proOption}
+        </>
+      ) : (
+        <>
+          <PlanColumn>{startOption}</PlanColumn>
+          <PlanColumn featured label="Anbefalt">
             {proOption}
-          </>
-        ) : (
-          <>
-            <PlanColumn>{startOption}</PlanColumn>
-            <PlanColumn featured label="Anbefalt">
-              {proOption}
-            </PlanColumn>
-          </>
-        )}
-      </div>
+          </PlanColumn>
+        </>
+      )}
+    </div>
+  )
 
-      <div className="rounded-lg bg-muted px-4 py-3 text-center text-sm font-medium text-foreground">
-        Alle priser er eks. mva.
-      </div>
+  // Cards + price footnote read as one unit (tight gap), so the disclaimer
+  // stays anchored to the prices it qualifies rather than floating alone.
+  const cardsAndNote = (
+    <div className="space-y-4">
+      {cards}
+      <p className="text-sm text-foreground-muted">Alle priser eks. mva.</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-8">
+      {isPastDue && onManage && (
+        <Alert variant="warning" icon={false} className="border-transparent bg-muted">
+          <AlertTitle className="text-base">Betalingen mislyktes</AlertTitle>
+          <AlertDescription className="text-base text-foreground">
+            Oppdater betalingsmåten for å beholde Pro-abonnementet.
+          </AlertDescription>
+          <div className="mt-3">
+            <Button
+              type="button"
+              onClick={onManage}
+              loading={portalLoading}
+              loadingText="Åpner"
+            >
+              Oppdater
+            </Button>
+          </div>
+        </Alert>
+      )}
+
+      {isPro ? (
+        cardsAndNote
+      ) : (
+        // "Velg plan" + the cards form one group: the header binds to the cards
+        // below it (16px) and is separated from the page header above by the
+        // outer rhythm, so it reads as the section anchor instead of floating.
+        <section>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-medium text-foreground">Velg plan</h2>
+            {showInterval && (
+              <IntervalToggle
+                interval={interval}
+                onChange={setInterval}
+                savings={yearly?.savings}
+              />
+            )}
+          </div>
+          <div className="mt-4">{cardsAndNote}</div>
+        </section>
+      )}
     </div>
   )
 }
 
-/** Segmented Månedlig/Årlig switch — active segment is a white pill. */
+/** Segmented Månedlig/Årlig switch — active segment is a white pill. The yearly
+ *  segment carries the savings nudge so the cheaper option sells itself. */
 function IntervalToggle({
   interval,
   onChange,
+  savings,
 }: {
   interval: 'month' | 'year'
   onChange: (next: 'month' | 'year') => void
+  savings?: string
 }) {
   return (
     <div className="inline-flex items-center rounded-full bg-muted p-0.5 text-sm">
@@ -268,13 +308,14 @@ function IntervalToggle({
           onClick={() => onChange(value)}
           aria-pressed={interval === value}
           className={cn(
-            'rounded-full px-3 py-1 font-medium transition-colors',
+            'inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-medium transition-colors',
             interval === value
               ? 'bg-background text-foreground shadow-sm'
               : 'text-foreground-muted hover:text-foreground',
           )}
         >
           {value === 'month' ? 'Månedlig' : 'Årlig'}
+          {value === 'year' && savings && <span className="text-success">{savings}</span>}
         </button>
       ))}
     </div>
