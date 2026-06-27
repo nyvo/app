@@ -18,21 +18,19 @@ import { toast } from 'sonner';
 
 type StatusTone = {
   variant: 'success' | 'warning' | 'destructive' | 'neutral';
-  /** Subtle same-hue border ring — the Copilot-style badge anatomy. */
-  ring: string;
   label: string;
 };
 
 // Stripe Connect account status → badge tone + Norwegian label.
 const STRIPE_STATUS_BADGE: Record<'pending' | 'restricted' | 'rejected' | 'enabled', StatusTone> = {
-  pending: { variant: 'warning', ring: 'border-warning/30', label: 'Venter på fullføring' },
-  restricted: { variant: 'warning', ring: 'border-warning/30', label: 'Mangler informasjon' },
-  rejected: { variant: 'destructive', ring: 'border-danger/25', label: 'Avslått' },
-  enabled: { variant: 'success', ring: 'border-success/30', label: 'Aktiv' },
+  pending: { variant: 'warning', label: 'Venter på fullføring' },
+  restricted: { variant: 'warning', label: 'Mangler informasjon' },
+  rejected: { variant: 'destructive', label: 'Avslått' },
+  enabled: { variant: 'success', label: 'Aktiv' },
 };
 
-const NOT_STARTED_BADGE: StatusTone = { variant: 'neutral', ring: 'border-foreground-muted/20', label: 'Ikke satt opp' };
-const PRO_LOCKED_BADGE: StatusTone = { variant: 'neutral', ring: 'border-foreground-muted/20', label: 'Pro-funksjon' };
+const NOT_STARTED_BADGE: StatusTone = { variant: 'neutral', label: 'Ikke satt opp' };
+const PRO_LOCKED_BADGE: StatusTone = { variant: 'neutral', label: 'Pro-funksjon' };
 
 function StatusPill({ tone }: { tone: StatusTone }) {
   return (
@@ -40,7 +38,6 @@ function StatusPill({ tone }: { tone: StatusTone }) {
       variant={tone.variant}
       shape="pill"
       size="sm"
-      className={tone.ring}
       role="status"
       aria-label={`Status: ${tone.label}`}
     >
@@ -193,7 +190,7 @@ const PaymentsPage = () => {
     tone = STRIPE_STATUS_BADGE.enabled;
     desc =
       'Stripe håndterer utbetalingene direkte til bankkontoen din. Saldo, utbetalinger og innstillinger finner du i oversikten.';
-    action = <Button variant="secondary" onClick={handleOpenStripeDashboard}>Se oversikt</Button>;
+    action = <Button onClick={handleOpenStripeDashboard}>Se oversikt</Button>;
   }
 
   return (
