@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react';
-import { Clock } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -278,43 +277,13 @@ interface BannerProps {
 
 function InfoBanner({ title, sub, action }: BannerProps) {
   return (
-    <BaseBanner
-      title={title}
-      sub={sub}
-      action={action}
-      tone="info"
-      icon={<Clock className="size-5" />}
-    />
-  );
-}
-
-function BaseBanner({
-  title,
-  sub,
-  action,
-  tone,
-  icon,
-}: BannerProps & { tone: 'warning' | 'info'; icon: React.ReactNode }) {
-  const toneClasses =
-    tone === 'warning'
-      ? 'bg-warning-subtle border-warning/20 text-warning'
-      : 'bg-info-subtle border-info/20 text-info';
-  return (
-    <div
-      className={cn(
-        'flex items-center gap-4 rounded-md border px-4 py-3.5',
-        toneClasses,
-      )}
-    >
-      <div className={cn('shrink-0', tone === 'warning' ? 'text-warning' : 'text-info')}>
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0 text-foreground">
+    <div className="flex items-center gap-4 rounded-xl bg-muted px-5 py-4">
+      <div className="min-w-0 flex-1">
         <p className="text-base font-medium text-foreground">{title}</p>
         <p className="text-base text-foreground-muted mt-0.5">{sub}</p>
       </div>
       {action && (
-        <Button variant="default" onClick={action.onClick} className="shrink-0">
+        <Button onClick={action.onClick} className="shrink-0">
           {action.label}
         </Button>
       )}
