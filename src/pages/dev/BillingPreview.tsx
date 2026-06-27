@@ -108,7 +108,7 @@ function BillingPagePreview({
       title="Abonnement"
       description={isPro && !isPastDue ? statusLine : undefined}
       action={
-        isPro ? (
+        isPro && !isPastDue ? (
           <Button type="button" variant="secondary" onClick={() => {}}>
             Administrer abonnement
             <ExternalLink className="size-4" aria-hidden />

@@ -126,7 +126,9 @@ const BillingPage = () => {
         title="Abonnement"
         description={isPro && !isPastDue ? statusLine : undefined}
         action={
-          isPro ? (
+          // past_due drops this header action — the "Oppdater" CTA in the alert
+          // is the single primary action (both open the same Stripe portal).
+          isPro && !isPastDue ? (
             <Button
               type="button"
               variant="secondary"
