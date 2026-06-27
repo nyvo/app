@@ -182,7 +182,7 @@ interface CourseListViewProps {
 
 export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState }: CourseListViewProps) {
   return (
-    <div className="rounded-lg border border-border overflow-hidden">
+    <div className="rounded-lg border border-border bg-surface overflow-hidden">
       <TableHeader sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
       {courses.length === 0 && emptyState ? (
         <div>{emptyState}</div>
@@ -195,7 +195,7 @@ export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState }
 
 export function CourseListSkeleton() {
   return (
-    <div className="rounded-lg border border-border overflow-hidden">
+    <div className="rounded-lg border border-border bg-surface overflow-hidden">
       <div className={cn(COLS, 'px-4 py-3 border-b border-border bg-surface text-sm text-foreground-muted')}>
         <span>Navn</span>
         <span>Status</span>

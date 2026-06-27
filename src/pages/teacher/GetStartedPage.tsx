@@ -31,7 +31,7 @@ export default function GetStartedPage() {
   // live state — the flash this page used to show on refresh.
   if (isLoading) {
     return (
-      <div className="flex-1 overflow-y-auto bg-background h-full">
+      <div className="flex-1 overflow-y-auto bg-canvas h-full">
         <MobileTeacherHeader />
         <PageShell narrow="centered" title="Kom i gang">
           <div className="space-y-3" aria-hidden="true">

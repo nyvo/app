@@ -224,7 +224,7 @@ const TeacherDashboard = () => {
   }, [currentSeller?.id, incomeRange, isPro]);
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background h-full">
+    <div className="flex-1 overflow-y-auto bg-canvas h-full">
       <MobileTeacherHeader />
 
       <PageShell

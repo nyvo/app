@@ -277,7 +277,7 @@ const CoursesPage = () => {
     : 'Ingen aktive eller kommende kurs akkurat nå.';
 
   return (
-      <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
+      <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-canvas">
 
         <MobileTeacherHeader />
 

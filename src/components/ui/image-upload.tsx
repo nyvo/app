@@ -225,10 +225,69 @@ export function ImageField({
     </button>
   )
 
-  // Single layout — Fiken/Linear/Notion pattern:
-  // [optional label] · placeholder-as-trigger · [Bytt bilde · Fjern when filled] · [description]
-  // Same shape for cover (16:10) and avatar (round). The picker shape is the
-  // only thing that differs; the actions and helpers stack below.
+  // Avatar (inline) — round preview beside its actions (Clay/Mercury pattern):
+  // empty → placeholder + "Last opp bilde"; filled → image + "Endre"/"Fjern".
+  if (isAvatar) {
+    return (
+      <div className={cn('flex w-full flex-col items-start gap-2', className)}>
+        {label && <span className="text-base font-medium text-foreground">{label}</span>}
+        {hiddenInput}
+        <div className="flex items-center gap-4">
+          <button
+            ref={pickerRef}
+            type="button"
+            onClick={openPicker}
+            disabled={isDisabled}
+            aria-label={ariaLabel ?? (displayUrl ? changeLabel : uploadLabel)}
+            aria-invalid={displayError ? true : undefined}
+            className={cn(
+              'relative size-16 shrink-0 overflow-hidden rounded-full bg-muted outline-none transition-colors focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed',
+              !displayUrl && 'hover:bg-active',
+              displayError && 'ring-2 ring-danger/20',
+              isDisabled && !loading && 'opacity-50',
+            )}
+          >
+            {displayUrl ? (
+              <img src={displayUrl} alt="" className="size-full object-cover" />
+            ) : (
+              <span className="flex size-full items-center justify-center text-foreground-muted">
+                <Upload className="size-5" aria-hidden="true" />
+              </span>
+            )}
+            {loading && (
+              <span className="absolute inset-0 flex items-center justify-center bg-background/75 text-xs font-medium text-foreground">
+                {loadingLabel}
+              </span>
+            )}
+          </button>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" onClick={openPicker} disabled={isDisabled}>
+              {displayUrl ? changeLabel : uploadLabel}
+            </Button>
+            {displayUrl && onRemove && (
+              <Button
+                type="button"
+                variant="plain"
+                onClick={handleRemove}
+                disabled={isDisabled}
+                className="text-foreground-muted hover:text-danger"
+              >
+                {removeLabel}
+              </Button>
+            )}
+          </div>
+        </div>
+        {description && (
+          <p id={descriptionId} className="text-sm text-foreground-muted">{description}</p>
+        )}
+        {displayError && (
+          <p id={errorId} role="alert" className="text-sm text-danger">{displayError}</p>
+        )}
+      </div>
+    )
+  }
+
+  // Cover layout — placeholder-as-trigger with Bytt bilde / Fjern stacked below.
   return (
     <div className={cn('flex w-full flex-col items-start gap-3', className)}>
       {label && (

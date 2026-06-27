@@ -118,7 +118,7 @@ const BillingPage = () => {
   }, [currentSeller?.id])
 
   return (
-    <main className="min-h-full flex-1 overflow-y-auto bg-background">
+    <main className="min-h-full flex-1 overflow-y-auto bg-canvas">
       <MobileTeacherHeader />
 
       <PageShell

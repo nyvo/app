@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Check, ExternalLink, Plus, X } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { PageTab, PageTabs } from '@/components/ui/page-tabs';
 import { FieldError } from '@/components/ui/field-error';
@@ -14,6 +15,7 @@ import type { PlaceDetails } from '@/services/places';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
+import { SettingsSection } from '@/components/teacher/SettingsSection';
 import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/use-locations';
@@ -31,7 +33,7 @@ const StudioPage = () => {
   const { currentTeam, currentSeller, refreshSellers } = useAuth();
 
   return (
-    <main className="flex-1 min-h-full overflow-y-auto bg-background">
+    <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
       <MobileTeacherHeader />
 
       <PageShell
@@ -73,7 +75,6 @@ function StudioPublicSettings({
 }) {
   const { locations, isLoading: loadingLocations, refetch } = useLocations(seller.id);
   const primaryLocation = locations[0] ?? null;
-  const additionalLocations = locations.slice(1);
 
   const { hash } = useLocation();
   const [tab, setTab] = useState<'profil' | 'sted' | 'samarbeid'>('profil');
@@ -447,64 +448,71 @@ function StudioPublicSettings({
           role="tabpanel"
           id="studio-panel-profil"
           aria-labelledby="studio-tab-profil"
-          className="space-y-6"
+          className="space-y-10"
         >
-          <p className="text-sm text-foreground-muted">
-            Vises på den offentlige studiosiden din.
-          </p>
-          <div className="grid gap-3">
-            <span className="text-sm font-medium text-foreground">Profilbilde</span>
-              <ImageField
-                variant="avatar"
-                value={logoUrl}
-                onChange={handlePhotoSelected}
-                onRemove={handlePhotoRemove}
-                loading={savingPhoto}
-                ariaLabel="Last opp profilbilde"
-              />
-            </div>
+          <SettingsSection
+            title="Offentlig profil"
+            description="Dette ser deltakerne på studiosiden din."
+          >
+            <Card>
+              <CardContent className="space-y-6">
+                <div className="grid gap-3">
+                  <span className="text-sm font-medium text-foreground">Profilbilde</span>
+                  <ImageField
+                    variant="avatar"
+                    value={logoUrl}
+                    onChange={handlePhotoSelected}
+                    onRemove={handlePhotoRemove}
+                    loading={savingPhoto}
+                    changeLabel="Endre"
+                    ariaLabel="Last opp profilbilde"
+                  />
+                </div>
 
-            <div className="grid gap-2">
-              <label htmlFor="studio-name" className="text-sm font-medium text-foreground">
-                Navn
-              </label>
-              <Input
-                id="studio-name"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  if (nameError) setNameError(null);
-                }}
-                onKeyDown={handleKeyDown}
-                disabled={isSaving}
-                aria-invalid={!!nameError || undefined}
-                aria-describedby={nameError ? 'studio-name-error' : undefined}
-              />
-              {nameError && <FieldError id="studio-name-error">{nameError}</FieldError>}
-            </div>
+                <div className="grid gap-2">
+                  <label htmlFor="studio-name" className="text-sm font-medium text-foreground">
+                    Navn
+                  </label>
+                  <Input
+                    id="studio-name"
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (nameError) setNameError(null);
+                    }}
+                    onKeyDown={handleKeyDown}
+                    disabled={isSaving}
+                    aria-invalid={!!nameError || undefined}
+                    aria-describedby={nameError ? 'studio-name-error' : undefined}
+                  />
+                  {nameError && <FieldError id="studio-name-error">{nameError}</FieldError>}
+                </div>
 
-            <div className="grid gap-2">
-              <label htmlFor="studio-slug" className="text-sm font-medium text-foreground">
-                Nettadresse
-              </label>
-              <InputGroup data-disabled={isSaving || undefined}>
-                <InputGroupAddon align="inline-start">openspot.no/</InputGroupAddon>
-                <InputGroupInput
-                  id="studio-slug"
-                  type="text"
-                  value={slug}
-                  onChange={(e) => {
-                    setSlug(e.target.value);
-                    if (slugError) setSlugError(null);
-                  }}
-                  onKeyDown={handleKeyDown}
-                  disabled={isSaving}
-                  aria-invalid={!!slugError || undefined}
-                  aria-describedby={slugError ? 'studio-slug-error' : undefined}
-                />
-              </InputGroup>
-              {slugError && <FieldError id="studio-slug-error">{slugError}</FieldError>}
-            </div>
+                <div className="grid gap-2">
+                  <label htmlFor="studio-slug" className="text-sm font-medium text-foreground">
+                    Nettadresse
+                  </label>
+                  <InputGroup data-disabled={isSaving || undefined}>
+                    <InputGroupAddon align="inline-start">openspot.no/</InputGroupAddon>
+                    <InputGroupInput
+                      id="studio-slug"
+                      type="text"
+                      value={slug}
+                      onChange={(e) => {
+                        setSlug(e.target.value);
+                        if (slugError) setSlugError(null);
+                      }}
+                      onKeyDown={handleKeyDown}
+                      disabled={isSaving}
+                      aria-invalid={!!slugError || undefined}
+                      aria-describedby={slugError ? 'studio-slug-error' : undefined}
+                    />
+                  </InputGroup>
+                  {slugError && <FieldError id="studio-slug-error">{slugError}</FieldError>}
+                </div>
+              </CardContent>
+            </Card>
+          </SettingsSection>
         </div>
       )}
 
@@ -513,192 +521,182 @@ function StudioPublicSettings({
           role="tabpanel"
           id="studio-panel-sted"
           aria-labelledby="studio-tab-sted"
-          className="space-y-6"
+          className="space-y-10"
         >
-          <p className="text-sm text-foreground-muted">
-            Brukes når du lager kurs, og vises til deltakerne som skal møte opp.
-          </p>
-          <div className="grid gap-2">
-            <label
-              htmlFor="studio-place-name"
-                data-error={!!placeError || undefined}
-                className="text-sm font-medium text-foreground data-[error=true]:text-danger"
-              >
-                Stedsnavn
-              </label>
-              <PlacesAutocomplete
-                id="studio-place-name"
-                value={placeName}
-                onChange={(v) => {
-                  setPlaceName(v);
-                  // The name field is the search box — typing means you're after a
-                  // different place, so the picked address + coords no longer apply.
-                  setAddress('');
-                  setPlaceCoords(null);
-                  if (placeError) setPlaceError(null);
-                }}
-                onSelect={(place: PlaceDetails) => {
-                  setPlaceName(place.name || placeName);
-                  setAddress(place.address);
-                  setPlaceCoords({ lat: place.lat, lon: place.lon, placeId: place.placeId });
-                  setPlaceError(null);
-                }}
-                onKeyDown={handleKeyDown}
-                disabled={isSaving || loadingLocations}
-                placeholder="Søk etter studio eller adresse…"
-                aria-invalid={!!placeError || undefined}
-                aria-describedby={placeError ? 'studio-place-error' : undefined}
-              />
-              {placeError && <FieldError id="studio-place-error">{placeError}</FieldError>}
-              {/* Address is derived from the picked place — shown for confirmation,
-                  not editable. Re-pick from the search to change it. */}
-              {address && <p className="text-sm text-foreground-muted">{address}</p>}
-              {(placeCoords?.placeId != null ||
-                (placeCoords?.lat != null && placeCoords?.lon != null)) && (
-                <MapEmbed
-                  placeId={placeCoords.placeId}
-                  lat={placeCoords.lat}
-                  lon={placeCoords.lon}
-                  title={`Kart over ${placeName}`}
-                  className="mt-1 h-44"
-                />
-              )}
-            </div>
-
-            <div className="grid gap-3">
-              <div>
-                <span className="text-sm font-medium text-foreground">Rom</span>
-                <p className="mt-1 text-sm text-foreground-muted">
-                  Sett antall plasser per rom. Da fylles det inn automatisk når du bruker rommet på et kurs.
-                </p>
-              </div>
-
-              {rooms.length > 0 && (
-                <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-surface">
-                  {rooms.map((room) => (
-                    <div key={room.name} className="flex items-center gap-3 px-3 py-2">
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-                        {room.name}
-                      </span>
-                      <Input
-                        type="number"
-                        inputMode="numeric"
-                        min="1"
-                        value={room.capacity == null ? '' : String(room.capacity)}
-                        onChange={(e) => setRoomCapacityDraft(room.name, e.target.value)}
-                        onBlur={() => commitRoomCapacity(room.name)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            (e.currentTarget as HTMLInputElement).blur();
-                          }
-                        }}
-                        disabled={isSaving || loadingLocations}
-                        placeholder="–"
-                        aria-label={`Antall plasser i ${room.name}`}
-                        className="h-8 w-16 shrink-0 text-center"
-                      />
-                      <span className="shrink-0 text-sm text-foreground-muted">plasser</span>
-                      <button
-                        type="button"
-                        onClick={() => removeRoom(room.name)}
-                        className="flex size-7 shrink-0 items-center justify-center rounded-md text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
-                        aria-label={`Fjern ${room.name}`}
-                      >
-                        <X className="size-4" />
-                      </button>
-                    </div>
-                  ))}
+          <SettingsSection
+            title="Sted"
+            description="Brukes når du lager kurs, og vises til deltakerne som skal møte opp."
+          >
+            <Card>
+              <CardContent className="space-y-3">
+                <div className="grid gap-2">
+                  <label
+                    htmlFor="studio-place-name"
+                    data-error={!!placeError || undefined}
+                    className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+                  >
+                    Stedsnavn
+                  </label>
+                  <PlacesAutocomplete
+                    id="studio-place-name"
+                    value={placeName}
+                    onChange={(v) => {
+                      setPlaceName(v);
+                      // The name field is the search box — typing means you're after a
+                      // different place, so the picked address + coords no longer apply.
+                      setAddress('');
+                      setPlaceCoords(null);
+                      if (placeError) setPlaceError(null);
+                    }}
+                    onSelect={(place: PlaceDetails) => {
+                      setPlaceName(place.name || placeName);
+                      setAddress(place.address);
+                      setPlaceCoords({ lat: place.lat, lon: place.lon, placeId: place.placeId });
+                      setPlaceError(null);
+                    }}
+                    onKeyDown={handleKeyDown}
+                    disabled={isSaving || loadingLocations}
+                    placeholder="Søk etter studio eller adresse…"
+                    aria-invalid={!!placeError || undefined}
+                    aria-describedby={placeError ? 'studio-place-error' : undefined}
+                  />
+                  {placeError && <FieldError id="studio-place-error">{placeError}</FieldError>}
+                  {/* Address is derived from the picked place — shown for confirmation,
+                      not editable. Re-pick from the search to change it. */}
+                  {address && <p className="text-sm text-foreground-muted">{address}</p>}
+                  {(placeCoords?.placeId != null ||
+                    (placeCoords?.lat != null && placeCoords?.lon != null)) && (
+                    <MapEmbed
+                      placeId={placeCoords.placeId}
+                      lat={placeCoords.lat}
+                      lon={placeCoords.lon}
+                      title={`Kart over ${placeName}`}
+                      className="mt-1 h-44"
+                    />
+                  )}
                 </div>
-              )}
+              </CardContent>
+            </Card>
+          </SettingsSection>
 
-              {addingRoom ? (
-                <div className="flex items-center gap-3">
-                  <Input
-                    autoFocus
-                    value={newRoom}
-                    onChange={(e) => setNewRoom(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addRoom();
-                      } else if (e.key === 'Escape') {
-                        e.preventDefault();
-                        cancelAddRoom();
-                      }
-                    }}
-                    disabled={isSaving || loadingLocations}
-                    placeholder="Sal 1, behandlingsrom, ute…"
-                    aria-label="Navn på rom"
-                    className="h-8 min-w-0 flex-1"
-                  />
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    min="1"
-                    value={newRoomCapacity}
-                    onChange={(e) => setNewRoomCapacity(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addRoom();
-                      } else if (e.key === 'Escape') {
-                        e.preventDefault();
-                        cancelAddRoom();
-                      }
-                    }}
-                    disabled={isSaving || loadingLocations}
-                    placeholder="–"
-                    aria-label="Antall plasser"
-                    className="h-8 w-16 shrink-0 text-center"
-                  />
-                  <span className="shrink-0 text-sm text-foreground-muted">plasser</span>
+          <SettingsSection
+            title="Rom"
+            description="Sett antall plasser per rom — fylles inn automatisk når du bruker rommet på et kurs."
+          >
+            <Card>
+              <CardContent className="space-y-3">
+                {rooms.length > 0 && (
+                  <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-surface">
+                    {rooms.map((room) => (
+                      <div key={room.name} className="flex items-center gap-3 px-3 py-2">
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                          {room.name}
+                        </span>
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min="1"
+                          value={room.capacity == null ? '' : String(room.capacity)}
+                          onChange={(e) => setRoomCapacityDraft(room.name, e.target.value)}
+                          onBlur={() => commitRoomCapacity(room.name)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              (e.currentTarget as HTMLInputElement).blur();
+                            }
+                          }}
+                          disabled={isSaving || loadingLocations}
+                          placeholder="–"
+                          aria-label={`Antall plasser i ${room.name}`}
+                          className="h-8 w-16 shrink-0 text-center"
+                        />
+                        <span className="shrink-0 text-sm text-foreground-muted">plasser</span>
+                        <button
+                          type="button"
+                          onClick={() => removeRoom(room.name)}
+                          className="flex size-7 shrink-0 items-center justify-center rounded-md text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
+                          aria-label={`Fjern ${room.name}`}
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {addingRoom ? (
+                  <div className="flex items-center gap-3">
+                    <Input
+                      autoFocus
+                      value={newRoom}
+                      onChange={(e) => setNewRoom(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addRoom();
+                        } else if (e.key === 'Escape') {
+                          e.preventDefault();
+                          cancelAddRoom();
+                        }
+                      }}
+                      disabled={isSaving || loadingLocations}
+                      placeholder="Sal 1, behandlingsrom, ute…"
+                      aria-label="Navn på rom"
+                      className="h-8 min-w-0 flex-1"
+                    />
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min="1"
+                      value={newRoomCapacity}
+                      onChange={(e) => setNewRoomCapacity(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addRoom();
+                        } else if (e.key === 'Escape') {
+                          e.preventDefault();
+                          cancelAddRoom();
+                        }
+                      }}
+                      disabled={isSaving || loadingLocations}
+                      placeholder="–"
+                      aria-label="Antall plasser"
+                      className="h-8 w-16 shrink-0 text-center"
+                    />
+                    <span className="shrink-0 text-sm text-foreground-muted">plasser</span>
+                    <button
+                      type="button"
+                      onClick={addRoom}
+                      disabled={!newRoom.trim()}
+                      className="flex size-7 shrink-0 items-center justify-center rounded-md text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-foreground-muted"
+                      aria-label="Legg til rom"
+                    >
+                      <Check className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelAddRoom}
+                      className="flex size-7 shrink-0 items-center justify-center rounded-md text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
+                      aria-label="Avbryt"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ) : (
                   <button
                     type="button"
-                    onClick={addRoom}
-                    disabled={!newRoom.trim()}
-                    className="flex size-7 shrink-0 items-center justify-center rounded-md text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-foreground-muted"
-                    aria-label="Legg til rom"
+                    onClick={() => setAddingRoom(true)}
+                    disabled={isSaving || loadingLocations}
+                    className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border bg-surface px-3 py-2.5 text-sm font-medium text-foreground-muted transition-colors hover:border-foreground/25 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <Check className="size-4" />
+                    <Plus className="size-4" />
+                    Legg til rom
                   </button>
-                  <button
-                    type="button"
-                    onClick={cancelAddRoom}
-                    className="flex size-7 shrink-0 items-center justify-center rounded-md text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
-                    aria-label="Avbryt"
-                  >
-                    <X className="size-4" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setAddingRoom(true)}
-                  disabled={isSaving || loadingLocations}
-                  className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border bg-surface px-3 py-2.5 text-sm font-medium text-foreground-muted transition-colors hover:border-foreground/25 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Plus className="size-4" />
-                  Legg til rom
-                </button>
-              )}
-            </div>
-
-            {additionalLocations.length > 0 && (
-              <div className="border-t border-border pt-6">
-                <p className="text-sm font-medium text-foreground">Andre lagrede steder</p>
-                <div className="mt-3 divide-y divide-border rounded-xl border border-border bg-surface">
-                  {additionalLocations.map((location) => (
-                    <div key={location.id} className="px-4 py-3">
-                      <p className="truncate text-base font-medium text-foreground">{location.name}</p>
-                      {location.address && (
-                        <p className="truncate text-base text-foreground-muted">{location.address}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                )}
+              </CardContent>
+            </Card>
+          </SettingsSection>
         </div>
       )}
 
