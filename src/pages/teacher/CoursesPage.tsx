@@ -357,7 +357,7 @@ const CoursesPage = () => {
                         title={`Fant ingen kurs for «${searchQuery}»`}
                         description="Prøv et annet søkeord."
                         action={
-                          <Button variant="default" onClick={() => setSearchQuery('')}>
+                          <Button variant="secondary" onClick={() => setSearchQuery('')}>
                             Tøm søk
                           </Button>
                         }

@@ -40,6 +40,7 @@ const StudioPage = () => {
         action={
           currentTeam?.slug ? (
             <Button
+              variant="secondary"
               onClick={() => window.open(`/${currentTeam.slug}`, '_blank')}
             >
               <ExternalLink className="size-4" />

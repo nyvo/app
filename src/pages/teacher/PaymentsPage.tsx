@@ -193,7 +193,7 @@ const PaymentsPage = () => {
     tone = STRIPE_STATUS_BADGE.enabled;
     desc =
       'Stripe håndterer utbetalingene direkte til bankkontoen din. Saldo, utbetalinger og innstillinger finner du i oversikten.';
-    action = <Button onClick={handleOpenStripeDashboard}>Se oversikt</Button>;
+    action = <Button variant="secondary" onClick={handleOpenStripeDashboard}>Se oversikt</Button>;
   }
 
   return (

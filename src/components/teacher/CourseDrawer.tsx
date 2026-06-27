@@ -575,7 +575,7 @@ function ScheduleQuickView({
       </div>
 
       <div className="border-t border-border px-6 py-4 bg-background">
-        <Button asChild className="w-full">
+        <Button asChild variant="secondary" className="w-full">
           <Link to={routes.course(courseId)} onClick={onClose}>
             Åpne kursside
           </Link>

@@ -465,7 +465,7 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
           onFocus={(e) => e.currentTarget.select()}
           aria-label="Invitasjonslenke"
         />
-        <Button type="button" onClick={() => void handleCopy()}>
+        <Button type="button" variant="secondary" onClick={() => void handleCopy()}>
           {copied ? 'Kopiert' : 'Kopier lenke'}
         </Button>
       </div>

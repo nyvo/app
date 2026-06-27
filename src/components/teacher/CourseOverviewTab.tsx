@@ -184,7 +184,7 @@ export function CourseOverviewTab({
               Kursrekke · {course.totalWeeks} {course.totalWeeks === 1 ? 'uke' : 'uker'}
             </p>
             {sessionCount > 1 && (
-              <Button variant="default" onClick={onOpenKursplan} className="shrink-0">
+              <Button variant="secondary" onClick={onOpenKursplan} className="shrink-0">
                 Se kursplan
               </Button>
             )}
@@ -200,7 +200,7 @@ export function CourseOverviewTab({
             <p className="text-base font-medium text-foreground">
               Enkeltkurs · {sessionCount} {sessionCount === 1 ? 'dag' : 'dager'}
             </p>
-            <Button variant="default" onClick={onOpenKursplan} className="shrink-0">
+            <Button variant="secondary" onClick={onOpenKursplan} className="shrink-0">
               Se kursplan
             </Button>
           </CardContent>
@@ -339,7 +339,7 @@ function EndStateSection({
           <p className="text-base text-foreground-muted mt-0.5">{sub}</p>
         </div>
         {action && (
-          <Button variant="default" onClick={action.onClick}>
+          <Button variant="secondary" onClick={action.onClick}>
             {action.label}
           </Button>
         )}

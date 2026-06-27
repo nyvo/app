@@ -14,7 +14,9 @@ import { Spinner } from "./spinner"
  *                shift: neutral-12 is already near-black, hover-darken reads
  *                as noise.
  *   secondary  — paired alternative (e.g. "Avbryt" next to a default).
- *   outline    — deprecated legacy. Use secondary or plain/link instead.
+ *   outline    — special-case emphasis: a bordered action for surfaces where a
+ *                filled button would clash (e.g. on a colored/photographic or
+ *                already-filled panel). Use sparingly; default to secondary.
  *   outline-soft — deprecated legacy.
  *   ghost      — low-emphasis row actions, sidebar nav, inline icon actions in
  *                dense lists. Transparent at rest, lifts to bg-muted on hover.
@@ -41,8 +43,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary — indigo brand; subtle darken on hover
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        // Primary — monochrome near-black (neutral-12 via --foreground); indigo
+        // is reserved as a sprinkle accent (links, selected states). Subtle
+        // hover lift; focus ring stays visible via the ring-offset.
+        default: "bg-foreground text-background hover:bg-foreground/90",
         outline:
           "border-border bg-background shadow-xs hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-border dark:bg-surface-on-dark dark:hover:bg-surface-on-dark",
         "outline-soft":
