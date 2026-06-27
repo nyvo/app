@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SettingsSection } from '@/components/teacher/SettingsSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { runWithUndo } from '@/lib/undo';
 import { friendlyError } from '@/lib/error-messages';
@@ -63,21 +64,13 @@ export function AffiliationsSection() {
   if (isBusiness && !currentTeam) return null;
 
   return (
-    <div ref={anchorRef} id="samarbeid" className="scroll-mt-10 space-y-6">
+    <div ref={anchorRef} id="samarbeid" className="scroll-mt-10 space-y-10">
       {isBusiness && currentTeam ? (
-        <>
-          <p className="text-sm text-foreground-muted">
-            Inviter instruktører til å vise kursene sine på studiosiden din.
-          </p>
-          <BusinessView teamId={currentTeam.id} />
-        </>
+        <BusinessView teamId={currentTeam.id} />
       ) : (
-        <>
-          <p className="text-sm text-foreground-muted">
-            Vis kursene dine på et studios side.
-          </p>
+        <SettingsSection title="Studio">
           <IndividualView sellerId={currentSeller.id} />
-        </>
+        </SettingsSection>
       )}
     </div>
   );
@@ -127,41 +120,37 @@ function BusinessView({ teamId }: { teamId: string }) {
     ) ?? null;
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardContent>
-          <h3 className="text-base font-medium tracking-tight text-foreground">
-            Inviter en instruktør
-          </h3>
-          <p className="mt-1 max-w-2xl text-base text-foreground-muted">
-            Del lenken på SMS eller Messenger. Den kan brukes av flere
-            instruktører, og alle publiserte kurs vises automatisk på
-            studiosiden.
-          </p>
-          <div className="mt-4">
+    <>
+      <SettingsSection
+        title="Inviter instruktører"
+        description="Del lenken så instruktører kan vise de publiserte kursene sine på studiosiden din."
+      >
+        <Card>
+          <CardContent>
             <InviteLinkPanel teamId={teamId} />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </SettingsSection>
 
-      <div>
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="text-sm font-medium text-foreground">Instruktører</p>
-          {visibleAffiliates === null ? (
+      <SettingsSection
+        title="Instruktører"
+        action={
+          visibleAffiliates === null ? (
             <Skeleton className="h-6 w-20 rounded-full" aria-hidden="true" />
           ) : visibleAffiliates.length > 0 ? (
-            <Badge variant="neutral" shape="pill" size="md">
+            <Badge variant="neutral" shape="pill" size="sm">
               {formatInstructorCount(visibleAffiliates.length)}
             </Badge>
-          ) : null}
-        </div>
+          ) : undefined
+        }
+      >
         <AffiliatesList
           affiliates={visibleAffiliates}
           loading={loadingAffiliates}
           onRevoke={handleRevoke}
         />
-      </div>
-    </div>
+      </SettingsSection>
+    </>
   );
 }
 
