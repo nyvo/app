@@ -31,6 +31,7 @@
   /* Surfaces — `--background` (page canvas) and `--surface` (cards/panels)
      share value in light mode but differ in role; would diverge in dark. */
   --color-background: var(--background);
+  --color-canvas: var(--canvas);
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
   --color-surface-tinted: var(--surface-tinted);
@@ -218,6 +219,7 @@
 
   /* Surfaces */
   --background: oklch(1 0 0);                      /* pure white, per spec */
+  --canvas: var(--neutral-2);                      /* dampened dashboard page canvas — white surfaces (--surface) float on it */
   --surface: oklch(1 0 0);                         /* cards, popovers, panels */
   --surface-elevated: oklch(1 0 0 / 0.8);          /* translucent backdrop-blur header */
   --surface-tinted: oklch(0.97 0.03 270);
@@ -342,6 +344,7 @@
 
   /* Surfaces */
   --background: var(--neutral-1);                  /* page canvas */
+  --canvas: var(--neutral-1);                      /* dark mode unused — keep canvas == background */
   --surface: var(--neutral-1);                     /* same value as bg, per spec */
   --surface-elevated: oklch(0.205 0 0 / 0.8);
   --surface-tinted: oklch(0.27 0.04 270);

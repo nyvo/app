@@ -230,7 +230,7 @@ const SchedulePage = () => {
   }, [filtered]);
 
   return (
-    <main className="flex-1 min-h-full overflow-y-auto bg-background">
+    <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
       <MobileTeacherHeader />
 
       <PageShell

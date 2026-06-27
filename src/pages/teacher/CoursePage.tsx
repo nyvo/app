@@ -68,7 +68,7 @@ type TabKey = 'oversikt' | 'pameldte' | 'rediger';
  */
 function CourseNotFound({ description }: { description?: string }) {
   return (
-    <div className="flex-1 overflow-y-auto bg-background h-full">
+    <div className="flex-1 overflow-y-auto bg-canvas h-full">
       <MobileTeacherHeader />
       <PageState variant="course" description={description} />
     </div>
@@ -558,7 +558,7 @@ const CoursePage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-1 overflow-y-auto bg-background h-full">
+      <div className="flex-1 overflow-y-auto bg-canvas h-full">
         <MobileTeacherHeader />
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 lg:pt-12 space-y-6">
           <Skeleton className="h-4 w-32" />
@@ -630,7 +630,7 @@ const CoursePage = () => {
     ) : undefined;
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background h-full">
+    <div className="flex-1 overflow-y-auto bg-canvas h-full">
       <MobileTeacherHeader />
 
       <PageShell
