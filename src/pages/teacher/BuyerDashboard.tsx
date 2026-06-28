@@ -184,7 +184,7 @@ export default function BuyerDashboard() {
           transition={pageTransition}
         >
           <header className="mb-12">
-            <h1 className="text-2xl font-medium tracking-tight text-foreground">
+            <h1 className="text-2xl font-medium text-foreground">
               {firstName ? `Hei, ${firstName}` : 'Oversikt'}
             </h1>
           </header>

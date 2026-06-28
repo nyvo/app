@@ -50,7 +50,7 @@ export function SettingsSection({
     <section className={className}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-base font-medium tracking-tight text-foreground">
+          <h2 className="text-base font-medium text-foreground">
             {title}
           </h2>
           {description && (

@@ -368,7 +368,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
         {/* Påmeldte — the operational concern */}
         <section className="px-6 py-6 border-b border-border">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-medium tracking-tight text-foreground">
+            <h3 className="text-base font-medium text-foreground">
               Påmeldte ({confirmedCount}
               {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''})
             </h3>
@@ -406,7 +406,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
         {/* Sessions — only when multi-day. Read-only here; editing on /courses/:id. */}
         {isMultiDay && (
           <section className="px-6 py-6">
-            <h3 className="text-base font-medium tracking-tight text-foreground mb-4">
+            <h3 className="text-base font-medium text-foreground mb-4">
               Økter ({sessions.length})
             </h3>
             <div className="space-y-1">
@@ -545,7 +545,7 @@ function ScheduleQuickView({
 
       <div className="flex-1 overflow-y-auto">
         <section className="px-6 py-6">
-          <h3 className="text-base font-medium tracking-tight text-foreground mb-4">
+          <h3 className="text-base font-medium text-foreground mb-4">
             Påmeldte ({confirmedCount}
             {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''})
           </h3>

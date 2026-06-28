@@ -279,7 +279,7 @@ export function ParticipantDetailDrawer({
             <div className="flex items-start gap-3 pr-10">
               <UserAvatar name={name} email={email} size="lg" />
               <div className="min-w-0 pt-0.5">
-                <p className="text-base font-medium tracking-tight text-foreground leading-snug truncate">
+                <p className="text-base font-medium text-foreground leading-snug truncate">
                   {name}
                 </p>
                 {email && (

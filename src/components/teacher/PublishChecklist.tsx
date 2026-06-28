@@ -37,7 +37,7 @@ export function PublishChecklist({ items, onItemClick }: PublishChecklistProps) 
   return (
     <section>
       <header className="mb-4 flex items-baseline justify-between gap-4">
-        <h2 className="text-base font-medium tracking-tight text-foreground">
+        <h2 className="text-base font-medium text-foreground">
           Før du publiserer
         </h2>
         <p className="text-base text-foreground-muted tabular-nums">

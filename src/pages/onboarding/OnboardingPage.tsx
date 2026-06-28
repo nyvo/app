@@ -176,7 +176,7 @@ function RoleChooser() {
   return (
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-2xl">
-        <h1 className="mb-8 text-2xl font-medium tracking-tight text-foreground">
+        <h1 className="mb-8 text-2xl font-medium text-foreground">
           Velg kontotype
         </h1>
 
@@ -330,7 +330,7 @@ function BuyerSetupForm({
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
         <BackLink onClick={() => { void handleBack() }} disabled={saving} />
-        <h1 className="mb-8 text-2xl font-medium tracking-tight text-foreground">
+        <h1 className="mb-8 text-2xl font-medium text-foreground">
           Litt om deg
         </h1>
 
@@ -437,7 +437,7 @@ function SellerType({
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={(e) => { e.preventDefault(); onContinue() }} className="w-full max-w-2xl">
         <BackLink onClick={onBack} />
-        <h1 className="mb-8 text-2xl font-medium tracking-tight text-foreground">
+        <h1 className="mb-8 text-2xl font-medium text-foreground">
           Velg profiltype
         </h1>
 
@@ -555,7 +555,7 @@ function SellerProfile({
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
         <BackLink onClick={onBack} disabled={saving} />
-        <h1 className="mb-8 text-2xl font-medium tracking-tight text-foreground">
+        <h1 className="mb-8 text-2xl font-medium text-foreground">
           Sett opp profilen
         </h1>
 

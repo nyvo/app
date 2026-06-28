@@ -122,7 +122,7 @@ function ConfirmContent({
   return (
     <>
       <div>
-        <h2 className="mb-2 text-lg font-medium tracking-tight text-foreground">
+        <h2 className="mb-2 text-lg font-medium text-foreground">
           {title}
         </h2>
         <p className="text-sm leading-relaxed text-foreground-muted [&_strong]:font-medium [&_strong]:text-foreground">

@@ -223,7 +223,7 @@ function IndividualView({ sellerId }: { sellerId: string }) {
       ) : (
         <Card>
           <CardContent>
-            <h3 className="text-base font-medium tracking-tight text-foreground">
+            <h3 className="text-base font-medium text-foreground">
               Kursene dine vises på {host.name}
             </h3>
             <p className="mt-1 max-w-2xl text-base text-foreground-muted">

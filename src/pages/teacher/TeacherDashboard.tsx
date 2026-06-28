@@ -349,7 +349,7 @@ export function UpcomingCoursesSection({
 
   return (
     <section className="flex flex-col">
-      <h2 className="mb-3 text-lg font-medium tracking-tight text-foreground">Neste kurs</h2>
+      <h2 className="mb-3 text-lg font-medium text-foreground">Neste kurs</h2>
       <div className="flex min-h-56 flex-1 flex-col rounded-xl border border-border bg-background p-3">
         {showSkeleton ? (
           <RowsSkeleton variant="course" />
@@ -422,7 +422,7 @@ export function RecentSignupsSection({
 
   return (
     <section className="flex flex-col">
-      <h2 className="mb-3 text-lg font-medium tracking-tight text-foreground">
+      <h2 className="mb-3 text-lg font-medium text-foreground">
         Siste påmeldinger
       </h2>
       <div className="flex min-h-56 flex-1 flex-col rounded-xl border border-border bg-background p-3">

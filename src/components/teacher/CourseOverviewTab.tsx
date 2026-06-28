@@ -260,7 +260,7 @@ function KpiCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-border bg-surface px-5 py-4">
       <p className="text-xs font-medium text-foreground-muted">{label}</p>
-      <p className="mt-2 text-2xl font-medium tracking-tight text-foreground tabular-nums">
+      <p className="mt-2 text-2xl font-medium text-foreground tabular-nums">
         {value}
       </p>
     </div>

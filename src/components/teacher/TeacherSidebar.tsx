@@ -113,7 +113,7 @@ export const TeacherSidebar = () => {
       <SidebarHeader>
         <Link
           to={routes.dashboard}
-          className="flex h-12 items-center rounded-md px-3 text-base font-medium tracking-tight text-sidebar-foreground outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+          className="flex h-12 items-center rounded-md px-3 text-base font-medium text-sidebar-foreground outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
           Openspot
         </Link>
@@ -149,7 +149,7 @@ export const TeacherSidebar = () => {
         {isSeller && !isPro && (
           <div className="rounded-lg bg-muted px-3 py-2.5">
             <div className="text-sm font-medium text-sidebar-foreground">Start</div>
-            <p className="mt-1 text-[13px] text-sidebar-foreground-muted">
+            <p className="mt-1 text-sm text-sidebar-foreground-muted">
               Få kortbetaling og automatiske utbetalinger med Pro.
             </p>
             <Button asChild className="mt-2.5 w-full">

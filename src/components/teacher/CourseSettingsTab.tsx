@@ -506,7 +506,7 @@ function SettingsSection({
 }) {
   return (
     <section id={id} className="grid scroll-mt-24 gap-4 py-8 md:grid-cols-[180px_minmax(0,1fr)] md:gap-10 first:pt-0">
-      <h2 className="text-lg font-medium tracking-tight text-foreground">{title}</h2>
+      <h2 className="text-lg font-medium text-foreground">{title}</h2>
       <div className="min-w-0">{children}</div>
     </section>
   );

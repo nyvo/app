@@ -44,7 +44,7 @@ export const EmptyState = React.memo(function EmptyState({
       )}
     >
       <EmptyHeader className="gap-1">
-        <EmptyTitle className="text-sm font-medium tracking-normal text-foreground">
+        <EmptyTitle className="text-sm font-medium text-foreground">
           {title}
         </EmptyTitle>
         {description && (

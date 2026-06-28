@@ -90,7 +90,7 @@ export function PageShell({
         <header className={cn('mb-8', description && 'mb-10')}>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3 flex-wrap min-w-0">
-              <h1 className="text-2xl font-medium tracking-tight text-foreground">
+              <h1 className="text-2xl font-medium text-foreground">
                 {title}
               </h1>
               {badge && <span className="shrink-0">{badge}</span>}
