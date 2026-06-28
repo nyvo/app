@@ -51,7 +51,7 @@ export default function GetStartedPage() {
   const isLive = isSetupComplete
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background h-full">
+    <div className="flex-1 overflow-y-auto bg-canvas h-full">
       <MobileTeacherHeader />
       <PageShell
         narrow="centered"
@@ -75,7 +75,7 @@ export default function GetStartedPage() {
                 🎉
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-base font-medium tracking-tight text-foreground">
+                <p className="text-base font-medium text-foreground">
                   Studioet ditt er live
                 </p>
                 <p className="text-base text-foreground-muted">
@@ -87,7 +87,7 @@ export default function GetStartedPage() {
               </Button>
             </div>
 
-            <p className="mt-8 mb-3 text-base font-medium tracking-tight text-foreground">
+            <p className="mt-8 mb-3 text-base font-medium text-foreground">
               Gjør studiosiden ferdig
             </p>
             <Card className="overflow-hidden p-0 gap-0">
@@ -110,7 +110,7 @@ export default function GetStartedPage() {
 
             {optionalSteps.length > 0 && (
               <>
-                <p className="mt-8 mb-3 text-base font-medium tracking-tight text-foreground">
+                <p className="mt-8 mb-3 text-base font-medium text-foreground">
                   Valgfritt
                 </p>
                 <Card className="overflow-hidden p-0 gap-0">

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -47,10 +48,11 @@ function StatusPill({ tone }: { tone: StatusTone }) {
 }
 
 /**
- * Payments page — a single flat "payout account" surface (modeled on Copilot's
- * Payout account screen): page title with an inline status badge, then a
- * subtitle and a divider; below it a short sub-headline, a one-sentence
- * description, and a single primary action. The content is driven by the
+ * Payments page — a single "payout account" surface: page title with an inline
+ * status badge and a subtitle, then a Card holding a short sub-headline, a
+ * one-sentence description, and a single primary action. The Card matches the
+ * other Settings pages (billing, get-started) on the dampened canvas. The
+ * content is driven by the
  * seller's Stripe Connect onboarding state:
  *
  *   • !isPro                   → upsell: card payments are a Pro feature
@@ -203,11 +205,13 @@ const PaymentsPage = () => {
         badge={<StatusPill tone={tone} />}
         description="Slik får du betalt for kursene dine."
       >
-        <div className="border-t border-border-subtle pt-8">
-          <h2 className="text-base font-medium tracking-tight text-foreground">{subhead}</h2>
-          <p className="mt-1 max-w-prose text-base text-foreground-muted">{desc}</p>
-          <div className="mt-5">{action}</div>
-        </div>
+        <Card>
+          <CardContent>
+            <h2 className="text-base font-medium text-foreground">{subhead}</h2>
+            <p className="mt-1 max-w-prose text-base text-foreground-muted">{desc}</p>
+            <div className="mt-5">{action}</div>
+          </CardContent>
+        </Card>
       </PageShell>
     </main>
   );

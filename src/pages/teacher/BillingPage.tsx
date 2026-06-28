@@ -236,15 +236,6 @@ export function BillingPlanSections({
     </div>
   )
 
-  // Cards + price footnote read as one unit (tight gap), so the disclaimer
-  // stays anchored to the prices it qualifies rather than floating alone.
-  const cardsAndNote = (
-    <div className="space-y-4">
-      {cards}
-      <p className="text-sm text-foreground-muted">Alle priser eks. mva.</p>
-    </div>
-  )
-
   return (
     <div className="space-y-8">
       {isPastDue && onManage && (
@@ -267,7 +258,7 @@ export function BillingPlanSections({
       )}
 
       {isPro ? (
-        cardsAndNote
+        cards
       ) : (
         // "Velg plan" + the cards form one group: the header binds to the cards
         // below it (16px) and is separated from the page header above by the
@@ -283,7 +274,7 @@ export function BillingPlanSections({
               />
             )}
           </div>
-          <div className="mt-4">{cardsAndNote}</div>
+          <div className="mt-4">{cards}</div>
         </section>
       )}
     </div>
@@ -385,7 +376,7 @@ function PlanOption({
             )}
           </div>
           <div className="mt-3 flex items-baseline gap-1.5">
-            <span className="whitespace-nowrap text-2xl font-medium tabular-nums tracking-tight text-foreground">
+            <span className="whitespace-nowrap text-2xl font-medium tabular-nums text-foreground">
               {price}
             </span>
             {priceSub && <span className="text-sm text-foreground-muted">{priceSub}</span>}
