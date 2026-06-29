@@ -236,7 +236,7 @@ const SchedulePage = () => {
       <PageShell
         title="Timeplan"
         tabs={
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border">
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
             <PageTabs ariaLabel="Status" className="border-b-0">
               {(['active', 'past'] as const).map((key) => (
                 <PageTab

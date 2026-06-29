@@ -7,30 +7,17 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { PaymentBadge } from '@/components/ui/payment-badge';
-import { StatusBadge } from '@/components/ui/status-badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatKroner, cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
-  Calendar,
-  CalendarPlus,
+  CalendarX,
   Copy,
   CreditCard,
-  Mail,
-  Phone,
-  RefreshCw,
-  Ticket,
-  Wallet,
-  XCircle,
+  Undo2,
+  UserCheck,
+  UserMinus,
   type LucideIcon,
 } from '@/lib/icons';
 import type { SignupWithProfile } from '@/services/signups';
@@ -55,23 +42,6 @@ const AUDIENCE_LABEL: Record<TicketAudience, string> = {
   staff: 'Personale',
 };
 
-function formatNorwegianDateTime(input: string | null | undefined): string {
-  if (!input) return '';
-  const d = new Date(input);
-  if (Number.isNaN(d.getTime())) return '';
-  const datePart = new Intl.DateTimeFormat('nb-NO', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  }).format(d);
-  const timePart = new Intl.DateTimeFormat('nb-NO', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(d);
-  return `${datePart} kl. ${timePart}`;
-}
-
 function formatNorwegianShort(input: string | null | undefined): string {
   if (!input) return '';
   const d = new Date(input);
@@ -85,7 +55,7 @@ function formatNorwegianShort(input: string | null | undefined): string {
     minute: '2-digit',
     hour12: false,
   }).format(d);
-  return `${datePart}, kl. ${timePart}`;
+  return `${datePart} kl. ${timePart}`;
 }
 
 // Map `payment_product` slug to a display label. Stripe sets 'stripe';
@@ -111,10 +81,21 @@ function ticketLabel(
   return 'Kursrekke';
 }
 
+type ActivityTone = 'success' | 'danger' | 'warning' | 'neutral';
+
 type ActivityEvent = {
   icon: LucideIcon;
+  tone: ActivityTone;
   label: string;
   timestamp: string;
+};
+
+// Circular node — container + icon share the hue (badge subtle treatment).
+const ACTIVITY_TONE: Record<ActivityTone, string> = {
+  success: 'bg-success-subtle text-success',
+  danger: 'bg-danger-subtle text-danger',
+  warning: 'bg-warning-subtle text-warning',
+  neutral: 'bg-muted text-foreground-muted',
 };
 
 /**
@@ -150,10 +131,9 @@ function buildActivity(signup: SignupWithProfile): ActivityEvent[] {
 
   if (signup.created_at) {
     events.push({
-      icon: paidAtomically ? CreditCard : CalendarPlus,
-      label: paidAtomically
-        ? 'Betaling mottatt og påmelding bekreftet'
-        : 'Påmelding bekreftet',
+      icon: paidAtomically ? CreditCard : UserCheck,
+      tone: 'success',
+      label: paidAtomically ? 'Påmeldt og betalt' : 'Påmeldt',
       timestamp: formatNorwegianShort(signup.created_at),
     });
   }
@@ -164,32 +144,38 @@ function buildActivity(signup: SignupWithProfile): ActivityEvent[] {
   if (isPaid && !paidAtomically) {
     events.push({
       icon: CreditCard,
-      label: 'Betaling mottatt',
+      tone: 'success',
+      label: 'Betalt',
       timestamp: formatNorwegianShort(signup.updated_at ?? signup.created_at),
+    });
+  }
+
+  // Cancellation comes before the refund it triggers, so the refund reads as
+  // the most recent event once the list is reversed to newest-first.
+  if (signup.status === 'cancelled') {
+    events.push({
+      icon: UserMinus,
+      tone: 'danger',
+      label: 'Avbestilt',
+      timestamp: formatNorwegianShort(signup.cancelled_at ?? signup.updated_at),
+    });
+  } else if (signup.status === 'course_cancelled') {
+    events.push({
+      icon: CalendarX,
+      tone: 'warning',
+      label: 'Kurs avlyst',
+      timestamp: formatNorwegianShort(signup.cancelled_at ?? signup.updated_at),
     });
   }
 
   if (signup.refunded_at) {
     events.push({
-      icon: RefreshCw,
+      icon: Undo2,
+      tone: 'neutral',
       label: signup.refund_amount
-        ? `${isPartiallyRefunded(signup) ? 'Delvis refundert' : 'Refundert'} · ${formatKroner(signup.refund_amount)}`
+        ? `${isPartiallyRefunded(signup) ? 'Delvis refundert' : 'Refundert'} ${formatKroner(signup.refund_amount)}`
         : 'Refundert',
       timestamp: formatNorwegianShort(signup.refunded_at),
-    });
-  }
-
-  if (signup.status === 'cancelled') {
-    events.push({
-      icon: XCircle,
-      label: 'Påmelding avbestilt',
-      timestamp: formatNorwegianShort(signup.cancelled_at ?? signup.updated_at),
-    });
-  } else if (signup.status === 'course_cancelled') {
-    events.push({
-      icon: XCircle,
-      label: 'Kurs avlyst',
-      timestamp: formatNorwegianShort(signup.cancelled_at ?? signup.updated_at),
     });
   }
 
@@ -226,10 +212,12 @@ export function ParticipantDetailDrawer({
   // Refundable when paid through Stripe (stripe_payment_intent_id present).
   const canRefund =
     isPaid && !!signup.stripe_payment_intent_id;
-  const canMarkResolved =
-    paymentStatus === 'pending' || paymentStatus === 'failed' || paymentStatus === 'external';
-  // The action menu now holds only high-impact actions (copy moved inline onto the
-  // contact rows). A cancelled signup with nothing to refund has none — disable.
+  // Only 'external' (direkte/in-person) signups are unpaid by design — the teacher
+  // reconciles the offline payment by hand. Card signups are minted as paid, so
+  // there is no other "mark paid" case.
+  const canMarkPaid = paymentStatus === 'external';
+  // Footer renders when there's something to do: an active signup always has a
+  // cancel action; a cancelled one only when there's still money to refund.
   const hasActions = !isCancelled || canRefund;
 
   const expectedPrice =
@@ -238,16 +226,12 @@ export function ParticipantDetailDrawer({
   // strike the price or present them as fully refunded.
   const isPartialRefund = paymentStatus === 'refunded' && isPartiallyRefunded(signup);
   const priceStrike = paymentStatus === 'refunded' && !isPartialRefund;
-  const paymentMethod = paymentMethodLabel(signup.payment_product);
-  const signupLabel = status === 'cancelled' ? 'Avbestilt' : undefined;
-  const paymentLabel =
-    paymentStatus === 'pending'
-      ? 'Venter'
-      : paymentStatus === 'failed'
-        ? 'Mislykket'
-        : isPartialRefund
-          ? 'Delvis refundert'
-          : undefined;
+  // In-person / free-tier studios settle off-platform — surface that as the
+  // payment method (the status badge stays "Påmeldt", an enrollment state).
+  const paymentMethod =
+    paymentStatus === 'external'
+      ? 'Avtales direkte'
+      : paymentMethodLabel(signup.payment_product);
 
   const runAction = async (fn: () => Promise<void>) => {
     setLoading(true);
@@ -272,59 +256,41 @@ export function ParticipantDetailDrawer({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="sm:max-w-[440px] p-0 gap-0 bg-background">
-          {/* Header — avatar + identity. Close X is provided by SheetContent. */}
-          <SheetHeader className="px-6 py-5 border-b border-border-subtle">
+        <SheetContent
+          side="right"
+          className="sm:max-w-[420px] p-0 gap-0 bg-background"
+          // Read-only detail panel: keep focus on the row that opened it rather
+          // than auto-focusing the first copy button (which would ring the email).
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          {/* Header — identity + status at a glance. Close X is provided by SheetContent. */}
+          <SheetHeader className="gap-0 border-b border-border-subtle px-6 py-5">
             <SheetTitle className="sr-only">Deltakerdetaljer</SheetTitle>
-            <div className="flex items-start gap-3 pr-10">
+            {/* Identity only — current state is carried by the Betaling section
+                and the activity timeline, not a redundant header badge. */}
+            <div className="flex items-center gap-3 pr-10">
               <UserAvatar name={name} email={email} size="lg" />
-              <div className="min-w-0 pt-0.5">
-                <p className="text-base font-medium text-foreground leading-snug truncate">
-                  {name}
-                </p>
-                {email && (
-                  <p className="text-sm text-foreground-muted truncate mt-0.5">{email}</p>
-                )}
-              </div>
+              <p className="min-w-0 flex-1 truncate text-lg font-medium text-foreground leading-snug">
+                {name}
+              </p>
             </div>
           </SheetHeader>
 
-          {/* Scrollable body */}
-          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-3">
-            {/* Status mini-cards */}
-            <div className="grid grid-cols-2 gap-3">
-              <StatusTile label="Påmelding">
-                <StatusBadge status={status} customLabel={signupLabel} />
-              </StatusTile>
-              <StatusTile label="Betaling">
-                <PaymentBadge status={paymentStatus} customLabel={paymentLabel} visibility="always" />
-              </StatusTile>
-            </div>
-
-            {/* Detail card — sections divided by hairline rules */}
-            <div className="rounded-xl border border-border bg-surface divide-y divide-border-subtle">
-              <Section title="Påmeldingsdetaljer">
-                <DetailRow
-                  icon={Calendar}
-                  label="Påmeldt"
-                  value={formatNorwegianDateTime(signup.created_at)}
-                />
-                <DetailRow
-                  icon={Ticket}
+          {/* Scrollable body — flat groups divided by hairline rules, no nested cards */}
+          <div className="flex-1 divide-y divide-border-subtle overflow-y-auto px-6">
+            <DetailGroup title="Betaling">
+              <dl className="space-y-2.5">
+                <Row
                   label="Billett"
                   value={ticketLabel(signup.ticket_kind_snapshot, signup.ticket_audience_snapshot)}
                 />
-              </Section>
-
-              {expectedPrice != null && (
-                <Section title="Betaling">
-                  <DetailRow
-                    icon={Wallet}
+                {expectedPrice != null && (
+                  <Row
                     label="Beløp"
                     value={
                       <span
                         className={cn(
-                          'tabular-nums font-medium text-foreground',
+                          'tabular-nums',
                           priceStrike &&
                             'text-foreground-muted line-through decoration-foreground-muted/60',
                         )}
@@ -333,32 +299,26 @@ export function ParticipantDetailDrawer({
                       </span>
                     }
                   />
-                  {paymentMethod && (
-                    <DetailRow
-                      icon={CreditCard}
-                      label="Metode"
-                      value={paymentMethod}
-                    />
-                  )}
-                  {signup.refund_amount != null && signup.refund_amount > 0 && (
-                    <DetailRow
-                      icon={RefreshCw}
-                      label="Refundert"
-                      value={
-                        <span className="tabular-nums text-foreground-muted">
-                          {formatKroner(signup.refund_amount)}
-                        </span>
-                      }
-                    />
-                  )}
-                </Section>
-              )}
+                )}
+                {paymentMethod && <Row label="Metode" value={paymentMethod} />}
+                {signup.refund_amount != null && signup.refund_amount > 0 && (
+                  <Row
+                    label="Refundert"
+                    value={
+                      <span className="tabular-nums text-foreground-muted">
+                        {formatKroner(signup.refund_amount)}
+                      </span>
+                    }
+                  />
+                )}
+              </dl>
+            </DetailGroup>
 
-              {(email || phone) && (
-                <Section title="Kontakt">
+            {(email || phone) && (
+              <DetailGroup title="Kontakt">
+                <dl className="space-y-2.5">
                   {email && (
                     <CopyRow
-                      icon={Mail}
                       label="E-post"
                       value={email}
                       onCopy={() => copyToClipboard(email, 'e-post')}
@@ -366,97 +326,123 @@ export function ParticipantDetailDrawer({
                   )}
                   {phone && (
                     <CopyRow
-                      icon={Phone}
                       label="Telefon"
                       value={phone}
                       onCopy={() => copyToClipboard(phone, 'telefonnummer')}
                     />
                   )}
-                </Section>
-              )}
+                </dl>
+              </DetailGroup>
+            )}
 
-              {signup.note && (
-                <Section title="Notat fra deltakeren">
-                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                    {signup.note}
-                  </p>
-                </Section>
-              )}
-            </div>
+            {signup.note && (
+              <DetailGroup title="Notat fra deltakeren">
+                <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+                  {signup.note}
+                </p>
+              </DetailGroup>
+            )}
 
-            {/* Activity log */}
             {activity.length > 0 && (
-              <div className="rounded-xl border border-border bg-surface p-5">
-                <h3 className="text-sm font-medium text-foreground mb-4">Aktivitetslogg</h3>
-                <ol className="space-y-3.5">
-                  {activity.map((event, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <span
-                        className="size-7 rounded-full bg-muted text-foreground-muted flex items-center justify-center shrink-0"
-                        aria-hidden="true"
-                      >
-                        <event.icon className="size-3.5" />
-                      </span>
-                      <div className="min-w-0 flex-1 pt-0.5">
-                        <p className="text-sm text-foreground leading-tight">{event.label}</p>
-                        <p className="text-xs text-foreground-muted mt-1">{event.timestamp}</p>
-                      </div>
-                    </li>
-                  ))}
+              <DetailGroup title="Aktivitet">
+                <ol>
+                  {activity.map((event, idx) => {
+                    const Icon = event.icon;
+                    const isLast = idx === activity.length - 1;
+                    return (
+                      <li key={idx} className="relative flex items-center gap-3 pb-4 last:pb-0">
+                        {/* Connector — links this node down to the next event */}
+                        {!isLast && (
+                          <span
+                            aria-hidden="true"
+                            className="absolute bottom-0 left-[11.5px] top-6 w-px bg-border"
+                          />
+                        )}
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            'flex size-6 shrink-0 items-center justify-center rounded-full',
+                            ACTIVITY_TONE[event.tone],
+                          )}
+                        >
+                          <Icon className="size-3.5" />
+                        </span>
+                        <div className="flex min-w-0 flex-1 items-baseline justify-between gap-4">
+                          <span className="text-base text-foreground">{event.label}</span>
+                          <span className="shrink-0 whitespace-nowrap text-sm tabular-nums text-foreground-muted">
+                            {event.timestamp}
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ol>
-              </div>
+              </DetailGroup>
             )}
           </div>
 
-          {/* Footer — single dropdown trigger */}
-          <SheetFooter className="px-6 py-4 border-t border-border-subtle">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+          {/* Footer — direct actions (≤2): recommended action primary, the
+              alternative secondary. Destructive emphasis lives in the dialog. */}
+          {hasActions && (
+            <SheetFooter className="border-t border-border-subtle px-6 py-4">
+              {isCancelled ? (
                 <Button
                   className="w-full"
-                  disabled={loading || !hasActions}
+                  disabled={loading}
+                  onClick={() => setConfirmKind('refund-only')}
                 >
-                  Handlinger
+                  Refunder beløp
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                side="top"
-                sideOffset={8}
-                className="w-[var(--radix-dropdown-menu-trigger-width)]"
-              >
-                {!isCancelled && canMarkResolved && (
-                  <DropdownMenuItem onSelect={() => setConfirmKind('resolve')}>
+              ) : canMarkPaid ? (
+                // Direkte / in-person: reconcile the offline payment, or cancel.
+                <>
+                  <Button
+                    className="w-full"
+                    disabled={loading}
+                    onClick={() => setConfirmKind('resolve')}
+                  >
                     Merk som betalt
-                  </DropdownMenuItem>
-                )}
-
-                {!isCancelled && canRefund && (
-                  <DropdownMenuItem onSelect={() => setConfirmKind('cancel-with-refund')}>
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    disabled={loading}
+                    onClick={() => setConfirmKind('cancel-no-refund')}
+                  >
+                    Avbestill
+                  </Button>
+                </>
+              ) : canRefund ? (
+                // Paid via card: cancel with or without refund.
+                <>
+                  <Button
+                    className="w-full"
+                    disabled={loading}
+                    onClick={() => setConfirmKind('cancel-with-refund')}
+                  >
                     Avbestill og refunder
-                  </DropdownMenuItem>
-                )}
-
-                {isCancelled && canRefund && (
-                  <DropdownMenuItem onSelect={() => setConfirmKind('refund-only')}>
-                    Refunder beløp
-                  </DropdownMenuItem>
-                )}
-
-                {!isCancelled && (
-                  <>
-                    {(canMarkResolved || canRefund) && <DropdownMenuSeparator />}
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => setConfirmKind('cancel-no-refund')}
-                    >
-                      Avbestill påmelding
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SheetFooter>
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    disabled={loading}
+                    onClick={() => setConfirmKind('cancel-no-refund')}
+                  >
+                    Avbestill uten refusjon
+                  </Button>
+                </>
+              ) : (
+                // Free / non-card active signup: only cancel (solo → primary).
+                <Button
+                  className="w-full"
+                  disabled={loading}
+                  onClick={() => setConfirmKind('cancel-no-refund')}
+                >
+                  Avbestill
+                </Button>
+              )}
+            </SheetFooter>
+          )}
         </SheetContent>
       </Sheet>
 
@@ -523,16 +509,7 @@ export function ParticipantDetailDrawer({
   );
 }
 
-function StatusTile({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-border bg-surface p-5">
-      <h3 className="text-sm font-medium text-foreground">{label}</h3>
-      <div className="mt-3">{children}</div>
-    </div>
-  );
-}
-
-function Section({
+function DetailGroup({
   title,
   children,
 }: {
@@ -540,29 +517,18 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="p-5">
-      <h3 className="text-sm font-medium text-foreground mb-3">{title}</h3>
-      <div className="space-y-3">{children}</div>
+    <section className="py-5">
+      <h3 className="mb-3 text-base font-medium text-foreground">{title}</h3>
+      {children}
     </section>
   );
 }
 
-function DetailRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: React.ReactNode;
-}) {
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3">
-      <Icon className="size-4 text-foreground-muted shrink-0 mt-0.5" aria-hidden="true" />
-      <dt className="text-sm text-foreground-muted shrink-0">{label}</dt>
-      <dd className="text-sm text-foreground ml-auto text-right min-w-0 break-words">
-        {value}
-      </dd>
+    <div className="flex items-baseline justify-between gap-4">
+      <dt className="shrink-0 text-sm text-foreground-muted">{label}</dt>
+      <dd className="min-w-0 break-words text-right text-base text-foreground">{value}</dd>
     </div>
   );
 }
@@ -571,28 +537,25 @@ function DetailRow({
 // reveals on hover. Keeps high-impact actions in the footer menu and makes
 // email/phone copyable in one tap, right where they're shown.
 function CopyRow({
-  icon: Icon,
   label,
   value,
   onCopy,
 }: {
-  icon: LucideIcon;
   label: string;
   value: string;
   onCopy: () => void;
 }) {
   return (
-    <div className="flex items-start gap-3">
-      <Icon className="size-4 text-foreground-muted shrink-0 mt-0.5" aria-hidden="true" />
-      <dt className="text-sm text-foreground-muted shrink-0">{label}</dt>
+    <div className="flex items-baseline justify-between gap-4">
+      <dt className="shrink-0 text-sm text-foreground-muted">{label}</dt>
       <button
         type="button"
         onClick={onCopy}
         aria-label={`Kopier ${label.toLowerCase()}`}
-        className="group ml-auto flex min-w-0 items-center gap-1.5 text-right text-sm text-foreground"
+        className="group flex min-w-0 items-center gap-1.5 text-right text-base text-foreground"
       >
         <span className="truncate">{value}</span>
-        <Copy className="size-3.5 shrink-0 text-foreground-muted transition-colors group-hover:text-foreground" />
+        <Copy className="size-4 shrink-0 text-foreground-muted transition-colors group-hover:text-foreground" />
       </button>
     </div>
   );

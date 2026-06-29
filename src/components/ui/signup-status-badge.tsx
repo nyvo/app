@@ -14,9 +14,12 @@ interface SignupStatusBadgeProps {
 function derive(status: SignupStatus, payment: PaymentStatus): { variant: BadgeVariant; label: string } {
   if (payment === 'refunded')           return { variant: 'neutral',     label: 'Refundert' };
   if (status === 'cancelled')           return { variant: 'neutral',     label: 'Avbestilt' };
-  if (status === 'course_cancelled')    return { variant: 'warning',     label: 'Kurs avlyst' };
-  if (payment === 'failed')             return { variant: 'destructive', label: 'Betaling feilet' };
-  if (payment === 'pending')            return { variant: 'warning',     label: 'Venter betaling' };
+  if (status === 'course_cancelled')    return { variant: 'warning', label: 'Kurs avlyst' };
+  // Signups are minted directly as confirmed+paid by create_signup_if_available
+  // (card rows only after the charge is captured; a failed capture cancels the row
+  // in the same step). So 'pending' and 'failed' never reach a live signup — no
+  // branch for them. 'external' (free-tier / in-person) is unpaid by design and
+  // falls through to "Påmeldt"; that arrangement shows in the payment details.
   return { variant: 'success', label: 'Påmeldt' };
 }
 
