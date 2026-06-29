@@ -186,10 +186,10 @@ export function ImageField({
       aria-describedby={describedBy}
       className={cn(
         'group relative shrink-0 cursor-pointer overflow-hidden transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed',
-        isAvatar ? 'size-24 rounded-full' : 'aspect-[16/10] w-full rounded-lg',
+        isAvatar ? 'size-24 rounded-full' : 'aspect-[16/10] w-full rounded-xl',
         displayUrl
-          ? 'bg-muted'
-          : 'border border-dashed border-border bg-surface hover:border-foreground/30 hover:bg-muted/40',
+          ? 'border border-border bg-muted'
+          : 'border border-border bg-surface hover:border-foreground/30 hover:bg-muted/40',
         displayError && 'ring-2 ring-danger/20',
         dragActive && !displayUrl && 'border-foreground/40 bg-muted',
         isDisabled && !loading && 'opacity-50',

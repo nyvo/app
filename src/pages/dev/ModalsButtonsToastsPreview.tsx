@@ -164,7 +164,7 @@ export default function ModalsButtonsToastsPreview() {
                 </Button>
                 <Button size="lg">Avlys kurs</Button>
               </ButtonRow>
-              <ButtonRow label="Page header CTA (size='default' — 36px)">
+              <ButtonRow label="Page header CTA (size='default' — 44px)">
                 <Button size="default">Opprett kurs</Button>
               </ButtonRow>
               <ButtonRow label="Drawer footer primary (size='default')">
@@ -190,7 +190,7 @@ export default function ModalsButtonsToastsPreview() {
                 <SizeChip label="sm · 32px" use="Table-row actions, toolbars">
                   <Button>Action</Button>
                 </SizeChip>
-                <SizeChip label="default · 36px" use="Page header CTAs, drawer footers">
+                <SizeChip label="default · 44px" use="Page header CTAs, drawer footers">
                   <Button size="default">Action</Button>
                 </SizeChip>
                 <SizeChip label="lg · 40px" use="Modal footer actions">

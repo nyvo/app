@@ -119,7 +119,7 @@ export function LocationCombobox({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={cn(
-          'flex h-9 w-full items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-[color,border-color,box-shadow] duration-150 ease-out placeholder:font-normal placeholder:text-foreground-muted focus-visible:outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-11 w-full items-center rounded-xl border border-border bg-surface px-4 text-base font-medium transition-[color,border-color,box-shadow] duration-150 ease-out placeholder:font-normal placeholder:text-foreground-subtle focus-visible:outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
         {...ariaProps}
@@ -135,7 +135,7 @@ export function LocationCombobox({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            'flex h-9 w-full items-center justify-between rounded-md border border-border bg-surface px-3 text-sm font-medium transition-[color,border-color,box-shadow] duration-150 ease-out focus-visible:outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed disabled:opacity-50',
+            'flex h-11 w-full items-center justify-between rounded-xl border border-border bg-surface px-4 text-base font-medium transition-[color,border-color,box-shadow] duration-150 ease-out focus-visible:outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed disabled:opacity-50',
             !value && 'font-normal text-foreground-muted',
             className
           )}
@@ -151,7 +151,7 @@ export function LocationCombobox({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Søk eller skriv nytt sted…"
-          className="block h-9 w-full border-0 bg-transparent px-3 text-sm font-medium placeholder:font-normal placeholder:text-foreground-muted focus:outline-none"
+          className="block h-11 w-full border-0 bg-transparent px-4 text-base font-medium placeholder:font-normal placeholder:text-foreground-subtle focus:outline-none"
           autoFocus
         />
         <div className="max-h-60 overflow-y-auto border-t border-border-subtle p-1 space-y-1">

@@ -19,6 +19,8 @@ interface PlacesAutocompleteProps {
   'aria-describedby'?: string;
   /** Forwarded for keys we don't handle (e.g. the form's Enter-to-save). */
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  /** Optional leading icon, forwarded to the inner input. */
+  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
 }
 
 const newToken = () => crypto.randomUUID();
@@ -31,6 +33,7 @@ export function PlacesAutocomplete({
   disabled,
   id,
   onKeyDown,
+  icon,
   ...aria
 }: PlacesAutocompleteProps) {
   const [open, setOpen] = useState(false);
@@ -88,6 +91,7 @@ export function PlacesAutocomplete({
     <div className="relative">
       <Input
         id={id}
+        icon={icon}
         value={value}
         disabled={disabled}
         placeholder={placeholder}

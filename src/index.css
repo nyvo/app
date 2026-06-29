@@ -57,6 +57,7 @@
   /* Foreground — role then modifier (Studio convention) */
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
   --color-foreground-disabled: var(--foreground-disabled);
 
   /* Brand / interaction */
@@ -229,6 +230,7 @@
   /* Foreground */
   --foreground: var(--neutral-12);
   --foreground-muted: var(--neutral-11);             /* WCAG AA on bg */
+  --foreground-subtle: var(--neutral-9);             /* recessive grey: placeholders + decorative input icons (quieter than -muted, not a disabled state) */
   --foreground-disabled: var(--neutral-8);
 
   /* Brand / interaction — periwinkle (#5564c4). White text = 5.2:1 AA. */
@@ -354,6 +356,7 @@
   /* Foreground */
   --foreground: var(--neutral-12);
   --foreground-muted: var(--neutral-11);
+  --foreground-subtle: var(--neutral-9);
   --foreground-disabled: var(--neutral-8);
 
   /* Brand / interaction — periwinkle, slightly brighter on dark (~4.9:1 white text AA). */

@@ -29,14 +29,14 @@ import { Spinner } from "./spinner"
  *   plain      — inline text action with button semantics. No chrome.
  *
  * Size axis (height / horizontal padding / text-size):
- *   default  36px   px-4     text-sm    Normal app buttons
+ *   default  44px   px-4     text-sm    Normal app buttons
  *   lg       40px   px-5     text-sm    Modal footer actions
  *   cta      44px   px-6     text-base  Public/mobile primary CTAs
- *   icon     36px square              Icon-only controls
+ *   icon     44px square              Icon-only controls
  *   icon-lg  40px square              Larger icon-only controls
  *
  * Touch surfaces (mobile booking, public pages, MobilePriceBar): minimum
- * `default` (36px); CTAs use `cta` (44px).
+ * `default` (44px); CTAs use `cta` (44px).
  */
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-colors duration-150 ease-out outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 dark:aria-invalid:border-danger/50 dark:aria-invalid:ring-danger/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 cursor-pointer",
@@ -64,10 +64,10 @@ const buttonVariants = cva(
           "bg-transparent border-transparent text-foreground-muted hover:bg-transparent hover:text-foreground",
       },
       size: {
-        default: "h-9 gap-1.5 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+        default: "h-11 gap-1.5 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
         lg: "h-10 gap-1.5 px-5 has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
         cta: "h-11 gap-2 px-6 text-base has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5",
-        icon: "size-9",
+        icon: "size-11",
         "icon-lg": "size-10",
       },
     },

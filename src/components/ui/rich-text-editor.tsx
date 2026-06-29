@@ -5,7 +5,6 @@ import Link from '@tiptap/extension-link';
 
 import { cn } from '@/lib/utils';
 import {
-  Link as LinkIcon,
   List as ListIcon,
   Redo2,
   Undo2,
@@ -55,17 +54,6 @@ function Divider() {
 }
 
 function Toolbar({ editor }: { editor: Editor }) {
-  const promptForLink = () => {
-    const previous = editor.getAttributes('link').href as string | undefined;
-    const url = window.prompt('Lenke (URL)', previous ?? 'https://');
-    if (url === null) return;
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
-      return;
-    }
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  };
-
   return (
     <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-surface px-1.5 py-1">
       <ToolbarButton
@@ -81,13 +69,6 @@ function Toolbar({ editor }: { editor: Editor }) {
         onClick={() => editor.chain().focus().toggleBulletList().run()}
       >
         <ListIcon />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Lenke"
-        isActive={editor.isActive('link')}
-        onClick={promptForLink}
-      >
-        <LinkIcon />
       </ToolbarButton>
 
       <Divider />
@@ -118,6 +99,9 @@ export function RichTextEditor({
   'aria-labelledby': ariaLabelledBy,
 }: RichTextEditorProps) {
   const editor = useEditor({
+    // Avoid TipTap's StrictMode double-mount crash ("reading 'cached'") — let
+    // the editor mount after the first paint instead of synchronously.
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         italic: false,
@@ -143,7 +127,7 @@ export function RichTextEditor({
         'aria-multiline': 'true',
         ...(ariaLabelledBy ? { 'aria-labelledby': ariaLabelledBy } : {}),
         class: cn(
-          'prose-editor min-h-32 px-3 py-2.5 outline-none',
+          'prose-editor min-h-32 px-4 py-3 outline-none',
           'text-base leading-relaxed text-foreground',
         ),
       },
@@ -179,7 +163,7 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-md border border-border bg-surface transition-[color,border-color,box-shadow] duration-150 ease-out',
+        'overflow-hidden rounded-xl border border-border bg-surface transition-[color,border-color,box-shadow] duration-150 ease-out',
         'focus-within:border-foreground focus-within:ring-2 focus-within:ring-foreground/15',
         className,
       )}

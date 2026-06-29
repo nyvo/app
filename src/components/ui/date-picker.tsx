@@ -10,6 +10,8 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 
+type IconType = React.ComponentType<{ className?: string; strokeWidth?: number }>
+
 interface DatePickerProps extends Omit<React.ComponentPropsWithoutRef<'button'>, 'value' | 'onChange'> {
   value?: Date
   onChange?: (date: Date | undefined) => void
@@ -19,6 +21,8 @@ interface DatePickerProps extends Omit<React.ComponentPropsWithoutRef<'button'>,
   /** Earliest selectable date. Days before this are greyed out. */
   fromDate?: Date
   timeZone?: string
+  /** Optional leading icon rendered before the value span. */
+  icon?: IconType
 }
 
 const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(({
@@ -32,6 +36,7 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(({
   id,
   fromDate,
   timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone,
+  icon: Icon,
   ...buttonProps
 }, ref) => {
   const [open, setOpen] = React.useState(false)
@@ -55,13 +60,16 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(({
           disabled={disabled}
           aria-invalid={error || undefined}
           className={cn(
-            'flex h-9 w-full items-center justify-between rounded-md border border-border bg-surface px-3 text-sm text-foreground outline-none transition-[color,border-color,box-shadow] duration-150 ease-out focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20',
+            'flex h-11 w-full items-center justify-between gap-2.5 rounded-xl border border-border bg-surface px-4 text-base text-foreground outline-none transition-[color,border-color,box-shadow] duration-150 ease-out focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20',
             !value && 'text-foreground-muted',
             className
           )}
           {...buttonProps}
         >
-          <span className={cn(!value && 'text-foreground-muted')}>
+          {Icon && (
+            <Icon className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
+          )}
+          <span className={cn('flex-1 text-left', !value && 'text-foreground-muted')}>
             {value ? formatDateNorwegian(value) : placeholder}
           </span>
           <ChevronDown className={cn('size-4 shrink-0 text-foreground-muted', error && 'text-danger')} />

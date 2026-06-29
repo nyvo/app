@@ -15,6 +15,9 @@ interface SegmentedTabsProps<T extends string> {
   className?: string;
   /** Stretch the control to fill its container; each tab gets equal width. */
   stretch?: boolean;
+  /** Control height. 'md' (default) = 36px track; 'lg' = 44px track for
+   *  generous, form-first surfaces (e.g. the course builder). */
+  size?: 'md' | 'lg';
 }
 
 /**
@@ -29,13 +32,15 @@ export function SegmentedTabs<T extends string>({
   ariaLabel,
   className,
   stretch = false,
+  size = 'lg',
 }: SegmentedTabsProps<T>) {
   return (
     <div
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        'h-9 items-center rounded-full bg-muted p-1 gap-1',
+        'items-center rounded-full bg-muted p-1 gap-1',
+        size === 'lg' ? 'h-11' : 'h-9',
         stretch ? 'flex w-full' : 'inline-flex w-fit',
         className,
       )}
@@ -50,7 +55,8 @@ export function SegmentedTabs<T extends string>({
             aria-selected={active}
             onClick={() => onChange(t.key)}
             className={cn(
-              'inline-flex h-7 items-center justify-center gap-2 rounded-full px-3 text-sm font-medium transition-colors',
+              'inline-flex items-center justify-center gap-2 rounded-full text-sm font-medium transition-colors',
+              size === 'lg' ? 'h-9 px-4' : 'h-7 px-3',
               'outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
               stretch && 'flex-1',
               active
