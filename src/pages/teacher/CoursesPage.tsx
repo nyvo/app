@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
-import { useSearchParams } from 'react-router-dom';
-import { CreateCourseDrawer } from '@/components/teacher/CreateCourseDrawer';
+import { useNavigate } from 'react-router-dom';
+import { routes } from '@/lib/routes';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
@@ -77,25 +77,7 @@ const DEFAULT_SORT_FOR_TAB: Record<ViewTab, { key: SortKey; dir: SortDir }> = {
 
 const CoursesPage = () => {
   const { currentSeller } = useAuth();
-  // `?new=1` opens the create drawer. The quick-glance `?kurs=:id` overlay
-  // lives at the layout level (TeacherLayout) so it works on any page.
-  const [searchParams, setSearchParams] = useSearchParams();
-  const showCreateDrawer = searchParams.get('new') === '1';
-
-  const handleCreateOpenChange = useCallback(
-    (open: boolean) => {
-      if (open) return;
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          next.delete('new');
-          return next;
-        },
-        { replace: true },
-      );
-    },
-    [setSearchParams],
-  );
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewTab, setViewTab] = useState<ViewTab>('active');
   const [sortKey, setSortKey] = useState<SortKey>('next');
@@ -285,18 +267,7 @@ const CoursesPage = () => {
           title="Mine kurs"
           action={
             !showCoursesEmptyState && (
-              <Button
-                onClick={() =>
-                  setSearchParams(
-                    (prev) => {
-                      const next = new URLSearchParams(prev);
-                      next.set('new', '1');
-                      return next;
-                    },
-                    { replace: false },
-                  )
-                }
-              >
+              <Button onClick={() => navigate(routes.coursesNew)}>
                 <CalendarPlus data-icon="inline-start" />
                 Opprett kurs
               </Button>
@@ -377,10 +348,6 @@ const CoursesPage = () => {
             </>
           )}
         </PageShell>
-        <CreateCourseDrawer
-          open={showCreateDrawer}
-          onOpenChange={handleCreateOpenChange}
-        />
       </div>
   );
 };

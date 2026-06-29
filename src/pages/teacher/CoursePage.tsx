@@ -39,11 +39,15 @@ import {
   cancelCourse,
   fetchCourseSessions,
   updateCourseSession,
+  rescheduleCourseSession,
+  createCourseSession,
+  deleteCourseSession,
   syncCourseDropInTier,
   publishCourse,
   unpublishCourse,
   deleteCourse,
 } from '@/services/courses';
+import { type SessionDay } from '@/components/teacher/SessionDaysEditor';
 import {
   teacherCancelSignup,
   markPaymentResolved,
@@ -60,6 +64,20 @@ import type {
 } from '@/types/database';
 
 type TabKey = 'oversikt' | 'pameldte' | 'rediger';
+
+/** Parse a YYYY-MM-DD string into a local Date without TZ shift. */
+function parseLocalDate(ymd: string): Date {
+  const [y, m, d] = ymd.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/** Format a local Date to YYYY-MM-DD without TZ shift. */
+function formatLocalYMD(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 /**
  * Course not-found shell — wraps the canonical NotFoundState in the
@@ -122,6 +140,10 @@ const CoursePage = () => {
   const [settingsDuration, setSettingsDuration] = useState<number | null>(60);
   const [settingsAllowsDropIn, setSettingsAllowsDropIn] = useState(false);
   const [settingsDropInPrice, setSettingsDropInPrice] = useState(0);
+  // Per-day session state for single-format courses. Populated from loaded
+  // sessions; each day carries the real session id so saves can target the
+  // right DB row. An id prefixed with 'new-' means the row doesn't exist yet.
+  const [sessionDays, setSessionDays] = useState<SessionDay[]>([]);
   const [settingsAcceptsLateSignups, setSettingsAcceptsLateSignups] = useState(true);
   const [settingsPrice, setSettingsPrice] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
@@ -155,6 +177,22 @@ const CoursePage = () => {
     if (courseData.startDate) setSettingsDate(new Date(courseData.startDate));
   }, [courseData]);
 
+  // Populate per-day session editor from loaded sessions (single format only).
+  // Re-runs whenever sessions are (re)fetched so discard/refetch stays in sync.
+  useEffect(() => {
+    if (!courseData || courseData.format !== 'single') return;
+    if (sessions.length === 0) return;
+    const sorted = [...sessions].sort((a, b) => a.session_date.localeCompare(b.session_date));
+    setSessionDays(
+      sorted.map((s) => ({
+        id: s.id,
+        date: parseLocalDate(s.session_date),
+        startTime: s.start_time.slice(0, 5),
+        endTime: s.end_time ? s.end_time.slice(0, 5) : '',
+      })),
+    );
+  }, [sessions, courseData?.format]);
+
   const isSettingsDirty = useMemo(() => {
     if (!courseData) return false;
     if (settingsTitle !== courseData.title) return true;
@@ -164,19 +202,36 @@ const CoursePage = () => {
     if (settingsPrice !== courseData.price) return true;
     if (settingsDropInPrice !== courseData.dropInPrice) return true;
     if (settingsDuration !== courseData.durationMinutes) return true;
-    const origDate = courseData.startDate ? new Date(courseData.startDate).toDateString() : '';
-    const currDate = settingsDate ? settingsDate.toDateString() : '';
-    if (currDate !== origDate) return true;
-    const origTimeMatch = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/);
-    const origTime = origTimeMatch ? origTimeMatch[1] : '';
-    if (settingsTime !== origTime) return true;
+
+    if (courseData.format === 'single') {
+      // Dirty when session count changed or any day differs from loaded sessions
+      const sorted = [...sessions].sort((a, b) => a.session_date.localeCompare(b.session_date));
+      if (sessionDays.length !== sorted.length) return true;
+      for (let i = 0; i < sessionDays.length; i++) {
+        const day = sessionDays[i];
+        const orig = sorted[i];
+        if (!orig) return true;
+        const dayYmd = day.date ? formatLocalYMD(day.date) : '';
+        if (dayYmd !== orig.session_date) return true;
+        if (day.startTime !== orig.start_time.slice(0, 5)) return true;
+        const origEnd = orig.end_time ? orig.end_time.slice(0, 5) : '';
+        if (day.endTime !== origEnd) return true;
+      }
+    } else {
+      const origDate = courseData.startDate ? new Date(courseData.startDate).toDateString() : '';
+      const currDate = settingsDate ? settingsDate.toDateString() : '';
+      if (currDate !== origDate) return true;
+      const origTimeMatch = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/);
+      const origTime = origTimeMatch ? origTimeMatch[1] : '';
+      if (settingsTime !== origTime) return true;
+    }
     // settingsAllowsDropIn intentionally excluded — drop-in toggle is
     // instant-commit, not part of the batched save flow.
     return false;
   }, [
     courseData, settingsTitle, settingsDescription, settingsLocation,
     maxParticipants, settingsDuration, settingsDate, settingsTime,
-    settingsPrice, settingsDropInPrice,
+    settingsPrice, settingsDropInPrice, sessionDays, sessions,
   ]);
 
   const refundPreview = useMemo(() => {
@@ -282,7 +337,94 @@ const CoursePage = () => {
         }
       }
 
-      if (settingsTime && sessions.length > 0) {
+      if (courseData.format === 'single') {
+        // Per-day session persistence for single/enkeltkurs courses.
+        // Build a lookup of original sessions by id for change detection.
+        const origById = new Map(sessions.map((s) => [s.id, s]));
+        const isDraft = courseData.status === 'draft';
+
+        // 1. Handle removed days (only for drafts — safety constraint).
+        if (isDraft) {
+          const keptIds = new Set(sessionDays.map((d) => d.id));
+          const removedSessions = sessions.filter((s) => !keptIds.has(s.id));
+          for (const s of removedSessions) {
+            const { error: delError } = await deleteCourseSession(s.id);
+            if (delError) {
+              setSaveError(friendlyError(delError, 'Kunne ikke slette dag. Prøv igjen.'));
+              setIsSaving(false);
+              return;
+            }
+          }
+        }
+
+        // 2. Update or create each day.
+        for (let i = 0; i < sessionDays.length; i++) {
+          const day = sessionDays[i];
+          if (!day.date || !day.startTime) continue;
+          const dateStr = formatLocalYMD(day.date);
+          const startTime = day.startTime;
+          const endTime = day.endTime || null;
+
+          const orig = origById.get(day.id);
+          if (!orig) {
+            // New day (no existing session row) — only for drafts.
+            if (!isDraft) continue;
+            const { error: createError } = await createCourseSession(courseId, {
+              session_date: dateStr,
+              start_time: startTime,
+              end_time: endTime ?? '',
+              session_number: i + 1,
+            });
+            if (createError) {
+              setSaveError(friendlyError(createError, 'Kunne ikke legge til dag. Prøv igjen.'));
+              setIsSaving(false);
+              return;
+            }
+          } else {
+            // Existing session — diff to see if anything changed.
+            const origDateStr = orig.session_date;
+            const origStart = orig.start_time.slice(0, 5);
+            const origEnd = orig.end_time ? orig.end_time.slice(0, 5) : '';
+            const hasChanged =
+              dateStr !== origDateStr ||
+              startTime !== origStart ||
+              (endTime ?? '') !== origEnd;
+            if (!hasChanged) continue;
+
+            if (isDraft) {
+              // Draft: plain update (no notifications).
+              const { error: updError } = await updateCourseSession(day.id, {
+                session_date: dateStr,
+                start_time: startTime,
+                end_time: endTime,
+              });
+              if (updError) {
+                setSaveError(friendlyError(updError, 'Kunne ikke oppdatere dag. Prøv igjen.'));
+                setIsSaving(false);
+                return;
+              }
+            } else {
+              // Published: reschedule via edge function to notify participants.
+              const { error: reError } = await rescheduleCourseSession({
+                sessionId: day.id,
+                newDate: dateStr,
+                newStartTime: startTime,
+                newEndTime: endTime ?? undefined,
+              });
+              if (reError) {
+                setSaveError(friendlyError(reError, 'Kunne ikke oppdatere dag. Prøv igjen.'));
+                setIsSaving(false);
+                return;
+              }
+            }
+          }
+        }
+
+        // Refetch sessions so UI reflects the saved state.
+        const updatedSessions = await fetchCourseSessions(courseId);
+        if (updatedSessions.data) setSessions(updatedSessions.data);
+      } else if (settingsTime && sessions.length > 0) {
+        // Series: bulk-apply start time to all sessions (unchanged behavior).
         const oldTime = sessions[0]?.start_time;
         if (oldTime && oldTime !== settingsTime) {
           await Promise.all(sessions.map((s) => updateCourseSession(s.id, { start_time: settingsTime })));
@@ -549,6 +691,18 @@ const CoursePage = () => {
     if (courseData.startDate) setSettingsDate(new Date(courseData.startDate));
     const timeMatch = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/);
     if (timeMatch) setSettingsTime(timeMatch[1]);
+    // Reset per-day session editor from the loaded sessions (single format).
+    if (courseData.format === 'single' && sessions.length > 0) {
+      const sorted = [...sessions].sort((a, b) => a.session_date.localeCompare(b.session_date));
+      setSessionDays(
+        sorted.map((s) => ({
+          id: s.id,
+          date: parseLocalDate(s.session_date),
+          startTime: s.start_time.slice(0, 5),
+          endTime: s.end_time ? s.end_time.slice(0, 5) : '',
+        })),
+      );
+    }
     setSaveError(null);
   };
 
@@ -770,6 +924,7 @@ const CoursePage = () => {
               settingsDescription={settingsDescription}
               onDescriptionChange={setSettingsDescription}
               settingsLocation={settingsLocation}
+              settingsLocationCoords={settingsLocationCoords}
               onLocationChange={setSettingsLocation}
               onLocationCoordsChange={setSettingsLocationCoords}
               settingsImageUrl={settingsImageUrl}
@@ -783,6 +938,9 @@ const CoursePage = () => {
               onTimeChange={setSettingsTime}
               settingsDuration={settingsDuration}
               onDurationChange={setSettingsDuration}
+              sessionDays={sessionDays}
+              onSessionDaysChange={setSessionDays}
+              isPublished={isLive}
               maxParticipants={maxParticipants}
               onMaxParticipantsChange={setMaxParticipants}
               currentEnrolled={courseData.enrolled || 0}

@@ -250,7 +250,7 @@ const SchedulePage = () => {
             </PageTabs>
 
             <Select value={monthFilter} onValueChange={setMonthFilter}>
-              <SelectTrigger className="h-9 w-48 mb-2">
+              <SelectTrigger className="w-48 mb-2">
                 <SelectValue placeholder="Alle måneder" />
               </SelectTrigger>
               <SelectContent>

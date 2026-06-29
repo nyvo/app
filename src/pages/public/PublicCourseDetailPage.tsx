@@ -257,7 +257,8 @@ function MetaStrip({
   const nextDateLabel = formatRelativeDate(nextSessionDate);
 
   const instructor = course.instructors[0] ?? course.instructor ?? null;
-  const showScheduleLink = course.format === 'series' && sessions.length > 1;
+  // Show the schedule dialog for series AND for multi-day single courses.
+  const showScheduleLink = sessions.length > 1;
 
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-base text-foreground-muted">
@@ -315,7 +316,7 @@ function SchedulePeek({ sessions, duration }: { sessions: CourseSession[]; durat
               const isPast = hasSessionFinished(s, duration);
               const isCancelled = s.status === 'cancelled';
               const timeRange = s.start_time
-                ? sessionTimeRange(s.start_time, duration)
+                ? sessionTimeRangeWithEndTime(s.start_time, s.end_time, duration)
                 : null;
               return (
                 <li
@@ -365,8 +366,21 @@ function SchedulePeek({ sessions, duration }: { sessions: CourseSession[]; durat
   );
 }
 
-function sessionTimeRange(startTime: string, durationMinutes: number | null): string {
+/**
+ * Build a `kl. HH:MM–HH:MM` (or just `HH:MM`) label for a session tile.
+ *
+ * Priority:
+ * 1. If the session has an explicit `end_time`, use it → `start–end`.
+ * 2. Otherwise fall back to `start + durationMinutes` (legacy series behaviour).
+ * 3. If neither, just return the start time.
+ */
+function sessionTimeRangeWithEndTime(
+  startTime: string,
+  endTime: string | null | undefined,
+  durationMinutes: number | null,
+): string {
   const start = startTime.slice(0, 5);
+  if (endTime) return `${start}–${endTime.slice(0, 5)}`;
   if (!durationMinutes || durationMinutes <= 0) return start;
   const [h, m] = start.split(':').map(Number);
   const total = h * 60 + m + durationMinutes;

@@ -1,0 +1,604 @@
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Calendar, Clock, ImageIcon } from '@/lib/icons';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { DatePicker } from '@/components/ui/date-picker';
+import { FieldError } from '@/components/ui/field-error';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
+import { SessionDaysEditor, newSessionDay, timeToMin } from '@/components/teacher/SessionDaysEditor';
+import type { SessionDay } from '@/components/teacher/SessionDaysEditor';
+import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { LocationField } from '@/components/ui/location-field';
+import { useAuth } from '@/contexts/AuthContext';
+import { createCourse, updateCourse } from '@/services/courses';
+import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
+import { friendlyError } from '@/lib/error-messages';
+import { routes } from '@/lib/routes';
+import { cn, formatKroner } from '@/lib/utils';
+import { formatLocalDateKey } from '@/utils/dateUtils';
+import type { CourseFormat } from '@/types/database';
+
+type FormatType = 'single' | 'series';
+
+// ── Time helpers (series path only — single path uses SessionDaysEditor) ────
+
+interface FormErrors {
+  title?: string;
+  // series-only fields
+  startDate?: string;
+  startTime?: string;
+  endTime?: string;
+  weeks?: string;
+  // single-only field (per-day editor)
+  sessionDays?: string;
+  capacity?: string;
+  price?: string;
+}
+
+function generateTimeSlots(startHour = 6, endHour = 23): string[] {
+  const slots: string[] = [];
+  for (let h = startHour; h < endHour; h++) {
+    for (const m of [0, 15, 30, 45]) {
+      slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    }
+  }
+  slots.push(`${String(endHour).padStart(2, '0')}:00`);
+  return slots;
+}
+
+const ALL_TIME_SLOTS = generateTimeSlots();
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <h2 className="text-base font-semibold text-foreground">{children}</h2>;
+}
+
+function Field({
+  label,
+  htmlFor,
+  children,
+  error,
+}: {
+  label: string;
+  htmlFor?: string;
+  children: React.ReactNode;
+  error?: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label htmlFor={htmlFor} className="block text-sm font-semibold text-foreground">
+        {label}
+      </label>
+      <div className="mt-2">{children}</div>
+      {error}
+    </div>
+  );
+}
+
+export default function CourseBuilderPage() {
+  const navigate = useNavigate();
+  const { currentSeller } = useAuth();
+
+  const [format, setFormat] = useState<FormatType>('single');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  // series fields
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [weeks, setWeeks] = useState('');
+  // single (multi-day) fields
+  const [sessionDays, setSessionDays] = useState<SessionDay[]>(() => [newSessionDay()]);
+  const [location, setLocation] = useState('');
+  const [locationAddress, setLocationAddress] = useState('');
+  const [locationCoords, setLocationCoords] = useState<{
+    lat: number | null;
+    lon: number | null;
+    placeId: string | null;
+  } | null>(null);
+  const [capacity, setCapacity] = useState('');
+  const [price, setPrice] = useState('');
+
+  // Cover image is picked locally and uploaded AFTER createCourse (the storage
+  // path needs the new course id — same pattern as the course detail page).
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+    };
+  }, [imagePreview]);
+
+  const handleImagePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+  };
+
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const errors = useMemo<FormErrors>(() => {
+    const e: FormErrors = {};
+    if (!title.trim()) e.title = 'Skriv inn tittel';
+
+    if (format === 'series') {
+      if (!startDate) e.startDate = 'Velg dato';
+      if (!startTime) e.startTime = 'Velg starttid';
+      if (!endTime) e.endTime = 'Velg sluttid';
+      else if (startTime && timeToMin(endTime) <= timeToMin(startTime)) {
+        e.endTime = 'Må være etter starttid';
+      }
+      const w = parseInt(weeks, 10);
+      if (!weeks) e.weeks = 'Skriv inn antall uker';
+      else if (isNaN(w) || w < 2 || w > 50) e.weeks = 'Mellom 2 og 50';
+    }
+
+    if (format === 'single') {
+      const invalidDay = sessionDays.find(
+        (d) =>
+          !d.date ||
+          !d.startTime ||
+          !d.endTime ||
+          timeToMin(d.endTime) <= timeToMin(d.startTime),
+      );
+      if (sessionDays.length === 0 || invalidDay) {
+        e.sessionDays = 'Alle dager må ha dato, starttid og sluttid (sluttid etter starttid)';
+      }
+    }
+
+    const cap = parseInt(capacity, 10);
+    if (!capacity) e.capacity = 'Skriv inn antall plasser';
+    else if (isNaN(cap) || cap < 1) e.capacity = 'Må være minst 1';
+    if (price === '') e.price = 'Skriv inn pris';
+    else {
+      const pri = parseInt(price, 10);
+      if (isNaN(pri) || pri < 0) e.price = 'Må være 0 eller mer';
+    }
+    return e;
+  }, [title, startDate, startTime, endTime, format, weeks, sessionDays, capacity, price]);
+
+  const isValid = Object.keys(errors).length === 0;
+  const showError = (field: keyof FormErrors) => submitAttempted && !!errors[field];
+
+  const handleSubmit = async () => {
+    setSubmitAttempted(true);
+    if (!isValid || !currentSeller?.id) return;
+    // For series we still need startDate; for single the days carry their own dates.
+    if (format === 'series' && !startDate) return;
+
+    setIsSubmitting(true);
+    try {
+      const formatWeekday = (date: Date) => {
+        const name = new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(date);
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      };
+
+      let courseStartDate: string;
+      let timeSchedule: string;
+      let duration: number;
+      let createOptions: Parameters<typeof createCourse>[1];
+
+      if (format === 'single') {
+        const day0 = sessionDays[0];
+        // day0.date is guaranteed non-null here (validation passed)
+        courseStartDate = formatLocalDateKey(day0.date!);
+        const day0Name = formatWeekday(day0.date!);
+        const timeRange = `${day0.startTime}–${day0.endTime}`;
+        timeSchedule =
+          sessionDays.length === 1
+            ? `${day0Name}, ${timeRange}`
+            : `${day0Name}, ${timeRange}`;
+        duration = timeToMin(day0.endTime) - timeToMin(day0.startTime);
+        createOptions = {
+          sessionDays: sessionDays.map((d) => ({
+            date: formatLocalDateKey(d.date!),
+            startTime: d.startTime,
+            endTime: d.endTime,
+          })),
+        };
+      } else {
+        // series — startDate is guaranteed non-null (validated above)
+        const startDayName = formatWeekday(startDate!);
+        const timeRange = `${startTime}–${endTime}`;
+        timeSchedule = `${startDayName}er, ${timeRange}`;
+        duration = timeToMin(endTime) - timeToMin(startTime);
+        courseStartDate = formatLocalDateKey(startDate!);
+        createOptions = undefined;
+      }
+
+      const dbFormat: CourseFormat = format;
+      const { data: created, error } = await createCourse(
+        {
+          seller_id: currentSeller.id,
+          title: title.trim(),
+          description: description.trim() || null,
+          instructor_name: null,
+          format: dbFormat,
+          start_date: courseStartDate,
+          time_schedule: timeSchedule,
+          duration,
+          total_weeks: format === 'series' ? parseInt(weeks, 10) : null,
+          location: location.trim() || null,
+          location_lat: locationCoords?.lat ?? null,
+          location_lon: locationCoords?.lon ?? null,
+          location_place_id: locationCoords?.placeId ?? null,
+          price:
+            format === 'series'
+              ? (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0)
+              : parseInt(price, 10) || 0,
+          max_participants: parseInt(capacity, 10),
+          status: 'draft' as const,
+        },
+        createOptions,
+      );
+
+      if (error || !created) {
+        toast.error(friendlyError(error, 'Kunne ikke opprette kurset.'));
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Upload the picked cover image now that we have the course id. A failed
+      // upload doesn't block creation — the teacher can add it on the course page.
+      if (imageFile) {
+        const { url, error: upErr } = await uploadCourseImage(created.id, imageFile);
+        if (url && !upErr) {
+          const { error: updErr } = await updateCourse(created.id, { image_url: url });
+          if (updErr && currentSeller?.id) {
+            void deleteCourseImage(created.id, url, currentSeller.id);
+          }
+        }
+      }
+
+      toast.success('Kurs opprettet');
+      navigate(routes.course(created.id));
+    } catch {
+      toast.error('Noe gikk galt. Prøv igjen.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <main className="flex h-dvh flex-col bg-canvas">
+      <MobileTeacherHeader />
+
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="mx-auto max-w-3xl px-4 pb-10 pt-10 sm:px-6">
+          <h1 className="mb-6 text-2xl font-medium text-foreground">Nytt kurs</h1>
+
+          <Card className="gap-0 overflow-hidden p-0">
+            {/* Cover banner */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImagePick}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="relative flex h-44 w-full cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden border-b border-border bg-muted text-foreground-muted transition-colors hover:bg-active"
+            >
+              {imagePreview ? (
+                <img src={imagePreview} alt="" className="absolute inset-0 size-full object-cover" />
+              ) : (
+                <>
+                  <ImageIcon className="size-6" strokeWidth={1.75} />
+                  <span className="text-sm font-medium text-foreground">Legg til et bilde</span>
+                </>
+              )}
+            </button>
+
+            <div className="space-y-8 p-6 sm:p-8">
+              {/* Om kurset */}
+              <section className="space-y-5">
+                <SectionTitle>Om kurset</SectionTitle>
+
+                <Field
+                  label="Tittel"
+                  htmlFor="cb-title"
+                  error={showError('title') && <FieldError>{errors.title}</FieldError>}
+                >
+                  <Input
+                    id="cb-title"
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    aria-invalid={showError('title') ? 'true' : undefined}
+                    aria-required="true"
+                    className={cn(showError('title') && 'border-danger focus-visible:ring-danger')}
+                  />
+                </Field>
+
+                <Field label="Beskrivelse">
+                  <RichTextEditor value={description} onChange={setDescription} />
+                </Field>
+              </section>
+
+              <hr className="border-border-subtle" />
+
+              {/* Når */}
+              <section className="space-y-5">
+                <SectionTitle>Når</SectionTitle>
+
+                <Field label="Type">
+                  <SegmentedTabs<FormatType>
+                    value={format}
+                    onChange={(v) => {
+                      setFormat(v);
+                    }}
+                    tabs={[
+                      { key: 'single', label: 'Enkeltkurs' },
+                      { key: 'series', label: 'Kursserie' },
+                    ]}
+                    ariaLabel="Type"
+                    stretch
+                  />
+                </Field>
+
+                {/* Single format: per-day editor */}
+                {format === 'single' && (
+                  <div>
+                    <SessionDaysEditor value={sessionDays} onChange={setSessionDays} />
+                    {showError('sessionDays') && (
+                      <FieldError>{errors.sessionDays}</FieldError>
+                    )}
+                  </div>
+                )}
+
+                {/* Series format: Startdato + Tidspunkt + Antall uker */}
+                {format === 'series' && (
+                  <>
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                      <Field
+                        label="Startdato"
+                        htmlFor="cb-date"
+                        error={showError('startDate') && <FieldError>{errors.startDate}</FieldError>}
+                      >
+                        <DatePicker
+                          id="cb-date"
+                          value={startDate}
+                          onChange={setStartDate}
+                          error={showError('startDate')}
+                          placeholder="Velg dato"
+                          fromDate={new Date()}
+                          icon={Calendar}
+                          aria-invalid={showError('startDate') ? 'true' : undefined}
+                        />
+                      </Field>
+
+                      <Field
+                        label="Tidspunkt"
+                        error={
+                          <>
+                            {showError('startTime') && <FieldError>{errors.startTime}</FieldError>}
+                            {!showError('startTime') && showError('endTime') && (
+                              <FieldError>{errors.endTime}</FieldError>
+                            )}
+                          </>
+                        }
+                      >
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={startTime}
+                            onValueChange={(v) => {
+                              setStartTime(v);
+                              if (endTime && timeToMin(endTime) <= timeToMin(v)) setEndTime('');
+                            }}
+                          >
+                            <SelectTrigger
+                              className={cn(
+                                'w-full gap-2.5 rounded-xl',
+                                showError('startTime') && 'border-danger focus-visible:ring-danger',
+                              )}
+                              aria-label="Starttid"
+                              aria-invalid={showError('startTime') ? 'true' : undefined}
+                            >
+                              <Clock className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
+                              <SelectValue placeholder="Start" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {ALL_TIME_SLOTS.map((slot) => (
+                                <SelectItem key={slot} value={slot}>
+                                  {slot}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <span
+                            aria-hidden="true"
+                            className="shrink-0 text-base font-medium text-foreground-muted"
+                          >
+                            –
+                          </span>
+                          <Select value={endTime} onValueChange={setEndTime}>
+                            <SelectTrigger
+                              className={cn(
+                                'w-full gap-2.5 rounded-xl',
+                                showError('endTime') && 'border-danger focus-visible:ring-danger',
+                              )}
+                              aria-label="Sluttid"
+                              aria-invalid={showError('endTime') ? 'true' : undefined}
+                            >
+                              <Clock className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
+                              <SelectValue placeholder="Slutt" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {ALL_TIME_SLOTS.filter(
+                                (slot) => !startTime || timeToMin(slot) > timeToMin(startTime),
+                              ).map((slot) => (
+                                <SelectItem key={slot} value={slot}>
+                                  {slot}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </Field>
+                    </div>
+
+                    <Field
+                      label="Antall uker"
+                      htmlFor="cb-weeks"
+                      error={showError('weeks') && <FieldError>{errors.weeks}</FieldError>}
+                    >
+                      <Input
+                        id="cb-weeks"
+                        type="number"
+                        inputMode="numeric"
+                        min="2"
+                        max="50"
+                        value={weeks}
+                        onChange={(e) => setWeeks(e.target.value)}
+                        aria-invalid={showError('weeks') ? 'true' : undefined}
+                        aria-required="true"
+                        className={cn(showError('weeks') && 'border-danger focus-visible:ring-danger')}
+                      />
+                    </Field>
+                  </>
+                )}
+              </section>
+
+              <hr className="border-border-subtle" />
+
+              {/* Hvor og pris */}
+              <section className="space-y-5">
+                <SectionTitle>Hvor og pris</SectionTitle>
+
+                <Field label="Sted" htmlFor="cb-location">
+                  <LocationField
+                    id="cb-location"
+                    value={location}
+                    coords={locationCoords}
+                    address={locationAddress}
+                    onChange={({ name, address, coords }) => {
+                      setLocation(name);
+                      setLocationAddress(address);
+                      setLocationCoords(coords);
+                    }}
+                  />
+                </Field>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field
+                    label="Antall plasser"
+                    htmlFor="cb-capacity"
+                    error={showError('capacity') && <FieldError>{errors.capacity}</FieldError>}
+                  >
+                    <Input
+                      id="cb-capacity"
+                      type="number"
+                      inputMode="numeric"
+                      min="1"
+                      value={capacity}
+                      onChange={(e) => setCapacity(e.target.value)}
+                      aria-invalid={showError('capacity') ? 'true' : undefined}
+                      aria-required="true"
+                      className={cn(
+                        showError('capacity') && 'border-danger focus-visible:ring-danger',
+                      )}
+                    />
+                  </Field>
+
+                  <Field
+                    label={format === 'series' ? 'Pris per gang' : 'Pris'}
+                    htmlFor="cb-price"
+                    error={
+                      <>
+                        {format === 'series' &&
+                          price !== '' &&
+                          weeks !== '' &&
+                          !showError('price') &&
+                          !showError('weeks') && (
+                            <p className="mt-2 text-base text-foreground-muted">
+                              Totalt{' '}
+                              {formatKroner(
+                                (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0),
+                              )}{' '}
+                              for {parseInt(weeks, 10) || 0} uker
+                            </p>
+                          )}
+                        {showError('price') && <FieldError>{errors.price}</FieldError>}
+                      </>
+                    }
+                  >
+                    <div className="relative">
+                      <Input
+                        id="cb-price"
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        aria-invalid={showError('price') ? 'true' : undefined}
+                        aria-required="true"
+                        className={cn(
+                          'pr-10 tabular-nums',
+                          showError('price') && 'border-danger focus-visible:ring-danger',
+                        )}
+                      />
+                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-base text-foreground-muted">
+                        kr
+                      </span>
+                    </div>
+                  </Field>
+                </div>
+              </section>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* Pinned footer */}
+      <div className="border-t border-border bg-background">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={() => navigate(routes.courses)}
+            disabled={isSubmitting}
+          >
+            Avbryt
+          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={handleSubmit}
+              loading={isSubmitting}
+              loadingText="Lagrer"
+            >
+              Lagre utkast
+            </Button>
+            <Button
+              size="lg"
+              onClick={handleSubmit}
+              loading={isSubmitting}
+              loadingText="Oppretter"
+            >
+              Publiser
+            </Button>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}

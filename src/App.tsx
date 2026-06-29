@@ -18,6 +18,7 @@ const GetStartedPage = lazy(() => import('./pages/teacher/GetStartedPage'));
 const HelpPage = lazy(() => import('./pages/teacher/HelpPage'));
 const SchedulePage = lazy(() => import('./pages/teacher/SchedulePage'));
 const CoursesPage = lazy(() => import('./pages/teacher/CoursesPage'));
+const CourseBuilderPage = lazy(() => import('./pages/teacher/CourseBuilderPage'));
 const CoursePage = lazy(() => import('./pages/teacher/CoursePage'));
 const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage'));
 const BillingPage = lazy(() => import('./pages/teacher/BillingPage'));
@@ -54,6 +55,11 @@ const ModalsButtonsToastsPreview = lazy(() => import('./pages/dev/ModalsButtonsT
 const TierPreview = lazy(() => import('./pages/dev/TierPreview'));
 const BillingPreview = lazy(() => import('./pages/dev/BillingPreview'));
 const CourseDetailPreview = lazy(() => import('./pages/dev/CourseDetailPreview'));
+const StudioPreview = lazy(() => import('./pages/dev/StudioPreview'));
+const DraftExperiencePreview = lazy(() => import('./pages/dev/DraftExperiencePreview'));
+const CourseBuilderPreview = lazy(() => import('./pages/dev/CourseBuilderPreview'));
+const CourseBuilderEventbrite = lazy(() => import('./pages/dev/CourseBuilderEventbrite'));
+const SessionDaysPreview = lazy(() => import('./pages/dev/SessionDaysPreview'));
 
 // Public team page at root: only renders if the slug is NOT a reserved word.
 // Reserved words 404 (since they should hit a literal route higher in the
@@ -118,6 +124,7 @@ function AppRoutes() {
             <Route path="get-started" element={<GetStartedPage />} />
             <Route path="schedule" element={<SchedulePage />} />
             <Route path="courses" element={<CoursesPage />} />
+            <Route path="courses/new" element={<CourseBuilderPage />} />
             <Route path="courses/:id" element={<CoursePage />} />
             <Route path="studio" element={<StudioPage />} />
             {/* Samarbeid moved into the Studio page (2026-06). Old links and
@@ -150,6 +157,11 @@ function AppRoutes() {
             <Route path="/dev/tier-preview" element={<TierPreview />} />
             <Route path="/dev/billing-preview" element={<BillingPreview />} />
             <Route path="/dev/course-detail-preview" element={<CourseDetailPreview />} />
+            <Route path="/dev/studio-preview" element={<StudioPreview />} />
+            <Route path="/dev/draft-experience-preview" element={<DraftExperiencePreview />} />
+            <Route path="/dev/course-builder-preview" element={<CourseBuilderPreview />} />
+            <Route path="/dev/course-builder-eventbrite" element={<CourseBuilderEventbrite />} />
+            <Route path="/dev/session-days-preview" element={<SessionDaysPreview />} />
           </>
         )}
 

@@ -8,9 +8,8 @@ import { FieldError } from '@/components/ui/field-error';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { ImageField } from '@/components/ui/image-upload';
 import { DatePicker } from '@/components/ui/date-picker';
-import { LocationCombobox, type LocationSelectMeta } from '@/components/ui/location-combobox';
-import { useLocations } from '@/hooks/use-locations';
-import { useAuth } from '@/contexts/AuthContext';
+import { LocationField, type LocationCoords } from '@/components/ui/location-field';
+import { SessionDaysEditor, type SessionDay } from '@/components/teacher/SessionDaysEditor';
 import {
   Select,
   SelectContent,
@@ -36,6 +35,8 @@ interface CourseSettingsTabProps {
 
   // Location — committed as null when empty (per DB schema).
   settingsLocation: string;
+  /** Current location coords — drives the map in the picker. */
+  settingsLocationCoords: LocationCoords | null;
   onLocationChange: (location: string) => void;
   // Coords copied from the picked location onto the course (null when the
   // location is custom-typed or cleared).
@@ -43,13 +44,21 @@ interface CourseSettingsTabProps {
     coords: { lat: number | null; lon: number | null; placeId: string | null } | null,
   ) => void;
 
-  // Schedule
+  // Schedule — for series, used as-is. For single, sessionDays takes over.
   settingsDate: Date | undefined;
   onDateChange: (date: Date | undefined) => void;
   settingsTime: string;
   onTimeChange: (time: string) => void;
   settingsDuration: number | null;
   onDurationChange: (duration: number | null) => void;
+
+  // Per-day session editor — only rendered for single-format courses.
+  // The parent keeps the state; this component only renders + forwards changes.
+  sessionDays: SessionDay[];
+  onSessionDaysChange: (days: SessionDay[]) => void;
+  /** True when the course is published (upcoming/active). Disables add/remove
+   *  of days to prevent destructive changes without refund/notification flows. */
+  isPublished: boolean;
 
   // Capacity
   maxParticipants: number;
@@ -98,6 +107,7 @@ export const CourseSettingsTab = ({
   isSaving,
   isImageSaving,
   settingsLocation,
+  settingsLocationCoords,
   onLocationChange,
   onLocationCoordsChange,
   settingsDate,
@@ -106,6 +116,9 @@ export const CourseSettingsTab = ({
   onTimeChange,
   settingsDuration,
   onDurationChange,
+  sessionDays,
+  onSessionDaysChange,
+  isPublished,
   maxParticipants,
   onMaxParticipantsChange,
   currentEnrolled,
@@ -122,9 +135,6 @@ export const CourseSettingsTab = ({
   onRequestCancel,
   onRequestDelete,
 }: CourseSettingsTabProps) => {
-  const { currentSeller } = useAuth();
-  const { locations } = useLocations(currentSeller?.id);
-
   const minParticipants = Math.max(currentEnrolled || 1, 1);
   const [participantsInput, setParticipantsInput] = useState(String(maxParticipants));
 
@@ -228,20 +238,13 @@ export const CourseSettingsTab = ({
 
   // Selecting a room pre-fills Plasser from the room's capacity, but only when
   // the field is still empty — never clobber a value the teacher typed.
-  const handleLocationChange = (value: string, meta?: LocationSelectMeta) => {
-    onLocationChange(value);
-    // Copy the venue's coords onto the course (or clear them for a custom/typed
-    // location) so the public page can map it.
-    onLocationCoordsChange(
-      meta && meta.lat != null && meta.lon != null
-        ? { lat: meta.lat, lon: meta.lon, placeId: meta.placeId }
-        : null,
-    );
-    if (meta?.capacity != null && participantsInput.trim() === '') {
-      const filled = Math.max(minParticipants, meta.capacity);
-      onMaxParticipantsChange(filled);
-      setParticipantsInput(String(filled));
-    }
+  const handleLocationChange = (next: {
+    name: string;
+    address: string;
+    coords: LocationCoords | null;
+  }) => {
+    onLocationChange(next.name);
+    onLocationCoordsChange(next.coords);
   };
 
 
@@ -306,68 +309,84 @@ export const CourseSettingsTab = ({
           <div className="space-y-6">
             <div>
               <FieldLabel>Sted</FieldLabel>
-              <LocationCombobox
+              <LocationField
+                id="settings-location"
                 value={settingsLocation}
+                coords={settingsLocationCoords}
                 onChange={handleLocationChange}
-                locations={locations}
-                placeholder="Velg sted"
-                aria-label="Sted"
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {courseFormat === 'single' ? (
+              /* Per-day editor for single/enkeltkurs courses */
               <div>
-                <FieldLabel id="settings-date-label">Dato</FieldLabel>
-                <DatePicker
-                  aria-labelledby="settings-date-label"
-                  value={settingsDate}
-                  onChange={onDateChange}
-                  placeholder="Velg dato"
+                <SessionDaysEditor
+                  value={sessionDays}
+                  onChange={onSessionDaysChange}
+                  readOnly={isPublished}
                 />
+                {isPublished && sessionDays.length > 1 && (
+                  <p className="mt-2 text-sm text-foreground-muted">
+                    Legg til eller fjern dager er deaktivert for publiserte kurs. Kontakt deltakere manuelt ved endringer i antall dager.
+                  </p>
+                )}
               </div>
-              <div>
-                <FieldLabel id="settings-time-label">Tidspunkt</FieldLabel>
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={settingsTime}
-                    onValueChange={(val) => {
-                      onTimeChange(val);
-                      // If current end time is now invalid, clear duration
-                      if (endTime && timeToMin(endTime) <= timeToMin(val)) {
-                        onDurationChange(null);
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="w-full" aria-label="Starttid">
-                      <SelectValue placeholder="Start" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      <SelectGroup>
-                        {allTimeSlots.map((slot) => (
-                          <SelectItem key={slot} value={slot}>{slot}</SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <span className="text-base font-medium shrink-0 text-foreground-muted">–</span>
-                  <Select
-                    value={endTime}
-                    onValueChange={handleEndTimeChange}
-                  >
-                    <SelectTrigger className="w-full" aria-label="Sluttid">
-                      <SelectValue placeholder="Slutt" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      <SelectGroup>
-                        {endTimeSlots.map((slot) => (
-                          <SelectItem key={slot} value={slot}>{slot}</SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+            ) : (
+              /* Series: keep the existing single date/time fields unchanged */
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <FieldLabel id="settings-date-label">Dato</FieldLabel>
+                  <DatePicker
+                    aria-labelledby="settings-date-label"
+                    value={settingsDate}
+                    onChange={onDateChange}
+                    placeholder="Velg dato"
+                  />
+                </div>
+                <div>
+                  <FieldLabel id="settings-time-label">Tidspunkt</FieldLabel>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={settingsTime}
+                      onValueChange={(val) => {
+                        onTimeChange(val);
+                        // If current end time is now invalid, clear duration
+                        if (endTime && timeToMin(endTime) <= timeToMin(val)) {
+                          onDurationChange(null);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full" aria-label="Starttid">
+                        <SelectValue placeholder="Start" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        <SelectGroup>
+                          {allTimeSlots.map((slot) => (
+                            <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-base font-medium shrink-0 text-foreground-muted">–</span>
+                    <Select
+                      value={endTime}
+                      onValueChange={handleEndTimeChange}
+                    >
+                      <SelectTrigger className="w-full" aria-label="Sluttid">
+                        <SelectValue placeholder="Slutt" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        <SelectGroup>
+                          {endTimeSlots.map((slot) => (
+                            <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </SettingsSection>
 

@@ -124,6 +124,13 @@ export interface SessionTimeOverride {
   time: string // e.g., "18:00"
 }
 
+/** Explicit per-day spec for multi-day single courses (arbitrary dates + times). */
+export interface SessionDaySpec {
+  date: string      // YYYY-MM-DD
+  startTime: string // HH:MM
+  endTime: string   // HH:MM
+}
+
 // Helper to convert time string to minutes since midnight
 function timeToMinutes(time: string): number {
   if (!time || !time.includes(':')) {
@@ -259,7 +266,7 @@ function generateSessionDates(
 // If the session insert fails the course row is deleted so no orphan remains.
 async function insertCourseSessionsOrRollback(
   courseId: string,
-  sessionEntries: { date: string; startTime: string }[]
+  sessionEntries: { date: string; startTime: string; endTime?: string }[]
 ): Promise<{ error: Error | null }> {
   if (sessionEntries.length === 0) return { error: null }
 
@@ -276,6 +283,7 @@ async function insertCourseSessionsOrRollback(
     session_number: i + 1,
     session_date: entry.date,
     start_time: entry.startTime,
+    end_time: entry.endTime ?? null,
     status: 'upcoming' as const,
   }))
 
@@ -311,12 +319,21 @@ export async function createCourse(
   options?: {
     eventDays?: number // Number of days for multi-day events
     sessionTimeOverrides?: SessionTimeOverride[] // Custom times for specific days
+    sessionDays?: SessionDaySpec[] // Explicit per-day specs (arbitrary dates + times)
   }
 ): Promise<{ data: Course | null; error: Error | null }> {
   const startTime = parseStartTime(courseData.time_schedule)
 
-  // Generate the session dates once — used below for insert
-  const sessionEntries = generateSessionDates(courseData, startTime, options)
+  // When explicit per-day specs are provided, use them verbatim; otherwise
+  // fall back to the legacy consecutive-date generation.
+  const sessionEntries: { date: string; startTime: string; endTime?: string }[] =
+    options?.sessionDays && options.sessionDays.length > 0
+      ? options.sessionDays.map((spec) => ({
+          date: spec.date,
+          startTime: spec.startTime,
+          endTime: spec.endTime,
+        }))
+      : generateSessionDates(courseData, startTime, options)
 
   const baseSlug = slugifyTitle(courseData.title) || courseData.title.slice(0, 8)
   let data: Course | null = null
@@ -547,6 +564,51 @@ export async function updateCourseSession(
   }
 
   return { data: data as CourseSession, error: null }
+}
+
+/**
+ * Insert a single new session row for a draft single-format course.
+ * Only call for courses in 'draft' status — a published course must go
+ * through rescheduleCourseSession to notify participants.
+ */
+export async function createCourseSession(
+  courseId: string,
+  spec: { session_date: string; start_time: string; end_time: string; session_number: number },
+): Promise<{ data: CourseSession | null; error: Error | null }> {
+  const { data, error } = await typedFrom('course_sessions')
+    .insert({
+      course_id: courseId,
+      session_date: spec.session_date,
+      start_time: spec.start_time,
+      end_time: spec.end_time || null,
+      session_number: spec.session_number,
+      status: 'upcoming' as const,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    return { data: null, error: error as Error }
+  }
+
+  return { data: data as CourseSession, error: null }
+}
+
+/**
+ * Delete a single session row. ONLY safe for draft courses that have no
+ * signups referencing this session (course_session_id FK on signups/
+ * payment_attempts). Caller MUST verify status === 'draft' before calling.
+ */
+export async function deleteCourseSession(sessionId: string): Promise<{ error: Error | null }> {
+  const { error } = await typedFrom('course_sessions')
+    .delete()
+    .eq('id', sessionId)
+
+  if (error) {
+    return { error: error as Error }
+  }
+
+  return { error: null }
 }
 
 /**

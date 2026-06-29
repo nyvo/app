@@ -33,9 +33,9 @@ export const routes = {
   // Courses
   // `/courses` is the list page. `?kurs=:id` opens the quick-glance drawer
   // over the list. `/courses/:id` is the full course page (the drawer's
-  // "Åpne kursside →" escape target).
+  // "Åpne kursside →" escape target). `/courses/new` is the builder page.
   courses: '/courses',
-  coursesNew: '/courses?new=1',
+  coursesNew: '/courses/new',
   coursesWithDrawer: (id: string) => `/courses?kurs=${id}`,
   course: (id: string) => `/courses/${id}`,
 
