@@ -21,7 +21,9 @@ import type { SessionDay } from '@/components/teacher/SessionDaysEditor';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { LocationField } from '@/components/ui/location-field';
 import { useAuth } from '@/contexts/AuthContext';
-import { createCourse, updateCourse } from '@/services/courses';
+import { createCourse, updateCourse, publishCourse } from '@/services/courses';
+import { sellerNeedsPaymentSetup } from '@/lib/payments';
+import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
@@ -35,6 +37,8 @@ type FormatType = 'single' | 'series';
 
 interface FormErrors {
   title?: string;
+  description?: string;
+  location?: string;
   // series-only fields
   startDate?: string;
   startTime?: string;
@@ -133,10 +137,23 @@ export default function CourseBuilderPage() {
 
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Pro sellers who hit "Publiser" without payouts set up: the course is saved
+  // as a draft, the gate dialog explains, and dismissing it lands them on the
+  // (saved) course page.
+  const [showPublishDialog, setShowPublishDialog] = useState(false);
+  const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
 
   const errors = useMemo<FormErrors>(() => {
     const e: FormErrors = {};
     if (!title.trim()) e.title = 'Skriv inn tittel';
+
+    // Description is required; strip rich-text markup so an empty editor
+    // (e.g. "<p></p>") doesn't count as filled.
+    if (!description.replace(/<[^>]*>/g, '').trim()) e.description = 'Skriv inn beskrivelse';
+
+    // Location must resolve to a real Google place (coords), not free text.
+    if (!location.trim()) e.location = 'Velg et sted';
+    else if (!locationCoords?.placeId) e.location = 'Velg et sted fra listen';
 
     if (format === 'series') {
       if (!startDate) e.startDate = 'Velg dato';
@@ -172,16 +189,19 @@ export default function CourseBuilderPage() {
       if (isNaN(pri) || pri < 0) e.price = 'Må være 0 eller mer';
     }
     return e;
-  }, [title, startDate, startTime, endTime, format, weeks, sessionDays, capacity, price]);
+  }, [title, description, location, locationCoords, startDate, startTime, endTime, format, weeks, sessionDays, capacity, price]);
 
   const isValid = Object.keys(errors).length === 0;
   const showError = (field: keyof FormErrors) => submitAttempted && !!errors[field];
 
-  const handleSubmit = async () => {
+  // Creates the course as a draft (+ uploads the cover image). Returns the new
+  // course id, or null if validation failed or the request errored. Both
+  // footer actions go through this — "Publiser" then flips the draft live.
+  const createDraft = async (): Promise<string | null> => {
     setSubmitAttempted(true);
-    if (!isValid || !currentSeller?.id) return;
+    if (!isValid || !currentSeller?.id) return null;
     // For series we still need startDate; for single the days carry their own dates.
-    if (format === 'series' && !startDate) return;
+    if (format === 'series' && !startDate) return null;
 
     setIsSubmitting(true);
     try {
@@ -236,6 +256,7 @@ export default function CourseBuilderPage() {
           duration,
           total_weeks: format === 'series' ? parseInt(weeks, 10) : null,
           location: location.trim() || null,
+          location_address: locationAddress.trim() || null,
           location_lat: locationCoords?.lat ?? null,
           location_lon: locationCoords?.lon ?? null,
           location_place_id: locationCoords?.placeId ?? null,
@@ -252,7 +273,7 @@ export default function CourseBuilderPage() {
       if (error || !created) {
         toast.error(friendlyError(error, 'Kunne ikke opprette kurset.'));
         setIsSubmitting(false);
-        return;
+        return null;
       }
 
       // Upload the picked cover image now that we have the course id. A failed
@@ -267,12 +288,40 @@ export default function CourseBuilderPage() {
         }
       }
 
-      toast.success('Kurs opprettet');
-      navigate(routes.course(created.id));
+      return created.id;
     } catch {
       toast.error('Noe gikk galt. Prøv igjen.');
       setIsSubmitting(false);
+      return null;
     }
+  };
+
+  const handleSaveDraft = async () => {
+    const id = await createDraft();
+    if (!id) return;
+    toast.success('Utkast lagret');
+    navigate(routes.course(id));
+  };
+
+  const handlePublish = async () => {
+    const id = await createDraft();
+    if (!id) return;
+    // Pro sellers can't go live until Stripe payouts are set up. Keep the draft,
+    // surface the gate dialog; dismissing it routes to the saved course page.
+    if (sellerNeedsPaymentSetup(currentSeller)) {
+      setCreatedCourseId(id);
+      setShowPublishDialog(true);
+      setIsSubmitting(false);
+      return;
+    }
+    const { error } = await publishCourse(id);
+    if (error) {
+      toast.error(friendlyError(error, 'Kurset er lagret, men kunne ikke publiseres.'));
+      navigate(routes.course(id));
+      return;
+    }
+    toast.success('Kurset er publisert');
+    navigate(routes.course(id));
   };
 
   return (
@@ -328,7 +377,10 @@ export default function CourseBuilderPage() {
                   />
                 </Field>
 
-                <Field label="Beskrivelse">
+                <Field
+                  label="Beskrivelse"
+                  error={showError('description') && <FieldError>{errors.description}</FieldError>}
+                >
                   <RichTextEditor value={description} onChange={setDescription} />
                 </Field>
               </section>
@@ -483,7 +535,11 @@ export default function CourseBuilderPage() {
               <section className="space-y-5">
                 <SectionTitle>Hvor og pris</SectionTitle>
 
-                <Field label="Sted" htmlFor="cb-location">
+                <Field
+                  label="Sted"
+                  htmlFor="cb-location"
+                  error={showError('location') && <FieldError>{errors.location}</FieldError>}
+                >
                   <LocationField
                     id="cb-location"
                     value={location}
@@ -582,7 +638,7 @@ export default function CourseBuilderPage() {
             <Button
               variant="secondary"
               size="lg"
-              onClick={handleSubmit}
+              onClick={handleSaveDraft}
               loading={isSubmitting}
               loadingText="Lagrer"
             >
@@ -590,15 +646,25 @@ export default function CourseBuilderPage() {
             </Button>
             <Button
               size="lg"
-              onClick={handleSubmit}
+              onClick={handlePublish}
               loading={isSubmitting}
-              loadingText="Oppretter"
+              loadingText="Publiserer"
             >
               Publiser
             </Button>
           </div>
         </div>
       </div>
+
+      <PublishCourseDialog
+        open={showPublishDialog}
+        onOpenChange={(open) => {
+          setShowPublishDialog(open);
+          // Closing the gate (e.g. "Ikke nå") lands them on the saved draft.
+          if (!open && createdCourseId) navigate(routes.course(createdCourseId));
+        }}
+        courseTitle={title.trim() || undefined}
+      />
     </main>
   );
 }

@@ -199,6 +199,7 @@ export type Database = {
           instructor_id: string | null
           instructor_name: string | null
           location: string | null
+          location_address: string | null
           location_lat: number | null
           location_lon: number | null
           location_place_id: string | null
@@ -227,6 +228,7 @@ export type Database = {
           instructor_id?: string | null
           instructor_name?: string | null
           location?: string | null
+          location_address?: string | null
           location_lat?: number | null
           location_lon?: number | null
           location_place_id?: string | null
@@ -255,6 +257,7 @@ export type Database = {
           instructor_id?: string | null
           instructor_name?: string | null
           location?: string | null
+          location_address?: string | null
           location_lat?: number | null
           location_lon?: number | null
           location_place_id?: string | null
