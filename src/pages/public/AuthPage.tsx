@@ -18,6 +18,7 @@ import { AUTH_VALIDATION, AUTH_ERRORS } from '@/lib/auth-messages'
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { supabase } from '@/lib/supabase'
 import { isValidEmail } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const ROUTES = AUTH_ROUTES
 
@@ -91,7 +92,7 @@ const AuthPage = () => {
         email: {
           validate: (value) => {
             if (!value.trim()) return AUTH_VALIDATION.emailRequired
-            if (!isValidEmail(value)) return AUTH_VALIDATION.emailInvalid
+            if (!isValidEmail(value.trim())) return AUTH_VALIDATION.emailInvalid
             return undefined
           },
         },
@@ -152,9 +153,17 @@ const AuthPage = () => {
       }
       // Bridge: the code just authenticated the (Google/magic-link) account —
       // now persist the password they typed so email+password works next time.
+      // The user is logged in either way, so surface a save failure rather than
+      // letting them believe their password was set.
       if (codeContext.reason === 'bridge' && codeContext.pendingPassword) {
-        await setPassword(codeContext.pendingPassword)
+        const { error: pwError } = await setPassword(codeContext.pendingPassword)
+        if (!cancelled && pwError) {
+          toast.warning(
+            'Du er logget inn, men passordet ble ikke lagret. Du kan sette det i innstillinger.',
+          )
+        }
       }
+      if (cancelled) return
       setIsVerifying(false)
       // success → AuthContext.onAuthStateChange fires → navigate effect runs
     })()
@@ -187,83 +196,112 @@ const AuthPage = () => {
     }
 
     setIsSubmitting(true)
-    const email = formData.email.trim()
-    const { exists, hasPassword, error: checkError } = await checkEmailAuthStatus(email)
-    if (checkError) {
-      setErrors({ general: AUTH_ERRORS.generic })
-      setIsSubmitting(false)
-      return
-    }
-
-    // New email → create the account.
-    if (!exists) {
-      if (!passwordValid) {
-        setPasswordError('Passordet oppfyller ikke kravene under')
+    const email = formData.email.trim().toLowerCase()
+    try {
+      const { exists, hasPassword, error: checkError } = await checkEmailAuthStatus(email)
+      if (checkError) {
+        setErrors({ general: AUTH_ERRORS.generic })
         setIsSubmitting(false)
         return
       }
-      const { error, needsConfirmation } = await signUpWithPassword(email, password, callbackUrl)
+
+      // New email → create the account.
+      if (!exists) {
+        if (!passwordValid) {
+          setPasswordError('Passordet oppfyller ikke kravene under')
+          setIsSubmitting(false)
+          return
+        }
+        const { error, needsConfirmation } = await signUpWithPassword(email, password, callbackUrl)
+        if (error) {
+          setErrors({ general: rateOrGeneric(error) })
+          setIsSubmitting(false)
+          return
+        }
+        if (needsConfirmation) {
+          goToCode({ reason: 'signup' })
+          setIsSubmitting(false)
+        }
+        // else: session created → keep loading until the navigate effect fires
+        return
+      }
+
+      // Existing account with a password → sign in.
+      if (hasPassword) {
+        const { error } = await signInWithPassword(email, password)
+        if (error) {
+          setPasswordError('Feil passord. Prøv igjen, eller be om en kode.')
+          setIsSubmitting(false)
+          return
+        }
+        // success → keep loading until the navigate effect fires
+        return
+      }
+
+      // Existing passwordless account (Google / magic-link) → bridge: send a code
+      // (login-only), set the typed password once it logs them in.
+      const { error } = await sendMagicLink(email, callbackUrl, { shouldCreateUser: false })
       if (error) {
         setErrors({ general: rateOrGeneric(error) })
         setIsSubmitting(false)
         return
       }
-      if (needsConfirmation) goToCode({ reason: 'signup' })
+      goToCode({ reason: 'bridge', pendingPassword: password })
       setIsSubmitting(false)
-      return
-    }
-
-    // Existing account with a password → sign in.
-    if (hasPassword) {
-      const { error } = await signInWithPassword(email, password)
-      if (error) {
-        setPasswordError('Feil passord. Prøv igjen, eller be om en kode.')
-        setIsSubmitting(false)
-        return
-      }
+    } catch {
+      setErrors({ general: AUTH_ERRORS.generic })
       setIsSubmitting(false)
-      return
     }
-
-    // Existing passwordless account (Google / magic-link) → bridge: send a code,
-    // set the typed password once it logs them in.
-    const { error } = await sendMagicLink(email, callbackUrl)
-    if (error) {
-      setErrors({ general: rateOrGeneric(error) })
-      setIsSubmitting(false)
-      return
-    }
-    goToCode({ reason: 'bridge', pendingPassword: password })
-    setIsSubmitting(false)
   }
 
-  // Explicit "Send meg en kode i stedet" — plain OTP login.
+  // Explicit "Send meg en kode i stedet" — login-only OTP. Pre-checks existence
+  // so an unknown email gets a clear message instead of silently creating an
+  // account.
   const handleUseCode = async () => {
     setErrors({})
     setPasswordError(null)
     if (!validateForm()) return
     setIsSubmitting(true)
-    const { error } = await sendMagicLink(formData.email.trim(), callbackUrl)
-    if (error) {
-      setErrors({ general: rateOrGeneric(error) })
+    const email = formData.email.trim().toLowerCase()
+    try {
+      const { exists, error: checkError } = await checkEmailAuthStatus(email)
+      if (checkError) {
+        setErrors({ general: AUTH_ERRORS.generic })
+        setIsSubmitting(false)
+        return
+      }
+      if (!exists) {
+        setErrors({
+          general: 'Fant ingen konto med denne e-posten. Opprett en med e-post og passord.',
+        })
+        setIsSubmitting(false)
+        return
+      }
+      const { error } = await sendMagicLink(email, callbackUrl, { shouldCreateUser: false })
+      if (error) {
+        setErrors({ general: rateOrGeneric(error) })
+        setIsSubmitting(false)
+        return
+      }
+      goToCode({ reason: 'login' })
       setIsSubmitting(false)
-      return
+    } catch {
+      setErrors({ general: AUTH_ERRORS.generic })
+      setIsSubmitting(false)
     }
-    goToCode({ reason: 'login' })
-    setIsSubmitting(false)
   }
 
   const handleResend = async () => {
     if (isResending) return
     setIsResending(true)
-    const email = formData.email.trim()
+    const email = formData.email.trim().toLowerCase()
     const { error } =
       codeContext.reason === 'signup'
         ? await supabase.auth.resend({ type: 'signup', email })
-        : await sendMagicLink(email, callbackUrl)
+        : await sendMagicLink(email, callbackUrl, { shouldCreateUser: false })
     setIsResending(false)
     if (error) {
-      setVerifyError(AUTH_ERRORS.generic)
+      setVerifyError(rateOrGeneric(error))
       return
     }
     setCode('')
@@ -356,6 +394,7 @@ const AuthPage = () => {
             id="email"
             type="email"
             placeholder="E-post"
+            autoComplete="email"
             value={formData.email}
             onChange={(e) => handleChange('email', e.target.value)}
             onBlur={() => handleBlur('email')}
@@ -378,6 +417,7 @@ const AuthPage = () => {
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Passord"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPasswordValue(e.target.value)}
               className="pr-10"
@@ -426,7 +466,8 @@ const AuthPage = () => {
         <button
           type="button"
           onClick={handleUseCode}
-          className="text-sm font-medium text-primary hover:underline"
+          disabled={isSubmitting}
+          className="text-sm font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
         >
           Send meg en kode i stedet
         </button>

@@ -28,7 +28,11 @@ interface AuthContextType {
   // Auth methods
   signInWithGoogle: (redirectTo?: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
-  sendMagicLink: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>
+  sendMagicLink: (
+    email: string,
+    redirectTo?: string,
+    opts?: { shouldCreateUser?: boolean },
+  ) => Promise<{ error: Error | null }>
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>
   signUpWithPassword: (
     email: string,
@@ -407,16 +411,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error as Error | null }
   }, [])
 
-  // Magic link — sends a one-click login link via email (no password needed)
-  const sendMagicLink = useCallback(async (email: string, redirectTo?: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: redirectTo || `${window.location.origin}${AUTH_ROUTES.callback}`,
-      },
-    })
-    return { error: error as Error | null }
-  }, [])
+  // Magic link / OTP — emails a one-click link + 6-digit code (no password
+  // needed). `shouldCreateUser` defaults to true (sign-in-or-create); pass false
+  // for login-only paths so an unknown email can't silently create an account.
+  const sendMagicLink = useCallback(
+    async (email: string, redirectTo?: string, opts?: { shouldCreateUser?: boolean }) => {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectTo || `${window.location.origin}${AUTH_ROUTES.callback}`,
+          shouldCreateUser: opts?.shouldCreateUser ?? true,
+        },
+      })
+      return { error: error as Error | null }
+    },
+    [],
+  )
 
   // Email + password sign-in (combined auth screen). Returns a generic error on
   // bad credentials — Supabase obfuscates "wrong password" vs "no such user".
