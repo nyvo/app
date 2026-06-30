@@ -1,14 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/button'
+import { Button, type ButtonProps } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 interface GoogleAuthButtonProps {
   redirectTo?: string
   label?: string
+  /** Visual variant override (default: filled near-black). */
+  variant?: ButtonProps['variant']
+  /** Extra classes merged onto the button (e.g. rounded-xl). */
+  className?: string
 }
 
-export function GoogleAuthButton({ redirectTo, label = 'Fortsett med Google' }: GoogleAuthButtonProps) {
+export function GoogleAuthButton({
+  redirectTo,
+  label = 'Fortsett med Google',
+  variant = 'default',
+  className,
+}: GoogleAuthButtonProps) {
   const { signInWithGoogle } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -52,11 +62,12 @@ export function GoogleAuthButton({ redirectTo, label = 'Fortsett med Google' }: 
   return (
     <Button
       type="button"
-      variant="default"
+      variant={variant}
       onClick={handleClick}
       loading={isLoading}
       loadingText={label}
-      size="lg" className="w-full gap-3"
+      size="lg"
+      className={cn('w-full gap-3', className)}
     >
       <svg className="size-4" viewBox="0 0 24 24" aria-hidden="true">
         <path

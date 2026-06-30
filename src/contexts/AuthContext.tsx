@@ -29,6 +29,16 @@ interface AuthContextType {
   signInWithGoogle: (redirectTo?: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   sendMagicLink: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>
+  signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>
+  signUpWithPassword: (
+    email: string,
+    password: string,
+    redirectTo?: string,
+  ) => Promise<{ error: Error | null; needsConfirmation: boolean }>
+  setPassword: (password: string) => Promise<{ error: Error | null }>
+  checkEmailAuthStatus: (
+    email: string,
+  ) => Promise<{ exists: boolean; hasPassword: boolean; error: Error | null }>
 
   // Seller methods
   ensureSeller: (name: string, slug: string, sellerType?: string) => Promise<{ seller: Seller | null; error: Error | null }>
@@ -408,6 +418,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error as Error | null }
   }, [])
 
+  // Email + password sign-in (combined auth screen). Returns a generic error on
+  // bad credentials — Supabase obfuscates "wrong password" vs "no such user".
+  const signInWithPassword = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    return { error: error as Error | null }
+  }, [])
+
+  // Email + password sign-up. `needsConfirmation` is true when email confirmation
+  // is enabled and no session came back — the caller then routes to the OTP screen
+  // (verifyOtp type 'signup') to finish.
+  const signUpWithPassword = useCallback(
+    async (email: string, password: string, redirectTo?: string) => {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectTo || `${window.location.origin}${AUTH_ROUTES.callback}`,
+        },
+      })
+      return { error: error as Error | null, needsConfirmation: !data.session }
+    },
+    [],
+  )
+
+  // Set/replace the password on the currently-authenticated user. Bridges a
+  // passwordless (Google / magic-link) account into one that can use a password.
+  // Note (supabase/auth#2085): this enables password login but does not add an
+  // 'email' row to auth.identities — password login still works regardless.
+  const setPassword = useCallback(async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password })
+    return { error: error as Error | null }
+  }, [])
+
+  // Server-side existence check for the combined auth screen — there is no client
+  // API for this by design. SECURITY DEFINER RPC (20260630140000). Returns exists
+  // + has_password so the page can branch: sign in / sign up / code-bridge.
+  const checkEmailAuthStatus = useCallback(async (email: string) => {
+    const { data, error } = await (
+      supabase.rpc as unknown as (
+        fn: string,
+        args: { p_email: string },
+      ) => ReturnType<typeof supabase.rpc>
+    )('check_email_auth_status', { p_email: email })
+    if (error) return { exists: false, hasPassword: false, error: error as Error }
+    const row = (data as Array<{ email_exists: boolean; has_password: boolean }> | null)?.[0]
+    return { exists: !!row?.email_exists, hasPassword: !!row?.has_password, error: null }
+  }, [])
+
   // Sign out
   const signOut = useCallback(async () => {
     const signingOutUserId = userRef.current?.id
@@ -618,6 +676,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithGoogle,
     signOut,
     sendMagicLink,
+    signInWithPassword,
+    signUpWithPassword,
+    setPassword,
+    checkEmailAuthStatus,
     ensureSeller,
     switchSeller,
     refreshSellers,
@@ -637,6 +699,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithGoogle,
     signOut,
     sendMagicLink,
+    signInWithPassword,
+    signUpWithPassword,
+    setPassword,
+    checkEmailAuthStatus,
     ensureSeller,
     switchSeller,
     refreshSellers,
