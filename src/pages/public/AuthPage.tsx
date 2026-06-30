@@ -158,9 +158,7 @@ const AuthPage = () => {
       if (codeContext.reason === 'bridge' && codeContext.pendingPassword) {
         const { error: pwError } = await setPassword(codeContext.pendingPassword)
         if (!cancelled && pwError) {
-          toast.warning(
-            'Du er logget inn, men passordet ble ikke lagret. Du kan sette det i innstillinger.',
-          )
+          toast.warning('Du er logget inn, men passordet ble ikke lagret.')
         }
       }
       if (cancelled) return
@@ -191,7 +189,7 @@ const AuthPage = () => {
     setPasswordError(null)
     if (!validateForm()) return
     if (!password) {
-      setPasswordError('Skriv inn et passord')
+      setPasswordError('Skriv inn passord')
       return
     }
 
@@ -230,7 +228,7 @@ const AuthPage = () => {
       if (hasPassword) {
         const { error } = await signInWithPassword(email, password)
         if (error) {
-          setPasswordError('Feil passord. Prøv igjen, eller be om en kode.')
+          setPasswordError('Passordet stemmer ikke.')
           setIsSubmitting(false)
           return
         }
@@ -272,7 +270,7 @@ const AuthPage = () => {
       }
       if (!exists) {
         setErrors({
-          general: 'Fant ingen konto med denne e-posten. Opprett en med e-post og passord.',
+          general: 'Ingen konto med denne e-posten – opprett en med passord.',
         })
         setIsSubmitting(false)
         return
