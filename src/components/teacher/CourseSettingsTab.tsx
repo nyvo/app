@@ -35,9 +35,12 @@ interface CourseSettingsTabProps {
 
   // Location — committed as null when empty (per DB schema).
   settingsLocation: string;
+  /** Street address of the picked place (shown under the name; persisted). */
+  settingsLocationAddress: string;
   /** Current location coords — drives the map in the picker. */
   settingsLocationCoords: LocationCoords | null;
   onLocationChange: (location: string) => void;
+  onLocationAddressChange: (address: string) => void;
   // Coords copied from the picked location onto the course (null when the
   // location is custom-typed or cleared).
   onLocationCoordsChange: (
@@ -107,8 +110,10 @@ export const CourseSettingsTab = ({
   isSaving,
   isImageSaving,
   settingsLocation,
+  settingsLocationAddress,
   settingsLocationCoords,
   onLocationChange,
+  onLocationAddressChange,
   onLocationCoordsChange,
   settingsDate,
   onDateChange,
@@ -182,6 +187,14 @@ export const CourseSettingsTab = ({
     return allTimeSlots.filter((t) => timeToMin(t) >= startMin);
   }, [settingsTime, allTimeSlots]);
 
+  // Read-only display for a published series — its start date is in the past
+  // and per-session time changes go through the Oversikt reschedule (which
+  // notifies påmeldte), so the fields are locked here.
+  const startDateLabel = settingsDate
+    ? new Intl.DateTimeFormat('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' }).format(settingsDate)
+    : '—';
+  const timeLabel = settingsTime ? (endTime ? `${settingsTime}–${endTime}` : settingsTime) : '—';
+
   const handleEndTimeChange = (val: string) => {
     if (!settingsTime) return;
     const dur = timeToMin(val) - timeToMin(settingsTime);
@@ -244,6 +257,7 @@ export const CourseSettingsTab = ({
     coords: LocationCoords | null;
   }) => {
     onLocationChange(next.name);
+    onLocationAddressChange(next.address);
     onLocationCoordsChange(next.coords);
   };
 
@@ -312,6 +326,7 @@ export const CourseSettingsTab = ({
               <LocationField
                 id="settings-location"
                 value={settingsLocation}
+                address={settingsLocationAddress}
                 coords={settingsLocationCoords}
                 onChange={handleLocationChange}
               />
@@ -331,11 +346,24 @@ export const CourseSettingsTab = ({
                   </p>
                 )}
               </div>
-            ) : (
-              /* Series: keep the existing single date/time fields unchanged */
+            ) : isPublished ? (
+              /* Published series: start date is in the past and per-session
+                 time changes happen on Oversikt (notifies) — so lock it here. */
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <FieldLabel id="settings-date-label">Dato</FieldLabel>
+                  <FieldLabel>Startdato</FieldLabel>
+                  <p className="text-base text-foreground">{startDateLabel}</p>
+                </div>
+                <div>
+                  <FieldLabel>Tidspunkt</FieldLabel>
+                  <p className="text-base tabular-nums text-foreground">{timeLabel}</p>
+                </div>
+              </div>
+            ) : (
+              /* Draft series: editable start date + time. */
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <FieldLabel id="settings-date-label">Startdato</FieldLabel>
                   <DatePicker
                     aria-labelledby="settings-date-label"
                     value={settingsDate}

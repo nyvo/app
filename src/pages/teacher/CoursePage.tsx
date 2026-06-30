@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ChevronRight, FileText, MoreHorizontal, Send } from '@/lib/icons';
+import { ChevronRight, FileText, MoreHorizontal } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -24,12 +24,6 @@ import { SendCourseMessageDrawer } from '@/components/teacher/SendCourseMessageD
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
-import {
-  CourseMetaRow,
-  buildTimeRange,
-  formatCourseDate,
-  nextUpcomingSession,
-} from '@/components/teacher/CourseMetaRow';
 import { PageState } from '@/components/page-state/page-state';
 import { AddParticipantDrawer } from '@/components/teacher/AddParticipantDrawer';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
@@ -123,6 +117,9 @@ const CoursePage = () => {
 
   const [activeTab, setActiveTab] = useState<TabKey>('oversikt');
   const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
+  // When set, the sessions modal opens straight into reschedule for this
+  // session (the Timeplan pencil); null opens the full list ("Se alle timer").
+  const [sessionEditId, setSessionEditId] = useState<string | null>(null);
   const [messageDrawerOpen, setMessageDrawerOpen] = useState(false);
   const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
 
@@ -130,6 +127,7 @@ const CoursePage = () => {
   const [settingsTitle, setSettingsTitle] = useState('');
   const [settingsDescription, setSettingsDescription] = useState('');
   const [settingsLocation, setSettingsLocation] = useState('');
+  const [settingsLocationAddress, setSettingsLocationAddress] = useState('');
   const [settingsLocationCoords, setSettingsLocationCoords] = useState<
     { lat: number | null; lon: number | null; placeId: string | null } | null
   >(null);
@@ -161,6 +159,7 @@ const CoursePage = () => {
     setSettingsTitle(courseData.title);
     setSettingsDescription(courseData.description || '');
     setSettingsLocation(courseData.location || '');
+    setSettingsLocationAddress(courseData.locationAddress || '');
     setSettingsLocationCoords(
       courseData.locationLat != null
         ? { lat: courseData.locationLat, lon: courseData.locationLon, placeId: courseData.locationPlaceId }
@@ -198,6 +197,7 @@ const CoursePage = () => {
     if (settingsTitle !== courseData.title) return true;
     if (settingsDescription !== (courseData.description || '')) return true;
     if (settingsLocation !== (courseData.location || '')) return true;
+    if (settingsLocationAddress !== (courseData.locationAddress || '')) return true;
     if (maxParticipants !== courseData.capacity) return true;
     if (settingsPrice !== courseData.price) return true;
     if (settingsDropInPrice !== courseData.dropInPrice) return true;
@@ -229,7 +229,7 @@ const CoursePage = () => {
     // instant-commit, not part of the batched save flow.
     return false;
   }, [
-    courseData, settingsTitle, settingsDescription, settingsLocation,
+    courseData, settingsTitle, settingsDescription, settingsLocation, settingsLocationAddress,
     maxParticipants, settingsDuration, settingsDate, settingsTime,
     settingsPrice, settingsDropInPrice, sessionDays, sessions,
   ]);
@@ -279,24 +279,6 @@ const CoursePage = () => {
     setMessageDrawerOpen(true);
   };
 
-  // Publish readiness — mirrors required PublishChecklist items on the
-  // Oversikt tab. Description and location are client-side UX gates; payment
-  // setup is also enforced by the DB trigger — for Pro sellers only. Free-tier
-  // sellers publish without Stripe onboarding (manual payments).
-  const publishReadiness = useMemo(() => {
-    const hasImage = !!courseData?.imageUrl;
-    const hasDescription = !!courseData?.description;
-    const hasLocation = !!courseData?.location;
-    const hasPaymentSetup = !sellerNeedsPaymentSetup(currentSeller);
-    return {
-      hasImage,
-      hasDescription,
-      hasLocation,
-      hasPaymentSetup,
-      ready: hasDescription && hasLocation && hasPaymentSetup,
-    };
-  }, [courseData?.imageUrl, courseData?.description, courseData?.location, currentSeller]);
-
   const handleSave = async () => {
     if (!courseId || !courseData) return;
     setIsSaving(true);
@@ -312,6 +294,7 @@ const CoursePage = () => {
         title: settingsTitle.trim(),
         description: settingsDescription.trim() || null,
         location: settingsLocation.trim() || null,
+        location_address: settingsLocationAddress.trim() || null,
         location_lat: settingsLocationCoords?.lat ?? null,
         location_lon: settingsLocationCoords?.lon ?? null,
         location_place_id: settingsLocationCoords?.placeId ?? null,
@@ -440,6 +423,7 @@ const CoursePage = () => {
               title: settingsTitle.trim(),
               description: settingsDescription.trim(),
               location: settingsLocation.trim() || null,
+              locationAddress: settingsLocationAddress.trim() || null,
               locationLat: settingsLocationCoords?.lat ?? null,
               locationLon: settingsLocationCoords?.lon ?? null,
               locationPlaceId: settingsLocationCoords?.placeId ?? null,
@@ -677,6 +661,7 @@ const CoursePage = () => {
     setSettingsTitle(courseData.title);
     setSettingsDescription(courseData.description || '');
     setSettingsLocation(courseData.location || '');
+    setSettingsLocationAddress(courseData.locationAddress || '');
     setSettingsLocationCoords(
       courseData.locationLat != null
         ? { lat: courseData.locationLat, lon: courseData.locationLon, placeId: courseData.locationPlaceId }
@@ -728,9 +713,13 @@ const CoursePage = () => {
     return <CourseNotFound description={error || undefined} />;
   }
 
+  // A draft has no signups yet — "Påmeldte" would be a guaranteed-empty tab, so
+  // it's hidden until the course goes live (the tab returns once published).
   const tabs: { key: TabKey; label: string; count?: number }[] = [
     { key: 'oversikt', label: 'Oversikt' },
-    { key: 'pameldte', label: 'Påmeldte', count: participantKpis.confirmed },
+    ...(courseData.status === 'draft'
+      ? []
+      : [{ key: 'pameldte' as const, label: 'Påmeldte', count: participantKpis.confirmed }]),
     { key: 'rediger', label: 'Rediger' },
   ];
 
@@ -750,38 +739,9 @@ const CoursePage = () => {
   const isLive = courseData.status === 'upcoming' || courseData.status === 'active';
   const canShare = isLive && !!courseUrl;
 
-  // Date · time · place under the title. The date adapts to the lifecycle so
-  // it never goes stale: a one-day single shows its date plainly; a series or
-  // multi-day course shows "Starter <første dato>" before it begins and
-  // "Neste: <neste økt>" once it's running. Archived (completed/cancelled)
-  // courses drop the date — their end-state banner already says when they ran.
-  // Time is pulled from the schedule string (e.g. "Tirsdager, 06:00").
-  const headerStartTime = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/)?.[1] ?? null;
-  const headerTime = headerStartTime
-    ? buildTimeRange(headerStartTime, courseData.durationMinutes)
-    : null;
-
-  const isSingleDay = sessions.length <= 1;
-  const isArchival =
-    courseData.status === 'completed' || courseData.status === 'cancelled';
-
-  let headerDate: string | null = null;
-  if (!isArchival) {
-    if (isSingleDay) {
-      headerDate = formatCourseDate(courseData.startDate);
-    } else if (courseData.status === 'active') {
-      const next = nextUpcomingSession(sessions);
-      headerDate = next ? `Neste: ${formatCourseDate(next.session_date)}` : null;
-    } else {
-      // upcoming / draft — hasn't begun yet, so the first date is the start.
-      headerDate = `Starter ${formatCourseDate(courseData.startDate)}`;
-    }
-  }
-
-  const headerMeta =
-    headerDate || headerTime || courseData.location ? (
-      <CourseMetaRow date={headerDate} time={headerTime} location={courseData.location} />
-    ) : undefined;
+  // Header carries just the title + status badge — the date/time/place now
+  // live in the Oversikt Timeplan + Sted cards, so they're no longer repeated
+  // here.
 
   return (
     <div className="flex-1 overflow-y-auto bg-canvas h-full">
@@ -789,7 +749,7 @@ const CoursePage = () => {
 
       <PageShell
         title={courseData.title}
-        description={headerMeta}
+        badgePlacement="below"
         badge={
           courseData.status === 'cancelled' ? (
             <span className="inline-flex items-center px-2 h-6 rounded-md text-sm font-medium bg-muted text-foreground-muted line-through">
@@ -800,31 +760,20 @@ const CoursePage = () => {
           )
         }
         action={
-          courseData.status === 'draft' ? (
-            <Button
-              onClick={handlePublish}
-              loading={isPublishing}
-              loadingText="Publiserer"
-              disabled={!publishReadiness.ready}
-              title={
-                publishReadiness.ready
-                  ? undefined
-                  : 'Fyll ut sjekklisten først'
-              }
-            >
-              <Send data-icon="inline-start" />
-              Publiser kurs
-            </Button>
-          ) : canShare ? (
+          // Drafts publish from the Oversikt readiness card — no header button.
+          // Published (upcoming/active) courses get the kebab (Gjør til utkast)
+          // on the title row; Share shows alongside when a public URL exists.
+          courseData.status === 'draft' ? null : isLive ? (
             <div className="flex items-center gap-2">
-              <ShareCoursePopover
-                courseUrl={courseUrl}
-                courseTitle={courseData.title}
-              />
+              {canShare && (
+                <ShareCoursePopover
+                  courseUrl={courseUrl}
+                  courseTitle={courseData.title}
+                />
+              )}
               {/* State-change actions (unpublish) live in the kebab —
-                  destructive actions stay in the Rediger tab's Faresone. Only
-                  reachable for live courses (canShare gates on upcoming/active),
-                  so a finished course can't be flipped back to a draft. */}
+                  destructive actions stay in the Rediger tab's Faresone. Gated
+                  to live courses, so a finished course can't be flipped back. */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -886,24 +835,18 @@ const CoursePage = () => {
               onDropInPriceChange={setSettingsDropInPrice}
               acceptsLateSignups={settingsAcceptsLateSignups}
               onAcceptsLateSignupsChange={handleToggleAcceptsLateSignups}
-              onOpenKursplan={() => setSessionsModalOpen(true)}
-              onSetupPaymentsClick={() => navigate(routes.settingsPayouts)}
-              onJumpToField={(field) => {
-                if (field === 'payments') {
-                  navigate(routes.settingsPayouts);
-                  return;
-                }
-                setActiveTab('rediger');
-                // Scroll after the tab actually mounts. Section ids live on
-                // CourseSettingsTab (Phase 5: course-edit-{image,description,
-                // location}).
-                requestAnimationFrame(() => {
-                  const el = document.getElementById(`course-edit-${field}`);
-                  if (!el) return;
-                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                });
+              onPublish={handlePublish}
+              publishing={isPublishing}
+              onOpenKursplan={() => {
+                setSessionEditId(null);
+                setSessionsModalOpen(true);
               }}
-              sessionCount={sessions.length}
+              onEditSession={(id) => {
+                setSessionEditId(id);
+                setSessionsModalOpen(true);
+              }}
+              onSetupPaymentsClick={() => navigate(routes.settingsPayouts)}
+              sessions={sessions}
             />
           )}
         </div>
@@ -924,8 +867,10 @@ const CoursePage = () => {
               settingsDescription={settingsDescription}
               onDescriptionChange={setSettingsDescription}
               settingsLocation={settingsLocation}
+              settingsLocationAddress={settingsLocationAddress}
               settingsLocationCoords={settingsLocationCoords}
               onLocationChange={setSettingsLocation}
+              onLocationAddressChange={setSettingsLocationAddress}
               onLocationCoordsChange={setSettingsLocationCoords}
               settingsImageUrl={settingsImageUrl}
               onImageFileChange={(file) => void handleImageSelected(file)}
@@ -1123,10 +1068,14 @@ const CoursePage = () => {
 
       <SessionsModal
         open={sessionsModalOpen}
-        onOpenChange={setSessionsModalOpen}
+        onOpenChange={(next) => {
+          setSessionsModalOpen(next);
+          if (!next) setSessionEditId(null);
+        }}
         sessions={sessions}
         defaultDurationMinutes={courseData.durationMinutes}
         onSessionUpdated={refetch}
+        initialEditSessionId={sessionEditId}
       />
 
       {courseId && (

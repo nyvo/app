@@ -32,8 +32,11 @@ interface PageShellProps {
   title: string;
   /** Optional subtitle below the title — a string or a rich node (e.g. a meta row). */
   description?: ReactNode;
-  /** Optional inline badge next to the title (status, count, etc). */
+  /** Optional badge (status, count, etc). Placed inline next to the title by
+   *  default, or on its own line under the title with `badgePlacement="below"`. */
   badge?: ReactNode;
+  /** Where the badge sits relative to the title. Default 'inline'. */
+  badgePlacement?: 'inline' | 'below';
   /** Optional primary action right-aligned in the header row. */
   action?: ReactNode;
   /** Optional tab strip (e.g. <PageTabs>) — rendered between header and content. */
@@ -61,6 +64,7 @@ export function PageShell({
   title,
   description,
   badge,
+  badgePlacement = 'inline',
   action,
   tabs,
   narrow,
@@ -93,10 +97,11 @@ export function PageShell({
               <h1 className="text-2xl font-medium text-foreground">
                 {title}
               </h1>
-              {badge && <span className="shrink-0">{badge}</span>}
+              {badge && badgePlacement === 'inline' && <span className="shrink-0">{badge}</span>}
             </div>
             {action && <div className="shrink-0">{action}</div>}
           </div>
+          {badge && badgePlacement === 'below' && <div className="mt-2">{badge}</div>}
           {description && (
             <div className="mt-2 text-base text-foreground-muted">{description}</div>
           )}

@@ -10,12 +10,12 @@ type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
 
 const config: Record<BadgeStatus, { variant: BadgeVariant; label: string }> = {
   confirmed:        { variant: 'success', label: 'Påmeldt' },
-  cancelled:        { variant: 'neutral', label: 'Avlyst' },
+  cancelled:        { variant: 'destructive', label: 'Avlyst' },
   course_cancelled: { variant: 'warning', label: 'Kurs avlyst' },
   draft:            { variant: 'neutral', label: 'Utkast' },
   active:           { variant: 'success', label: 'Pågår' },
-  upcoming:         { variant: 'neutral', label: 'Kommende' },
-  full:             { variant: 'neutral', label: 'Fullt' },
+  upcoming:         { variant: 'info', label: 'Kommende' },
+  full:             { variant: 'warning', label: 'Fullt' },
   completed:        { variant: 'neutral', label: 'Fullført' },
 };
 

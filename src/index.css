@@ -63,6 +63,8 @@
   /* Brand / interaction */
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-border: var(--primary-border);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
@@ -236,6 +238,10 @@
   /* Brand / interaction — periwinkle (#5564c4). White text = 5.2:1 AA. */
   --primary: oklch(0.540 0.150 274);
   --primary-foreground: oklch(0.985 0 0);
+  /* Faint primary surface + border for framed cards — opaque tokens matched to
+     the composited bg-primary/5 + border-primary/15 (over canvas) they replace. */
+  --primary-subtle: oklch(0.962 0.005 275);
+  --primary-border: oklch(0.901 0.025 278);
   --toast-surface: var(--chrome-surface);             /* shared dark-chrome surface */
   --secondary: var(--neutral-3);
   --secondary-foreground: var(--neutral-12);
@@ -362,6 +368,8 @@
   /* Brand / interaction — periwinkle, slightly brighter on dark (~4.9:1 white text AA). */
   --primary: oklch(0.555 0.150 274);
   --primary-foreground: oklch(0.985 0 0);
+  --primary-subtle: oklch(0.198 0.010 285);
+  --primary-border: oklch(0.252 0.038 279);
   /* --toast-surface inherits the shared --chrome-surface from :root (dark in both themes) */
   --secondary: var(--neutral-3);
   --secondary-foreground: var(--neutral-12);
