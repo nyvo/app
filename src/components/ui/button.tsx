@@ -6,8 +6,10 @@ import { cn } from "@/lib/utils"
 import { Spinner } from "./spinner"
 
 /**
- * Button — every button in Studio is pill-shaped (`rounded-full`). The pill
- * is the system's signature interactive shape; there is no rect variant.
+ * Button — text buttons share the input radius (`rounded-xl`, 10px) so they
+ * sit consistently alongside form fields (inputs, selects, date pickers).
+ * Icon-only buttons (`size="icon"` / `icon-lg`) stay circular (`rounded-full`)
+ * — the X / kebab / back / share affordances.
  *
  * Variant axis (color + emphasis):
  *   default    — primary action per section (max 1–2 per screen). No hover
@@ -39,7 +41,7 @@ import { Spinner } from "./spinner"
  * `default` (44px); CTAs use `cta` (44px).
  */
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-colors duration-150 ease-out outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 dark:aria-invalid:border-danger/50 dark:aria-invalid:ring-danger/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 cursor-pointer",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-colors duration-150 ease-out outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 dark:aria-invalid:border-danger/50 dark:aria-invalid:ring-danger/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 cursor-pointer",
   {
     variants: {
       variant: {
@@ -72,6 +74,10 @@ const buttonVariants = cva(
       },
     },
     compoundVariants: [
+      // Icon-only buttons stay circular regardless of variant — the base
+      // rounded-xl is for rectangular text buttons that sit beside inputs.
+      { size: "icon", className: "rounded-full" },
+      { size: "icon-lg", className: "rounded-full" },
       // Plain variant strips chrome (height + padding) at every size.
       // Size still controls font-size; `plain` is "text inline, no button shell".
       { variant: "plain", size: "default", className: "h-auto p-0" },
