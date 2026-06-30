@@ -146,27 +146,31 @@ export function SessionsModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg" showCloseButton={view === 'list'}>
-        <DialogHeader>
-          {/* Back sits on its own row above the title so the title stays
-              left-aligned (matching the list view), not shifted by the icon. */}
-          {view === 'reschedule' && (
-            <Button
-              variant="soft"
-              size="icon"
-              onClick={backToList}
-              aria-label="Tilbake"
-              className="-ml-2 mb-1"
-            >
-              <ArrowLeft className="size-4" />
-            </Button>
+        <DialogHeader
+          className={cn(
+            // Step 2 reads as a proper header bar: back + title on one line,
+            // divider underneath, spanning the full dialog width.
+            view === 'reschedule' && '-mx-6 border-b border-border-subtle px-6 pb-4',
           )}
-          <DialogTitle>
-            {view === 'list'
-              ? 'Alle timer'
-              : editing
-                ? `Endre time — ${dayMonth(editing.session_date)}`
-                : 'Endre time'}
-          </DialogTitle>
+        >
+          {view === 'reschedule' ? (
+            <div className="flex items-center gap-3">
+              <Button
+                variant="soft"
+                size="icon"
+                onClick={backToList}
+                aria-label="Tilbake"
+                className="-ml-2 shrink-0"
+              >
+                <ArrowLeft className="size-4" />
+              </Button>
+              <DialogTitle>
+                {editing ? `Endre time — ${dayMonth(editing.session_date)}` : 'Endre time'}
+              </DialogTitle>
+            </div>
+          ) : (
+            <DialogTitle>Alle timer</DialogTitle>
+          )}
         </DialogHeader>
 
         {view === 'list' && (
