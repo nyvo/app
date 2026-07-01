@@ -43,7 +43,10 @@ export function AuthLayout({
           className="w-full max-w-md"
         >
           {customContent ? (
-            <div className="flex flex-col items-center">
+            // min-height keeps multi-step flows (identify → password → code) from
+            // re-centering as content height changes; `relative` anchors a step's
+            // floating back arrow so it doesn't push the heading down.
+            <div className="relative flex min-h-96 flex-col items-center">
               {children}
             </div>
           ) : (

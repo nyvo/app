@@ -28,7 +28,21 @@ interface AuthContextType {
   // Auth methods
   signInWithGoogle: (redirectTo?: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
-  sendMagicLink: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>
+  sendMagicLink: (
+    email: string,
+    redirectTo?: string,
+    opts?: { shouldCreateUser?: boolean },
+  ) => Promise<{ error: Error | null }>
+  signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>
+  signUpWithPassword: (
+    email: string,
+    password: string,
+    redirectTo?: string,
+  ) => Promise<{ error: Error | null; needsConfirmation: boolean }>
+  setPassword: (password: string) => Promise<{ error: Error | null }>
+  checkEmailAuthStatus: (
+    email: string,
+  ) => Promise<{ exists: boolean; hasPassword: boolean; error: Error | null }>
 
   // Seller methods
   ensureSeller: (name: string, slug: string, sellerType?: string) => Promise<{ seller: Seller | null; error: Error | null }>
@@ -213,12 +227,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false
     }
 
-    const userProfile = await fetchProfileData(userId)
+    let userProfile = await fetchProfileData(userId)
     if (!userProfile) {
-      // Profile doesn't exist — user data was deleted. Sign out the stale session.
-      logger.error('Profile not found for authenticated user, signing out')
-      await supabase.auth.signOut()
-      return false
+      // Self-heal a missing profile instead of signing out. The row can be absent
+      // if the handle_new_user trigger ever failed (it swallows errors) or the row
+      // was deleted — and a profile-less session would otherwise hang the auth flow
+      // forever (this path → signOut on every login). RLS "Profiles INSERT own"
+      // lets the user create their own row.
+      logger.warn('Profile missing for authenticated user; self-healing')
+      // ensure_own_profile is a SECURITY DEFINER RPC that (re)creates the caller's
+      // own profile row idempotently — profiles is SELECT-only for the client, so
+      // creation goes through the definer function, not a direct insert.
+      const { error: healError } = await (
+        supabase.rpc as unknown as (fn: string) => ReturnType<typeof supabase.rpc>
+      )('ensure_own_profile')
+      if (healError) {
+        logger.error('Failed to self-heal missing profile, signing out:', healError)
+        await supabase.auth.signOut()
+        return false
+      }
+      userProfile = await fetchProfileData(userId)
+      if (!userProfile) {
+        logger.error('Profile still missing after self-heal, signing out')
+        await supabase.auth.signOut()
+        return false
+      }
     }
     setProfile(userProfile)
 
@@ -397,15 +430,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error as Error | null }
   }, [])
 
-  // Magic link — sends a one-click login link via email (no password needed)
-  const sendMagicLink = useCallback(async (email: string, redirectTo?: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: redirectTo || `${window.location.origin}${AUTH_ROUTES.callback}`,
-      },
-    })
+  // Magic link / OTP — emails a one-click link + 6-digit code (no password
+  // needed). `shouldCreateUser` defaults to true (sign-in-or-create); pass false
+  // for login-only paths so an unknown email can't silently create an account.
+  const sendMagicLink = useCallback(
+    async (email: string, redirectTo?: string, opts?: { shouldCreateUser?: boolean }) => {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectTo || `${window.location.origin}${AUTH_ROUTES.callback}`,
+          shouldCreateUser: opts?.shouldCreateUser ?? true,
+        },
+      })
+      return { error: error as Error | null }
+    },
+    [],
+  )
+
+  // Email + password sign-in (combined auth screen). Returns a generic error on
+  // bad credentials — Supabase obfuscates "wrong password" vs "no such user".
+  const signInWithPassword = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error: error as Error | null }
+  }, [])
+
+  // Email + password sign-up. `needsConfirmation` is true when email confirmation
+  // is enabled and no session came back — the caller then routes to the OTP screen
+  // (verifyOtp type 'signup') to finish.
+  const signUpWithPassword = useCallback(
+    async (email: string, password: string, redirectTo?: string) => {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectTo || `${window.location.origin}${AUTH_ROUTES.callback}`,
+        },
+      })
+      return { error: error as Error | null, needsConfirmation: !data.session }
+    },
+    [],
+  )
+
+  // Set/replace the password on the currently-authenticated user. Bridges a
+  // passwordless (Google / magic-link) account into one that can use a password.
+  // Note (supabase/auth#2085): this enables password login but does not add an
+  // 'email' row to auth.identities — password login still works regardless.
+  const setPassword = useCallback(async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password })
+    return { error: error as Error | null }
+  }, [])
+
+  // Server-side existence check for the combined auth screen — there is no client
+  // API for this by design. SECURITY DEFINER RPC (20260630140000). Returns exists
+  // + has_password so the page can branch: sign in / sign up / code-bridge.
+  const checkEmailAuthStatus = useCallback(async (email: string) => {
+    const { data, error } = await (
+      supabase.rpc as unknown as (
+        fn: string,
+        args: { p_email: string },
+      ) => ReturnType<typeof supabase.rpc>
+    )('check_email_auth_status', { p_email: email })
+    if (error) return { exists: false, hasPassword: false, error: error as Error }
+    const row = (data as Array<{ email_exists: boolean; has_password: boolean }> | null)?.[0]
+    return { exists: !!row?.email_exists, hasPassword: !!row?.has_password, error: null }
   }, [])
 
   // Sign out
@@ -618,6 +705,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithGoogle,
     signOut,
     sendMagicLink,
+    signInWithPassword,
+    signUpWithPassword,
+    setPassword,
+    checkEmailAuthStatus,
     ensureSeller,
     switchSeller,
     refreshSellers,
@@ -637,6 +728,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithGoogle,
     signOut,
     sendMagicLink,
+    signInWithPassword,
+    signUpWithPassword,
+    setPassword,
+    checkEmailAuthStatus,
     ensureSeller,
     switchSeller,
     refreshSellers,
