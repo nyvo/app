@@ -5,15 +5,17 @@
 // OPS_ALERT_EMAIL (or Resend env) set it still runs the check and returns the
 // summary, but sends nothing — a safe no-op until the destination is wired.
 //
-// Auth mirrors the other cron functions: x-cron-secret (DINTERO_CRON_SECRET) or a
-// service-role bearer.
+// Auth mirrors the other cron functions: x-cron-secret (CRON_SECRET, or the legacy
+// DINTERO_CRON_SECRET) or a service-role bearer.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-const cronSecret = Deno.env.get('DINTERO_CRON_SECRET') || ''
+// Shared cron auth secret. Prefer CRON_SECRET; fall back to the legacy
+// DINTERO_CRON_SECRET name during the rename transition (not Dintero-specific).
+const cronSecret = Deno.env.get('CRON_SECRET') || Deno.env.get('DINTERO_CRON_SECRET') || ''
 
 const alertEmail = Deno.env.get('OPS_ALERT_EMAIL') || ''
 const resendApiKey = Deno.env.get('RESEND_API_KEY') || ''
