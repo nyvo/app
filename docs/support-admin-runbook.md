@@ -67,10 +67,10 @@ Dintero runbook; the app is on **Stripe Connect**.
    select net.http_post(
      url := 'https://nollnnkksgicsvuthnjq.supabase.co/functions/v1/sweep-pending-payments',
      headers := jsonb_build_object('Content-Type','application/json',
-       'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'dintero_cron_secret')),
+       'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret')),
      body := '{}'::jsonb, timeout_milliseconds := 45000);
    ```
-   (`dintero_cron_secret` is the legacy secret name — it's the shared cron secret; the value is current.)
+   (`cron_secret` is the shared cron auth secret — not Dintero-specific despite the old name.)
 
 Never `insert` a signup by hand to "fix" this — capacity + capture must go through
 the RPC/webhook path.

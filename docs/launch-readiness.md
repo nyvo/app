@@ -72,9 +72,11 @@ are founder-side config actions and follow-up builds. Split into "flip on at lau
       via `auth.users` / `profiles` by email first. Fulfils the privacy page's
       30-day promise. *Remaining (optional): a self-service download button in
       account settings so users don't have to contact support.*
-- [ ] **Rename `DINTERO_CRON_SECRET`** — cosmetic: `sweep-pending-payments` and
-      `send-pending-confirmations` still read the stale-named secret (it works).
-      Renaming needs a coordinated code + Supabase secret + cron-header update.
+- [x] **Rename `DINTERO_CRON_SECRET` → `CRON_SECRET` / `cron_secret`** — done
+      (zero-downtime): vault `cron_secret` created, crons repointed, functions read
+      `CRON_SECRET` with a fallback to the legacy env name. *Final cleanup (optional):
+      set a `CRON_SECRET` function secret, then drop the fallback + old
+      `dintero_cron_secret` vault secret + old `DINTERO_CRON_SECRET` function secret.*
 - [ ] **Manual payment smoke test** — the money path has zero e2e coverage. Run the
       runbook in `PRELAUNCH.md` against Stripe test/live before opening signups.
 

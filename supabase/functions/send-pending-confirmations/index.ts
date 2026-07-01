@@ -18,7 +18,9 @@ import { deliverBookingConfirmations } from '../_shared/booking-notifications.ts
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-const cronSecret = Deno.env.get('DINTERO_CRON_SECRET') || ''
+// Shared cron auth secret. Prefer CRON_SECRET; fall back to the legacy
+// DINTERO_CRON_SECRET name during the rename transition (not Dintero-specific).
+const cronSecret = Deno.env.get('CRON_SECRET') || Deno.env.get('DINTERO_CRON_SECRET') || ''
 
 // Don't retry the inline path's own work — give it a few seconds to land.
 const GRACE_SECONDS = 30
