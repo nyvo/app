@@ -63,9 +63,13 @@ are founder-side config actions and follow-up builds. Split into "flip on at lau
 - [ ] **Support / admin recovery runbook** — `is_platform_admin` can read all
       profiles, but there's no admin UI; recovery is via edge functions or direct
       service-role SQL. Write a Stripe-based runbook (the old Dintero one was removed).
-- [ ] **GDPR data export** — the privacy page promises a copy within 30 days, but
-      there is no export function. Handle as a manual support process; build an RPC if
-      volume grows.
+- [x] **GDPR data export (mechanism built)** — support-run RPC: in the Supabase SQL
+      editor (service_role), `select public.export_user_data('<auth-user-id>')`
+      returns the subject's data as machine-readable JSON (account, profile, their
+      own `buyer_id` bookings, seller memberships + business identity). Find the id
+      via `auth.users` / `profiles` by email first. Fulfils the privacy page's
+      30-day promise. *Remaining (optional): a self-service download button in
+      account settings so users don't have to contact support.*
 - [ ] **Rename `DINTERO_CRON_SECRET`** — cosmetic: `sweep-pending-payments` and
       `send-pending-confirmations` still read the stale-named secret (it works).
       Renaming needs a coordinated code + Supabase secret + cron-header update.
