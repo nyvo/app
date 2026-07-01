@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { FieldError } from '@/components/ui/field-error'
+import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFormValidation } from '@/hooks/use-form-validation'
@@ -133,6 +134,7 @@ const AuthPage = () => {
   useEffect(() => {
     if (code.length !== 6) return
     let cancelled = false
+    let hangTimer: ReturnType<typeof setTimeout> | undefined
     setIsVerifying(true)
     setVerifyError(null)
     ;(async () => {
@@ -145,11 +147,20 @@ const AuthPage = () => {
         setIsVerifying(false)
         return
       }
-      setIsVerifying(false)
-      // success → AuthContext.onAuthStateChange fires → navigate effect runs
+      // Success — stay in the loading state (spinner shown). AuthContext now loads
+      // the profile; the navigate effect fires once it's ready and unmounts us.
+      // Safety net: if that never happens (e.g. a transient profile-load failure),
+      // surface an error rather than hanging silently on the code screen.
+      hangTimer = setTimeout(() => {
+        if (cancelled) return
+        setVerifyError(AUTH_ERRORS.generic)
+        setCode('')
+        setIsVerifying(false)
+      }, 12000)
     })()
     return () => {
       cancelled = true
+      if (hangTimer) clearTimeout(hangTimer)
     }
   }, [code, email, codeCtx])
 
@@ -331,30 +342,42 @@ const AuthPage = () => {
           <FieldError className="mt-4 text-center">{verifyError}</FieldError>
         )}
 
-        <p className="mt-6 text-center text-sm text-foreground-muted">
-          Fikk du ingen kode?{' '}
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={isResending}
-            className="font-medium text-foreground hover:underline disabled:cursor-not-allowed disabled:text-foreground-muted"
+        {isVerifying ? (
+          <div
+            className="mt-6 flex items-center justify-center gap-2 text-sm text-foreground-muted"
+            role="status"
           >
-            Send på nytt
-          </button>
-        </p>
+            <Spinner size="sm" />
+            Logger inn …
+          </div>
+        ) : (
+          <>
+            <p className="mt-6 text-center text-sm text-foreground-muted">
+              Fikk du ingen kode?{' '}
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isResending}
+                className="font-medium text-foreground hover:underline disabled:cursor-not-allowed disabled:text-foreground-muted"
+              >
+                Send på nytt
+              </button>
+            </p>
 
-        <button
-          type="button"
-          onClick={() => {
-            setCode('')
-            setVerifyError(null)
-            if (codeCtx.hasPasswordFallback) setStep('password')
-            else backToIdentify()
-          }}
-          className="mt-8 text-sm font-medium text-primary hover:underline"
-        >
-          {codeCtx.hasPasswordFallback ? 'Bruk passord i stedet' : 'Bruk en annen e-post'}
-        </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCode('')
+                setVerifyError(null)
+                if (codeCtx.hasPasswordFallback) setStep('password')
+                else backToIdentify()
+              }}
+              className="mt-8 text-sm font-medium text-primary hover:underline"
+            >
+              {codeCtx.hasPasswordFallback ? 'Bruk passord i stedet' : 'Bruk en annen e-post'}
+            </button>
+          </>
+        )}
       </AuthLayout>
     )
   }
