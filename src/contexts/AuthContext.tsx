@@ -227,12 +227,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false
     }
 
-    const userProfile = await fetchProfileData(userId)
+    let userProfile = await fetchProfileData(userId)
     if (!userProfile) {
-      // Profile doesn't exist — user data was deleted. Sign out the stale session.
-      logger.error('Profile not found for authenticated user, signing out')
-      await supabase.auth.signOut()
-      return false
+      // Self-heal a missing profile instead of signing out. The row can be absent
+      // if the handle_new_user trigger ever failed (it swallows errors) or the row
+      // was deleted — and a profile-less session would otherwise hang the auth flow
+      // forever (this path → signOut on every login). RLS "Profiles INSERT own"
+      // lets the user create their own row.
+      logger.warn('Profile missing for authenticated user; self-healing')
+      // ensure_own_profile is a SECURITY DEFINER RPC that (re)creates the caller's
+      // own profile row idempotently — profiles is SELECT-only for the client, so
+      // creation goes through the definer function, not a direct insert.
+      const { error: healError } = await (
+        supabase.rpc as unknown as (fn: string) => ReturnType<typeof supabase.rpc>
+      )('ensure_own_profile')
+      if (healError) {
+        logger.error('Failed to self-heal missing profile, signing out:', healError)
+        await supabase.auth.signOut()
+        return false
+      }
+      userProfile = await fetchProfileData(userId)
+      if (!userProfile) {
+        logger.error('Profile still missing after self-heal, signing out')
+        await supabase.auth.signOut()
+        return false
+      }
     }
     setProfile(userProfile)
 
