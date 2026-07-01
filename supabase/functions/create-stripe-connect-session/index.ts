@@ -135,7 +135,8 @@ Deno.serve(async (req: Request) => {
           name,
           stripe_account_id,
           stripe_onboarding_complete,
-          uses_integrated_payments,
+          subscription_plan,
+          subscription_status,
           team:teams!owner_seller_id(slug)
         )
       `)
@@ -151,7 +152,8 @@ Deno.serve(async (req: Request) => {
       name: string
       stripe_account_id: string | null
       stripe_onboarding_complete: boolean
-      uses_integrated_payments: boolean
+      subscription_plan: string | null
+      subscription_status: string | null
       team: { slug: string } | null
     } | null
 
@@ -183,11 +185,13 @@ Deno.serve(async (req: Request) => {
     // narrowing is otherwise lost across the many awaits before createPaymentIntent is called.
     const stripeAccountId: string = seller.stripe_account_id
 
-    // INV-1: integrated checkout requires an active Pro subscription. uses_integrated_payments
-    // is the derived predicate (pro + active/past_due + onboarded with either provider).
-    if (!seller.uses_integrated_payments) {
-      return errorResponse('Payment is not set up for this seller', 400, req)
-    }
+    // Free-tier ("Start") sellers pay the platform take, deducted from their payout via the
+    // application fee. Active (incl. past_due grace) Pro pays 0% — a lapsed Pro reverts to
+    // the take rather than free-riding.
+    const platformTake = !(
+      seller.subscription_plan === 'pro' &&
+      ['active', 'past_due'].includes(seller.subscription_status ?? '')
+    )
 
     // Resolve the ticket type via available_ticket_types(courseId) — the same RPC the booking
     // page uses, so the buyer is charged exactly what they saw.
@@ -268,8 +272,8 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const { serviceFeeNok, totalPrice, priceInOre, serviceFeeInOre } =
-      calculatePricing(typedTier.price)
+    const { serviceFeeNok, totalPrice, priceInOre, serviceFeeInOre, platformFeeInOre, platformFeeNok } =
+      calculatePricing(typedTier.price, { platformTake })
 
     // Persist the attempt. Its id becomes metadata.attempt_id on the PaymentIntent (C4) and the
     // ticket-type snapshot fields are write-once context for refund/recovery paths.
@@ -289,6 +293,7 @@ Deno.serve(async (req: Request) => {
         ticket_kind_snapshot: typedTier.ticket_kind,
         base_price_nok: typedTier.price,
         service_fee_nok: serviceFeeNok,
+        platform_fee_nok: platformFeeNok,
         total_price_nok: totalPrice,
         status: 'pending',
       })
@@ -303,13 +308,13 @@ Deno.serve(async (req: Request) => {
 
     // One destination charge: buyer pays the total; the connected (studio) account is the
     // merchant of record (on_behalf_of, C7) and receives the course price; the platform service
-    // fee is pulled back via application_fee_amount. Manual capture (C1) — captured in the
-    // webhook after the capacity check. Idempotency-keyed on the attempt id.
+    // fee — plus the free-tier take — is pulled back via application_fee_amount. Manual capture
+    // (C1) — captured in the webhook after the capacity check. Idempotency-keyed on the attempt id.
     let paymentIntent
     try {
       paymentIntent = await createPaymentIntent({
         amount: priceInOre,
-        applicationFeeAmount: serviceFeeInOre,
+        applicationFeeAmount: serviceFeeInOre + platformFeeInOre,
         sellerAccountId: stripeAccountId,
         attemptId: merchantReference,
       })

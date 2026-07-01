@@ -42,14 +42,11 @@ import {
   deleteCourse,
 } from '@/services/courses';
 import { type SessionDay } from '@/components/teacher/SessionDaysEditor';
-import {
-  teacherCancelSignup,
-  markPaymentResolved,
-} from '@/services/signups';
+import { teacherCancelSignup } from '@/services/signups';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { useAuth } from '@/contexts/AuthContext';
 import { friendlyError } from '@/lib/error-messages';
-import { isProSeller, sellerNeedsPaymentSetup } from '@/lib/payments';
+import { publishNeedsPaymentSetup } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 import { cn, formatKroner } from '@/lib/utils';
 import type {
@@ -516,16 +513,6 @@ const CoursePage = () => {
     refetchParticipants();
   };
 
-  const handleMarkResolved = async (signupId: string) => {
-    const { error: resolveError } = await markPaymentResolved(signupId);
-    if (resolveError) {
-      toast.error(friendlyError(resolveError, 'Kunne ikke merke som betalt.'));
-      return;
-    }
-    toast.success('Påmelding merket som betalt');
-    refetchParticipants();
-  };
-
   // Drop-in toggle is instant-commit (not part of batched save). Optimistic
   // update fires immediately; revert + error toast on failure.
   const handleToggleDropIn = async (next: boolean) => {
@@ -610,10 +597,15 @@ const CoursePage = () => {
 
   // Publish flow — mirrors CourseDrawer. The DB trigger is the authoritative
   // gate; this client check just keeps teachers out of a guaranteed-to-fail
-  // request.
+  // request. Only PAID courses need Stripe onboarding — 0 kr courses publish
+  // freely on every tier.
+  const courseHasPaidTier =
+    (courseData?.price ?? 0) > 0 ||
+    ((courseData?.allowsDropIn ?? false) && (courseData?.dropInPrice ?? 0) > 0);
+
   const handlePublish = async () => {
     if (!courseId || !courseData) return;
-    if (sellerNeedsPaymentSetup(currentSeller)) {
+    if (publishNeedsPaymentSetup(currentSeller, courseHasPaidTier)) {
       setShowPublishDialog(true);
       return;
     }
@@ -828,7 +820,7 @@ const CoursePage = () => {
               revenue={participantKpis.revenue}
               paymentSetupStatus={currentSeller?.stripe_account_status ?? null}
               paymentSetupComplete={currentSeller?.stripe_onboarding_complete ?? false}
-              paymentSetupRequired={isProSeller(currentSeller)}
+              paymentSetupRequired={courseHasPaidTier}
               allowsDropIn={settingsAllowsDropIn}
               onAllowsDropInChange={handleToggleDropIn}
               dropInPrice={settingsDropInPrice}
@@ -1092,9 +1084,7 @@ const CoursePage = () => {
         open={selectedParticipantId !== null}
         onOpenChange={(open) => !open && setSelectedParticipantId(null)}
         signup={participants.find((p) => p.id === selectedParticipantId) ?? null}
-        courseTitle={courseData.title}
         onCancelEnrollment={handleCancelEnrollment}
-        onMarkResolved={handleMarkResolved}
       />
 
       <ConfirmDialog

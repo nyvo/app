@@ -18,9 +18,17 @@ const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:5173'
 
 interface RequestBody {
   sellerId: string
+  /** Billing interval — defaults to monthly. */
+  interval?: 'month' | 'year'
 }
 
-function priceIdForSellerType(sellerType: string | null): string {
+function priceIdForSellerType(sellerType: string | null, interval: 'month' | 'year'): string {
+  if (interval === 'year') {
+    const soloYearly =
+      Deno.env.get('STRIPE_PRO_SOLO_YEARLY_PRICE_ID') || Deno.env.get('STRIPE_PRO_YEARLY_PRICE_ID') || ''
+    const studioYearly = Deno.env.get('STRIPE_PRO_STUDIO_YEARLY_PRICE_ID') || soloYearly
+    return sellerType === 'business' ? studioYearly : soloYearly
+  }
   const solo = Deno.env.get('STRIPE_PRO_SOLO_PRICE_ID') || Deno.env.get('STRIPE_PRO_PRICE_ID') || ''
   const studio = Deno.env.get('STRIPE_PRO_STUDIO_PRICE_ID') || solo
   return sellerType === 'business' ? studio : solo
@@ -35,6 +43,7 @@ Deno.serve(async (req: Request) => {
     if (!body.sellerId) {
       return errorResponse('Missing sellerId', 400, req)
     }
+    const interval: 'month' | 'year' = body.interval === 'year' ? 'year' : 'month'
 
     const authz = await verifyAuthAndOrgMembership(req, body.sellerId, ['owner'])
     if (!authz.authenticated) {
@@ -60,7 +69,7 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Studioet har allerede Pro.', 409, req)
     }
 
-    const priceId = priceIdForSellerType(seller.seller_type)
+    const priceId = priceIdForSellerType(seller.seller_type, interval)
     if (!priceId) {
       return errorResponse('Stripe price is not configured', 500, req)
     }

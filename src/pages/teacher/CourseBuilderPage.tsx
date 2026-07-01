@@ -22,7 +22,8 @@ import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { LocationField } from '@/components/ui/location-field';
 import { useAuth } from '@/contexts/AuthContext';
 import { createCourse, updateCourse, publishCourse } from '@/services/courses';
-import { sellerNeedsPaymentSetup } from '@/lib/payments';
+import { isProSeller, publishNeedsPaymentSetup } from '@/lib/payments';
+import { calculatePlatformFee } from '@/lib/pricing';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { friendlyError } from '@/lib/error-messages';
@@ -112,6 +113,12 @@ export default function CourseBuilderPage() {
   } | null>(null);
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
+
+  // The stored course price — per-gang × uker on a series (mirrors createDraft).
+  const coursePriceTotal =
+    format === 'series'
+      ? (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0)
+      : parseInt(price, 10) || 0;
 
   // Cover image is picked locally and uploaded AFTER createCourse (the storage
   // path needs the new course id — same pattern as the course detail page).
@@ -306,9 +313,9 @@ export default function CourseBuilderPage() {
   const handlePublish = async () => {
     const id = await createDraft();
     if (!id) return;
-    // Pro sellers can't go live until Stripe payouts are set up. Keep the draft,
-    // surface the gate dialog; dismissing it routes to the saved course page.
-    if (sellerNeedsPaymentSetup(currentSeller)) {
+    // A paid course can't go live until Stripe payouts are set up. Keep the
+    // draft, surface the gate dialog; dismissing it routes to the saved course page.
+    if (publishNeedsPaymentSetup(currentSeller, coursePriceTotal > 0)) {
       setCreatedCourseId(id);
       setShowPublishDialog(true);
       setIsSubmitting(false);
@@ -590,6 +597,16 @@ export default function CourseBuilderPage() {
                                 (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0),
                               )}{' '}
                               for {parseInt(weeks, 10) || 0} uker
+                            </p>
+                          )}
+                        {/* Free-tier payout preview — the 5% take is visible
+                            where the price decision is made, never in checkout. */}
+                        {!isProSeller(currentSeller) &&
+                          !showError('price') &&
+                          coursePriceTotal > 0 && (
+                            <p className="mt-2 text-base text-foreground-muted">
+                              Du får {formatKroner(coursePriceTotal - calculatePlatformFee(coursePriceTotal))}{' '}
+                              utbetalt (5&nbsp;% plattformgebyr)
                             </p>
                           )}
                         {showError('price') && <FieldError>{errors.price}</FieldError>}

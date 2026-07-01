@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
 import {
-  LockedIncomeCard,
+  PlatformFeeHint,
   RecentSignupsSection,
   UpcomingCoursesSection,
 } from '@/pages/teacher/TeacherDashboard';
@@ -151,9 +151,17 @@ export default function DashboardPreview() {
           </div>
         </PreviewState>
 
-        <PreviewState label="Start (gratis)">
+        <PreviewState label="Start (gratis) – med plattformgebyr-linje">
           <div className="space-y-8">
-            <LockedIncomeCard />
+            <div className="space-y-3">
+              <IncomeChart
+                series={incomeSeries}
+                isLoading={false}
+                range={range}
+                onRangeChange={setRange}
+              />
+              <PlatformFeeHint feeNok={312} />
+            </div>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
               <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />

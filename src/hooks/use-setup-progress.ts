@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { CreditCard, BookOpen, MapPin, Image } from '@/lib/icons'
 import type { LucideIcon } from '@/lib/icons'
 import type { Seller } from '@/types/database'
-import { isProSeller } from '@/lib/payments'
 import { routes } from '@/lib/routes'
 
 export interface SetupStep {
@@ -40,14 +39,9 @@ interface UseSetupProgressResult {
   motivationalSubtitle: string
 }
 
-function getMotivationalSubtitle(completedCount: number, totalCount: number, isPro: boolean): string {
+function getMotivationalSubtitle(completedCount: number, totalCount: number): string {
   const remaining = totalCount - completedCount
-  if (remaining === 0) {
-    // Free-tier sellers take signups only — payment happens off-platform.
-    return isPro
-      ? 'Du er klar til å ta imot påmeldinger og betaling'
-      : 'Du er klar til å ta imot påmeldinger'
-  }
+  if (remaining === 0) return 'Du er klar til å ta imot påmeldinger og betaling'
   if (remaining === 1) return 'Nesten i mål – ett steg igjen'
   return `${remaining} steg igjen før du kan ta imot påmeldinger`
 }
@@ -62,25 +56,21 @@ export function useSetupProgress({
   return useMemo(() => {
     const seller = currentSeller
 
-    // Required steps. Pro sellers must connect payouts (the KYC long pole)
-    // before anything else; free-tier sellers handle payment off-platform,
-    // so their only required step is publishing a course — the checklist
-    // must never dead-end on a payments step they can't (and shouldn't) do.
-    // A course can be published with a free-typed location, so a saved
-    // studio address is polish, not a publish blocker → it lives below.
-    const isPro = isProSeller(seller)
+    // Required steps. Every seller connects payouts (the KYC long pole) —
+    // integrated payments are open to all tiers, and a paid course can't be
+    // published without it. A course can be published with a free-typed
+    // location, so a saved studio address is polish, not a publish blocker
+    // → it lives below.
     const steps: SetupStep[] = [
-      ...(isPro
-        ? [{
-            id: 'payments' as const,
-            title: 'Aktiver betalinger',
-            description: 'Koble til en betalingsløsning så du kan motta betaling fra elever.',
-            isComplete: !!seller?.stripe_onboarding_complete,
-            actionLabel: 'Aktiver',
-            actionOnClick: onConnectPayments,
-            icon: CreditCard,
-          }]
-        : []),
+      {
+        id: 'payments' as const,
+        title: 'Aktiver betalinger',
+        description: 'Koble til Stripe så du kan ta betalt for kursene dine.',
+        isComplete: !!seller?.stripe_onboarding_complete,
+        actionLabel: 'Aktiver',
+        actionOnClick: onConnectPayments,
+        icon: CreditCard,
+      },
       {
         id: 'course',
         title: 'Publiser ditt første kurs',
@@ -122,7 +112,7 @@ export function useSetupProgress({
     const completedCount = steps.filter((s) => s.isComplete).length
     const totalCount = steps.length
     const nextStep = steps.find((s) => !s.isComplete) || null
-    const motivationalSubtitle = getMotivationalSubtitle(completedCount, totalCount, isPro)
+    const motivationalSubtitle = getMotivationalSubtitle(completedCount, totalCount)
 
     return {
       steps,

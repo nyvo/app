@@ -106,10 +106,11 @@ and the buyer's signup will stay `paid`.
 
 ## §4 — Offline / manual payment (cash, Vipps direct, bank transfer)
 
-Mark a signup paid **without** Stripe: `POST /functions/v1/mark-payment-resolved`
-`{ "signup_id": "<id>" }`. Org-membership gated, refuses to re-mark an already
-paid/refunded row, and writes the `payment_audit_log` via the trigger. Don't set
-`payment_status='paid'` by hand.
+There is no off-platform payment path anymore: every paid booking goes through
+Stripe, on every tier (the `mark-payment-resolved` function is deleted). A
+teacher who took payment outside the platform adds the participant themselves
+(add-participant flow records `payment_status='paid'`). Don't set
+`payment_status='paid'` by hand on student-created rows.
 
 ## §5 — Account recovery & GDPR
 

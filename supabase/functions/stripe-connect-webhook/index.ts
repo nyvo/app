@@ -228,6 +228,7 @@ Deno.serve(async (req: Request) => {
           p_participant_email: attempt.participant_email,
           p_participant_phone: attempt.participant_phone,
           p_amount_paid: amountNok,
+          p_platform_fee_nok: attempt.platform_fee_nok ?? 0,
           p_course_session_id: attempt.course_session_id,
           p_note: attempt.note ?? null,
           p_payment_product: 'stripe',

@@ -64,9 +64,6 @@ const CheckoutSuccessPage = () => {
   const { user } = useAuth();
   const orgSlugFromUrl = searchParams.get('org');
   const isFreeSignup = searchParams.get('free') === 'true';
-  // Manual signups (paid course, free-tier seller) confirm like free signups:
-  // payment is arranged with the studio.
-  const isManualSignup = searchParams.get('manual') === 'true';
   // Stripe checkout returns with ?payment_intent=pi_… (Stripe appends it to our return_url).
   // The webhook captures + mints the signup async; here we poll get_signup_by_stripe_id.
   const paymentIntentId = searchParams.get('payment_intent');
@@ -290,12 +287,12 @@ const CheckoutSuccessPage = () => {
     );
   }
 
-  // Reached without any known success signal — not a free/manual signup and no
+  // Reached without any known success signal — not a free signup and no
   // Stripe payment_intent to poll (e.g. a paid return that dropped its params).
   // The Stripe poll always resolves to signup / paymentFailed / bookingFailed,
   // so this branch is the *only* way to arrive here with nothing confirmed.
   // Never imply enrolment: point at the receipt email + support.
-  if (!isFreeSignup && !isManualSignup && !isStripe) {
+  if (!isFreeSignup && !isStripe) {
     const fallbackStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
@@ -362,11 +359,6 @@ const CheckoutSuccessPage = () => {
                         ? `Vi har sendt en bekreftelse til ${signup.participant_email_masked}.`
                         : 'Vi har sendt en bekreftelse til e-posten din.'}
                     </p>
-                    {isManualSignup && (
-                      <p className="mt-1 text-base text-foreground-muted">
-                        Betaling avtales direkte med studioet.
-                      </p>
-                    )}
                   </div>
 
                   {signup && (

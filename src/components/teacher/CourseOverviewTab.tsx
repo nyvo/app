@@ -107,7 +107,9 @@ export function CourseOverviewTab({
 }: CourseOverviewTabProps) {
   const isSeries = course.format === 'series';
   const isFree = course.price <= 0;
-  const isPro = paymentSetupRequired;
+  // paymentSetupRequired = the course has a paid tier (price or drop-in) —
+  // the same signal gates the publish blocker and the Inntekt KPI.
+  const hasPaidTier = paymentSetupRequired;
   // Persisted status is the source of truth — reconcile_course_lifecycle keeps
   // it honest (upcoming/active/completed), so the branches below work off it.
   const status = course.status;
@@ -121,9 +123,9 @@ export function CourseOverviewTab({
       'Påmeldte',
       course.capacity > 0 ? `${enrolledCount} / ${course.capacity}` : String(enrolledCount),
     ],
-    // Inntekt is integrated-payment revenue — always 0 kr on free, so it's
-    // omitted there rather than showing a dead metric.
-    ...(isPro ? ([['Inntekt', formatKroner(revenue)]] as [string, string][]) : []),
+    // Inntekt is omitted on 0 kr courses — no money flow, the zero would be
+    // a dead metric.
+    ...(hasPaidTier ? ([['Inntekt', formatKroner(revenue)]] as [string, string][]) : []),
     ['Pris', course.price > 0 ? formatKroner(course.price) : 'Gratis'],
   ];
 
@@ -224,8 +226,9 @@ function StatRow({ stats }: { stats: [string, string][] }) {
 // ─── Draft readiness (Publisering) ────────────────────────────────────────
 //
 // Title, description, location and capacity are all required at creation, so a
-// draft only ever needs the one DB-enforced step: Pro payouts. Two states —
-// "set up payouts" (Pro, not connected) or "ready to publish".
+// draft only ever needs the one DB-enforced step: Stripe payouts when the
+// course has a paid tier. Two states — "set up payouts" (paid course, not
+// connected) or "ready to publish".
 
 function ReadinessCard({
   paymentSetupRequired,
@@ -477,21 +480,21 @@ export function CourseKpis({
   capacity,
   revenue,
   price,
-  isPro,
+  hasPaidTier,
 }: {
   enrolled: number;
   capacity: number;
   revenue: number;
   price: number;
-  isPro: boolean;
+  hasPaidTier: boolean;
 }) {
   return (
-    <div className={cn('grid grid-cols-1 gap-3', isPro ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
+    <div className={cn('grid grid-cols-1 gap-3', hasPaidTier ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
       <KpiCard
         label="Påmeldte"
         value={capacity > 0 ? `${enrolled} / ${capacity}` : String(enrolled)}
       />
-      {isPro && <KpiCard label="Inntekt" value={formatKroner(revenue)} />}
+      {hasPaidTier && <KpiCard label="Inntekt" value={formatKroner(revenue)} />}
       <KpiCard label="Pris" value={price > 0 ? formatKroner(price) : 'Gratis'} />
     </div>
   );

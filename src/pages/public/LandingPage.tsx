@@ -255,14 +255,14 @@ const LandingPage = () => {
             <PricingTier
               tier={{
                 name: 'Start',
-                description: 'For instruktører som vil ta påmeldinger uten betalingsoppsett.',
+                description: 'Alt du trenger for å ta imot påmeldinger og betaling.',
                 price: 'Gratis',
                 features: [
                   'Ubegrenset antall kurs og deltakere',
                   'Egen studioside',
                   'Påmeldinger rett inn i oversikten',
-                  'Betaling avtales direkte med instruktør',
-                  'Ingen betalingsoppsett nødvendig',
+                  'Kortbetaling og automatiske utbetalinger',
+                  '5 % plattformgebyr per betaling',
                 ],
                 cta: PRELAUNCH
                   ? { label: 'Ta kontakt', to: '#varsle' }
@@ -274,15 +274,13 @@ const LandingPage = () => {
               tier={{
                 name: 'Pro',
                 recommended: true,
-                description: 'For instruktører og studioer som vil ta betalt automatisk.',
+                description: 'Lønner seg fra rundt 10 000 kr i påmeldinger i måneden.',
                 price: formatKroner(499),
                 priceSub: '/ mnd eks. mva',
                 features: [
                   'Alt i Start',
-                  'Vipps og kort i checkout',
-                  'Automatiske utbetalinger via Stripe',
-                  '0 % lærerprovisjon',
-                  'Servicegebyr håndteres av plattformen',
+                  '0 % plattformgebyr – du beholder hele kursprisen',
+                  'Månedlig eller årlig betaling',
                 ],
                 cta: PRELAUNCH
                   ? { label: 'Ta kontakt', to: '#varsle' }

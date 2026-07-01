@@ -129,6 +129,36 @@ function netAmount(row: IncomeRow): number {
 }
 
 /**
+ * Sum of the platform take (free-tier 5% payout deduction) charged this
+ * calendar month. Feeds the "plattformgebyr denne måneden" line under the
+ * income chart — the free seller's self-serve Pro crossover math. Refunded
+ * rows are excluded: their fee was returned with the refund.
+ */
+export async function fetchPlatformFeeMonth(
+  sellerId: string,
+): Promise<{ data: number; error: Error | null }> {
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  const { data, error } = await supabase
+    .from('signups')
+    .select('platform_fee_nok')
+    .eq('seller_id', sellerId)
+    .eq('payment_status', 'paid')
+    .gt('platform_fee_nok', 0)
+    .gte('created_at', monthStart.toISOString())
+
+  if (error) {
+    return { data: 0, error: error as Error }
+  }
+  const total = ((data ?? []) as { platform_fee_nok: number | null }[]).reduce(
+    (sum, row) => sum + (row.platform_fee_nok ?? 0),
+    0,
+  )
+  return { data: total, error: null }
+}
+
+/**
  * Fetch net income (paid minus refunded) for a seller, bucketed by day or
  * month depending on range. Also returns the previous period's total so the
  * caller can compute a % delta badge.

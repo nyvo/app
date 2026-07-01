@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
     const abandonCutoffMs = Date.now() - ABANDON_HOURS * 60 * 60 * 1000
     const { data: stripeOrphans, error: stripeErr } = await supabase
       .from('payment_attempts')
-      .select('id, status, created_at, stripe_payment_intent_id, seller_id, course_id, ticket_type_id, participant_name, participant_email, participant_phone, note, course_session_id')
+      .select('id, status, created_at, stripe_payment_intent_id, seller_id, course_id, ticket_type_id, participant_name, participant_email, participant_phone, note, course_session_id, platform_fee_nok')
       .in('status', ['pending', 'authorized'])
       .not('stripe_payment_intent_id', 'is', null)
       .lt('created_at', graceCutoff)
@@ -130,6 +130,7 @@ Deno.serve(async (req: Request) => {
             p_participant_email: attempt.participant_email,
             p_participant_phone: attempt.participant_phone,
             p_amount_paid: pi.amount / 100,
+            p_platform_fee_nok: attempt.platform_fee_nok ?? 0,
             p_course_session_id: attempt.course_session_id,
             p_note: attempt.note ?? null,
             p_payment_product: 'stripe',

@@ -80,16 +80,12 @@ export async function deliverBookingConfirmations(
   signupId: string,
   attempt: BookingAttempt,
   amountNok: number,
-  opts?: { amountLabel?: string },
 ): Promise<void> {
   // Free signups (amountNok === 0) still get a confirmation — a free trial
   // class is a real booking the buyer + studio want to know about.
   if (!attempt.participant_name) return
 
-  // Manual-payment signups override the label ("… betales direkte til
-  // studioet") so a paid course never reads as "Gratis" in the emails.
-  const amountLabel =
-    opts?.amountLabel ?? (amountNok > 0 ? formatKroner(amountNok) : 'Gratis')
+  const amountLabel = amountNok > 0 ? formatKroner(amountNok) : 'Gratis'
 
   await notifyBookingCreated(supabase, signupId, attempt)
   await sendSellerBookingEmail(supabase, signupId, attempt, amountLabel)

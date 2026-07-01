@@ -58,11 +58,8 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
 
   const selectedTile = tiles.find((t) => t.id === selectedId) ?? tiles[0] ?? null;
   const ticketPrice = selectedTile?.amount ?? 0;
-  // Manual-payment sellers (no integrated payments): no service fee — the
-  // platform isn't in the money flow. Payment is arranged with the studio.
-  const usesIntegratedPayments = course.seller?.uses_integrated_payments ?? false;
-  const serviceFee = usesIntegratedPayments ? calculateServiceFee(ticketPrice) : 0;
-  const total = usesIntegratedPayments ? calculateTotalPrice(ticketPrice) : ticketPrice;
+  const serviceFee = calculateServiceFee(ticketPrice);
+  const total = calculateTotalPrice(ticketPrice);
 
   const baseHref = checkoutHref ?? `/${studioSlug}/${course.slug}/pamelding`;
   // Always pass the ticket selection — when the series has started, the only
@@ -163,16 +160,9 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
               <Link to={href}>Reserver</Link>
             </Button>
 
-            {ticketPrice > 0 && usesIntegratedPayments && (
+            {ticketPrice > 0 && (
               <div className="border-t border-border pt-4">
                 <p className="text-center text-xs text-foreground-muted">Sikker betaling</p>
-              </div>
-            )}
-            {ticketPrice > 0 && !usesIntegratedPayments && (
-              <div className="border-t border-border pt-4">
-                <p className="text-center text-sm text-foreground-muted">
-                  Betaling avtales direkte med studioet.
-                </p>
               </div>
             )}
           </>

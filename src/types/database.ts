@@ -374,6 +374,7 @@ export type Database = {
           participant_name: string
           participant_phone: string | null
           payment_product: string | null
+          platform_fee_nok: number
           seller_id: string
           service_fee_nok: number
           status: string
@@ -400,6 +401,7 @@ export type Database = {
           participant_name: string
           participant_phone?: string | null
           payment_product?: string | null
+          platform_fee_nok?: number
           seller_id: string
           service_fee_nok?: number
           status?: string
@@ -426,6 +428,7 @@ export type Database = {
           participant_name?: string
           participant_phone?: string | null
           payment_product?: string | null
+          platform_fee_nok?: number
           seller_id?: string
           service_fee_nok?: number
           status?: string
@@ -727,6 +730,7 @@ export type Database = {
           participant_phone: string | null
           payment_product: string | null
           payment_status: Database["public"]["Enums"]["payment_status"] | null
+          platform_fee_nok: number
           refund_amount: number | null
           refunded_at: string | null
           seller_id: string
@@ -755,6 +759,7 @@ export type Database = {
           participant_phone?: string | null
           payment_product?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          platform_fee_nok?: number
           refund_amount?: number | null
           refunded_at?: string | null
           seller_id: string
@@ -783,6 +788,7 @@ export type Database = {
           participant_phone?: string | null
           payment_product?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          platform_fee_nok?: number
           refund_amount?: number | null
           refunded_at?: string | null
           seller_id?: string
