@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ImageIcon, Check, X, Clock } from '@/lib/icons';
+import { ImageIcon, Check, X, Clock, Mail } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { PageState } from '@/components/page-state/page-state';
@@ -284,6 +284,44 @@ const CheckoutSuccessPage = () => {
           </p>
           <Button asChild variant="default">
             <Link to={failedStudioUrl}>Tilbake</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Reached without any known success signal — not a free/manual signup and no
+  // Stripe payment_intent to poll (e.g. a paid return that dropped its params).
+  // The Stripe poll always resolves to signup / paymentFailed / bookingFailed,
+  // so this branch is the *only* way to arrive here with nothing confirmed.
+  // Never imply enrolment: point at the receipt email + support.
+  if (!isFreeSignup && !isManualSignup && !isStripe) {
+    const fallbackStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
+
+    return (
+      <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
+        <div className="flex flex-col items-center text-center max-w-md">
+          <div
+            aria-hidden="true"
+            className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted text-foreground"
+          >
+            <Mail className="size-6" strokeWidth={2.5} />
+          </div>
+          <h1 className="mb-3 text-3xl font-medium text-foreground">
+            Sjekk e-posten din
+          </h1>
+          <p className="mb-8 text-base text-foreground-muted">
+            Vi fant ingen bekreftelse her – sjekk e-posten din for kvittering, eller kontakt oss på{' '}
+            <a
+              href={`mailto:${SUPPORT_EMAIL}`}
+              className="text-foreground underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground"
+            >
+              {SUPPORT_EMAIL}
+            </a>
+            .
+          </p>
+          <Button asChild variant="default">
+            <Link to={fallbackStudioUrl}>Tilbake</Link>
           </Button>
         </div>
       </div>
