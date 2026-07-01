@@ -148,7 +148,7 @@ These eight patterns replace power-user defaults with non-power-user friendlier 
 | **Quick-create drawer → detail page** | Capture the minimum-viable record (name + type + 1-2 must-haves) in a 6-field drawer, then land on the detail page where the rest of the configuration lives. | `components.md` § Drawer (quick-create variant) + § 15 |
 | **Setup checklist** (3-5 onboarding tasks, each linking to its own surface) | First-run / empty-account onboarding. Each task lives on its own existing page. | `components.md` § Setup checklist + § 16.3 |
 
-For vendor flows that legitimately need multi-step (Stripe Connect, Dintero onboarding, payment SCA), **embed the vendor's own UI** — don't reimplement.
+For vendor flows that legitimately need multi-step (Stripe Connect onboarding, payment SCA), **embed the vendor's own UI** — don't reimplement.
 
 Full rationale, examples, and anti-patterns: § 16 — *No wizards — sectioned forms + setup checklists instead*.
 
@@ -1271,7 +1271,7 @@ Three replacement patterns cover everything a wizard would do:
 |------------------|--------------|
 | Create course / Edit course | **Sectioned form** in a drawer (or page) |
 | Studio onboarding | **Setup checklist** on a dedicated page |
-| Stripe / Dintero KYC | **Embedded vendor UI** — Stripe and Dintero ship their own |
+| Stripe KYC | **Embedded vendor UI** — Stripe ships its own |
 | Quick add (signup, etc.) | **Drawer with simple form** (#15) |
 
 ### 16.1 Why no wizards
@@ -1406,7 +1406,7 @@ The completed task title is **dimmed** (`text-foreground-muted`) — visually co
 
 ### 16.4 Embedded vendor UI
 
-Stripe Connect, Dintero, and similar vendors ship their own KYC / onboarding flows as embeddable components. Studio embeds them; doesn't replicate them.
+Stripe Connect and similar vendors ship their own KYC / onboarding flows as embeddable components. Studio embeds them; doesn't replicate them.
 
 **Rule:** never re-implement a wizard for a flow that the vendor already provides. Use their component, style its container with Studio tokens (the iframe / embedded UI usually inherits page bg), and accept that the vendor's UI may not perfectly match Studio. That's fine — users see vendor-flow consistency across products too.
 
@@ -1939,7 +1939,7 @@ No multi-step wizard. The booking action is one screen with progressive disclosu
 
 **Email is the receipt.** The on-screen confirmation is a UI state; the email is what the customer keeps. Send it before the success page renders. If email send fails, retry — never tell the user "your booking failed" because email failed.
 
-**Embedded payment, not redirect.** Use Dintero embedded checkout (or Stripe Elements). Redirecting to an external payment page breaks the flow trust and adds drop-off. **Tradeoff to acknowledge:** embedded checkout means PCI scope (frontend handling card data) — use the payment provider's iframe-based component (Stripe Elements, Dintero embedded) which keeps Studio out of PCI scope while preserving the on-domain experience. Pure redirect is faster to implement and PCI-free, but the conversion cost (loss of attribution, brand break, drop-off) outweighs the dev simplification for v1.
+**Embedded payment, not redirect.** Use Stripe Elements embedded checkout. Redirecting to an external payment page breaks the flow trust and adds drop-off. **Tradeoff to acknowledge:** embedded checkout means PCI scope (frontend handling card data) — use the payment provider's iframe-based component (Stripe Elements) which keeps Studio out of PCI scope while preserving the on-domain experience. Pure redirect is faster to implement and PCI-free, but the conversion cost (loss of attribution, brand break, drop-off) outweighs the dev simplification for v1.
 
 **Mobile-first, not mobile-friendly.** Most bookings happen on phones during a commute, in bed, before sleep. Design the mobile booking flow first; desktop is the secondary surface. **Mobile cart abandonment exceeds 75%** industry-wide — every friction point on mobile costs more than the equivalent on desktop. The MobilePriceBar (§18.6) is a customer-flow primitive, not a polish detail.
 
@@ -1951,7 +1951,7 @@ No multi-step wizard. The booking action is one screen with progressive disclosu
 
 **Norwegian payment methods — Vipps is essential.** Adding 1-click payment options (Apple Pay, Google Pay) lifts conversion 16-21% globally. **For Norway specifically, Vipps is the equivalent and dominant mobile-pay option** — supporting it is non-negotiable for the audience. Card payment is the fallback. Order in the embedded checkout: Vipps first, card second, anything else third.
 
-**Trust signals at the right moments.** Studio brand at the top (PublicNav), studio name in the booking panel header, payment provider logo near the submit button (e.g. "Sikker betaling med Dintero"), SSL lock visible in the URL bar. Don't carpet-bomb the page with badges — research is clear that excessive trust seals reduce trust ("badge fatigue"). One small line of micro-copy + one provider logo is enough.
+**Trust signals at the right moments.** Studio brand at the top (PublicNav), studio name in the booking panel header, payment provider logo near the submit button (e.g. "Sikker betaling med Stripe"), SSL lock visible in the URL bar. Don't carpet-bomb the page with badges — research is clear that excessive trust seals reduce trust ("badge fatigue"). One small line of micro-copy + one provider logo is enough.
 
 ### 19.3 BookingPanel composition
 
@@ -1976,7 +1976,7 @@ The booking panel is the single most important component on the public surface. 
 │ ☐ Jeg godtar vilkårene              │  ← required checkbox
 ├─────────────────────────────────────┤
 │ [    Book og betal — 2 250 kr   ]   │  ← primary CTA, full-width pill
-│       Sikker betaling med Dintero   │  ← trust micro-copy
+│       Sikker betaling med Stripe    │  ← trust micro-copy
 └─────────────────────────────────────┘
 ```
 

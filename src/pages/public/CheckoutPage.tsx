@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FieldError } from '@/components/ui/field-error';
 import { PageState } from '@/components/page-state/page-state';
 import { Elements, PaymentElement, useStripe as useStripeHook, useElements } from '@stripe/react-stripe-js';
-import { getStripe } from '@/lib/stripe';
+import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { ChevronLeft, Check } from '@/lib/icons';
 import { formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
 import { calculateServiceFee } from '@/lib/pricing';
@@ -611,6 +611,18 @@ function StripeEmbed({
   returnUrl: string;
   errorMessage: string | null;
 }) {
+  // Missing publishable key — surface a clear error instead of an Elements
+  // provider that never mounts (buyer would otherwise stare at a forever-skeleton).
+  if (!isStripeConfigured) {
+    return (
+      <Alert variant="error">
+        <AlertDescription>
+          Betaling er ikke tilgjengelig akkurat nå. Prøv igjen senere eller kontakt studioet.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (errorMessage) {
     return (
       <Alert variant="error">
