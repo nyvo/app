@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { FieldError } from '@/components/ui/field-error'
-import { Alert } from '@/components/ui/alert'
+import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFormValidation } from '@/hooks/use-form-validation'
 import { AuthLayout } from '@/components/auth/AuthLayout'
@@ -174,7 +174,7 @@ const AuthPage = () => {
     try {
       const { exists, hasPassword, error } = await checkEmailAuthStatus(email)
       if (error) {
-        setErrors({ general: AUTH_ERRORS.generic })
+        toast.error(AUTH_ERRORS.generic)
         setIsSubmitting(false)
         return
       }
@@ -195,14 +195,14 @@ const AuthPage = () => {
       // exists, no password (Google / magic-link legacy) → login code.
       const { error: otpErr } = await sendMagicLink(email, callbackUrl, { shouldCreateUser: false })
       if (otpErr) {
-        setErrors({ general: rateOrGeneric(otpErr) })
+        toast.error(rateOrGeneric(otpErr))
         setIsSubmitting(false)
         return
       }
       goToCode({ reason: 'login', hasPasswordFallback: false })
       setIsSubmitting(false)
     } catch {
-      setErrors({ general: AUTH_ERRORS.generic })
+      toast.error(AUTH_ERRORS.generic)
       setIsSubmitting(false)
     }
   }
@@ -226,7 +226,7 @@ const AuthPage = () => {
         }
         const { error, needsConfirmation } = await signUpWithPassword(email, password, callbackUrl)
         if (error) {
-          setErrors({ general: rateOrGeneric(error) })
+          toast.error(rateOrGeneric(error))
           setIsSubmitting(false)
           return
         }
@@ -245,7 +245,7 @@ const AuthPage = () => {
       }
       // success → keep loading until the navigate effect fires
     } catch {
-      setErrors({ general: AUTH_ERRORS.generic })
+      toast.error(AUTH_ERRORS.generic)
       setIsSubmitting(false)
     }
   }
@@ -258,14 +258,14 @@ const AuthPage = () => {
     try {
       const { error } = await sendMagicLink(email, callbackUrl, { shouldCreateUser: false })
       if (error) {
-        setErrors({ general: rateOrGeneric(error) })
+        toast.error(rateOrGeneric(error))
         setIsSubmitting(false)
         return
       }
       goToCode({ reason: 'login', hasPasswordFallback: true })
       setIsSubmitting(false)
     } catch {
-      setErrors({ general: AUTH_ERRORS.generic })
+      toast.error(AUTH_ERRORS.generic)
       setIsSubmitting(false)
     }
   }
@@ -328,9 +328,7 @@ const AuthPage = () => {
         </InputOTP>
 
         {verifyError && (
-          <p className="mt-4 text-base text-danger" role="alert">
-            {verifyError}
-          </p>
+          <FieldError className="mt-4 text-center">{verifyError}</FieldError>
         )}
 
         <p className="mt-6 text-center text-sm text-foreground-muted">
@@ -423,8 +421,6 @@ const AuthPage = () => {
             )}
           </div>
 
-          {errors.general && <Alert variant="error">{errors.general}</Alert>}
-
           <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
             {isSignup ? 'Opprett konto' : 'Logg inn'}
           </Button>
@@ -481,8 +477,6 @@ const AuthPage = () => {
             </FieldError>
           )}
         </div>
-
-        {errors.general && <Alert variant="error">{errors.general}</Alert>}
 
         <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
           Fortsett
