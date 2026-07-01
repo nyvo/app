@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation, useSearchParams, type Location } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { Eye, EyeOff, Check } from '@/lib/icons'
+import { Eye, EyeOff, Check, ChevronLeft } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
@@ -292,20 +292,6 @@ const AuthPage = () => {
     setErrors({})
   }
 
-  /** Plain "for <email> · Endre" subline — returns to step 1 to change the email. */
-  const IdentifiedSubline = () => (
-    <p className="mt-2 text-base text-foreground-muted">
-      for {email} ·{' '}
-      <button
-        type="button"
-        onClick={backToIdentify}
-        className="font-medium text-primary hover:underline"
-      >
-        Endre
-      </button>
-    </p>
-  )
-
   // ── Code-entry screen ──────────────────────────────────────────────────────
   if (step === 'code') {
     const isConfirm = codeCtx.reason === 'confirm'
@@ -379,11 +365,18 @@ const AuthPage = () => {
     const isSignup = accountMode === 'signup'
     return (
       <AuthLayout title="" customContent>
+        <button
+          type="button"
+          onClick={backToIdentify}
+          aria-label="Tilbake"
+          className="mb-4 -ml-2 self-start rounded-full p-2 text-foreground-muted transition-colors hover:bg-hover hover:text-foreground"
+        >
+          <ChevronLeft className="size-5" />
+        </button>
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-medium text-foreground">
             {isSignup ? 'Lag et passord' : 'Skriv inn passordet'}
           </h1>
-          <IdentifiedSubline />
         </div>
 
         <form className="w-full space-y-5" onSubmit={handlePassword}>
