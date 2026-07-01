@@ -3,6 +3,8 @@
  * Logs are automatically stripped in production builds
  */
 
+import { reportErrorLog } from './monitoring';
+
 const isDev = import.meta.env.DEV;
 
 export const logger = {
@@ -34,9 +36,11 @@ export const logger = {
 
   /**
    * Error-level logging
-   * Use for error messages (always shown)
+   * Use for error messages (always shown). Also forwarded to Sentry when a
+   * VITE_SENTRY_DSN is configured — otherwise a silent no-op.
    */
   error: (...args: unknown[]) => {
     console.error(...args);
+    reportErrorLog(args);
   },
 };
