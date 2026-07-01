@@ -12,7 +12,7 @@ product
 
 ## Product Purpose
 
-A Norwegian course-and-class booking tool for independent yoga teachers and small studios. The job: turn "I run yoga classes" into "I have a public page that takes bookings, accepts payment via Dintero, and gives me a calm operator surface for who/what/when". Replaces a manual setup of Facebook event + Vipps DM + spreadsheet with one coherent surface.
+A Norwegian course-and-class booking tool for independent yoga teachers and small studios. The job: turn "I run yoga classes" into "I have a public page that takes bookings, accepts payment via Stripe, and gives me a calm operator surface for who/what/when". Replaces a manual setup of Facebook event + Vipps DM + spreadsheet with one coherent surface.
 
 Success = a teacher with zero SaaS comfort can publish a course, take their first booking, and refund a participant without writing in for help.
 

@@ -15,8 +15,8 @@ different actors, triggers, and legal bases, and must stay separate:
    memberships (`courses.instructor_id`, `team_affiliations.invited_by`,
    `signups.buyer_id` → NULL; `seller_members` rows removed).
 2. **Studio closure** — a *business* winds down (stop sales, resolve courses /
-   refunds / payouts / Dintero, transfer or close). Separate action under studio
-   settings; support-assisted initially.
+   refunds / payouts / Stripe obligations, transfer or close). Separate action under
+   studio settings; support-assisted initially.
 3. **Privacy erasure (GDPR)** — a verified data-subject request over participant /
    guest PII. Handled with independent identity verification and a field-level
    retention matrix.
@@ -82,7 +82,7 @@ Removes login + profile only. The DB is the authority; the frontend is thin.
 
 ## ② Studio closure (separate; support-assisted first)
 Stop new sales → delist storefront → resolve active courses, refunds, payouts,
-Dintero obligations → transfer ownership or mark seller closed → retain only legally
+Stripe obligations → transfer ownership or mark seller closed → retain only legally
 necessary records → purge only after an explicit `retain_until` date. **Never bypass
 triggers** during purge — encode the retention clock into the trigger predicate
 instead of `session_replication_role = replica`.

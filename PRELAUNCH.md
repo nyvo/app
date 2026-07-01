@@ -10,10 +10,9 @@ not strict dependency.
 
 ### Done in this pass
 
-- **Capture-amount defense-in-depth** — `finalize-dintero-transaction` and
-  `dintero-webhook` now compare Dintero's transaction amount against
-  `payment_attempts.total_price_nok` before creating a signup or capturing an
-  authorization. Mismatched authorizations are voided and logged.
+- **Capture-amount defense-in-depth** — `stripe-connect-webhook` compares the
+  authorized Stripe amount against `payment_attempts.total_price_nok` before
+  capturing an authorization. Mismatched authorizations are voided and logged.
 - **E2E smoke coverage refreshed** — Playwright specs now target the current
   `/auth` magic-link flow and current protected routes instead of the removed
   `/signup`, `/login`, `/forgot-password`, and `/teacher/*` routes.
@@ -23,7 +22,7 @@ not strict dependency.
 
 ### Still needs human / production verification
 
-- Run the Dintero manual smoke-test runbook below against sandbox/live.
+- Run the manual smoke-test runbook below against Stripe test/live mode.
 - Confirm production `VITE_PRELAUNCH` is explicitly set for the intended launch
   state.
 - Confirm DMARC, PITR/backups, and failure alerting from
@@ -79,27 +78,28 @@ actual code. Recorded so nobody re-investigates:
 
 ### Manual smoke-test runbook (run before launch — money path has no e2e coverage)
 
-The public booking + payment flow has zero automated tests and Dintero is new
-(April 2026). Run these by hand against sandbox/live before opening signups:
+The public booking + payment flow has zero automated tests and the Stripe Connect
+integration is newly wired. Run these by hand against Stripe test/live mode before
+opening signups:
 
 1. **Full paid booking on a real phone** — browse → course detail → checkout →
-   fill form → Dintero embed → success page → confirmation email arrives.
+   fill form → Stripe payment embed → success page → confirmation email arrives.
    Watch the checkout layout on a 390px-wide screen.
 2. **Free signup** — separate path (`window.location` redirect); confirm success
    page + email.
 3. **Webhook-down → sweep recovery** (most important): start a paid checkout,
    authorize, then **close the tab before the redirect**. Wait ~3 min for the
    `sweep-pending-payments` cron. Confirm the signup appears `confirmed` with the
-   correct `amount_paid`, and the Dintero transaction is captured exactly once.
+   correct `amount_paid`, and the Stripe payment intent is captured exactly once.
 4. **Seller-onboarding gate** — an un-approved seller must NOT be able to take
    payment (checkout button blocked).
 5. **Refund / cancel-course as owner** — confirm the buyer is actually refunded
-   in the Dintero backoffice, not just marked refunded in the DB.
+   in the Stripe dashboard, not just marked refunded in the DB.
 6. **Teacher onboarding incl. a taken studio slug** — the error path must leave
    the user able to recover, not stuck.
 
-Defer the automated Dintero e2e test to post-launch — sandbox e2e is flaky and
-wouldn't cover the real webhook/capture/refund money movement anyway.
+Defer the automated payment e2e test to post-launch — Stripe test-mode e2e is flaky
+and wouldn't cover the real webhook/capture/refund money movement anyway.
 
 ## Database hygiene
 
