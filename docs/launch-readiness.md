@@ -60,9 +60,11 @@ are founder-side config actions and follow-up builds. Split into "flip on at lau
 
 ### Build (before or shortly after launch)
 
-- [ ] **Support / admin recovery runbook** — `is_platform_admin` can read all
-      profiles, but there's no admin UI; recovery is via edge functions or direct
-      service-role SQL. Write a Stripe-based runbook (the old Dintero one was removed).
+- [x] **Support / admin recovery runbook** — written (Stripe-based):
+      [`support-admin-runbook.md`](./support-admin-runbook.md). Covers missing/stuck
+      signups, refund reconciliation, issuing refunds/cancels, offline payments,
+      account recovery + GDPR export, and health checks. (Recovery is still via edge
+      functions / service-role SQL — there's no admin UI.)
 - [x] **GDPR data export (mechanism built)** — support-run RPC: in the Supabase SQL
       editor (service_role), `select public.export_user_data('<auth-user-id>')`
       returns the subject's data as machine-readable JSON (account, profile, their
