@@ -1,4 +1,4 @@
-// Teacher action: mark a signup as paid without going through Dintero.
+// Teacher action: mark a signup as paid without going through Stripe.
 // Used when the participant has paid offline (cash, Vipps direct, bank
 // transfer) and the teacher wants to reconcile the record.
 //
