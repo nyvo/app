@@ -18,7 +18,6 @@ import { AUTH_VALIDATION, AUTH_ERRORS } from '@/lib/auth-messages'
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { supabase } from '@/lib/supabase'
 import { isValidEmail } from '@/lib/utils'
-import { toast } from 'sonner'
 
 const ROUTES = AUTH_ROUTES
 
@@ -44,18 +43,17 @@ function Rule({ met, children }: { met: boolean; children: React.ReactNode }) {
 }
 
 /**
- * Combined sign-in / sign-up surface (§ auth rework).
+ * Combined auth surface — EMAIL-FIRST (§ auth rework).
  *
- * One screen, email + password both visible. On "Fortsett" a SECURITY DEFINER
- * RPC (check_email_auth_status) decides the branch:
- *   • email unknown          → sign up with the typed password (rules enforced)
- *   • exists, has password    → sign in
- *   • exists, no password     → Google/magic-link account adopting a password:
- *                               send a code, and once verified set the password
- *                               ("bridge"), so next time email+password works.
+ * Step 1 identifies the email; a SECURITY DEFINER RPC (check_email_auth_status)
+ * then routes to exactly the right step 2:
+ *   • unknown email        → "Lag et passord" (sign up, rules enforced)
+ *   • exists + has password → "Skriv inn passordet" (sign in)
+ *   • exists, no password   → login code (Google / magic-link legacy — one code
+ *                             screen, no false "you used Google")
  *
- * Alternatives: Google (filled-neutral) and "Send meg en kode i stedet" (the
- * existing OTP path). The code screen is a STATE, not a separate route.
+ * The code screen is shared but context-framed: signup confirmation reads as
+ * "Bekreft e-posten din", code-login as "Logg inn med kode".
  */
 const AuthPage = () => {
   const navigate = useNavigate()
@@ -65,7 +63,6 @@ const AuthPage = () => {
     sendMagicLink,
     signInWithPassword,
     signUpWithPassword,
-    setPassword,
     checkEmailAuthStatus,
     user,
     profile,
@@ -82,8 +79,9 @@ const AuthPage = () => {
     ROUTES.dashboard
   const callbackUrl = `${window.location.origin}${ROUTES.callback}?next=${encodeURIComponent(redirectAfterLogin)}${intent ? `&intent=${intent}` : ''}`
 
-  // Two surfaces: the credentials form, and the code-entry screen.
-  const [step, setStep] = useState<'credentials' | 'code'>('credentials')
+  // 3 surfaces: identify (email) → password (sign in / sign up) → code.
+  const [step, setStep] = useState<'identify' | 'password' | 'code'>('identify')
+  const [accountMode, setAccountMode] = useState<'signup' | 'signin'>('signin')
 
   const { formData, errors, touched, setErrors, handleChange, handleBlur, validateForm } =
     useFormValidation({
@@ -111,17 +109,18 @@ const AuthPage = () => {
   }
   const passwordValid = rules.length && rules.number && rules.special
 
-  // Code-entry state. `reason` tells the verify effect what to do on success:
-  //   'login'  → plain OTP login        'signup' → confirm a new account
-  //   'bridge' → set pendingPassword after the code logs them in
+  // Code-entry state. `reason` picks the OTP type + framing; `hasPasswordFallback`
+  // shows "Bruk passord i stedet" only when the user actually has a password.
   const [code, setCode] = useState('')
   const [isVerifying, setIsVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState<string | null>(null)
   const [isResending, setIsResending] = useState(false)
-  const [codeContext, setCodeContext] = useState<{
-    reason: 'login' | 'signup' | 'bridge'
-    pendingPassword?: string
-  }>({ reason: 'login' })
+  const [codeCtx, setCodeCtx] = useState<{
+    reason: 'confirm' | 'login'
+    hasPasswordFallback: boolean
+  }>({ reason: 'login', hasPasswordFallback: false })
+
+  const email = formData.email.trim().toLowerCase()
 
   useEffect(() => {
     if (user && !authLoading && profile) {
@@ -129,21 +128,15 @@ const AuthPage = () => {
     }
   }, [user, profile, authLoading, navigate, redirectAfterLogin, intent])
 
-  // Auto-verify once all 6 digits are entered. `isVerifying`/`codeContext` are
-  // intentionally read fresh; flipping isVerifying in deps would cancel the
-  // in-flight request via cleanup.
+  // Auto-verify once all 6 digits are entered.
   useEffect(() => {
     if (code.length !== 6) return
     let cancelled = false
     setIsVerifying(true)
     setVerifyError(null)
     ;(async () => {
-      const otpType = codeContext.reason === 'signup' ? 'signup' : 'email'
-      const { error } = await supabase.auth.verifyOtp({
-        email: formData.email.trim(),
-        token: code,
-        type: otpType,
-      })
+      const otpType = codeCtx.reason === 'confirm' ? 'signup' : 'email'
+      const { error } = await supabase.auth.verifyOtp({ email, token: code, type: otpType })
       if (cancelled) return
       if (error) {
         setVerifyError(AUTH_ERRORS.invalidOrExpiredCode)
@@ -151,60 +144,80 @@ const AuthPage = () => {
         setIsVerifying(false)
         return
       }
-      // Bridge: the code just authenticated the (Google/magic-link) account —
-      // now persist the password they typed so email+password works next time.
-      // The user is logged in either way, so surface a save failure rather than
-      // letting them believe their password was set.
-      if (codeContext.reason === 'bridge' && codeContext.pendingPassword) {
-        const { error: pwError } = await setPassword(codeContext.pendingPassword)
-        if (!cancelled && pwError) {
-          toast.warning('Du er logget inn, men passordet ble ikke lagret.')
-        }
-      }
-      if (cancelled) return
       setIsVerifying(false)
       // success → AuthContext.onAuthStateChange fires → navigate effect runs
     })()
     return () => {
       cancelled = true
     }
-  }, [code, formData.email, codeContext, setPassword])
-
-  const goToCode = (ctx: { reason: 'login' | 'signup' | 'bridge'; pendingPassword?: string }) => {
-    setCode('')
-    setVerifyError(null)
-    setCodeContext(ctx)
-    setStep('code')
-  }
+  }, [code, email, codeCtx])
 
   const rateOrGeneric = (error: Error) =>
     error.message.includes('rate') || (error as { status?: number }).status === 429
       ? AUTH_ERRORS.rateLimited
       : AUTH_ERRORS.generic
 
-  // Main submit — branch on the email's auth status.
-  const handleContinue = async (e: React.FormEvent) => {
+  const goToCode = (ctx: { reason: 'confirm' | 'login'; hasPasswordFallback: boolean }) => {
+    setCode('')
+    setVerifyError(null)
+    setCodeCtx(ctx)
+    setStep('code')
+  }
+
+  // Step 1 — identify the email, then route to the right step 2.
+  const handleIdentify = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrors({})
-    setPasswordError(null)
     if (!validateForm()) return
-    if (!password) {
-      setPasswordError('Skriv inn passord')
-      return
-    }
-
     setIsSubmitting(true)
-    const email = formData.email.trim().toLowerCase()
     try {
-      const { exists, hasPassword, error: checkError } = await checkEmailAuthStatus(email)
-      if (checkError) {
+      const { exists, hasPassword, error } = await checkEmailAuthStatus(email)
+      if (error) {
         setErrors({ general: AUTH_ERRORS.generic })
         setIsSubmitting(false)
         return
       }
-
-      // New email → create the account.
+      setPasswordValue('')
+      setPasswordError(null)
       if (!exists) {
+        setAccountMode('signup')
+        setStep('password')
+        setIsSubmitting(false)
+        return
+      }
+      if (hasPassword) {
+        setAccountMode('signin')
+        setStep('password')
+        setIsSubmitting(false)
+        return
+      }
+      // exists, no password (Google / magic-link legacy) → login code.
+      const { error: otpErr } = await sendMagicLink(email, callbackUrl, { shouldCreateUser: false })
+      if (otpErr) {
+        setErrors({ general: rateOrGeneric(otpErr) })
+        setIsSubmitting(false)
+        return
+      }
+      goToCode({ reason: 'login', hasPasswordFallback: false })
+      setIsSubmitting(false)
+    } catch {
+      setErrors({ general: AUTH_ERRORS.generic })
+      setIsSubmitting(false)
+    }
+  }
+
+  // Step 2 — submit the password (create or sign in).
+  const handlePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErrors({})
+    setPasswordError(null)
+    if (!password) {
+      setPasswordError('Skriv inn passord')
+      return
+    }
+    setIsSubmitting(true)
+    try {
+      if (accountMode === 'signup') {
         if (!passwordValid) {
           setPasswordError('Passordet oppfyller ikke kravene under')
           setIsSubmitting(false)
@@ -217,71 +230,38 @@ const AuthPage = () => {
           return
         }
         if (needsConfirmation) {
-          goToCode({ reason: 'signup' })
+          goToCode({ reason: 'confirm', hasPasswordFallback: false })
           setIsSubmitting(false)
         }
-        // else: session created → keep loading until the navigate effect fires
+        // else session created → keep loading until the navigate effect fires
         return
       }
-
-      // Existing account with a password → sign in.
-      if (hasPassword) {
-        const { error } = await signInWithPassword(email, password)
-        if (error) {
-          setPasswordError('Passordet stemmer ikke.')
-          setIsSubmitting(false)
-          return
-        }
-        // success → keep loading until the navigate effect fires
-        return
-      }
-
-      // Existing passwordless account (Google / magic-link) → bridge: send a code
-      // (login-only), set the typed password once it logs them in.
-      const { error } = await sendMagicLink(email, callbackUrl, { shouldCreateUser: false })
+      const { error } = await signInWithPassword(email, password)
       if (error) {
-        setErrors({ general: rateOrGeneric(error) })
+        setPasswordError('Passordet stemmer ikke.')
         setIsSubmitting(false)
         return
       }
-      goToCode({ reason: 'bridge', pendingPassword: password })
-      setIsSubmitting(false)
+      // success → keep loading until the navigate effect fires
     } catch {
       setErrors({ general: AUTH_ERRORS.generic })
       setIsSubmitting(false)
     }
   }
 
-  // Explicit "Send meg en kode i stedet" — login-only OTP. Pre-checks existence
-  // so an unknown email gets a clear message instead of silently creating an
-  // account.
+  // "Send meg en kode i stedet" from the sign-in step (user has a password).
   const handleUseCode = async () => {
     setErrors({})
     setPasswordError(null)
-    if (!validateForm()) return
     setIsSubmitting(true)
-    const email = formData.email.trim().toLowerCase()
     try {
-      const { exists, error: checkError } = await checkEmailAuthStatus(email)
-      if (checkError) {
-        setErrors({ general: AUTH_ERRORS.generic })
-        setIsSubmitting(false)
-        return
-      }
-      if (!exists) {
-        setErrors({
-          general: 'Ingen konto med denne e-posten – opprett en med passord.',
-        })
-        setIsSubmitting(false)
-        return
-      }
       const { error } = await sendMagicLink(email, callbackUrl, { shouldCreateUser: false })
       if (error) {
         setErrors({ general: rateOrGeneric(error) })
         setIsSubmitting(false)
         return
       }
-      goToCode({ reason: 'login' })
+      goToCode({ reason: 'login', hasPasswordFallback: true })
       setIsSubmitting(false)
     } catch {
       setErrors({ general: AUTH_ERRORS.generic })
@@ -292,9 +272,8 @@ const AuthPage = () => {
   const handleResend = async () => {
     if (isResending) return
     setIsResending(true)
-    const email = formData.email.trim().toLowerCase()
     const { error } =
-      codeContext.reason === 'signup'
+      codeCtx.reason === 'confirm'
         ? await supabase.auth.resend({ type: 'signup', email })
         : await sendMagicLink(email, callbackUrl, { shouldCreateUser: false })
     setIsResending(false)
@@ -306,14 +285,38 @@ const AuthPage = () => {
     setVerifyError(null)
   }
 
+  const backToIdentify = () => {
+    setStep('identify')
+    setPasswordValue('')
+    setPasswordError(null)
+    setErrors({})
+  }
+
+  /** Plain "for <email> · Endre" subline — returns to step 1 to change the email. */
+  const IdentifiedSubline = () => (
+    <p className="mt-2 text-base text-foreground-muted">
+      for {email} ·{' '}
+      <button
+        type="button"
+        onClick={backToIdentify}
+        className="font-medium text-primary hover:underline"
+      >
+        Endre
+      </button>
+    </p>
+  )
+
   // ── Code-entry screen ──────────────────────────────────────────────────────
   if (step === 'code') {
+    const isConfirm = codeCtx.reason === 'confirm'
     return (
       <AuthLayout title="" customContent>
         <div className="mb-8 space-y-2 text-center">
-          <h1 className="text-2xl font-medium text-foreground">Sjekk e-posten din</h1>
+          <h1 className="text-2xl font-medium text-foreground">
+            {isConfirm ? 'Bekreft e-posten din' : 'Logg inn med kode'}
+          </h1>
           <p className="text-base text-foreground-muted">
-            Vi sendte en kode til {formData.email.trim() || 'e-posten din'}.
+            Vi sendte en {isConfirm ? 'bekreftelseskode' : 'innloggingskode'} til {email}.
           </p>
         </div>
 
@@ -358,19 +361,102 @@ const AuthPage = () => {
         <button
           type="button"
           onClick={() => {
-            setStep('credentials')
             setCode('')
             setVerifyError(null)
+            if (codeCtx.hasPasswordFallback) setStep('password')
+            else backToIdentify()
           }}
           className="mt-8 text-sm font-medium text-primary hover:underline"
         >
-          Bruk passord i stedet
+          {codeCtx.hasPasswordFallback ? 'Bruk passord i stedet' : 'Bruk en annen e-post'}
         </button>
       </AuthLayout>
     )
   }
 
-  // ── Credentials screen ─────────────────────────────────────────────────────
+  // ── Password screen (step 2) ───────────────────────────────────────────────
+  if (step === 'password') {
+    const isSignup = accountMode === 'signup'
+    return (
+      <AuthLayout title="" customContent>
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-medium text-foreground">
+            {isSignup ? 'Lag et passord' : 'Skriv inn passordet'}
+          </h1>
+          <IdentifiedSubline />
+        </div>
+
+        <form className="w-full space-y-5" onSubmit={handlePassword}>
+          <div>
+            <label htmlFor="password" className="sr-only">
+              Passord
+            </label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder={isSignup ? 'Lag et passord' : 'Passord'}
+                autoComplete={isSignup ? 'new-password' : 'current-password'}
+                value={password}
+                onChange={(e) => setPasswordValue(e.target.value)}
+                className="pr-10"
+                autoFocus
+                aria-invalid={!!passwordError || undefined}
+                aria-describedby={passwordError ? 'password-error' : undefined}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-foreground-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
+                aria-label={showPassword ? 'Skjul passord' : 'Vis passord'}
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+
+            {isSignup && password.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                <Rule met={rules.length}>Minst 8 tegn</Rule>
+                <Rule met={rules.number}>Minst ett tall</Rule>
+                <Rule met={rules.special}>Minst ett spesialtegn</Rule>
+              </ul>
+            )}
+
+            {passwordError && (
+              <FieldError id="password-error" className="mt-2">
+                {passwordError}
+              </FieldError>
+            )}
+          </div>
+
+          {errors.general && (
+            <p className="text-base text-danger" role="alert">
+              {errors.general}
+            </p>
+          )}
+
+          <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
+            {isSignup ? 'Opprett konto' : 'Logg inn'}
+          </Button>
+        </form>
+
+        {!isSignup && (
+          <div className="mt-5 text-center">
+            <button
+              type="button"
+              onClick={handleUseCode}
+              disabled={isSubmitting}
+              className="text-sm font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Send meg en kode i stedet
+            </button>
+          </div>
+        )}
+      </AuthLayout>
+    )
+  }
+
+  // ── Identify screen (step 1) ───────────────────────────────────────────────
   return (
     <AuthLayout title="" customContent>
       <div className="mb-8 text-center">
@@ -383,7 +469,7 @@ const AuthPage = () => {
         <span className="text-sm text-foreground-muted">eller</span>
       </div>
 
-      <form className="w-full space-y-5" onSubmit={handleContinue}>
+      <form className="w-full space-y-5" onSubmit={handleIdentify}>
         <div className="grid gap-2">
           <label htmlFor="email" className="sr-only">
             E-post
@@ -404,72 +490,17 @@ const AuthPage = () => {
               {errors.email}
             </FieldError>
           )}
-        </div>
-
-        <div>
-          <label htmlFor="password" className="sr-only">
-            Passord
-          </label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Passord"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPasswordValue(e.target.value)}
-              className="pr-10"
-              aria-invalid={!!passwordError || undefined}
-              aria-describedby={passwordError ? 'password-error' : undefined}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-foreground-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
-              aria-label={showPassword ? 'Skjul passord' : 'Vis passord'}
-            >
-              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </button>
-          </div>
-
-          {/* Rules appear only once typing starts — a returning user who autofills
-              an existing password never sees them. */}
-          {password.length > 0 && (
-            <ul className="mt-3 space-y-2">
-              <Rule met={rules.length}>Minst 8 tegn</Rule>
-              <Rule met={rules.number}>Minst ett tall</Rule>
-              <Rule met={rules.special}>Minst ett spesialtegn</Rule>
-            </ul>
-          )}
-
-          {passwordError && (
-            <FieldError id="password-error" className="mt-2">
-              {passwordError}
-            </FieldError>
+          {errors.general && (
+            <p className="text-base text-danger" role="alert">
+              {errors.general}
+            </p>
           )}
         </div>
-
-        {errors.general && (
-          <p className="text-base text-danger" role="alert">
-            {errors.general}
-          </p>
-        )}
 
         <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
           Fortsett
         </Button>
       </form>
-
-      <div className="mt-5 text-center">
-        <button
-          type="button"
-          onClick={handleUseCode}
-          disabled={isSubmitting}
-          className="text-sm font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Send meg en kode i stedet
-        </button>
-      </div>
 
       <p className="mt-14 max-w-xs text-center text-sm text-foreground-muted">
         Ved å fortsette godtar du{' '}
