@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { PageState } from '@/components/page-state/page-state'
+import { captureError } from '@/lib/monitoring'
 
 interface Props {
   children: ReactNode
@@ -23,6 +24,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, info.componentStack)
+    captureError(error, { componentStack: info.componentStack })
   }
 
   render() {
