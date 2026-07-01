@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { FieldError } from '@/components/ui/field-error'
+import { Alert } from '@/components/ui/alert'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFormValidation } from '@/hooks/use-form-validation'
 import { AuthLayout } from '@/components/auth/AuthLayout'
@@ -422,11 +423,7 @@ const AuthPage = () => {
             )}
           </div>
 
-          {errors.general && (
-            <p className="text-base text-danger" role="alert">
-              {errors.general}
-            </p>
-          )}
+          {errors.general && <Alert variant="error">{errors.general}</Alert>}
 
           <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
             {isSignup ? 'Opprett konto' : 'Logg inn'}
@@ -483,12 +480,9 @@ const AuthPage = () => {
               {errors.email}
             </FieldError>
           )}
-          {errors.general && (
-            <p className="text-base text-danger" role="alert">
-              {errors.general}
-            </p>
-          )}
         </div>
+
+        {errors.general && <Alert variant="error">{errors.general}</Alert>}
 
         <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
           Fortsett
