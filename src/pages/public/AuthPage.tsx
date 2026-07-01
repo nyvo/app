@@ -407,7 +407,7 @@ const AuthPage = () => {
               </button>
             </div>
 
-            {isSignup && password.length > 0 && (
+            {isSignup && (
               <ul className="mt-3 space-y-2">
                 <Rule met={rules.length}>Minst 8 tegn</Rule>
                 <Rule met={rules.number}>Minst ett tall</Rule>
