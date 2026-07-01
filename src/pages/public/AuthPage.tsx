@@ -368,7 +368,7 @@ const AuthPage = () => {
           type="button"
           onClick={backToIdentify}
           aria-label="Tilbake"
-          className="absolute -left-2 top-0 rounded-full p-2 text-foreground-muted transition-colors hover:bg-hover hover:text-foreground"
+          className="absolute -left-2 -top-0.5 rounded-full p-2 text-foreground-muted transition-colors hover:bg-hover hover:text-foreground"
         >
           <ChevronLeft className="size-5" />
         </button>
