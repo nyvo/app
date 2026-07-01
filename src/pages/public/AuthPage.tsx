@@ -302,7 +302,7 @@ const AuthPage = () => {
             {isConfirm ? 'Bekreft e-posten din' : 'Logg inn med kode'}
           </h1>
           <p className="text-base text-foreground-muted">
-            Vi sendte en {isConfirm ? 'bekreftelseskode' : 'innloggingskode'} til {email}.
+            Vi sendte en kode til {email}.
           </p>
         </div>
 
