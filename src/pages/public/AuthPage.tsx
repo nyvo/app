@@ -185,7 +185,7 @@ const AuthPage = () => {
     try {
       const { exists, hasPassword, error } = await checkEmailAuthStatus(email)
       if (error) {
-        toast.error(AUTH_ERRORS.generic)
+        toast.error(rateOrGeneric(error))
         setIsSubmitting(false)
         return
       }
@@ -250,7 +250,30 @@ const AuthPage = () => {
       }
       const { error } = await signInWithPassword(email, password)
       if (error) {
-        setPasswordError('Passordet stemmer ikke.')
+        const authErr = error as { code?: string; status?: number }
+        // Unconfirmed email → resend the signup code and route to the
+        // confirmation screen instead of a misleading "wrong password".
+        if (authErr.code === 'email_not_confirmed' || error.message.includes('not confirmed')) {
+          const { error: resendError } = await supabase.auth.resend({ type: 'signup', email })
+          if (resendError) {
+            toast.error(rateOrGeneric(resendError))
+            setIsSubmitting(false)
+            return
+          }
+          goToCode({ reason: 'confirm', hasPasswordFallback: false })
+          setIsSubmitting(false)
+          return
+        }
+        if (
+          authErr.status === 429 ||
+          authErr.code === 'over_request_rate_limit' ||
+          error.message.includes('rate')
+        ) {
+          toast.error(AUTH_ERRORS.rateLimited)
+          setIsSubmitting(false)
+          return
+        }
+        setPasswordError('Passordet stemmer ikke')
         setIsSubmitting(false)
         return
       }

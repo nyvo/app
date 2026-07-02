@@ -27,12 +27,15 @@ const AuthCallbackPage = () => {
   const { user, profile, isInitialized } = useAuth()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  // Parse `error_description` from the hash on mount — Supabase appends it
-  // when the magic-link token is expired or already redeemed. The raw value
-  // is English-only, so we always render our own localized fallback.
+  // Parse `error_description` on mount — Supabase appends it when the token is
+  // expired or already redeemed. With PKCE it arrives as a query param; the
+  // legacy implicit flow put it in the hash. The raw value is English-only, so
+  // we always render our own localized fallback.
   useEffect(() => {
-    const hash = window.location.hash
-    if (hash.includes('error_description=')) {
+    const hasError =
+      window.location.hash.includes('error_description=') ||
+      new URLSearchParams(window.location.search).has('error_description')
+    if (hasError) {
       setErrorMessage('Lenken er utløpt eller fungerer ikke.')
       window.history.replaceState(null, '', window.location.pathname)
     }
