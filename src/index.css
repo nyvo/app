@@ -123,7 +123,9 @@
   --radius-md: 6px;    /* inputs */
   --radius-lg: 8px;    /* list rows, badges, image thumbs */
   --radius-xl: 10px;   /* cards, panels, dialogs (THE surface radius) */
-  --radius-2xl: 12px;  /* large marketing surfaces, product frames */
+  --radius-2xl: 12px;  /* large marketing surfaces, product frames — plus the
+                          focal floating booking cards (booking rail, checkout
+                          summary, receipt pane), which pair it with shadow-soft */
   --radius-3xl: 16px;  /* oversized marketing bands */
 
   /* ── Type scale (Studio canonical) ──────────────────────────

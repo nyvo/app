@@ -104,7 +104,7 @@ export default function PublicCourseDetailPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
-        <Link to="/" className="flex select-none items-center">
+        <Link to={`/${slug}`} className="flex select-none items-center">
           <span className="text-base font-medium text-foreground">Openspot</span>
         </Link>
       </header>
@@ -115,7 +115,7 @@ export default function PublicCourseDetailPage() {
         {error && !loading && <PageState variant="public-course" />}
 
         {!loading && !error && course && (
-          <div className="mx-auto max-w-[1100px] w-full px-4 sm:px-6 lg:px-8 pb-16 animate-in fade-in duration-150">
+          <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16 animate-in fade-in duration-150">
             {backLabel && (
               <Link
                 to={backHref}
@@ -193,7 +193,7 @@ function ArrangorSection({ seller }: { seller: NonNullable<PublicCourseWithDetai
       {seller.slug ? (
         <Link
           to={`/${seller.slug}`}
-          className="group inline-flex max-w-full items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15"
+          className="group inline-flex max-w-full items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <UserAvatar size="lg" name={seller.name} src={seller.logo_url} className="shrink-0" />
           <span className="min-w-0">
@@ -393,7 +393,7 @@ function sessionTimeRangeWithEndTime(
 function CourseDetailSkeleton() {
   return (
     <div
-      className="mx-auto max-w-[1100px] w-full px-4 sm:px-6 lg:px-8 pb-16 animate-in fade-in duration-150"
+      className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16 animate-in fade-in duration-150"
       role="status"
       aria-live="polite"
     >

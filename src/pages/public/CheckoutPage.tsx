@@ -55,19 +55,6 @@ const CheckoutPage = () => {
   // swaps that block for the live Stripe Elements block. No route change.
   const [step, setStep] = useState<'contact' | 'payment'>('contact');
 
-  // Load Inter font for the checkout surface only — needed to exact-match
-  // Stripe's Elements typography on titles. Cleaned up on unmount so the
-  // rest of the app continues using Geist.
-  useEffect(() => {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap';
-    document.head.appendChild(link);
-    return () => {
-      document.head.removeChild(link);
-    };
-  }, []);
-
   // ── Load course + tiers ────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
@@ -294,7 +281,7 @@ const CheckoutPage = () => {
           <span className="text-base font-medium text-foreground">Openspot</span>
         </Link>
       </header>
-      <div className="mx-auto max-w-5xl w-full px-4 sm:px-6 lg:px-8 pb-16">
+      <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">
         <button
           type="button"
           onClick={() => {
@@ -306,7 +293,7 @@ const CheckoutPage = () => {
               navigate(backHref);
             }
           }}
-          className="mb-8 px-2 sm:px-6 inline-flex items-center gap-1.5 text-base text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+          className="mb-8 px-2 sm:px-6 inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
         >
           <ChevronLeft className="size-4" strokeWidth={1.75} />
           Tilbake
@@ -614,7 +601,7 @@ function StripeEmbed({
         clientSecret,
         appearance: {
           theme: 'stripe',
-          variables: { fontFamily: 'Inter, system-ui, sans-serif', borderRadius: '8px' },
+          variables: { fontFamily: 'system-ui, sans-serif', borderRadius: '6px' },
         },
       }}
     >
@@ -741,18 +728,20 @@ function CheckoutSummary({
 function CheckoutSkeleton() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-6 pb-16">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="mt-8 h-10 w-2/3 max-w-md" />
-        <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
-          <div className="space-y-6 max-w-[560px]">
+      <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
+        <span className="text-base font-medium text-foreground">Openspot</span>
+      </header>
+      <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">
+        <Skeleton className="mb-8 h-4 w-32" />
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-6 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
+          <div className="space-y-6 max-w-[552px]">
             <Skeleton className="h-20 w-full rounded-lg" />
             <Skeleton className="h-9 w-full" />
             <Skeleton className="h-9 w-full" />
             <Skeleton className="h-9 w-full" />
             <Skeleton className="h-44 w-full rounded-xl" />
           </div>
-          <Skeleton className="hidden lg:block h-72 w-full rounded-xl" />
+          <Skeleton className="hidden md:block h-72 w-full rounded-2xl" />
         </div>
       </div>
     </div>
