@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       course_sessions: {
@@ -151,39 +126,6 @@ export type Database = {
           },
         ]
       }
-      course_team_listings: {
-        Row: {
-          course_id: string
-          created_at: string
-          team_id: string
-        }
-        Insert: {
-          course_id: string
-          created_at?: string
-          team_id: string
-        }
-        Update: {
-          course_id?: string
-          created_at?: string
-          team_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "course_team_listings_course_id_fkey"
-            columns: ["course_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "course_team_listings_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       courses: {
         Row: {
           accepts_late_signups: boolean
@@ -196,7 +138,6 @@ export type Database = {
           id: string
           idempotency_key: string | null
           image_url: string | null
-          instructor_id: string | null
           instructor_name: string | null
           location: string | null
           location_address: string | null
@@ -225,7 +166,6 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           image_url?: string | null
-          instructor_id?: string | null
           instructor_name?: string | null
           location?: string | null
           location_address?: string | null
@@ -254,7 +194,6 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           image_url?: string | null
-          instructor_id?: string | null
           instructor_name?: string | null
           location?: string | null
           location_address?: string | null
@@ -273,13 +212,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "courses_instructor_id_fkey"
-            columns: ["instructor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "courses_seller_id_fkey"
             columns: ["seller_id"]
@@ -378,6 +310,7 @@ export type Database = {
           seller_id: string
           service_fee_nok: number
           status: string
+          stripe_payment_intent_id: string | null
           ticket_audience_snapshot:
             | Database["public"]["Enums"]["ticket_audience_t"]
             | null
@@ -405,6 +338,7 @@ export type Database = {
           seller_id: string
           service_fee_nok?: number
           status?: string
+          stripe_payment_intent_id?: string | null
           ticket_audience_snapshot?:
             | Database["public"]["Enums"]["ticket_audience_t"]
             | null
@@ -432,6 +366,7 @@ export type Database = {
           seller_id?: string
           service_fee_nok?: number
           status?: string
+          stripe_payment_intent_id?: string | null
           ticket_audience_snapshot?:
             | Database["public"]["Enums"]["ticket_audience_t"]
             | null
@@ -487,8 +422,8 @@ export type Database = {
           id: string
           new_status: Database["public"]["Enums"]["payment_status"]
           old_status: Database["public"]["Enums"]["payment_status"] | null
-          seller_id: string
-          signup_id: string
+          seller_id: string | null
+          signup_id: string | null
           via_external: boolean
         }
         Insert: {
@@ -496,8 +431,8 @@ export type Database = {
           id?: string
           new_status: Database["public"]["Enums"]["payment_status"]
           old_status?: Database["public"]["Enums"]["payment_status"] | null
-          seller_id: string
-          signup_id: string
+          seller_id?: string | null
+          signup_id?: string | null
           via_external: boolean
         }
         Update: {
@@ -505,8 +440,8 @@ export type Database = {
           id?: string
           new_status?: Database["public"]["Enums"]["payment_status"]
           old_status?: Database["public"]["Enums"]["payment_status"] | null
-          seller_id?: string
-          signup_id?: string
+          seller_id?: string | null
+          signup_id?: string | null
           via_external?: boolean
         }
         Relationships: [
@@ -528,18 +463,21 @@ export type Database = {
       }
       processed_webhook_events: {
         Row: {
+          created_at: string
           event_id: string
           event_type: string
           processed_at: string | null
           result: Json | null
         }
         Insert: {
+          created_at?: string
           event_id: string
           event_type: string
           processed_at?: string | null
           result?: Json | null
         }
         Update: {
+          created_at?: string
           event_id?: string
           event_type?: string
           processed_at?: string | null
@@ -604,6 +542,87 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_affiliations: {
+        Row: {
+          created_at: string
+          guest_seller_id: string
+          host_seller_id: string
+          invited_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          guest_seller_id: string
+          host_seller_id: string
+          invited_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          guest_seller_id?: string
+          host_seller_id?: string
+          invited_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_affiliations_guest_fkey"
+            columns: ["guest_seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_affiliations_host_fkey"
+            columns: ["host_seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_affiliations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_invite_links: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          host_seller_id: string
+          id: string
+          revoked_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          host_seller_id: string
+          id?: string
+          revoked_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          host_seller_id?: string
+          id?: string
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_invite_links_host_fkey"
+            columns: ["host_seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seller_members: {
         Row: {
           created_at: string | null
@@ -640,18 +659,47 @@ export type Database = {
           },
         ]
       }
+      seller_slug_aliases: {
+        Row: {
+          archived_at: string
+          old_slug: string
+          seller_id: string
+        }
+        Insert: {
+          archived_at?: string
+          old_slug: string
+          seller_id: string
+        }
+        Update: {
+          archived_at?: string
+          old_slug?: string
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_slug_aliases_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sellers: {
         Row: {
           closed_at: string | null
+          cover_image_url: string | null
           created_at: string | null
+          default_course_image_url: string | null
           email: string | null
           id: string
           logo_url: string | null
           name: string
+          operating_model: string
           organization_number: string | null
           phone: string | null
-          seller_type: string
           settings: Json | null
+          slug: string
           stripe_account_id: string | null
           stripe_account_status: string | null
           stripe_onboarding_complete: boolean
@@ -663,19 +711,22 @@ export type Database = {
           subscription_provider: string | null
           subscription_status: string
           updated_at: string | null
-          uses_integrated_payments: boolean
+          uses_integrated_payments: boolean | null
         }
         Insert: {
           closed_at?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
+          default_course_image_url?: string | null
           email?: string | null
           id?: string
           logo_url?: string | null
           name: string
+          operating_model?: string
           organization_number?: string | null
           phone?: string | null
-          seller_type?: string
           settings?: Json | null
+          slug: string
           stripe_account_id?: string | null
           stripe_account_status?: string | null
           stripe_onboarding_complete?: boolean
@@ -687,18 +738,22 @@ export type Database = {
           subscription_provider?: string | null
           subscription_status?: string
           updated_at?: string | null
+          uses_integrated_payments?: boolean | null
         }
         Update: {
           closed_at?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
+          default_course_image_url?: string | null
           email?: string | null
           id?: string
           logo_url?: string | null
           name?: string
+          operating_model?: string
           organization_number?: string | null
           phone?: string | null
-          seller_type?: string
           settings?: Json | null
+          slug?: string
           stripe_account_id?: string | null
           stripe_account_status?: string | null
           stripe_onboarding_complete?: boolean
@@ -710,6 +765,7 @@ export type Database = {
           subscription_provider?: string | null
           subscription_status?: string
           updated_at?: string | null
+          uses_integrated_payments?: boolean | null
         }
         Relationships: []
       }
@@ -843,36 +899,36 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          google_place_id: string | null
           id: string
-          name: string
-          rooms: Json
           lat: number | null
           lon: number | null
-          google_place_id: string | null
+          name: string
+          rooms: Json
           seller_id: string
           updated_at: string
         }
         Insert: {
           address?: string | null
           created_at?: string
+          google_place_id?: string | null
           id?: string
-          name: string
-          rooms?: Json
           lat?: number | null
           lon?: number | null
-          google_place_id?: string | null
+          name: string
+          rooms?: Json
           seller_id: string
           updated_at?: string
         }
         Update: {
           address?: string | null
           created_at?: string
+          google_place_id?: string | null
           id?: string
-          name?: string
-          rooms?: Json
           lat?: number | null
           lon?: number | null
-          google_place_id?: string | null
+          name?: string
+          rooms?: Json
           seller_id?: string
           updated_at?: string
         }
@@ -881,160 +937,6 @@ export type Database = {
             foreignKeyName: "teacher_locations_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
-            referencedRelation: "sellers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      team_affiliations: {
-        Row: {
-          invited_at: string
-          invited_by: string | null
-          responded_at: string | null
-          seller_id: string
-          status: string
-          team_id: string
-        }
-        Insert: {
-          invited_at?: string
-          invited_by?: string | null
-          responded_at?: string | null
-          seller_id: string
-          status: string
-          team_id: string
-        }
-        Update: {
-          invited_at?: string
-          invited_by?: string | null
-          responded_at?: string | null
-          seller_id?: string
-          status?: string
-          team_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "team_affiliations_invited_by_fkey"
-            columns: ["invited_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "team_affiliations_seller_id_fkey"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "sellers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "team_affiliations_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      team_invite_links: {
-        Row: {
-          code: string
-          created_at: string
-          created_by: string | null
-          expires_at: string
-          id: string
-          revoked_at: string | null
-          team_id: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          created_by?: string | null
-          expires_at?: string
-          id?: string
-          revoked_at?: string | null
-          team_id: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          created_by?: string | null
-          expires_at?: string
-          id?: string
-          revoked_at?: string | null
-          team_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "team_invite_links_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      team_slug_aliases: {
-        Row: {
-          archived_at: string
-          old_slug: string
-          team_id: string
-        }
-        Insert: {
-          archived_at?: string
-          old_slug: string
-          team_id: string
-        }
-        Update: {
-          archived_at?: string
-          old_slug?: string
-          team_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "team_slug_aliases_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      teams: {
-        Row: {
-          cover_image_url: string | null
-          created_at: string
-          default_course_image_url: string | null
-          id: string
-          name: string
-          owner_seller_id: string
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          cover_image_url?: string | null
-          created_at?: string
-          default_course_image_url?: string | null
-          id?: string
-          name: string
-          owner_seller_id: string
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          cover_image_url?: string | null
-          created_at?: string
-          default_course_image_url?: string | null
-          id?: string
-          name?: string
-          owner_seller_id?: string
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "teams_owner_seller_id_fkey"
-            columns: ["owner_seller_id"]
-            isOneToOne: true
             referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
@@ -1071,7 +973,7 @@ export type Database = {
         Args: { p_course_id: string }
         Returns: boolean
       }
-      _normalize_team_slug: { Args: { p_input: string }; Returns: string }
+      _normalize_slug: { Args: { p_input: string }; Returns: string }
       _seller_has_unfinished_business: {
         Args: { p_seller_id: string }
         Returns: boolean
@@ -1099,6 +1001,13 @@ export type Database = {
       calculate_package_end_date: {
         Args: { p_course_start_date: string; p_package_weeks: number }
         Returns: string
+      }
+      check_email_auth_status: {
+        Args: { p_email: string }
+        Returns: {
+          email_exists: boolean
+          has_password: boolean
+        }[]
       }
       check_rate_limit: {
         Args: { p_key: string; p_limit: number; p_window_seconds: number }
@@ -1135,6 +1044,7 @@ export type Database = {
           session_date: string
         }[]
       }
+      claim_my_signups: { Args: never; Returns: number }
       cleanup_old_webhook_events: { Args: never; Returns: number }
       cleanup_rate_limit_buckets: { Args: never; Returns: undefined }
       close_and_anonymize_seller: {
@@ -1170,6 +1080,24 @@ export type Database = {
         Args: { p_course_session_id: string }
         Returns: number
       }
+      create_seller_invite_link: {
+        Args: { p_host_seller_id: string }
+        Returns: {
+          code: string
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          host_seller_id: string
+          id: string
+          revoked_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "seller_invite_links"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_signup_if_available: {
         Args: {
           p_amount_paid: number
@@ -1185,62 +1113,47 @@ export type Database = {
           p_participant_phone: string
           p_payment_product?: string
           p_payment_status?: string
+          p_platform_fee_nok?: number
           p_seller_id: string
           p_stripe_payment_intent_id?: string
           p_ticket_type_id: string
         }
         Returns: Json
       }
-      create_team_invite_link: {
-        Args: { p_team_id: string }
-        Returns: {
-          code: string
-          created_at: string
-          created_by: string | null
-          expires_at: string
-          id: string
-          revoked_at: string | null
-          team_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "team_invite_links"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       delete_course_cascade: {
         Args: { p_course_id: string }
         Returns: undefined
       }
+      ensure_own_profile: { Args: never; Returns: undefined }
       ensure_seller_for_user: {
         Args: {
+          p_operating_model?: string
           p_seller_name: string
-          p_seller_type?: string
-          p_team_slug: string
+          p_slug: string
         }
         Returns: {
-          member_role: Database["public"]["Enums"]["seller_member_role"]
           seller_id: string
           seller_name: string
-          team_id: string
-          team_slug: string
+          slug: string
           was_created: boolean
         }[]
       }
-      find_seller_by_owner_email: {
-        Args: { p_email: string }
+      export_user_data: { Args: { p_user_id: string }; Returns: Json }
+      find_seller_by_owner_email: { Args: { p_email: string }; Returns: string }
+      get_payment_attempt_status: {
+        Args: { p_attempt_id: string }
         Returns: string
       }
       get_seller_operational: {
         Args: { p_seller_id: string }
         Returns: {
-          seller_type: string
-          stripe_account_id: string | null
-          stripe_account_status: string | null
+          operating_model: string
+          stripe_account_id: string
+          stripe_account_status: string
           stripe_onboarding_complete: boolean
-          subscription_customer_id: string | null
-          subscription_current_period_end: string | null
+          subscription_cancel_at_period_end: boolean
+          subscription_current_period_end: string
+          subscription_customer_id: string
           subscription_plan: string
           subscription_status: string
           updated_at: string
@@ -1254,6 +1167,10 @@ export type Database = {
           phone: string
         }[]
       }
+      get_signup_by_stripe_id: {
+        Args: { p_payment_intent_id?: string }
+        Returns: Json
+      }
       is_platform_admin: { Args: { user_uuid: string }; Returns: boolean }
       is_seller_member: {
         Args: { p_seller_id: string; p_user_id: string }
@@ -1263,18 +1180,14 @@ export type Database = {
         Args: { p_seller_id: string; p_user_id: string }
         Returns: boolean
       }
-      is_team_admin: {
-        Args: { p_team_id: string; p_user_id: string }
-        Returns: boolean
-      }
-      lookup_team_invite_link: {
+      lookup_seller_invite_link: {
         Args: { p_code: string }
         Returns: {
+          cover_image_url: string
+          host_seller_id: string
+          name: string
+          slug: string
           status: string
-          team_cover_image_url: string
-          team_id: string
-          team_name: string
-          team_slug: string
         }[]
       }
       mark_seller_onboarding_complete: {
@@ -1298,6 +1211,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      ops_health_check: { Args: never; Returns: Json }
       public_signup_counts: {
         Args: { p_course_ids: string[] }
         Returns: {
@@ -1305,26 +1219,40 @@ export type Database = {
           course_id: string
         }[]
       }
-      public_storefront_seller_ids: {
-        Args: { p_team_slug: string }
+      public_storefront_scope: {
+        Args: { p_slug: string }
         Returns: {
           owner_seller_id: string
           seller_id: string
-          team_id: string
+        }[]
+      }
+      public_studio_location: {
+        Args: { p_slug: string }
+        Returns: {
+          address: string
+          google_place_id: string
+          lat: number
+          lon: number
+          name: string
         }[]
       }
       reconcile_course_lifecycle: { Args: never; Returns: number }
-      redeem_team_invite_link: {
+      redact_closed_seller_buyer_pii: { Args: never; Returns: undefined }
+      redeem_seller_invite_link: {
         Args: { p_code: string; p_force_leave?: boolean }
         Returns: {
-          existing_team_id: string
+          existing_host_seller_id: string
+          host_seller_id: string
           status: string
-          team_id: string
         }[]
       }
-      rename_team_slug: {
-        Args: { p_new_slug: string; p_team_id: string }
+      rename_seller_slug: {
+        Args: { p_new_slug: string; p_seller_id: string }
         Returns: string
+      }
+      set_operating_model: {
+        Args: { p_operating_model: string; p_seller_id: string }
+        Returns: Json
       }
       set_user_role: {
         Args: { p_role: string }
@@ -1490,9 +1418,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       course_format: ["single", "series"],
@@ -1512,7 +1437,6 @@ export const Constants = {
 export type Profile = Tables<"profiles">
 export type Seller = Tables<"sellers">
 export type SellerUpdate = TablesUpdate<"sellers">
-export type Team = Tables<"teams">
 export type Course = Tables<"courses">
 export type CourseInsert = TablesInsert<"courses">
 export type CourseUpdate = TablesUpdate<"courses">
@@ -1524,8 +1448,8 @@ export type SignupInsert = TablesInsert<"signups">
 export type TeacherLocation = Tables<"teacher_locations">
 export type TeacherLocationInsert = TablesInsert<"teacher_locations">
 export type TeacherLocationUpdate = TablesUpdate<"teacher_locations">
-export type TeamAffiliation = Tables<"team_affiliations">
-export type TeamInviteLink = Tables<"team_invite_links">
+export type SellerAffiliation = Tables<"seller_affiliations">
+export type SellerInviteLink = Tables<"seller_invite_links">
 export type Notification = Tables<"notifications">
 
 export type CourseFormat = Enums<"course_format">
@@ -1537,8 +1461,9 @@ export type SignupStatus = Enums<"signup_status">
 export type TicketAudience = Enums<"ticket_audience_t">
 export type TicketKind = Enums<"ticket_kind_t">
 
+/** Operating model of a seller — a solo teacher or a multi-instructor studio. */
+export type OperatingModel = 'solo' | 'studio'
 export type SessionStatus = "upcoming" | "completed" | "cancelled"
-export type TeamAffiliationStatus = "pending" | "active" | "declined"
 export type UserRole = "buyer" | "seller"
 export type ExceptionType = "payment_failed" | "pending_payment"
 export type NotificationType =
@@ -1552,7 +1477,7 @@ export type NotificationType =
 
 export type AvailableTicketType =
   Database["public"]["Functions"]["available_ticket_types"]["Returns"][number]
-export type LookupTeamInviteLinkResult =
-  Database["public"]["Functions"]["lookup_team_invite_link"]["Returns"][number]
-export type RedeemTeamInviteLinkResult =
-  Database["public"]["Functions"]["redeem_team_invite_link"]["Returns"][number]
+export type LookupInviteLinkResult =
+  Database["public"]["Functions"]["lookup_seller_invite_link"]["Returns"][number]
+export type RedeemInviteLinkResult =
+  Database["public"]["Functions"]["redeem_seller_invite_link"]["Returns"][number]

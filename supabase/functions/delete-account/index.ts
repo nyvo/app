@@ -2,8 +2,8 @@
 //
 // Safety model (see docs/account-deletion-design.md): this NEVER deletes or
 // alters business content. It deletes the auth user, which cascades to the
-// profile; FK rules clear the profile's own references (instructor_id,
-// invited_by, buyer_id -> NULL) and memberships, while paid bookings/payments
+// profile; FK rules clear the profile's own references (invited_by,
+// buyer_id -> NULL) and memberships, while paid bookings/payments
 // are retained. The BEFORE DELETE guard on profiles is the atomic backstop: it
 // refuses if the user is a sole seller owner, an active-course instructor, or
 // owns Storage objects. We re-check those here first so the user gets a clear,

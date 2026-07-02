@@ -16,31 +16,31 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SettingsSection } from '@/components/teacher/SettingsSection';
-import { useAuth } from '@/contexts/AuthContext';
 import { runWithUndo } from '@/lib/undo';
 import { friendlyError } from '@/lib/error-messages';
 import { cn } from '@/lib/utils';
 import {
-  fetchTeamAffiliates,
+  fetchHostAffiliates,
   revokeAffiliation,
-  type OutgoingAffiliate,
+  type HostAffiliate,
+  type GuestHost,
 } from '@/services/affiliations';
+import type { Seller } from '@/types/database';
 import {
   fetchActiveInviteLink,
   createInviteLink,
 } from '@/services/invite-links';
-import { supabase } from '@/lib/supabase';
-import type { TeamInviteLink } from '@/types/database';
+import type { SellerInviteLink } from '@/types/database';
 
 // ---------------------------------------------------------------------------
 // Samarbeid — lives as a section on the Studio page (it's storefront
-// management: what shows on which page). Split by seller type:
+// management: what shows on which page). Split by operating model:
 //
-// Business / studio (owner side):
+// Studio (host side):
 //   - Invite link panel ("Inviter en instruktør").
 //   - Instructors whose courses show on this studio page.
 //
-// Individual teacher (member side):
+// Solo teacher (guest side):
 //   - The studio page their courses show on.
 //   - "Stopp visning" action.
 //
@@ -48,11 +48,21 @@ import type { TeamInviteLink } from '@/types/database';
 // scrolls itself into view so the join flow ends with visible confirmation.
 // ---------------------------------------------------------------------------
 
-export function AffiliationsSection() {
-  const { currentSeller, currentTeam } = useAuth();
+// The guest-host state is loaded once at StudioPage level (it gates tab
+// visibility) and passed down — this section never re-fetches it. `onHostChange`
+// lets a "Stopp visning" here propagate up so the tab hides/refreshes.
+export function AffiliationsSection({
+  seller,
+  host,
+  onHostChange,
+}: {
+  seller: Seller;
+  host: HostStudio | null | undefined;
+  onHostChange: (host: HostStudio | null) => void;
+}) {
   const { hash } = useLocation();
   const anchorRef = useRef<HTMLDivElement>(null);
-  const isBusiness = currentSeller?.seller_type === 'business';
+  const isStudio = seller.operating_model === 'studio';
 
   useEffect(() => {
     if (hash === '#samarbeid') {
@@ -60,16 +70,21 @@ export function AffiliationsSection() {
     }
   }, [hash]);
 
-  if (!currentSeller) return null;
-  if (isBusiness && !currentTeam) return null;
-
   return (
     <div ref={anchorRef} id="samarbeid" className="scroll-mt-10 space-y-10">
-      {isBusiness && currentTeam ? (
-        <BusinessView teamId={currentTeam.id} />
+      {isStudio ? (
+        <BusinessView
+          hostSellerId={seller.id}
+          host={host}
+          onHostChange={onHostChange}
+        />
       ) : (
         <SettingsSection title="Studio">
-          <IndividualView sellerId={currentSeller.id} />
+          <IndividualView
+            sellerId={seller.id}
+            host={host}
+            onLeft={() => onHostChange(null)}
+          />
         </SettingsSection>
       )}
     </div>
@@ -80,32 +95,40 @@ export function AffiliationsSection() {
 // Business view — invite card + connected instructors
 // ───────────────────────────────────────────────────────────────────────────
 
-function BusinessView({ teamId }: { teamId: string }) {
-  const [affiliates, setAffiliates] = useState<OutgoingAffiliate[] | null>(null);
+function BusinessView({
+  hostSellerId,
+  host,
+  onHostChange,
+}: {
+  hostSellerId: string;
+  host: HostStudio | null | undefined;
+  onHostChange: (host: HostStudio | null) => void;
+}) {
+  const [affiliates, setAffiliates] = useState<HostAffiliate[] | null>(null);
   const [loadingAffiliates, setLoadingAffiliates] = useState(true);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
 
   const refresh = useCallback(async () => {
     setLoadingAffiliates(true);
-    const { data } = await fetchTeamAffiliates(teamId);
+    const { data } = await fetchHostAffiliates(hostSellerId);
     setAffiliates(data);
     setLoadingAffiliates(false);
-  }, [teamId]);
+  }, [hostSellerId]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  const handleRevoke = (affiliate: OutgoingAffiliate) => {
+  const handleRevoke = (affiliate: HostAffiliate) => {
     runWithUndo({
-      message: `${affiliate.seller.name} vises ikke lenger på studiosiden`,
-      hide: () => setHiddenIds((prev) => new Set(prev).add(affiliate.seller_id)),
+      message: `${affiliate.guest.name} vises ikke lenger på studiosiden`,
+      hide: () => setHiddenIds((prev) => new Set(prev).add(affiliate.guest_seller_id)),
       restore: () =>
         setHiddenIds((prev) => {
           const next = new Set(prev);
-          next.delete(affiliate.seller_id);
+          next.delete(affiliate.guest_seller_id);
           return next;
         }),
       commit: async () => {
-        const { error } = await revokeAffiliation({ teamId, sellerId: affiliate.seller_id });
+        const { error } = await revokeAffiliation({ hostSellerId, guestSellerId: affiliate.guest_seller_id });
         if (!error) await refresh();
         return { error };
       },
@@ -115,9 +138,7 @@ function BusinessView({ teamId }: { teamId: string }) {
   };
 
   const visibleAffiliates =
-    affiliates?.filter((affiliate) =>
-      affiliate.status === 'active' && !hiddenIds.has(affiliate.seller_id)
-    ) ?? null;
+    affiliates?.filter((affiliate) => !hiddenIds.has(affiliate.guest_seller_id)) ?? null;
 
   return (
     <>
@@ -127,7 +148,7 @@ function BusinessView({ teamId }: { teamId: string }) {
       >
         <Card>
           <CardContent>
-            <InviteLinkPanel teamId={teamId} />
+            <InviteLinkPanel hostSellerId={hostSellerId} />
           </CardContent>
         </Card>
       </SettingsSection>
@@ -150,6 +171,19 @@ function BusinessView({ teamId }: { teamId: string }) {
           onRevoke={handleRevoke}
         />
       </SettingsSection>
+
+      {/* A studio can itself rent space elsewhere — show the guest card only when
+          such a host exists (no empty state in this position). */}
+      {host && (
+        <SettingsSection title="Vises hos">
+          <IndividualView
+            sellerId={hostSellerId}
+            host={host}
+            onLeft={() => onHostChange(null)}
+            hideWhenEmpty
+          />
+        </SettingsSection>
+      )}
     </>
   );
 }
@@ -158,43 +192,29 @@ function BusinessView({ teamId }: { teamId: string }) {
 // Individual view — where the teacher's courses are shown
 // ───────────────────────────────────────────────────────────────────────────
 
-interface HostTeam {
-  id: string;
-  slug: string;
-  name: string;
-  cover_image_url: string | null;
-}
+type HostStudio = GuestHost['host'];
 
-function IndividualView({ sellerId }: { sellerId: string }) {
-  const [host, setHost] = useState<HostTeam | null | undefined>(undefined);
+// Presentational: the host state is owned by StudioPage. `hideWhenEmpty` is set
+// where the card sits below a studio's own instructors — there, no host means
+// render nothing rather than an empty state.
+function IndividualView({
+  sellerId,
+  host,
+  onLeft,
+  hideWhenEmpty,
+}: {
+  sellerId: string;
+  host: HostStudio | null | undefined;
+  onLeft: () => void;
+  hideWhenEmpty?: boolean;
+}) {
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [leaving, setLeaving] = useState(false);
-
-  const loadHost = useCallback(async () => {
-    // The teacher's active studio connection. With single-team enforcement,
-    // this is at most one.
-    const { data, error } = await supabase
-      .from('team_affiliations')
-      .select('team_id, team:teams!inner(id, slug, name, cover_image_url)')
-      .eq('seller_id', sellerId)
-      .eq('status', 'active')
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      setHost(null);
-      return;
-    }
-    const t = (data as { team: HostTeam | null } | null)?.team ?? null;
-    setHost(t);
-  }, [sellerId]);
-
-  useEffect(() => { void loadHost(); }, [loadHost]);
 
   const handleLeave = async () => {
     if (!host) return;
     setLeaving(true);
-    const { error } = await revokeAffiliation({ teamId: host.id, sellerId });
+    const { error } = await revokeAffiliation({ hostSellerId: host.id, guestSellerId: sellerId });
     setLeaving(false);
     setConfirmLeave(false);
     if (error) {
@@ -202,10 +222,12 @@ function IndividualView({ sellerId }: { sellerId: string }) {
       return;
     }
     toast.success('Kursene dine vises ikke lenger på studioet');
-    setHost(null);
+    onLeft();
   };
 
   const hostUrl = host ? `${window.location.origin}/${host.slug}` : null;
+
+  if (hideWhenEmpty && host == null) return null;
 
   return (
     <>
@@ -286,9 +308,9 @@ function AffiliatesList({
   loading,
   onRevoke,
 }: {
-  affiliates: OutgoingAffiliate[] | null;
+  affiliates: HostAffiliate[] | null;
   loading: boolean;
-  onRevoke: (affiliate: OutgoingAffiliate) => void;
+  onRevoke: (affiliate: HostAffiliate) => void;
 }) {
   if (loading || affiliates === null) {
     return <AffiliatesListSkeleton />;
@@ -309,16 +331,16 @@ function AffiliatesList({
     <ul className="rounded-md border border-border bg-surface overflow-hidden">
       {affiliates.map((affiliate, i) => (
         <li
-          key={affiliate.seller_id}
+          key={affiliate.guest_seller_id}
           className={cn(
             'grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3',
             i > 0 && 'border-t border-border',
           )}
         >
           <div className="flex min-w-0 items-center gap-3">
-            <InstructorAvatar name={affiliate.seller.name} url={affiliate.seller.logo_url} />
+            <InstructorAvatar name={affiliate.guest.name} url={affiliate.guest.logo_url} />
             <p className="min-w-0 truncate text-base font-medium text-foreground">
-              {affiliate.seller.name}
+              {affiliate.guest.name}
             </p>
           </div>
           <InstructorActionsMenu onRevoke={() => onRevoke(affiliate)} />
@@ -361,8 +383,8 @@ function InstructorActionsMenu({
 // Invite link panel — copy is the primary action; regenerate invalidates
 // ───────────────────────────────────────────────────────────────────────────
 
-function InviteLinkPanel({ teamId }: { teamId: string }) {
-  const [link, setLink] = useState<TeamInviteLink | null | undefined>(undefined);
+function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
+  const [link, setLink] = useState<SellerInviteLink | null | undefined>(undefined);
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
   const autoGenAttempted = useRef(false);
@@ -370,7 +392,7 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { data } = await fetchActiveInviteLink(teamId);
+      const { data } = await fetchActiveInviteLink(hostSellerId);
       if (cancelled) return;
       if (data) {
         setLink(data);
@@ -382,7 +404,7 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
         return;
       }
       autoGenAttempted.current = true;
-      const { data: created, error } = await createInviteLink(teamId);
+      const { data: created, error } = await createInviteLink(hostSellerId);
       if (cancelled) return;
       if (error || !created) {
         setLink(null);
@@ -391,11 +413,11 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
       setLink(created);
     })();
     return () => { cancelled = true; };
-  }, [teamId]);
+  }, [hostSellerId]);
 
   const handleRegenerate = async () => {
     setCreating(true);
-    const { data, error } = await createInviteLink(teamId);
+    const { data, error } = await createInviteLink(hostSellerId);
     setCreating(false);
     if (error || !data) {
       toast.error(friendlyError(error, 'Kunne ikke lage lenke.'));

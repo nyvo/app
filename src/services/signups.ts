@@ -26,11 +26,7 @@ export interface SignupWithProfile extends Signup {
 // --- Buyer-side (claimed bookings) -----------------------------------------
 
 // Signup row as the buyer dashboard needs it: course details plus the
-// public storefront identity (seller name/logo via column grants, team slug
-// via the public teams policy). The teams embed must name the ownership FK
-// (`teams!teams_owner_seller_id_fkey`) — sellers↔teams is otherwise
-// ambiguous (PGRST201) because team_affiliations adds a many-to-many path.
-// Ownership is 1:1, so PostgREST returns an object, not an array.
+// public storefront identity (seller name/logo/slug via column grants).
 // Explicit column list, not `*` — the buyer owns these rows, but future
 // signup columns must not silently start flowing to the client.
 export interface BuyerSignup extends Pick<Signup,
@@ -39,7 +35,7 @@ export interface BuyerSignup extends Pick<Signup,
     seller: {
       name: string
       logo_url: string | null
-      team: { slug: string } | null
+      slug: string
     } | null
   }) | null
 }
@@ -70,7 +66,7 @@ export async function fetchMySignups(
       id, status, amount_paid, created_at,
       course:courses(
         id, title, slug, start_date, end_date, time_schedule, location, image_url,
-        seller:sellers(name, logo_url, team:teams!teams_owner_seller_id_fkey(slug))
+        seller:sellers(name, logo_url, slug)
       )
     `)
     .eq('buyer_id', userId)

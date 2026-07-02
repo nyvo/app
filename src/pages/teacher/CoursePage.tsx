@@ -95,7 +95,7 @@ function CourseNotFound({ description }: { description?: string }) {
 const CoursePage = () => {
   const navigate = useNavigate();
   const { id: courseId } = useParams<{ id: string }>();
-  const { currentSeller, currentTeam } = useAuth();
+  const { currentSeller } = useAuth();
 
   const {
     course: courseData,
@@ -722,8 +722,8 @@ const CoursePage = () => {
   const hasSignupRecords = participantsLoading || participants.length > 0;
 
   const courseUrl =
-    currentTeam?.slug && courseData.slug
-      ? `${window.location.origin}/${currentTeam.slug}/${courseData.slug}`
+    currentSeller?.slug && courseData.slug
+      ? `${window.location.origin}/${currentSeller.slug}/${courseData.slug}`
       : '';
   // Share + unpublish only make sense while a course is published and live.
   // A finished (completed) or cancelled course is archival: no share, no

@@ -22,16 +22,16 @@ interface RequestBody {
   interval?: 'month' | 'year'
 }
 
-function priceIdForSellerType(sellerType: string | null, interval: 'month' | 'year'): string {
+function priceIdForOperatingModel(operatingModel: string | null, interval: 'month' | 'year'): string {
   if (interval === 'year') {
     const soloYearly =
       Deno.env.get('STRIPE_PRO_SOLO_YEARLY_PRICE_ID') || Deno.env.get('STRIPE_PRO_YEARLY_PRICE_ID') || ''
     const studioYearly = Deno.env.get('STRIPE_PRO_STUDIO_YEARLY_PRICE_ID') || soloYearly
-    return sellerType === 'business' ? studioYearly : soloYearly
+    return operatingModel === 'studio' ? studioYearly : soloYearly
   }
   const solo = Deno.env.get('STRIPE_PRO_SOLO_PRICE_ID') || Deno.env.get('STRIPE_PRO_PRICE_ID') || ''
   const studio = Deno.env.get('STRIPE_PRO_STUDIO_PRICE_ID') || solo
-  return sellerType === 'business' ? studio : solo
+  return operatingModel === 'studio' ? studio : solo
 }
 
 Deno.serve(async (req: Request) => {
@@ -57,7 +57,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: seller, error: sellerError } = await supabase
       .from('sellers')
-      .select('id, name, seller_type, subscription_plan, subscription_status, subscription_customer_id')
+      .select('id, name, operating_model, subscription_plan, subscription_status, subscription_customer_id')
       .eq('id', body.sellerId)
       .single()
 
@@ -69,7 +69,7 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Studioet har allerede Pro.', 409, req)
     }
 
-    const priceId = priceIdForSellerType(seller.seller_type, interval)
+    const priceId = priceIdForOperatingModel(seller.operating_model, interval)
     if (!priceId) {
       return errorResponse('Stripe price is not configured', 500, req)
     }

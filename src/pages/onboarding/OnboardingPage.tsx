@@ -19,7 +19,7 @@ import type { UserRole } from '@/types/database'
  *
  *   profile.role === null                      → RoleChooser
  *   profile.role === 'buyer'  + !completed     → BuyerSetup
- *   profile.role === 'seller' + !completed     → SellerType → SellerProfile
+ *   profile.role === 'seller' + !completed     → SellerFlow (name + URL)
  *   onboarding_completed_at !== null           → redirect /overview
  *
  * `?intent=buyer|seller` (set by the entry door: seller CTA, invite link,
@@ -31,8 +31,6 @@ import type { UserRole } from '@/types/database'
  * is the production wiring. Visual rules: studio-design §16.2 sectioned
  * form, §21.3a role chooser, no section H2s on short forms.
  */
-
-type SellerKind = 'individual' | 'studio'
 
 // Top-left ghost back link. Same shape as CheckoutPage so the back affordance
 // reads identically across the app's multi-step flows.
@@ -374,19 +372,18 @@ function BuyerSetupForm({
 }
 
 // ---------------------------------------------------------------------------
-// Step 2b — Seller flow (Type → Profile + URL)
+// Step 2b — Seller flow (single screen: name → slug)
 // ---------------------------------------------------------------------------
 
 function SellerFlow({ nextPath }: { nextPath: string }) {
-  const { setRole } = useAuth()
-  const [stage, setStage] = useState<'type' | 'profile'>('type')
-  const [direction, setDirection] = useState(1)
-  const [kind, setKind] = useState<SellerKind>('individual')
+  const { profile, ensureSeller, markOnboardingComplete, setRole } = useAuth()
+  const navigate = useNavigate()
 
-  const goToProfile = () => { setDirection(1); setStage('profile') }
-  const goBackToType = () => { setDirection(-1); setStage('type') }
+  const [name, setName] = useState(() => resolveDisplayName(profile?.name, profile?.email))
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [saving, setSaving] = useState(false)
 
-  const exitToRole = async () => {
+  const handleBack = async () => {
     const { error } = await setRole(null)
     if (error) {
       logger.error('Onboarding: setRole(null) failed', error)
@@ -394,131 +391,12 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
     }
   }
 
-  return (
-    <div className="flex-1 relative overflow-hidden">
-      <AnimatePresence mode="wait" custom={direction} initial={false}>
-        <motion.div
-          key={stage}
-          custom={direction}
-          variants={stepVariants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          className="absolute inset-0 flex"
-        >
-          {stage === 'type' ? (
-            <SellerType
-              kind={kind}
-              setKind={setKind}
-              onContinue={goToProfile}
-              onBack={() => { void exitToRole() }}
-            />
-          ) : (
-            <SellerProfile kind={kind} onBack={goBackToType} nextPath={nextPath} />
-          )}
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  )
-}
-
-function SellerType({
-  kind,
-  setKind,
-  onContinue,
-  onBack,
-}: {
-  kind: SellerKind
-  setKind: (k: SellerKind) => void
-  onContinue: () => void
-  onBack: () => void
-}) {
-  return (
-    <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
-      <form onSubmit={(e) => { e.preventDefault(); onContinue() }} className="w-full max-w-2xl">
-        <BackLink onClick={onBack} />
-        <h1 className="mb-8 text-2xl font-medium text-foreground">
-          Velg profiltype
-        </h1>
-
-        <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <legend className="sr-only">Velg profiltype</legend>
-          {([
-            {
-              value: 'individual' as const,
-              title: 'Individuell lærer',
-              body: 'Egen profil med dine kurs.',
-            },
-            {
-              value: 'studio' as const,
-              title: 'Studio',
-              body: 'Studioprofil med en eller flere lærere.',
-            },
-          ]).map((opt) => {
-            const isSelected = kind === opt.value
-            return (
-              <label
-                key={opt.value}
-                className={cn(
-                  'flex items-start gap-3 min-h-[7.5rem] rounded-xl bg-muted p-6 cursor-pointer transition-shadow duration-150 hover:bg-muted/70 focus-within:ring-2 focus-within:ring-foreground',
-                  isSelected && 'ring-2 ring-foreground',
-                )}
-              >
-                <input
-                  type="radio"
-                  name="sellerKind"
-                  value={opt.value}
-                  checked={isSelected}
-                  onChange={() => setKind(opt.value)}
-                  className="sr-only"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">{opt.title}</p>
-                  <p className="mt-1 text-sm text-foreground-muted leading-relaxed">{opt.body}</p>
-                </div>
-                {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
-              </label>
-            )
-          })}
-        </fieldset>
-
-        <Button type="submit" size="cta" className="mt-8 w-full">
-          Fortsett
-        </Button>
-      </form>
-    </div>
-  )
-}
-
-function SellerProfile({
-  kind,
-  onBack,
-  nextPath,
-}: {
-  kind: SellerKind
-  onBack: () => void
-  nextPath: string
-}) {
-  const { profile, ensureSeller, markOnboardingComplete } = useAuth()
-  const navigate = useNavigate()
-  const nameLabel = kind === 'studio' ? 'Studionavn' : 'Profilnavn'
-  const nameHint =
-    kind === 'studio'
-      ? 'Kan endres senere.'
-      : 'Bruk navnet deltakerne kjenner deg som.'
-
-  const [name, setName] = useState(() =>
-    kind === 'individual' ? resolveDisplayName(profile?.name, profile?.email) : '',
-  )
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [saving, setSaving] = useState(false)
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = name.trim()
     const slug = generateSlug(trimmed)
     if (!trimmed) {
-      setErrors({ name: kind === 'studio' ? 'Skriv inn studionavn' : 'Skriv inn profilnavn' })
+      setErrors({ name: 'Skriv inn et navn.' })
       return
     }
     if (slug.length < 3) {
@@ -527,8 +405,8 @@ function SellerProfile({
     }
 
     setSaving(true)
-    const sellerType = kind === 'studio' ? 'business' : 'individual'
-    const { seller, error } = await ensureSeller(trimmed, slug, sellerType)
+    // Third arg omitted — the default 'solo' model applies; changed later in settings.
+    const { seller, error } = await ensureSeller(trimmed, slug)
     if (error || !seller) {
       logger.error('Onboarding: ensureSeller failed', error)
       const msg = error?.message ?? ''
@@ -554,14 +432,14 @@ function SellerProfile({
   return (
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
-        <BackLink onClick={onBack} disabled={saving} />
+        <BackLink onClick={() => { void handleBack() }} disabled={saving} />
         <h1 className="mb-8 text-2xl font-medium text-foreground">
-          Sett opp profilen
+          Hva skal siden din hete?
         </h1>
 
         <div className="grid gap-2">
           <label htmlFor="seller-name" className="text-sm font-medium text-foreground">
-            {nameLabel}
+            Navn
           </label>
           <Input
             id="seller-name"
@@ -575,7 +453,7 @@ function SellerProfile({
             aria-describedby={`seller-name-hint${errors.name ? ' seller-name-error' : ''}`}
           />
           <p id="seller-name-hint" className="text-sm text-foreground-muted">
-            {nameHint}
+            Bruk ditt eget navn eller navnet på studioet.
           </p>
           {errors.name && (
             <FieldError id="seller-name-error" className="mt-0">{errors.name}</FieldError>

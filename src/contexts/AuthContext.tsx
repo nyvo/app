@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import type { Profile, Seller, SellerMemberRole, Team, UserRole } from '@/types/database'
+import type { Profile, Seller, SellerMemberRole, UserRole } from '@/types/database'
 import { logger } from '@/lib/logger'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
 import { fetchSellerOperational } from '@/services/sellers'
@@ -21,7 +21,6 @@ interface AuthContextType {
   isInitialized: boolean // true once initial auth check is complete
 
   currentSeller: Seller | null
-  currentTeam: Team | null   // The team owned by currentSeller (1:1 in current model)
   sellers: Seller[]
   userRole: SellerMemberRole | null
 
@@ -45,7 +44,7 @@ interface AuthContextType {
   ) => Promise<{ exists: boolean; hasPassword: boolean; error: Error | null }>
 
   // Seller methods
-  ensureSeller: (name: string, slug: string, sellerType?: string) => Promise<{ seller: Seller | null; error: Error | null }>
+  ensureSeller: (name: string, slug: string, operatingModel?: string) => Promise<{ seller: Seller | null; error: Error | null }>
   switchSeller: (sellerId: string) => void
   refreshSellers: () => Promise<void>
 
@@ -95,7 +94,7 @@ async function fetchProfileData(userId: string): Promise<Profile | null> {
 
 async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], memberships: SellerMembership[] }> {
   // Explicit column list — only the public grant set is selected here.
-  // Operational fields (seller_type, updated_at) are hydrated separately via
+  // Operational fields (operating_model, updated_at) are hydrated separately via
   // get_seller_operational for the active seller.
   // Sensitive fields (phone, organization_number) remain gated behind
   // get_seller_private.
@@ -107,6 +106,9 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
         id,
         name,
         logo_url,
+        slug,
+        cover_image_url,
+        default_course_image_url,
         created_at,
         stripe_onboarding_complete
       )
@@ -128,6 +130,9 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
       id: s.id as string,
       name: s.name as string,
       logo_url: (s.logo_url ?? null) as string | null,
+      slug: (s.slug ?? '') as string,
+      cover_image_url: (s.cover_image_url ?? null) as string | null,
+      default_course_image_url: (s.default_course_image_url ?? null) as string | null,
       closed_at: null,
       email: null,
       phone: null,
@@ -135,7 +140,7 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
       stripe_account_status: null,
       stripe_onboarding_complete: (s.stripe_onboarding_complete ?? false) as boolean,
       settings: {},
-      seller_type: 'individual',
+      operating_model: 'solo',
       organization_number: null,
       subscription_plan: 'free',
       subscription_status: 'none',
@@ -155,7 +160,7 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
   return { sellers, memberships: typedMemberships }
 }
 
-// Hydrate operational fields (seller_type, subscription plan/status, updated_at)
+// Hydrate operational fields (operating_model, subscription plan/status, updated_at)
 // for a single seller via the member-gated RPC. Returns the seller unchanged on
 // RPC failure or non-member access — UI degrades to the public columns only.
 async function hydrateSellerOperational(seller: Seller): Promise<Seller> {
@@ -170,7 +175,7 @@ async function hydrateSellerOperational(seller: Seller): Promise<Seller> {
     stripe_account_id: data.stripe_account_id,
     stripe_account_status: data.stripe_account_status,
     stripe_onboarding_complete: data.stripe_onboarding_complete,
-    seller_type: data.seller_type,
+    operating_model: data.operating_model,
     subscription_plan: data.subscription_plan,
     subscription_status: data.subscription_status,
     subscription_current_period_end: data.subscription_current_period_end,
@@ -178,20 +183,6 @@ async function hydrateSellerOperational(seller: Seller): Promise<Seller> {
     uses_integrated_payments: data.uses_integrated_payments,
     updated_at: data.updated_at,
   }
-}
-
-// Fetch teams owned by the given sellers. One row per seller (1:1 ownership).
-async function fetchTeamsForSellers(sellerIds: string[]): Promise<Team[]> {
-  if (sellerIds.length === 0) return []
-  const { data, error } = await supabase
-    .from('teams')
-    .select('*')
-    .in('owner_seller_id', sellerIds)
-  if (error) {
-    logger.error('Error fetching teams:', error)
-    return []
-  }
-  return (data as Team[]) || []
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -203,7 +194,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const [currentSeller, setCurrentSeller] = useState<Seller | null>(null)
   const [sellers, setSellers] = useState<Seller[]>([])
-  const [teamsBySellerId, setTeamsBySellerId] = useState<Record<string, Team>>({})
   const [userRole, setUserRole] = useState<SellerMemberRole | null>(null)
 
   // Refs to track values without causing re-renders in callbacks
@@ -267,11 +257,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { sellers: loadedSellers, memberships } = await fetchSellersData(userId)
     setSellers(loadedSellers)
-
-    const loadedTeams = await fetchTeamsForSellers(loadedSellers.map((s) => s.id))
-    const teamMap: Record<string, Team> = {}
-    for (const t of loadedTeams) teamMap[t.owner_seller_id] = t
-    setTeamsBySellerId(teamMap)
 
     if (loadedSellers.length > 0 && !currentSellerRef.current) {
       const savedSellerId = getStoredCurrentSellerId(userId)
@@ -344,7 +329,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfile(null)
           setSellers([])
           setCurrentSeller(null)
-          setTeamsBySellerId({})
           setUserRole(null)
           clearStoredCurrentSellerId(signedOutUserId)
           return
@@ -399,15 +383,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setSellers(loadedSellers)
 
-    const loadedTeams = await fetchTeamsForSellers(loadedSellers.map((s) => s.id))
-    const teamMap: Record<string, Team> = {}
-    for (const t of loadedTeams) teamMap[t.owner_seller_id] = t
-    setTeamsBySellerId(teamMap)
-
     if (currentSellerRef.current) {
       // Update currentSeller with fresh data (e.g. after Stripe onboarding).
       // Hydrate operational fields via the member-gated RPC so consumers
-      // (PaymentsPage, AffiliationsSection) see fresh seller_type.
+      // (PaymentsPage, AffiliationsSection) see fresh operating_model.
       const freshSeller = loadedSellers.find((s) => s.id === currentSellerRef.current?.id)
       if (freshSeller) {
         const hydrated = await hydrateSellerOperational(freshSeller)
@@ -505,7 +484,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null)
     setSellers([])
     setCurrentSeller(null)
-    setTeamsBySellerId({})
     setUserRole(null)
     clearStoredCurrentSellerId(signingOutUserId)
 
@@ -516,14 +494,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // No userRef guard — the RPC uses auth.uid() server-side, and the Supabase
   // client has the session JWT immediately after signUp(), even before React
   // state (userRef) is updated via onAuthStateChange.
-  const ensureSeller = useCallback(async (name: string, slug: string, sellerType: string = 'individual') => {
+  const ensureSeller = useCallback(async (name: string, slug: string, operatingModel: string = 'solo') => {
     // Call hardened RPC — no user_id param, uses auth.uid() server-side
     const { data, error } = await (supabase.rpc as unknown as (
       fn: string, args: Record<string, string>
     ) => ReturnType<typeof supabase.rpc>)('ensure_seller_for_user', {
       p_seller_name: name,
-      p_team_slug: slug,
-      p_seller_type: sellerType,
+      p_slug: slug,
+      p_operating_model: operatingModel,
     })
 
     if (error) {
@@ -533,10 +511,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // RPC returns TABLE rows as array
     const rows = data as Array<{
       seller_id: string
-      team_id: string
-      team_slug: string
+      slug: string
       seller_name: string
-      member_role: SellerMemberRole
       was_created: boolean
     }>
 
@@ -552,6 +528,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: row.seller_id,
       name: row.seller_name,
       logo_url: null,
+      slug: row.slug,
+      cover_image_url: null,
+      default_course_image_url: null,
       closed_at: null,
       email: null,
       phone: null,
@@ -559,7 +538,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       stripe_account_status: null,
       stripe_onboarding_complete: false,
       settings: {},
-      seller_type: sellerType,
+      operating_model: operatingModel,
       organization_number: null,
       subscription_plan: 'free',
       subscription_status: 'none',
@@ -579,22 +558,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return [...prev, seller]
     })
     setCurrentSeller(seller)
-    setUserRole(row.member_role)
+    // The creator is the seller's owner (the RPC no longer echoes the role).
+    setUserRole('owner')
     if (userRef.current?.id) setStoredCurrentSellerId(userRef.current.id, seller.id)
-
-    // Stub a Team entry so consumers (currentTeam) work immediately. Full team
-    // data loads on next refreshSellers/loadUserData call.
-    const stubTeam: Team = {
-      id: row.team_id,
-      slug: row.team_slug,
-      name: row.seller_name,
-      cover_image_url: null,
-      default_course_image_url: null,
-      owner_seller_id: row.seller_id,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }
-    setTeamsBySellerId((prev) => ({ ...prev, [seller.id]: stubTeam }))
 
     return { seller, error: null }
   }, [])
@@ -687,11 +653,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [sellers]
   );
 
-  const currentTeam = useMemo<Team | null>(
-    () => (currentSeller ? teamsBySellerId[currentSeller.id] ?? null : null),
-    [currentSeller, teamsBySellerId]
-  )
-
   const value = useMemo<AuthContextType>(() => ({
     user,
     profile,
@@ -699,7 +660,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     isInitialized,
     currentSeller,
-    currentTeam,
     sellers,
     userRole,
     signInWithGoogle,
@@ -722,7 +682,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     isInitialized,
     currentSeller,
-    currentTeam,
     sellersKey,
     userRole,
     signInWithGoogle,

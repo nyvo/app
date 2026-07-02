@@ -1,17 +1,17 @@
 /**
- * Reserved slugs — these strings can NEVER be used as a team slug because
- * they collide with top-level routes or reserved namespaces in the app.
+ * Reserved slugs — these strings can NEVER be used as a storefront slug
+ * because they collide with top-level routes or reserved namespaces in the app.
  *
  * The flat-slug URL scheme (`ourapp.no/<slug>`) means every top-level path
- * segment is potentially in conflict with a team slug. To prevent that, all
- * literal route names + likely future routes + filesystem-style names are
- * forbidden as slugs.
+ * segment is potentially in conflict with a seller's storefront slug. To
+ * prevent that, all literal route names + likely future routes +
+ * filesystem-style names are forbidden as slugs.
  *
  * **Add new entries here whenever you add a new top-level route in App.tsx.**
  *
  * Validation should be done in two places:
  *   1. Client-side in slug forms (immediate feedback when typing)
- *   2. Server-side in `ensure_seller_for_user` and `createTeam` edge function
+ *   2. Server-side in `ensure_seller_for_user` / `rename_seller_slug`
  *      (defense in depth — never trust the client)
  */
 export const RESERVED_SLUGS = new Set<string>([

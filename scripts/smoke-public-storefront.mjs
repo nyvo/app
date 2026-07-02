@@ -58,29 +58,22 @@ async function step(name, fn) {
   }
 }
 
-const teamRes = await step('teams by slug', () => supabase
-  .from('teams')
-  .select('owner_seller_id, slug, default_course_image_url')
+const sellerRes = await step('seller by slug', () => supabase
+  .from('sellers')
+  .select('id, name, logo_url, slug, cover_image_url, default_course_image_url, stripe_onboarding_complete')
   .eq('slug', slug)
   .maybeSingle())
 
-const team = teamRes.data
-if (!team) process.exit()
+if (!sellerRes.data) process.exit()
 
-await step('team_slug_aliases select grant', () => supabase
-  .from('team_slug_aliases')
-  .select('team_id')
+await step('seller_slug_aliases select grant', () => supabase
+  .from('seller_slug_aliases')
+  .select('seller_id')
   .eq('old_slug', slug)
   .maybeSingle())
 
-await step('seller public fields', () => supabase
-  .from('sellers')
-  .select('id, name, logo_url, dintero_onboarding_complete')
-  .eq('id', team.owner_seller_id)
-  .maybeSingle())
-
-const scopeRes = await step('public_storefront_seller_ids rpc', () => supabase
-  .rpc('public_storefront_seller_ids', { p_team_slug: slug }))
+const scopeRes = await step('public_storefront_scope rpc', () => supabase
+  .rpc('public_storefront_scope', { p_slug: slug }))
 
 const sellerIds = Array.from(new Set((scopeRes.data || []).map((row) => row.seller_id)))
 if (sellerIds.length === 0) process.exit()
@@ -106,7 +99,7 @@ const coursesRes = await step('public courses list query', () => supabase
     image_url,
     instructor_name,
     seller_id,
-    seller:sellers(id, name, logo_url, dintero_onboarding_complete)
+    seller:sellers(id, name, logo_url, slug, default_course_image_url, stripe_onboarding_complete)
   `)
   .in('status', ['active', 'upcoming', 'cancelled'])
   .order('start_date', { ascending: true })

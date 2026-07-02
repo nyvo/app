@@ -299,7 +299,7 @@ async function insertCourseSessionsOrRollback(
 
 /**
  * Generate a URL-safe slug from a course title using the same Norwegian-aware
- * rules as `ensure_seller_for_user` (`_normalize_team_slug` in the DB) — keeps
+ * rules as `ensure_seller_for_user` (`_normalize_slug` in the DB) — keeps
  * the client and server in sync on what a slug looks like.
  */
 function slugifyTitle(title: string): string {

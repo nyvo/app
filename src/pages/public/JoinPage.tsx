@@ -13,7 +13,7 @@ import { lookupInviteLink, redeemInviteLink } from '@/services/invite-links';
 import { PageState } from '@/components/page-state/page-state';
 import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
-import type { LookupTeamInviteLinkResult } from '@/types/database';
+import type { LookupInviteLinkResult } from '@/types/database';
 
 // ---------------------------------------------------------------------------
 // /join/:code — public landing for a shareable invite link.
@@ -31,7 +31,7 @@ import type { LookupTeamInviteLinkResult } from '@/types/database';
 
 type LookupState =
   | { status: 'loading' }
-  | { status: 'valid'; team: LookupTeamInviteLinkResult }
+  | { status: 'valid'; team: LookupInviteLinkResult }
   | { status: 'expired' }
   | { status: 'not_found' };
 
@@ -86,7 +86,7 @@ export default function JoinPage() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, isInitialized, currentSeller, currentTeam } = useAuth();
+  const { user, profile, isInitialized, currentSeller } = useAuth();
 
   const [lookup, setLookup] = useState<LookupState>({ status: 'loading' });
   const [phase, setPhase] = useState<JoinPhase>({ kind: 'idle' });
@@ -121,21 +121,20 @@ export default function JoinPage() {
     }
 
     let cancelled = false;
-    const teamId = lookup.team.team_id;
+    const hostSellerId = lookup.team.host_seller_id;
 
     setPhase({ kind: 'checking_membership' });
 
     void (async () => {
-      if (currentTeam?.id === teamId) {
+      if (currentSeller?.id === hostSellerId) {
         if (!cancelled) setPhase({ kind: 'own_team' });
         return;
       }
 
       const { data, error } = await supabase
-        .from('team_affiliations')
-        .select('team_id, team:teams!inner(name)')
-        .eq('seller_id', currentSeller.id)
-        .eq('status', 'active')
+        .from('seller_affiliations')
+        .select('host_seller_id, host:sellers!seller_affiliations_host_fkey(name)')
+        .eq('guest_seller_id', currentSeller.id)
         .limit(1)
         .maybeSingle();
 
@@ -147,25 +146,25 @@ export default function JoinPage() {
       }
 
       const activeAffiliation = data as {
-        team_id: string;
-        team: { name: string } | null;
+        host_seller_id: string;
+        host: { name: string } | null;
       };
 
-      if (activeAffiliation.team_id === teamId) {
+      if (activeAffiliation.host_seller_id === hostSellerId) {
         setPhase({ kind: 'already_member' });
         return;
       }
 
       setPhase({
         kind: 'need_force_leave',
-        existingTeamName: activeAffiliation.team?.name ?? null,
+        existingTeamName: activeAffiliation.host?.name ?? null,
       });
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [lookup, user, profile?.role, currentSeller, currentTeam]);
+  }, [lookup, user, profile?.role, currentSeller]);
 
   const handleJoin = async (forceLeave = false) => {
     if (!code) return;
@@ -183,10 +182,10 @@ export default function JoinPage() {
         // confirmation ("Kursene dine vises på …") instead of a bare page.
         navigate(routes.studioSamarbeid, { replace: true });
         return;
-      case 'already_member':
+      case 'already_affiliated':
         setPhase({ kind: 'already_member' });
         return;
-      case 'own_team':
+      case 'own_storefront':
         setPhase({ kind: 'own_team' });
         return;
       case 'no_seller':
@@ -195,14 +194,14 @@ export default function JoinPage() {
         // buyers, but a role-less / lagging-profile user lands here.
         setPhase({ kind: 'no_access' });
         return;
-      case 'in_other_team': {
-        // Fetch the leaving team's name for the confirm copy.
+      case 'has_other_host': {
+        // Fetch the leaving studio's name for the confirm copy.
         let existingTeamName: string | null = null;
-        if (data.existing_team_id) {
+        if (data.existing_host_seller_id) {
           const { data: t } = await supabase
-            .from('teams')
+            .from('sellers')
             .select('name')
-            .eq('id', data.existing_team_id)
+            .eq('id', data.existing_host_seller_id)
             .maybeSingle();
           existingTeamName = (t as { name: string } | null)?.name ?? null;
         }
@@ -273,9 +272,9 @@ export default function JoinPage() {
   if (!user) {
     return (
       <Shell>
-        <Cover url={team.team_cover_image_url} />
+        <Cover url={team.cover_image_url} />
         <h1 className="text-3xl font-medium text-foreground mb-3">
-          Bli med i {team.team_name}
+          Bli med i {team.name}
         </h1>
         <p className="text-base text-foreground-muted mb-8">
           Logg inn eller opprett en konto for å fortsette. Du blir tilbake hit etterpå.
@@ -307,7 +306,7 @@ export default function JoinPage() {
   if (phase.kind === 'checking_membership') {
     return (
       <Shell>
-        <Cover url={team.team_cover_image_url} />
+        <Cover url={team.cover_image_url} />
         <div role="status" aria-live="polite" className="space-y-6">
           <span className="sr-only">Sjekker medlemskap…</span>
           <div className="space-y-3">
@@ -323,12 +322,12 @@ export default function JoinPage() {
   if (phase.kind === 'already_member') {
     return (
       <Shell>
-        <Cover url={team.team_cover_image_url} />
+        <Cover url={team.cover_image_url} />
         <h1 className="text-3xl font-medium text-foreground mb-3">
           Du er allerede med
         </h1>
         <p className="text-base text-foreground-muted mb-8">
-          Du er allerede medlem av {team.team_name}.
+          Du er allerede medlem av {team.name}.
         </p>
         <Button size="cta" className="w-full" onClick={() => navigate(routes.studioSamarbeid)}>
           Min side
@@ -359,9 +358,9 @@ export default function JoinPage() {
     const leavingName = phase.existingTeamName ?? 'det forrige teamet';
     return (
       <Shell>
-        <Cover url={team.team_cover_image_url} />
+        <Cover url={team.cover_image_url} />
         <h1 className="text-3xl font-medium text-foreground mb-3">
-          Bli med i {team.team_name}
+          Bli med i {team.name}
         </h1>
         <p className="text-base text-foreground-muted mb-6">
           Du kan være med i ett team om gangen. Blir du med her, forlater du:
@@ -383,9 +382,9 @@ export default function JoinPage() {
   // State 1 — clean join (default for logged-in user, idle phase)
   return (
     <Shell>
-      <Cover url={team.team_cover_image_url} />
+      <Cover url={team.cover_image_url} />
       <h1 className="text-3xl font-medium text-foreground mb-3">
-        Bli med i {team.team_name}
+        Bli med i {team.name}
       </h1>
       <p className="text-base text-foreground-muted mb-8">
         Kursene dine vil vises på studio-siden deres.
