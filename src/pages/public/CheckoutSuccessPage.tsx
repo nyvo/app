@@ -13,11 +13,12 @@ import { formatKroner } from '@/lib/utils';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { toLocalDate } from '@/utils/dateUtils';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { COMPANY } from '@/lib/company';
 
 const WEEKDAYS = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
 const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
 const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
-const SUPPORT_EMAIL = 'hei@openspot.no';
+const SUPPORT_EMAIL = COMPANY.email;
 
 // Today, Norwegian short form: "26. apr 2026". Used in the receipt footer.
 function formatBookingDate(d: Date): string {

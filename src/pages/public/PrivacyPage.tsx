@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { COMPANY } from '@/lib/company';
 
 const PrivacyPage = () => {
   useDocumentTitle('Personvern');
@@ -28,7 +29,7 @@ const PrivacyPage = () => {
                 Openspot driftes av Framio AS, org.nr. 935 967 511, som er behandlingsansvarlig for personopplysningene dine.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Kontakt: <a href="mailto:hei@framio.no" className="underline underline-offset-2">hei@framio.no</a>
+                Kontakt: <a href={`mailto:${COMPANY.email}`} className="underline underline-offset-2">{COMPANY.email}</a>
               </p>
             </section>
 
@@ -127,7 +128,7 @@ const PrivacyPage = () => {
               <h2 className="text-lg font-medium text-foreground">Kontakt</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Spørsmål om personvern? Send en e-post til{' '}
-                <a href="mailto:hei@framio.no" className="underline underline-offset-2">hei@framio.no</a>.
+                <a href={`mailto:${COMPANY.email}`} className="underline underline-offset-2">{COMPANY.email}</a>.
               </p>
             </section>
           </div>
