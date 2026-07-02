@@ -34,7 +34,7 @@ const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY,
   auth: { persistSession: false, autoRefreshToken: false },
 })
 
-const slug = process.argv[2] || 'inspire-yogastudio'
+const slug = process.argv[2] || 'kristoffer-studio'
 const todayStr = new Date().toISOString().split('T')[0]
 const grace = new Date()
 grace.setDate(grace.getDate() - 30)

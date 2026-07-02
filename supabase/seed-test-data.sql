@@ -20,46 +20,46 @@ DECLARE
   v_seller_id UUID;
 
   -- Course IDs (one per scenario)
-  c_series_full        UUID := extensions.uuid_generate_v4();
-  c_series_available   UUID := extensions.uuid_generate_v4();
-  c_series_almost_full UUID := extensions.uuid_generate_v4();
-  c_series_upcoming    UUID := extensions.uuid_generate_v4();
-  c_series_draft       UUID := extensions.uuid_generate_v4();
-  c_series_completed   UUID := extensions.uuid_generate_v4();
-  c_series_cancelled   UUID := extensions.uuid_generate_v4();
-  c_series_dropin      UUID := extensions.uuid_generate_v4();
-  c_series_expensive   UUID := extensions.uuid_generate_v4();
-  c_series_payments    UUID := extensions.uuid_generate_v4();
-  c_series_online      UUID := extensions.uuid_generate_v4();
-  c_series_long_desc   UUID := extensions.uuid_generate_v4();
-  c_single_event       UUID := extensions.uuid_generate_v4();
-  c_single_online      UUID := extensions.uuid_generate_v4();
-  c_single_free        UUID := extensions.uuid_generate_v4();
+  c_series_full        UUID := gen_random_uuid();
+  c_series_available   UUID := gen_random_uuid();
+  c_series_almost_full UUID := gen_random_uuid();
+  c_series_upcoming    UUID := gen_random_uuid();
+  c_series_draft       UUID := gen_random_uuid();
+  c_series_completed   UUID := gen_random_uuid();
+  c_series_cancelled   UUID := gen_random_uuid();
+  c_series_dropin      UUID := gen_random_uuid();
+  c_series_expensive   UUID := gen_random_uuid();
+  c_series_payments    UUID := gen_random_uuid();
+  c_series_online      UUID := gen_random_uuid();
+  c_series_long_desc   UUID := gen_random_uuid();
+  c_single_event       UUID := gen_random_uuid();
+  c_single_online      UUID := gen_random_uuid();
+  c_single_free        UUID := gen_random_uuid();
 
   -- Ticket-type IDs (course_signup_packages rows)
-  t_full_pkg           UUID := extensions.uuid_generate_v4();
-  t_full_half          UUID := extensions.uuid_generate_v4();
-  t_avail_pkg          UUID := extensions.uuid_generate_v4();
-  t_almost_pkg         UUID := extensions.uuid_generate_v4();
-  t_upcoming_pkg       UUID := extensions.uuid_generate_v4();
-  t_payments_pkg       UUID := extensions.uuid_generate_v4();
-  t_dropin_pkg         UUID := extensions.uuid_generate_v4();
-  t_dropin_drop        UUID := extensions.uuid_generate_v4();
-  t_exp_full           UUID := extensions.uuid_generate_v4();
-  t_exp_half           UUID := extensions.uuid_generate_v4();
-  t_exp_single         UUID := extensions.uuid_generate_v4();
-  t_online_pkg         UUID := extensions.uuid_generate_v4();
-  t_long_pkg           UUID := extensions.uuid_generate_v4();
-  t_completed_pkg      UUID := extensions.uuid_generate_v4();
-  t_cancelled_pkg      UUID := extensions.uuid_generate_v4();
-  t_event_std          UUID := extensions.uuid_generate_v4();
-  t_event_online       UUID := extensions.uuid_generate_v4();
-  t_free_std           UUID := extensions.uuid_generate_v4();
+  t_full_pkg           UUID := gen_random_uuid();
+  t_full_half          UUID := gen_random_uuid();
+  t_avail_pkg          UUID := gen_random_uuid();
+  t_almost_pkg         UUID := gen_random_uuid();
+  t_upcoming_pkg       UUID := gen_random_uuid();
+  t_payments_pkg       UUID := gen_random_uuid();
+  t_dropin_pkg         UUID := gen_random_uuid();
+  t_dropin_drop        UUID := gen_random_uuid();
+  t_exp_full           UUID := gen_random_uuid();
+  t_exp_half           UUID := gen_random_uuid();
+  t_exp_single         UUID := gen_random_uuid();
+  t_online_pkg         UUID := gen_random_uuid();
+  t_long_pkg           UUID := gen_random_uuid();
+  t_completed_pkg      UUID := gen_random_uuid();
+  t_cancelled_pkg      UUID := gen_random_uuid();
+  t_event_std          UUID := gen_random_uuid();
+  t_event_online       UUID := gen_random_uuid();
+  t_free_std           UUID := gen_random_uuid();
 BEGIN
   -- ============================================
   -- LOOK UP SELLER FOR THE TEST USER
   -- ============================================
-  v_user_id := 'a358f2c1-a16d-4b8d-919a-7809b487ecb4'; -- nyvo77@gmail.com — REPLACE
+  v_user_id := '393f61e1-9e1b-4102-9597-a6dbc406c9b2'; -- nyvo77@gmail.com (post-2026-07 DB reset) — REPLACE
 
   SELECT sm.seller_id INTO v_seller_id
   FROM public.seller_members sm
@@ -74,6 +74,16 @@ BEGIN
   END IF;
 
   RAISE NOTICE 'Seeding for seller_id: %', v_seller_id;
+
+  -- Seed-only: these triggers guard interactive flows, not bulk seeding.
+  -- The Stripe publish/price gates block active paid courses for sellers
+  -- without onboarding — we seed that state deliberately (checkout renders
+  -- its "Påmelding åpner snart" banner). The default-ticket trigger would
+  -- duplicate the explicit packages inserted below. All re-enabled at the
+  -- end; the DO block is one transaction, so a failure rolls these back too.
+  ALTER TABLE public.courses DISABLE TRIGGER enforce_course_publish_requires_payment;
+  ALTER TABLE public.courses DISABLE TRIGGER courses_create_default_ticket;
+  ALTER TABLE public.course_signup_packages DISABLE TRIGGER enforce_package_price_requires_payment;
 
   -- ============================================
   -- CLEAN PRIOR SEED ROWS (matched by slug prefix)
@@ -104,7 +114,7 @@ BEGIN
   -- SCENARIO 1: Active series, FULL (3/3). Mid-run, 8 weeks. Long desc.
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, total_weeks, start_date, end_date, instructor_id)
+    max_participants, price, total_weeks, start_date, end_date, instructor_name)
   VALUES (c_series_full, v_seller_id, 'seed-vinyasa-mandager',
     'Vinyasa Flow — Mandager',
     'Dynamisk vinyasa der pust og bevegelse smelter sammen. Passer for deg som har litt erfaring og ønsker styrke, fleksibilitet og fokus.',
@@ -112,12 +122,12 @@ BEGIN
     'Studio 1, Parkveien 5, Oslo', 'Mandager 18:00-19:15', 75, 3, 2400.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '28 days'))::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '28 days') + INTERVAL '49 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 2: Active series, available (5/12).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, total_weeks, start_date, end_date, instructor_id)
+    max_participants, price, total_weeks, start_date, end_date, instructor_name)
   VALUES (c_series_available, v_seller_id, 'seed-hatha-onsdager',
     'Hatha Yoga — Onsdager',
     'Klassisk hatha med fokus på riktig teknikk og kroppskjennskap. Perfekt for nybegynnere.',
@@ -125,12 +135,12 @@ BEGIN
     'Studio 2, Parkveien 5, Oslo', 'Onsdager 10:00-11:00', 60, 12, 1800.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '21 days') + INTERVAL '2 days')::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '21 days') + INTERVAL '51 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 3: Almost full (5/6 — 1 left). Tests low-spots badge.
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, total_weeks, start_date, end_date, instructor_id)
+    max_participants, price, total_weeks, start_date, end_date, instructor_name)
   VALUES (c_series_almost_full, v_seller_id, 'seed-yoga-nidra',
     'Yoga Nidra & Avspenning',
     'Dyp avspenning og guidet meditasjon. Liggende praksis — kommer du sliten, går du uthvilt.',
@@ -138,12 +148,12 @@ BEGIN
     'Studio 2, Parkveien 5, Oslo', 'Tirsdager 17:30-18:30', 60, 6, 1600.00, 6,
     (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '1 day')::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '36 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 4: Upcoming series (starts in 2 weeks, 3 pre-signups).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, total_weeks, start_date, end_date, instructor_id)
+    max_participants, price, total_weeks, start_date, end_date, instructor_name)
   VALUES (c_series_upcoming, v_seller_id, 'seed-yin-fredager',
     'Yin Yoga — Nybegynnerkurs',
     'Stille, langsom praksis der hver stilling holdes 3–5 minutter. Slipper spenninger i bindevev og fascia.',
@@ -151,12 +161,12 @@ BEGIN
     'Studio 2, Parkveien 5, Oslo', 'Fredager 17:00-18:15', 75, 15, 1500.00, 6,
     (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '4 days')::DATE,
     (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '39 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 5: Draft (not published).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, total_weeks, start_date, end_date, instructor_id)
+    max_participants, price, total_weeks, start_date, end_date, instructor_name)
   VALUES (c_series_draft, v_seller_id, 'seed-yoga-gravide',
     'Yoga for Gravide',
     'Trygg yoga gjennom svangerskapet. Tilpasset hver trimester.',
@@ -164,12 +174,12 @@ BEGIN
     'Studio 2, Parkveien 5, Oslo', 'Lørdager 11:00-12:00', 60, 8, 2000.00, 8,
     (date_trunc('week', CURRENT_DATE + INTERVAL '21 days') + INTERVAL '5 days')::DATE,
     (date_trunc('week', CURRENT_DATE + INTERVAL '21 days') + INTERVAL '54 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 6: Completed (3 months ago).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, total_weeks, start_date, end_date, instructor_id)
+    max_participants, price, total_weeks, start_date, end_date, instructor_name)
   VALUES (c_series_completed, v_seller_id, 'seed-vinyasa-vinter',
     'Vinyasa Grunnkurs — Forrige sesong',
     'Dynamisk vinyasa for nybegynnere. Ferdig sesong.',
@@ -177,12 +187,12 @@ BEGIN
     'Studio 1, Parkveien 5, Oslo', 'Onsdager 18:00-19:15', 75, 10, 2200.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '90 days') + INTERVAL '2 days')::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '90 days') + INTERVAL '51 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 7: Cancelled (signups become course_cancelled).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, total_weeks, start_date, end_date, instructor_id)
+    max_participants, price, total_weeks, start_date, end_date, instructor_name)
   VALUES (c_series_cancelled, v_seller_id, 'seed-aerial-intro',
     'Aerial Yoga Intro',
     'Akrobatisk yoga med silketøy. Avlyst pga. utstyrslevering.',
@@ -190,12 +200,12 @@ BEGIN
     'Studio 3, Parkveien 5, Oslo', 'Søndager 14:00-15:30', 90, 8, 2800.00, 6,
     (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '6 days')::DATE,
     (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '41 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 8: Series with drop-in tier available.
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, total_weeks, start_date, end_date, instructor_id)
+    max_participants, price, total_weeks, start_date, end_date, instructor_name)
   VALUES (c_series_dropin, v_seller_id, 'seed-lunsj-yoga',
     'Lunsj-yoga — Open Flow',
     'Energigivende lunsjpause. Kan kjøpes som kurs eller drop-in per gang.',
@@ -203,12 +213,12 @@ BEGIN
     'Studio 1, Parkveien 5, Oslo', 'Mandager 12:00-13:00', 60, 18, 1400.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '14 days'))::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '49 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 9: Expensive series with multiple ticket tiers.
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, total_weeks, start_date, end_date, instructor_id)
+    max_participants, price, total_weeks, start_date, end_date, instructor_name)
   VALUES (c_series_expensive, v_seller_id, 'seed-yogalarer-200',
     'Yogalærerutdanning 200t',
     'Yoga Alliance-sertifisert lærerutdanning. 10 helgesamlinger over 5 måneder.',
@@ -216,12 +226,12 @@ BEGIN
     'Storsalen, Kulturhuset, Youngs gate 6, Oslo', 'Lørdager 09:00-16:00', 420, 16, 18500.00, 10,
     (date_trunc('week', CURRENT_DATE + INTERVAL '21 days') + INTERVAL '5 days')::DATE,
     (date_trunc('week', CURRENT_DATE + INTERVAL '21 days') + INTERVAL '68 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 10: Payment exceptions (failed / pending / refunded mix).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, total_weeks, start_date, end_date, instructor_id)
+    max_participants, price, total_weeks, start_date, end_date, instructor_name)
   VALUES (c_series_payments, v_seller_id, 'seed-yin-meditasjon',
     'Yin & Meditasjon',
     'Stille praksis kombinert med guidet meditasjon.',
@@ -229,12 +239,12 @@ BEGIN
     'Studio 1, Parkveien 5, Oslo', 'Torsdager 19:30-20:45', 75, 8, 2400.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '3 days')::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '52 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 11: Online series — Zoom (no physical location).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, total_weeks, start_date, end_date, instructor_id)
+    max_participants, price, total_weeks, start_date, end_date, instructor_name)
   VALUES (c_series_online, v_seller_id, 'seed-kveldsmeditasjon',
     'Kveldsmeditasjon Online',
     'Guidet meditasjon hjemmefra. Zoom-lenke sendes på e-post etter påmelding.',
@@ -242,12 +252,12 @@ BEGIN
     NULL, 'Onsdager 20:00-20:30', 30, 50, 600.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '21 days') + INTERVAL '2 days')::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '21 days') + INTERVAL '51 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 12: Long-description course (tests collapse/expand).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, total_weeks, start_date, end_date, instructor_id)
+    max_participants, price, total_weeks, start_date, end_date, instructor_name)
   VALUES (c_series_long_desc, v_seller_id, 'seed-helhetlig-yoga',
     'Helhetlig Yoga — Kropp, Pust & Sinn',
     'Et kurs som utforsker yoga som helhetlig praksis. Vi dykker inn i et nytt tema hver uke: grounding og stabilitet, ryggradens bevegelighet, pust og pranayama, meditasjon, og hjemmepraksis.'
@@ -257,12 +267,12 @@ BEGIN
     'Studio 1, Parkveien 5, Oslo', 'Torsdager 10:00-11:30', 90, 10, 2200.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '28 days') + INTERVAL '3 days')::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '28 days') + INTERVAL '52 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 13: Single in-person event (workshop).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, start_date, end_date, instructor_id)
+    max_participants, price, start_date, end_date, instructor_name)
   VALUES (c_single_event, v_seller_id, 'seed-fullmane-workshop',
     'Full Moon Workshop',
     'En kveld dedikert til fullmånen. Sirkel, intensjonssetting, lett yoga og meditasjon.',
@@ -270,12 +280,12 @@ BEGIN
     'Friluftshuset, Frognerparken, Oslo', 'Lørdag 19:00-21:00', 120, 25, 450.00,
     (date_trunc('week', CURRENT_DATE) + INTERVAL '5 days')::DATE,
     (date_trunc('week', CURRENT_DATE) + INTERVAL '5 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 14: Single online event (webinar).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, start_date, end_date, instructor_id)
+    max_participants, price, start_date, end_date, instructor_name)
   VALUES (c_single_online, v_seller_id, 'seed-webinar-pust',
     'Pustewebinar — Introduksjon',
     'En times innføring i diafragmatisk pust og nervesystemets respons. Zoom.',
@@ -283,12 +293,12 @@ BEGIN
     NULL, 'Tirsdag 19:00-20:00', 60, 100, 250.00,
     (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '1 day')::DATE,
     (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '1 day')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- SCENARIO 15: Free single event (price 0).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
     format, delivery_mode, status, location, time_schedule, duration,
-    max_participants, price, start_date, end_date, instructor_id)
+    max_participants, price, start_date, end_date, instructor_name)
   VALUES (c_single_free, v_seller_id, 'seed-gratis-provetime',
     'Gratis Prøvetime',
     'Kom og prøv! Helt gratis åpen klasse for å bli kjent med studioet og lærerne.',
@@ -296,7 +306,7 @@ BEGIN
     'Studio 1, Parkveien 5, Oslo', 'Søndag 10:00-11:00', 60, 20, 0,
     (date_trunc('week', CURRENT_DATE) + INTERVAL '6 days')::DATE,
     (date_trunc('week', CURRENT_DATE) + INTERVAL '6 days')::DATE,
-    v_user_id);
+    'Kristoffer');
 
   -- ============================================
   -- 2. COURSE SESSIONS (one row per occurrence)
@@ -581,6 +591,19 @@ BEGIN
     (v_seller_id, c_single_free, 'Selma Bakken',  'selma.bakken@example.com',  'confirmed', 'paid', 0, t_free_std, 'Gratis', 'standard', 'package'),
     (v_seller_id, c_single_free, 'Noah Holmen',   'noah.holmen@example.com',   'confirmed', 'paid', 0, t_free_std, 'Gratis', 'standard', 'package'),
     (v_seller_id, c_single_free, 'Alma Solheim',  'alma.solheim@example.com',  'confirmed', 'paid', 0, t_free_std, 'Gratis', 'standard', 'package');
+
+  -- Instructor variety — the storefront's instructor filter only renders
+  -- when the studio has 2+ distinct instructor names.
+  UPDATE public.courses SET instructor_name = 'Maren Berg'
+  WHERE seller_id = v_seller_id
+    AND slug IN ('seed-hatha-onsdager', 'seed-yin-fredager', 'seed-kveldsmeditasjon');
+  UPDATE public.courses SET instructor_name = 'Silje Rud'
+  WHERE seller_id = v_seller_id
+    AND slug IN ('seed-yoga-nidra', 'seed-webinar-pust');
+
+  ALTER TABLE public.courses ENABLE TRIGGER enforce_course_publish_requires_payment;
+  ALTER TABLE public.courses ENABLE TRIGGER courses_create_default_ticket;
+  ALTER TABLE public.course_signup_packages ENABLE TRIGGER enforce_package_price_requires_payment;
 
   -- ============================================
   -- DONE

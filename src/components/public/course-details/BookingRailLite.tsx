@@ -189,7 +189,7 @@ function TicketTileButton({
       onClick={onSelect}
       className={cn(
         'ios-ease w-full rounded-xl border px-3.5 py-2.5 text-left',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         selected
           ? 'border-primary bg-selection-light'
           : 'border-border hover:border-foreground-muted hover:bg-muted/40',

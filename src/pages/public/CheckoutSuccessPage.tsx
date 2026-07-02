@@ -210,14 +210,12 @@ const CheckoutSuccessPage = () => {
   if (error) {
     return (
       <div className="min-h-screen w-full bg-background">
-        <header className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-surface-elevated backdrop-blur-md">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <Link to="/" className="flex items-center">
-              <span className="text-base font-medium text-foreground">Openspot</span>
-            </Link>
-          </div>
+        <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
+          <Link to={orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/'} className="flex select-none items-center">
+            <span className="text-base font-medium text-foreground">Openspot</span>
+          </Link>
         </header>
-        <div className="pt-16">
+        <div>
           <PageState variant="server-error" description={error} />
         </div>
       </div>
@@ -311,7 +309,7 @@ const CheckoutSuccessPage = () => {
             Vi fant ingen bekreftelse her – sjekk e-posten din for kvittering, eller kontakt oss på{' '}
             <a
               href={`mailto:${SUPPORT_EMAIL}`}
-              className="text-foreground underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground"
+              className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
             >
               {SUPPORT_EMAIL}
             </a>
@@ -364,8 +362,8 @@ const CheckoutSuccessPage = () => {
                   {signup && (
                     <>
                       {/* Course pane — image + title + date/time. */}
-                      <div className="mt-8 flex items-center gap-4 rounded-lg border border-border bg-background p-3.5">
-                        <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted">
+                      <div className="mt-8 flex items-center gap-4 rounded-2xl border border-border bg-surface shadow-soft p-4">
+                        <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
                           {courseImage ? (
                             <img
                               src={courseImage}
@@ -423,7 +421,7 @@ const CheckoutSuccessPage = () => {
                     Trenger du hjelp? Send en e-post til{' '}
                     <a
                       href={`mailto:${SUPPORT_EMAIL}`}
-                      className="text-foreground underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground"
+                      className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
                     >
                       {SUPPORT_EMAIL}
                     </a>

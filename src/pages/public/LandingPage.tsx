@@ -544,7 +544,7 @@ function PricingTier({ tier }: { tier: Tier }) {
     <motion.div
       variants={scrollVariants}
       transition={scrollTransition}
-      className="flex flex-col rounded-xl border border-border bg-background p-8"
+      className="flex flex-col rounded-xl border border-border bg-surface p-8"
     >
       <div className="mb-6">
         <h3 className="inline-flex items-center rounded-full bg-muted px-3 py-0.5 text-base font-medium text-foreground">
@@ -581,7 +581,8 @@ function PricingTier({ tier }: { tier: Tier }) {
       <Button
         asChild
         variant={tier.recommended ? 'default' : 'secondary'}
-        className="mt-auto h-12 w-full"
+        size="cta"
+        className="mt-auto w-full"
       >
         <a href={tier.cta.to}>{tier.cta.label}</a>
       </Button>

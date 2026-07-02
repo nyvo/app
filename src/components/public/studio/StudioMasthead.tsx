@@ -1,5 +1,4 @@
 import { ArrowUpRight, Building, MapPin } from '@/lib/icons';
-import { cn } from '@/lib/utils';
 import type { PublicSeller } from '@/services/sellers';
 import { directionsUrl, type StudioLocation } from './studioFacts';
 
@@ -16,10 +15,7 @@ interface StudioMastheadProps {
  * name) with one line: where the studio is, with a directions link.
  */
 export function StudioMasthead({ organization, location }: StudioMastheadProps) {
-  const hasLogoOverride = organization.slug === 'inspire-yogastudio';
-  const logoUrl = hasLogoOverride
-    ? '/68bc6f41587d4e422ca9562d_Logo - black.svg'
-    : organization.logo_url;
+  const logoUrl = organization.logo_url;
 
   return (
     <header className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14">
@@ -29,7 +25,7 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
             <img
               src={logoUrl}
               alt={`${organization.name} logo`}
-              className={cn('size-full', hasLogoOverride ? 'object-contain p-3' : 'object-cover')}
+              className="size-full object-cover"
             />
           </div>
         ) : (
