@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { friendlyError } from '@/lib/error-messages'
 
 interface BillingSessionResult {
   url: string
@@ -14,14 +15,17 @@ async function invokeBillingFunction(
     const { data, error } = await supabase.functions.invoke(functionName, {
       body: { sellerId, ...extraBody },
     })
-    if (error) return { url: null, error: new Error(error.message || fallbackMessage) }
-    if (data?.error) return { url: null, error: new Error(data.error) }
+    // Server errors can be raw English strings (e.g. "Stripe price is not
+    // configured"). Route them through friendlyError so anything unmapped
+    // falls back to the Norwegian message instead of leaking to the toast.
+    if (error) return { url: null, error: new Error(friendlyError(error, fallbackMessage)) }
+    if (data?.error) return { url: null, error: new Error(friendlyError(data.error, fallbackMessage)) }
     const result = data as BillingSessionResult
     return { url: result.url, error: null }
   } catch (err) {
     return {
       url: null,
-      error: err instanceof Error ? err : new Error(fallbackMessage),
+      error: new Error(friendlyError(err, fallbackMessage)),
     }
   }
 }

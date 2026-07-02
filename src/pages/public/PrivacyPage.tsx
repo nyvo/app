@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 
 const PrivacyPage = () => {
+  useDocumentTitle('Personvern');
   return (
     <div className="min-h-screen w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">

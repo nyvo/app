@@ -186,12 +186,14 @@ export const TeacherSidebar = () => {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to={routes.settingsBilling}>
-                    <HugeiconsIcon icon={CreditCardIcon} size={16} strokeWidth={1.75} />
-                    Abonnement
-                  </Link>
-                </DropdownMenuItem>
+                {isSeller && (
+                  <DropdownMenuItem asChild>
+                    <Link to={routes.settingsBilling}>
+                      <HugeiconsIcon icon={CreditCardIcon} size={16} strokeWidth={1.75} />
+                      Abonnement
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                   <Link to={routes.settingsProfile}>
                     <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={1.75} />

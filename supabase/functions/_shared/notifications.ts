@@ -77,30 +77,6 @@ export type NotificationInput =
       bankSuffix?: string | null
       triggeredBy?: string | null
     }
-  | {
-      type: 'dintero_seller.action_required'
-      sellerId: string
-      triggeredBy?: string | null
-    }
-  | {
-      type: 'dintero_seller.approved'
-      sellerId: string
-      triggeredBy?: string | null
-    }
-  | {
-      type: 'dintero_seller.rejected'
-      sellerId: string
-      triggeredBy?: string | null
-    }
-  | {
-      type: 'team.invite_accepted'
-      sellerId: string
-      actorId: string
-      teamMemberId: string
-      memberName: string
-      role: string
-      triggeredBy?: string | null
-    }
 
 // ---------- Rendered row shape (recipient_id filled per fan-out) ----------
 
@@ -117,10 +93,6 @@ interface RenderedNotification {
 }
 
 // ---------- Render ----------
-
-function todayKey(): string {
-  return new Date().toISOString().slice(0, 10)
-}
 
 function renderNotification(input: NotificationInput): RenderedNotification {
   const base = {
@@ -200,59 +172,6 @@ function renderNotification(input: NotificationInput): RenderedNotification {
           settlement_id: input.settlementId,
           amount: input.amount,
           bank_suffix: input.bankSuffix ?? null,
-        },
-      }
-
-    case 'dintero_seller.action_required':
-      return {
-        ...base,
-        type: input.type,
-        action_required: true,
-        // Daily key — if still unresolved tomorrow, we re-surface as a fresh
-        // row. Keeps the amber dot from staying stale for weeks.
-        dedupe_key: `dintero_seller.action_required:${input.sellerId}:${todayKey()}`,
-        title: 'Dintero trenger mer informasjon',
-        body: 'Last opp manglende dokumenter',
-        action_url: '/settings/payouts',
-        metadata: { seller_id: input.sellerId },
-      }
-
-    case 'dintero_seller.approved':
-      return {
-        ...base,
-        type: input.type,
-        action_required: false,
-        dedupe_key: `dintero_seller.approved:${input.sellerId}`,
-        title: 'Dintero-kontoen er godkjent',
-        body: 'Du kan nå motta betalinger',
-        action_url: '/settings/payouts',
-        metadata: { seller_id: input.sellerId },
-      }
-
-    case 'dintero_seller.rejected':
-      return {
-        ...base,
-        type: input.type,
-        action_required: true,
-        dedupe_key: `dintero_seller.rejected:${input.sellerId}`,
-        title: 'Dintero-kontoen ble avvist',
-        body: 'Sjekk detaljer og prøv igjen',
-        action_url: '/settings/payouts',
-        metadata: { seller_id: input.sellerId },
-      }
-
-    case 'team.invite_accepted':
-      return {
-        ...base,
-        type: input.type,
-        action_required: false,
-        dedupe_key: `team.invite_accepted:${input.teamMemberId}:${input.sellerId}`,
-        title: 'Nytt teammedlem',
-        body: `${input.memberName} · ${input.role}`,
-        action_url: '/studio',
-        metadata: {
-          team_member_id: input.teamMemberId,
-          role: input.role,
         },
       }
   }

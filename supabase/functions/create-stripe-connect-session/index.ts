@@ -74,38 +74,38 @@ Deno.serve(async (req: Request) => {
     } = body
 
     if (!courseId || !organizationSlug || !ticketTypeId || !customerEmail || !customerName) {
-      return errorResponse('Missing required fields', 400, req)
+      return errorResponse('Noen felt mangler.', 400, req)
     }
 
     // Validate UUID-shaped inputs before they flow into .eq() queries.
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!uuidRegex.test(courseId)) {
-      return errorResponse('Invalid courseId', 400, req)
+      return errorResponse('Ugyldig kurs-id.', 400, req)
     }
     if (!uuidRegex.test(ticketTypeId)) {
-      return errorResponse('Invalid ticketTypeId', 400, req)
+      return errorResponse('Ugyldig billettype.', 400, req)
     }
     if (sessionId !== undefined && sessionId !== null && !uuidRegex.test(sessionId)) {
-      return errorResponse('Invalid sessionId', 400, req)
+      return errorResponse('Ugyldig time-id.', 400, req)
     }
 
     // Length caps on user-provided strings.
     if (customerName.length > 200) {
-      return errorResponse('customerName exceeds 200 characters', 400, req)
+      return errorResponse('Navnet er for langt.', 400, req)
     }
     if (customerPhone && customerPhone.length > 30) {
-      return errorResponse('customerPhone exceeds 30 characters', 400, req)
+      return errorResponse('Telefonnummeret er for langt.', 400, req)
     }
     if (customerNote && customerNote.length > 1000) {
-      return errorResponse('customerNote exceeds 1000 characters', 400, req)
+      return errorResponse('Meldingen er for lang.', 400, req)
     }
     if (!/^[a-z0-9-]{1,64}$/.test(organizationSlug)) {
-      return errorResponse('Invalid organizationSlug', 400, req)
+      return errorResponse('Ugyldig lenke.', 400, req)
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(customerEmail)) {
-      return errorResponse('Invalid email format', 400, req)
+      return errorResponse('Ugyldig e-postadresse.', 400, req)
     }
 
     // Abuse protection: per-IP + per-email fixed-window rate limit. Each call creates a
@@ -144,7 +144,7 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (courseError || !course) {
-      return errorResponse('Course not found', 404, req)
+      return errorResponse('Fant ikke kurset.', 404, req)
     }
 
     const seller = course.seller as unknown as {
@@ -158,11 +158,11 @@ Deno.serve(async (req: Request) => {
     } | null
 
     if (!seller || seller.slug !== organizationSlug) {
-      return errorResponse('Course not found for this seller', 404, req)
+      return errorResponse('Fant ikke kurset hos dette studioet.', 404, req)
     }
 
     if (course.status === 'draft' || course.status === 'cancelled') {
-      return errorResponse('Course is not available for booking', 400, req)
+      return errorResponse('Kurset er ikke åpent for påmelding.', 400, req)
     }
 
     // Reject checkout for a course whose last session is already in the past.
@@ -179,7 +179,7 @@ Deno.serve(async (req: Request) => {
 
     // Seller must have completed Stripe Connect onboarding (charges_enabled).
     if (!seller.stripe_account_id || !seller.stripe_onboarding_complete) {
-      return errorResponse('Payment is not set up for this seller', 400, req)
+      return errorResponse('Betaling er ikke satt opp for dette studioet.', 400, req)
     }
     // Capture into a non-null const here, where the guard above has narrowed the type. The
     // narrowing is otherwise lost across the many awaits before createPaymentIntent is called.
@@ -210,7 +210,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (typedTier.price <= 0) {
-      return errorResponse('Course has no valid price', 400, req)
+      return errorResponse('Kurset mangler gyldig pris.', 400, req)
     }
 
     const isDropIn = typedTier.ticket_kind === 'drop_in'

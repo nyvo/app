@@ -1,3 +1,5 @@
+> Utdatert (juli 2026): Dintero er erstattet av Stripe Connect — se git-historikk.
+
 # Ship Monday — 2026-04-27
 
 **Today:** 2026-04-24 (Fri). 3 days. Fri–Sat = remaining systems + sandbox tests. Sun = design/visual/responsiveness/skeletons.

@@ -10,6 +10,7 @@ import { StudioMasthead } from '@/components/public/studio/StudioMasthead';
 import { StudioDayList } from '@/components/public/studio/StudioDayList';
 import { StudioFilterPill } from '@/components/public/studio/StudioFilterPill';
 import { deriveStudioFacts, type StudioLocation } from '@/components/public/studio/studioFacts';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 
 type ErrorKind = 'not-found' | 'load-failed';
 type CourseTypeFilter = 'all' | 'series' | 'workshop' | 'drop-in' | 'online';
@@ -44,6 +45,8 @@ const PublicCoursesPage = () => {
   const [errorKind, setErrorKind] = useState<ErrorKind | null>(null);
   const [typeFilter, setTypeFilter] = useState<CourseTypeFilter>('all');
   const [instructorFilter, setInstructorFilter] = useState<string>('all');
+
+  useDocumentTitle(organization?.name);
 
   useEffect(() => {
     async function loadData() {

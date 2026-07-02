@@ -12,6 +12,7 @@ import { AUTH_ROUTES } from '@/lib/auth-routes';
 import { formatKroner } from '@/lib/utils';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { toLocalDate } from '@/utils/dateUtils';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 
 const WEEKDAYS = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
 const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
@@ -60,6 +61,7 @@ interface SignupDetails {
 }
 
 const CheckoutSuccessPage = () => {
+  useDocumentTitle('Kvittering');
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const orgSlugFromUrl = searchParams.get('org');

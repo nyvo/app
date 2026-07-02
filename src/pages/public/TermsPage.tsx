@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { COMPANY } from '@/lib/company';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 
 const TermsPage = () => {
+  useDocumentTitle('Vilkår');
   return (
     <div className="min-h-screen w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">

@@ -21,6 +21,7 @@ import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { PasswordRules, isPasswordValid } from '@/components/auth/PasswordRules'
 import { supabase } from '@/lib/supabase'
 import { isValidEmail } from '@/lib/utils'
+import { useDocumentTitle } from '@/hooks/use-document-title'
 
 const ROUTES = AUTH_ROUTES
 
@@ -38,6 +39,7 @@ const ROUTES = AUTH_ROUTES
  * "Bekreft e-posten din", code-login as "Logg inn med kode".
  */
 const AuthPage = () => {
+  useDocumentTitle('Logg inn')
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()

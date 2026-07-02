@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Grain } from '@/components/public/Grain';
 import { formatKroner } from '@/lib/utils';
 import { COMPANY } from '@/lib/company';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 import {
   scrollVariants,
   scrollStaggerVariants,
@@ -37,6 +38,7 @@ function ProductFrame({
 }
 
 const LandingPage = () => {
+  useDocumentTitle()
   return (
     <div className="overflow-x-hidden bg-background text-foreground antialiased">
       {/* Nav */}
