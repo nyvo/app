@@ -19,6 +19,7 @@ import { fetchPublicCourseBySlug, resolveCourseImage, singleDayCount, type Publi
 import { createStripeSession } from '@/services/checkout';
 import { createFreeSignup, checkCourseAvailability } from '@/services/signups';
 import { supabase } from '@/lib/supabase';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 import type { AvailableTicketType } from '@/types/database';
 
 interface FormState {
@@ -36,6 +37,7 @@ interface FormState {
  * "Endre" destroys the existing session and re-creates with the new one.
  */
 const CheckoutPage = () => {
+  useDocumentTitle('Påmelding');
   const { slug, courseSlug } = useParams<{ slug: string; courseSlug: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

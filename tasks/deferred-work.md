@@ -1,3 +1,5 @@
+> Utdatert (juli 2026): Dintero er erstattet av Stripe Connect — se git-historikk.
+
 # Deferred Work
 
 Items explicitly parked during the public-booking redesign (April 2026). Each one has a reason it's out of v1 scope and a rough shape of what it'd take to pick up later.

@@ -19,6 +19,7 @@ import { PageState } from '@/components/page-state/page-state';
 import { resolveCourseImage, fetchPublicCourseBySlug, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug } from '@/services/sellers';
 import { supabase } from '@/lib/supabase';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 import type { CourseSession } from '@/types/database';
 
 interface DetailNavState {
@@ -36,6 +37,8 @@ export default function PublicCourseDetailPage() {
   const [sessions, setSessions] = useState<CourseSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useDocumentTitle(course?.title);
 
   useEffect(() => {
     let active = true;
