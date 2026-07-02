@@ -229,6 +229,33 @@ export async function listLiveSubscriptions(customerId: string): Promise<StripeS
   return (list.data ?? []).filter((sub) => LIVE_SUBSCRIPTION_STATUSES.has(sub.status))
 }
 
+export interface StripeSubscriptionItemDetail {
+  id: string
+  price: { id: string; recurring?: { interval?: string } }
+}
+
+/** Full subscription detail (with price/interval per item) — used when repricing a plan swap. */
+export async function retrieveSubscription(
+  subscriptionId: string,
+): Promise<StripeSubscription & { items?: { data?: StripeSubscriptionItemDetail[] } }> {
+  return stripeRequest(`/subscriptions/${subscriptionId}`, {}, { method: 'GET' })
+}
+
+/**
+ * Swap a subscription item onto a new price. `proration_behavior: 'none'` means the new
+ * price applies from the next invoice rather than generating an immediate proration charge.
+ */
+export async function updateSubscriptionItemPrice(params: {
+  subscriptionId: string
+  itemId: string
+  priceId: string
+}): Promise<{ id: string }> {
+  return stripeRequest<{ id: string }>(`/subscriptions/${params.subscriptionId}`, {
+    items: [{ id: params.itemId, price: params.priceId }],
+    proration_behavior: 'none',
+  })
+}
+
 export async function verifyStripeSignature(params: {
   payload: string
   signatureHeader: string | null

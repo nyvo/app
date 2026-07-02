@@ -29,7 +29,7 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
 interface SessionRequestBody {
   courseId: string
-  /** Team slug from the public booking URL — looked up via teams.owner_seller_id. */
+  /** Seller slug from the public booking URL. */
   organizationSlug: string
   ticketTypeId: string
   customerEmail: string
@@ -124,7 +124,7 @@ Deno.serve(async (req: Request) => {
       return errorResponse('For mange forsøk. Prøv igjen om litt.', 429, req)
     }
 
-    // Load course + seller (slug lives on the seller's owning team).
+    // Load course + seller (slug lives directly on the seller).
     const { data: course, error: courseError } = await supabase
       .from('courses')
       .select(`
@@ -133,11 +133,11 @@ Deno.serve(async (req: Request) => {
         seller:sellers(
           id,
           name,
+          slug,
           stripe_account_id,
           stripe_onboarding_complete,
           subscription_plan,
-          subscription_status,
-          team:teams!owner_seller_id(slug)
+          subscription_status
         )
       `)
       .eq('id', courseId)
@@ -150,14 +150,14 @@ Deno.serve(async (req: Request) => {
     const seller = course.seller as unknown as {
       id: string
       name: string
+      slug: string | null
       stripe_account_id: string | null
       stripe_onboarding_complete: boolean
       subscription_plan: string | null
       subscription_status: string | null
-      team: { slug: string } | null
     } | null
 
-    if (!seller || seller.team?.slug !== organizationSlug) {
+    if (!seller || seller.slug !== organizationSlug) {
       return errorResponse('Course not found for this seller', 404, req)
     }
 

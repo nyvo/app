@@ -11,9 +11,8 @@ interface PublicCourseInstructor {
 
 interface PublicCourseSeller {
   name: string
-  // slug + default_course_image_url now live on the team owned by the seller —
-  // populated via a follow-up team query and merged into this shape on the
-  // returned PublicCourseWithDetails.
+  // slug + default_course_image_url live directly on the seller row and are
+  // selected via the seller embed on the course queries.
   slug: string
   logo_url: string | null
   /** Gates the public checkout: paid courses are bookable once the seller has
@@ -26,6 +25,8 @@ interface SellerJoinRow {
   id: string
   name: string
   logo_url: string | null
+  slug: string
+  default_course_image_url: string | null
   stripe_onboarding_complete: boolean
 }
 
@@ -56,13 +57,11 @@ interface CourseQueryResult {
 }
 
 interface StorefrontSellerScopeRow {
-  team_id: string
   owner_seller_id: string
   seller_id: string
 }
 
 interface StorefrontSellerScope {
-  teamId: string
   ownerSellerId: string
   sellerIds: string[]
 }
@@ -169,51 +168,19 @@ export function singleDayCount(
 }
 
 /**
- * Fetch the team-owned slug + default_course_image_url for a set of seller ids
- * and return as a map keyed by seller_id. Each seller has at most one team
- * (teams.owner_seller_id is the FK).
- */
-async function fetchTeamMetaBySellerIds(
-  sellerIds: string[],
-): Promise<Record<string, { slug: string; default_course_image_url: string | null }>> {
-  const result: Record<string, { slug: string; default_course_image_url: string | null }> = {}
-  if (sellerIds.length === 0) return result
-
-  const { data, error } = await supabase
-    .from('teams')
-    .select('owner_seller_id, slug, default_course_image_url')
-    .in('owner_seller_id', sellerIds)
-
-  if (error) {
-    logger.error('Error fetching team meta:', error)
-    return result
-  }
-
-  for (const row of (data ?? []) as { owner_seller_id: string; slug: string; default_course_image_url: string | null }[]) {
-    if (!(row.owner_seller_id in result)) {
-      result[row.owner_seller_id] = {
-        slug: row.slug,
-        default_course_image_url: row.default_course_image_url,
-      }
-    }
-  }
-  return result
-}
-
-/**
  * Public storefront scope. The RPC intentionally exposes only seller IDs, not
- * team_affiliations rows. A storefront includes its owner seller plus active
+ * seller_affiliations rows. A storefront includes its owner seller plus active
  * collaborator sellers.
  */
 async function fetchStorefrontSellerScope(
-  teamSlug: string,
+  storefrontSlug: string,
 ): Promise<{ data: StorefrontSellerScope | null; error: Error | null }> {
   const { data, error } = await (supabase.rpc as unknown as (
     fn: string,
-    args: { p_team_slug: string },
+    args: { p_slug: string },
   ) => Promise<{ data: StorefrontSellerScopeRow[] | null; error: Error | null }>)(
-    'public_storefront_seller_ids',
-    { p_team_slug: teamSlug },
+    'public_storefront_scope',
+    { p_slug: storefrontSlug },
   )
 
   if (error) {
@@ -229,7 +196,6 @@ async function fetchStorefrontSellerScope(
   const first = rows[0]
   return {
     data: {
-      teamId: first.team_id,
       ownerSellerId: first.owner_seller_id,
       sellerIds: Array.from(new Set(rows.map((row) => row.seller_id))),
     },
@@ -301,7 +267,7 @@ export async function fetchPublicCourses(
       instructor_name,
       accepts_late_signups,
       seller_id,
-      seller:sellers(id, name, logo_url, stripe_onboarding_complete)
+      seller:sellers(id, name, logo_url, slug, default_course_image_url, stripe_onboarding_complete)
     `, { count: filters?.limit ? 'exact' : undefined })
     .in('status', ['active', 'upcoming', 'cancelled'])
     .order('start_date', { ascending: true })
@@ -353,15 +319,10 @@ export async function fetchPublicCourses(
   const courses = coursesData as unknown as CourseQueryResult[]
   const courseIds = courses.map(c => c.id)
 
-  // Resolve seller → team meta (slug + default_course_image_url) for all the
-  // sellers in the result.
-  const uniqSellerIds = Array.from(new Set(courses.map(c => c.seller_id)))
-  const teamMetaPromise = fetchTeamMetaBySellerIds(uniqSellerIds)
-
   // Batch fetch signup counts (aggregate RPC) and sessions in parallel.
   // RPC returns only (course_id, confirmed_count) — no row data exposed to anon.
   // Cast: generated types regenerated after the migration is deployed.
-  const [signupsResult, sessionsResult, dropInTiersResult, teamMetaMap] = await Promise.all([
+  const [signupsResult, sessionsResult, dropInTiersResult] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase.rpc as any)('public_signup_counts', { p_course_ids: courseIds }),
     supabase
@@ -376,7 +337,6 @@ export async function fetchPublicCourses(
       .in('course_id', courseIds)
       .eq('ticket_kind', 'drop_in')
       .eq('is_active', true),
-    teamMetaPromise,
   ])
 
   if (signupsResult.error) {
@@ -445,7 +405,6 @@ export async function fetchPublicCourses(
     const confirmedCount = signupCountMap[course.id] || 0
     const spotsAvailable = Math.max(0, maxParticipants - confirmedCount)
     const instructors = flattenInstructors(course.id, course.instructor_name)
-    const teamMeta = teamMetaMap[course.seller_id]
     // Drop-in availability mirrors the RPC's gating: there must be an active
     // drop-in tier row (the teacher's policy) AND the series must be
     // started + have spots open. Price is the explicit tier price set by the teacher.
@@ -458,10 +417,10 @@ export async function fetchPublicCourses(
     const sellerEnriched: PublicCourseSeller | null = course.seller
       ? {
           name: course.seller.name,
-          slug: teamMeta?.slug ?? '',
+          slug: course.seller.slug ?? '',
           logo_url: course.seller.logo_url,
           stripe_onboarding_complete: course.seller.stripe_onboarding_complete,
-          default_course_image_url: teamMeta?.default_course_image_url ?? null,
+          default_course_image_url: course.seller.default_course_image_url ?? null,
         }
       : null
 
@@ -540,7 +499,7 @@ export async function fetchPublicCourseBySlug(
       instructor_name,
       accepts_late_signups,
       seller_id,
-      seller:sellers(id, name, logo_url, stripe_onboarding_complete)
+      seller:sellers(id, name, logo_url, slug, default_course_image_url, stripe_onboarding_complete)
     `)
     .eq('slug', courseSlug)
     .neq('status', 'cancelled')
@@ -567,8 +526,8 @@ export async function fetchPublicCourseBySlug(
     return { data: null, error: new Error('Fant ikke kurset') }
   }
 
-  // Get signup count, drop-in tier, and team meta in parallel.
-  const [countResult, dropInResult, teamMetaMap] = await Promise.all([
+  // Get signup count and drop-in tier in parallel.
+  const [countResult, dropInResult] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase.rpc as any)('public_signup_counts', { p_course_ids: [typedCourse.id] }),
     supabase
@@ -578,7 +537,6 @@ export async function fetchPublicCourseBySlug(
       .eq('ticket_kind', 'drop_in')
       .eq('is_active', true)
       .maybeSingle(),
-    fetchTeamMetaBySellerIds([typedCourse.seller_id]),
   ])
 
   if (countResult.error) {
@@ -601,15 +559,14 @@ export async function fetchPublicCourseBySlug(
   const dropInPrice = dropInActive ? Number(dropInTier.price) : null
 
   const instructors = flattenInstructors(typedCourse.id, typedCourse.instructor_name)
-  const teamMeta = teamMetaMap[typedCourse.seller_id]
 
   const sellerEnriched: PublicCourseSeller | null = typedCourse.seller
     ? {
         name: typedCourse.seller.name,
-        slug: teamMeta?.slug ?? '',
+        slug: typedCourse.seller.slug ?? '',
         logo_url: typedCourse.seller.logo_url,
         stripe_onboarding_complete: typedCourse.seller.stripe_onboarding_complete,
-        default_course_image_url: teamMeta?.default_course_image_url ?? null,
+        default_course_image_url: typedCourse.seller.default_course_image_url ?? null,
       }
     : null
 

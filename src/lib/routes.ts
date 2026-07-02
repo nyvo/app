@@ -8,7 +8,7 @@
  *     full path string. Use them in `<Link to={...}>` and `navigate(...)`.
  *   - When you add a new top-level route, also add the slug to
  *     `RESERVED_SLUGS` in reservedSlugs.ts so it can't collide with a
- *     team's public slug.
+ *     seller's public storefront slug.
  *
  * NAMING:
  *   English URLs, Norwegian UI copy. Same convention as Time2Book and
@@ -49,8 +49,8 @@ export const routes = {
   settingsBilling: '/settings/billing',
   settingsPayouts: '/settings/payouts',
 
-  // ─── Public team / course pages (flat slug at root) ───────────────────
-  publicTeam: (teamSlug: string) => `/${teamSlug}`,
-  publicCourse: (teamSlug: string, courseSlug: string) =>
-    `/${teamSlug}/${courseSlug}`,
+  // ─── Public storefront / course pages (flat slug at root) ─────────────
+  publicTeam: (storefrontSlug: string) => `/${storefrontSlug}`,
+  publicCourse: (storefrontSlug: string, courseSlug: string) =>
+    `/${storefrontSlug}/${courseSlug}`,
 } as const;

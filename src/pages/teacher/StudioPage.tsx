@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Check, ExternalLink, Plus, X } from '@/lib/icons';
@@ -20,17 +20,21 @@ import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSec
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/use-locations';
 import { friendlyError } from '@/lib/error-messages';
-import { logger } from '@/lib/logger';
+import { extractEdgeError } from '@/lib/edge-errors';
+import { supabase } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 import { createLocation, updateLocation } from '@/services/locations';
+import { fetchGuestHost, type GuestHost } from '@/services/affiliations';
 import { parseRooms, type Room } from '@/lib/rooms';
 import { runWithUndo } from '@/lib/undo';
-import { updateSeller } from '@/services/sellers';
-import { renameTeamSlug, updateTeam } from '@/services/teams';
+import { renameSellerSlug, updateSeller } from '@/services/sellers';
 import { deleteSellerLogo, uploadSellerLogo } from '@/services/storage';
-import type { Seller, Team } from '@/types/database';
+import type { Seller } from '@/types/database';
+
+type HostStudio = GuestHost['host'];
 
 const StudioPage = () => {
-  const { currentTeam, currentSeller, refreshSellers } = useAuth();
+  const { currentSeller, refreshSellers } = useAuth();
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
@@ -40,17 +44,16 @@ const StudioPage = () => {
         narrow="centered"
         title="Studio"
         action={
-          currentTeam?.slug ? (
-            <Button onClick={() => window.open(`/${currentTeam.slug}`, '_blank')}>
+          currentSeller?.slug ? (
+            <Button onClick={() => window.open(`/${currentSeller.slug}`, '_blank')}>
               <ExternalLink className="size-4" />
               Se siden din
             </Button>
           ) : null
         }
       >
-        {currentTeam && currentSeller ? (
+        {currentSeller ? (
           <StudioPublicSettings
-            team={currentTeam}
             seller={currentSeller}
             onSaved={refreshSellers}
           />
@@ -65,23 +68,42 @@ const StudioPage = () => {
 };
 
 function StudioPublicSettings({
-  team,
   seller,
   onSaved,
 }: {
-  team: Team;
   seller: Seller;
   onSaved: () => Promise<void> | void;
 }) {
   const { locations, isLoading: loadingLocations, refetch } = useLocations(seller.id);
   const primaryLocation = locations[0] ?? null;
 
+  const isStudio = seller.operating_model === 'studio';
+
+  // The host storefront this seller's courses show on, if any. Loaded once here
+  // because it gates the Samarbeid tab's visibility (a solo seller only sees the
+  // tab while an affiliation is active). `undefined` while the fetch is in
+  // flight — the tab simply appears when it lands.
+  const [host, setHost] = useState<HostStudio | null | undefined>(undefined);
+  const loadHost = useCallback(async () => {
+    const { data, error } = await fetchGuestHost(seller.id);
+    setHost(error ? null : (data?.host ?? null));
+  }, [seller.id]);
+  useEffect(() => { void loadHost(); }, [loadHost]);
+
+  // Studios keep the tab always; solo sellers only while an affiliation exists.
+  const showSamarbeid = isStudio || host != null;
+
   const { hash } = useLocation();
   const [tab, setTab] = useState<'profil' | 'sted' | 'samarbeid'>('profil');
-  // Joining a studio lands at /studio#samarbeid — open that tab directly.
+  // Joining a studio lands at /studio#samarbeid — open that tab once it renders.
   useEffect(() => {
-    if (hash === '#samarbeid') setTab('samarbeid');
-  }, [hash]);
+    if (hash === '#samarbeid' && showSamarbeid) setTab('samarbeid');
+  }, [hash, showSamarbeid]);
+  // The tab can vanish (solo revoke, or a studio switching to solo with no host)
+  // — don't strand the user on a hidden panel.
+  useEffect(() => {
+    if (!showSamarbeid && tab === 'samarbeid') setTab('profil');
+  }, [showSamarbeid, tab]);
 
   const [savingPhoto, setSavingPhoto] = useState(false);
   const [logoUrl, setLogoUrl] = useState(seller.logo_url);
@@ -95,11 +117,11 @@ function StudioPublicSettings({
     setName(seller.name);
   }, [seller.name]);
 
-  const [slug, setSlug] = useState(team.slug);
+  const [slug, setSlug] = useState(seller.slug);
   const [slugError, setSlugError] = useState<string | null>(null);
   useEffect(() => {
-    setSlug(team.slug);
-  }, [team.slug]);
+    setSlug(seller.slug);
+  }, [seller.slug]);
 
   const [placeName, setPlaceName] = useState('');
   const [address, setAddress] = useState('');
@@ -140,12 +162,12 @@ function StudioPublicSettings({
         address.trim() !== (primaryLocation.address ?? '')
       : placeName.trim() !== '' || address.trim() !== '';
 
-    return name.trim() !== seller.name || slug.trim() !== team.slug || locationDirty;
-  }, [address, name, placeName, primaryLocation, seller.name, slug, team.slug]);
+    return name.trim() !== seller.name || slug.trim() !== seller.slug || locationDirty;
+  }, [address, name, placeName, primaryLocation, seller.name, slug, seller.slug]);
 
   const handleCancel = () => {
     setName(seller.name);
-    setSlug(team.slug);
+    setSlug(seller.slug);
     setNameError(null);
     setSlugError(null);
     setPlaceName(primaryLocation?.name ?? '');
@@ -306,14 +328,11 @@ function StudioPublicSettings({
           setNameError(friendlyError(error, 'Kunne ikke lagre navnet.'));
           return;
         }
-        void updateTeam(team.id, { name: trimmedName }).catch((err) => {
-          logger.warn('Failed to mirror seller name onto team row:', err);
-        });
         setName(trimmedName);
       }
 
-      if (trimmedSlug !== team.slug) {
-        const { slug: nextSlug, error } = await renameTeamSlug(team.id, trimmedSlug);
+      if (trimmedSlug !== seller.slug) {
+        const { slug: nextSlug, error } = await renameSellerSlug(seller.id, trimmedSlug);
         if (error || !nextSlug) {
           const msg = error?.message ?? '';
           if (msg.includes('already taken')) setSlugError('Denne nettadressen er opptatt. Velg en annen.');
@@ -433,14 +452,16 @@ function StudioPublicSettings({
         >
           Sted
         </PageTab>
-        <PageTab
-          active={tab === 'samarbeid'}
-          onClick={() => setTab('samarbeid')}
-          id="studio-tab-samarbeid"
-          ariaControls="studio-panel-samarbeid"
-        >
-          Samarbeid
-        </PageTab>
+        {showSamarbeid && (
+          <PageTab
+            active={tab === 'samarbeid'}
+            onClick={() => setTab('samarbeid')}
+            id="studio-tab-samarbeid"
+            ariaControls="studio-panel-samarbeid"
+          >
+            Samarbeid
+          </PageTab>
+        )}
       </PageTabs>
 
       {tab === 'profil' && (
@@ -513,6 +534,12 @@ function StudioPublicSettings({
               </CardContent>
             </Card>
           </SettingsSection>
+
+          <AccountTypeSection
+            seller={seller}
+            onChanged={onSaved}
+            onBecameSolo={() => setTab('profil')}
+          />
         </div>
       )}
 
@@ -700,13 +727,17 @@ function StudioPublicSettings({
         </div>
       )}
 
-      {tab === 'samarbeid' && (
+      {tab === 'samarbeid' && showSamarbeid && (
         <div
           role="tabpanel"
           id="studio-panel-samarbeid"
           aria-labelledby="studio-tab-samarbeid"
         >
-          <AffiliationsSection />
+          <AffiliationsSection
+            seller={seller}
+            host={host}
+            onHostChange={setHost}
+          />
         </div>
       )}
 
@@ -717,6 +748,103 @@ function StudioPublicSettings({
         onCancel={handleCancel}
       />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Kontotype — self-declared identity that gates which tools the seller sees.
+// Picking the other option applies immediately (no save button); the selection
+// is derived from the seller row, so an error leaves it on the original value.
+// ---------------------------------------------------------------------------
+
+function AccountTypeSection({
+  seller,
+  onChanged,
+  onBecameSolo,
+}: {
+  seller: Seller;
+  onChanged: () => Promise<void> | void;
+  onBecameSolo: () => void;
+}) {
+  const [pending, setPending] = useState(false);
+  const current = seller.operating_model;
+
+  const handlePick = async (picked: 'solo' | 'studio') => {
+    if (pending || picked === current) return;
+    setPending(true);
+    const { error } = await supabase.functions.invoke('set-operating-model', {
+      body: { sellerId: seller.id, operatingModel: picked },
+    });
+    if (error) {
+      // invoke() wraps non-2xx as FunctionsHttpError; the JSON body (e.g. the
+      // 409 { error: 'has_active_affiliates' }) is only readable via the helper.
+      const { message } = await extractEdgeError(error);
+      toast.error(
+        message === 'has_active_affiliates'
+          ? 'Fjern tilknyttede instruktører først.'
+          : 'Kunne ikke endre kontotypen.',
+      );
+      setPending(false);
+      return;
+    }
+    await onChanged();
+    toast.success('Kontotypen er oppdatert.');
+    if (picked === 'solo') onBecameSolo();
+    setPending(false);
+  };
+
+  return (
+    <SettingsSection
+      title="Kontotype"
+      description="Styrer hva du ser i verktøyet. Du kan endre når som helst."
+    >
+      <Card>
+        <CardContent>
+          <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3" disabled={pending}>
+            <legend className="sr-only">Velg kontotype</legend>
+            {([
+              {
+                value: 'solo' as const,
+                title: 'Jeg underviser selv',
+                body: 'Egen side med kursene dine.',
+              },
+              {
+                value: 'studio' as const,
+                title: 'Jeg driver et studio',
+                body: 'Studioside med egne og tilknyttede instruktører.',
+              },
+            ]).map((opt) => {
+              const isSelected = current === opt.value;
+              return (
+                <label
+                  key={opt.value}
+                  className={cn(
+                    'flex items-start gap-3 min-h-[7.5rem] rounded-xl bg-muted p-6 cursor-pointer transition-shadow duration-150 hover:bg-muted/70 focus-within:ring-2 focus-within:ring-foreground',
+                    isSelected && 'ring-2 ring-foreground',
+                    pending && 'cursor-not-allowed opacity-70',
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="operatingModel"
+                    value={opt.value}
+                    checked={isSelected}
+                    onChange={() => { void handlePick(opt.value); }}
+                    disabled={pending}
+                    className="sr-only"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">{opt.title}</p>
+                    <p className="mt-1 text-sm text-foreground-muted leading-relaxed">{opt.body}</p>
+                  </div>
+                  {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
+                </label>
+              );
+            })}
+          </fieldset>
+        </CardContent>
+      </Card>
+    </SettingsSection>
   );
 }
 

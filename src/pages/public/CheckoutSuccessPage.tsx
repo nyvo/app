@@ -49,12 +49,12 @@ interface SignupDetails {
     image_url?: string | null;
     /**
      * Studio identity — RPC populates this from the seller (legal/billing
-     * entity) plus the slug from the team owned by that seller.
+     * entity), whose slug is the public storefront path.
      */
     seller: {
       name: string;
       logo_url?: string | null;
-      team_slug: string;
+      slug: string;
     };
   };
 }
@@ -225,8 +225,8 @@ const CheckoutSuccessPage = () => {
   }
 
   // Determine studio URL from signup data or URL parameter
-  const studioUrl = signup?.course?.seller?.team_slug
-    ? `/${signup.course.seller.team_slug}`
+  const studioUrl = signup?.course?.seller?.slug
+    ? `/${signup.course.seller.slug}`
     : orgSlugFromUrl
       ? `/${orgSlugFromUrl}`
       : '/';

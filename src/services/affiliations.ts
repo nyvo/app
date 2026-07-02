@@ -1,20 +1,29 @@
 import { supabase } from '@/lib/supabase';
-import type { TeamAffiliation, TeamAffiliationStatus } from '@/types/database';
+import type { SellerAffiliation } from '@/types/database';
 
 // ---------------------------------------------------------------------------
-// Storefront syndication: Inspire Yogastudio invites Anna's seller to
-// advertise courses on Inspire's storefront. Studio-initiates only — invite
-// is created with status='pending', the freelancer accepts (status='active')
-// or declines (status='declined'). RLS enforces who can read/write each row.
+// Storefront syndication: a host seller (studio) lets a guest seller advertise
+// their courses on the host's storefront. A row in seller_affiliations existing
+// means the link is active — there is no status column. Rows are created only
+// by the redeem RPC (invite-links) and removed via `.delete()`; the client
+// cannot INSERT/UPDATE (RLS). The single-host policy (a guest can have at most
+// one host) is enforced in the redeem RPC.
 // ---------------------------------------------------------------------------
 
-/** Affiliation row + the studio team's display info for the freelancer view. */
-export interface IncomingInvite {
-  team_id: string;
-  seller_id: string;
-  status: TeamAffiliationStatus;
-  invited_at: string;
-  team: {
+/** A guest affiliated with a host, for the host's instructor list. */
+export interface HostAffiliate {
+  guest_seller_id: string;
+  guest: {
+    id: string;
+    name: string;
+    logo_url: string | null;
+  };
+}
+
+/** The host a guest is affiliated with, for the guest's studio view. */
+export interface GuestHost {
+  host_seller_id: string;
+  host: {
     id: string;
     slug: string;
     name: string;
@@ -22,273 +31,59 @@ export interface IncomingInvite {
   };
 }
 
-/** Affiliation row + the affiliated seller's display info for the studio view. */
-export interface OutgoingAffiliate {
-  team_id: string;
-  seller_id: string;
-  status: TeamAffiliationStatus;
-  invited_at: string;
-  responded_at: string | null;
-  seller: {
-    id: string;
-    name: string;
-    logo_url: string | null;
-  };
+/** Every guest affiliated with `hostSellerId` (the studio side). RLS enforces
+ * that the caller manages the host. */
+export async function fetchHostAffiliates(
+  hostSellerId: string,
+): Promise<{ data: HostAffiliate[]; error: Error | null }> {
+  const { data, error } = await supabase
+    .from('seller_affiliations')
+    .select(`
+      guest_seller_id,
+      guest:sellers!seller_affiliations_guest_fkey(id, name, logo_url)
+    `)
+    .eq('host_seller_id', hostSellerId)
+    .order('created_at', { ascending: false });
+
+  if (error) return { data: [], error: error as Error };
+  return { data: (data ?? []) as unknown as HostAffiliate[], error: null };
 }
 
-/** Unified row for the members table — owner row + active affiliates. */
-export interface TeamMember {
-  sellerId: string;
-  name: string;
-  role: 'owner' | 'member';
-}
-
-/** Active members of a team: the owner (first) + each active affiliate. */
-export async function fetchTeamMembers(
-  teamId: string,
-): Promise<{ data: TeamMember[]; error: Error | null }> {
-  const { data: team, error: teamError } = await supabase
-    .from('teams')
-    .select('owner_seller_id')
-    .eq('id', teamId)
+/** The at-most-one host a guest seller is affiliated with, or null. */
+export async function fetchGuestHost(
+  guestSellerId: string,
+): Promise<{ data: GuestHost | null; error: Error | null }> {
+  const { data, error } = await supabase
+    .from('seller_affiliations')
+    .select(`
+      host_seller_id,
+      host:sellers!seller_affiliations_host_fkey(id, slug, name, cover_image_url)
+    `)
+    .eq('guest_seller_id', guestSellerId)
+    .limit(1)
     .maybeSingle();
 
-  if (teamError) return { data: [], error: teamError as Error };
-  if (!team) return { data: [], error: null };
-
-  const ownerSellerId = (team as { owner_seller_id: string }).owner_seller_id;
-
-  const [{ data: owner, error: ownerErr }, { data: rows, error: affErr }] = await Promise.all([
-    supabase
-      .from('sellers')
-      .select('id, name')
-      .eq('id', ownerSellerId)
-      .maybeSingle(),
-    supabase
-      .from('team_affiliations')
-      .select('seller_id, seller:sellers!inner(id, name)')
-      .eq('team_id', teamId)
-      .eq('status', 'active'),
-  ]);
-
-  if (ownerErr) return { data: [], error: ownerErr as Error };
-  if (affErr) return { data: [], error: affErr as Error };
-
-  const members: TeamMember[] = [];
-  if (owner) {
-    const o = owner as { id: string; name: string };
-    members.push({ sellerId: o.id, name: o.name, role: 'owner' });
-  }
-  for (const r of (rows ?? []) as Array<{
-    seller_id: string;
-    seller: { id: string; name: string };
-  }>) {
-    members.push({
-      sellerId: r.seller.id,
-      name: r.seller.name,
-      role: 'member',
-    });
-  }
-  return { data: members, error: null };
+  if (error) return { data: null, error: error as Error };
+  return { data: (data as unknown as GuestHost | null) ?? null, error: null };
 }
 
 /**
- * Fetch every affiliation involving any of the user's sellers as the
- * INVITED side. RLS exposes both pending and historical (declined) rows;
- * the caller filters as needed.
- */
-export async function fetchIncomingInvites(
-  sellerIds: string[],
-): Promise<{ data: IncomingInvite[]; error: Error | null }> {
-  if (sellerIds.length === 0) return { data: [], error: null };
-
-  const { data, error } = await supabase
-    .from('team_affiliations')
-    .select(`
-      team_id, seller_id, status, invited_at,
-      team:teams!inner(id, slug, name, cover_image_url)
-    `)
-    .in('seller_id', sellerIds)
-    .order('invited_at', { ascending: false });
-
-  if (error) return { data: [], error: error as Error };
-  return {
-    data: (data ?? []) as unknown as IncomingInvite[],
-    error: null,
-  };
-}
-
-/**
- * Fetch every affiliation FOR a specific team (the studio side). Caller is
- * the team admin; RLS enforces.
- */
-export async function fetchTeamAffiliates(
-  teamId: string,
-): Promise<{ data: OutgoingAffiliate[]; error: Error | null }> {
-  const { data, error } = await supabase
-    .from('team_affiliations')
-    .select(`
-      team_id, seller_id, status, invited_at, responded_at,
-      seller:sellers!inner(id, name, logo_url)
-    `)
-    .eq('team_id', teamId)
-    .order('invited_at', { ascending: false });
-
-  if (error) return { data: [], error: error as Error };
-  return {
-    data: (data ?? []) as unknown as OutgoingAffiliate[],
-    error: null,
-  };
-}
-
-/**
- * Studio invites a freelancer by email. We resolve the email to a seller
- * via the seller_members → profiles join (a seller's "owner" is the
- * profile that signed up for it). If multiple sellers share an owner,
- * pick the first; the freelancer can reject if it's the wrong one.
- */
-export async function inviteAffiliateByEmail(input: {
-  teamId: string;
-  email: string;
-  inviterUserId: string;
-}): Promise<{ error: Error | null }> {
-  const normalized = input.email.trim().toLowerCase();
-
-  // Resolve email → owner's seller via the find_seller_by_owner_email RPC.
-  // A direct profiles SELECT can't work here: RLS only exposes the caller's
-  // own profile row, so the old lookup always came back empty. The RPC runs
-  // SECURITY DEFINER, is rate-limited, and returns only the seller_id.
-  const { data: sellerId, error: lookupError } = await supabase.rpc(
-    'find_seller_by_owner_email',
-    { p_email: normalized },
-  );
-
-  if (lookupError) return { error: lookupError as Error };
-  if (!sellerId) {
-    return { error: new Error('Fant ingen virksomhet med denne e-postadressen.') };
-  }
-
-  // Insert the invite. RLS rejects if (a) caller isn't team admin, or (b)
-  // seller_id matches the team's owner_seller_id (self-invite).
-  const { error } = await supabase.from('team_affiliations').insert({
-    team_id: input.teamId,
-    seller_id: sellerId,
-    status: 'pending',
-    invited_by: input.inviterUserId,
-  });
-
-  if (error) {
-    // Friendlier message for unique-violation (already invited).
-    if (error.code === '23505') {
-      return { error: new Error('Denne personen er allerede invitert.') };
-    }
-    return { error: error as Error };
-  }
-
-  return { error: null };
-}
-
-/**
- * Freelancer accepts or declines an invite. RLS restricts to the
- * affiliated seller's members.
- */
-export async function respondToInvite(input: {
-  teamId: string;
-  sellerId: string;
-  accept: boolean;
-}): Promise<{ error: Error | null }> {
-  const { error } = await supabase
-    .from('team_affiliations')
-    .update({
-      status: input.accept ? 'active' : 'declined',
-      responded_at: new Date().toISOString(),
-    })
-    .eq('team_id', input.teamId)
-    .eq('seller_id', input.sellerId);
-
-  if (error) return { error: error as Error };
-  return { error: null };
-}
-
-/**
- * Either side withdraws the affiliation. RLS allows team admin OR
- * affiliated seller members. The cleanup trigger removes any
- * course_team_listings tied to this (team, seller) pair.
+ * Either side withdraws the affiliation. RLS allows the host's managers OR the
+ * guest seller's members. Deletes the single (host, guest) row.
  */
 export async function revokeAffiliation(input: {
-  teamId: string;
-  sellerId: string;
+  hostSellerId: string;
+  guestSellerId: string;
 }): Promise<{ error: Error | null }> {
   const { error } = await supabase
-    .from('team_affiliations')
+    .from('seller_affiliations')
     .delete()
-    .eq('team_id', input.teamId)
-    .eq('seller_id', input.sellerId);
+    .eq('host_seller_id', input.hostSellerId)
+    .eq('guest_seller_id', input.guestSellerId);
 
-  if (error) return { error: error as Error };
-  return { error: null };
-}
-
-// ---------------------------------------------------------------------------
-// Course listings — per-course opt-in for a freelancer's courses to appear
-// on a venue's storefront. Listing requires an active team_affiliation
-// between the course's owning seller and the team (RLS enforces).
-// ---------------------------------------------------------------------------
-
-/**
- * Returns the set of course IDs (owned by `sellerId`) currently listed on
- * `teamId`. Used to drive checkbox state in the toggle UI.
- */
-export async function fetchListedCourseIds(input: {
-  teamId: string;
-  sellerId: string;
-}): Promise<{ data: Set<string>; error: Error | null }> {
-  const { data, error } = await supabase
-    .from('course_team_listings')
-    .select('course_id, courses!inner(seller_id)')
-    .eq('team_id', input.teamId)
-    .eq('courses.seller_id', input.sellerId);
-
-  if (error) return { data: new Set(), error: error as Error };
-  const ids = new Set<string>();
-  for (const row of (data ?? []) as Array<{ course_id: string }>) {
-    ids.add(row.course_id);
-  }
-  return { data: ids, error: null };
-}
-
-/**
- * Add a course to a team's storefront. Requires an active affiliation.
- * Idempotent — if the row already exists, the unique-violation is
- * swallowed and reported as success.
- */
-export async function addCourseListing(input: {
-  courseId: string;
-  teamId: string;
-}): Promise<{ error: Error | null }> {
-  const { error } = await supabase.from('course_team_listings').insert({
-    course_id: input.courseId,
-    team_id: input.teamId,
-  });
-  if (error && error.code !== '23505') {
-    return { error: error as Error };
-  }
-  return { error: null };
-}
-
-/** Remove a course from a team's storefront. */
-export async function removeCourseListing(input: {
-  courseId: string;
-  teamId: string;
-}): Promise<{ error: Error | null }> {
-  const { error } = await supabase
-    .from('course_team_listings')
-    .delete()
-    .eq('course_id', input.courseId)
-    .eq('team_id', input.teamId);
   if (error) return { error: error as Error };
   return { error: null };
 }
 
 // Re-export the canonical type for consumers.
-export type { TeamAffiliation };
+export type { SellerAffiliation };

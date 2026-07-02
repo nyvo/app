@@ -49,7 +49,7 @@ function isPastSignup(signup: BuyerSignup, today: Date): boolean {
 
 function SignupRow({ signup }: { signup: BuyerSignup }) {
   const course = signup.course
-  const teamSlug = course?.seller?.team?.slug ?? null
+  const teamSlug = course?.seller?.slug ?? null
   const sellerName = course?.seller?.name ?? null
 
   const dateLine = formatCourseDate(course?.start_date ?? null)

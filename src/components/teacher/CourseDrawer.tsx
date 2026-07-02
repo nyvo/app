@@ -140,7 +140,7 @@ export function CourseDrawer({ courseId, origin, sessionId, onClose }: CourseDra
 
 function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void }) {
   const navigate = useNavigate();
-  const { currentSeller, currentTeam } = useAuth();
+  const { currentSeller } = useAuth();
   const {
     course: courseData,
     sessions,
@@ -265,8 +265,8 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
   }
 
   const courseUrl =
-    currentTeam?.slug && courseData.slug
-      ? `${window.location.origin}/${currentTeam.slug}/${courseData.slug}`
+    currentSeller?.slug && courseData.slug
+      ? `${window.location.origin}/${currentSeller.slug}/${courseData.slug}`
       : '';
   const isMultiDay = sessions.length > 1;
 

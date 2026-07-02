@@ -3,13 +3,9 @@ import type { Seller, SellerUpdate } from '@/types/database'
 
 /**
  * Public seller fields — a subset of Seller safe to expose on public
- * (anon-accessible) studio pages, merged with the team's display fields
- * (slug, default_course_image_url). Email is intentionally excluded from
- * direct public seller reads.
- *
- * Note: `slug` and `default_course_image_url` actually live on `teams`, not
- * `sellers`. We merge them here to keep the public-rendering surface
- * single-shaped.
+ * (anon-accessible) studio pages. slug, cover_image_url and
+ * default_course_image_url now live directly on the seller row. Email is
+ * intentionally excluded from direct public seller reads.
  */
 export interface PublicSeller {
   id: string
@@ -25,76 +21,50 @@ export async function fetchSellerBySlug(
 ): Promise<{ data: PublicSeller | null; error: Error | null }> {
   const lookupSlug = slug.trim().toLowerCase()
 
-  // Slug now lives on the team (one team per seller). Resolve seller via
-  // the team's owner_seller_id. On miss, fall back to team_slug_aliases so
-  // previously shared URLs keep resolving — callers compare `slug` to the
-  // returned `PublicSeller.slug` and 301-style replace if they differ.
-  const { data: team, error: teamError } = await supabase
-    .from('teams')
-    .select('owner_seller_id, slug, default_course_image_url')
+  const publicColumns = 'id, name, logo_url, slug, default_course_image_url, stripe_onboarding_complete'
+
+  // Slug lives directly on the seller. On miss, fall back to
+  // seller_slug_aliases so previously shared URLs keep resolving — callers
+  // compare `slug` to the returned `PublicSeller.slug` and 301-style replace
+  // if they differ.
+  const { data: seller, error: sellerError } = await supabase
+    .from('sellers')
+    .select(publicColumns)
     .eq('slug', lookupSlug)
     .maybeSingle()
 
-  if (teamError) {
-    return { data: null, error: teamError as Error }
+  if (sellerError) {
+    return { data: null, error: sellerError as Error }
   }
 
-  let teamRow:
-    | { owner_seller_id: string; slug: string; default_course_image_url: string | null }
-    | null = team
-    ? (team as { owner_seller_id: string; slug: string; default_course_image_url: string | null })
-    : null
-
-  if (!teamRow) {
-    const { data: alias, error: aliasError } = await supabase
-      .from('team_slug_aliases')
-      .select('team_id')
-      .eq('old_slug', lookupSlug)
-      .maybeSingle()
-
-    if (aliasError) {
-      return { data: null, error: aliasError as Error }
-    }
-    if (!alias) return { data: null, error: null }
-
-    const aliasRow = alias as { team_id: string }
-    const { data: aliasedTeam, error: aliasedTeamError } = await supabase
-      .from('teams')
-      .select('owner_seller_id, slug, default_course_image_url')
-      .eq('id', aliasRow.team_id)
-      .maybeSingle()
-
-    if (aliasedTeamError) {
-      return { data: null, error: aliasedTeamError as Error }
-    }
-    if (!aliasedTeam) return { data: null, error: null }
-
-    teamRow = aliasedTeam as {
-      owner_seller_id: string
-      slug: string
-      default_course_image_url: string | null
-    }
+  if (seller) {
+    return { data: seller as unknown as PublicSeller, error: null }
   }
 
-  const { data, error } = await supabase
-    .from('sellers')
-    .select('id, name, logo_url, stripe_onboarding_complete')
-    .eq('id', teamRow.owner_seller_id)
+  const { data: alias, error: aliasError } = await supabase
+    .from('seller_slug_aliases')
+    .select('seller_id')
+    .eq('old_slug', lookupSlug)
     .maybeSingle()
 
-  if (error) {
-    return { data: null, error: error as Error }
+  if (aliasError) {
+    return { data: null, error: aliasError as Error }
   }
-  if (!data) return { data: null, error: null }
+  if (!alias) return { data: null, error: null }
 
-  const seller = data as Omit<PublicSeller, 'slug' | 'default_course_image_url'>
-  const merged: PublicSeller = {
-    ...seller,
-    slug: teamRow.slug,
-    default_course_image_url: teamRow.default_course_image_url,
+  const aliasRow = alias as { seller_id: string }
+  const { data: aliasedSeller, error: aliasedError } = await supabase
+    .from('sellers')
+    .select(publicColumns)
+    .eq('id', aliasRow.seller_id)
+    .maybeSingle()
+
+  if (aliasedError) {
+    return { data: null, error: aliasedError as Error }
   }
+  if (!aliasedSeller) return { data: null, error: null }
 
-  return { data: merged, error: null }
+  return { data: aliasedSeller as unknown as PublicSeller, error: null }
 }
 
 /** The studio's canonical location (set in the Studio tab → teacher_locations).
@@ -109,15 +79,15 @@ export interface StudioLocationRow {
 }
 
 export async function fetchStudioLocation(
-  teamSlug: string
+  slug: string
 ): Promise<{ data: StudioLocationRow | null; error: Error | null }> {
   const { data, error } = await (supabase.rpc as unknown as (
     fn: string,
-    args: { p_team_slug: string }
+    args: { p_slug: string }
   ) => Promise<{
     data: { name: string; address: string | null; lat: number | null; lon: number | null; google_place_id: string | null }[] | null
     error: Error | null
-  }>)('public_studio_location', { p_team_slug: teamSlug })
+  }>)('public_studio_location', { p_slug: slug })
 
   // The RPC may not be deployed yet — treat any error as "no canonical
   // location" so the storefront falls back to a course-derived one.
@@ -145,12 +115,12 @@ export async function fetchStudioLocation(
  */
 export async function updateSeller(
   id: string,
-  updates: Pick<SellerUpdate, 'name' | 'logo_url'>
+  updates: Pick<SellerUpdate, 'name' | 'logo_url' | 'cover_image_url'>
 ): Promise<{ data: Seller | null; error: Error | null }> {
   const { data, error } = await typedFrom('sellers')
     .update(updates)
     .eq('id', id)
-    .select('id, name, logo_url, stripe_onboarding_complete, created_at')
+    .select('id, name, logo_url, slug, cover_image_url, default_course_image_url, stripe_onboarding_complete, created_at')
     .single()
 
   if (error) {
@@ -159,7 +129,7 @@ export async function updateSeller(
 
   const row = data as Pick<
     Seller,
-    'id' | 'name' | 'logo_url' | 'stripe_onboarding_complete' | 'created_at'
+    'id' | 'name' | 'logo_url' | 'slug' | 'cover_image_url' | 'default_course_image_url' | 'stripe_onboarding_complete' | 'created_at'
   >
 
   const { data: operational } = await fetchSellerOperational(id)
@@ -174,7 +144,7 @@ export async function updateSeller(
       stripe_account_status: operational?.stripe_account_status ?? null,
       stripe_onboarding_complete: operational?.stripe_onboarding_complete ?? false,
       settings: {},
-      seller_type: operational?.seller_type ?? 'individual',
+      operating_model: operational?.operating_model ?? 'solo',
       organization_number: null,
       subscription_plan: operational?.subscription_plan ?? 'free',
       subscription_status: operational?.subscription_status ?? 'none',
@@ -191,6 +161,30 @@ export async function updateSeller(
 }
 
 /**
+ * Rename a seller's public slug. The previous slug is archived in
+ * seller_slug_aliases so links shared in the wild keep resolving via a
+ * client-side redirect on the public storefront.
+ *
+ * RPC enforces owner-only writes, the same normalization + reserved-list as
+ * onboarding, and uniqueness against both current slugs and archived aliases.
+ * Returns the canonical normalized slug on success.
+ */
+export async function renameSellerSlug(
+  sellerId: string,
+  newSlug: string,
+): Promise<{ slug: string | null; error: Error | null }> {
+  const { data, error } = await supabase.rpc('rename_seller_slug', {
+    p_seller_id: sellerId,
+    p_new_slug: newSlug,
+  })
+
+  if (error) {
+    return { slug: null, error: error as Error }
+  }
+  return { slug: data as string, error: null }
+}
+
+/**
  * Operational seller fields that are not part of the public storefront
  * grant set. Fetched via a member-gated RPC; returns null for non-members.
  */
@@ -201,7 +195,7 @@ export interface SellerOperational {
   stripe_account_id: string | null
   stripe_account_status: string | null
   stripe_onboarding_complete: boolean
-  seller_type: string
+  operating_model: string
   subscription_plan: SubscriptionPlan
   subscription_status: SubscriptionStatus
   subscription_current_period_end: string | null
