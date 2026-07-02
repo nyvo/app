@@ -3,16 +3,20 @@ import { logger } from '@/lib/logger';
 import { Link } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
-import { Sparkles } from '@/lib/icons';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
-import { fetchIncomeSeries, type IncomeRange, type IncomeSeries } from '@/services/income';
+import {
+  fetchIncomeSeries,
+  fetchPlatformFeeMonth,
+  type IncomeRange,
+  type IncomeSeries,
+} from '@/services/income';
 import { DateBadge } from '@/components/ui/date-badge';
 import { PaymentBadge } from '@/components/ui/payment-badge';
-import { cn } from '@/lib/utils';
+import { cn, formatKroner } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -23,7 +27,6 @@ import type { Course as CourseDB, CourseSession } from '@/types/database';
 import {
   fetchRecentSignups,
   teacherCancelSignup,
-  markPaymentResolved,
   type SignupWithDetails,
 } from '@/services/signups';
 import { friendlyError } from '@/lib/error-messages';
@@ -115,14 +118,12 @@ const TeacherDashboard = () => {
       fetchCourses(currentSeller.id),
       fetchNextSessions(currentSeller.id, ROW_LIMIT),
       fetchRecentSignups(currentSeller.id, ROW_LIMIT),
-      isPro
-        ? fetchIncomeSeries(currentSeller.id, incomeRangeRef.current)
-        : Promise.resolve({ data: null, error: null }),
+      fetchIncomeSeries(currentSeller.id, incomeRangeRef.current),
     ]);
 
     processDashboardResults(nextSessionsResult, signupsResult);
-    if (isPro && incomeResult.data) setIncomeSeries(incomeResult.data);
-  }, [currentSeller?.id, isPro]);
+    if (incomeResult.data) setIncomeSeries(incomeResult.data);
+  }, [currentSeller?.id]);
 
   // Drawer actions mirror the course page; refetch refreshes the recent list.
   const handleCancelEnrollment = async (signupId: string, refund: boolean) => {
@@ -132,16 +133,6 @@ const TeacherDashboard = () => {
       return;
     }
     toast.success(refund ? 'Påmelding avbestilt og refusjon behandlet' : 'Påmelding avbestilt');
-    refetchDashboardData();
-  };
-
-  const handleMarkResolved = async (signupId: string) => {
-    const { error } = await markPaymentResolved(signupId);
-    if (error) {
-      toast.error(friendlyError(error, 'Kunne ikke merke som betalt.'));
-      return;
-    }
-    toast.success('Påmelding merket som betalt');
     refetchDashboardData();
   };
 
@@ -208,7 +199,7 @@ const TeacherDashboard = () => {
   // Income chart — refetches whenever the range toggle changes, independent
   // of the main dashboard loader so toggling Uke/Måned/År stays snappy.
   useEffect(() => {
-    if (!currentSeller?.id || !isPro) {
+    if (!currentSeller?.id) {
       setIncomeSeries(null);
       return;
     }
@@ -221,7 +212,26 @@ const TeacherDashboard = () => {
     return () => {
       isActive = false;
     };
-  }, [currentSeller?.id, incomeRange, isPro]);
+  }, [currentSeller?.id, incomeRange]);
+
+  // Free-tier fee line — this month's platform take, the seller's self-serve
+  // Pro crossover math. Not fetched for Pro (their take is 0).
+  const [monthPlatformFee, setMonthPlatformFee] = useState(0);
+  useEffect(() => {
+    if (!currentSeller?.id || isPro) {
+      setMonthPlatformFee(0);
+      return;
+    }
+    let isActive = true;
+    fetchPlatformFeeMonth(currentSeller.id).then((result) => {
+      if (!isActive) return;
+      if (result.error) logger.error('Failed to fetch platform fees:', result.error);
+      else setMonthPlatformFee(result.data);
+    });
+    return () => {
+      isActive = false;
+    };
+  }, [currentSeller?.id, isPro]);
 
   return (
     <div className="flex-1 overflow-y-auto bg-canvas h-full">
@@ -239,16 +249,17 @@ const TeacherDashboard = () => {
             />
           ) : (
             <div className="space-y-8">
-              {isPro ? (
+              <div className="space-y-3">
                 <IncomeChart
                   series={incomeSeries}
                   isLoading={incomeSeries === null}
                   range={incomeRange}
                   onRangeChange={setIncomeRange}
                 />
-              ) : (
-                <LockedIncomeCard />
-              )}
+                {!isPro && monthPlatformFee > 0 && (
+                  <PlatformFeeHint feeNok={monthPlatformFee} />
+                )}
+              </div>
 
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <UpcomingCoursesSection courses={dashboardCourses} isLoading={isLoading} />
@@ -266,72 +277,29 @@ const TeacherDashboard = () => {
         open={selectedSignupId !== null}
         onOpenChange={(open) => !open && setSelectedSignupId(null)}
         signup={recentSignupsRaw?.find((s) => s.id === selectedSignupId) ?? null}
-        courseTitle={
-          recentSignupsRaw?.find((s) => s.id === selectedSignupId)?.course?.title ?? ''
-        }
         onCancelEnrollment={handleCancelEnrollment}
-        onMarkResolved={handleMarkResolved}
       />
     </div>
   );
 };
 
 /**
- * Free-tier replacement for the income chart: the SAME card frame, but the
- * chart is a faint decorative ghost behind a Pro upsell — no fabricated
- * numbers, since a free seller has no integrated income to show. Exported
- * (with the section components below) so /dev/dashboard-preview can render
- * the real states without auth — same pattern as BillingPlanSections.
+ * The free tier's upgrade surface: this month's platform take next to the Pro
+ * price, so the crossover math is the seller's own numbers — no salesmanship.
+ * Exported so /dev/dashboard-preview can render it without auth.
  */
-export function LockedIncomeCard() {
+export function PlatformFeeHint({ feeNok }: { feeNok: number }) {
+  const month = new Intl.DateTimeFormat('nb-NO', { month: 'long' }).format(new Date());
   return (
-    <section className="rounded-xl border border-border bg-background p-6 sm:p-8">
-      <header className="flex items-center justify-between gap-4">
-        <p className="text-sm font-medium text-foreground-muted">Inntekt</p>
-        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
-          <Sparkles className="size-3 fill-current" aria-hidden />
-          Pro
-        </span>
-      </header>
-      <div className="relative mt-6 h-[220px] sm:h-[260px]">
-        <GhostSparkline className="absolute inset-0 h-full w-full text-border" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-          <p className="max-w-xs text-sm text-foreground-muted">
-            Lås opp inntektsoversikt med Pro.
-          </p>
-          <Button asChild>
-            <Link to={routes.settingsBilling}>Oppgrader til Pro</Link>
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/** Decorative, dataless income curve — sets the "chart goes here" frame
- *  behind the Pro upsell without implying real numbers. */
-function GhostSparkline({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 400 200" preserveAspectRatio="none" aria-hidden>
-      <defs>
-        <linearGradient id="locked-income-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="currentColor" stopOpacity="0.16" />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M0,140 C40,135 70,95 110,100 C150,105 180,60 220,72 C260,84 300,45 340,52 C370,57 388,40 400,34 L400,200 L0,200 Z"
-        fill="url(#locked-income-fill)"
-      />
-      <path
-        d="M0,140 C40,135 70,95 110,100 C150,105 180,60 220,72 C260,84 300,45 340,52 C370,57 388,40 400,34"
-        fill="none"
-        stroke="currentColor"
-        strokeOpacity="0.3"
-        strokeWidth="2"
-        vectorEffect="non-scaling-stroke"
-      />
-    </svg>
+    <p className="px-1 text-sm text-foreground-muted">
+      Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: 0 kr.{' '}
+      <Link
+        to={routes.settingsBilling}
+        className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+      >
+        Se Pro
+      </Link>
+    </p>
   );
 }
 

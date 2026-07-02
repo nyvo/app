@@ -6,11 +6,6 @@ verify_jwt = false
 [functions.create-free-signup]
 verify_jwt = false
 
-# Public manual-payment signup (paid course, free-tier seller) — same
-# unauthenticated posture as create-free-signup; abuse is rate-limited inside.
-[functions.create-manual-signup]
-verify_jwt = false
-
 [functions.stripe-billing-webhook]
 verify_jwt = false
 

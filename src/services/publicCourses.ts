@@ -16,13 +16,9 @@ interface PublicCourseSeller {
   // returned PublicCourseWithDetails.
   slug: string
   logo_url: string | null
+  /** Gates the public checkout: paid courses are bookable once the seller has
+   *  completed Stripe onboarding — every tier sells through Stripe. */
   stripe_onboarding_complete: boolean
-  /**
-   * Derived predicate (generated column): pro + active sub + Stripe onboarded.
-   * The booking UI branches on this — integrated → Stripe checkout + service
-   * fee; manual → signup only, payment arranged directly with the studio.
-   */
-  uses_integrated_payments: boolean
   default_course_image_url: string | null
 }
 
@@ -31,7 +27,6 @@ interface SellerJoinRow {
   name: string
   logo_url: string | null
   stripe_onboarding_complete: boolean
-  uses_integrated_payments: boolean
 }
 
 interface CourseQueryResult {
@@ -306,7 +301,7 @@ export async function fetchPublicCourses(
       instructor_name,
       accepts_late_signups,
       seller_id,
-      seller:sellers(id, name, logo_url, stripe_onboarding_complete, uses_integrated_payments)
+      seller:sellers(id, name, logo_url, stripe_onboarding_complete)
     `, { count: filters?.limit ? 'exact' : undefined })
     .in('status', ['active', 'upcoming', 'cancelled'])
     .order('start_date', { ascending: true })
@@ -466,7 +461,6 @@ export async function fetchPublicCourses(
           slug: teamMeta?.slug ?? '',
           logo_url: course.seller.logo_url,
           stripe_onboarding_complete: course.seller.stripe_onboarding_complete,
-          uses_integrated_payments: course.seller.uses_integrated_payments,
           default_course_image_url: teamMeta?.default_course_image_url ?? null,
         }
       : null
@@ -546,7 +540,7 @@ export async function fetchPublicCourseBySlug(
       instructor_name,
       accepts_late_signups,
       seller_id,
-      seller:sellers(id, name, logo_url, stripe_onboarding_complete, uses_integrated_payments)
+      seller:sellers(id, name, logo_url, stripe_onboarding_complete)
     `)
     .eq('slug', courseSlug)
     .neq('status', 'cancelled')
@@ -615,7 +609,6 @@ export async function fetchPublicCourseBySlug(
         slug: teamMeta?.slug ?? '',
         logo_url: typedCourse.seller.logo_url,
         stripe_onboarding_complete: typedCourse.seller.stripe_onboarding_complete,
-        uses_integrated_payments: typedCourse.seller.uses_integrated_payments,
         default_course_image_url: teamMeta?.default_course_image_url ?? null,
       }
     : null

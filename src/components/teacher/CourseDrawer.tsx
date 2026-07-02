@@ -27,7 +27,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCourseDetail } from '@/hooks/use-course-detail';
 import { publishCourse, unpublishCourse } from '@/services/courses';
 import { friendlyError } from '@/lib/error-messages';
-import { sellerNeedsPaymentSetup } from '@/lib/payments';
+import { publishNeedsPaymentSetup } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 import type { CourseSession } from '@/types/database';
 
@@ -159,9 +159,15 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
   const [isPublishing, setIsPublishing] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
 
+  // Only paid courses need Stripe onboarding to publish — 0 kr courses go
+  // live on every tier without payment setup.
+  const courseHasPaidTier =
+    (courseData?.price ?? 0) > 0 ||
+    ((courseData?.allowsDropIn ?? false) && (courseData?.dropInPrice ?? 0) > 0);
+
   const handlePublish = async () => {
     if (!courseId) return;
-    if (sellerNeedsPaymentSetup(currentSeller)) {
+    if (publishNeedsPaymentSetup(currentSeller, courseHasPaidTier)) {
       setShowPublishDialog(true);
       return;
     }
@@ -291,9 +297,9 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
 
       {/* Body — scrollable */}
       <div className="flex-1 overflow-y-auto">
-        {/* Payment alert — page-scoped inline. Pro sellers only: free-tier
-            sellers publish without Stripe onboarding (manual payments). */}
-        {sellerNeedsPaymentSetup(currentSeller) && (
+        {/* Payment alert — page-scoped inline. Only paid courses need the
+            payout account; 0 kr courses publish without Stripe onboarding. */}
+        {publishNeedsPaymentSetup(currentSeller, courseHasPaidTier) && (
           <div className="px-6 pt-6">
             <Alert variant="warning">
               <div>

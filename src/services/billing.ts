@@ -8,10 +8,11 @@ async function invokeBillingFunction(
   functionName: string,
   sellerId: string,
   fallbackMessage: string,
+  extraBody?: Record<string, unknown>,
 ): Promise<{ url: string | null; error: Error | null }> {
   try {
     const { data, error } = await supabase.functions.invoke(functionName, {
-      body: { sellerId },
+      body: { sellerId, ...extraBody },
     })
     if (error) return { url: null, error: new Error(error.message || fallbackMessage) }
     if (data?.error) return { url: null, error: new Error(data.error) }
@@ -25,11 +26,15 @@ async function invokeBillingFunction(
   }
 }
 
-export function createStripeCheckoutSession(sellerId: string) {
+export function createStripeCheckoutSession(
+  sellerId: string,
+  interval: 'month' | 'year' = 'month',
+) {
   return invokeBillingFunction(
     'create-stripe-checkout-session',
     sellerId,
     'Kunne ikke starte abonnement.',
+    { interval },
   )
 }
 

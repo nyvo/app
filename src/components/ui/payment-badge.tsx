@@ -12,10 +12,9 @@ const config: Record<PaymentStatus, { variant: BadgeVariant; label: string }> = 
   pending:  { variant: 'warning',     label: 'Venter betaling' },
   failed:   { variant: 'destructive', label: 'Betaling feilet' },
   refunded: { variant: 'neutral',     label: 'Refundert' },
-  // Manual-payment signup (free-tier seller): money changes hands outside the
-  // platform. Neutral, not warning — it's the normal state on free (every
-  // direct-pay signup is 'external'), so amber would read as a false alarm.
-  // Stays visible until the teacher marks it paid (mark-payment-resolved).
+  // Historical only: the off-platform payment path is deleted (all paid
+  // bookings go through Stripe) and 'external' can no longer be minted. The
+  // entry stays because the DB enum keeps the value for old rows.
   external: { variant: 'neutral',     label: 'Betales direkte' },
 };
 

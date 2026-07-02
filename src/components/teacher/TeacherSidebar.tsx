@@ -82,15 +82,7 @@ export const TeacherSidebar = () => {
   const { isMobile, setOpenMobile } = useSidebar();
   const isSeller = profile?.role === 'seller';
   const isPro = isProSeller(currentSeller);
-  // "Utbetalingskonto" (Stripe onboarding) is a Pro surface — hidden for
-  // free-tier sellers, who never touch Stripe Connect. Free sellers get the
-  // upgrade prompt via the plan card in the footer instead.
-  const navItems =
-    profile?.role === 'buyer'
-      ? BUYER_NAV_ITEMS
-      : isPro
-        ? SELLER_NAV_ITEMS
-        : SELLER_NAV_ITEMS.filter((item) => item.href !== routes.settingsPayouts);
+  const navItems = profile?.role === 'buyer' ? BUYER_NAV_ITEMS : SELLER_NAV_ITEMS;
   const displayName = accountDisplayName({
     profileName: profile?.name,
     sellerName: currentSeller?.name,
@@ -150,7 +142,7 @@ export const TeacherSidebar = () => {
           <div className="rounded-lg bg-muted px-3 py-2.5">
             <div className="text-sm font-medium text-sidebar-foreground">Start</div>
             <p className="mt-1 text-sm text-sidebar-foreground-muted">
-              Få kortbetaling og automatiske utbetalinger med Pro.
+              Med Pro betaler du 0 kr i plattformgebyr.
             </p>
             <Button asChild className="mt-2.5 w-full">
               <Link to={routes.settingsBilling}>Oppgrader til Pro</Link>

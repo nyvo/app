@@ -45,16 +45,23 @@ function formatBillingDate(value: string): string {
 
 const START_FEATURES = [
   'Påmeldinger og kurslenker',
-  'Betaling avtales direkte med deltakerne',
-  'Ingen betalingsoppsett nødvendig',
+  'Kortbetaling ved påmelding',
+  'Automatiske utbetalinger via Stripe',
+  '5 % plattformgebyr per betaling',
 ] as const
 
 const PRO_FEATURES = [
   'Alt i Start',
-  'Kortbetaling og Vipps i checkout',
-  'Automatiske utbetalinger via Stripe',
-  'Servicegebyr håndteres av plattformen',
+  '0 % plattformgebyr – du beholder hele kursprisen',
+  'Månedlig eller årlig betaling',
 ] as const
+
+// Yearly Pro — ~2 months free vs 12 × 499 kr.
+const PRO_YEARLY = {
+  price: formatKroner(4990),
+  priceSub: '/år',
+  savings: 'Spar 998 kr',
+} as const
 
 const BillingPage = () => {
   const { currentSeller, refreshSellers } = useAuth()
@@ -93,10 +100,10 @@ const BillingPage = () => {
     setSearchParams(next, { replace: true })
   }, [refreshSellers, searchParams, setSearchParams])
 
-  const handleUpgrade = useCallback(async () => {
+  const handleUpgrade = useCallback(async (interval: 'month' | 'year') => {
     if (!currentSeller?.id) return
     setCheckoutLoading(true)
-    const { url, error } = await createStripeCheckoutSession(currentSeller.id)
+    const { url, error } = await createStripeCheckoutSession(currentSeller.id, interval)
     setCheckoutLoading(false)
     if (error || !url) {
       toast.error(error?.message || 'Kunne ikke starte abonnement.')
@@ -145,6 +152,7 @@ const BillingPage = () => {
         <BillingPlanSections
           plan={currentSeller?.subscription_plan}
           status={currentSeller?.subscription_status}
+          yearly={PRO_YEARLY}
           onUpgrade={handleUpgrade}
           onManage={handleManage}
           checkoutLoading={checkoutLoading}
@@ -172,7 +180,7 @@ export function BillingPlanSections({
   status?: SubscriptionStatus
   /** When set, free sellers get a Månedlig/Årlig toggle on the Pro card. */
   yearly?: { price: string; priceSub: string; savings?: string }
-  onUpgrade: () => void
+  onUpgrade: (interval: 'month' | 'year') => void
   onManage?: () => void
   checkoutLoading: boolean
   portalLoading?: boolean
@@ -189,7 +197,7 @@ export function BillingPlanSections({
     <PlanOption
       name="Start"
       price="Gratis"
-      description="For instruktører som vil ta påmeldinger og håndtere betaling selv."
+      description="Alt du trenger for å ta imot påmeldinger og betaling."
       features={START_FEATURES}
       active={!isPro}
     />
@@ -199,7 +207,7 @@ export function BillingPlanSections({
       name="Pro"
       price={proPrice}
       priceSub={proPriceSub}
-      description="For instruktører og studioer som vil ta betalt automatisk."
+      description="Lønner seg fra rundt 10 000 kr i påmeldinger i måneden."
       features={PRO_FEATURES}
       active={isPro}
       action={
@@ -207,7 +215,7 @@ export function BillingPlanSections({
           <Button
             type="button"
             className="w-full"
-            onClick={onUpgrade}
+            onClick={() => onUpgrade(showInterval ? interval : 'month')}
             loading={checkoutLoading}
             loadingText="Åpner"
           >

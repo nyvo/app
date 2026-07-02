@@ -27,13 +27,10 @@ interface ParticipantDetailDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   signup: SignupWithProfile | null;
-  /** Used in confirm dialog scopes (cancel/refund) for context. */
-  courseTitle: string;
   onCancelEnrollment: (signupId: string, refund: boolean) => Promise<void>;
-  onMarkResolved: (signupId: string) => Promise<void>;
 }
 
-type ConfirmKind = 'cancel-no-refund' | 'cancel-with-refund' | 'refund-only' | 'resolve' | null;
+type ConfirmKind = 'cancel-no-refund' | 'cancel-with-refund' | 'refund-only' | null;
 
 const AUDIENCE_LABEL: Record<TicketAudience, string> = {
   standard: 'Standard',
@@ -187,9 +184,7 @@ export function ParticipantDetailDrawer({
   open,
   onOpenChange,
   signup,
-  courseTitle,
   onCancelEnrollment,
-  onMarkResolved,
 }: ParticipantDetailDrawerProps) {
   const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
   const [loading, setLoading] = useState(false);
@@ -212,10 +207,6 @@ export function ParticipantDetailDrawer({
   // Refundable when paid through Stripe (stripe_payment_intent_id present).
   const canRefund =
     isPaid && !!signup.stripe_payment_intent_id;
-  // Only 'external' (direkte/in-person) signups are unpaid by design — the teacher
-  // reconciles the offline payment by hand. Card signups are minted as paid, so
-  // there is no other "mark paid" case.
-  const canMarkPaid = paymentStatus === 'external';
   // Footer renders when there's something to do: an active signup always has a
   // cancel action; a cancelled one only when there's still money to refund.
   const hasActions = !isCancelled || canRefund;
@@ -226,8 +217,8 @@ export function ParticipantDetailDrawer({
   // strike the price or present them as fully refunded.
   const isPartialRefund = paymentStatus === 'refunded' && isPartiallyRefunded(signup);
   const priceStrike = paymentStatus === 'refunded' && !isPartialRefund;
-  // In-person / free-tier studios settle off-platform — surface that as the
-  // payment method (the status badge stays "Påmeldt", an enrollment state).
+  // 'external' only exists on historical rows from the deleted off-platform
+  // path — surface it as the payment method rather than a processor label.
   const paymentMethod =
     paymentStatus === 'external'
       ? 'Avtales direkte'
@@ -393,25 +384,6 @@ export function ParticipantDetailDrawer({
                 >
                   Refunder beløp
                 </Button>
-              ) : canMarkPaid ? (
-                // Direkte / in-person: reconcile the offline payment, or cancel.
-                <>
-                  <Button
-                    className="w-full"
-                    disabled={loading}
-                    onClick={() => setConfirmKind('resolve')}
-                  >
-                    Merk som betalt
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className="w-full"
-                    disabled={loading}
-                    onClick={() => setConfirmKind('cancel-no-refund')}
-                  >
-                    Avbestill
-                  </Button>
-                </>
               ) : canRefund ? (
                 // Paid via card: cancel with or without refund.
                 <>
@@ -494,17 +466,6 @@ export function ParticipantDetailDrawer({
         onConfirm={() => runAction(() => onCancelEnrollment(signup.id, true))}
       />
 
-      <ConfirmDialog
-        open={confirmKind === 'resolve'}
-        onOpenChange={(o) => !o && !loading && setConfirmKind(null)}
-        ariaLabel="Merk som betalt"
-        title="Merk som betalt"
-        body={<><strong>{name}</strong> markeres som betalt for <strong>{courseTitle}</strong>.</>}
-        actionLabel="Merk som betalt"
-        loading={loading}
-        loadingText="Lagrer…"
-        onConfirm={() => runAction(() => onMarkResolved(signup.id))}
-      />
     </>
   );
 }

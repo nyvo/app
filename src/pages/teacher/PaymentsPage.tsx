@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { useAuth } from '@/contexts/AuthContext';
-import { routes } from '@/lib/routes';
-import { isProSeller } from '@/lib/payments';
 import {
   startStripeConnectOnboarding,
   refreshStripeConnectStatus,
@@ -31,7 +28,6 @@ const STRIPE_STATUS_BADGE: Record<'pending' | 'restricted' | 'rejected' | 'enabl
 };
 
 const NOT_STARTED_BADGE: StatusTone = { variant: 'neutral', label: 'Ikke satt opp' };
-const PRO_LOCKED_BADGE: StatusTone = { variant: 'neutral', label: 'Pro-funksjon' };
 
 function StatusPill({ tone }: { tone: StatusTone }) {
   return (
@@ -53,12 +49,12 @@ function StatusPill({ tone }: { tone: StatusTone }) {
  * one-sentence description, and a single primary action. The Card matches the
  * other Settings pages (billing, get-started) on the dampened canvas. The
  * content is driven by the
- * seller's Stripe Connect onboarding state:
+ * seller's Stripe Connect onboarding state (every tier — integrated payments
+ * are not gated on plan):
  *
- *   • !isPro                   → upsell: card payments are a Pro feature
- *   • Pro, not started         → "Kom i gang" (hosted Stripe onboarding)
- *   • Pro, started, !connected → "Fortsett oppsettet" (+ rejected sub-case)
- *   • Pro, connected           → "Se oversikt" (Stripe Express dashboard)
+ *   • not started         → "Kom i gang" (hosted Stripe onboarding)
+ *   • started, !connected → "Fortsett oppsettet" (+ rejected sub-case)
+ *   • connected           → "Se oversikt" (Stripe Express dashboard)
  *
  * No balance / settlements UI — the merchant manages all of that on Stripe's
  * own Express dashboard. Status re-syncs automatically on return from Stripe
@@ -67,7 +63,6 @@ function StatusPill({ tone }: { tone: StatusTone }) {
  */
 const PaymentsPage = () => {
   const { currentSeller, refreshSellers } = useAuth();
-  const isPro = isProSeller(currentSeller);
 
   const stripeConnected = !!currentSeller?.stripe_onboarding_complete;
   const stripeStarted = !!currentSeller?.stripe_account_id;
@@ -129,12 +124,12 @@ const PaymentsPage = () => {
   // Re-check status when returning from Stripe (?stripe=return); re-mint an
   // expired onboarding link when Stripe sends ?stripe=refresh.
   useEffect(() => {
-    if (!currentSeller?.id || !isPro) return;
+    if (!currentSeller?.id) return;
     const stripeParam = new URLSearchParams(window.location.search).get('stripe');
     if (stripeParam === 'return') void handleCheckStripe();
     else if (stripeParam === 'refresh') void handleStartStripe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSeller?.id, isPro]);
+  }, [currentSeller?.id]);
 
   // ─── One view-model per onboarding state, rendered by the flat layout below ───
   let subhead: string;
@@ -142,17 +137,7 @@ const PaymentsPage = () => {
   let desc: string;
   let action: ReactNode;
 
-  if (!isPro) {
-    subhead = 'Ta betalt med kort';
-    tone = PRO_LOCKED_BADGE;
-    desc =
-      'I dag avtaler du betaling direkte med deltakerne. Med Pro får du kortbetaling og automatiske utbetalinger.';
-    action = (
-      <Button asChild>
-        <Link to={routes.settingsBilling}>Oppgrader til Pro</Link>
-      </Button>
-    );
-  } else if (!stripeStarted && !stripeConnected) {
+  if (!stripeStarted && !stripeConnected) {
     subhead = 'Sett opp utbetalinger';
     tone = NOT_STARTED_BADGE;
     desc =
