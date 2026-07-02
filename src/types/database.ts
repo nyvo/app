@@ -697,8 +697,6 @@ export type Database = {
           name: string
           operating_model: string
           organization_number: string | null
-          phone: string | null
-          settings: Json | null
           slug: string
           stripe_account_id: string | null
           stripe_account_status: string | null
@@ -724,8 +722,6 @@ export type Database = {
           name: string
           operating_model?: string
           organization_number?: string | null
-          phone?: string | null
-          settings?: Json | null
           slug: string
           stripe_account_id?: string | null
           stripe_account_status?: string | null
@@ -751,8 +747,6 @@ export type Database = {
           name?: string
           operating_model?: string
           organization_number?: string | null
-          phone?: string | null
-          settings?: Json | null
           slug?: string
           stripe_account_id?: string | null
           stripe_account_status?: string | null
@@ -942,27 +936,6 @@ export type Database = {
           },
         ]
       }
-      waitlist: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          source: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          source?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          source?: string | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -978,7 +951,6 @@ export type Database = {
         Args: { p_seller_id: string }
         Returns: boolean
       }
-      account_deletion_preflight: { Args: never; Returns: Json }
       available_ticket_types: {
         Args: { p_course_id: string }
         Returns: {
@@ -998,10 +970,6 @@ export type Database = {
           weeks: number
         }[]
       }
-      calculate_package_end_date: {
-        Args: { p_course_start_date: string; p_package_weeks: number }
-        Returns: string
-      }
       check_email_auth_status: {
         Args: { p_email: string }
         Returns: {
@@ -1012,37 +980,6 @@ export type Database = {
       check_rate_limit: {
         Args: { p_key: string; p_limit: number; p_window_seconds: number }
         Returns: boolean
-      }
-      check_session_conflict: {
-        Args: {
-          p_end_time: string
-          p_exclude_course_id?: string
-          p_seller_id: string
-          p_session_date: string
-          p_start_time: string
-        }
-        Returns: {
-          conflicting_course_id: string
-          conflicting_course_title: string
-          conflicting_end: string
-          conflicting_start: string
-          has_conflict: boolean
-        }[]
-      }
-      check_sessions_conflicts: {
-        Args: {
-          p_exclude_course_id?: string
-          p_seller_id: string
-          p_sessions: Json
-        }
-        Returns: {
-          conflicting_course_id: string
-          conflicting_course_title: string
-          conflicting_end: string
-          conflicting_start: string
-          has_conflict: boolean
-          session_date: string
-        }[]
       }
       claim_my_signups: { Args: never; Returns: number }
       cleanup_old_webhook_events: { Args: never; Returns: number }
@@ -1071,10 +1008,6 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
-      }
-      count_signups_by_ticket_type: {
-        Args: { p_course_id: string; p_ticket_type_id: string }
-        Returns: number
       }
       count_signups_for_session: {
         Args: { p_course_session_id: string }
@@ -1139,7 +1072,6 @@ export type Database = {
         }[]
       }
       export_user_data: { Args: { p_user_id: string }; Returns: Json }
-      find_seller_by_owner_email: { Args: { p_email: string }; Returns: string }
       get_payment_attempt_status: {
         Args: { p_attempt_id: string }
         Returns: string
@@ -1158,13 +1090,6 @@ export type Database = {
           subscription_status: string
           updated_at: string
           uses_integrated_payments: boolean
-        }[]
-      }
-      get_seller_private: {
-        Args: { p_seller_id: string }
-        Returns: {
-          organization_number: string
-          phone: string
         }[]
       }
       get_signup_by_stripe_id: {
