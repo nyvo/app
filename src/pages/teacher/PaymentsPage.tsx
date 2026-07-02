@@ -12,6 +12,7 @@ import {
   getStripeSettlements,
 } from '@/services/stripe-connect';
 import { friendlyError } from '@/lib/error-messages';
+import { COMPANY } from '@/lib/company';
 import { toast } from 'sonner';
 
 type StatusTone = {
@@ -94,7 +95,7 @@ const PaymentsPage = () => {
     if (data?.onboarding_complete) {
       toast.success('Utbetalinger er klare');
     } else if (data?.status === 'rejected') {
-      toast.error('Søknaden ble avslått. Ta gjerne kontakt på hei@openspot.no.');
+      toast.error(`Søknaden ble avslått. Ta gjerne kontakt på ${COMPANY.email}.`);
     } else {
       toast('Oppsettet er ikke fullført ennå.');
     }
@@ -151,10 +152,10 @@ const PaymentsPage = () => {
     if (stripeStatus === 'rejected') {
       subhead = 'Søknaden ble avslått';
       tone = STRIPE_STATUS_BADGE.rejected;
-      desc = 'Ta gjerne kontakt på hei@openspot.no, så hjelper vi deg.';
+      desc = `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg.`;
       action = (
         <Button asChild>
-          <a href="mailto:hei@openspot.no">Kontakt oss</a>
+          <a href={`mailto:${COMPANY.email}`}>Kontakt oss</a>
         </Button>
       );
     } else {

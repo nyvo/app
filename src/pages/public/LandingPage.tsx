@@ -194,7 +194,7 @@ const LandingPage = () => {
         title="Enkel påmelding."
         description="Deltakeren velger time og betaler — alt på én side."
         bullets={[
-          'Vipps og kort',
+          'Sikker kortbetaling',
           'Automatisk kvittering på e-post',
           'Enkel refusjon',
         ]}

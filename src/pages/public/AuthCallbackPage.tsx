@@ -9,6 +9,7 @@ import {
   resolvePostAuthDestination,
   sanitizeNextPath,
 } from '@/lib/auth-routes'
+import { COMPANY } from '@/lib/company'
 
 /**
  * Magic-link / OAuth callback handler.
@@ -70,8 +71,8 @@ const AuthCallbackPage = () => {
         footer={
           <p className="text-sm text-foreground-muted">
             Trenger du hjelp?{' '}
-            <a href="mailto:hei@openspot.no" className="font-medium text-foreground hover:underline">
-              hei@openspot.no
+            <a href={`mailto:${COMPANY.email}`} className="font-medium text-foreground hover:underline">
+              {COMPANY.email}
             </a>
           </p>
         }
