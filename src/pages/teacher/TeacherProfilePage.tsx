@@ -6,6 +6,7 @@ import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { PasswordRow } from '@/components/teacher/PasswordRow';
 import { PageShell } from '@/components/teacher/PageShell';
 import { SettingsSection } from '@/components/teacher/SettingsSection';
 import { useAuth } from '@/contexts/AuthContext';
@@ -217,6 +218,7 @@ const TeacherProfilePage = () => {
 
             <SettingsSection title="Konto og sikkerhet">
               <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
+                <PasswordRow />
                 <div className="flex items-center justify-between gap-4 px-5 py-4">
                   <span className="text-base font-medium text-foreground">Logg ut alle enheter</span>
                   <Button

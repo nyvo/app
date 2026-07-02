@@ -10,7 +10,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { authPageVariants, authPageTransition } from '@/lib/motion';
 import { supabase } from '@/lib/supabase';
 import { lookupInviteLink, redeemInviteLink } from '@/services/invite-links';
-import { PageState } from '@/components/page-state/page-state';
 import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
 import type { LookupInviteLinkResult } from '@/types/database';
@@ -295,12 +294,25 @@ export default function JoinPage() {
   }
 
   // No access — studio invites are for instructors. A participant (buyer)
-  // account can't affiliate with a studio, so show a plain no-access state
-  // instead of offering a join it can't complete. We know the account is a
-  // non-instructor when its profile is loaded and the role isn't 'seller';
+  // account can't affiliate with a studio, so explain why the link doesn't
+  // apply instead of offering a join it can't complete. We know the account is
+  // a non-instructor when its profile is loaded and the role isn't 'seller';
   // the 'no_access' phase is the server-authoritative fallback (no_seller).
   if (phase.kind === 'no_access' || (profile !== null && profile.role !== 'seller')) {
-    return <PageState variant="generic" />;
+    return (
+      <Shell>
+        <Cover url={team.cover_image_url} />
+        <h1 className="text-3xl font-medium text-foreground mb-3">
+          Denne lenken er for kursholdere
+        </h1>
+        <p className="text-base text-foreground-muted mb-8">
+          Invitasjonen lar kursholdere vise kursene sine på {team.name} sin side. Kontoen din er en deltakerkonto.
+        </p>
+        <Button size="cta" className="w-full" onClick={() => navigate('/overview')}>
+          Gå til Min side
+        </Button>
+      </Shell>
+    );
   }
 
   if (phase.kind === 'checking_membership') {
@@ -344,7 +356,7 @@ export default function JoinPage() {
           Dette er ditt eget studio
         </h1>
         <p className="text-base text-foreground-muted mb-8">
-          Du kan ikke bli medlem av ditt eget team.
+          Du kan ikke bli medlem av ditt eget studio.
         </p>
         <Button size="cta" className="w-full" onClick={() => navigate(routes.studio)}>
           Til Studio
@@ -355,7 +367,7 @@ export default function JoinPage() {
 
   // State 2 — in another team, need to confirm leave
   if (phase.kind === 'need_force_leave') {
-    const leavingName = phase.existingTeamName ?? 'det forrige teamet';
+    const leavingName = phase.existingTeamName ?? 'det forrige studioet';
     return (
       <Shell>
         <Cover url={team.cover_image_url} />
@@ -363,7 +375,7 @@ export default function JoinPage() {
           Bli med i {team.name}
         </h1>
         <p className="text-base text-foreground-muted mb-6">
-          Du kan være med i ett team om gangen. Blir du med her, forlater du:
+          Du kan være med i ett studio om gangen. Blir du med her, forlater du:
         </p>
         <div className="border border-border rounded-md bg-surface p-4 mb-8 text-left">
           <div className="text-base font-medium text-foreground">{leavingName}</div>

@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation, useSearchParams, type Location } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { Eye, EyeOff, Check, ChevronLeft } from '@/lib/icons'
+import { Eye, EyeOff, ChevronLeft } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
@@ -18,31 +18,11 @@ import {
 } from '@/lib/auth-routes'
 import { AUTH_VALIDATION, AUTH_ERRORS } from '@/lib/auth-messages'
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
+import { PasswordRules, isPasswordValid } from '@/components/auth/PasswordRules'
 import { supabase } from '@/lib/supabase'
 import { isValidEmail } from '@/lib/utils'
 
 const ROUTES = AUTH_ROUTES
-
-/** Live password-requirement row — neutral filled disc when met, empty ring when not. */
-function Rule({ met, children }: { met: boolean; children: React.ReactNode }) {
-  return (
-    <li
-      className={`flex items-center gap-2.5 text-sm transition-colors ${
-        met ? 'text-foreground' : 'text-foreground-muted'
-      }`}
-    >
-      <span
-        aria-hidden="true"
-        className={`flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
-          met ? 'border-foreground bg-foreground' : 'border-border bg-transparent'
-        }`}
-      >
-        {met && <Check className="size-2.5 text-background" strokeWidth={3} />}
-      </span>
-      {children}
-    </li>
-  )
-}
 
 /**
  * Combined auth surface — EMAIL-FIRST (§ auth rework).
@@ -104,12 +84,7 @@ const AuthPage = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const rules = {
-    length: password.length >= 8,
-    number: /\d/.test(password),
-    special: /[^A-Za-z0-9]/.test(password),
-  }
-  const passwordValid = rules.length && rules.number && rules.special
+  const passwordValid = isPasswordValid(password)
 
   // Code-entry state. `reason` picks the OTP type + framing; `hasPasswordFallback`
   // shows "Bruk passord i stedet" only when the user actually has a password.
@@ -185,7 +160,7 @@ const AuthPage = () => {
     try {
       const { exists, hasPassword, error } = await checkEmailAuthStatus(email)
       if (error) {
-        toast.error(AUTH_ERRORS.generic)
+        toast.error(rateOrGeneric(error))
         setIsSubmitting(false)
         return
       }
@@ -250,7 +225,30 @@ const AuthPage = () => {
       }
       const { error } = await signInWithPassword(email, password)
       if (error) {
-        setPasswordError('Passordet stemmer ikke.')
+        const authErr = error as { code?: string; status?: number }
+        // Unconfirmed email → resend the signup code and route to the
+        // confirmation screen instead of a misleading "wrong password".
+        if (authErr.code === 'email_not_confirmed' || error.message.includes('not confirmed')) {
+          const { error: resendError } = await supabase.auth.resend({ type: 'signup', email })
+          if (resendError) {
+            toast.error(rateOrGeneric(resendError))
+            setIsSubmitting(false)
+            return
+          }
+          goToCode({ reason: 'confirm', hasPasswordFallback: false })
+          setIsSubmitting(false)
+          return
+        }
+        if (
+          authErr.status === 429 ||
+          authErr.code === 'over_request_rate_limit' ||
+          error.message.includes('rate')
+        ) {
+          toast.error(AUTH_ERRORS.rateLimited)
+          setIsSubmitting(false)
+          return
+        }
+        setPasswordError('Passordet stemmer ikke')
         setIsSubmitting(false)
         return
       }
@@ -429,13 +427,7 @@ const AuthPage = () => {
               </button>
             </div>
 
-            {isSignup && (
-              <ul className="mt-3 space-y-2">
-                <Rule met={rules.length}>Minst 8 tegn</Rule>
-                <Rule met={rules.number}>Minst ett tall</Rule>
-                <Rule met={rules.special}>Minst ett spesialtegn</Rule>
-              </ul>
-            )}
+            {isSignup && <PasswordRules password={password} />}
 
             {passwordError && (
               <FieldError id="password-error" className="mt-2">
