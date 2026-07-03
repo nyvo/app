@@ -83,6 +83,8 @@ const BillingPage = () => {
   // StrictMode (dev) double-invokes effects; the toast + refresh must run once
   // per checkout return, so dedupe with a ref.
   const stripeResultHandled = useRef(false)
+  const refreshTimers = useRef<number[]>([])
+  useEffect(() => () => refreshTimers.current.forEach(clearTimeout), [])
   useEffect(() => {
     const stripeResult = searchParams.get('stripe')
     if (!stripeResult || stripeResultHandled.current) return
@@ -90,7 +92,13 @@ const BillingPage = () => {
 
     if (stripeResult === 'success') {
       toast.success('Abonnementet er aktivert')
+      // The webhook that flips the seller to Pro can land after the redirect —
+      // refresh a couple more times so the page doesn't keep showing the
+      // upgrade cards on a completed checkout.
       void refreshSellers()
+      refreshTimers.current = [2500, 6000].map((ms) =>
+        window.setTimeout(() => void refreshSellers(), ms),
+      )
     } else if (stripeResult === 'cancelled') {
       toast('Abonnementet ble ikke fullført')
     }

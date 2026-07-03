@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { errorResponse, successResponse, handleCors } from '../_shared/auth.ts'
 import {
   verifyStripeSignature,
+  retrieveSubscription,
   type StripeEvent,
   type StripeSubscription,
 } from '../_shared/stripe.ts'
@@ -13,7 +14,10 @@ const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
 
 function stripeStatusToSellerStatus(status: string): 'active' | 'past_due' | 'canceled' | 'none' {
   if (status === 'active' || status === 'trialing') return 'active'
-  if (status === 'past_due' || status === 'unpaid' || status === 'incomplete') return 'past_due'
+  // NOT 'incomplete': past_due is treated as full Pro across the app (0% platform
+  // take, "already has Pro" guard) — a subscription whose FIRST invoice was never
+  // paid must map to 'none' so the seller stays on the free plan.
+  if (status === 'past_due' || status === 'unpaid') return 'past_due'
   if (status === 'canceled' || status === 'incomplete_expired' || status === 'paused') return 'canceled'
   return 'none'
 }
@@ -129,7 +133,16 @@ Deno.serve(async (req: Request) => {
       event.type === 'customer.subscription.updated' ||
       event.type === 'customer.subscription.deleted'
     ) {
-      result = await syncSubscription(supabase, event.data.object as unknown as StripeSubscription)
+      // Stripe does NOT guarantee event ordering — a delayed 'updated' can carry
+      // stale state (e.g. re-granting Pro after a 'deleted'). Sync from the LIVE
+      // subscription instead of the event payload; a retrieve failure throws so
+      // the claim is released and Stripe retries.
+      const eventSub = event.data.object as unknown as StripeSubscription
+      const live = await retrieveSubscription(eventSub.id)
+      result = await syncSubscription(supabase, {
+        ...live,
+        metadata: { ...eventSub.metadata, ...live.metadata },
+      })
     } else if (event.type === 'checkout.session.completed') {
       const session = event.data.object
       const sellerId = typeof session.metadata === 'object' && session.metadata
@@ -139,20 +152,17 @@ Deno.serve(async (req: Request) => {
       const customerId = typeof session.customer === 'string' ? session.customer : null
 
       if (sellerId && subscriptionId && customerId) {
-        const { error } = await supabase
-          .from('sellers')
-          .update({
-            subscription_plan: 'pro',
-            subscription_status: 'active',
-            subscription_cancel_at_period_end: false,
-            subscription_provider: 'stripe',
-            subscription_customer_id: customerId,
-            subscription_external_id: subscriptionId,
-          })
-          .eq('id', sellerId)
-
-        if (error) throw error
-        result = { status: 'checkout_synced', sellerId, stripeSubscriptionId: subscriptionId }
+        // The session object carries neither subscription status nor period end —
+        // sync from the live subscription so the seller row is complete from the
+        // first event (metadata.seller_id is forced from the session, which is
+        // authoritative for who checked out).
+        const live = await retrieveSubscription(subscriptionId)
+        const synced = await syncSubscription(supabase, {
+          ...live,
+          customer: customerId,
+          metadata: { ...live.metadata, seller_id: sellerId },
+        })
+        result = { ...synced, status: 'checkout_synced' }
       }
     }
 

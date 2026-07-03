@@ -240,6 +240,15 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // Session rows store naive Norwegian local times — "now" in Europe/Oslo
+    // (sv-SE → "YYYY-MM-DD HH:mm:ss", lexically comparable with date + time).
+    const osloNow = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: 'Europe/Oslo',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false,
+    }).format(new Date())
+
     // Resolve the drop-in session up-front (capacity check + FK on payment_attempts).
     let courseSession: { id: string; session_date: string; start_time: string } | null = null
     if (isDropIn && sessionId) {
@@ -258,17 +267,40 @@ Deno.serve(async (req: Request) => {
         return errorResponse('Timen er avlyst', 400, req)
       }
       courseSession = cs as { id: string; session_date: string; start_time: string }
+      // A drop-in is for the next class — never sell a class that already started.
+      if (`${courseSession.session_date} ${courseSession.start_time}` <= osloNow) {
+        return errorResponse('Timen har allerede startet', 400, req)
+      }
     }
 
     // Soft capacity check. The hard guard is the advisory-locked RPC in the webhook — this just
-    // avoids authorizing a card on a sale that can't succeed.
-    if (isDropIn && courseSession && course.max_participants) {
-      const { data: countResult } = await supabase.rpc('count_signups_for_session', {
-        p_course_session_id: courseSession.id,
-      })
-      const sessionCount = typeof countResult === 'number' ? countResult : 0
-      if (sessionCount >= course.max_participants) {
-        return errorResponse('Timen er full', 400, req)
+    // avoids sending the buyer into payment for a sale that can't succeed. Drop-in checks the
+    // chosen session; a package occupies every remaining class, so its proxy is the next
+    // upcoming session (per-session counts — course-wide totals over-count past drop-ins).
+    if (course.max_participants) {
+      let capacitySessionId = isDropIn ? courseSession?.id ?? null : null
+      if (!isDropIn) {
+        const { data: upcoming } = await supabase
+          .from('course_sessions')
+          .select('id, session_date, start_time')
+          .eq('course_id', courseId)
+          .neq('status', 'cancelled')
+          .gte('session_date', osloNow.slice(0, 10))
+          .order('session_date', { ascending: true })
+          .order('start_time', { ascending: true })
+          .limit(10)
+        capacitySessionId =
+          ((upcoming ?? []) as { id: string; session_date: string; start_time: string }[])
+            .find((s) => `${s.session_date} ${s.start_time}` > osloNow)?.id ?? null
+      }
+      if (capacitySessionId) {
+        const { data: countResult } = await supabase.rpc('count_signups_for_session', {
+          p_course_session_id: capacitySessionId,
+        })
+        const sessionCount = typeof countResult === 'number' ? countResult : 0
+        if (sessionCount >= course.max_participants) {
+          return errorResponse(isDropIn ? 'Timen er full' : 'Kurset er fullt', 400, req)
+        }
       }
     }
 

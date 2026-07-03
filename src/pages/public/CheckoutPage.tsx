@@ -17,7 +17,7 @@ import { calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
 import { fetchPublicCourseBySlug, resolveCourseImage, singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { createStripeSession } from '@/services/checkout';
-import { createFreeSignup, checkCourseAvailability } from '@/services/signups';
+import { createFreeSignup } from '@/services/signups';
 import { supabase } from '@/lib/supabase';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import type { AvailableTicketType } from '@/types/database';
@@ -131,29 +131,38 @@ const CheckoutPage = () => {
   const selectedTier = tiers.find((t) => t.id === selectedTierId) ?? null;
   const isDropInSelected = selectedTier?.ticket_kind === 'drop_in';
 
-  // Drop-in flow: pick the next available session automatically. Same model
-  // as BookingPanel — we don't expose a session picker to the buyer.
-  const [dropInSessionId, setDropInSessionId] = useState<string | null>(null);
+  // Drop-in flow: pick the next class automatically — the first session that
+  // hasn't started yet. Same model as BookingPanel; no session picker.
+  // undefined = loading / not applicable, null = no upcoming session.
+  const [dropInSessionId, setDropInSessionId] = useState<string | null | undefined>(undefined);
   useEffect(() => {
     let cancelled = false;
     if (!isDropInSelected || !course?.id) {
-      setDropInSessionId(null);
+      setDropInSessionId(undefined);
       return;
     }
     void (async () => {
-      const today = new Date().toISOString().slice(0, 10);
+      // Session rows store naive Norwegian local times — compare against "now"
+      // in Europe/Oslo (sv-SE gives "YYYY-MM-DD HH:mm:ss", lexically ordered).
+      const osloNow = new Intl.DateTimeFormat('sv-SE', {
+        timeZone: 'Europe/Oslo',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false,
+      }).format(new Date());
       const { data } = await supabase
         .from('course_sessions')
         .select('id, session_date, start_time, status')
         .eq('course_id', course.id)
-        .gte('session_date', today)
+        .gte('session_date', osloNow.slice(0, 10))
         .neq('status', 'cancelled')
         .order('session_date', { ascending: true })
         .order('start_time', { ascending: true })
-        .limit(1);
+        .limit(10);
       if (cancelled) return;
-      const first = (data as { id: string }[] | null)?.[0];
-      setDropInSessionId(first?.id ?? null);
+      const next = (data as { id: string; session_date: string; start_time: string }[] | null)
+        ?.find((s) => `${s.session_date} ${s.start_time}` > osloNow);
+      setDropInSessionId(next?.id ?? null);
     })();
     return () => {
       cancelled = true;
@@ -171,7 +180,9 @@ const CheckoutPage = () => {
     && isValidEmail(form.email)
     && isValidPhone(form.phone)
     && form.terms
-    && !!selectedTier;
+    && !!selectedTier
+    // Drop-in needs a resolved next class before the buyer can continue.
+    && (!isDropInSelected || typeof dropInSessionId === 'string');
 
   // Inline phone error, shown only after blur and only when the field holds
   // something that isn't a valid number — an empty field just keeps the
@@ -204,18 +215,15 @@ const CheckoutPage = () => {
     setSessionError(null);
     setEmailMessage(null);
 
-    const { available } = await checkCourseAvailability(course.id);
-    if (available <= 0) {
-      setSessionError('Kurset er fullt.');
-      setSubmitting(false);
-      return;
-    }
-
+    // No client-side capacity pre-check: course-wide counts are wrong for
+    // per-session capacity (drop-ins from past classes inflate them). The edge
+    // function's soft check answers with the right inline error, and nothing is
+    // authorized until the buyer confirms in the payment step.
     const sessionParams = {
       courseId: course.id,
       organizationSlug: slug,
       ticketTypeId: selectedTier.id,
-      sessionId: isDropInSelected ? dropInSessionId ?? undefined : undefined,
+      sessionId: isDropInSelected && typeof dropInSessionId === 'string' ? dropInSessionId : undefined,
       customerEmail: form.email.trim(),
       customerName: formatPersonName(form.name),
       customerPhone: form.phone.trim() || undefined,
@@ -419,6 +427,9 @@ const CheckoutPage = () => {
                       </Button>
                       {sessionError && (
                         <p className="text-sm text-danger text-center">{sessionError}</p>
+                      )}
+                      {isDropInSelected && dropInSessionId === null && (
+                        <p className="text-sm text-danger text-center">Ingen kommende timer for drop-in.</p>
                       )}
                       {course.seller?.name && (
                         <p className="text-sm text-foreground-muted text-center">
