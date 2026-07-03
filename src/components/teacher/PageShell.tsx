@@ -28,8 +28,9 @@ import { cn } from '@/lib/utils';
  */
 
 interface PageShellProps {
-  /** Required page title — renders as h1. */
-  title: string;
+  /** Required page title — renders as h1. Accepts a node so loading states can
+   *  pass a Skeleton through the same shell (single width authority). */
+  title: ReactNode;
   /** Optional subtitle below the title — a string or a rich node (e.g. a meta row). */
   description?: ReactNode;
   /** Optional badge (status, count, etc). Placed inline next to the title by

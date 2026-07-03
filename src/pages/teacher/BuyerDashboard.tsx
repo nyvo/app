@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { ImageIcon } from '@/lib/icons'
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
+import { PageShell } from '@/components/teacher/PageShell'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DelayedFallback } from '@/components/ui/delayed-fallback'
-import { pageVariants, pageTransition } from '@/lib/motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { claimMySignups, fetchMySignups, type BuyerSignup } from '@/services/signups'
 import { routes } from '@/lib/routes'
@@ -214,48 +213,35 @@ export default function BuyerDashboard() {
     <div className="flex-1 overflow-y-auto bg-canvas h-full">
       <MobileTeacherHeader />
 
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-12">
-        <motion.div
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          transition={pageTransition}
-        >
-          <header className="mb-12">
-            <h1 className="text-2xl font-medium text-foreground">
-              {firstName ? `Hei, ${firstName}` : 'Oversikt'}
-            </h1>
-          </header>
-
-          {loadFailed ? (
-            <div className="rounded-xl border border-border bg-background p-6 sm:p-10">
-              <ErrorState
-                title="Kunne ikke hente påmeldingene dine"
-                message="Sjekk forbindelsen og prøv igjen."
-                onRetry={loadSignups}
-              />
-            </div>
-          ) : signups === null ? (
-            // Skeleton held back 200ms (Studio § 10 — no flash-loader for
-            // sub-second loads) so a fast query stays quiet.
-            <DelayedFallback>
-              <DashboardSkeleton />
-            </DelayedFallback>
-          ) : signups.length === 0 ? (
-            <div className="rounded-xl border border-border bg-background p-6 sm:p-10">
-              <EmptyState
-                title="Ingen påmeldinger ennå"
-                description="Når du melder deg på et kurs vil du finne det her."
-              />
-            </div>
-          ) : (
-            <div className="space-y-10">
-              <SignupSection title="Kommende" signups={upcoming} />
-              <SignupSection title="Tidligere" signups={past} />
-            </div>
-          )}
-        </motion.div>
-      </div>
+      <PageShell title={firstName ? `Hei, ${firstName}` : 'Oversikt'}>
+        {loadFailed ? (
+          <div className="rounded-xl border border-border bg-background p-6 sm:p-10">
+            <ErrorState
+              title="Kunne ikke hente påmeldingene dine"
+              message="Sjekk forbindelsen og prøv igjen."
+              onRetry={loadSignups}
+            />
+          </div>
+        ) : signups === null ? (
+          // Skeleton held back 200ms (Studio § 10 — no flash-loader for
+          // sub-second loads) so a fast query stays quiet.
+          <DelayedFallback>
+            <DashboardSkeleton />
+          </DelayedFallback>
+        ) : signups.length === 0 ? (
+          <div className="rounded-xl border border-border bg-background p-6 sm:p-10">
+            <EmptyState
+              title="Ingen påmeldinger ennå"
+              description="Når du melder deg på et kurs vil du finne det her."
+            />
+          </div>
+        ) : (
+          <div className="space-y-10">
+            <SignupSection title="Kommende" signups={upcoming} />
+            <SignupSection title="Tidligere" signups={past} />
+          </div>
+        )}
+      </PageShell>
     </div>
   )
 }

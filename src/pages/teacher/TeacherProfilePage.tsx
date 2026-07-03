@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
@@ -8,7 +7,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PasswordRow } from '@/components/teacher/PasswordRow';
 import { PageShell } from '@/components/teacher/PageShell';
-import { SettingsSection } from '@/components/teacher/SettingsSection';
+import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, typedFrom } from '@/lib/supabase';
 import { isValidEmail, resolveDisplayName } from '@/lib/utils';
@@ -166,57 +165,59 @@ const TeacherProfilePage = () => {
     <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
         <MobileTeacherHeader />
 
-        <PageShell narrow="centered" title="Innstillinger">
-          <div className="space-y-10">
-            <SettingsSection title="Personlig informasjon">
-              <Card>
-                <CardContent className="grid grid-cols-1 gap-6">
-                  <div className="grid gap-2">
-                    <label
-                      htmlFor="profile-name"
-                      className="text-sm font-medium text-foreground"
-                    >
-                      Navn
-                    </label>
-                    <Input
-                      id="profile-name"
-                      type="text"
-                      value={name}
-                      placeholder="Navnet ditt"
-                      onChange={(e) => setName(e.target.value)}
-                      aria-describedby="profile-name-hint"
-                    />
-                    <p id="profile-name-hint" className="text-sm text-foreground-muted">
-                      Brukes bare på kontoen din. Den offentlige siden viser studionavnet.
-                    </p>
-                  </div>
+        <PageShell title="Innstillinger">
+          <SettingsRows>
+            <SettingsRow
+              title="Personlig informasjon"
+              description="Navn og kontaktinformasjon for kontoen din."
+            >
+              <div className="grid gap-2">
+                <label
+                  htmlFor="profile-name"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Navn
+                </label>
+                <Input
+                  id="profile-name"
+                  type="text"
+                  value={name}
+                  placeholder="Navnet ditt"
+                  onChange={(e) => setName(e.target.value)}
+                  aria-describedby="profile-name-hint"
+                />
+                <p id="profile-name-hint" className="text-sm text-foreground-muted">
+                  Brukes bare på kontoen din. Den offentlige siden viser studionavnet.
+                </p>
+              </div>
 
-                  <div className="grid gap-2">
-                    <label
-                      htmlFor="profile-email"
-                      data-error={(errors.email && touched.email) || undefined}
-                      className="text-sm font-medium text-foreground data-[error=true]:text-danger"
-                    >
-                      E-post
-                    </label>
-                    <Input
-                      id="profile-email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
-                      onBlur={() => handleBlur('email')}
-                      aria-invalid={!!(errors.email && touched.email) || undefined}
-                      aria-describedby={errors.email && touched.email ? 'profile-email-error' : undefined}
-                    />
-                    {errors.email && touched.email && (
-                      <FieldError id="profile-email-error" className="mt-0">{errors.email}</FieldError>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </SettingsSection>
+              <div className="grid gap-2">
+                <label
+                  htmlFor="profile-email"
+                  data-error={(errors.email && touched.email) || undefined}
+                  className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+                >
+                  E-post
+                </label>
+                <Input
+                  id="profile-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                  onBlur={() => handleBlur('email')}
+                  aria-invalid={!!(errors.email && touched.email) || undefined}
+                  aria-describedby={errors.email && touched.email ? 'profile-email-error' : undefined}
+                />
+                {errors.email && touched.email && (
+                  <FieldError id="profile-email-error" className="mt-0">{errors.email}</FieldError>
+                )}
+              </div>
+            </SettingsRow>
 
-            <SettingsSection title="Konto og sikkerhet">
+            <SettingsRow
+              title="Konto og sikkerhet"
+              description="Passord, pålogging og sletting av kontoen."
+            >
               <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
                 <PasswordRow />
                 <div className="flex items-center justify-between gap-4 px-5 py-4">
@@ -270,15 +271,15 @@ const TeacherProfilePage = () => {
                 typeToConfirmValue={deleteConfirmText}
                 onTypeToConfirmChange={setDeleteConfirmText}
               />
-            </SettingsSection>
+            </SettingsRow>
+          </SettingsRows>
 
-            <DirtyFormBar
-              visible={isDirty}
-              isSaving={isSaving}
-              onSave={handleSave}
-              onCancel={handleCancel}
-            />
-          </div>
+          <DirtyFormBar
+            visible={isDirty}
+            isSaving={isSaving}
+            onSave={handleSave}
+            onCancel={handleCancel}
+          />
         </PageShell>
     </main>
   );

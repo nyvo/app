@@ -3,10 +3,12 @@ import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Check, ExternalLink, Plus, X } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { PageTab, PageTabs } from '@/components/ui/page-tabs';
 import { FieldError } from '@/components/ui/field-error';
+import { ErrorState } from '@/components/ui/error-state';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { ImageField } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
 import { PlacesAutocomplete } from '@/components/ui/places-autocomplete';
@@ -15,7 +17,7 @@ import type { PlaceDetails } from '@/services/places';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
-import { SettingsSection } from '@/components/teacher/SettingsSection';
+import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
 import { EmbedCodeSection } from '@/components/teacher/studio/EmbedCodeSection';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,7 +44,6 @@ const StudioPage = () => {
       <MobileTeacherHeader />
 
       <PageShell
-        narrow="centered"
         title="Studio"
         action={
           currentSeller?.slug ? (
@@ -75,7 +76,7 @@ function StudioPublicSettings({
   seller: Seller;
   onSaved: () => Promise<void> | void;
 }) {
-  const { locations, isLoading: loadingLocations, refetch } = useLocations(seller.id);
+  const { locations, isLoading: loadingLocations, error: locationsError, refetch } = useLocations(seller.id);
   const primaryLocation = locations[0] ?? null;
 
   const isStudio = seller.operating_model === 'studio';
@@ -465,84 +466,94 @@ function StudioPublicSettings({
         )}
       </PageTabs>
 
+      {locationsError ? (
+        <div className="rounded-xl border border-border bg-background p-6 sm:p-10">
+          <ErrorState
+            title="Kunne ikke hente studioet ditt"
+            message="Sjekk forbindelsen og prøv igjen."
+            onRetry={() => void refetch()}
+          />
+        </div>
+      ) : loadingLocations ? (
+        // Skeleton held back 200ms (Studio § 10 — no flash-loader for
+        // sub-second loads); tabs above stay visible, only the panel is replaced.
+        <DelayedFallback>
+          <StudioRowsSkeleton />
+        </DelayedFallback>
+      ) : (
+        <>
       {tab === 'profil' && (
         <div
           role="tabpanel"
           id="studio-panel-profil"
           aria-labelledby="studio-tab-profil"
-          className="space-y-10"
         >
-          <SettingsSection
-            title="Offentlig profil"
-            description="Dette ser deltakerne på studiosiden din."
-          >
-            <Card>
-              <CardContent className="space-y-6">
-                <div className="grid gap-3">
-                  <span className="text-sm font-medium text-foreground">Profilbilde</span>
-                  <ImageField
-                    variant="avatar"
-                    value={logoUrl}
-                    onChange={handlePhotoSelected}
-                    onRemove={handlePhotoRemove}
-                    loading={savingPhoto}
-                    changeLabel="Endre"
-                    ariaLabel="Last opp profilbilde"
-                  />
-                </div>
+          <SettingsRows>
+            <SettingsRow title="Profilbilde" description="Vises på studiosiden din.">
+              <ImageField
+                variant="avatar"
+                value={logoUrl}
+                onChange={handlePhotoSelected}
+                onRemove={handlePhotoRemove}
+                loading={savingPhoto}
+                changeLabel="Endre"
+                ariaLabel="Last opp profilbilde"
+              />
+            </SettingsRow>
 
-                <div className="grid gap-2">
-                  <label htmlFor="studio-name" className="text-sm font-medium text-foreground">
-                    Navn
-                  </label>
-                  <Input
-                    id="studio-name"
-                    value={name}
+            <SettingsRow title="Navn" description="Navnet kundene ser på studiosiden.">
+              <div className="grid gap-2">
+                <Input
+                  id="studio-name"
+                  aria-label="Navn"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (nameError) setNameError(null);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  disabled={isSaving}
+                  aria-invalid={!!nameError || undefined}
+                  aria-describedby={nameError ? 'studio-name-error' : undefined}
+                />
+                {nameError && <FieldError id="studio-name-error">{nameError}</FieldError>}
+              </div>
+            </SettingsRow>
+
+            <SettingsRow
+              title="Nettadresse"
+              description="Den offentlige adressen til studiosiden din."
+            >
+              <div className="grid gap-2">
+                <InputGroup data-disabled={isSaving || undefined}>
+                  <InputGroupAddon align="inline-start">openspot.no/</InputGroupAddon>
+                  <InputGroupInput
+                    id="studio-slug"
+                    type="text"
+                    aria-label="Nettadresse"
+                    value={slug}
                     onChange={(e) => {
-                      setName(e.target.value);
-                      if (nameError) setNameError(null);
+                      setSlug(e.target.value);
+                      if (slugError) setSlugError(null);
                     }}
                     onKeyDown={handleKeyDown}
                     disabled={isSaving}
-                    aria-invalid={!!nameError || undefined}
-                    aria-describedby={nameError ? 'studio-name-error' : undefined}
+                    aria-invalid={!!slugError || undefined}
+                    aria-describedby={slugError ? 'studio-slug-error' : undefined}
                   />
-                  {nameError && <FieldError id="studio-name-error">{nameError}</FieldError>}
-                </div>
+                </InputGroup>
+                {slugError && <FieldError id="studio-slug-error">{slugError}</FieldError>}
+              </div>
+            </SettingsRow>
 
-                <div className="grid gap-2">
-                  <label htmlFor="studio-slug" className="text-sm font-medium text-foreground">
-                    Nettadresse
-                  </label>
-                  <InputGroup data-disabled={isSaving || undefined}>
-                    <InputGroupAddon align="inline-start">openspot.no/</InputGroupAddon>
-                    <InputGroupInput
-                      id="studio-slug"
-                      type="text"
-                      value={slug}
-                      onChange={(e) => {
-                        setSlug(e.target.value);
-                        if (slugError) setSlugError(null);
-                      }}
-                      onKeyDown={handleKeyDown}
-                      disabled={isSaving}
-                      aria-invalid={!!slugError || undefined}
-                      aria-describedby={slugError ? 'studio-slug-error' : undefined}
-                    />
-                  </InputGroup>
-                  {slugError && <FieldError id="studio-slug-error">{slugError}</FieldError>}
-                </div>
-              </CardContent>
-            </Card>
-          </SettingsSection>
+            {seller.slug && <EmbedCodeSection slug={seller.slug} />}
 
-          {seller.slug && <EmbedCodeSection slug={seller.slug} />}
-
-          <AccountTypeSection
-            seller={seller}
-            onChanged={onSaved}
-            onBecameSolo={() => setTab('profil')}
-          />
+            <AccountTypeSection
+              seller={seller}
+              onChanged={onSaved}
+              onBecameSolo={() => setTab('profil')}
+            />
+          </SettingsRows>
         </div>
       )}
 
@@ -551,23 +562,21 @@ function StudioPublicSettings({
           role="tabpanel"
           id="studio-panel-sted"
           aria-labelledby="studio-tab-sted"
-          className="space-y-10"
         >
-          <SettingsSection
-            title="Sted"
-            description="Brukes når du lager kurs, og vises til deltakerne som skal møte opp."
-          >
-            <Card>
-              <CardContent className="space-y-3">
-                <div className="grid gap-2">
-                  <label
-                    htmlFor="studio-place-name"
-                    data-error={!!placeError || undefined}
-                    className="text-sm font-medium text-foreground data-[error=true]:text-danger"
-                  >
-                    Stedsnavn
-                  </label>
-                  <PlacesAutocomplete
+          <SettingsRows>
+            <SettingsRow
+              title="Sted"
+              description="Brukes når du lager kurs, og vises til deltakerne som skal møte opp."
+            >
+              <div className="grid gap-2">
+                <label
+                  htmlFor="studio-place-name"
+                  data-error={!!placeError || undefined}
+                  className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+                >
+                  Stedsnavn
+                </label>
+                <PlacesAutocomplete
                     id="studio-place-name"
                     value={placeName}
                     onChange={(v) => {
@@ -605,16 +614,13 @@ function StudioPublicSettings({
                     />
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          </SettingsSection>
+            </SettingsRow>
 
-          <SettingsSection
-            title="Rom"
-            description="Sett antall plasser per rom — fylles inn automatisk når du bruker rommet på et kurs."
-          >
-            <Card>
-              <CardContent className="space-y-3">
+            <SettingsRow
+              title="Rom"
+              description="Sett antall plasser per rom — fylles inn automatisk når du bruker rommet på et kurs."
+            >
+              <div className="space-y-3">
                 {rooms.length > 0 && (
                   <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-surface">
                     {rooms.map((room) => (
@@ -724,9 +730,9 @@ function StudioPublicSettings({
                     Legg til rom
                   </button>
                 )}
-              </CardContent>
-            </Card>
-          </SettingsSection>
+              </div>
+            </SettingsRow>
+          </SettingsRows>
         </div>
       )}
 
@@ -743,6 +749,8 @@ function StudioPublicSettings({
           />
         </div>
       )}
+        </>
+      )}
 
       <DirtyFormBar
         visible={isDirty && tab !== 'samarbeid'}
@@ -750,6 +758,29 @@ function StudioPublicSettings({
         onSave={handleSave}
         onCancel={handleCancel}
       />
+    </div>
+  );
+}
+
+// Placeholder for the settings panel while locations load — mirrors the
+// SettingsRows rhythm (220px label column + capped control column) so the tab
+// content doesn't jump when the fetch lands.
+function StudioRowsSkeleton() {
+  return (
+    <div className="divide-y divide-border-subtle" role="status" aria-live="polite">
+      <span className="sr-only">Laster…</span>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="grid gap-4 py-8 first:pt-0 last:pb-0 md:grid-cols-[220px_minmax(0,42rem)] md:gap-12"
+        >
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+          <Skeleton className="h-10 w-full max-w-md" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -797,15 +828,13 @@ function AccountTypeSection({
   };
 
   return (
-    <SettingsSection
+    <SettingsRow
       title="Kontotype"
       description="Styrer hva du ser i verktøyet. Du kan endre når som helst."
     >
-      <Card>
-        <CardContent>
-          <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3" disabled={pending}>
-            <legend className="sr-only">Velg kontotype</legend>
-            {([
+      <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3" disabled={pending}>
+        <legend className="sr-only">Velg kontotype</legend>
+        {([
               {
                 value: 'solo' as const,
                 title: 'Jeg underviser selv',
@@ -844,10 +873,8 @@ function AccountTypeSection({
                 </label>
               );
             })}
-          </fieldset>
-        </CardContent>
-      </Card>
-    </SettingsSection>
+      </fieldset>
+    </SettingsRow>
   );
 }
 

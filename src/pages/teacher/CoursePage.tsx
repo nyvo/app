@@ -691,12 +691,14 @@ const CoursePage = () => {
     return (
       <div className="flex-1 overflow-y-auto bg-canvas h-full">
         <MobileTeacherHeader />
-        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 lg:pt-12 space-y-6">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-7 w-64" />
-          <Skeleton className="h-10 w-full max-w-md" />
+        <PageShell
+          title={<Skeleton className="h-7 w-64" />}
+          badgePlacement="below"
+          badge={<Skeleton className="h-4 w-32" />}
+          tabs={<Skeleton className="h-10 w-full max-w-md" />}
+        >
           <Skeleton className="h-72 w-full" />
-        </div>
+        </PageShell>
       </div>
     );
   }
@@ -951,7 +953,7 @@ const CoursePage = () => {
                       </Button>
                     </div>
 
-                    <div className="rounded-lg border border-border overflow-hidden">
+                    <div className="rounded-lg border border-border bg-surface overflow-hidden">
                       {visible.length === 0 ? (
                       <EmptyState
                         title={

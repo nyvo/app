@@ -336,7 +336,7 @@ export default function CourseBuilderPage() {
       <MobileTeacherHeader />
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 pb-10 pt-10 sm:px-6">
+        <div className="mx-auto max-w-3xl px-4 pb-10 pt-6 sm:px-6 lg:px-8 lg:pt-12">
           <h1 className="mb-6 text-2xl font-medium text-foreground">Nytt kurs</h1>
 
           <Card className="gap-0 overflow-hidden p-0">
