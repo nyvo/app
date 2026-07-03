@@ -85,6 +85,20 @@ function sessionTimeRange(s: CourseSession): string {
   return end ? `${start}–${end}` : start;
 }
 
+/** Timeplan card header status, right-aligned next to the title: the start
+ *  date before the first session, "Uke x/x" once it's underway (x = number
+ *  of sessions whose date has arrived, out of the total). Assumes `sessions`
+ *  is already sorted ascending by date (the caller's `ordered`). */
+function timeplanHeaderStatus(sessions: CourseSession[], today: string): string | null {
+  if (sessions.length === 0) return null;
+  const total = sessions.length;
+  if (sessions[0].session_date > today) {
+    return `Kurset starter ${dayMonth(sessions[0].session_date)}`;
+  }
+  const current = sessions.filter((s) => s.session_date <= today).length;
+  return `Uke ${current}/${total}`;
+}
+
 export function CourseOverviewTab({
   course,
   enrolledCount,
@@ -310,13 +324,14 @@ function TimeplanCard({
   onOpenAll: () => void;
 }) {
   const today = new Date().toISOString().slice(0, 10);
+  const statusLabel = timeplanHeaderStatus(sessions, today);
 
   if (sessions.length <= 1) {
     const s = sessions[0];
     // A single date — a centered "when" block (read-only; its time is edited
     // from Rediger). Fills the card next to the Sted map.
     return (
-      <FramedCard title="Timeplan">
+      <FramedCard title="Timeplan" action={statusLabel}>
         <div className="flex flex-1 flex-col items-center justify-center p-5 text-center">
           {s ? (
             <>
@@ -339,7 +354,7 @@ function TimeplanCard({
   const preview =
     sessions.length > 3 && upcoming.length > 0 ? upcoming.slice(0, 3) : sessions.slice(0, 3);
   return (
-    <FramedCard title="Timeplan">
+    <FramedCard title="Timeplan" action={statusLabel}>
       <div className="flex flex-1 flex-col p-5">
         <div className="space-y-1">
           {preview.map((s) => (
