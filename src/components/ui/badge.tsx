@@ -40,7 +40,8 @@ const badgeVariants = cva(
         info:
           "bg-info-subtle text-info border-transparent",
         neutral:
-          "bg-muted text-foreground-muted border-transparent",
+          // text-foreground, not -muted: neutral-11 on neutral-3 measures 4.27:1 — below AA for badge-size text
+          "bg-muted text-foreground border-transparent",
         inverted:
           "bg-foreground text-background border-transparent",
         link:

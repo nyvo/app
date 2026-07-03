@@ -1,6 +1,7 @@
 import { Badge, type badgeVariants } from './badge';
 import type { VariantProps } from 'class-variance-authority';
 import type { SignupStatus } from '@/types/database';
+import { cn } from '@/lib/utils';
 
 export type { SignupStatus };
 export type CourseStatus = 'draft' | 'active' | 'upcoming' | 'completed' | 'cancelled' | 'full';
@@ -8,9 +9,10 @@ export type BadgeStatus = SignupStatus | CourseStatus;
 
 type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
 
-const config: Record<BadgeStatus, { variant: BadgeVariant; label: string }> = {
+const config: Record<BadgeStatus, { variant: BadgeVariant; label: string; className?: string }> = {
   confirmed:        { variant: 'success', label: 'Påmeldt' },
-  cancelled:        { variant: 'destructive', label: 'Avlyst' },
+  // Cancelled is a resolved state, not an alarm — muted with strikethrough, not red.
+  cancelled:        { variant: 'neutral', label: 'Avlyst', className: 'line-through' },
   course_cancelled: { variant: 'warning', label: 'Kurs avlyst' },
   draft:            { variant: 'neutral', label: 'Utkast' },
   active:           { variant: 'success', label: 'Pågår' },
@@ -34,13 +36,13 @@ interface StatusBadgeProps {
  * For combined signup+payment state, use SignupStatusBadge. For payment state alone, use PaymentBadge.
  */
 export function StatusBadge({ status, size = 'sm', customLabel, className }: StatusBadgeProps) {
-  const { variant, label } = config[status];
+  const { variant, label, className: statusClassName } = config[status];
   return (
     <Badge
       variant={variant}
       shape="pill"
       size={size}
-      className={className}
+      className={cn(statusClassName, className)}
       role="status"
       aria-label={`Status: ${customLabel || label}`}
     >
