@@ -105,6 +105,18 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
 
   const points: IncomePoint[] = series?.points ?? buildPlaceholderPoints(range)
   const hasIncome = points.some((p) => p.amount > 0)
+  // The faint previous-period overlay only renders when the previous period
+  // actually carried income — so the both-zero empty state keeps just the
+  // current flat neutral line.
+  const hasPrevious = points.some((p) => p.previousAmount > 0)
+  // Compute the Y domain explicitly across BOTH series so the overlay is never
+  // clipped. (recharts folds every series on the axis into `dataMax`, but the
+  // overlay has no fill, so being explicit here removes any doubt.)
+  const dataMax = points.reduce(
+    (max, p) => Math.max(max, p.amount, hasPrevious ? p.previousAmount : 0),
+    0,
+  )
+  const domainMax = Math.max(dataMax, EMPTY_DOMAIN_MAX)
   // Zero state per the analytics convention (Patreon/Airbnb earnings): the
   // frame, grid and flat zero-line stay so layout never jumps — only a short
   // muted message lands in the plot centre.
@@ -171,15 +183,31 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
               interval={0}
               tick={(tickProps) => <EdgeTick {...tickProps} points={points} />}
             />
-            <YAxis
-              hide
-              domain={[0, (dataMax: number) => Math.max(dataMax, EMPTY_DOMAIN_MAX)]}
-            />
+            <YAxis hide domain={[0, domainMax]} />
             <Tooltip
               cursor={{ stroke: 'var(--color-border)', strokeWidth: 1 }}
               content={tooltipContent ?? <IncomeTooltip />}
             />
+            {hasPrevious && (
+              // Quiet hairline-grey previous-period line, drawn BEHIND the main
+              // area (declared first). No fill, no dots — a faint reference.
+              <Area
+                type="monotone"
+                dataKey="previousAmount"
+                stroke="var(--color-border)"
+                strokeWidth={1.5}
+                fill="none"
+                dot={false}
+                activeDot={false}
+                isAnimationActive={false}
+              />
+            )}
             <Area
+              // Monotone, deliberately: this is a merchant-facing summary
+              // (Shopify/Airbnb earnings register), not a financial ops tool —
+              // trajectory over precision, which lives in the tooltip. On a
+              // cumulative series monotone interpolation cannot overshoot or
+              // dip below real values, so the soft curve stays honest.
               type="monotone"
               dataKey="amount"
               // Flat zero-line stays neutral (reference: Airbnb earnings) —
@@ -213,15 +241,14 @@ function QuietRangeToggle({
   onChange: (range: IncomeRange) => void
 }) {
   return (
-    <div role="tablist" aria-label="Velg tidsrom" className="inline-flex items-center gap-1">
+    <div aria-label="Velg tidsrom" className="inline-flex items-center gap-1">
       {RANGE_TABS.map((opt) => {
         const isActive = opt.key === value
         return (
           <button
             key={opt.key}
             type="button"
-            role="tab"
-            aria-selected={isActive}
+            aria-pressed={isActive}
             onClick={() => onChange(opt.key)}
             className={cn(
               'rounded-md px-2 py-1 text-sm font-medium outline-none transition-colors duration-150',
@@ -251,24 +278,28 @@ function IncomeTooltip({
   payload?: TooltipPayload[]
 }) {
   if (!active || !payload?.length) return null
-  const point = payload[0]?.payload
+  // With two series (overlay + main) payload has multiple entries; both share
+  // the same point object, so read the point from whichever entry carries it.
+  const point = payload.find((entry) => entry?.payload)?.payload
   if (!point) return null
   return (
-    <div className="min-w-[180px] rounded-lg border border-border-subtle bg-background px-3 py-2 text-sm shadow-soft">
-      <div className="text-foreground-muted">Sum hittil</div>
+    <div className="min-w-[180px] rounded-xl border border-border bg-background px-3 py-2.5 text-sm shadow-soft">
+      <div className="text-xs font-medium text-foreground-muted">Sum hittil</div>
+      {/* Two tiers: the header is the quiet tier; both value rows share the
+          same treatment — the markers alone tell the series apart. */}
       <div className="mt-1.5 flex items-center justify-between gap-3">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2 rounded-full" style={{ backgroundColor: STROKE }} />
+        <span className="inline-flex items-center gap-2">
+          <span className="size-3 rounded-sm bg-primary" />
           <span className="font-medium text-foreground tabular-nums">
             {formatKroner(point.amount)}
           </span>
         </span>
         <span className="text-foreground-muted">{point.label}</span>
       </div>
-      <div className="mt-0.5 flex items-center justify-between gap-3">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-border" />
-          <span className="tabular-nums text-foreground-muted">
+      <div className="mt-1 flex items-center justify-between gap-3">
+        <span className="inline-flex items-center gap-2">
+          <span className="size-3 rounded-sm bg-border" />
+          <span className="font-medium text-foreground tabular-nums">
             {formatKroner(point.previousAmount)}
           </span>
         </span>

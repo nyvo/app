@@ -203,6 +203,15 @@ export async function fetchIncomeSeries(
   let total = 0
   let previousTotal = 0
   const periodStartMs = periodStart.getTime()
+  // Cap the previous total at the same elapsed point as the current window so
+  // the % badge compares equal amounts of elapsed time. For 'year' the current
+  // window is only ~11.1 months (12 partial months), so counting a full 12
+  // previous months biased the badge down; cut the previous total at 12 months
+  // before now. For week/month the window is already whole, so the cap is just
+  // periodStart (unchanged). The overlay line still shows the whole previous
+  // period — only the badge math is capped.
+  const previousCutoffMs =
+    range === 'year' ? addMonths(now, -12).getTime() : periodStart.getTime()
 
   for (const row of rows) {
     if (!row.created_at) continue
@@ -219,9 +228,11 @@ export async function fetchIncomeSeries(
       const point = currentByKey.get(key)
       if (point) point.amount += amount
     } else {
-      previousTotal += amount
+      // Bucket into the overlay regardless (it shows the full previous period)…
       const point = previousByKey.get(key)
       if (point) point.previousAmount += amount
+      // …but only count toward the badge total within the capped window.
+      if (ts <= previousCutoffMs) previousTotal += amount
     }
   }
 
