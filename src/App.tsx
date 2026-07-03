@@ -25,6 +25,7 @@ const BillingPage = lazy(() => import('./pages/teacher/BillingPage'));
 const PaymentsPage = lazy(() => import('./pages/teacher/PaymentsPage'));
 const StudioPage = lazy(() => import('./pages/teacher/StudioPage'));
 const PublicCoursesPage = lazy(() => import('./pages/public/PublicCoursesPage'));
+const EmbedCalendarPage = lazy(() => import('./pages/public/EmbedCalendarPage'));
 const PublicCourseDetailPage = lazy(() => import('./pages/public/PublicCourseDetailPage'));
 const CheckoutPage = lazy(() => import('./pages/public/CheckoutPage'));
 const LandingPage = lazy(() => import('./pages/public/LandingPage'));
@@ -61,6 +62,7 @@ const CourseBuilderPreview = lazy(() => import('./pages/dev/CourseBuilderPreview
 const CourseBuilderEventbrite = lazy(() => import('./pages/dev/CourseBuilderEventbrite'));
 const SessionDaysPreview = lazy(() => import('./pages/dev/SessionDaysPreview'));
 const CourseOversiktWireframe = lazy(() => import('./pages/dev/CourseOversiktWireframe'));
+const EmbedPreview = lazy(() => import('./pages/dev/EmbedPreview'));
 
 // Public team page at root: only renders if the slug is NOT a reserved word.
 // Reserved words 404 (since they should hit a literal route higher in the
@@ -164,8 +166,14 @@ function AppRoutes() {
             <Route path="/dev/course-builder-eventbrite" element={<CourseBuilderEventbrite />} />
             <Route path="/dev/session-days-preview" element={<SessionDaysPreview />} />
             <Route path="/dev/oversikt-wireframe" element={<CourseOversiktWireframe />} />
+            <Route path="/dev/embed-preview" element={<EmbedPreview />} />
           </>
         )}
+
+        {/* Embeddable calendar widget — sellers iframe this into their own
+            site. Literal `/embed/` prefix, so it MUST come before the flat
+            `/:slug` catch-all below (which would otherwise swallow it). */}
+        <Route path="/embed/:slug" element={<EmbedCalendarPage />} />
 
         {/* Flat-slug team pages at root — `ourapp.no/<team-slug>[/courseId]`.
             FlatTeamRoute checks the slug against the reserved-words list and

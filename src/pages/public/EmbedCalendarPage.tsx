@@ -1,0 +1,153 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
+import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
+import { fetchSellerBySlug, type PublicSeller } from '@/services/sellers';
+import { toLocalDate } from '@/utils/dateUtils';
+import { useDocumentTitle } from '@/hooks/use-document-title';
+import { EmbedCalendar } from '@/components/public/embed/EmbedCalendar';
+
+type ErrorKind = 'not-found' | 'load-failed';
+
+const CANCELLED_GRACE_DAYS = 30;
+
+// Same visibility rule the storefront uses: active/upcoming always, cancelled
+// only within a 30-day grace window from start.
+function isVisible(course: PublicCourseWithDetails): boolean {
+  if (course.status === 'cancelled') {
+    if (!course.start_date) return false;
+    const graceMs = CANCELLED_GRACE_DAYS * 24 * 60 * 60 * 1000;
+    const start = toLocalDate(course.start_date).getTime();
+    if (isNaN(start)) return false;
+    return Date.now() - start <= graceMs;
+  }
+  return course.status === 'active' || course.status === 'upcoming';
+}
+
+/**
+ * Standalone calendar surface for embedding in a seller's own site via
+ * `<iframe src="/embed/<slug>">`. No app nav, masthead or cookie banner — the
+ * calendar is the whole page. Course rows link OUT to the detail page (new
+ * tab) where booking happens. Marked noindex so it never competes with the
+ * canonical storefront in search.
+ */
+const EmbedCalendarPage = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const [seller, setSeller] = useState<PublicSeller | null>(null);
+  const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [errorKind, setErrorKind] = useState<ErrorKind | null>(null);
+
+  useDocumentTitle(seller?.name);
+
+  // Keep this route out of search indexes; restore on unmount so navigating
+  // away (dev) doesn't leave a stray noindex on other pages.
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'robots';
+    meta.content = 'noindex';
+    document.head.appendChild(meta);
+    return () => {
+      document.head.removeChild(meta);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadData() {
+      if (!slug) {
+        setErrorKind('not-found');
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      setErrorKind(null);
+
+      const { data: sellerData, error: sellerError } = await fetchSellerBySlug(slug);
+      if (cancelled) return;
+      if (sellerError || !sellerData) {
+        setErrorKind('not-found');
+        setLoading(false);
+        return;
+      }
+      setSeller(sellerData);
+
+      // Use the canonical slug for the course query (handles archived-alias
+      // URLs) while keeping the loaded slug for the out-links; the detail page
+      // canonicalizes those on arrival.
+      const { data, error } = await fetchPublicCourses({ teamSlug: sellerData.slug });
+      if (cancelled) return;
+      if (error) {
+        setErrorKind('load-failed');
+        setLoading(false);
+        return;
+      }
+      setCourses(data || []);
+      setLoading(false);
+    }
+    loadData();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  const visible = useMemo(() => courses.filter(isVisible), [courses]);
+
+  return (
+    <div className="min-h-dvh bg-background text-foreground">
+      {/* Wide enough that the widget's @2xl container breakpoint (672px) is
+          reachable in a wide iframe; narrow iframes just get the stacked layout. */}
+      <div className="mx-auto w-full max-w-4xl p-4 sm:p-6">
+        {loading && <EmbedSkeleton />}
+
+        {!loading && errorKind === 'not-found' && (
+          <p className="py-20 text-center text-base text-foreground-muted">
+            Fant ikke denne kalenderen.
+          </p>
+        )}
+
+        {!loading && errorKind === 'load-failed' && (
+          <p className="py-20 text-center text-base text-foreground-muted">
+            Noe gikk galt. Prøv igjen senere.
+          </p>
+        )}
+
+        {!loading && !errorKind && seller && (
+          <div className="animate-in fade-in duration-150">
+            <EmbedCalendar courses={visible} slug={slug ?? seller.slug} sellerName={seller.name} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+function EmbedSkeleton() {
+  return (
+    <div className="space-y-8" role="status" aria-live="polite">
+      <span className="sr-only">Laster…</span>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-7 w-40" />
+          <div className="flex gap-1">
+            <Skeleton className="size-8 rounded-full" />
+            <Skeleton className="size-8 rounded-full" />
+          </div>
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {Array.from({ length: 42 }).map((_, i) => (
+            <Skeleton key={i} className="aspect-square rounded-md" />
+          ))}
+        </div>
+      </div>
+      <div className="space-y-4">
+        <Skeleton className="h-5 w-32" />
+        {Array.from({ length: 2 }).map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default EmbedCalendarPage;
