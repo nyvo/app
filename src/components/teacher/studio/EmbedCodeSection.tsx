@@ -2,16 +2,16 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Check, Copy, ExternalLink } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { SettingsSection } from '@/components/teacher/SettingsSection';
+import { SettingsRow } from '@/components/teacher/SettingsRows';
 
 /**
  * EmbedCodeSection — the seller-facing "copy embed code" panel on the Studio
  * Profil tab. Hands the teacher the iframe snippet for the public /embed/:slug
  * calendar so they can drop it into their own website.
  *
- * `slug` is the SAVED slug (from the seller row), not a dirty unsaved edit —
- * the embed only works once the slug is live.
+ * Renders as a SettingsRow so it sits inline with the other Profil rows (shared
+ * horizontal settings layout). `slug` is the SAVED slug (from the seller row),
+ * not a dirty unsaved edit — the embed only works once the slug is live.
  */
 export function EmbedCodeSection({ slug }: { slug: string }) {
   const [copied, setCopied] = useState(false);
@@ -33,31 +33,27 @@ export function EmbedCodeSection({ slug }: { slug: string }) {
   };
 
   return (
-    <SettingsSection
+    <SettingsRow
       title="Kalender på eget nettsted"
       description="Lim inn koden på nettstedet ditt for å vise kurskalenderen med påmelding."
     >
-      <Card>
-        <CardContent className="space-y-4">
-          <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-[13px] leading-relaxed text-foreground select-all">
-            <code>{snippet}</code>
-          </pre>
-          <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" onClick={() => void handleCopy()}>
-              {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-              {copied ? 'Kopiert' : 'Kopier kode'}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => window.open(previewUrl, '_blank')}
-            >
-              <ExternalLink className="size-4" />
-              Forhåndsvis
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </SettingsSection>
+      <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-[13px] leading-relaxed text-foreground select-all">
+        <code>{snippet}</code>
+      </pre>
+      <div className="flex items-center gap-2">
+        <Button type="button" variant="outline" onClick={() => void handleCopy()}>
+          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+          {copied ? 'Kopiert' : 'Kopier kode'}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => window.open(previewUrl, '_blank')}
+        >
+          <ExternalLink className="size-4" />
+          Forhåndsvis
+        </Button>
+      </div>
+    </SettingsRow>
   );
 }

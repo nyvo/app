@@ -7,7 +7,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import {
   DropdownMenu,
@@ -15,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SettingsSection } from '@/components/teacher/SettingsSection';
+import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { runWithUndo } from '@/lib/undo';
 import { friendlyError } from '@/lib/error-messages';
 import { cn } from '@/lib/utils';
@@ -71,22 +70,24 @@ export function AffiliationsSection({
   }, [hash]);
 
   return (
-    <div ref={anchorRef} id="samarbeid" className="scroll-mt-10 space-y-10">
-      {isStudio ? (
-        <BusinessView
-          hostSellerId={seller.id}
-          host={host}
-          onHostChange={onHostChange}
-        />
-      ) : (
-        <SettingsSection title="Studio">
-          <IndividualView
-            sellerId={seller.id}
+    <div ref={anchorRef} id="samarbeid" className="scroll-mt-10">
+      <SettingsRows>
+        {isStudio ? (
+          <BusinessView
+            hostSellerId={seller.id}
             host={host}
-            onLeft={() => onHostChange(null)}
+            onHostChange={onHostChange}
           />
-        </SettingsSection>
-      )}
+        ) : (
+          <SettingsRow title="Studio" description="Studioet der kursene dine vises.">
+            <IndividualView
+              sellerId={seller.id}
+              host={host}
+              onLeft={() => onHostChange(null)}
+            />
+          </SettingsRow>
+        )}
+      </SettingsRows>
     </div>
   );
 }
@@ -142,47 +143,35 @@ function BusinessView({
 
   return (
     <>
-      <SettingsSection
+      <SettingsRow
         title="Inviter instruktører"
         description="Del lenken så instruktører kan vise de publiserte kursene sine på studiosiden din."
       >
-        <Card>
-          <CardContent>
-            <InviteLinkPanel hostSellerId={hostSellerId} />
-          </CardContent>
-        </Card>
-      </SettingsSection>
+        <InviteLinkPanel hostSellerId={hostSellerId} />
+      </SettingsRow>
 
-      <SettingsSection
+      <SettingsRow
         title="Instruktører"
-        action={
-          visibleAffiliates === null ? (
-            <Skeleton className="h-6 w-20 rounded-full" aria-hidden="true" />
-          ) : visibleAffiliates.length > 0 ? (
-            <Badge variant="neutral" shape="pill" size="sm">
-              {formatInstructorCount(visibleAffiliates.length)}
-            </Badge>
-          ) : undefined
-        }
+        description="Instruktørene som viser kursene sine på studiosiden din."
       >
         <AffiliatesList
           affiliates={visibleAffiliates}
           loading={loadingAffiliates}
           onRevoke={handleRevoke}
         />
-      </SettingsSection>
+      </SettingsRow>
 
       {/* A studio can itself rent space elsewhere — show the guest card only when
           such a host exists (no empty state in this position). */}
       {host && (
-        <SettingsSection title="Vises hos">
+        <SettingsRow title="Vises hos" description="Studioet der kursene dine også vises.">
           <IndividualView
             sellerId={hostSellerId}
             host={host}
             onLeft={() => onHostChange(null)}
             hideWhenEmpty
           />
-        </SettingsSection>
+        </SettingsRow>
       )}
     </>
   );
@@ -352,10 +341,6 @@ function AffiliatesList({
 
 function InstructorAvatar({ name, url }: { name: string; url: string | null }) {
   return <UserAvatar name={name} src={url} size="lg" />;
-}
-
-function formatInstructorCount(count: number) {
-  return count === 1 ? '1 instruktør' : `${count} instruktører`;
 }
 
 function InstructorActionsMenu({
