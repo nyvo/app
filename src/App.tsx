@@ -43,7 +43,6 @@ const TokenPreview = lazy(() => import('./pages/dev/TokenPreview'));
 const OnboardingPreview = lazy(() => import('./pages/dev/OnboardingPreview'));
 const CreateCoursePreview = lazy(() => import('./pages/dev/CreateCoursePreview'));
 const CoursesGridPreview = lazy(() => import('./pages/dev/CoursesGridPreview'));
-const MonthGridPreview = lazy(() => import('./pages/dev/MonthGridPreview'));
 const PayoutPreview = lazy(() => import('./pages/dev/PayoutPreview'));
 const IncomeChartPreview = lazy(() => import('./pages/dev/IncomeChartPreview'));
 const EntityCardPreview = lazy(() => import('./pages/dev/EntityCardPreview'));
@@ -149,7 +148,6 @@ function AppRoutes() {
             <Route path="/dev/onboarding-preview" element={<OnboardingPreview />} />
             <Route path="/dev/create-course-preview" element={<CreateCoursePreview />} />
             <Route path="/dev/courses-grid-preview" element={<CoursesGridPreview />} />
-            <Route path="/dev/month-grid-preview" element={<MonthGridPreview />} />
             <Route path="/dev/payout-preview" element={<PayoutPreview />} />
             <Route path="/dev/income-chart-preview" element={<IncomeChartPreview />} />
             <Route path="/dev/entity-card-preview" element={<EntityCardPreview />} />
