@@ -18,9 +18,9 @@ interface UseNotificationsReturn {
 
   markSeenAll: () => Promise<void>
   markRead: (id: number) => Promise<void>
-  markAllRead: () => Promise<void>
   markResolved: (id: number) => Promise<void>
   archive: (notification: Notification) => void
+  archiveAll: () => void
   refetch: () => Promise<void>
 }
 
@@ -171,26 +171,6 @@ export function useNotifications(): UseNotificationsReturn {
     [userId, notifications],
   )
 
-  const markAllRead = useCallback(async () => {
-    if (!userId) return
-    if (unreadCount === 0) return
-
-    const now = new Date().toISOString()
-    setNotifications((prev) =>
-      prev.map((n) => (n.read_at === null ? { ...n, read_at: now } : n)),
-    )
-
-    const { error: updateError } = await supabase
-      .from('notifications')
-      .update({ read_at: now })
-      .eq('recipient_id', userId)
-      .is('read_at', null)
-
-    if (updateError) {
-      logger.error('[notifications] markAllRead failed', updateError)
-    }
-  }, [userId, unreadCount])
-
   const markResolved = useCallback(
     async (id: number) => {
       if (!userId) return
@@ -249,6 +229,41 @@ export function useNotifications(): UseNotificationsReturn {
     [userId],
   )
 
+  // "Fjern alle" — batch soft-archive of every row currently in the feed,
+  // mirroring `archive`'s delay-commit undo. The list clears instantly; the
+  // batch archived_at write only commits when the undo toast expires, so
+  // "Angre" restores the whole snapshot before any DB write happens.
+  const archiveAll = useCallback(() => {
+    if (!userId) return
+    if (notifications.length === 0) return
+
+    const snapshot = notifications
+    const ids = snapshot.map((n) => n.id)
+
+    runWithUndo({
+      message: 'Alle varsler ble fjernet',
+      hide: () => setNotifications([]),
+      restore: () =>
+        setNotifications((prev) => {
+          // Merge the snapshot back in with anything that arrived meanwhile.
+          const merged = [...prev]
+          for (const n of snapshot) {
+            if (!merged.some((m) => m.id === n.id)) merged.push(n)
+          }
+          return merged
+            .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+            .slice(0, PAGE_SIZE)
+        }),
+      commit: async () =>
+        await supabase
+          .from('notifications')
+          .update({ archived_at: new Date().toISOString() })
+          .in('id', ids)
+          .eq('recipient_id', userId),
+      errorOf: (result) => result.error,
+    })
+  }, [userId, notifications])
+
   return {
     notifications,
     isLoading,
@@ -259,9 +274,9 @@ export function useNotifications(): UseNotificationsReturn {
 
     markSeenAll,
     markRead,
-    markAllRead,
     markResolved,
     archive,
+    archiveAll,
     refetch: fetchInitial,
   }
 }

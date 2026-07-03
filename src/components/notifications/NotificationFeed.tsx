@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'framer-motion'
 import { NotificationRow } from './NotificationRow'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Notification } from '@/types/database'
@@ -13,9 +14,9 @@ interface NotificationFeedProps {
 
 /**
  * Scrolling feed inside the popover. One flat, label-free list: unresolved
- * action_required items sort to the top (the row's status tint — amber/red —
- * carries the severity, so no "Krever handling" header is needed), then
- * everything else in chronological order.
+ * action_required items sort to the top, then everything else in chronological
+ * order. The panel is all-neutral — position (top of the list) carries the
+ * priority, so no "Krever handling" header is needed.
  *
  * Time-based grouping ("I dag / I går / Tidligere") is intentionally
  * absent — each row carries its own relative timestamp, so a time
@@ -64,15 +65,17 @@ export function NotificationFeed({
 
   return (
     <div className="overflow-y-auto">
-      {ordered.map((n) => (
-        <NotificationRow
-          key={n.id}
-          notification={n}
-          openedAt={openedAt}
-          onActivate={onActivate}
-          onArchive={onArchive}
-        />
-      ))}
+      <AnimatePresence initial={false}>
+        {ordered.map((n) => (
+          <NotificationRow
+            key={n.id}
+            notification={n}
+            openedAt={openedAt}
+            onActivate={onActivate}
+            onArchive={onArchive}
+          />
+        ))}
+      </AnimatePresence>
     </div>
   )
 }

@@ -1,14 +1,17 @@
-import { differenceInSeconds, formatDistanceToNow, format } from 'date-fns'
+import { format } from 'date-fns'
 import { nb } from 'date-fns/locale'
 
 /**
  * Norwegian relative time formatter tuned for the notification feed.
  *
- * Rules:
- *   < 60 s     → "nå nettopp"        (date-fns would say "mindre enn ett minutt siden")
- *   < 7 d      → "for X siden"       (date-fns nb, e.g. "for 5 min siden")
- *   ≥ 7 d this year   → "15. mai"           (short absolute, lowercase month)
- *   ≥ 7 d prior year  → "15. mai 2025"      (year disambiguates)
+ * Flat, prefix-free buckets (no date-fns "omtrent"/"for … siden" envelope):
+ *   < 60 s            → "nå"
+ *   < 60 min          → "5 min"
+ *   < 24 t            → "3 t"
+ *   yesterday         → "i går"          (calendar day before today)
+ *   < 7 d             → "3 d"
+ *   ≥ 7 d this year   → "15. mai"        (short absolute, lowercase month)
+ *   ≥ 7 d prior year  → "15. mai 2025"   (year disambiguates)
  *
  * Always returns a stable string from the same timestamp — safe to render
  * repeatedly in row keys.
@@ -16,38 +19,33 @@ import { nb } from 'date-fns/locale'
 export function formatRelativeTime(value: string | Date): string {
   const date = typeof value === 'string' ? new Date(value) : value
   const now = new Date()
-  const seconds = Math.abs(differenceInSeconds(now, date))
+  const seconds = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 1000))
 
-  if (seconds < 60) return 'nå nettopp'
+  if (seconds < 60) return 'nå'
 
-  const sevenDays = 60 * 60 * 24 * 7
-  if (seconds < sevenDays) {
-    // "for X siden". date-fns adds the prefix when addSuffix=true.
-    const distance = formatDistanceToNow(date, { locale: nb, addSuffix: true })
-    return shortenDistance(distance)
-  }
+  const minutes = Math.floor(seconds / 60)
+  if (seconds < 60 * 60) return `${minutes} min`
+
+  const hours = Math.floor(seconds / 60 / 60)
+  if (seconds < 60 * 60 * 24) return `${hours} t`
+
+  if (isYesterday(date, now)) return 'i går'
+
+  const days = Math.floor(seconds / 60 / 60 / 24)
+  if (seconds < 60 * 60 * 24 * 7) return `${days} d`
 
   return date.getFullYear() === now.getFullYear()
     ? format(date, 'd. MMM', { locale: nb })
     : format(date, 'd. MMM yyyy', { locale: nb })
 }
 
-/**
- * date-fns nb returns longer forms than we want in a tight feed row.
- *   "for 5 minutter siden" → "5 min"
- *   "for 2 timer siden"    → "2 t"
- *   "for 1 dag siden"      → "i går"  (when seconds < 48 h)  → handled below
- *   "for 3 dager siden"    → "3 d"
- * Drop the "for ... siden" envelope, abbreviate units. Keeps rows scannable.
- */
-function shortenDistance(distance: string): string {
-  // Strip surrounding "for ... siden"
-  const stripped = distance.replace(/^for\s+/, '').replace(/\s+siden$/, '')
-
-  return stripped
-    .replace(/\bminutter?\b/, 'min')
-    .replace(/\btimer?\b/, 't')
-    .replace(/\bdager?\b/, 'd')
-    .replace(/\bsekunder?\b/, 's')
-    .replace(/\bmindre enn ett minutt\b/, '< 1 min')
+/** True when `date` falls on the calendar day before `now` (local time). */
+function isYesterday(date: Date, now: Date): boolean {
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  return (
+    date.getFullYear() === yesterday.getFullYear() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getDate() === yesterday.getDate()
+  )
 }

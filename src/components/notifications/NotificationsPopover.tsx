@@ -19,8 +19,9 @@ import { NotificationLiveRegion } from './NotificationLiveRegion'
  * Trigger: 36 px circular button with the Bell glyph. A single red dot
  * appears top-right whenever there are unseen notifications, and the bell
  * itself brightens from muted to foreground. One signal — "open me". Per-item
- * urgency (failed payments etc.) lives in the row status plates inside the
- * panel, not on the bell. The dot clears on open via `markSeenAll`.
+ * urgency (failed payments etc.) lives in the row ordering inside the
+ * panel (action-required first), not on the bell. The dot clears on open via
+ * `markSeenAll`.
  *
  * Panel: 380 × 520 max with internal scroll on desktop; bottom sheet on
  * mobile. On open we mark everything as seen (clears the bell dot) without
@@ -38,11 +39,10 @@ export function NotificationsPopover() {
     notifications,
     isLoading,
     unseenCount,
-    unreadCount,
     markSeenAll,
     markRead,
-    markAllRead,
     archive,
+    archiveAll,
   } = useNotifications()
 
   // Capture the open timestamp synchronously, before the effect below stamps
@@ -63,10 +63,6 @@ export function NotificationsPopover() {
   const handleActivate = (id: number) => {
     void markRead(id)
     setOpen(false)
-  }
-
-  const handleMarkAllRead = () => {
-    void markAllRead()
   }
 
   const handleArchive = (notification: (typeof notifications)[number]) => {
@@ -101,13 +97,13 @@ export function NotificationsPopover() {
     <>
       <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
         {titleSlot}
-        {unreadCount > 0 && (
+        {notifications.length > 0 && (
           <button
             type="button"
-            onClick={handleMarkAllRead}
+            onClick={archiveAll}
             className="rounded-full px-2 py-1 text-xs text-foreground-muted transition-colors hover:bg-muted hover:text-foreground"
           >
-            Marker alle som lest
+            Fjern alle
           </button>
         )}
       </div>

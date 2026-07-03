@@ -1,21 +1,10 @@
 import { useNavigate } from 'react-router-dom'
+import { motion, useReducedMotion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { X } from '@/lib/icons'
 import { formatRelativeTime } from '@/lib/format-relative-time'
-import {
-  getNotificationIcon,
-  getNotificationStatus,
-  type NotificationStatus,
-} from './notification-icons'
+import { getNotificationIcon } from './notification-icons'
 import type { Notification } from '@/types/database'
-
-// Plate tint per status. `neutral` (and any read/resolved row) falls back to
-// the plain muted plate below.
-const STATUS_PLATE: Record<Exclude<NotificationStatus, 'neutral'>, string> = {
-  success: 'bg-success-subtle text-success',
-  warning: 'bg-warning-subtle text-warning',
-  danger: 'bg-danger-subtle text-danger',
-}
 
 interface NotificationRowProps {
   notification: Notification
@@ -28,17 +17,19 @@ interface NotificationRowProps {
 /**
  * One row in the notifications feed.
  *
- * Anatomy: 32px status-tinted icon plate · title (foreground) · sub (muted) ·
- * relative time (muted, tabular-nums). Single typographic weight per row
- * — hierarchy is carried by color, never by font weight.
+ * Anatomy: 32px rounded-square glyph plate · title · sub · relative time
+ * (tabular-nums). The panel is all-neutral — no per-status hue. Hierarchy is
+ * carried by weight + color: fresh rows use a dark plate (foreground fill,
+ * light glyph) with a font-medium foreground title; dimmed rows use a muted
+ * plate and drop title, body and timestamp to muted text (never disabled —
+ * everything stays readable).
  *
- * Dimmed state mutes title/icon to muted and sub to disabled, and drains the
- * plate tint back to neutral grey. A row dims once it's been read, its action
- * resolved, or it was seen in a previous session (seen_at predates `openedAt`)
- * — so already-seen items render greyed on the next open, while items that
- * arrived since last open stay full-contrast this session. No left-edge dot —
- * dimming alone communicates the state. Click activates: navigate to
- * action_url and mark read (handled by parent through onActivate).
+ * A row dims once it's been read, its action resolved, or it was seen in a
+ * previous session (seen_at predates `openedAt`) — so already-seen items render
+ * greyed on the next open, while items that arrived since last open stay
+ * full-contrast this session. No left-edge dot — dimming alone communicates
+ * the state. Click activates: navigate to action_url and mark read (handled by
+ * parent through onActivate).
  *
  * A dismiss (✕) button soft-archives the row — removes it from the feed while
  * retaining it in the DB (not a delete; the 2025/26 inbox standard), with a
@@ -46,6 +37,10 @@ interface NotificationRowProps {
  * pointer devices it reveals on hover/focus; on touch (no hover) it stays
  * visible, since there's no hover to trigger it. Two sibling buttons inside a
  * `group` wrapper rather than one button (a button cannot nest a button).
+ *
+ * On archive the row animates out (translate-x + fade + height collapse,
+ * ~200ms ease-out via AnimatePresence in the feed) so the rows below glide up
+ * rather than jump. Reduced-motion drops the movement to a plain fade.
  */
 export function NotificationRow({
   notification,
@@ -54,8 +49,8 @@ export function NotificationRow({
   onArchive,
 }: NotificationRowProps) {
   const navigate = useNavigate()
+  const shouldReduceMotion = useReducedMotion()
   const Icon = getNotificationIcon(notification.type)
-  const status = getNotificationStatus(notification.type)
   const isRead = notification.read_at !== null
   const isResolvedAction =
     notification.action_required && notification.resolved_at !== null
@@ -72,8 +67,23 @@ export function NotificationRow({
     if (notification.action_url) navigate(notification.action_url)
   }
 
+  // Strong ease-out (Emil's UI curve); exit only — remaining rows glide up as
+  // the collapsing height pulls them into place.
+  const exit = shouldReduceMotion
+    ? { opacity: 0, transition: { duration: 0.15, ease: [0.23, 1, 0.32, 1] as const } }
+    : {
+        opacity: 0,
+        x: 12,
+        height: 0,
+        transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] as const },
+      }
+
   return (
-    <div className="group relative border-t border-border-subtle first:border-t-0">
+    <motion.div
+      layout
+      exit={exit}
+      className="group relative overflow-hidden border-t border-border-subtle first:border-t-0"
+    >
       <button
         type="button"
         onClick={handleClick}
@@ -81,12 +91,10 @@ export function NotificationRow({
       >
         <div
           className={cn(
-            'flex size-8 shrink-0 items-center justify-center rounded-full',
+            'flex size-8 shrink-0 items-center justify-center rounded-lg',
             dimmed
               ? 'bg-muted text-foreground-muted'
-              : status === 'neutral'
-                ? 'bg-muted text-foreground'
-                : STATUS_PLATE[status],
+              : 'bg-foreground text-background',
           )}
           aria-hidden="true"
         >
@@ -96,30 +104,20 @@ export function NotificationRow({
         <div className="min-w-0">
           <div
             className={cn(
-              'text-sm leading-5',
+              'text-sm font-medium leading-5',
               dimmed ? 'text-foreground-muted' : 'text-foreground',
             )}
           >
             {notification.title}
           </div>
           {notification.body && (
-            <div
-              className={cn(
-                'text-sm leading-5',
-                dimmed ? 'text-foreground-disabled' : 'text-foreground-muted',
-              )}
-            >
+            <div className="text-sm leading-5 text-foreground-muted">
               {notification.body}
             </div>
           )}
         </div>
 
-        <div
-          className={cn(
-            'shrink-0 whitespace-nowrap text-xs tabular-nums transition-opacity duration-150 group-hover:opacity-0 group-focus-within:opacity-0 [@media(hover:none)]:opacity-0',
-            dimmed ? 'text-foreground-disabled' : 'text-foreground-muted',
-          )}
-        >
+        <div className="shrink-0 whitespace-nowrap text-xs tabular-nums text-foreground-muted transition-opacity duration-150 group-hover:opacity-0 group-focus-within:opacity-0 [@media(hover:none)]:opacity-0">
           {formatRelativeTime(notification.created_at)}
         </div>
       </button>
@@ -132,6 +130,6 @@ export function NotificationRow({
       >
         <X className="size-3.5" />
       </button>
-    </div>
+    </motion.div>
   )
 }
