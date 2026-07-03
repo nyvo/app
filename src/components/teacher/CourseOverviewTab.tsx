@@ -473,42 +473,6 @@ function SettingsCard(props: TogglesSectionProps) {
   );
 }
 
-// ─── KPI cards (standalone export — used by the dev preview) ──────────────
-
-export function CourseKpis({
-  enrolled,
-  capacity,
-  revenue,
-  price,
-  hasPaidTier,
-}: {
-  enrolled: number;
-  capacity: number;
-  revenue: number;
-  price: number;
-  hasPaidTier: boolean;
-}) {
-  return (
-    <div className={cn('grid grid-cols-1 gap-3', hasPaidTier ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
-      <KpiCard
-        label="Påmeldte"
-        value={capacity > 0 ? `${enrolled} / ${capacity}` : String(enrolled)}
-      />
-      {hasPaidTier && <KpiCard label="Inntekt" value={formatKroner(revenue)} />}
-      <KpiCard label="Pris" value={price > 0 ? formatKroner(price) : 'Gratis'} />
-    </div>
-  );
-}
-
-function KpiCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-surface px-5 py-5">
-      <p className="text-sm text-foreground-muted">{label}</p>
-      <p className="mt-2 text-3xl font-medium text-foreground tabular-nums">{value}</p>
-    </div>
-  );
-}
-
 // ─── Toggles (drop-in + late signups) ─────────────────────────────────────
 
 interface TogglesSectionProps {

@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { PageTab, PageTabs } from '@/components/ui/page-tabs';
 import { FieldError } from '@/components/ui/field-error';
+import { ErrorState } from '@/components/ui/error-state';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { ImageField } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
 import { PlacesAutocomplete } from '@/components/ui/places-autocomplete';
@@ -73,7 +76,7 @@ function StudioPublicSettings({
   seller: Seller;
   onSaved: () => Promise<void> | void;
 }) {
-  const { locations, isLoading: loadingLocations, refetch } = useLocations(seller.id);
+  const { locations, isLoading: loadingLocations, error: locationsError, refetch } = useLocations(seller.id);
   const primaryLocation = locations[0] ?? null;
 
   const isStudio = seller.operating_model === 'studio';
@@ -463,6 +466,22 @@ function StudioPublicSettings({
         )}
       </PageTabs>
 
+      {locationsError ? (
+        <div className="rounded-xl border border-border bg-background p-6 sm:p-10">
+          <ErrorState
+            title="Kunne ikke hente studioet ditt"
+            message="Sjekk forbindelsen og prøv igjen."
+            onRetry={() => void refetch()}
+          />
+        </div>
+      ) : loadingLocations ? (
+        // Skeleton held back 200ms (Studio § 10 — no flash-loader for
+        // sub-second loads); tabs above stay visible, only the panel is replaced.
+        <DelayedFallback>
+          <StudioRowsSkeleton />
+        </DelayedFallback>
+      ) : (
+        <>
       {tab === 'profil' && (
         <div
           role="tabpanel"
@@ -730,6 +749,8 @@ function StudioPublicSettings({
           />
         </div>
       )}
+        </>
+      )}
 
       <DirtyFormBar
         visible={isDirty && tab !== 'samarbeid'}
@@ -737,6 +758,29 @@ function StudioPublicSettings({
         onSave={handleSave}
         onCancel={handleCancel}
       />
+    </div>
+  );
+}
+
+// Placeholder for the settings panel while locations load — mirrors the
+// SettingsRows rhythm (220px label column + capped control column) so the tab
+// content doesn't jump when the fetch lands.
+function StudioRowsSkeleton() {
+  return (
+    <div className="divide-y divide-border-subtle" role="status" aria-live="polite">
+      <span className="sr-only">Laster…</span>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="grid gap-4 py-8 first:pt-0 last:pb-0 md:grid-cols-[220px_minmax(0,42rem)] md:gap-12"
+        >
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+          <Skeleton className="h-10 w-full max-w-md" />
+        </div>
+      ))}
     </div>
   );
 }
