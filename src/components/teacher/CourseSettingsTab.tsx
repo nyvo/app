@@ -10,6 +10,7 @@ import { ImageField } from '@/components/ui/image-upload';
 import { DatePicker } from '@/components/ui/date-picker';
 import { LocationField, type LocationCoords } from '@/components/ui/location-field';
 import { SessionDaysEditor, type SessionDay } from '@/components/teacher/SessionDaysEditor';
+import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import {
   Select,
   SelectContent,
@@ -276,8 +277,12 @@ export const CourseSettingsTab = ({
 
   return (
     <div className="w-full">
-      <div className="divide-y divide-border">
-        <SettingsSection title="Bilde" id="course-edit-image">
+      <SettingsRows>
+        <SettingsRow
+          title="Bilde"
+          id="course-edit-image"
+          description="Vises på kurskortet og kurssiden."
+        >
           <ImageField
             value={settingsImageUrl}
             onChange={(file) => {
@@ -292,47 +297,48 @@ export const CourseSettingsTab = ({
             loading={isImageSaving}
             className="max-w-sm"
           />
-        </SettingsSection>
+        </SettingsRow>
 
-        <SettingsSection title="Detaljer">
-          <div className="space-y-6">
-            <div>
-              <FieldLabel htmlFor="settings-title">Tittel</FieldLabel>
-              <Input
-                id="settings-title"
-                type="text"
-                value={settingsTitle}
-                onChange={(e) => onTitleChange(e.target.value)}
-                className="text-base"
-              />
-            </div>
-
-            <div id="course-edit-description" className="scroll-mt-24">
-              <FieldLabel id="settings-description-label">Beskrivelse</FieldLabel>
-              <RichTextEditor
-                id="settings-description"
-                aria-labelledby="settings-description-label"
-                value={settingsDescription}
-                onChange={onDescriptionChange}
-              />
-            </div>
+        <SettingsRow title="Detaljer" description="Tittel og beskrivelse slik de vises på kurssiden.">
+          <div>
+            <FieldLabel htmlFor="settings-title">Tittel</FieldLabel>
+            <Input
+              id="settings-title"
+              type="text"
+              value={settingsTitle}
+              onChange={(e) => onTitleChange(e.target.value)}
+              className="text-base"
+            />
           </div>
-        </SettingsSection>
 
-        <SettingsSection title="Sted og tid" id="course-edit-location">
-          <div className="space-y-6">
-            <div>
-              <FieldLabel>Sted</FieldLabel>
-              <LocationField
-                id="settings-location"
-                value={settingsLocation}
-                address={settingsLocationAddress}
-                coords={settingsLocationCoords}
-                onChange={handleLocationChange}
-              />
-            </div>
+          <div id="course-edit-description" className="scroll-mt-24">
+            <FieldLabel id="settings-description-label">Beskrivelse</FieldLabel>
+            <RichTextEditor
+              id="settings-description"
+              aria-labelledby="settings-description-label"
+              value={settingsDescription}
+              onChange={onDescriptionChange}
+            />
+          </div>
+        </SettingsRow>
 
-            {courseFormat === 'single' ? (
+        <SettingsRow
+          title="Sted og tid"
+          id="course-edit-location"
+          description="Hvor og når kurset holdes."
+        >
+          <div>
+            <FieldLabel>Sted</FieldLabel>
+            <LocationField
+              id="settings-location"
+              value={settingsLocation}
+              address={settingsLocationAddress}
+              coords={settingsLocationCoords}
+              onChange={handleLocationChange}
+            />
+          </div>
+
+          {courseFormat === 'single' ? (
               /* Per-day editor for single/enkeltkurs courses */
               <div>
                 <SessionDaysEditor
@@ -415,10 +421,12 @@ export const CourseSettingsTab = ({
                 </div>
               </div>
             )}
-          </div>
-        </SettingsSection>
+        </SettingsRow>
 
-        <SettingsSection title="Påmelding">
+        <SettingsRow
+          title="Påmelding"
+          description="Plasser og pris for nye påmeldinger."
+        >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <FieldLabel htmlFor="settings-capacity" error={isBelowEnrolled}>
@@ -479,8 +487,8 @@ export const CourseSettingsTab = ({
               )}
             </div>
           </div>
-        </SettingsSection>
-      </div>
+        </SettingsRow>
+      </SettingsRows>
 
       {/* Destructive zone. "Gjør til utkast" lives in the header kebab menu
           (state change, not destructive). Danger-tinted surface for actions
@@ -541,23 +549,6 @@ export const CourseSettingsTab = ({
     </div>
   );
 };
-
-function SettingsSection({
-  id,
-  title,
-  children,
-}: {
-  id?: string;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section id={id} className="grid scroll-mt-24 gap-4 py-8 md:grid-cols-[180px_minmax(0,1fr)] md:gap-10 first:pt-0">
-      <h2 className="text-lg font-medium text-foreground">{title}</h2>
-      <div className="min-w-0">{children}</div>
-    </section>
-  );
-}
 
 interface ActionRowProps {
   title: string;

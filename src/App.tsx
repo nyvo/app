@@ -64,6 +64,7 @@ const SessionDaysPreview = lazy(() => import('./pages/dev/SessionDaysPreview'));
 const CourseOversiktWireframe = lazy(() => import('./pages/dev/CourseOversiktWireframe'));
 const EmbedPreview = lazy(() => import('./pages/dev/EmbedPreview'));
 const EmbedCodePreview = lazy(() => import('./pages/dev/EmbedCodePreview'));
+const SettingsRowsPreview = lazy(() => import('./pages/dev/SettingsRowsPreview'));
 
 // Public team page at root: only renders if the slug is NOT a reserved word.
 // Reserved words 404 (since they should hit a literal route higher in the
@@ -169,6 +170,7 @@ function AppRoutes() {
             <Route path="/dev/oversikt-wireframe" element={<CourseOversiktWireframe />} />
             <Route path="/dev/embed-preview" element={<EmbedPreview />} />
             <Route path="/dev/embed-code-preview" element={<EmbedCodePreview />} />
+            <Route path="/dev/settings-rows-preview" element={<SettingsRowsPreview />} />
           </>
         )}
 
