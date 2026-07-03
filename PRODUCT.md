@@ -47,7 +47,7 @@ Calm, plainspoken, considerate. Three-word read: **airy, klarspråk, restrained*
 **WCAG 2.2 AA** as the floor for everything. Specifically:
 
 - Body text ≥4.5:1 contrast against background; large text (≥18px or bold ≥14px) ≥3:1.
-- Placeholder color is `text-foreground-muted` (sand-11, ~5.6:1 on white). Never `text-foreground-disabled` (sand-8, ~2.5:1 — fails AA).
+- Placeholder color is `text-foreground-muted` (`--neutral-11`, ~5.6:1 on white). Never `text-foreground-disabled` (`--neutral-8`, ~2.5:1 — fails AA).
 - Touch targets ≥36px on touch-primary surfaces (mobile booking, public pages, MobilePriceBar); ≥44px for primary CTAs to hit WCAG 2.5.5 AAA + Apple HIG.
 - Diacritic and case-insensitive matching mandatory for Norwegian names in any list filter.
 - `prefers-reduced-motion` respected on every animation (page transitions, drawer slides, dialog fades) — crossfade or instant alternative, never optional.
