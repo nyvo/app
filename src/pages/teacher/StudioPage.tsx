@@ -17,6 +17,7 @@ import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { SettingsSection } from '@/components/teacher/SettingsSection';
 import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
+import { EmbedCodeSection } from '@/components/teacher/studio/EmbedCodeSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/use-locations';
 import { friendlyError } from '@/lib/error-messages';
@@ -534,6 +535,8 @@ function StudioPublicSettings({
               </CardContent>
             </Card>
           </SettingsSection>
+
+          {seller.slug && <EmbedCodeSection slug={seller.slug} />}
 
           <AccountTypeSection
             seller={seller}
