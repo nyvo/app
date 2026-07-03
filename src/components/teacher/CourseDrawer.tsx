@@ -75,13 +75,7 @@ function DrawerHeader({
         <SheetTitle className="leading-tight">
           {title}
         </SheetTitle>
-        {status === 'cancelled' ? (
-          <span className="inline-flex items-center px-2 h-6 rounded-md text-sm font-medium bg-muted text-foreground-muted line-through shrink-0">
-            Avlyst
-          </span>
-        ) : (
-          <StatusBadge status={status as CourseStatus} className="shrink-0" />
-        )}
+        <StatusBadge status={status as CourseStatus} className="shrink-0" />
       </div>
       {description && (
         <SheetDescription asChild>

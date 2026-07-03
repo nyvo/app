@@ -386,7 +386,7 @@ function PlanOption({
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-base font-medium text-foreground">{name}</h3>
             {active && (
-              <Badge variant="neutral" size="sm" className="text-foreground">
+              <Badge variant="neutral" size="sm">
                 Aktiv plan
               </Badge>
             )}
