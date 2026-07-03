@@ -1,5 +1,7 @@
 # Studio — Layout & UX Patterns
 
+> **SUPERSEDED COLOR MODEL** — this document predates the current system. Authoritative: `src/index.css` (+ CLAUDE.md §Design tokens). Current reality: pure-neutral grey (chroma 0) neutrals, periwinkle primary `oklch(0.540 0.150 274)`, WHITE sidebar rail, beige as the one warm accent, ring = foreground. Any sand-\*/Slate/indigo/dark-sidebar/monochrome-primary guidance below is historical — do not apply. Layout, spacing, and craft rules remain valid unless they contradict `src/index.css` or newer primitives (e.g. SettingsRows for settings pages; the primary-tinted FramedCard on course Oversikt is sanctioned).
+
 These patterns complement the token system. They answer: *"Now that I know what colors and spacing to use, how do I lay out a screen?"*
 
 The product is for **everyone, not power users.** Yoga teachers, small studio owners, and non-technical operators. They need to glance at the app and immediately understand what to do next. Density and bulk-action UIs work against them.
@@ -1604,7 +1606,7 @@ Pages are typically composed of 2–4 sections (header + content). Sections are 
 
 ### 17.9 Anti-patterns
 
-- **Don't mix max-widths across dashboard pages.** Every page shell is `mx-auto max-w-6xl`. Mixing `max-w-4xl` / `max-w-6xl` / `max-w-6xl` across pages causes content to jump horizontally between routes, which reads as broken layout. Narrower inner blocks (a centered form at `max-w-md`, long-form prose at `max-w-3xl`) are fine — but the page shell stays 5xl.
+- **Don't mix max-widths across dashboard pages.** Every page shell is `mx-auto max-w-6xl`. Mixing `max-w-4xl` / `max-w-6xl` / `max-w-6xl` across pages causes content to jump horizontally between routes, which reads as broken layout. Narrower inner blocks (a centered form at `max-w-md`, long-form prose at `max-w-3xl`) are fine — but the page shell stays 6xl.
 - **Don't stretch content past max-width to fill ultrawide screens.** Cards become too wide, tables become hard to scan, line-lengths exceed the readable range. Embrace the empty space.
 - **Don't use `max-w-full` or no max-width on dashboard pages** unless the page is genuinely full-bleed (e.g., a calendar view that benefits from horizontal space). Default to a sensible cap.
 - **Don't put a sidebar on public/booking pages.** Public surfaces are sidebar-less — they're for users who haven't yet entered the app. Adding a sidebar there muddies the public/private surface distinction and puts navigation chrome in front of users who don't need it yet.

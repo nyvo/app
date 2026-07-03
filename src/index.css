@@ -17,11 +17,15 @@
    Layer 3 — Tailwind @theme (inline below). Exposes semantic tokens
               as utility classes (bg-foreground, text-success-fg, etc.).
 
-   Source of truth for the design system:
-     ~/.claude/skills/studio-design/design-model.yaml
+   Source of truth for the design system: THIS FILE.
+     ~/.claude/skills/studio-design/design-model.yaml is historical
+     rationale only — its color values are superseded (gen-2 cool
+     Slate / indigo). When in doubt, this file wins.
 
-   Color format: OKLCH (perceptually uniform). Values aligned to
-   Radix Sand / Sky / Mint / Iris / Jade / Amber / Red scales.
+   Color format: OKLCH (perceptually uniform). Neutral ramp is a
+   pure-neutral grey (chroma 0), de-tinted from Radix Slate to kill
+   the cold blue cast. Status scales are Jade / Amber / Red. Primary
+   is periwinkle (oklch(0.540 0.150 274)); beige is the one warm accent.
    ============================================================ */
 
 @theme inline {

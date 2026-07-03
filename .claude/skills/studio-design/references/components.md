@@ -1,5 +1,7 @@
 # Studio — Components
 
+> **SUPERSEDED COLOR MODEL** — this document predates the current system. Authoritative: `src/index.css` (+ CLAUDE.md §Design tokens). Current reality: pure-neutral grey (chroma 0) neutrals, periwinkle primary `oklch(0.540 0.150 274)`, WHITE sidebar rail, beige as the one warm accent, ring = foreground. Any sand-\*/Slate/indigo/dark-sidebar/monochrome-primary guidance below is historical — do not apply. Layout, spacing, and craft rules remain valid unless they contradict `src/index.css` or newer primitives (e.g. SettingsRows for settings pages; the primary-tinted FramedCard on course Oversikt is sanctioned).
+
 Patterns for the core primitives. Every value sourced from `design-model.yaml`.
 
 ---

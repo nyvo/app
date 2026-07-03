@@ -25,7 +25,7 @@
   - Every heading `font-medium tracking-tight` — **never** `font-semibold`/`font-bold`.
   - Teacher pages are always `mx-auto max-w-6xl`, centered, via `PageShell`.
     Inner constraint is `narrow="centered"` (`max-w-3xl`) or `narrow="left"`.
-  - Selectable cards use `ring-foreground`, never indigo.
+  - Selectable cards use `ring-foreground`, never brand/periwinkle.
   - Don't mix text colors on one line.
 - **Existing responsive utilities** already in `index.css` — reuse, don't reinvent:
   `.touch-target` (44px min), `.safe-area-bottom` / `.safe-area-top`
