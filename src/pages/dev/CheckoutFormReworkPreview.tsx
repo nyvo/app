@@ -73,14 +73,7 @@ const CheckoutFormReworkPreview = () => {
       <DevBar variant={variant} onVariantChange={setVariant} />
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-6 pb-32 lg:pb-16">
-        <Link
-          to="/dev/checkout-rework"
-          className="inline-flex items-center text-sm text-foreground-muted hover:text-foreground transition-colors"
-        >
-          ← Tilbake til kurset
-        </Link>
-
-        <header className="mt-8 mb-10 max-w-2xl">
+        <header className="mb-10 max-w-2xl">
           <p className="text-sm text-foreground-muted">Påmelding</p>
           <h1 className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
             {course.title}
