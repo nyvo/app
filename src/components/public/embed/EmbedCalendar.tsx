@@ -343,23 +343,19 @@ function EmbedClassRow({
           )}
         </div>
 
-        <div className="flex shrink-0 flex-col items-end gap-2">
+        <div className="flex shrink-0 flex-col items-end gap-1">
           <span className="text-sm font-medium leading-5 tabular-nums whitespace-nowrap text-foreground">
             {price.from && price.amount
               ? <><span className="font-normal text-foreground-muted">fra </span>{formatKroner(price.amount)}</>
               : formatCoursePrice(price.amount)}
           </span>
-          <span
-            className={cn(
-              'inline-flex h-7 items-center rounded-full px-3 text-[0.8125rem] font-medium transition-colors duration-150',
-              isDisabled
-                ? 'border border-border-subtle bg-background text-foreground-disabled'
-                : 'border border-border bg-background text-foreground group-hover:bg-muted',
-            )}
-            aria-hidden
-          >
-            {CTA_LABELS[bookability]}
-          </span>
+          {/* The whole card is the link; a state label appears only when the
+              course can't be booked. */}
+          {isDisabled && (
+            <span className="text-[0.8125rem] leading-5 text-foreground-muted">
+              {CTA_LABELS[bookability]}
+            </span>
+          )}
         </div>
       </a>
     </li>
