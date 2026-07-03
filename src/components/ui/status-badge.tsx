@@ -1,39 +1,34 @@
 import { Badge, type badgeVariants } from './badge';
 import type { VariantProps } from 'class-variance-authority';
-import type { SignupStatus } from '@/types/database';
 import { cn } from '@/lib/utils';
 
-export type { SignupStatus };
-export type CourseStatus = 'draft' | 'active' | 'upcoming' | 'completed' | 'cancelled' | 'full';
-export type BadgeStatus = SignupStatus | CourseStatus;
+// Mirrors the course_status DB enum, kept honest by reconcile_course_lifecycle.
+export type CourseStatus = 'draft' | 'active' | 'upcoming' | 'completed' | 'cancelled';
 
 type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
 
-const config: Record<BadgeStatus, { variant: BadgeVariant; label: string; className?: string }> = {
-  confirmed:        { variant: 'success', label: 'Påmeldt' },
+const config: Record<CourseStatus, { variant: BadgeVariant; label: string; className?: string }> = {
+  draft:     { variant: 'neutral', label: 'Utkast' },
+  upcoming:  { variant: 'info', label: 'Kommende' },
+  active:    { variant: 'success', label: 'Pågår' },
+  completed: { variant: 'neutral', label: 'Fullført' },
   // Cancelled is a resolved state, not an alarm — muted with strikethrough, not red.
-  cancelled:        { variant: 'neutral', label: 'Avlyst', className: 'line-through' },
-  course_cancelled: { variant: 'warning', label: 'Kurs avlyst' },
-  draft:            { variant: 'neutral', label: 'Utkast' },
-  active:           { variant: 'success', label: 'Pågår' },
-  upcoming:         { variant: 'info', label: 'Kommende' },
-  full:             { variant: 'warning', label: 'Fullt' },
-  completed:        { variant: 'neutral', label: 'Fullført' },
+  cancelled: { variant: 'neutral', label: 'Avlyst', className: 'line-through' },
 };
 
 interface StatusBadgeProps {
-  status: BadgeStatus;
+  status: CourseStatus;
   size?: 'sm' | 'md';
   customLabel?: string;
   className?: string;
 }
 
 /**
- * StatusBadge — for course and generic signup status in tables / list rows.
+ * StatusBadge — course status only, in headers / tables / list rows.
  * Pill shape system-wide; size + color do the work of distinguishing status
  * badges from decorative meta. Modern dashboards (Stripe, Linear, Shopify,
  * GitHub) all converged on pill for status — Studio follows.
- * For combined signup+payment state, use SignupStatusBadge. For payment state alone, use PaymentBadge.
+ * For signup state use SignupStatusBadge; for payment state alone, PaymentBadge.
  */
 export function StatusBadge({ status, size = 'sm', customLabel, className }: StatusBadgeProps) {
   const { variant, label, className: statusClassName } = config[status];

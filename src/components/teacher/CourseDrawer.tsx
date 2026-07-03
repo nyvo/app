@@ -12,7 +12,7 @@ import {
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { StatusBadge, type CourseStatus } from '@/components/ui/status-badge';
 import { ShareCoursePopover } from '@/components/ui/share-course-popover';
 import {
   DropdownMenu,
@@ -57,8 +57,6 @@ function buildTimeRange(startTime: string, durationMinutes: number): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${start}–${pad(endH)}:${pad(endM)}`;
 }
-
-type CourseStatus = 'draft' | 'active' | 'upcoming' | 'completed';
 
 function DrawerHeader({
   title,
