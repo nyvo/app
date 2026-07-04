@@ -2,7 +2,7 @@ import { SessionCard, TimelineDay, type SessionRow } from '@/pages/teacher/Sched
 
 /**
  * Auth-free preview of the schedule agenda — the sign-off surface for the
- * ported Luma-style timeline (date rail + facepile cards). Renders the real
+ * ported Luma-style timeline (date rail + agenda cards). Renders the real
  * TimelineDay + SessionCard exports, so what you see here is production.
  */
 const SchedulePreview = () => {
@@ -47,7 +47,6 @@ const MOCK_SESSIONS: SessionRow[] = [
     deliveryMode: 'in_person',
     signupCount: 8,
     maxParticipants: 10,
-    participantNames: ['Olav Hansen', 'Mari Eriksen', 'Anne Sørensen', 'Jonas Berg', 'Ida Moen'],
   },
   {
     ...base,
@@ -60,7 +59,6 @@ const MOCK_SESSIONS: SessionRow[] = [
     deliveryMode: 'in_person',
     signupCount: 14,
     maxParticipants: 14,
-    participantNames: ['Kari Nordmann', 'Ola Vik', 'Nina Holm', 'Jon Dal', 'Mia Strand'],
   },
   {
     ...base,
@@ -73,7 +71,6 @@ const MOCK_SESSIONS: SessionRow[] = [
     deliveryMode: 'online',
     signupCount: 23,
     maxParticipants: null,
-    participantNames: ['Thea Lund', 'Emil Foss', 'Live Bakke', 'Aksel Rud'],
   },
   {
     ...base,
@@ -86,7 +83,6 @@ const MOCK_SESSIONS: SessionRow[] = [
     deliveryMode: 'in_person',
     signupCount: 12,
     maxParticipants: 14,
-    participantNames: ['Hanna Vold', 'Marius Eng', 'Selma Kro', 'Leon Hagen', 'Amalie Torp'],
   },
   {
     ...base,
@@ -99,7 +95,6 @@ const MOCK_SESSIONS: SessionRow[] = [
     deliveryMode: 'in_person',
     signupCount: 4,
     maxParticipants: 12,
-    participantNames: ['Nora Aas', 'Sondre Vik', 'Vilde Holt', 'Jakob Ryen'],
   },
 ];
 

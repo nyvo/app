@@ -104,7 +104,8 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
     delta > 0 ? 'success' : delta < 0 ? 'warning' : 'neutral'
 
   const points: IncomePoint[] = series?.points ?? buildPlaceholderPoints(range)
-  const hasIncome = points.some((p) => p.amount > 0)
+  // `amount` is null for future days (month range) — treat those as 0 here.
+  const hasIncome = points.some((p) => (p.amount ?? 0) > 0)
   // The faint previous-period overlay only renders when the previous period
   // actually carried income — so the both-zero empty state keeps just the
   // current flat neutral line.
@@ -113,7 +114,7 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
   // clipped. (recharts folds every series on the axis into `dataMax`, but the
   // overlay has no fill, so being explicit here removes any doubt.)
   const dataMax = points.reduce(
-    (max, p) => Math.max(max, p.amount, hasPrevious ? p.previousAmount : 0),
+    (max, p) => Math.max(max, p.amount ?? 0, hasPrevious ? p.previousAmount : 0),
     0,
   )
   const domainMax = Math.max(dataMax, EMPTY_DOMAIN_MAX)
@@ -210,6 +211,10 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
               // dip below real values, so the soft curve stays honest.
               type="monotone"
               dataKey="amount"
+              // Stop the line at today: month buckets after today carry null,
+              // and recharts breaks the area on null points (default behaviour,
+              // stated explicitly here) rather than bridging to the axis end.
+              connectNulls={false}
               // Flat zero-line stays neutral (reference: Airbnb earnings) —
               // a saturated line under "no income" reads as data.
               stroke={hasIncome ? STROKE : 'var(--color-border)'}
@@ -282,20 +287,25 @@ function IncomeTooltip({
   // the same point object, so read the point from whichever entry carries it.
   const point = payload.find((entry) => entry?.payload)?.payload
   if (!point) return null
+  // A future day (month range) has no current-period figure yet — show only the
+  // previous-period row so the tooltip never implies a zero we don't have.
+  const hasCurrent = point.amount != null
   return (
     <div className="min-w-[180px] rounded-xl border border-border bg-background px-3 py-2.5 text-sm shadow-soft">
       <div className="text-xs font-medium text-foreground-muted">Sum hittil</div>
       {/* Two tiers: the header is the quiet tier; both value rows share the
           same treatment — the markers alone tell the series apart. */}
-      <div className="mt-1.5 flex items-center justify-between gap-3">
-        <span className="inline-flex items-center gap-2">
-          <span className="size-3 rounded-sm bg-primary" />
-          <span className="font-medium text-foreground tabular-nums">
-            {formatKroner(point.amount)}
+      {hasCurrent && (
+        <div className="mt-1.5 flex items-center justify-between gap-3">
+          <span className="inline-flex items-center gap-2">
+            <span className="size-3 rounded-sm bg-primary" />
+            <span className="font-medium text-foreground tabular-nums">
+              {formatKroner(point.amount)}
+            </span>
           </span>
-        </span>
-        <span className="text-foreground-muted">{point.label}</span>
-      </div>
+          <span className="text-foreground-muted">{point.label}</span>
+        </div>
+      )}
       <div className="mt-1 flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-2">
           <span className="size-3 rounded-sm bg-border" />

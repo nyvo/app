@@ -8,8 +8,12 @@ export interface IncomePoint {
   key: string
   /** Label shown in tooltip (Norwegian). */
   label: string
-  /** Net income in NOK for this bucket. */
-  amount: number
+  /**
+   * Cumulative net income in NOK through this bucket, or `null` for a future
+   * day that has no data yet (month range only — the axis spans the whole
+   * calendar month but the line stops at today). Week/year never produce null.
+   */
+  amount: number | null
   /** Label of the same offset in the previous period, e.g. "ons 8. okt". */
   previousLabel: string
   /** Net income in NOK at the same offset one period earlier. */
@@ -97,12 +101,14 @@ function buildBuckets(range: IncomeRange, end: Date): BucketScaffold[] {
   }
 
   if (range === 'month') {
-    // Calendar month-to-date: day 1 → today. Each bucket's previous counterpart
-    // is the same day-offset from the 1st of the previous month, so the overlay
-    // line aligns by elapsed offset rather than by calendar date.
+    // Full calendar month: day 1 → last day, so the axis right edge is always
+    // the month's end (Stripe gross-volume pattern) and never reshapes daily.
+    // Days after today carry `amount: null` (filled in the cumulative pass).
+    // Each bucket's previous counterpart is the same day-offset from the 1st of
+    // the previous month, so the overlay aligns by elapsed offset, not date.
     const periodStart = startOfDay(new Date(end.getFullYear(), end.getMonth(), 1))
     const prevMonthStart = addMonths(periodStart, -1)
-    const span = end.getDate()
+    const span = new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate()
     const scaffold: BucketScaffold[] = []
     for (let i = 0; i < span; i++) {
       const d = addDays(periodStart, i)
@@ -263,7 +269,8 @@ export async function fetchIncomeSeries(
     if (ts >= periodStartMs) {
       total += amount
       const point = currentByKey.get(key)
-      if (point) point.amount += amount
+      // Buckets start at 0 here; the null tail is assigned in the cumulative pass.
+      if (point) point.amount = (point.amount ?? 0) + amount
     } else {
       // Bucket into the overlay regardless (it shows the full previous period)…
       const point = previousByKey.get(key)
@@ -283,11 +290,21 @@ export async function fetchIncomeSeries(
   const points = scaffold.map((s) => s.point)
   let runningCurrent = 0
   let runningPrevious = 0
+  // `amount` accumulates only through today — later buckets (future days of the
+  // current month) become null so the main line stops at today. `previousAmount`
+  // accumulates across ALL buckets: the previous period is complete data.
+  const todayKey = range === 'month' ? formatLocalDateKey(end) : null
+  let pastToday = false
   for (const point of points) {
-    runningCurrent += point.amount
-    point.amount = runningCurrent
     runningPrevious += point.previousAmount
     point.previousAmount = runningPrevious
+    if (pastToday) {
+      point.amount = null
+    } else {
+      runningCurrent += point.amount ?? 0
+      point.amount = runningCurrent
+      if (todayKey && point.key === todayKey) pastToday = true
+    }
   }
 
   return {
