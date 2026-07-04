@@ -104,6 +104,11 @@
   /* Selected-state tint */
   --color-selection-light: var(--selection-light);
 
+  /* Categorical markers — legend hues, small marker fills only */
+  --color-category-1: var(--category-1);
+  --color-category-2: var(--category-2);
+  --color-category-3: var(--category-3);
+
   /* Structure */
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
@@ -276,6 +281,15 @@
   /* Selected-state tint (cards, steppers) — NOT text ::selection (that uses --muted) */
   --selection-light: oklch(0.540 0.150 274 / 8%);
 
+  /* Categorical markers — legend hues for type tags (tables, labels, chart
+     series). Deliberately pastel-bright so a small marker reads instantly;
+     identity, NOT status (status stays jade/amber/red). Blue family only so
+     they never compete with the warm beige accent. Small marker fills only —
+     never text, never surfaces, never actions. */
+  --category-1: oklch(0.70 0.150 274);  /* periwinkle pastel, vivid */
+  --category-2: oklch(0.74 0.140 235);  /* baby blue, vivid */
+  --category-3: oklch(0.78 0.130 205);  /* cyan-blue, vivid */
+
   /* Beige — the one warm accent on the pure-neutral system. Highlight surfaces
      only (upsell, callouts); never a button/action. */
   --beige: oklch(0.935 0.022 80);
@@ -399,6 +413,12 @@
 
   /* Selected-state tint */
   --selection-light: oklch(0.555 0.150 274 / 12%);
+
+  /* Categorical markers (dark) — same pastel-bright family; high L pops on
+     dark surfaces without any glow effect. */
+  --category-1: oklch(0.72 0.155 274);
+  --category-2: oklch(0.76 0.145 235);
+  --category-3: oklch(0.80 0.135 205);
 
   /* Beige — warm accent (dark) */
   --beige: oklch(0.300 0.018 78);

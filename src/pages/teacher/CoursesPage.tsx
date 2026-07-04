@@ -203,6 +203,14 @@ const CoursesPage = () => {
         return true;
       })
       .sort((a, b) => {
+        // Drafts always sink to the bottom as a stable group, regardless of
+        // sort key/direction — they have no sessions or signups to compare,
+        // so interleaving them in metric sorts is noise. The active sort
+        // still applies within each group.
+        const draftRank = (x: { course: Course }) => (x.course.status === 'draft' ? 1 : 0);
+        const byDraft = draftRank(a) - draftRank(b);
+        if (byDraft !== 0) return byDraft;
+
         let result = 0;
         switch (sortKey) {
           case 'next':

@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
-import { CourseMetaRow } from '@/components/teacher/CourseMetaRow';
+import { formatCourseDate } from '@/components/teacher/CourseMetaRow';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCourseDetail } from '@/hooks/use-course-detail';
@@ -29,22 +29,13 @@ import { publishCourse, unpublishCourse } from '@/services/courses';
 import { friendlyError } from '@/lib/error-messages';
 import { publishNeedsPaymentSetup } from '@/lib/payments';
 import { routes } from '@/lib/routes';
-import type { CourseSession } from '@/types/database';
 
 const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
-const WEEKDAY_SHORT = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør'] as const;
 
 function formatSessionDate(dateStr: string): string {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
-}
-
-function formatSessionDateLabel(session: CourseSession): string {
-  const d = new Date(session.session_date + 'T00:00:00');
-  if (isNaN(d.getTime())) return '';
-  const weekday = WEEKDAY_SHORT[d.getDay()];
-  return `${weekday} ${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
 }
 
 function buildTimeRange(startTime: string, durationMinutes: number): string {
@@ -64,29 +55,40 @@ function DrawerHeader({
   title,
   status,
   description,
+  hideHealthyBadge = false,
 }: {
   title: string;
   status: string;
   description?: ReactNode;
+  /** Suppress the badge for healthy statuses (active/upcoming) — the schedule
+   * quick view only surfaces state when it carries information (draft,
+   * cancelled, completed). */
+  hideHealthyBadge?: boolean;
 }) {
+  const badgeIsInformative =
+    status === 'draft' || status === 'completed' || status === 'cancelled';
+  const showBadge = hideHealthyBadge ? badgeIsInformative : true;
+
   return (
-    <SheetHeader className="px-6 py-4 border-b border-border">
-      <div className="flex items-start gap-3 flex-wrap">
-        <SheetTitle className="leading-tight">
-          {title}
-        </SheetTitle>
-        {status === 'cancelled' ? (
-          <span className="inline-flex items-center px-2 h-6 rounded-md text-sm font-medium bg-muted text-foreground-muted line-through shrink-0">
-            Avlyst
-          </span>
-        ) : (
-          <StatusBadge status={status as CourseStatus} className="shrink-0" />
-        )}
-      </div>
+    <SheetHeader className="px-6 py-5 border-b border-border">
+      {/* Title owns its row (Cron/Notion Calendar event-panel model); state
+          moves to its own row below the meta so nothing competes with it. */}
+      <SheetTitle className="leading-tight">{title}</SheetTitle>
       {description && (
         <SheetDescription asChild>
-          <div className="mt-1">{description}</div>
+          <div className="mt-1.5">{description}</div>
         </SheetDescription>
+      )}
+      {showBadge && (
+        <div className="mt-2.5">
+          {status === 'cancelled' ? (
+            <span className="inline-flex items-center px-2 h-6 rounded-md text-sm font-medium bg-muted text-foreground-muted line-through">
+              Avlyst
+            </span>
+          ) : (
+            <StatusBadge status={status as CourseStatus} />
+          )}
+        </div>
       )}
     </SheetHeader>
   );
@@ -108,7 +110,7 @@ interface CourseDrawerProps {
  * Studio rule (patterns.md § 15): drawers are supplementary, pages are
  * primary. The body splits by `origin`:
  *   - `schedule` → minimal session-framed quick view: title + status,
- *     session date/time/location, top-5 påmeldte, single "Åpne kursside"
+ *     session date/time/location, full påmeldte list, single "Åpne kursside"
  *     footer link. No course-management chrome.
  *   - default (courses list) → full course-management quick view with
  *     publish/share/unpublish, multi-day session list, etc.
@@ -151,7 +153,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
   } = useCourseDetail(courseId);
 
   // Filter out cancelled/refunded — they shouldn't inflate the X / capacity
-  // ratio or appear in the top-5 preview (was reading e.g. "16 / 10" because
+  // ratio or appear in the list (was reading e.g. "16 / 10" because
   // cancellations weren't filtered out).
   const confirmedParticipants = participants.filter((p) => p.status === 'confirmed');
   const confirmedCount = confirmedParticipants.length;
@@ -373,11 +375,12 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
 
         {/* Påmeldte — the operational concern */}
         <section className="px-6 py-6 border-b border-border">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-medium text-foreground">
-              Påmeldte ({confirmedCount}
-              {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''})
-            </h3>
+          <div className="mb-4 flex items-baseline justify-between gap-3">
+            <h3 className="text-base font-medium text-foreground">Påmeldte</h3>
+            <span className="text-base tabular-nums text-foreground-muted">
+              {confirmedCount}
+              {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''}
+            </span>
           </div>
           {confirmedCount === 0 ? (
             <p className="text-base text-foreground-muted">
@@ -385,7 +388,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
             </p>
           ) : (
             <div className="space-y-1">
-              {confirmedParticipants.slice(0, 5).map((p) => {
+              {confirmedParticipants.map((p) => {
                 const name = p.participant_name || p.profile?.name || 'Ukjent';
                 const email = p.participant_email || p.profile?.email || '';
                 return (
@@ -522,24 +525,57 @@ function ScheduleQuickView({
 
   const currentSession = sessionId ? sessions.find((s) => s.id === sessionId) : undefined;
 
-  const sessionDateLabel = currentSession
-    ? formatSessionDateLabel(currentSession)
+  // Long-form date ("Fredag 4. juli") — the short "Fre 4. jul" read as
+  // terse/boring in the header. Sentence-cased; Norwegian keeps the month
+  // lowercase.
+  const rawDate = currentSession ? formatCourseDate(currentSession.session_date) : '';
+  const sessionDateLabel = rawDate
+    ? rawDate.charAt(0).toUpperCase() + rawDate.slice(1)
     : null;
   const sessionTimeRange = currentSession?.start_time
     ? buildTimeRange(currentSession.start_time, courseData.durationMinutes)
     : null;
+  // Duration appended only when known — the "·" separator is approved here.
+  const sessionTimeLine =
+    sessionTimeRange && courseData.durationMinutes > 0
+      ? `${sessionTimeRange} · ${courseData.durationMinutes} min`
+      : sessionTimeRange;
 
-  // Location is intentionally dropped here — it's too wide for the narrow
-  // sheet header. The full date · time · place lives on the course page.
+  // Local-parsed date drives the boxed calendar chip (month band over day),
+  // avoiding UTC drift on the day number. The chip anchors a two-line when-row
+  // (long date over time+duration); location stays off — too wide for the
+  // narrow sheet, and the full picture lives on the course page.
+  const chipDate = currentSession
+    ? new Date(currentSession.session_date + 'T00:00:00')
+    : null;
   const headerDescription =
-    sessionDateLabel || sessionTimeRange ? (
-      <CourseMetaRow date={sessionDateLabel} time={sessionTimeRange} />
+    chipDate && !isNaN(chipDate.getTime()) && (sessionDateLabel || sessionTimeLine) ? (
+      <div className="flex items-center gap-3">
+        <span className="flex size-11 flex-col overflow-hidden rounded-lg border border-border bg-surface">
+          <span className="flex h-4 items-center justify-center bg-muted text-[9px] font-semibold uppercase tracking-wide text-foreground-muted">
+            {MONTHS_SHORT[chipDate.getMonth()]}
+          </span>
+          <span className="flex flex-1 items-center justify-center text-base font-medium text-foreground">
+            {chipDate.getDate()}
+          </span>
+        </span>
+        <span className="min-w-0">
+          {sessionDateLabel && (
+            <span className="block text-sm font-medium text-foreground">
+              {sessionDateLabel}
+            </span>
+          )}
+          {sessionTimeLine && (
+            <span className="block text-sm tabular-nums text-foreground-muted">
+              {sessionTimeLine}
+            </span>
+          )}
+        </span>
+      </div>
     ) : undefined;
 
   const confirmedParticipants = participants.filter((p) => p.status === 'confirmed');
   const confirmedCount = confirmedParticipants.length;
-  const visibleParticipants = confirmedParticipants.slice(0, 5);
-  const extraCount = Math.max(0, confirmedCount - visibleParticipants.length);
 
   return (
     <>
@@ -547,19 +583,27 @@ function ScheduleQuickView({
         title={courseData.title}
         status={courseData.status}
         description={headerDescription}
+        hideHealthyBadge
       />
 
       <div className="flex-1 overflow-y-auto">
         <section className="px-6 py-6">
-          <h3 className="text-base font-medium text-foreground mb-4">
-            Påmeldte ({confirmedCount}
-            {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''})
-          </h3>
+          {/* Heading + count as an aligned pair (schedule-card grammar):
+              the word carries hierarchy, the number reads as a datum. */}
+          <div className="mb-4 flex items-baseline justify-between gap-3">
+            <h3 className="text-base font-medium text-foreground">Påmeldte</h3>
+            <span className="text-base tabular-nums text-foreground-muted">
+              {confirmedCount}
+              {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''}
+            </span>
+          </div>
           {confirmedCount === 0 ? (
             <p className="text-base text-foreground-muted">Ingen påmeldinger ennå.</p>
           ) : (
             <div className="space-y-1">
-              {visibleParticipants.map((p) => {
+              {/* Every confirmed signup — the body scrolls, so there is no
+                  reason to cap the list behind a "+x flere". */}
+              {confirmedParticipants.map((p) => {
                 const name = p.participant_name || p.profile?.name || 'Ukjent';
                 const email = p.participant_email || p.profile?.email || '';
                 return (
@@ -572,16 +616,14 @@ function ScheduleQuickView({
                   </div>
                 );
               })}
-              {extraCount > 0 && (
-                <p className="pt-2 text-sm text-foreground-muted">+ {extraCount} flere</p>
-              )}
             </div>
           )}
         </section>
       </div>
 
       <div className="border-t border-border px-6 py-4 bg-background">
-        <Button asChild variant="secondary" className="w-full">
+        {/* The drawer's only action — primary, not secondary. */}
+        <Button asChild className="w-full">
           <Link to={routes.course(courseId)} onClick={onClose}>
             Åpne kursside
           </Link>
