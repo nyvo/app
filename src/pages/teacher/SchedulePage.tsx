@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, Users } from '@/lib/icons';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { Badge } from '@/components/ui/badge';
+import { MapPin, Monitor } from '@/lib/icons';
 import { PageShell } from '@/components/teacher/PageShell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -27,7 +28,7 @@ import type { CourseFormat, DeliveryMode } from '@/types/database';
 
 type RangeFilter = 'active' | 'past';
 
-interface SessionRow {
+export interface SessionRow {
   id: string;
   courseId: string;
   sessionDate: string;       // YYYY-MM-DD
@@ -39,6 +40,9 @@ interface SessionRow {
   deliveryMode: DeliveryMode;
   signupCount: number;
   maxParticipants: number | null;
+  /** Confirmed signups' display names, stable order, capped at 5 for the
+   *  facepile (the rest indicator counts off signupCount, not this length). */
+  participantNames: string[];
 }
 
 // Joined row shape from the embedded course query.
@@ -140,18 +144,28 @@ const SchedulePage = () => {
       const rows = (data ?? []) as unknown as SessionWithCourse[];
       const courseIds = [...new Set(rows.map((r) => r.course_id))];
 
-      // Confirmed-signup counts per course (capacity is per-course on the
-      // schema today — drop-ins use per-session capacity but we keep the
-      // simpler course-level count here for display).
+      // Confirmed signups per course — one query yields both the count and the
+      // facepile names (capacity is per-course on the schema today; drop-ins
+      // use per-session capacity but we keep the simpler course-level count
+      // here for display). Names are stored capped at 5; the card's rest
+      // indicator counts off signupCount, not the stored length.
       const counts: Record<string, number> = {};
+      const names: Record<string, string[]> = {};
       if (courseIds.length > 0) {
-        const { data: countRows } = await supabase
+        const { data: signupRows } = await supabase
           .from('signups')
-          .select('course_id')
+          .select('course_id, participant_name, status')
+          .eq('seller_id', currentSeller.id)
           .in('course_id', courseIds)
-          .eq('status', 'confirmed');
-        for (const r of (countRows ?? []) as Array<{ course_id: string }>) {
+          .eq('status', 'confirmed')
+          .order('created_at', { ascending: true });
+        for (const r of (signupRows ?? []) as Array<{
+          course_id: string;
+          participant_name: string | null;
+        }>) {
           counts[r.course_id] = (counts[r.course_id] ?? 0) + 1;
+          const arr = names[r.course_id] ?? (names[r.course_id] = []);
+          if (arr.length < 5) arr.push(r.participant_name || 'Deltaker');
         }
       }
 
@@ -169,6 +183,7 @@ const SchedulePage = () => {
           deliveryMode: r.course!.delivery_mode,
           signupCount: counts[r.course_id] ?? 0,
           maxParticipants: r.course!.max_participants,
+          participantNames: names[r.course_id] ?? [],
         }));
 
       setSessions(enriched);
@@ -267,12 +282,20 @@ const SchedulePage = () => {
       >
         {/* Body */}
         {loading ? (
-          <div className="space-y-4" role="status" aria-label="Laster">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-16 w-full rounded-lg" />
-                <Skeleton className="h-16 w-full rounded-lg" />
+          <div className="space-y-6" role="status" aria-label="Laster">
+            {[1, 2].map((i) => (
+              <div key={i} className="space-y-2.5">
+                <Skeleton className="h-4 w-28" />
+                <div className="rounded-xl border border-border bg-surface px-5 py-4 space-y-2.5">
+                  <Skeleton className="h-3.5 w-24" />
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-3.5 w-32" />
+                  <div className="flex items-center gap-1.5 pt-1">
+                    <Skeleton className="size-6 rounded-full" />
+                    <Skeleton className="size-6 rounded-full" />
+                    <Skeleton className="size-6 rounded-full" />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -295,24 +318,20 @@ const SchedulePage = () => {
             className="py-16"
           />
         ) : (
-          <div className="space-y-8">
-            {groups.map(([date, daySessions]) => {
+          <div>
+            {groups.map(([date, daySessions], idx) => {
               const label = formatDayLabel(date);
               return (
-                <section key={date} aria-labelledby={`day-${date}`}>
-                  <h2
-                    id={`day-${date}`}
-                    className="mb-3 flex items-baseline gap-2"
-                  >
-                    <span className="text-lg font-medium text-foreground">{label.primary}</span>
-                    <span className="text-base text-foreground-muted">{label.secondary}</span>
-                  </h2>
-                  <div className="space-y-2">
-                    {daySessions.map((s) => (
-                      <SessionCard key={s.id} session={s} />
-                    ))}
-                  </div>
-                </section>
+                <TimelineDay
+                  key={date}
+                  primary={label.primary}
+                  secondary={label.secondary}
+                  first={idx === 0}
+                >
+                  {daySessions.map((s) => (
+                    <SessionCard key={s.id} session={s} />
+                  ))}
+                </TimelineDay>
               );
             })}
           </div>
@@ -322,38 +341,129 @@ const SchedulePage = () => {
   );
 };
 
-function SessionCard({ session }: { session: SessionRow }) {
-  const isFull =
-    session.maxParticipants != null && session.signupCount >= session.maxParticipants;
-  const capacityText =
-    session.maxParticipants != null
-      ? isFull
-        ? 'Fullt'
-        : `${session.signupCount} / ${session.maxParticipants}`
-      : `${session.signupCount}`;
+/** Initials for the facepile fallback — up to two letters from the name. */
+function initials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .slice(0, 2)
+    .join('');
+}
+
+/**
+ * Luma-style day group — a date rail (node dot + dotted spine, day label over
+ * date) with the day's cards in the right column. Exported so the
+ * /dev/schedule-preview sign-off surface renders the real component.
+ */
+export function TimelineDay({
+  primary,
+  secondary,
+  first = false,
+  children,
+}: {
+  primary: string;
+  secondary: string;
+  first?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div className={cn('grid grid-cols-[96px_1fr] gap-x-2', !first && 'mt-2')}>
+      <div className="relative pt-1">
+        <span className="absolute left-[3px] top-[9px] size-2 rounded-full bg-border" />
+        <span className="absolute bottom-0 left-[6px] top-[22px] w-px border-l border-dotted border-border" />
+        <div className="pl-5">
+          <p className="text-[15px] font-medium leading-tight text-foreground">{primary}</p>
+          <p className="text-sm text-foreground-muted">{secondary}</p>
+        </div>
+      </div>
+      <div className="space-y-2.5 pb-6">{children}</div>
+    </div>
+  );
+}
+
+/**
+ * Agenda card — time over title over place, with a left-aligned facepile +
+ * capacity footer (Luma events-list grammar). White surface so the card lifts
+ * off the canvas. Exported for the /dev/schedule-preview sign-off surface.
+ */
+export function SessionCard({ session }: { session: SessionRow }) {
+  const isCapped = session.maxParticipants != null;
+  const isFull = isCapped && session.signupCount >= session.maxParticipants!;
+  const isOnline = session.deliveryMode === 'online';
+  const placeLabel = isOnline ? 'Online' : session.courseLocation;
+
+  const shown = session.participantNames.slice(0, 4);
+  const rest = session.signupCount - shown.length;
 
   return (
     <Link
       to={{ search: `?kurs=${session.courseId}&sess=${session.id}&from=schedule` }}
       className={cn(
-        'block rounded-lg border border-border bg-[var(--neutral-2)] p-4 outline-none transition-colors',
-        'hover:bg-muted',
-        'focus-visible:ring-2 focus-visible:ring-ring/50',
+        'block rounded-xl border border-border bg-surface px-5 py-4 outline-none transition-colors',
+        'hover:bg-hover',
+        'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
       )}
     >
-      <p className="text-base font-medium text-foreground truncate">
+      {/* Time — one uniform style, never two weights/colours in a line. */}
+      <p className="text-sm font-medium tabular-nums text-foreground-muted">
+        {formatTimeRange(session.startTime, session.endTime)}
+      </p>
+
+      <p className="mt-0.5 truncate text-base font-medium text-foreground">
         {session.courseTitle}
       </p>
 
-      <div className="mt-1 flex items-center gap-4 text-base text-foreground-muted tabular-nums">
-        <span className="inline-flex items-center gap-1.5">
-          <Clock className="size-4 shrink-0" aria-hidden="true" />
-          {formatTimeRange(session.startTime, session.endTime)}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <Users className="size-4 shrink-0" aria-hidden="true" />
-          {capacityText}
-        </span>
+      {(isOnline || placeLabel) && (
+        <p className="mt-1 flex items-center gap-1.5 text-sm text-foreground-muted">
+          {isOnline ? (
+            <Monitor className="size-3.5 shrink-0" aria-hidden="true" />
+          ) : (
+            <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
+          )}
+          <span className="truncate">{placeLabel}</span>
+        </p>
+      )}
+
+      {/* Facepile + capacity, left-aligned together. */}
+      <div className="mt-3 flex items-center gap-2.5">
+        {session.signupCount === 0 ? (
+          <span className="text-sm text-foreground-subtle">Ingen påmeldte</span>
+        ) : (
+          <>
+            <span className="flex items-center">
+              {shown.map((name, i) => (
+                <span
+                  key={i}
+                  className="-ml-1.5 first:ml-0 flex size-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-foreground-muted ring-2 ring-surface"
+                >
+                  {initials(name)}
+                </span>
+              ))}
+              {rest > 0 && (
+                <span className="-ml-1.5 flex size-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-foreground-muted ring-2 ring-surface">
+                  +{rest}
+                </span>
+              )}
+            </span>
+
+            {/* A full class is a positive STATUS → success badge; other counts
+                are plain quantities in muted text. */}
+            {isFull ? (
+              <Badge variant="success" shape="pill" size="sm">
+                Fullt
+              </Badge>
+            ) : isCapped ? (
+              <span className="text-sm tabular-nums text-foreground-muted">
+                {session.signupCount} / {session.maxParticipants}
+              </span>
+            ) : (
+              <span className="text-sm text-foreground-muted">
+                {session.signupCount} påmeldte
+              </span>
+            )}
+          </>
+        )}
       </div>
     </Link>
   );

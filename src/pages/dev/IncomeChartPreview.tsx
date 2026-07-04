@@ -46,7 +46,9 @@ function buildMockPoints(range: IncomeRange): IncomePoint[] {
       };
     });
   }
-  const span = range === 'week' ? 7 : 30;
+  // Month is now calendar month-to-date, so the mock spans day 1 → today
+  // (length is illustrative — matches production's MTD shape, not a fixed 30).
+  const span = range === 'week' ? 7 : now.getDate();
   return Array.from({ length: span }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (span - 1 - i));
     const prev = new Date(d.getFullYear(), d.getMonth(), d.getDate() - span);
@@ -65,8 +67,18 @@ function buildMockPoints(range: IncomeRange): IncomePoint[] {
 
 function buildMockSeries(range: IncomeRange): IncomeSeries {
   const points = buildMockPoints(range);
-  const total = points.reduce((sum, p) => sum + p.amount, 0);
-  return { range, points, total, previousTotal: Math.round(total * 0.84) };
+  // Match production (services/income.ts): the chart plots a cumulative running
+  // total, not per-bucket amounts. Convert both series so the preview shows a
+  // shape that can actually occur in the app.
+  let runningCurrent = 0;
+  let runningPrevious = 0;
+  for (const p of points) {
+    runningCurrent += p.amount;
+    p.amount = runningCurrent;
+    runningPrevious += p.previousAmount;
+    p.previousAmount = runningPrevious;
+  }
+  return { range, points, total: runningCurrent, previousTotal: runningPrevious };
 }
 
 function buildEmptySeries(range: IncomeRange): IncomeSeries {
@@ -91,8 +103,8 @@ export default function IncomeChartPreview() {
             IncomeChart preview
           </h1>
           <p className="mt-2 text-sm text-foreground-muted">
-            Per-bucket line with faint previous-period overlay, hidden Y-axis,
-            and X-axis edge labels — Time2Book pattern.
+            Cumulative running total with a faint previous-period overlay,
+            hidden Y-axis, and X-axis edge labels — Time2Book pattern.
           </p>
         </header>
 

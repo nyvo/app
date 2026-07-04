@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { cn, formatKroner } from '@/lib/utils';
+import { CourseListView, type SortDir, type SortKey } from '@/components/teacher/CourseListView';
 import type { SessionScheduleRow } from '@/services/courses';
 
 // ─── Mock data ────────────────────────────────────────────────────────────
@@ -229,7 +231,49 @@ export default function CoursesListPreview() {
         </header>
 
         <CoursesFlatTable courses={MOCK} />
+
+        <header className="mb-6 mt-16">
+          <h2 className="text-lg font-medium text-foreground">
+            Live CourseListView (shipped component)
+          </h2>
+          <p className="mt-1 text-sm text-foreground-muted">
+            The real table from /courses with Linear-style type markers —
+            a small colored dot + muted label (Kursrekke / Enkelttime / Nettkurs).
+          </p>
+        </header>
+        <LiveListSection />
       </div>
     </div>
+  );
+}
+
+function LiveListSection() {
+  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const handleSort = (key: SortKey) => {
+    if (key === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else setSortKey(key);
+  };
+  const withOnline: SessionScheduleRow[] = [
+    ...MOCK,
+    {
+      ...MOCK[0],
+      sessionId: 'online-1',
+      courseId: 'online-1',
+      courseTitle: 'Kveldsmeditasjon online',
+      courseFormat: 'single',
+      deliveryMode: 'online',
+      price: 150,
+      signupsCount: 23,
+      maxParticipants: null,
+    },
+  ];
+  return (
+    <CourseListView
+      courses={withOnline}
+      sortKey={sortKey}
+      sortDir={sortDir}
+      onSort={handleSort}
+    />
   );
 }

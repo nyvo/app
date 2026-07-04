@@ -9,14 +9,21 @@ import type { SessionScheduleRow } from '@/services/courses';
 import type { CourseFormat, DeliveryMode } from '@/types/database';
 import { routes } from '@/lib/routes';
 
-const FORMAT_LABEL: Record<CourseFormat, string> = {
-  series: 'Kursrekke',
-  single: 'Enkelttime',
+/**
+ * Course-type marker — Linear's label pattern: a small bright pill + muted
+ * text. The pill carries the categorical hue (--category-* tokens: legend
+ * semantics like calendar event colors, NOT status), pastel-bright so it
+ * reads instantly while the table stays calm at any row count.
+ */
+const TYPE_MARKER: Record<'series' | 'single' | 'online', { label: string; dot: string }> = {
+  series: { label: 'Kursrekke', dot: 'bg-category-1' },
+  single: { label: 'Enkelttime', dot: 'bg-category-2' },
+  online: { label: 'Nettkurs', dot: 'bg-category-3' },
 };
 
-function typeLabel(format: CourseFormat, delivery: DeliveryMode): string {
-  if (delivery === 'online') return 'Nettkurs';
-  return FORMAT_LABEL[format];
+function typeMarker(format: CourseFormat, delivery: DeliveryMode) {
+  if (delivery === 'online') return TYPE_MARKER.online;
+  return TYPE_MARKER[format] ?? TYPE_MARKER.single;
 }
 
 /**
@@ -110,9 +117,15 @@ function TableRow({ course }: { course: SessionScheduleRow }) {
     >
       <div className="min-w-0">
         <h3 className="truncate text-base font-medium text-foreground">{course.courseTitle}</h3>
-        <p className="mt-0.5 truncate text-base text-foreground-muted">
-          {typeLabel(course.courseFormat, course.deliveryMode)}
-        </p>
+        {(() => {
+          const { label, dot } = typeMarker(course.courseFormat, course.deliveryMode);
+          return (
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-foreground-muted">
+              <span className={cn('h-2 w-3.5 shrink-0 rounded-full', dot)} aria-hidden="true" />
+              {label}
+            </p>
+          );
+        })()}
       </div>
       <div>
         <StatusBadgeRow courseStatus={course.courseStatus} />
