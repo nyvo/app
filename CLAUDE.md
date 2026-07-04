@@ -11,11 +11,10 @@
 
 ## Design tokens
 
-Source of truth is `src/index.css` — a 3-layer OKLCH system: primitives (`--neutral-*`, `--jade/amber/red-*`) → semantic tokens (`--foreground`, `--primary`, `--success`…) → Tailwind `@theme` utilities. Consume semantic tokens in components, never primitives directly; build hierarchy through spacing + the tier gaps (surface → border → muted-text → foreground), not bold weights.
+Source of truth is `src/index.css` — a 3-layer OKLCH system: primitives (`--neutral-*`, `--jade/amber/red/blue-*`) → semantic tokens (`--foreground`, `--primary`, `--success`…) → Tailwind `@theme` utilities. Consume semantic tokens in components, never primitives directly; build hierarchy through spacing + the tier gaps (surface → border → muted-text → foreground), not bold weights.
 
 - **Neutral = pure-neutral grey (chroma 0).** Deliberately de-tinted from Radix Slate to kill the cold blue cast. Do **not** re-introduce a hue on the neutral ramp. Lightness steps are accessibility-tuned (`--neutral-11` is AA on white) — change hue/chroma, never the L values.
 - **Primary = periwinkle** (`oklch(0.540 0.150 274)` light, `0.555` dark). White button text is AA-verified — keep any primary change in the 0.45–0.55 L band.
-- **Beige** (`--beige` / `-foreground` / `-border`, `bg-beige`) is the **one warm accent**. Highlight surfaces only (upsell, callouts) — **never a button/action**, never frequent, or it competes with periwinkle as a second brand colour.
 - **Interaction overlays — `--hover` / `--pressed` (`bg-hover` / `bg-pressed`)** are `--foreground` ink at 6% / 12% alpha. Because they reference `--foreground`, one token **adapts to any surface and theme** (darkens light-mode hovers on the grey rail or a white card; lightens dark-mode hovers). Prefer these for hover/active *fills* over baking a per-surface opaque token. The sidebar's `--sidebar-accent`/`-active` alias them.
 - **Sidebar is a white rail** — `--sidebar` aliases `--background`, separated by a `--border-subtle` divider, with nav items and the plan/account cards on light `--muted` / translucent `--hover` fills (was dark chrome). `--chrome-*` stays dark — now only for toasts + marketing dark bands, not the sidebar.
 

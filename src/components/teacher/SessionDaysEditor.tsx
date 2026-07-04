@@ -1,6 +1,7 @@
 import { Calendar, Clock, Trash2 } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -102,7 +103,7 @@ export function SessionDaysEditor({ value, onChange, readOnly = false }: Session
             {/* Date + time as labelled columns; gap matches the rest of the form */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-semibold text-foreground">Dato</label>
+                <Label className="mb-2">Dato</Label>
                 <DatePicker
                   value={day.date}
                   onChange={(d) => updateDay(day.id, { date: d })}
@@ -113,7 +114,7 @@ export function SessionDaysEditor({ value, onChange, readOnly = false }: Session
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-semibold text-foreground">Tidspunkt</label>
+                <Label className="mb-2">Tidspunkt</Label>
                 <div className="flex items-center gap-2">
               <Select
                 value={day.startTime}

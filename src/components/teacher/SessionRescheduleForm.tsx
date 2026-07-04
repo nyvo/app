@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Info } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -89,16 +90,14 @@ export function SessionRescheduleForm({
       {/* Labeled fields — same Dato | Tidspunkt layout as the course builder. */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
-          <label htmlFor="reschedule-date" className="block text-sm font-semibold text-foreground">
-            Dato
-          </label>
+          <Label htmlFor="reschedule-date">Dato</Label>
           <div className="mt-2">
             <DatePicker id="reschedule-date" value={newDate} onChange={setNewDate} />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-foreground">Tidspunkt</label>
+          <Label>Tidspunkt</Label>
           <div className="mt-2 flex items-center gap-2">
             <Select
               value={newStart}

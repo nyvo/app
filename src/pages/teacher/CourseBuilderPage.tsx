@@ -5,6 +5,7 @@ import { Calendar, Clock, ImageIcon } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { DatePicker } from '@/components/ui/date-picker';
 import { FieldError } from '@/components/ui/field-error';
@@ -65,7 +66,7 @@ function generateTimeSlots(startHour = 6, endHour = 23): string[] {
 const ALL_TIME_SLOTS = generateTimeSlots();
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-base font-semibold text-foreground">{children}</h2>;
+  return <h2 className="text-base font-medium text-foreground">{children}</h2>;
 }
 
 function Field({
@@ -81,9 +82,7 @@ function Field({
 }) {
   return (
     <div>
-      <label htmlFor={htmlFor} className="block text-sm font-semibold text-foreground">
-        {label}
-      </label>
+      <Label htmlFor={htmlFor}>{label}</Label>
       <div className="mt-2">{children}</div>
       {error}
     </div>
