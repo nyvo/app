@@ -276,7 +276,7 @@ function IndividualView({
 
 function ConnectionSkeleton() {
   return (
-    <div className="rounded-xl border border-border bg-surface p-6" role="status" aria-live="polite">
+    <div className="rounded-xl border border-card bg-surface p-6" role="status" aria-live="polite">
       <span className="sr-only">Laster samarbeid</span>
       <Skeleton className="h-5 w-64 max-w-full" />
       <Skeleton className="mt-2 h-5 w-80 max-w-full" />
@@ -307,7 +307,7 @@ function AffiliatesList({
 
   if (affiliates.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-6">
+      <div className="rounded-xl border border-card bg-surface p-6">
         <p className="text-base font-medium text-foreground">Ingen instruktører tilknyttet ennå</p>
         <p className="mt-1 max-w-md text-base text-foreground-muted">
           Send invitasjonslenken til en instruktør for å vise kursene deres her.

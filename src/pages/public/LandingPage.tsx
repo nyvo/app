@@ -30,7 +30,7 @@ function ProductFrame({
   return (
     <div className={`relative isolate overflow-hidden rounded-2xl bg-muted ${padding}`}>
       <Grain opacity={0.6} baseFrequency={0.7} />
-      <div className="relative overflow-hidden rounded-lg border border-border bg-background shadow-soft">
+      <div className="relative overflow-hidden rounded-lg border border-card bg-background shadow-soft">
         {children}
       </div>
     </div>
@@ -546,7 +546,7 @@ function PricingTier({ tier }: { tier: Tier }) {
     <motion.div
       variants={scrollVariants}
       transition={scrollTransition}
-      className="flex flex-col rounded-xl border border-border bg-surface p-8"
+      className="flex flex-col rounded-xl border border-card bg-surface p-8"
     >
       <div className="mb-6">
         <h3 className="inline-flex items-center rounded-full bg-muted px-3 py-0.5 text-base font-medium text-foreground">

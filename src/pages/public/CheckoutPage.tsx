@@ -599,7 +599,7 @@ function StripeEmbed({
 
   if (!clientSecret) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-5">
+      <div className="rounded-xl border border-card bg-surface p-5">
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full mt-3" />
         <Skeleton className="h-11 w-full mt-4 rounded-full" />
@@ -676,7 +676,7 @@ function CheckoutSummary({
   const img = resolveCourseImage(course);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-soft">
+    <div className="overflow-hidden rounded-2xl border border-card bg-surface shadow-soft">
       <div className="p-5 space-y-5">
         {/* Course header — thumbnail + identity, so the buyer can see what
             they're paying for, like Airbnb/Expedia checkout summaries. */}

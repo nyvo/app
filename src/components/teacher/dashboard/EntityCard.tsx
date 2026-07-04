@@ -76,7 +76,7 @@ export function EntityCard({
       <Link
         to={to}
         className={cn(
-          'block rounded-xl border border-border bg-background p-6 no-underline outline-none transition-colors duration-150',
+          'block rounded-xl border border-card bg-background p-6 no-underline outline-none transition-colors duration-150',
           'hover:border-border-strong focus-visible:border-border-strong focus-visible:ring-2 focus-visible:ring-ring-subtle',
           className,
         )}
@@ -87,7 +87,7 @@ export function EntityCard({
   }
 
   return (
-    <section className={cn('rounded-xl border border-border bg-background p-6', className)}>
+    <section className={cn('rounded-xl border border-card bg-background p-6', className)}>
       {body}
 
       {hasFooter && (

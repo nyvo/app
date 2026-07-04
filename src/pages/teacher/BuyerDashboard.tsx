@@ -132,7 +132,7 @@ function DashboardSkeleton() {
       <span className="sr-only">Laster…</span>
       <section>
         <Skeleton className="mb-3 h-4 w-20" />
-        <ul className="divide-y divide-border rounded-xl border border-border bg-background">
+        <ul className="divide-y divide-border rounded-xl border border-card bg-background">
           {Array.from({ length: 3 }).map((_, i) => (
             <li key={i} className="flex items-start gap-4 p-3.5 sm:items-center">
               <Skeleton className="size-16 shrink-0 rounded-md" />
@@ -155,7 +155,7 @@ function SignupSection({ title, signups }: { title: string; signups: BuyerSignup
   return (
     <section>
       <h2 className="mb-3 text-sm font-medium text-foreground-muted">{title}</h2>
-      <ul className="divide-y divide-border rounded-xl border border-border bg-background">
+      <ul className="divide-y divide-border rounded-xl border border-card bg-background">
         {signups.map((s) => (
           <SignupRow key={s.id} signup={s} />
         ))}
@@ -215,7 +215,7 @@ export default function BuyerDashboard() {
 
       <PageShell title={firstName ? `Hei, ${firstName}` : 'Oversikt'}>
         {loadFailed ? (
-          <div className="rounded-xl border border-border bg-background p-6 sm:p-10">
+          <div className="rounded-xl border border-card bg-background p-6 sm:p-10">
             <ErrorState
               title="Kunne ikke hente påmeldingene dine"
               message="Sjekk forbindelsen og prøv igjen."
@@ -229,7 +229,7 @@ export default function BuyerDashboard() {
             <DashboardSkeleton />
           </DelayedFallback>
         ) : signups.length === 0 ? (
-          <div className="rounded-xl border border-border bg-background p-6 sm:p-10">
+          <div className="rounded-xl border border-card bg-background p-6 sm:p-10">
             <EmptyState
               title="Ingen påmeldinger ennå"
               description="Når du melder deg på et kurs vil du finne det her."

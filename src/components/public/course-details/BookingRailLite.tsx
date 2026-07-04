@@ -68,7 +68,7 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
   const href = selectedTile ? `${baseHref}?billett=${selectedTile.id}` : baseHref;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-soft">
+    <div className="overflow-hidden rounded-2xl border border-card bg-surface shadow-soft">
       <div className="p-6 space-y-5">
         {/* Context — the "when" as a labeled booking-summary field (the
             Navan/Airbnb idiom), not a verbatim echo of the hero meta. The card
