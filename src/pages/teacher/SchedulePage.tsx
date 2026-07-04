@@ -268,15 +268,22 @@ const SchedulePage = () => {
       >
         {/* Body */}
         {loading ? (
-          <div className="space-y-6" role="status" aria-label="Laster">
+          <div role="status" aria-label="Laster">
+            {/* Mirrors the timeline anatomy: rail (day + date lines) left,
+                cards (title + one meta line) right. */}
             {[1, 2].map((i) => (
-              <div key={i} className="space-y-2.5">
-                <Skeleton className="h-4 w-28" />
-                <div className="rounded-xl border border-border bg-surface px-5 py-4 space-y-2.5">
-                  <Skeleton className="h-3.5 w-24" />
-                  <Skeleton className="h-4 w-48" />
-                  <Skeleton className="h-3.5 w-32" />
-                  <Skeleton className="h-3.5 w-20" />
+              <div key={i} className={cn('grid grid-cols-[132px_1fr] gap-x-2', i > 1 && 'mt-2')}>
+                <div className="space-y-1.5 pl-5 pt-1">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-12" />
+                </div>
+                <div className="space-y-2.5 pb-6">
+                  {[1, 2].map((j) => (
+                    <div key={j} className="rounded-xl border border-border bg-surface px-5 py-4">
+                      <Skeleton className="h-4 w-48" />
+                      <Skeleton className="mt-2.5 h-3.5 w-72 max-w-full" />
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
