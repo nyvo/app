@@ -24,8 +24,8 @@
 
    Color format: OKLCH (perceptually uniform). Neutral ramp is a
    pure-neutral grey (chroma 0), de-tinted from Radix Slate to kill
-   the cold blue cast. Status scales are Jade / Amber / Red. Primary
-   is periwinkle (oklch(0.540 0.150 274)); beige is the one warm accent.
+   the cold blue cast. Status scales are Jade / Amber / Red / Blue.
+   Primary is periwinkle (oklch(0.540 0.150 274)).
    ============================================================ */
 
 @theme inline {
@@ -38,8 +38,6 @@
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
-  --color-surface-tinted: var(--surface-tinted);
-  --color-surface-tinted-border: var(--surface-tinted-border);
   --color-surface-on-dark: var(--surface-on-dark);
 
   /* Chrome — the dark surface for toasts + marketing dark bands (the landing
@@ -76,16 +74,11 @@
 
   /* Hover/active fill (subtle, not a status) */
   --color-muted: var(--muted);
-  --color-active: var(--neutral-3);
+  --color-active: var(--muted);
 
   /* Translucent interaction overlays — ink at low alpha, adapt to surface + theme */
   --color-hover: var(--hover);
   --color-pressed: var(--pressed);
-
-  /* Beige — warm highlight surface only (upsell/callouts); never an action */
-  --color-beige: var(--beige);
-  --color-beige-foreground: var(--beige-foreground);
-  --color-beige-border: var(--beige-border);
 
   /* Status — solid (alert dialog, toast, button) + subtle (pill, banner) */
   --color-success: var(--success);
@@ -118,12 +111,6 @@
   --color-ring: var(--ring);
   --color-ring-subtle: var(--ring-subtle);
   --color-sidebar-ring: var(--sidebar-ring);
-
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
 
   /* Radius — explicit integer px (was multiplier-derived fractional px,
      which renders soft on 1× displays). Values snap to the nearest integer
@@ -206,8 +193,8 @@
      ──────────────────────────────────────────────────────────── */
 
   /* Neutral — pure-neutral grey (chroma 0). De-tinted from Radix Slate to kill the
-     cold blue cast; the only warm note in the system is --beige (accent only).
-     Lightness ramp preserved, so every contrast ratio is unchanged. */
+     cold blue cast. Lightness ramp preserved, so every contrast ratio is
+     unchanged. */
   --neutral-1:  oklch(0.991 0 0);
   --neutral-2:  oklch(0.983 0 0);
   --neutral-3:  oklch(0.956 0 0);
@@ -221,13 +208,15 @@
   --neutral-11: oklch(0.550 0 0);   /* secondary-text grey — lifted from 0.502 for clearer primary/secondary hierarchy; 4.9:1 AA on white */
   --neutral-12: oklch(0.241 0 0);
 
-  /* Status — jade (success) / amber (warning) / red (danger) */
+  /* Status — jade (success) / amber (warning) / red (danger) / blue (info) */
   --jade-3:   oklch(0.953 0.034 158);
   --jade-11:  oklch(0.516 0.081 165);
   --amber-3:  oklch(0.972 0.067 100);
   --amber-11: oklch(0.557 0.131 65);
   --red-3:    oklch(0.946 0.024 17);
   --red-11:   oklch(0.540 0.170 25);   /* darkened from L 0.563 (4.36:1 on red-3 failed AA for 12px pill text); chroma softened from 0.215 — vivid outlier vs jade C.081 / amber C.131 in a chroma-0 scheme; 4.67:1 on red-3 */
+  --blue-3:   oklch(0.95 0.03 270);
+  --blue-11:  oklch(0.520 0.180 270);  /* darkened from L 0.55 — 4.33:1 on blue-3 failed AA */
 
   /* ── LAYER 2 · SEMANTIC TOKENS (consume these in components) ──
      All values reference Layer 1 primitives. Don't hard-code OKLCH here. */
@@ -237,8 +226,6 @@
   --canvas: var(--neutral-2);                      /* dampened dashboard page canvas — white surfaces (--surface) float on it */
   --surface: oklch(1 0 0);                         /* cards, popovers, panels */
   --surface-elevated: oklch(1 0 0 / 0.8);          /* translucent backdrop-blur header */
-  --surface-tinted: oklch(0.97 0.03 270);
-  --surface-tinted-border: oklch(0.9 0.04 270);
   --surface-on-dark: oklch(1 0 0 / 0.06);          /* faint elevated surface over bg-primary */
 
   /* Foreground */
@@ -255,11 +242,14 @@
   --primary-subtle: oklch(0.962 0.005 275);
   --primary-border: oklch(0.901 0.025 278);
   --toast-surface: var(--chrome-surface);             /* shared dark-chrome surface */
-  --secondary: var(--neutral-3);
-  --secondary-foreground: var(--neutral-12);
-  --accent: var(--neutral-3);
-  --accent-foreground: var(--neutral-12);
-  --muted: var(--neutral-3);                         /* hover/active fill */
+  /* THE light neutral fill (hover/active, secondary buttons). --muted is the
+     one knob; --secondary/--accent are shadcn-compat aliases of it so the
+     three names can never drift apart. */
+  --muted: var(--neutral-3);
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+  --accent: var(--muted);
+  --accent-foreground: var(--foreground);
 
   /* Status — solid + subtle pairs.
      `--success` (= jade-11) is the canonical green; used as text on light bg
@@ -275,27 +265,22 @@
   --danger: var(--red-11);
   --danger-foreground: var(--neutral-1);
   --danger-subtle: var(--red-3);
-  --info: oklch(0.520 0.180 270);      /* darkened from L 0.55 — 4.33:1 on info-subtle failed AA */
+  --info: var(--blue-11);
   --info-foreground: var(--neutral-1);
-  --info-subtle: oklch(0.95 0.03 270);
+  --info-subtle: var(--blue-3);
 
-  /* Selected-state tint (cards, steppers) — NOT text ::selection (that uses --muted) */
-  --selection-light: oklch(0.540 0.150 274 / 8%);
+  /* Selected-state tint (cards, steppers) — NOT text ::selection (that uses --muted).
+     Derived from --primary so it can't drift if the brand color ever moves. */
+  --selection-light: color-mix(in oklab, var(--primary) 8%, transparent);
 
   /* Categorical markers — legend hues for type tags (tables, labels, chart
      series). Deliberately pastel-bright so a small marker reads instantly;
      identity, NOT status (status stays jade/amber/red). Blue family only so
-     they never compete with the warm beige accent. Small marker fills only —
+     they read as identity on the neutral system. Small marker fills only —
      never text, never surfaces, never actions. */
   --category-1: oklch(0.70 0.150 274);  /* periwinkle pastel, vivid */
   --category-2: oklch(0.74 0.140 235);  /* baby blue, vivid */
   --category-3: oklch(0.78 0.130 205);  /* cyan-blue, vivid */
-
-  /* Beige — the one warm accent on the pure-neutral system. Highlight surfaces
-     only (upsell, callouts); never a button/action. */
-  --beige: oklch(0.935 0.022 80);
-  --beige-foreground: oklch(0.320 0.022 70);
-  --beige-border: oklch(0.885 0.028 78);
 
   /* Interaction overlays — --foreground ink at low alpha. Adapts to any surface
      AND theme (dark text darkens light-mode hovers; light text lightens dark-mode
@@ -339,18 +324,16 @@
   --sidebar-active-foreground: var(--foreground);
   --sidebar-border: var(--border-subtle);
   --sidebar-ring: var(--ring);
-
-  --chart-1: oklch(0.809 0.105 266);
-  --chart-2: oklch(0.623 0.200 268);
-  --chart-3: oklch(0.546 0.237 270);   /* = primary */
-  --chart-4: oklch(0.488 0.230 271);
-  --chart-5: oklch(0.424 0.190 272);
 }
 
 .dark {
-  /* ── PRIMITIVES (dark mode — warm Stone dark, indigo accents) ── */
+  /* ── DARK MODE — pure-neutral grey primitives, mirrors the light ramp ──
+     Only tokens whose DEFINITION differs from :root are redefined here.
+     Semantic tokens that just re-point at primitives (--foreground, --muted,
+     the status pairs, borders, --ring, --hover/--pressed, sidebar, toast, …)
+     inherit from :root and track the redefined primitives automatically. */
 
-  /* Neutral — pure-neutral grey (dark, chroma 0). Mirrors the light ramp, de-tinted. */
+  /* Neutral — pure-neutral grey (dark, chroma 0). */
   --neutral-1:  oklch(0.179 0 0);
   --neutral-2:  oklch(0.213 0 0);
   --neutral-3:  oklch(0.252 0 0);
@@ -371,75 +354,28 @@
   --amber-11: oklch(0.800 0.135 85);
   --red-3:    oklch(0.290 0.080 25);
   --red-11:   oklch(0.730 0.155 25);  /* chroma softened to match the light-mode red-11 de-tint; 5.7:1 on red-3 */
+  --blue-3:   oklch(0.30 0.05 270);
+  --blue-11:  oklch(0.68 0.18 270);
 
   /* Surfaces */
   --background: var(--neutral-1);                  /* page canvas */
   --canvas: var(--neutral-1);                      /* dark mode unused — keep canvas == background */
   --surface: var(--neutral-1);                     /* same value as bg, per spec */
   --surface-elevated: oklch(0.205 0 0 / 0.8);
-  --surface-tinted: oklch(0.27 0.04 270);
-  --surface-tinted-border: oklch(0.38 0.06 270);
-  --surface-on-dark: oklch(1 0 0 / 0.06);
 
-  /* Foreground */
-  --foreground: var(--neutral-12);
-  --foreground-muted: var(--neutral-11);
-  --foreground-subtle: var(--neutral-9);
-  --foreground-disabled: var(--neutral-8);
-
-  /* Brand / interaction — periwinkle, slightly brighter on dark (~4.9:1 white text AA). */
+  /* Brand — periwinkle, slightly brighter on dark (~4.9:1 white text AA). */
   --primary: oklch(0.555 0.150 274);
-  --primary-foreground: oklch(0.985 0 0);
   --primary-subtle: oklch(0.198 0.010 285);
   --primary-border: oklch(0.252 0.038 279);
-  /* --toast-surface inherits the shared --chrome-surface from :root (dark in both themes) */
-  --secondary: var(--neutral-3);
-  --secondary-foreground: var(--neutral-12);
-  --accent: var(--neutral-3);
-  --accent-foreground: var(--neutral-12);
-  --muted: var(--neutral-3);
 
-  /* Status */
-  --success: var(--jade-11);
-  --success-foreground: var(--neutral-1);
-  --success-subtle: var(--jade-3);
-  --warning: var(--amber-11);
-  --warning-foreground: var(--neutral-1);
-  --warning-subtle: var(--amber-3);
-  --danger: var(--red-11);
-  --danger-foreground: var(--neutral-1);
-  --danger-subtle: var(--red-3);
-  --info: oklch(0.68 0.18 270);
-  --info-foreground: var(--neutral-1);
-  --info-subtle: oklch(0.30 0.05 270);
-
-  /* Selected-state tint */
-  --selection-light: oklch(0.555 0.150 274 / 12%);
+  /* Selected-state tint — stronger mix than light mode (12% vs 8%) */
+  --selection-light: color-mix(in oklab, var(--primary) 12%, transparent);
 
   /* Categorical markers (dark) — same pastel-bright family; high L pops on
      dark surfaces without any glow effect. */
   --category-1: oklch(0.72 0.155 274);
   --category-2: oklch(0.76 0.145 235);
   --category-3: oklch(0.80 0.135 205);
-
-  /* Beige — warm accent (dark) */
-  --beige: oklch(0.300 0.018 78);
-  --beige-foreground: oklch(0.900 0.015 80);
-  --beige-border: oklch(0.360 0.020 78);
-
-  /* Structure */
-  --border: var(--neutral-7);
-  --border-card: var(--neutral-4);
-  --border-subtle: var(--neutral-6);
-  --border-strong: var(--neutral-8);
-  --input: var(--neutral-7);
-  --ring: var(--foreground);                          /* neutral focus ring, see :root */
-  /* --ring-subtle inherits from :root — tracks --foreground automatically */
-  --chart-1: oklch(0.809 0.105 266);
-  --chart-2: oklch(0.623 0.200 268);
-  --chart-3: oklch(0.546 0.237 270);   /* = primary */
-  --chart-4: oklch(0.488 0.230 271);
-  --chart-5: oklch(0.424 0.190 272);
 }
 
 @layer base {

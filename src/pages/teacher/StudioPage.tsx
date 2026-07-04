@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { ImageField } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PlacesAutocomplete } from '@/components/ui/places-autocomplete';
 import { MapEmbed } from '@/components/ui/map-embed';
 import type { PlaceDetails } from '@/services/places';
@@ -569,13 +570,9 @@ function StudioPublicSettings({
               description="Brukes når du lager kurs, og vises til deltakerne som skal møte opp."
             >
               <div className="grid gap-2">
-                <label
-                  htmlFor="studio-place-name"
-                  data-error={!!placeError || undefined}
-                  className="text-sm font-medium text-foreground data-[error=true]:text-danger"
-                >
+                <Label htmlFor="studio-place-name" data-error={!!placeError || undefined}>
                   Stedsnavn
-                </label>
+                </Label>
                 <PlacesAutocomplete
                     id="studio-place-name"
                     value={placeName}

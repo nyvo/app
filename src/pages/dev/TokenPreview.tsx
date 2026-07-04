@@ -147,9 +147,9 @@ function Samples() {
         <p className="text-xs text-foreground-muted">Oppdatert for 2 minutter siden</p>
       </div>
 
-      {/* Chart-2 accent surface */}
-      <div className="rounded-lg bg-chart-2/10 p-4 flex items-center gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-chart-2/10 text-chart-2 ring-1 ring-chart-2/20">
+      {/* Primary-tinted accent surface */}
+      <div className="rounded-lg bg-primary/10 p-4 flex items-center gap-3">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/20">
           <span className="text-sm font-medium">YM</span>
         </div>
         <div className="min-w-0">

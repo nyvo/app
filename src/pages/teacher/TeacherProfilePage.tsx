@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PasswordRow } from '@/components/teacher/PasswordRow';
@@ -172,12 +173,7 @@ const TeacherProfilePage = () => {
               description="Navn og kontaktinformasjon for kontoen din."
             >
               <div className="grid gap-2">
-                <label
-                  htmlFor="profile-name"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Navn
-                </label>
+                <Label htmlFor="profile-name">Navn</Label>
                 <Input
                   id="profile-name"
                   type="text"
@@ -192,13 +188,12 @@ const TeacherProfilePage = () => {
               </div>
 
               <div className="grid gap-2">
-                <label
+                <Label
                   htmlFor="profile-email"
                   data-error={(errors.email && touched.email) || undefined}
-                  className="text-sm font-medium text-foreground data-[error=true]:text-danger"
                 >
                   E-post
-                </label>
+                </Label>
                 <Input
                   id="profile-email"
                   type="email"
