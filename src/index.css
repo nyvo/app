@@ -226,7 +226,7 @@
   --amber-3:  oklch(0.972 0.067 100);
   --amber-11: oklch(0.557 0.131 65);
   --red-3:    oklch(0.946 0.024 17);
-  --red-11:   oklch(0.540 0.215 25);   /* darkened from L 0.563 — 4.36:1 on red-3 failed AA for 12px pill text */
+  --red-11:   oklch(0.540 0.170 25);   /* darkened from L 0.563 (4.36:1 on red-3 failed AA for 12px pill text); chroma softened from 0.215 — vivid outlier vs jade C.081 / amber C.131 in a chroma-0 scheme; 4.67:1 on red-3 */
 
   /* ── LAYER 2 · SEMANTIC TOKENS (consume these in components) ──
      All values reference Layer 1 primitives. Don't hard-code OKLCH here. */
@@ -368,7 +368,7 @@
   --amber-3:  oklch(0.290 0.060 80);
   --amber-11: oklch(0.800 0.135 85);
   --red-3:    oklch(0.290 0.080 25);
-  --red-11:   oklch(0.730 0.180 25);
+  --red-11:   oklch(0.730 0.155 25);  /* chroma softened to match the light-mode red-11 de-tint; 5.7:1 on red-3 */
 
   /* Surfaces */
   --background: var(--neutral-1);                  /* page canvas */

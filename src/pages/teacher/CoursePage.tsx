@@ -744,15 +744,7 @@ const CoursePage = () => {
       <PageShell
         title={courseData.title}
         badgePlacement="below"
-        badge={
-          courseData.status === 'cancelled' ? (
-            <span className="inline-flex items-center px-2 h-6 rounded-md text-sm font-medium bg-muted text-foreground-muted line-through">
-              Avlyst
-            </span>
-          ) : (
-            <StatusBadge status={courseData.status} />
-          )
-        }
+        badge={<StatusBadge status={courseData.status} />}
         action={
           // Drafts publish from the Oversikt readiness card — no header button.
           // Published (upcoming/active) courses get the kebab (Gjør til utkast)

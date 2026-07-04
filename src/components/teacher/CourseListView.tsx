@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight, ChevronUp } from '@/lib/icons';
 import { motion } from 'framer-motion';
 import { cn, formatKroner } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge, type CourseStatus } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SessionScheduleRow } from '@/services/courses';
 import type { CourseFormat, DeliveryMode } from '@/types/database';
@@ -27,33 +27,13 @@ function typeMarker(format: CourseFormat, delivery: DeliveryMode) {
 }
 
 /**
- * Publish-state badge — neutral pill. Silent on the healthy state (Publisert);
- * only renders for states the teacher might need to notice. Uses the Badge
- * primitive per the studio Badge spec.
+ * Publish-state badge — silent on the healthy states (upcoming/active, i.e.
+ * Publisert); only renders for states the teacher might need to notice.
+ * Label + presentation delegate to StatusBadge so status copy stays centralized.
  */
-function statusLabel(courseStatus: string): { text: string; live: boolean } {
-  switch (courseStatus) {
-    case 'draft':
-      return { text: 'Utkast', live: false };
-    case 'cancelled':
-      return { text: 'Avlyst', live: false };
-    case 'completed':
-      return { text: 'Fullført', live: false };
-    case 'upcoming':
-    case 'active':
-    default:
-      return { text: 'Publisert', live: true };
-  }
-}
-
 function StatusBadgeRow({ courseStatus }: { courseStatus: string }) {
-  const { text, live } = statusLabel(courseStatus);
-  if (live) return null;
-  return (
-    <Badge variant="neutral" shape="pill" size="sm">
-      {text}
-    </Badge>
-  );
+  if (courseStatus !== 'draft' && courseStatus !== 'cancelled' && courseStatus !== 'completed') return null;
+  return <StatusBadge status={courseStatus as CourseStatus} />;
 }
 
 export const COURSES_PER_PAGE = 6;

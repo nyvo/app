@@ -12,7 +12,7 @@ import {
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { StatusBadge, type CourseStatus } from '@/components/ui/status-badge';
 import { ShareCoursePopover } from '@/components/ui/share-course-popover';
 import {
   DropdownMenu,
@@ -49,8 +49,6 @@ function buildTimeRange(startTime: string, durationMinutes: number): string {
   return `${start}–${pad(endH)}:${pad(endM)}`;
 }
 
-type CourseStatus = 'draft' | 'active' | 'upcoming' | 'completed';
-
 function DrawerHeader({
   title,
   status,
@@ -72,7 +70,8 @@ function DrawerHeader({
   return (
     <SheetHeader className="px-6 py-5 border-b border-border">
       {/* Title owns its row (Cron/Notion Calendar event-panel model); state
-          moves to its own row below the meta so nothing competes with it. */}
+          moves to its own row below the meta so nothing competes with it.
+          StatusBadge centralizes all status treatments incl. Avlyst. */}
       <SheetTitle className="leading-tight">{title}</SheetTitle>
       {description && (
         <SheetDescription asChild>
@@ -81,13 +80,7 @@ function DrawerHeader({
       )}
       {showBadge && (
         <div className="mt-2.5">
-          {status === 'cancelled' ? (
-            <span className="inline-flex items-center px-2 h-6 rounded-md text-sm font-medium bg-muted text-foreground-muted line-through">
-              Avlyst
-            </span>
-          ) : (
-            <StatusBadge status={status as CourseStatus} />
-          )}
+          <StatusBadge status={status as CourseStatus} />
         </div>
       )}
     </SheetHeader>
