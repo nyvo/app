@@ -150,7 +150,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
   return (
     <div
       aria-label={sellerName ? `Kalender – ${sellerName}` : 'Kalender'}
-      className="@container overflow-hidden rounded-2xl border border-border bg-background text-foreground"
+      className="@container overflow-hidden rounded-2xl border border-card bg-background text-foreground"
     >
       <div className="flex flex-col @2xl:flex-row">
         {/* ── Calendar pane ─────────────────────────────────────────── */}

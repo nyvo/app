@@ -380,7 +380,7 @@ function PlanOption({
   action?: ReactNode
 }) {
   return (
-    <Card className="h-full border-border">
+    <Card className="h-full border-card">
       <CardContent className="flex h-full flex-col gap-5">
         <div>
           <div className="flex items-center justify-between gap-3">

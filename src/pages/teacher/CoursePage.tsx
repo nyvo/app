@@ -945,7 +945,7 @@ const CoursePage = () => {
                       </Button>
                     </div>
 
-                    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+                    <div className="rounded-lg border border-card bg-surface overflow-hidden">
                       {visible.length === 0 ? (
                       <EmptyState
                         title={

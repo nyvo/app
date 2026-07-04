@@ -111,6 +111,7 @@
 
   /* Structure */
   --color-border: var(--border);
+  --color-border-card: var(--border-card);
   --color-border-subtle: var(--border-subtle);
   --color-border-strong: var(--border-strong);
   --color-input: var(--input);
@@ -304,6 +305,7 @@
 
   /* Structure */
   --border: var(--neutral-7);                         /* visible divider (was neutral-6, too faint on white) */
+  --border-card: var(--neutral-4);                    /* card/panel EDGE on canvas — definition, not decoration; the fill contrast does the separating (--border stays for dividers/inputs, which need visibility on white) */
   --border-subtle: var(--neutral-6);
   --border-strong: var(--neutral-8);                  /* hover/emphasis edge on interactive surfaces (Radix step-8 role) */
   --input: var(--neutral-7);                          /* crisp field edge */
@@ -427,6 +429,7 @@
 
   /* Structure */
   --border: var(--neutral-7);
+  --border-card: var(--neutral-4);
   --border-subtle: var(--neutral-6);
   --border-strong: var(--neutral-8);
   --input: var(--neutral-7);

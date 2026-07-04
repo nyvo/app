@@ -365,7 +365,7 @@ const CheckoutSuccessPage = () => {
                   {signup && (
                     <>
                       {/* Course pane — image + title + date/time. */}
-                      <div className="mt-8 flex items-center gap-4 rounded-2xl border border-border bg-surface shadow-soft p-4">
+                      <div className="mt-8 flex items-center gap-4 rounded-2xl border border-card bg-surface shadow-soft p-4">
                         <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
                           {courseImage ? (
                             <img
