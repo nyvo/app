@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
+import {
+  PayoutSetupCard,
+  PayoutFaqSection,
+  type PayoutSetupViewModel,
+  type MarkerTone,
+} from '@/components/teacher/PayoutSetupCard';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   startStripeConnectOnboarding,
@@ -15,47 +19,23 @@ import { friendlyError } from '@/lib/error-messages';
 import { COMPANY } from '@/lib/company';
 import { toast } from 'sonner';
 
-type StatusTone = {
-  variant: 'success' | 'warning' | 'destructive' | 'neutral';
-  label: string;
-};
-
-// Stripe Connect account status → badge tone + Norwegian label.
-const STRIPE_STATUS_BADGE: Record<'pending' | 'restricted' | 'rejected' | 'enabled', StatusTone> = {
-  pending: { variant: 'warning', label: 'Venter på fullføring' },
-  restricted: { variant: 'warning', label: 'Mangler informasjon' },
-  rejected: { variant: 'destructive', label: 'Avslått' },
-  enabled: { variant: 'success', label: 'Aktiv' },
-};
-
-const NOT_STARTED_BADGE: StatusTone = { variant: 'neutral', label: 'Ikke satt opp' };
-
-function StatusPill({ tone }: { tone: StatusTone }) {
-  return (
-    <Badge
-      variant={tone.variant}
-      shape="pill"
-      size="sm"
-      role="status"
-      aria-label={`Status: ${tone.label}`}
-    >
-      {tone.label}
-    </Badge>
-  );
-}
+const STEP_1_TITLE = 'Bekreft virksomheten';
+const STEP_2_TITLE = 'Vi kontrollerer opplysningene';
+const STEP_3_TITLE = 'Motta utbetalinger';
 
 /**
- * Payments page — a single "payout account" surface: page title with an inline
- * status badge and a subtitle, then a Card holding a short sub-headline, a
- * one-sentence description, and a single primary action. The Card matches the
- * other Settings pages (billing, get-started) on the dampened canvas. The
- * content is driven by the
+ * Payments page — a single "payout account" surface: a Card holding a 3-step
+ * vertical timeline (Bekreft virksomheten → Vi kontrollerer opplysningene →
+ * Motta utbetalinger), plus a FAQ accordion below. No status badge next to
+ * the page title — progress is entirely conveyed by which step is current
+ * and its marker tone. The Card matches the other Settings pages (billing,
+ * get-started) on the dampened canvas. The content is driven by the
  * seller's Stripe Connect onboarding state (every tier — integrated payments
  * are not gated on plan):
  *
- *   • not started         → "Kom i gang" (hosted Stripe onboarding)
- *   • started, !connected → "Fortsett oppsettet" (+ rejected sub-case)
- *   • connected           → "Se oversikt" (Stripe Express dashboard)
+ *   • not started         → step 1 current, "Kom i gang" (hosted Stripe onboarding)
+ *   • started, !connected → step 2 current, "Fortsett oppsettet" (+ restricted/rejected sub-cases)
+ *   • connected           → step 3 current, "Se oversikt" (Stripe Express dashboard)
  *
  * No balance / settlements UI — the merchant manages all of that on Stripe's
  * own Express dashboard. Status re-syncs automatically on return from Stripe
@@ -132,72 +112,92 @@ const PaymentsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSeller?.id]);
 
-  // ─── One view-model per onboarding state, rendered by the flat layout below ───
-  let subhead: string;
-  let tone: StatusTone;
-  let desc: string;
-  let action: ReactNode;
+  // ─── One view-model per onboarding state, rendered by PayoutSetupCard ───
+  let h2: string;
+  let counter: string;
+  let step2Title = STEP_2_TITLE;
+  let step2Tone: MarkerTone = 'neutral';
+  let step2Desc: string;
+  let step2Action: ReactNode;
+  let steps: PayoutSetupViewModel['steps'];
 
   if (!stripeStarted && !stripeConnected) {
-    subhead = 'Sett opp utbetalinger';
-    tone = NOT_STARTED_BADGE;
-    desc =
-      'Vi sender deg til Stripe for å bekrefte virksomheten og legge til kontonummeret utbetalingene skal gå til.';
-    action = (
-      <Button onClick={handleStartStripe} loading={stripeLoading} loadingText="Starter">
-        Kom i gang
-      </Button>
-    );
+    h2 = 'Sett opp utbetalinger';
+    counter = 'Steg 1 av 3';
+    steps = [
+      {
+        title: STEP_1_TITLE,
+        status: 'current',
+        description:
+          'Du blir sendt til Stripe – betalingspartneren vår – for å bekrefte virksomheten og legge inn kontonummeret pengene skal gå til.',
+        action: (
+          <Button onClick={handleStartStripe} loading={stripeLoading} loadingText="Starter">
+            Kom i gang
+          </Button>
+        ),
+      },
+      { title: STEP_2_TITLE, status: 'upcoming' },
+      { title: STEP_3_TITLE, status: 'upcoming' },
+    ];
   } else if (stripeStarted && !stripeConnected) {
+    counter = 'Steg 2 av 3';
     if (stripeStatus === 'rejected') {
-      subhead = 'Søknaden ble avslått';
-      tone = STRIPE_STATUS_BADGE.rejected;
-      desc = `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg.`;
-      action = (
+      h2 = 'Søknaden ble avslått';
+      step2Title = 'Søknaden ble ikke godkjent';
+      step2Tone = 'danger';
+      step2Desc = `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg videre.`;
+      step2Action = (
         <Button asChild>
           <a href={`mailto:${COMPANY.email}`}>Kontakt oss</a>
         </Button>
       );
     } else {
-      subhead = 'Fullfør oppsettet';
+      h2 = 'Fullfør oppsettet';
       if (stripeStatus === 'restricted') {
-        tone = STRIPE_STATUS_BADGE.restricted;
-        desc = 'Stripe mangler litt informasjon. Vi aktiverer utbetalinger så snart alt er på plass.';
+        step2Title = 'Vi mangler litt informasjon';
+        step2Tone = 'warning';
+        step2Desc = 'Fyll inn det som gjenstår, så aktiverer vi utbetalinger så snart alt er på plass.';
       } else {
-        tone = STRIPE_STATUS_BADGE.pending;
-        desc = 'Vi aktiverer utbetalinger automatisk når kontoen er klar hos Stripe.';
+        step2Desc =
+          'Vi aktiverer utbetalinger automatisk så snart alt er godkjent. Mangler det noe, kan du fortsette der du slapp.';
       }
-      action = (
+      step2Action = (
         <Button onClick={handleStartStripe} loading={stripeLoading} loadingText="Åpner">
           Fortsett oppsettet
         </Button>
       );
     }
+    steps = [
+      { title: STEP_1_TITLE, status: 'done' },
+      { title: step2Title, status: 'current', tone: step2Tone, description: step2Desc, action: step2Action },
+      { title: STEP_3_TITLE, status: 'upcoming' },
+    ];
   } else {
-    subhead = 'Utbetalingene er klare';
-    tone = STRIPE_STATUS_BADGE.enabled;
-    desc =
-      'Stripe håndterer utbetalingene direkte til bankkontoen din. Saldo, utbetalinger og innstillinger finner du i oversikten.';
-    action = <Button onClick={handleOpenStripeDashboard}>Se oversikt</Button>;
+    h2 = 'Utbetalingene er klare';
+    counter = 'Fullført';
+    steps = [
+      { title: STEP_1_TITLE, status: 'done' },
+      { title: STEP_2_TITLE, status: 'done' },
+      {
+        title: STEP_3_TITLE,
+        status: 'current',
+        tone: 'success',
+        description:
+          'Pengene overføres automatisk til bankkontoen din. Saldo og alle utbetalinger finner du i oversikten.',
+        action: <Button onClick={handleOpenStripeDashboard}>Se oversikt</Button>,
+      },
+    ];
   }
+
+  const viewModel: PayoutSetupViewModel = { h2, counter, steps };
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
       <MobileTeacherHeader />
 
-      <PageShell
-        narrow="centered"
-        title="Utbetalingskonto"
-        badge={<StatusPill tone={tone} />}
-        description="Slik får du betalt for kursene dine."
-      >
-        <Card>
-          <CardContent>
-            <h2 className="text-base font-medium text-foreground">{subhead}</h2>
-            <p className="mt-1 max-w-prose text-base text-foreground-muted">{desc}</p>
-            <div className="mt-5">{action}</div>
-          </CardContent>
-        </Card>
+      <PageShell narrow="centered" title="Utbetalingskonto" description="Slik får du betalt for kursene dine.">
+        <PayoutSetupCard viewModel={viewModel} />
+        <PayoutFaqSection />
       </PageShell>
     </main>
   );

@@ -1,187 +1,195 @@
-import {
-  ArrowRight,
-  ArrowUpRight,
-  BookOpen,
-  Calendar,
-  Clock,
-  FileText,
-  Plus,
-  Share2,
-  UserPlus,
-  Users,
-} from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { formatKroner } from '@/lib/utils';
+import {
+  PayoutSetupCard,
+  PayoutFaqSection,
+  type PayoutSetupViewModel,
+} from '@/components/teacher/PayoutSetupCard';
+import { COMPANY } from '@/lib/company';
 
-// ─── Sample data ──────────────────────────────────────────────────────────
-const NEXT_PAYOUT = 2200;
-const PAYOUT_DATE = 'tirsdag 19. mai';
-const PENDING_THIS_WEEK = 1450;
-const PENDING_SIGNUPS = 7;
+/**
+ * /dev/payout-preview — auth-free preview of the payouts settings timeline.
+ * Production lives at src/pages/teacher/PaymentsPage.tsx + route
+ * /settings/payouts. Renders all five onboarding states with no-op handlers
+ * so the design can be reviewed without a real Stripe Connect account.
+ */
 
-const UPCOMING = [
-  { id: '1', title: 'Morning Flow', day: 'I dag', time: '09:00', signups: 8, capacity: 10 },
-  { id: '2', title: 'Yin Yoga', day: 'I morgen', time: '18:00', signups: 5, capacity: 12 },
-  { id: '3', title: 'Vinyasa', day: 'Onsdag', time: '17:30', signups: 11, capacity: 12 },
-  { id: '4', title: 'Coffee & Flow', day: 'Lørdag', time: '09:00', signups: 3, capacity: 10 },
-];
+const STEP_1_TITLE = 'Bekreft virksomheten';
+const STEP_2_TITLE = 'Vi kontrollerer opplysningene';
+const STEP_3_TITLE = 'Motta utbetalinger';
 
-const ACTIVITY = [
-  { id: '1', name: 'Olav Hansen', course: 'Morning Flow', when: '2 t' },
-  { id: '2', name: 'Maja Berg', course: 'Yin Yoga', when: '4 t' },
-  { id: '3', name: 'Lars Solheim', course: 'Vinyasa', when: 'i går' },
-  { id: '4', name: 'Tone Eriksen', course: 'Morning Flow', when: '2 d' },
-];
+function noop() {
+  // no-op — dev preview only, not wired to real Stripe/auth handlers
+}
 
-const LAST_CLASS = {
-  title: 'Morning Flow',
-  date: 'søndag 12. mai',
-  attended: 8,
-  capacity: 10,
-  revenue: 2000,
-};
+function PreviewFrame({
+  label,
+  description,
+  children,
+}: {
+  label: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="border-b border-border pb-2">
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="mt-1 text-sm text-foreground-muted">{description}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
 
-const RESOURCES = [
-  { title: 'MVA for yogalærere', desc: 'Når må du registrere deg, og når trenger du ikke', icon: FileText },
-  { title: 'Skatt for selvstendige', desc: 'Forskuddsskatt, fradrag og bokføring', icon: BookOpen },
-  { title: 'Hvordan dele kurslenker', desc: 'Lag QR-kode og del på Instagram', icon: Share2 },
+const STATES: { id: string; label: string; description: string; viewModel: PayoutSetupViewModel }[] = [
+  {
+    id: 'not-started',
+    label: '1 — Ikke startet',
+    description: 'Selgeren har ikke startet Stripe-onboardingen ennå.',
+    viewModel: {
+      h2: 'Sett opp utbetalinger',
+      counter: 'Steg 1 av 3',
+      steps: [
+        {
+          title: STEP_1_TITLE,
+          status: 'current',
+          description:
+            'Du blir sendt til Stripe – betalingspartneren vår – for å bekrefte virksomheten og legge inn kontonummeret pengene skal gå til.',
+          action: <Button onClick={noop}>Kom i gang</Button>,
+        },
+        { title: STEP_2_TITLE, status: 'upcoming' },
+        { title: STEP_3_TITLE, status: 'upcoming' },
+      ],
+    },
+  },
+  {
+    id: 'pending',
+    label: '2 — Venter',
+    description: 'Startet hos Stripe, venter på at kontrollen fullføres.',
+    viewModel: {
+      h2: 'Fullfør oppsettet',
+      counter: 'Steg 2 av 3',
+      steps: [
+        { title: STEP_1_TITLE, status: 'done' },
+        {
+          title: STEP_2_TITLE,
+          status: 'current',
+          description:
+            'Vi aktiverer utbetalinger automatisk så snart alt er godkjent. Mangler det noe, kan du fortsette der du slapp.',
+          action: <Button onClick={noop}>Fortsett oppsettet</Button>,
+        },
+        { title: STEP_3_TITLE, status: 'upcoming' },
+      ],
+    },
+  },
+  {
+    id: 'restricted',
+    label: '3 — Mangler informasjon',
+    description: 'Stripe trenger mer informasjon før kontoen kan aktiveres.',
+    viewModel: {
+      h2: 'Fullfør oppsettet',
+      counter: 'Steg 2 av 3',
+      steps: [
+        { title: STEP_1_TITLE, status: 'done' },
+        {
+          title: 'Vi mangler litt informasjon',
+          status: 'current',
+          tone: 'warning',
+          description: 'Fyll inn det som gjenstår, så aktiverer vi utbetalinger så snart alt er på plass.',
+          action: <Button onClick={noop}>Fortsett oppsettet</Button>,
+        },
+        { title: STEP_3_TITLE, status: 'upcoming' },
+      ],
+    },
+  },
+  {
+    id: 'rejected',
+    label: '4 — Avslått',
+    description: 'Stripe avslo søknaden om en betalingskonto.',
+    viewModel: {
+      h2: 'Søknaden ble avslått',
+      counter: 'Steg 2 av 3',
+      steps: [
+        { title: STEP_1_TITLE, status: 'done' },
+        {
+          title: 'Søknaden ble ikke godkjent',
+          status: 'current',
+          tone: 'danger',
+          description: `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg videre.`,
+          action: (
+            <Button asChild>
+              <a href={`mailto:${COMPANY.email}`}>Kontakt oss</a>
+            </Button>
+          ),
+        },
+        { title: STEP_3_TITLE, status: 'upcoming' },
+      ],
+    },
+  },
+  {
+    id: 'enabled',
+    label: '5 — Aktiv',
+    description: 'Utbetalinger er satt opp og klare til bruk.',
+    viewModel: {
+      h2: 'Utbetalingene er klare',
+      counter: 'Fullført',
+      steps: [
+        { title: STEP_1_TITLE, status: 'done' },
+        { title: STEP_2_TITLE, status: 'done' },
+        {
+          title: STEP_3_TITLE,
+          status: 'current',
+          tone: 'success',
+          description: 'Pengene overføres automatisk til bankkontoen din. Saldo og alle utbetalinger finner du i oversikten.',
+          action: <Button onClick={noop}>Se oversikt</Button>,
+        },
+      ],
+    },
+  },
 ];
 
 const PayoutPreview = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
-      <div className="mx-auto w-full max-w-5xl px-6 py-8 lg:py-12">
-        {/* ─── Header: payout headline + create CTA ───────────────────────── */}
-        <header className="mb-12 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-foreground-muted">Oversikt</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground tabular-nums">
-              {formatKroner(NEXT_PAYOUT)}
-            </h1>
-            <p className="mt-1 text-sm text-foreground-muted">
-              Neste utbetaling {PAYOUT_DATE}{' '}
-              <span aria-hidden="true">·</span>{' '}
-              <span className="tabular-nums">{formatKroner(PENDING_THIS_WEEK)}</span> på vei inn fra {PENDING_SIGNUPS} påmeldinger
-            </p>
-          </div>
-          <Button size="default" className="shrink-0">
-            <Plus data-icon="inline-start" />
-            Opprett kurs
-          </Button>
-        </header>
+    <main className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-surface">
+        <div className="mx-auto max-w-3xl px-6 py-6">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Utbetalingskonto — 5 tilstander</h1>
+          <p className="mt-2 text-sm text-foreground-muted">
+            Dev preview, ikke koblet til ekte data. Fem tilstander stablet — bla nedover eller bruk lenkene under.
+          </p>
+          <nav className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+            {STATES.map((s) => (
+              <a key={s.id} href={`#${s.id}`} className="text-foreground underline-offset-4 hover:underline">
+                {s.label}
+              </a>
+            ))}
+          </nav>
+        </div>
+      </header>
 
-        {/* ─── Last class recap (Substack pattern) ─────────────────────────── */}
-        <section className="mb-12">
-          <h2 className="mb-4 text-sm font-medium text-foreground-muted">Forrige time</h2>
-          <div className="flex flex-col gap-4 rounded-lg border border-border bg-background p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <p className="truncate text-base font-semibold text-foreground">{LAST_CLASS.title}</p>
-              <p className="mt-1 text-sm text-foreground-muted">
-                {LAST_CLASS.date}{' '}
-                <span aria-hidden="true">·</span>{' '}
-                <span className="tabular-nums">{LAST_CLASS.attended}/{LAST_CLASS.capacity}</span> påmeldte{' '}
-                <span aria-hidden="true">·</span>{' '}
-                <span className="tabular-nums">{formatKroner(LAST_CLASS.revenue)}</span>
-              </p>
-            </div>
-            <div className="flex shrink-0 gap-2">
-              <Button variant="ghost">
-                <Share2 data-icon="inline-start" />
-                Del
-              </Button>
-              <Button variant="ghost">
-                Se detaljer <ArrowRight data-icon="inline-end" />
-              </Button>
-            </div>
-          </div>
+      <div className="mx-auto max-w-3xl px-6 py-10 space-y-12">
+        {STATES.map((s) => (
+          <section key={s.id} id={s.id} className="scroll-mt-6">
+            <PreviewFrame label={s.label} description={s.description}>
+              <PayoutSetupCard viewModel={s.viewModel} />
+            </PreviewFrame>
+          </section>
+        ))}
+
+        <section id="faq" className="scroll-mt-6">
+          <PreviewFrame label="FAQ" description="Vises under kortet i alle fem tilstander.">
+            <PayoutFaqSection />
+          </PreviewFrame>
         </section>
 
-        {/* ─── Two-column: Upcoming + Activity ─────────────────────────────── */}
-        <section className="mb-16 grid grid-cols-1 divide-y divide-border lg:grid-cols-2 lg:divide-y-0 lg:divide-x">
-          <div className="flex flex-col pb-8 lg:pb-0 lg:pr-8">
-            <h2 className="mb-6 text-xl font-medium tracking-tight text-foreground">Siste aktivitet</h2>
-            <div className="space-y-2">
-              {ACTIVITY.map((a) => (
-                <div
-                  key={a.id}
-                  className="group flex items-center gap-3 rounded-lg p-3 transition-colors duration-150 hover:bg-muted"
-                >
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground-muted">
-                    <UserPlus className="size-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{a.name}</p>
-                    <p className="mt-1 truncate text-sm text-foreground-muted">Meldte seg på {a.course}</p>
-                  </div>
-                  <span className="shrink-0 text-xs tabular-nums text-foreground-muted">{a.when}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-col pt-8 lg:pt-0 lg:pl-8">
-            <h2 className="mb-6 text-xl font-medium tracking-tight text-foreground">Neste kurs</h2>
-            <div className="space-y-2">
-              {UPCOMING.map((c) => {
-                const isFull = c.signups >= c.capacity;
-                return (
-                  <div
-                    key={c.id}
-                    className="group block rounded-lg bg-muted p-3 transition-opacity duration-150 hover:opacity-80"
-                  >
-                    <p className="truncate text-sm font-medium text-foreground">{c.title}</p>
-                    <div className="mt-1 flex items-center gap-3 text-sm text-foreground-muted tabular-nums">
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="size-3.5 shrink-0" />
-                        {c.day}
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <Clock className="size-3.5 shrink-0" />
-                        {c.time}
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <Users className="size-3.5 shrink-0" />
-                        {c.signups}/{c.capacity}
-                        {isFull && ' · Fullt'}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* ─── Resources rail (Substack pattern) ───────────────────────────── */}
-        <section className="border-t border-border pt-10">
-          <h2 className="mb-6 text-sm font-medium text-foreground-muted">Ressurser for læreren</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {RESOURCES.map((r) => {
-              const Icon = r.icon;
-              return (
-                <a
-                  key={r.title}
-                  href="#"
-                  className="group flex flex-col gap-2 rounded-lg border border-border p-4 outline-none transition-colors duration-150 hover:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/15"
-                >
-                  <div className="flex items-center justify-between">
-                    <Icon className="size-4 text-foreground-muted" />
-                    <ArrowUpRight className="size-4 text-foreground-muted opacity-0 transition-opacity duration-150 group-hover:opacity-100" />
-                  </div>
-                  <p className="text-sm font-medium text-foreground">{r.title}</p>
-                  <p className="text-sm text-foreground-muted">{r.desc}</p>
-                </a>
-              );
-            })}
-          </div>
-        </section>
-
-        <p className="mt-12 text-xs text-foreground-muted">
-          Preview · sample data only. Combines: payout-first headline (Stripe Express), single big CTA in header (Cal.com),
-          last-class recap (Substack), evergreen resources rail (Substack). Current 2-column upcoming/activity preserved.
-        </p>
+        <footer className="border-t border-border pt-6 pb-12">
+          <p className="text-xs text-foreground-muted">
+            Implementasjon: <code className="font-medium">src/pages/teacher/PaymentsPage.tsx</code> (ruten{' '}
+            <code className="font-medium">/settings/payouts</code>).
+          </p>
+        </footer>
       </div>
-    </div>
+    </main>
   );
 };
 
