@@ -340,7 +340,9 @@ export function TimelineDay({
   children: ReactNode;
 }) {
   return (
-    <div className={cn('grid grid-cols-[96px_1fr] gap-x-2', !first && 'mt-2')}>
+    // Rail width fits the longest date at text-base ("22. september" ≈ 107px
+    // + 20px rail padding) so long month names never wrap or cramp.
+    <div className={cn('grid grid-cols-[132px_1fr] gap-x-2', !first && 'mt-2')}>
       <div className="relative pt-1">
         <span className="absolute left-[3px] top-[9px] size-2 rounded-full bg-border" />
         <span className="absolute bottom-0 left-[6px] top-[22px] w-px border-l border-dotted border-border" />
