@@ -40,9 +40,6 @@ export interface SessionRow {
   deliveryMode: DeliveryMode;
   signupCount: number;
   maxParticipants: number | null;
-  /** Confirmed signups' display names, stable order, capped at 5 for the
-   *  facepile (the rest indicator counts off signupCount, not this length). */
-  participantNames: string[];
 }
 
 // Joined row shape from the embedded course query.
@@ -144,28 +141,19 @@ const SchedulePage = () => {
       const rows = (data ?? []) as unknown as SessionWithCourse[];
       const courseIds = [...new Set(rows.map((r) => r.course_id))];
 
-      // Confirmed signups per course — one query yields both the count and the
-      // facepile names (capacity is per-course on the schema today; drop-ins
-      // use per-session capacity but we keep the simpler course-level count
-      // here for display). Names are stored capped at 5; the card's rest
-      // indicator counts off signupCount, not the stored length.
+      // Confirmed signup count per course (capacity is per-course on the schema
+      // today; drop-ins use per-session capacity but we keep the simpler
+      // course-level count here for display).
       const counts: Record<string, number> = {};
-      const names: Record<string, string[]> = {};
       if (courseIds.length > 0) {
         const { data: signupRows } = await supabase
           .from('signups')
-          .select('course_id, participant_name, status')
+          .select('course_id, status')
           .eq('seller_id', currentSeller.id)
           .in('course_id', courseIds)
-          .eq('status', 'confirmed')
-          .order('created_at', { ascending: true });
-        for (const r of (signupRows ?? []) as Array<{
-          course_id: string;
-          participant_name: string | null;
-        }>) {
+          .eq('status', 'confirmed');
+        for (const r of (signupRows ?? []) as Array<{ course_id: string }>) {
           counts[r.course_id] = (counts[r.course_id] ?? 0) + 1;
-          const arr = names[r.course_id] ?? (names[r.course_id] = []);
-          if (arr.length < 5) arr.push(r.participant_name || 'Deltaker');
         }
       }
 
@@ -183,7 +171,6 @@ const SchedulePage = () => {
           deliveryMode: r.course!.delivery_mode,
           signupCount: counts[r.course_id] ?? 0,
           maxParticipants: r.course!.max_participants,
-          participantNames: names[r.course_id] ?? [],
         }));
 
       setSessions(enriched);
@@ -290,11 +277,7 @@ const SchedulePage = () => {
                   <Skeleton className="h-3.5 w-24" />
                   <Skeleton className="h-4 w-48" />
                   <Skeleton className="h-3.5 w-32" />
-                  <div className="flex items-center gap-1.5 pt-1">
-                    <Skeleton className="size-6 rounded-full" />
-                    <Skeleton className="size-6 rounded-full" />
-                    <Skeleton className="size-6 rounded-full" />
-                  </div>
+                  <Skeleton className="h-3.5 w-20" />
                 </div>
               </div>
             ))}
@@ -341,16 +324,6 @@ const SchedulePage = () => {
   );
 };
 
-/** Initials for the facepile fallback — up to two letters from the name. */
-function initials(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .slice(0, 2)
-    .join('');
-}
-
 /**
  * Luma-style day group — a date rail (node dot + dotted spine, day label over
  * date) with the day's cards in the right column. Exported so the
@@ -383,18 +356,15 @@ export function TimelineDay({
 }
 
 /**
- * Agenda card — time over title over place, with a left-aligned facepile +
- * capacity footer (Luma events-list grammar). White surface so the card lifts
- * off the canvas. Exported for the /dev/schedule-preview sign-off surface.
+ * Agenda card — time over title over place, with a labeled signup count in the
+ * footer (Luma events-list grammar). White surface so the card lifts off the
+ * canvas. Exported for the /dev/schedule-preview sign-off surface.
  */
 export function SessionCard({ session }: { session: SessionRow }) {
   const isCapped = session.maxParticipants != null;
   const isFull = isCapped && session.signupCount >= session.maxParticipants!;
   const isOnline = session.deliveryMode === 'online';
   const placeLabel = isOnline ? 'Online' : session.courseLocation;
-
-  const shown = session.participantNames.slice(0, 4);
-  const rest = session.signupCount - shown.length;
 
   return (
     <Link
@@ -425,41 +395,28 @@ export function SessionCard({ session }: { session: SessionRow }) {
         </p>
       )}
 
-      {/* Facepile + capacity, left-aligned together. */}
-      <div className="mt-3 flex items-center gap-2.5">
+      {/* Labeled signup count. Zero is a single muted line; otherwise a
+          "Påmeldte" label paired with the value (count, capacity, or a "Fullt"
+          status badge when the class is full). */}
+      <div className="mt-3 flex items-center gap-2">
         {session.signupCount === 0 ? (
           <span className="text-sm text-foreground-subtle">Ingen påmeldte</span>
         ) : (
           <>
-            <span className="flex items-center">
-              {shown.map((name, i) => (
-                <span
-                  key={i}
-                  className="-ml-1.5 first:ml-0 flex size-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-foreground-muted ring-2 ring-surface"
-                >
-                  {initials(name)}
-                </span>
-              ))}
-              {rest > 0 && (
-                <span className="-ml-1.5 flex size-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-foreground-muted ring-2 ring-surface">
-                  +{rest}
-                </span>
-              )}
-            </span>
-
+            <span className="text-sm text-foreground-muted">Påmeldte</span>
             {/* A full class is a positive STATUS → success badge; other counts
-                are plain quantities in muted text. */}
+                are plain quantities. */}
             {isFull ? (
               <Badge variant="success" shape="pill" size="sm">
                 Fullt
               </Badge>
             ) : isCapped ? (
-              <span className="text-sm tabular-nums text-foreground-muted">
+              <span className="text-sm tabular-nums text-foreground">
                 {session.signupCount} / {session.maxParticipants}
               </span>
             ) : (
-              <span className="text-sm text-foreground-muted">
-                {session.signupCount} påmeldte
+              <span className="text-sm tabular-nums text-foreground">
+                {session.signupCount}
               </span>
             )}
           </>

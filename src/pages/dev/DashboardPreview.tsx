@@ -41,7 +41,7 @@ function buildMockIncome(range: IncomeRange): IncomeSeries {
       previousAmount: Math.max(0, Math.round(base * 0.72)),
     };
   });
-  const total = points.reduce((sum, p) => sum + p.amount, 0);
+  const total = points.reduce((sum, p) => sum + (p.amount ?? 0), 0);
   return { range, points, total, previousTotal: Math.round(total * 0.84) };
 }
 
