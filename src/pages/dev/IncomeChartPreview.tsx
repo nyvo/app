@@ -46,7 +46,9 @@ function buildMockPoints(range: IncomeRange): IncomePoint[] {
       };
     });
   }
-  const span = range === 'week' ? 7 : 30;
+  // Month is now calendar month-to-date, so the mock spans day 1 → today
+  // (length is illustrative — matches production's MTD shape, not a fixed 30).
+  const span = range === 'week' ? 7 : now.getDate();
   return Array.from({ length: span }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (span - 1 - i));
     const prev = new Date(d.getFullYear(), d.getMonth(), d.getDate() - span);

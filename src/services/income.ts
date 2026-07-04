@@ -96,7 +96,32 @@ function buildBuckets(range: IncomeRange, end: Date): BucketScaffold[] {
     return scaffold
   }
 
-  const span = range === 'week' ? 7 : 30
+  if (range === 'month') {
+    // Calendar month-to-date: day 1 → today. Each bucket's previous counterpart
+    // is the same day-offset from the 1st of the previous month, so the overlay
+    // line aligns by elapsed offset rather than by calendar date.
+    const periodStart = startOfDay(new Date(end.getFullYear(), end.getMonth(), 1))
+    const prevMonthStart = addMonths(periodStart, -1)
+    const span = end.getDate()
+    const scaffold: BucketScaffold[] = []
+    for (let i = 0; i < span; i++) {
+      const d = addDays(periodStart, i)
+      const prev = addDays(prevMonthStart, i)
+      scaffold.push({
+        point: {
+          key: formatLocalDateKey(d),
+          label: dayLabel(d),
+          amount: 0,
+          previousLabel: dayLabel(prev),
+          previousAmount: 0,
+        },
+        previousKey: formatLocalDateKey(prev),
+      })
+    }
+    return scaffold
+  }
+
+  const span = 7
   const start = addDays(startOfDay(end), -(span - 1))
   const scaffold: BucketScaffold[] = []
   for (let i = 0; i < span; i++) {
@@ -163,6 +188,10 @@ export async function fetchPlatformFeeMonth(
  * month depending on range. Also returns the previous period's total so the
  * caller can compute a % delta badge.
  *
+ * Windows: week = rolling 7 days; month = calendar month-to-date (1st →
+ * today, compared against the same offsets in the previous calendar month);
+ * year = rolling 12 months.
+ *
  * Bucketing is by `created_at` (when the booking was made) — matches the
  * "revenue earned" mental model rather than the "money landed" one.
  */
@@ -178,8 +207,11 @@ export async function fetchIncomeSeries(
   if (range === 'year') {
     periodStart = new Date(end.getFullYear(), end.getMonth() - 11, 1)
     previousStart = new Date(periodStart.getFullYear() - 1, periodStart.getMonth(), 1)
+  } else if (range === 'month') {
+    periodStart = startOfDay(new Date(end.getFullYear(), end.getMonth(), 1))
+    previousStart = addMonths(periodStart, -1)
   } else {
-    const span = range === 'week' ? 7 : 30
+    const span = 7
     periodStart = addDays(end, -(span - 1))
     previousStart = addDays(periodStart, -span)
   }
@@ -207,11 +239,16 @@ export async function fetchIncomeSeries(
   // the % badge compares equal amounts of elapsed time. For 'year' the current
   // window is only ~11.1 months (12 partial months), so counting a full 12
   // previous months biased the badge down; cut the previous total at 12 months
-  // before now. For week/month the window is already whole, so the cap is just
-  // periodStart (unchanged). The overlay line still shows the whole previous
-  // period — only the badge math is capped.
+  // before now. For 'month' the window is month-to-date, so cap the previous
+  // month at the same moment one month back (equal elapsed days). For 'week'
+  // the window is already whole, so the cap is just periodStart. The overlay
+  // line still shows the whole previous period — only the badge math is capped.
   const previousCutoffMs =
-    range === 'year' ? addMonths(now, -12).getTime() : periodStart.getTime()
+    range === 'year'
+      ? addMonths(now, -12).getTime()
+      : range === 'month'
+        ? addMonths(now, -1).getTime()
+        : periodStart.getTime()
 
   for (const row of rows) {
     if (!row.created_at) continue
