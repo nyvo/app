@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
-import { Badge } from '@/components/ui/badge';
-import { MapPin, Monitor } from '@/lib/icons';
+import { Clock, MapPin, Monitor, Users } from '@/lib/icons';
 import { PageShell } from '@/components/teacher/PageShell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -345,9 +344,11 @@ export function TimelineDay({
       <div className="relative pt-1">
         <span className="absolute left-[3px] top-[9px] size-2 rounded-full bg-border" />
         <span className="absolute bottom-0 left-[6px] top-[22px] w-px border-l border-dotted border-border" />
+        {/* Both lines share one token size — hierarchy comes from weight +
+            color only (day medium ink, date regular muted). */}
         <div className="pl-5">
-          <p className="text-[15px] font-medium leading-tight text-foreground">{primary}</p>
-          <p className="text-sm text-foreground-muted">{secondary}</p>
+          <p className="text-base font-medium leading-tight text-foreground">{primary}</p>
+          <p className="text-base text-foreground-muted">{secondary}</p>
         </div>
       </div>
       <div className="space-y-2.5 pb-6">{children}</div>
@@ -356,15 +357,18 @@ export function TimelineDay({
 }
 
 /**
- * Agenda card — time over title over place, with a labeled signup count in the
- * footer (Luma events-list grammar). White surface so the card lifts off the
- * canvas. Exported for the /dev/schedule-preview sign-off surface.
+ * Agenda card — title, then ONE icon-anchored meta line (time, place,
+ * participants — the Time2Book schedule grammar). Every meta item shares the
+ * same muted style; a full class reads "12 / 12", no badge, so the line stays
+ * consistent. Exported for the /dev/schedule-preview sign-off surface.
  */
 export function SessionCard({ session }: { session: SessionRow }) {
-  const isCapped = session.maxParticipants != null;
-  const isFull = isCapped && session.signupCount >= session.maxParticipants!;
   const isOnline = session.deliveryMode === 'online';
   const placeLabel = isOnline ? 'Online' : session.courseLocation;
+  const countLabel =
+    session.maxParticipants != null
+      ? `${session.signupCount} / ${session.maxParticipants}`
+      : `${session.signupCount}`;
 
   return (
     <Link
@@ -375,53 +379,32 @@ export function SessionCard({ session }: { session: SessionRow }) {
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
       )}
     >
-      {/* Time — one uniform style, never two weights/colours in a line. */}
-      <p className="text-sm font-medium tabular-nums text-foreground-muted">
-        {formatTimeRange(session.startTime, session.endTime)}
-      </p>
-
-      <p className="mt-0.5 truncate text-base font-medium text-foreground">
+      <p className="truncate text-base font-medium text-foreground">
         {session.courseTitle}
       </p>
 
-      {(isOnline || placeLabel) && (
-        <p className="mt-1 flex items-center gap-1.5 text-sm text-foreground-muted">
-          {isOnline ? (
-            <Monitor className="size-3.5 shrink-0" aria-hidden="true" />
-          ) : (
-            <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
-          )}
-          <span className="truncate">{placeLabel}</span>
-        </p>
-      )}
-
-      {/* Labeled signup count. Zero is a single muted line; otherwise a
-          "Påmeldte" label paired with the value (count, capacity, or a "Fullt"
-          status badge when the class is full). */}
-      <div className="mt-3 flex items-center gap-2">
-        {session.signupCount === 0 ? (
-          <span className="text-sm text-foreground-subtle">Ingen påmeldte</span>
-        ) : (
-          <>
-            <span className="text-sm text-foreground-muted">Påmeldte</span>
-            {/* A full class is a positive STATUS → success badge; other counts
-                are plain quantities. */}
-            {isFull ? (
-              <Badge variant="success" shape="pill" size="sm">
-                Fullt
-              </Badge>
-            ) : isCapped ? (
-              <span className="text-sm tabular-nums text-foreground">
-                {session.signupCount} / {session.maxParticipants}
-              </span>
+      <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground-muted">
+        <span className="inline-flex items-center gap-1.5">
+          <Clock className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className="tabular-nums">
+            {formatTimeRange(session.startTime, session.endTime)}
+          </span>
+        </span>
+        {placeLabel && (
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            {isOnline ? (
+              <Monitor className="size-3.5 shrink-0" aria-hidden="true" />
             ) : (
-              <span className="text-sm tabular-nums text-foreground">
-                {session.signupCount}
-              </span>
+              <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
             )}
-          </>
+            <span className="truncate">{placeLabel}</span>
+          </span>
         )}
-      </div>
+        <span className="inline-flex items-center gap-1.5">
+          <Users className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className="tabular-nums">{countLabel}</span>
+        </span>
+      </p>
     </Link>
   );
 }
