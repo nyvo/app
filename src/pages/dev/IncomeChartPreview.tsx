@@ -14,7 +14,7 @@ import type { IncomePoint, IncomeRange, IncomeSeries } from '@/services/income';
 
 const RANGE_LABEL: Record<IncomeRange, string> = {
   week: 'Uke',
-  month: 'Måned',
+  month: '30 dager',
   year: 'År',
 };
 
@@ -63,23 +63,19 @@ function buildMockPoints(range: IncomeRange): IncomePoint[] {
       };
     });
   }
-  // Month spans the FULL calendar month (day 1 → last day) to mirror production:
-  // the axis right edge is the month's end, current data runs to "today" (here
-  // day 4 for illustration) and every later day is null so the line stops there.
-  // The previous-period overlay stays complete across all days.
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const todayIndex = 3; // days 0..3 carry data; day 4 onward is the null tail.
-  return Array.from({ length: daysInMonth }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth(), i + 1);
-    const prev = new Date(prevMonthStart.getFullYear(), prevMonthStart.getMonth(), i + 1);
+  // Month = rolling 30 days ending today (labeled "30 dager"), mirroring
+  // production — the trend line always spans the full width.
+  const span = 30;
+  return Array.from({ length: span }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (span - 1 - i));
+    const prev = new Date(d.getFullYear(), d.getMonth(), d.getDate() - span);
     const weekend = d.getDay() === 0 || d.getDay() === 6 ? 1800 : 0;
     const base = 400 + Math.round(Math.sin(i * 0.7) * 600) + weekend + i * 30;
     const prevBase = Math.round(base * 0.72) + Math.round(Math.cos(i * 0.5) * 250);
     return {
       key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
       label: dayLabel(d),
-      amount: i > todayIndex ? null : Math.max(0, base),
+      amount: Math.max(0, base),
       previousLabel: dayLabel(prev),
       previousAmount: Math.max(0, prevBase),
     };
@@ -138,7 +134,7 @@ export default function IncomeChartPreview() {
               onChange={setRange}
               tabs={[
                 { key: 'week', label: 'Uke' },
-                { key: 'month', label: 'Måned' },
+                { key: 'month', label: '30 dager' },
                 { key: 'year', label: 'År' },
               ]}
               ariaLabel="Velg tidsrom"
@@ -212,7 +208,7 @@ function QuietRangeToggle({
 }) {
   const options: { key: IncomeRange; label: string }[] = [
     { key: 'week', label: 'Uke' },
-    { key: 'month', label: 'Måned' },
+    { key: 'month', label: '30 dager' },
     { key: 'year', label: 'År' },
   ];
   return (

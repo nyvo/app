@@ -9,9 +9,9 @@ export interface IncomePoint {
   /** Label shown in tooltip (Norwegian). */
   label: string
   /**
-   * Cumulative net income in NOK through this bucket, or `null` for a future
-   * day that has no data yet (month range only — the axis spans the whole
-   * calendar month but the line stops at today). Week/year never produce null.
+   * Cumulative net income in NOK through this bucket. Nullable so a range
+   * with a fixed frame could stop the line early (`null` = no data yet); the
+   * current rolling windows always produce numbers. Chart/tooltip handle null.
    */
   amount: number | null
   /** Label of the same offset in the previous period, e.g. "ons 8. okt". */
@@ -100,34 +100,12 @@ function buildBuckets(range: IncomeRange, end: Date): BucketScaffold[] {
     return scaffold
   }
 
-  if (range === 'month') {
-    // Full calendar month: day 1 → last day, so the axis right edge is always
-    // the month's end (Stripe gross-volume pattern) and never reshapes daily.
-    // Days after today carry `amount: null` (filled in the cumulative pass).
-    // Each bucket's previous counterpart is the same day-offset from the 1st of
-    // the previous month, so the overlay aligns by elapsed offset, not date.
-    const periodStart = startOfDay(new Date(end.getFullYear(), end.getMonth(), 1))
-    const prevMonthStart = addMonths(periodStart, -1)
-    const span = new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate()
-    const scaffold: BucketScaffold[] = []
-    for (let i = 0; i < span; i++) {
-      const d = addDays(periodStart, i)
-      const prev = addDays(prevMonthStart, i)
-      scaffold.push({
-        point: {
-          key: formatLocalDateKey(d),
-          label: dayLabel(d),
-          amount: 0,
-          previousLabel: dayLabel(prev),
-          previousAmount: 0,
-        },
-        previousKey: formatLocalDateKey(prev),
-      })
-    }
-    return scaffold
-  }
-
-  const span = 7
+  // Rolling windows (week = 7 days, month = 30 days), both ending today —
+  // the chart is a TREND line, so it always spans its full width at constant
+  // density. The toggle labels say "7 dager"/"30 dager" so the window is
+  // honest (a calendar-month frame was tried and rejected: it left the line
+  // stranded at ~10% width early in the month).
+  const span = range === 'week' ? 7 : 30
   const start = addDays(startOfDay(end), -(span - 1))
   const scaffold: BucketScaffold[] = []
   for (let i = 0; i < span; i++) {
@@ -194,9 +172,10 @@ export async function fetchPlatformFeeMonth(
  * month depending on range. Also returns the previous period's total so the
  * caller can compute a % delta badge.
  *
- * Windows: week = rolling 7 days; month = calendar month-to-date (1st →
- * today, compared against the same offsets in the previous calendar month);
- * year = rolling 12 months.
+ * Windows: week = rolling 7 days; month = rolling 30 days (the toggle is
+ * labeled "30 dager" — a calendar-month frame was tried and rejected);
+ * year = rolling 12 months. All windows end today, so the trend line always
+ * spans the chart's full width at constant density.
  *
  * Bucketing is by `created_at` (when the booking was made) — matches the
  * "revenue earned" mental model rather than the "money landed" one.
@@ -213,11 +192,8 @@ export async function fetchIncomeSeries(
   if (range === 'year') {
     periodStart = new Date(end.getFullYear(), end.getMonth() - 11, 1)
     previousStart = new Date(periodStart.getFullYear() - 1, periodStart.getMonth(), 1)
-  } else if (range === 'month') {
-    periodStart = startOfDay(new Date(end.getFullYear(), end.getMonth(), 1))
-    previousStart = addMonths(periodStart, -1)
   } else {
-    const span = 7
+    const span = range === 'week' ? 7 : 30
     periodStart = addDays(end, -(span - 1))
     previousStart = addDays(periodStart, -span)
   }
@@ -245,16 +221,11 @@ export async function fetchIncomeSeries(
   // the % badge compares equal amounts of elapsed time. For 'year' the current
   // window is only ~11.1 months (12 partial months), so counting a full 12
   // previous months biased the badge down; cut the previous total at 12 months
-  // before now. For 'month' the window is month-to-date, so cap the previous
-  // month at the same moment one month back (equal elapsed days). For 'week'
-  // the window is already whole, so the cap is just periodStart. The overlay
-  // line still shows the whole previous period — only the badge math is capped.
+  // before now. Week/month are whole rolling windows of equal length, so the
+  // cap is just periodStart. The overlay line still shows the whole previous
+  // period — only the badge math is capped.
   const previousCutoffMs =
-    range === 'year'
-      ? addMonths(now, -12).getTime()
-      : range === 'month'
-        ? addMonths(now, -1).getTime()
-        : periodStart.getTime()
+    range === 'year' ? addMonths(now, -12).getTime() : periodStart.getTime()
 
   for (const row of rows) {
     if (!row.created_at) continue
@@ -290,21 +261,11 @@ export async function fetchIncomeSeries(
   const points = scaffold.map((s) => s.point)
   let runningCurrent = 0
   let runningPrevious = 0
-  // `amount` accumulates only through today — later buckets (future days of the
-  // current month) become null so the main line stops at today. `previousAmount`
-  // accumulates across ALL buckets: the previous period is complete data.
-  const todayKey = range === 'month' ? formatLocalDateKey(end) : null
-  let pastToday = false
   for (const point of points) {
     runningPrevious += point.previousAmount
     point.previousAmount = runningPrevious
-    if (pastToday) {
-      point.amount = null
-    } else {
-      runningCurrent += point.amount ?? 0
-      point.amount = runningCurrent
-      if (todayKey && point.key === todayKey) pastToday = true
-    }
+    runningCurrent += point.amount ?? 0
+    point.amount = runningCurrent
   }
 
   return {
