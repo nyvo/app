@@ -1,12 +1,11 @@
 // deno test --allow-env supabase/functions/stripe-connect-webhook/
 //
-// Handler-level tests for the money path: the handler runs UNMODIFIED
-// (real signature verification, real supabase-js client, real _shared/stripe
-// request code) against a fetch router that fakes PostgREST + the Stripe API
-// + Resend. Every scenario asserts on the HTTP effects (was capture called?
-// was the claim released?), not on internals.
+// Handler-level tests for the money path — see _shared/test-harness.ts for
+// how the fake network works. Every scenario asserts on HTTP effects (was
+// capture called? was the claim released?), not on internals.
 
 import { assert, assertEquals } from 'jsr:@std/assert@1'
+import { installRouter, has, signedStripeRequest, type Call } from '../_shared/test-harness.ts'
 
 // Env BEFORE importing the handler — module scope reads these.
 Deno.env.set('SUPABASE_URL', 'http://sb.test')
@@ -18,21 +17,7 @@ Deno.env.set('RESEND_API_KEY', 're_test_handler')
 const { handleStripeConnectWebhook } = await import('./handler.ts')
 
 const SECRET = 'whsec_handler_test'
-
-async function signedRequest(event: unknown): Promise<Request> {
-  const payload = JSON.stringify(event)
-  const ts = Math.floor(Date.now() / 1000)
-  const key = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
-  )
-  const digest = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${ts}.${payload}`))
-  const hex = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('')
-  return new Request('http://localhost/stripe-connect-webhook', {
-    method: 'POST',
-    headers: { 'stripe-signature': `t=${ts},v1=${hex}` },
-    body: payload,
-  })
-}
+const signedRequest = (event: unknown) => signedStripeRequest(event, SECRET)
 
 function capturableEvent() {
   return {
@@ -56,69 +41,8 @@ const ATTEMPT_ROW = {
   ticket_type_id: 'tt_1', total_price_nok: 200, platform_fee_nok: 0, status: 'pending',
 }
 
-interface Call { method: string; url: string; body: string }
-interface Rule {
-  method: string
-  match: string // substring of URL
-  status: number
-  body?: unknown
-  times?: number // consume after N hits (default: unlimited)
-}
-
-// Fake network. Explicit rules first (in order, respecting `times`), then
-// permissive fallbacks so best-effort tails (booking emails, notifications)
-// never explode: object-Accept GETs get PGRST116 (maybeSingle → null), plain
-// GETs get [], writes get 2xx.
-function installRouter(rules: Rule[]): { calls: Call[]; restore: () => void } {
-  const calls: Call[] = []
-  const counts = new Map<Rule, number>()
-  const original = globalThis.fetch
-
-  globalThis.fetch = async (input: URL | RequestInfo, init?: RequestInit): Promise<Response> => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
-    const method = (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase()
-    let body = ''
-    if (init?.body) body = typeof init.body === 'string' ? init.body : String(init.body)
-    else if (input instanceof Request) body = await input.clone().text().catch(() => '')
-    calls.push({ method, url, body })
-
-    for (const rule of rules) {
-      if (rule.method !== method || !url.includes(rule.match)) continue
-      const used = counts.get(rule) ?? 0
-      if (rule.times !== undefined && used >= rule.times) continue
-      counts.set(rule, used + 1)
-      return jsonResponse(rule.status, rule.body)
-    }
-
-    // Fallbacks.
-    const accept = init?.headers
-      ? new Headers(init.headers as HeadersInit).get('accept') ?? ''
-      : input instanceof Request ? input.headers.get('accept') ?? '' : ''
-    if (url.includes('/rest/v1/')) {
-      if (method === 'GET') {
-        return accept.includes('pgrst.object')
-          ? jsonResponse(406, { code: 'PGRST116', message: 'no rows' })
-          : jsonResponse(200, [])
-      }
-      return jsonResponse(method === 'POST' ? 201 : 204, method === 'POST' ? {} : undefined)
-    }
-    if (url.includes('api.resend.com')) return jsonResponse(200, { id: 'em_test' })
-    if (url.includes('api.stripe.com')) return jsonResponse(200, { id: 'stripe_obj', status: 'succeeded' })
-    return jsonResponse(200, {})
-  }
-
-  return { calls, restore: () => { globalThis.fetch = original } }
-}
-
-function jsonResponse(status: number, body?: unknown): Response {
-  return new Response(body === undefined ? null : JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
-
-const has = (calls: Call[], method: string, urlPart: string) =>
-  calls.some((c) => c.method === method && c.url.includes(urlPart))
+const findPatch = (calls: Call[], table: string, bodyPart: string) =>
+  calls.find((c) => c.method === 'PATCH' && c.url.includes(table) && c.body.includes(bodyPart))
 
 // ── Scenarios ───────────────────────────────────────────────────────────────
 
@@ -148,8 +72,7 @@ Deno.test('happy path: mint + capture → 200, attempt captured', async () => {
     assertEquals(res.status, 200)
     assert(has(calls, 'POST', '/capture'), 'capture must be called')
     assert(!has(calls, 'POST', '/cancel'), 'cancel must NOT be called')
-    const captured = calls.find((c) => c.method === 'PATCH' && c.url.includes('payment_attempts') && c.body.includes('captured'))
-    assert(captured, 'attempt must be marked captured')
+    assert(findPatch(calls, 'payment_attempts', 'captured'), 'attempt must be marked captured')
   } finally { restore() }
 })
 
@@ -163,8 +86,7 @@ Deno.test('duplicate_signup (two-tab double checkout) → cancel PI, void attemp
     assertEquals(res.status, 200)
     assert(has(calls, 'POST', '/v1/payment_intents/pi_test_1/cancel'), 'PI must be cancelled')
     assert(!has(calls, 'POST', '/capture'), 'capture must NEVER be called on duplicate_signup')
-    const voided = calls.find((c) => c.method === 'PATCH' && c.url.includes('payment_attempts') && c.body.includes('voided'))
-    assert(voided, 'attempt must be voided')
+    assert(findPatch(calls, 'payment_attempts', 'voided'), 'attempt must be voided')
   } finally { restore() }
 })
 
@@ -193,8 +115,7 @@ Deno.test('capture throws but live PI is succeeded → treated as success (H1 re
     const res = await handleStripeConnectWebhook(await signedRequest(capturableEvent()))
     assertEquals(res.status, 200)
     assert(!has(calls, 'POST', '/cancel'), 'a captured payment must not be cancelled')
-    const captured = calls.find((c) => c.method === 'PATCH' && c.url.includes('payment_attempts') && c.body.includes('captured'))
-    assert(captured, 'attempt must be marked captured on recheck success')
+    assert(findPatch(calls, 'payment_attempts', 'captured'), 'attempt must be marked captured on recheck success')
   } finally { restore() }
 })
 

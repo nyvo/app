@@ -40,6 +40,18 @@ jobs:
         with:
           deno-version: v2.x
 
+      # The repo-root package.json puts Deno in bring-your-own-node_modules
+      # mode, and jsr:@supabase/supabase-js resolves npm:@supabase/realtime-js
+      # from node_modules — without this install the whole job fails at
+      # dependency resolution (it worked locally only because dev machines
+      # have node_modules).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
       # Edge-function tests: shared payment modules (claim state machine,
       # signature verification) + handler-level suites (stripe-connect-webhook
       # runs unmodified against a faked PostgREST/Stripe network). Running
