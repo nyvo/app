@@ -64,10 +64,12 @@ Deno.serve(async (req: Request) => {
   const authz = await verifyOrgMembership(auth.userId, course.seller_id)
   if (!authz.authorized) return errorResponse(authz.error || 'Forbidden', 403, req)
 
-  // Fan out to every confirmed signup.
+  // Fan out to every confirmed signup. Recipients come from the signup's
+  // own participant_email — not a profiles join — so guest bookings
+  // (buyer_id NULL, the common checkout path) are reached too.
   const { data: signups, error: signupsError } = await supabase
     .from('signups')
-    .select(`id, profile:profiles(email, name)`)
+    .select('id, participant_name, participant_email')
     .eq('course_id', body.course_id)
     .eq('status', 'confirmed')
 
@@ -80,13 +82,12 @@ Deno.serve(async (req: Request) => {
   let failed = 0
 
   for (const s of signups ?? []) {
-    const profile = (s as { profile?: { email?: string; name?: string | null } | null }).profile
-    if (!profile?.email) continue
+    if (!s.participant_email) continue
     const result = await sendEmail({
       template: 'course-message',
-      to: profile.email,
+      to: s.participant_email,
       props: {
-        buyerName: profile.name || 'Hei',
+        buyerName: s.participant_name || 'Hei',
         studioName,
         courseTitle: course.title,
         // No teacher-authored subject — the email's H1 and Resend subject
@@ -97,7 +98,7 @@ Deno.serve(async (req: Request) => {
     })
     if (result.error) {
       failed += 1
-      console.error('[send-course-message] email failed', { to: profile.email, error: result.error })
+      console.error('[send-course-message] email failed', { to: s.participant_email, error: result.error })
     } else {
       notified += 1
     }

@@ -37,8 +37,7 @@ interface SignupDetails {
   payment_status?: string | null;
   status?: string | null;
   // Masked (k•••@example.com) — the anon receipt lookup never returns the
-  // full address; the claim magic link is sent server-side by
-  // send-booking-claim-link, which resolves the address itself.
+  // full address.
   participant_email_masked: string;
   amount_paid: number;
   created_at?: string | null;
