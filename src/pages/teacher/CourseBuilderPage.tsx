@@ -35,7 +35,7 @@ import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
-import { cn, formatKroner } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { formatLocalDateKey } from '@/utils/dateUtils';
 import { singleScheduleLabel, seriesScheduleLabel } from '@/utils/timeSchedule';
 import type { CourseFormat } from '@/types/database';
@@ -105,11 +105,9 @@ export default function CourseBuilderPage() {
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
 
-  // The stored course price — per-gang × uker on a series (mirrors createDraft).
-  const coursePriceTotal =
-    format === 'series'
-      ? (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0)
-      : parseInt(price, 10) || 0;
+  // The teacher enters the full course price directly — input, stored value
+  // and charged amount are the same number for both formats.
+  const coursePriceTotal = parseInt(price, 10) || 0;
 
   // Cover image is picked locally and uploaded AFTER createCourse (the storage
   // path needs the new course id — same pattern as the course detail page).
@@ -280,10 +278,7 @@ export default function CourseBuilderPage() {
           location_lat: locationCoords?.lat ?? null,
           location_lon: locationCoords?.lon ?? null,
           location_place_id: locationCoords?.placeId ?? null,
-          price:
-            format === 'series'
-              ? (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0)
-              : parseInt(price, 10) || 0,
+          price: coursePriceTotal,
           max_participants: parseInt(capacity, 10),
           status: 'draft' as const,
           idempotency_key: idempotencyKeyRef.current,
@@ -601,7 +596,7 @@ export default function CourseBuilderPage() {
                   </Field>
 
                   <Field
-                    label={format === 'series' ? 'Pris per gang' : 'Pris'}
+                    label={format === 'series' ? 'Pris for hele kurset' : 'Pris'}
                     htmlFor="cb-price"
                     error={showError('price') && <FieldError>{errors.price}</FieldError>}
                   >
@@ -626,24 +621,6 @@ export default function CourseBuilderPage() {
                     </div>
                   </Field>
                 </div>
-
-                {format === 'series' &&
-                  price !== '' &&
-                  weeks !== '' &&
-                  !showError('price') &&
-                  !showError('weeks') && (
-                    <div className="flex items-baseline justify-between gap-3 rounded-xl bg-muted px-4 py-3">
-                      {/* Full-ink label: -muted grey loses AA on the grey fill */}
-                      <span className="text-base text-foreground">
-                        Totalt for {parseInt(weeks, 10) || 0} uker
-                      </span>
-                      <span className="text-base font-medium tabular-nums text-foreground">
-                        {formatKroner(
-                          (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0),
-                        )}
-                      </span>
-                    </div>
-                  )}
               </section>
             </div>
           </Card>
