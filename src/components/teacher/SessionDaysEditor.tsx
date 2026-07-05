@@ -42,9 +42,9 @@ export function timeToMin(t: string): number {
   return h * 60 + m
 }
 
-const ALL_TIME_SLOTS = generateTimeSlots()
+export const ALL_TIME_SLOTS = generateTimeSlots()
 
-function endTimeSlotsFor(startTime: string): string[] {
+export function endTimeSlotsFor(startTime: string): string[] {
   if (!startTime) return ALL_TIME_SLOTS
   const min = timeToMin(startTime) + 15
   return ALL_TIME_SLOTS.filter((t) => timeToMin(t) >= min)

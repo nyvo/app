@@ -262,21 +262,14 @@ function generateSessionDates(
   return results
 }
 
-// Insert course sessions and set end_date on the course.
+// Insert course sessions. courses.start_date/end_date are derived from the
+// session rows by the sync_course_date_bounds DB trigger — no manual sync.
 // If the session insert fails the course row is deleted so no orphan remains.
 async function insertCourseSessionsOrRollback(
   courseId: string,
   sessionEntries: { date: string; startTime: string; endTime?: string }[]
 ): Promise<{ error: Error | null }> {
   if (sessionEntries.length === 0) return { error: null }
-
-  // Compute and set end_date (last session's date)
-  if (sessionEntries.length > 1) {
-    const endDate = sessionEntries[sessionEntries.length - 1].date
-    await typedFrom('courses')
-      .update({ end_date: endDate })
-      .eq('id', courseId)
-  }
 
   const sessions: CourseSessionInsert[] = sessionEntries.map((entry, i) => ({
     course_id: courseId,

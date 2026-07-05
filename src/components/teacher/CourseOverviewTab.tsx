@@ -19,9 +19,9 @@ interface CourseOverviewTabProps {
   /** Raw Stripe account status (pending | restricted | rejected | enabled | null) */
   paymentSetupStatus: string | null;
   paymentSetupComplete: boolean;
-  /** Whether payment setup is a publish requirement for this seller (Pro only).
-   *  Free-tier sellers publish without Stripe onboarding — the payout nudge in
-   *  the readiness card is hidden for them. */
+  /** Whether payment setup is a publish requirement for this course — true
+   *  when it has any paid tier (price or drop-in), on every plan. 0 kr courses
+   *  publish without Stripe onboarding, so the payout nudge is hidden. */
   paymentSetupRequired: boolean;
   allowsDropIn: boolean;
   onAllowsDropInChange: (next: boolean) => void;
@@ -86,17 +86,22 @@ function sessionTimeRange(s: CourseSession): string {
 }
 
 /** Timeplan card header status, right-aligned next to the title: the start
- *  date before the first session, "Uke x/x" once it's underway (x = number
- *  of sessions whose date has arrived, out of the total). Assumes `sessions`
- *  is already sorted ascending by date (the caller's `ordered`). */
-function timeplanHeaderStatus(sessions: CourseSession[], today: string): string | null {
+ *  date before the first session, "Uke x/x" (series) or "Dag x/x" (multi-day
+ *  enkeltkurs) once it's underway (x = number of sessions whose date has
+ *  arrived, out of the total). Assumes `sessions` is already sorted ascending
+ *  by date (the caller's `ordered`). */
+function timeplanHeaderStatus(
+  sessions: CourseSession[],
+  today: string,
+  unit: 'Uke' | 'Dag',
+): string | null {
   if (sessions.length === 0) return null;
   const total = sessions.length;
   if (sessions[0].session_date > today) {
     return `Kurset starter ${dayMonth(sessions[0].session_date)}`;
   }
   const current = sessions.filter((s) => s.session_date <= today).length;
-  return `Uke ${current}/${total}`;
+  return `${unit} ${current}/${total}`;
 }
 
 export function CourseOverviewTab({
@@ -167,6 +172,7 @@ export function CourseOverviewTab({
       <div className="grid gap-4 lg:grid-cols-2">
         <TimeplanCard
           sessions={ordered}
+          progressUnit={isSeries ? 'Uke' : 'Dag'}
           onEditSession={onEditSession}
           onOpenAll={onOpenKursplan}
         />
@@ -316,15 +322,17 @@ function ReadinessCard({
 
 function TimeplanCard({
   sessions,
+  progressUnit,
   onEditSession,
   onOpenAll,
 }: {
   sessions: CourseSession[];
+  progressUnit: 'Uke' | 'Dag';
   onEditSession: (id: string) => void;
   onOpenAll: () => void;
 }) {
   const today = new Date().toISOString().slice(0, 10);
-  const statusLabel = timeplanHeaderStatus(sessions, today);
+  const statusLabel = timeplanHeaderStatus(sessions, today, progressUnit);
 
   if (sessions.length <= 1) {
     const s = sessions[0];

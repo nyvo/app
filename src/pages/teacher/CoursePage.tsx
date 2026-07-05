@@ -41,7 +41,7 @@ import {
   unpublishCourse,
   deleteCourse,
 } from '@/services/courses';
-import { type SessionDay } from '@/components/teacher/SessionDaysEditor';
+import { type SessionDay, timeToMin } from '@/components/teacher/SessionDaysEditor';
 import { teacherCancelSignup } from '@/services/signups';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { useAuth } from '@/contexts/AuthContext';
@@ -68,6 +68,19 @@ function formatLocalYMD(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+/** Minutes since midnight → HH:MM. */
+function minToTime(mins: number): string {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/** Capitalized Norwegian weekday name for a date ("Mandag"). */
+function weekdayLabel(date: Date): string {
+  const name = new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(date);
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 /**
@@ -281,10 +294,26 @@ const CoursePage = () => {
     setIsSaving(true);
     setSaveError(null);
     try {
+      // Rebuild the denormalized schedule label in the same shape createDraft
+      // wrote it: singles from the earliest day ("Lørdag, 10:00–16:00"),
+      // series as plural weekday + range ("Mandager, 18:00–19:00").
       let timeSchedule: string | undefined;
-      if (settingsDate && settingsTime) {
-        const dayName = new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(settingsDate);
-        timeSchedule = `${dayName.charAt(0).toUpperCase() + dayName.slice(1)}er, ${settingsTime}`;
+      if (courseData.format === 'single') {
+        const first = [...sessionDays]
+          .filter((d) => d.date && d.startTime)
+          .sort((a, b) => formatLocalYMD(a.date!).localeCompare(formatLocalYMD(b.date!)))[0];
+        if (first) {
+          timeSchedule = first.endTime
+            ? `${weekdayLabel(first.date!)}, ${first.startTime}–${first.endTime}`
+            : `${weekdayLabel(first.date!)}, ${first.startTime}`;
+        }
+      } else if (settingsDate && settingsTime) {
+        const end = settingsDuration
+          ? minToTime(timeToMin(settingsTime) + settingsDuration)
+          : '';
+        timeSchedule = end
+          ? `${weekdayLabel(settingsDate)}er, ${settingsTime}–${end}`
+          : `${weekdayLabel(settingsDate)}er, ${settingsTime}`;
       }
 
       const updateData = {
@@ -403,20 +432,65 @@ const CoursePage = () => {
         // Refetch sessions so UI reflects the saved state.
         const updatedSessions = await fetchCourseSessions(courseId);
         if (updatedSessions.data) setSessions(updatedSessions.data);
-      } else if (settingsTime && sessions.length > 0) {
-        // Series: bulk-apply start time to all sessions (unchanged behavior).
-        const oldTime = sessions[0]?.start_time;
-        if (oldTime && oldTime !== settingsTime) {
-          await Promise.all(sessions.map((s) => updateCourseSession(s.id, { start_time: settingsTime })));
-          const updatedSessions = await fetchCourseSessions(courseId);
-          if (updatedSessions.data) setSessions(updatedSessions.data);
+      } else if (sessions.length > 0) {
+        const sorted = [...sessions].sort((a, b) => a.session_number - b.session_number);
+        if (courseData.status === 'draft' && settingsDate) {
+          // Draft series: startdato/tid edits regenerate the weekly session
+          // dates in place — plain updates, nobody to notify on a draft. The
+          // sync_course_date_bounds DB trigger keeps courses.start_date/
+          // end_date in step with the session rows.
+          let changed = false;
+          for (let i = 0; i < sorted.length; i++) {
+            const d = new Date(settingsDate);
+            d.setDate(settingsDate.getDate() + i * 7);
+            const dateStr = formatLocalYMD(d);
+            const s = sorted[i];
+            const timeChanged = !!settingsTime && s.start_time.slice(0, 5) !== settingsTime;
+            if (s.session_date === dateStr && !timeChanged) continue;
+            const { error: sessError } = await updateCourseSession(s.id, {
+              session_date: dateStr,
+              ...(settingsTime ? { start_time: settingsTime } : {}),
+            });
+            if (sessError) {
+              setSaveError(friendlyError(sessError, 'Kunne ikke oppdatere timeplanen. Prøv igjen.'));
+              setIsSaving(false);
+              return;
+            }
+            changed = true;
+          }
+          if (changed) {
+            const updatedSessions = await fetchCourseSessions(courseId);
+            if (updatedSessions.data) setSessions(updatedSessions.data);
+          }
+        } else if (settingsTime) {
+          // Published series: bulk-apply start time to all sessions
+          // (unchanged behavior — dates are locked once live).
+          const oldTime = sorted[0]?.start_time;
+          if (oldTime && oldTime !== settingsTime) {
+            await Promise.all(sorted.map((s) => updateCourseSession(s.id, { start_time: settingsTime })));
+            const updatedSessions = await fetchCourseSessions(courseId);
+            if (updatedSessions.data) setSessions(updatedSessions.data);
+          }
         }
       }
+
+      // Keep local startDate in step with the saved schedule (the DB derives
+      // courses.start_date from the session rows).
+      const savedStartDate =
+        courseData.format === 'single'
+          ? [...sessionDays]
+              .filter((d) => d.date)
+              .map((d) => formatLocalYMD(d.date!))
+              .sort()[0] ?? null
+          : courseData.status === 'draft' && settingsDate
+            ? formatLocalYMD(settingsDate)
+            : null;
 
       setCourseData((prev) =>
         prev
           ? {
               ...prev,
+              startDate: savedStartDate ?? prev.startDate,
               title: settingsTitle.trim(),
               description: settingsDescription.trim(),
               location: settingsLocation.trim() || null,
