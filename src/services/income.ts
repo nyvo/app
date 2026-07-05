@@ -28,10 +28,10 @@ export interface IncomeSeries {
 }
 
 interface IncomeRow {
-  amount_paid: number | null
-  refund_amount: number | null
-  created_at: string | null
-  payment_status: 'pending' | 'paid' | 'failed' | 'refunded' | null
+  /** Oslo wall-clock day, `YYYY-MM-DD`, from seller_income_series. */
+  bucket_day: string
+  /** Net income (paid − refund, floored at 0) summed for that day. */
+  net_nok: number
 }
 
 const MONTH_ABBR_NB = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const
@@ -131,40 +131,26 @@ function bucketKeyForDate(range: IncomeRange, iso: string): string | null {
   return range === 'year' ? monthKey(d) : formatLocalDateKey(d)
 }
 
-function netAmount(row: IncomeRow): number {
-  const paid = row.amount_paid ?? 0
-  const refunded = row.refund_amount ?? 0
-  return Math.max(0, paid - refunded)
-}
-
 /**
  * Sum of the platform take (free-tier 5% payout deduction) charged this
  * calendar month. Feeds the "plattformgebyr denne måneden" line under the
  * income chart — the free seller's self-serve Pro crossover math. Refunded
  * rows are excluded: their fee was returned with the refund.
+ *
+ * Summed in the database (seller_platform_fee_month) — shipping raw rows hit
+ * PostgREST's 1000-row cap and undercounted sellers past that many signups.
  */
 export async function fetchPlatformFeeMonth(
   sellerId: string,
 ): Promise<{ data: number; error: Error | null }> {
-  const now = new Date()
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-
-  const { data, error } = await supabase
-    .from('signups')
-    .select('platform_fee_nok')
-    .eq('seller_id', sellerId)
-    .eq('payment_status', 'paid')
-    .gt('platform_fee_nok', 0)
-    .gte('created_at', monthStart.toISOString())
+  const { data, error } = await supabase.rpc('seller_platform_fee_month', {
+    p_seller_id: sellerId,
+  })
 
   if (error) {
     return { data: 0, error: error as Error }
   }
-  const total = ((data ?? []) as { platform_fee_nok: number | null }[]).reduce(
-    (sum, row) => sum + (row.platform_fee_nok ?? 0),
-    0,
-  )
-  return { data: total, error: null }
+  return { data: Number(data) || 0, error: null }
 }
 
 /**
@@ -198,12 +184,12 @@ export async function fetchIncomeSeries(
     previousStart = addDays(periodStart, -span)
   }
 
-  const { data, error } = await supabase
-    .from('signups')
-    .select('amount_paid, refund_amount, created_at, payment_status')
-    .eq('seller_id', sellerId)
-    .in('payment_status', ['paid', 'refunded'])
-    .gte('created_at', previousStart.toISOString())
+  // Daily net aggregates from the DB (bounded row count), not raw signups —
+  // the old raw-row fetch silently truncated at PostgREST's 1000-row cap.
+  const { data, error } = await supabase.rpc('seller_income_series', {
+    p_seller_id: sellerId,
+    p_from: previousStart.toISOString(),
+  })
 
   if (error) {
     return { data: null, error: error as Error }
@@ -228,13 +214,13 @@ export async function fetchIncomeSeries(
     range === 'year' ? addMonths(now, -12).getTime() : periodStart.getTime()
 
   for (const row of rows) {
-    if (!row.created_at) continue
-    const ts = new Date(row.created_at).getTime()
+    if (!row.bucket_day) continue
+    const ts = new Date(row.bucket_day).getTime()
     if (Number.isNaN(ts)) continue
-    const amount = netAmount(row)
+    const amount = Number(row.net_nok) || 0
     if (amount === 0) continue
 
-    const key = bucketKeyForDate(range, row.created_at)
+    const key = bucketKeyForDate(range, row.bucket_day)
     if (!key) continue
 
     if (ts >= periodStartMs) {

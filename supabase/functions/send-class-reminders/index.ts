@@ -17,6 +17,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { sendEmail } from '../_shared/email.ts'
+import { timingSafeEqual } from '../_shared/auth.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -77,8 +78,8 @@ function osloDate(daysAhead: number): string {
 Deno.serve(async (req: Request) => {
   const auth = req.headers.get('authorization') || ''
   const providedSecret = req.headers.get('x-cron-secret') || ''
-  const hasServiceRole = auth === `Bearer ${supabaseServiceKey}`
-  const hasCronSecret = cronSecret && providedSecret === cronSecret
+  const hasServiceRole = timingSafeEqual(auth, `Bearer ${supabaseServiceKey}`)
+  const hasCronSecret = timingSafeEqual(providedSecret, cronSecret)
 
   if (!hasServiceRole && !hasCronSecret) {
     return new Response('Unauthorized', { status: 401 })
@@ -161,7 +162,8 @@ Deno.serve(async (req: Request) => {
       summary.sessions += 1
       const courseStart = reminderStartLabel(session.session_date, session.start_time)
       const studioName = course.seller?.name ?? ''
-      let anyFailed = false
+      let anySucceeded = false
+      let attempted = 0
       let first = true
 
       // Sequential with a small gap — Resend's default limit is ~2 req/s, and
@@ -170,6 +172,7 @@ Deno.serve(async (req: Request) => {
         if (!s.participant_email) continue
         if (!first) await new Promise((r) => setTimeout(r, 550))
         first = false
+        attempted += 1
         const result = await sendEmail({
           template: 'class-reminder',
           to: s.participant_email,
@@ -183,22 +186,25 @@ Deno.serve(async (req: Request) => {
         })
         if (result.error) {
           summary.failed += 1
-          anyFailed = true
           console.error('[send-class-reminders] email failed', {
             to: s.participant_email,
             sessionId: session.id,
             error: result.error,
           })
         } else {
+          anySucceeded = true
           summary.sent += 1
         }
       }
 
-      // Stamp only when EVERY send succeeded (or there was nobody to remind).
-      // Stamping on partial success permanently dropped the failed tail of the
-      // list. The retry cost is a duplicate reminder for the earlier successes
-      // — annoying but far better than participants silently never reminded.
-      if (!anyFailed) {
+      // Stamp when at least one send landed, or there was nobody to remind.
+      // The old rule (stamp only if EVERY send succeeded) meant a single
+      // permanently-rejected address kept the session unstamped through all ~8
+      // hourly windows, re-sending to everyone else each run. Now one bad
+      // address costs that one recipient their reminder (logged above) instead
+      // of spamming the whole class. A TOTAL failure (every attempt failed,
+      // e.g. Resend down) leaves the session unstamped so the next run retries.
+      if (anySucceeded || attempted === 0) {
         await supabase
           .from('course_sessions')
           .update({ reminder_sent_at: new Date().toISOString() })

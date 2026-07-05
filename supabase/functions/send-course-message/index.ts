@@ -80,9 +80,14 @@ Deno.serve(async (req: Request) => {
 
   let notified = 0
   let failed = 0
+  let first = true
 
   for (const s of signups ?? []) {
     if (!s.participant_email) continue
+    // Pace sends — Resend's default is ~2 req/s and a tight loop over a full
+    // class 429s mid-list, silently dropping the tail.
+    if (!first) await new Promise((r) => setTimeout(r, 550))
+    first = false
     const result = await sendEmail({
       template: 'course-message',
       to: s.participant_email,
