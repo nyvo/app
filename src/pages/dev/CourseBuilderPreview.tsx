@@ -147,7 +147,7 @@ export default function CourseBuilderPreview() {
                   <Field label="Antall plasser" htmlFor="b-cap">
                     <Input id="b-cap" className={BIG_INPUT} type="number" inputMode="numeric" min="1" value={capacity} onChange={(e) => setCapacity(e.target.value)} />
                   </Field>
-                  <Field label={format === 'series' ? 'Pris per gang' : 'Pris'} htmlFor="b-price">
+                  <Field label={format === 'series' ? 'Pris for hele kurset' : 'Pris'} htmlFor="b-price">
                     <div className="relative">
                       <Input id="b-price" className={cn(BIG_INPUT, 'pr-10 tabular-nums')} type="number" inputMode="numeric" min="0" value={price} onChange={(e) => setPrice(e.target.value)} />
                       <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-base text-foreground-muted">kr</span>
