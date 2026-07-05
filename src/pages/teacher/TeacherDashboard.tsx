@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
-import { logger } from '@/lib/logger';
+import { useState, useCallback, lazy, Suspense } from 'react';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
@@ -88,63 +88,71 @@ function dayLabel(dateStr?: string): string {
 const TeacherDashboard = () => {
   const { currentSeller } = useAuth();
   const isPro = isProSeller(currentSeller);
-  const [dashboardCourses, setDashboardCourses] = useState<DashboardCourse[] | null>(null);
-  const [recentSignupsRaw, setRecentSignupsRaw] = useState<SignupWithDetails[] | null>(null);
-  const [incomeSeries, setIncomeSeries] = useState<IncomeSeries | null>(null);
+  const sellerId = currentSeller?.id;
+  const queryClient = useQueryClient();
   const [incomeRange, setIncomeRange] = useState<IncomeRange>('month');
-  const incomeRangeRef = useRef<IncomeRange>('month');
-  incomeRangeRef.current = incomeRange;
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedSignupId, setSelectedSignupId] = useState<string | null>(null);
-  const hasLoadedRef = useRef(false);
 
-  // Returns true if any fetch failed. A failed fetch must NOT clobber
-  // last-known data with [] — a false "no upcoming classes / no signups"
-  // empty state is worse than an error for an operational dashboard.
-  function processDashboardResults(
-    nextSessionsResult: Awaited<ReturnType<typeof fetchNextSessions>>,
-    signupsResult: Awaited<ReturnType<typeof fetchRecentSignups>>,
-  ): boolean {
-    let hadError = false;
-
-    if (nextSessionsResult.error) {
-      logger.error('Failed to fetch next sessions:', nextSessionsResult.error);
-      hadError = true;
-    } else {
-      setDashboardCourses(
-        (nextSessionsResult.data ?? []).map(({ session, course, signupCount }) =>
-          mapSessionForDashboard(session, course, signupCount),
-        ),
+  // Server state on TanStack Query. What the old hand-rolled version needed
+  // bespoke code for comes free here: background refetch errors keep
+  // last-known data (no false empty states), realtime events invalidate
+  // instead of re-orchestrating fetches, and focus-refetch keeps a kept-open
+  // dashboard current.
+  const nextSessionsQuery = useQuery({
+    queryKey: ['dashboard-next-sessions', sellerId],
+    enabled: !!sellerId,
+    queryFn: async (): Promise<DashboardCourse[]> => {
+      const { data, error } = await fetchNextSessions(sellerId!, ROW_LIMIT);
+      if (error) throw error;
+      return (data ?? []).map(({ session, course, signupCount }) =>
+        mapSessionForDashboard(session, course, signupCount),
       );
-    }
+    },
+  });
 
-    if (signupsResult.error) {
-      logger.error('Failed to fetch recent signups:', signupsResult.error);
-      hadError = true;
-    } else {
-      setRecentSignupsRaw(signupsResult.data ?? []);
-    }
+  const recentSignupsQuery = useQuery({
+    queryKey: ['dashboard-recent-signups', sellerId],
+    enabled: !!sellerId,
+    queryFn: async (): Promise<SignupWithDetails[]> => {
+      const { data, error } = await fetchRecentSignups(sellerId!, ROW_LIMIT);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-    return hadError;
-  }
+  // Income chart — keyed on the range so toggling Uke/Måned/År is cached per
+  // range; keepPreviousData shows the old series while the next one loads
+  // instead of flashing a skeleton.
+  const incomeQuery = useQuery({
+    queryKey: ['income-series', sellerId, incomeRange],
+    enabled: !!sellerId,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<IncomeSeries> => {
+      const { data, error } = await fetchIncomeSeries(sellerId!, incomeRange);
+      if (error || !data) throw error ?? new Error('Income series unavailable');
+      return data;
+    },
+  });
 
-  const refetchDashboardData = useCallback(async () => {
-    if (!currentSeller?.id) return;
+  // Free-tier fee line — this month's platform take, the seller's self-serve
+  // Pro crossover math. Not fetched for Pro (their take is 0).
+  const feeQuery = useQuery({
+    queryKey: ['platform-fee-month', sellerId],
+    enabled: !!sellerId && !isPro,
+    queryFn: async (): Promise<number> => {
+      const { data, error } = await fetchPlatformFeeMonth(sellerId!);
+      if (error) throw error;
+      return data;
+    },
+  });
 
-    const [nextSessionsResult, signupsResult, incomeResult] = await Promise.all([
-      fetchNextSessions(currentSeller.id, ROW_LIMIT),
-      fetchRecentSignups(currentSeller.id, ROW_LIMIT),
-      fetchIncomeSeries(currentSeller.id, incomeRangeRef.current),
-    ]);
+  const refetchDashboardData = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ['dashboard-next-sessions', sellerId] });
+    void queryClient.invalidateQueries({ queryKey: ['dashboard-recent-signups', sellerId] });
+    void queryClient.invalidateQueries({ queryKey: ['income-series', sellerId] });
+  }, [queryClient, sellerId]);
 
-    // Background refetch (realtime/action-triggered): on error keep showing
-    // the last-known data rather than flipping the page into an error state.
-    processDashboardResults(nextSessionsResult, signupsResult);
-    if (incomeResult.data) setIncomeSeries(incomeResult.data);
-  }, [currentSeller?.id]);
-
-  // Drawer actions mirror the course page; refetch refreshes the recent list.
+  // Drawer actions mirror the course page; invalidation refreshes the lists.
   const handleCancelEnrollment = async (signupId: string, refund: boolean) => {
     const { error } = await teacherCancelSignup(signupId, { refund });
     if (error) {
@@ -165,88 +173,18 @@ const TeacherDashboard = () => {
     currentSeller?.id,
   );
 
-  // Initial data fetch
-  useEffect(() => {
-    let isActive = true;
-
-    async function loadDashboardData() {
-      if (!currentSeller?.id) {
-        setIsLoading(false);
-        return;
-      }
-
-      if (!hasLoadedRef.current) {
-        setIsLoading(true);
-      }
-      setLoadError(null);
-
-      try {
-        const [nextSessionsResult, signupsResult] = await Promise.all([
-          fetchNextSessions(currentSeller.id, ROW_LIMIT),
-          fetchRecentSignups(currentSeller.id, ROW_LIMIT),
-        ]);
-
-        if (!isActive) return;
-
-        if (processDashboardResults(nextSessionsResult, signupsResult)) {
-          setLoadError('Kunne ikke laste oversikten.');
-        }
-      } catch (err) {
-        logger.error('Dashboard load error:', err);
-        if (isActive) {
-          setLoadError('Noe gikk galt. Prøv igjen.');
-        }
-      } finally {
-        if (isActive) {
-          setIsLoading(false);
-          hasLoadedRef.current = true;
-        }
-      }
-    }
-
-    loadDashboardData();
-
-    return () => {
-      isActive = false;
-    };
-  }, [currentSeller?.id]);
-
-  // Income chart — refetches whenever the range toggle changes, independent
-  // of the main dashboard loader so toggling Uke/Måned/År stays snappy.
-  useEffect(() => {
-    if (!currentSeller?.id) {
-      setIncomeSeries(null);
-      return;
-    }
-    let isActive = true;
-    fetchIncomeSeries(currentSeller.id, incomeRange).then((result) => {
-      if (!isActive) return;
-      if (result.data) setIncomeSeries(result.data);
-      else if (result.error) logger.error('Failed to fetch income:', result.error);
-    });
-    return () => {
-      isActive = false;
-    };
-  }, [currentSeller?.id, incomeRange]);
-
-  // Free-tier fee line — this month's platform take, the seller's self-serve
-  // Pro crossover math. Not fetched for Pro (their take is 0).
-  const [monthPlatformFee, setMonthPlatformFee] = useState(0);
-  useEffect(() => {
-    if (!currentSeller?.id || isPro) {
-      setMonthPlatformFee(0);
-      return;
-    }
-    let isActive = true;
-    fetchPlatformFeeMonth(currentSeller.id).then((result) => {
-      if (!isActive) return;
-      if (result.error) logger.error('Failed to fetch platform fees:', result.error);
-      else setMonthPlatformFee(result.data);
-    });
-    return () => {
-      isActive = false;
-    };
-  }, [currentSeller?.id, isPro]);
+  const dashboardCourses = nextSessionsQuery.data ?? null;
+  const recentSignupsRaw = recentSignupsQuery.data ?? null;
+  const incomeSeries = incomeQuery.data ?? null;
+  const monthPlatformFee = feeQuery.data ?? 0;
+  const isLoading = !!sellerId && (nextSessionsQuery.isPending || recentSignupsQuery.isPending);
+  // Error page only when a list failed with NOTHING to show — a failed
+  // background refetch keeps rendering last-known data.
+  const loadError =
+    (nextSessionsQuery.isError && nextSessionsQuery.data === undefined) ||
+    (recentSignupsQuery.isError && recentSignupsQuery.data === undefined)
+      ? 'Kunne ikke laste oversikten.'
+      : null;
 
   return (
     <div className="flex-1 overflow-y-auto bg-canvas h-full">
