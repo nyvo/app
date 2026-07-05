@@ -83,7 +83,7 @@ const CheckoutSuccessPage = () => {
   useEffect(() => {
     let cancelled = false;
     async function fetchSignupDetails() {
-      if (!isStripe) {
+      if (!paymentIntentId) {
         setLoading(false);
         return;
       }
@@ -102,8 +102,7 @@ const CheckoutSuccessPage = () => {
 
         // Server-side lookup via SECURITY DEFINER RPC — avoids exposing
         // all paid signups through a broad SELECT RLS policy.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error: fetchError } = await (supabase.rpc as any)('get_signup_by_stripe_id', {
+        const { data, error: fetchError } = await supabase.rpc('get_signup_by_stripe_id', {
           p_payment_intent_id: paymentIntentId,
         });
         if (cancelled) return;
@@ -132,8 +131,7 @@ const CheckoutSuccessPage = () => {
         // cancelled the PI and never minted a signup), the buyer is NOT enrolled and was NOT
         // charged. Surface that instead of the optimistic "we're processing" fallback below.
         if (attemptRef) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { data: attemptStatus } = await (supabase.rpc as any)('get_payment_attempt_status', {
+          const { data: attemptStatus } = await supabase.rpc('get_payment_attempt_status', {
             p_attempt_id: attemptRef,
           });
           if (cancelled) return;

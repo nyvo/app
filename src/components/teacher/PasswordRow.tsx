@@ -48,9 +48,7 @@ export function PasswordRow() {
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      const { data, error } = await (
-        supabase.rpc as unknown as (fn: string) => ReturnType<typeof supabase.rpc>
-      )('has_own_password')
+      const { data, error } = await supabase.rpc('has_own_password')
       if (cancelled) return
       if (error) {
         // Keep the button disabled rather than assuming no password.

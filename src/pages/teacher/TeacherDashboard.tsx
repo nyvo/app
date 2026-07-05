@@ -22,7 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchCourses, fetchNextSessions } from '@/services/courses';
+import { fetchNextSessions } from '@/services/courses';
 import type { Course as CourseDB, CourseSession } from '@/types/database';
 import {
   fetchRecentSignups,
@@ -94,33 +94,47 @@ const TeacherDashboard = () => {
   const [selectedSignupId, setSelectedSignupId] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
 
+  // Returns true if any fetch failed. A failed fetch must NOT clobber
+  // last-known data with [] — a false "no upcoming classes / no signups"
+  // empty state is worse than an error for an operational dashboard.
   function processDashboardResults(
     nextSessionsResult: Awaited<ReturnType<typeof fetchNextSessions>>,
     signupsResult: Awaited<ReturnType<typeof fetchRecentSignups>>,
-  ) {
-    if (nextSessionsResult.data && nextSessionsResult.data.length > 0) {
+  ): boolean {
+    let hadError = false;
+
+    if (nextSessionsResult.error) {
+      logger.error('Failed to fetch next sessions:', nextSessionsResult.error);
+      hadError = true;
+    } else {
       setDashboardCourses(
-        nextSessionsResult.data.map(({ session, course, signupCount }) =>
+        (nextSessionsResult.data ?? []).map(({ session, course, signupCount }) =>
           mapSessionForDashboard(session, course, signupCount),
         ),
       );
-    } else {
-      setDashboardCourses([]);
     }
 
-    setRecentSignupsRaw(signupsResult.data ?? []);
+    if (signupsResult.error) {
+      logger.error('Failed to fetch recent signups:', signupsResult.error);
+      hadError = true;
+    } else {
+      setRecentSignupsRaw(signupsResult.data ?? []);
+    }
+
+    return hadError;
   }
 
   const refetchDashboardData = useCallback(async () => {
     if (!currentSeller?.id) return;
 
-    const [, nextSessionsResult, signupsResult, incomeResult] = await Promise.all([
-      fetchCourses(currentSeller.id),
+    const [nextSessionsResult, signupsResult, incomeResult] = await Promise.all([
       fetchNextSessions(currentSeller.id, ROW_LIMIT),
       fetchRecentSignups(currentSeller.id, ROW_LIMIT),
       fetchIncomeSeries(currentSeller.id, incomeRangeRef.current),
     ]);
 
+    // Background refetch (realtime/action-triggered): on error keep showing
+    // the last-known data rather than flipping the page into an error state.
     processDashboardResults(nextSessionsResult, signupsResult);
     if (incomeResult.data) setIncomeSeries(incomeResult.data);
   }, [currentSeller?.id]);
@@ -162,20 +176,16 @@ const TeacherDashboard = () => {
       setLoadError(null);
 
       try {
-        const [coursesResult, nextSessionsResult, signupsResult] = await Promise.all([
-          fetchCourses(currentSeller.id),
+        const [nextSessionsResult, signupsResult] = await Promise.all([
           fetchNextSessions(currentSeller.id, ROW_LIMIT),
           fetchRecentSignups(currentSeller.id, ROW_LIMIT),
         ]);
 
         if (!isActive) return;
 
-        if (coursesResult.error) {
-          logger.error('Failed to fetch courses:', coursesResult.error);
-          setLoadError('Kunne ikke laste kurs');
+        if (processDashboardResults(nextSessionsResult, signupsResult)) {
+          setLoadError('Kunne ikke laste oversikten.');
         }
-
-        processDashboardResults(nextSessionsResult, signupsResult);
       } catch (err) {
         logger.error('Dashboard load error:', err);
         if (isActive) {

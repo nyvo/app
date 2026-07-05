@@ -130,6 +130,7 @@ const CoursePage = () => {
     sessions,
     participants,
     participantsLoading,
+    participantsError,
     loading: isLoading,
     error,
     setCourse: setCourseData,
@@ -860,8 +861,9 @@ const CoursePage = () => {
   // Whether the course has ANY signup rows (confirmed OR cancelled). Cancelled
   // signups still carry payment records under retention, so a finished course
   // is only safe to hard-delete when there are none at all. Treat the
-  // not-yet-loaded state as "has records" so we never offer delete prematurely.
-  const hasSignupRecords = participantsLoading || participants.length > 0;
+  // not-yet-loaded state AND a failed fetch as "has records" so we never offer
+  // delete on incomplete information.
+  const hasSignupRecords = participantsLoading || participantsError || participants.length > 0;
 
   const courseUrl =
     currentSeller?.slug && courseData.slug
@@ -1086,7 +1088,15 @@ const CoursePage = () => {
                     </div>
 
                     <div className="rounded-lg border border-card bg-surface overflow-hidden">
-                      {visible.length === 0 ? (
+                      {participantsError && visible.length === 0 ? (
+                      // Failed fetch ≠ empty roster — never tell the teacher
+                      // "ingen påmeldte" when we simply couldn't load them.
+                      <EmptyState
+                        title="Kunne ikke laste deltakerne"
+                        description="Sjekk nettet og last siden på nytt."
+                        className="py-12"
+                      />
+                    ) : visible.length === 0 ? (
                       <EmptyState
                         title={
                           sortedParticipants.length === 0

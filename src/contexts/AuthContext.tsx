@@ -233,9 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ensure_own_profile is a SECURITY DEFINER RPC that (re)creates the caller's
       // own profile row idempotently — profiles is SELECT-only for the client, so
       // creation goes through the definer function, not a direct insert.
-      const { error: healError } = await (
-        supabase.rpc as unknown as (fn: string) => ReturnType<typeof supabase.rpc>
-      )('ensure_own_profile')
+      const { error: healError } = await supabase.rpc('ensure_own_profile')
       if (healError) {
         logger.error('Failed to self-heal missing profile, signing out:', healError)
         await supabase.auth.signOut()
@@ -475,12 +473,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // API for this by design. SECURITY DEFINER RPC (20260630140000). Returns exists
   // + has_password so the page can branch: sign in / sign up / code-bridge.
   const checkEmailAuthStatus = useCallback(async (email: string) => {
-    const { data, error } = await (
-      supabase.rpc as unknown as (
-        fn: string,
-        args: { p_email: string },
-      ) => ReturnType<typeof supabase.rpc>
-    )('check_email_auth_status', { p_email: email })
+    const { data, error } = await supabase.rpc('check_email_auth_status', { p_email: email })
     if (error) return { exists: false, hasPassword: false, error: error as Error }
     const row = (data as Array<{ email_exists: boolean; has_password: boolean }> | null)?.[0]
     return { exists: !!row?.email_exists, hasPassword: !!row?.has_password, error: null }
@@ -508,9 +501,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // state (userRef) is updated via onAuthStateChange.
   const ensureSeller = useCallback(async (name: string, slug: string, operatingModel: string = 'solo') => {
     // Call hardened RPC — no user_id param, uses auth.uid() server-side
-    const { data, error } = await (supabase.rpc as unknown as (
-      fn: string, args: Record<string, string>
-    ) => ReturnType<typeof supabase.rpc>)('ensure_seller_for_user', {
+    const { data, error } = await supabase.rpc('ensure_seller_for_user', {
       p_seller_name: name,
       p_slug: slug,
       p_operating_model: operatingModel,
@@ -581,10 +572,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setRole = useCallback(async (role: UserRole | null) => {
     const userId = userRef.current?.id
     if (!userId) return { error: new Error('Ikke logget inn') }
-    const { data, error } = await (supabase.rpc as unknown as (
-      fn: string, args: { p_role: UserRole | null }
-    ) => ReturnType<typeof supabase.rpc>)('set_user_role', {
-      p_role: role,
+    const { data, error } = await supabase.rpc('set_user_role', {
+      // p_role is nullable at the SQL level (null = back to the role chooser);
+      // generated types can't express nullable RPC params.
+      p_role: role as unknown as string,
     })
     if (error) return { error: error as Error }
     const updatedProfile = data as Profile | null
@@ -597,12 +588,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const completeBuyerOnboarding = useCallback(async (input: { name: string; phone?: string }) => {
     const userId = userRef.current?.id
     if (!userId) return { error: new Error('Ikke logget inn') }
-    const { data, error } = await (supabase.rpc as unknown as (
-      fn: string,
-      args: { p_name: string; p_phone: string | null }
-    ) => ReturnType<typeof supabase.rpc>)('complete_buyer_onboarding', {
+    const { data, error } = await supabase.rpc('complete_buyer_onboarding', {
       p_name: input.name.trim(),
-      p_phone: input.phone?.trim() || null,
+      // Omit rather than send null — the RPC's param default is NULL anyway.
+      p_phone: input.phone?.trim() || undefined,
     })
     if (error) return { error: error as Error }
     const updatedProfile = data as Profile | null
@@ -615,10 +604,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const markOnboardingComplete = useCallback(async () => {
     const userId = userRef.current?.id
     if (!userId) return { error: new Error('Ikke logget inn') }
-    const { data, error } = await (supabase.rpc as unknown as (
-      fn: string,
-      args?: Record<string, never>
-    ) => ReturnType<typeof supabase.rpc>)('mark_seller_onboarding_complete')
+    const { data, error } = await supabase.rpc('mark_seller_onboarding_complete')
     if (error) return { error: error as Error }
     const updatedProfile = data as Profile | null
     setProfile((prev) => updatedProfile ?? prev)

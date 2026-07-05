@@ -99,6 +99,11 @@ Deno.serve(async (req: Request) => {
       .eq('status', 'upcoming')
       .gte('session_date', osloDate(0))
       .lte('session_date', osloDate(2))
+      // Soonest-first: without an ORDER BY, which rows fill the LIMIT page is
+      // planner-dependent, and out-of-window rows could starve in-window
+      // sessions indefinitely once the range holds > MAX_SESSIONS_PER_RUN rows.
+      .order('session_date', { ascending: true })
+      .order('start_time', { ascending: true })
       .limit(MAX_SESSIONS_PER_RUN)
 
     if (sessionsError) {
@@ -106,7 +111,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const now = Date.now()
-    const summary = { checked: sessions?.length || 0, sessions: 0, sent: 0, failed: 0 }
+    const summary = { checked: sessions?.length || 0, sessions: 0, sent: 0, failed: 0, expired: 0 }
 
     for (const session of sessions || []) {
       const course = session.course as unknown as {
@@ -116,12 +121,27 @@ Deno.serve(async (req: Request) => {
         status: string
         seller: { name: string } | null
       } | null
-      if (!course || course.status !== 'published') continue
+      // Live courses only. NOTE: 'published' is not a course_status value
+      // (draft/upcoming/active/completed/cancelled) — the old
+      // `status !== 'published'` check skipped EVERY session, so no reminder
+      // could ever send.
+      if (!course || (course.status !== 'upcoming' && course.status !== 'active')) continue
 
       const startEpoch = sessionStartEpoch(session.session_date, session.start_time)
       if (startEpoch === null) continue
       const hoursUntil = (startEpoch - now) / (60 * 60 * 1000)
-      if (hoursUntil < WINDOW_MIN_HOURS || hoursUntil > WINDOW_MAX_HOURS) continue
+      if (hoursUntil < WINDOW_MIN_HOURS) {
+        // The window has permanently passed (all hourly retries missed, or the
+        // class already started) — a "day before" reminder now would be wrong.
+        // Stamp it so it stops occupying the LIMIT page on every future run.
+        summary.expired += 1
+        await supabase
+          .from('course_sessions')
+          .update({ reminder_sent_at: new Date().toISOString() })
+          .eq('id', session.id)
+        continue
+      }
+      if (hoursUntil > WINDOW_MAX_HOURS) continue
 
       const { data: signups, error: signupsError } = await supabase
         .from('signups')
@@ -141,11 +161,15 @@ Deno.serve(async (req: Request) => {
       summary.sessions += 1
       const courseStart = reminderStartLabel(session.session_date, session.start_time)
       const studioName = course.seller?.name ?? ''
-      let anySent = false
+      let anyFailed = false
+      let first = true
 
-      // Sequential — keeps Resend rate-limit happy on long lists.
+      // Sequential with a small gap — Resend's default limit is ~2 req/s, and
+      // a tight loop over a full class 429s mid-list.
       for (const s of signups || []) {
         if (!s.participant_email) continue
+        if (!first) await new Promise((r) => setTimeout(r, 550))
+        first = false
         const result = await sendEmail({
           template: 'class-reminder',
           to: s.participant_email,
@@ -159,6 +183,7 @@ Deno.serve(async (req: Request) => {
         })
         if (result.error) {
           summary.failed += 1
+          anyFailed = true
           console.error('[send-class-reminders] email failed', {
             to: s.participant_email,
             sessionId: session.id,
@@ -166,14 +191,14 @@ Deno.serve(async (req: Request) => {
           })
         } else {
           summary.sent += 1
-          anySent = true
         }
       }
 
-      // Stamp once at least one participant was reached, or when there was
-      // nobody to remind. A total send failure leaves the row unstamped so
-      // the next hourly run inside the window retries it.
-      if (anySent || (signups || []).length === 0) {
+      // Stamp only when EVERY send succeeded (or there was nobody to remind).
+      // Stamping on partial success permanently dropped the failed tail of the
+      // list. The retry cost is a duplicate reminder for the earlier successes
+      // — annoying but far better than participants silently never reminded.
+      if (!anyFailed) {
         await supabase
           .from('course_sessions')
           .update({ reminder_sent_at: new Date().toISOString() })

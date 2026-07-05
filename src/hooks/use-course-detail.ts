@@ -66,6 +66,7 @@ export interface UseCourseDetailReturn {
   participants: SignupWithProfile[];
   loading: boolean;
   participantsLoading: boolean;
+  participantsError: boolean;
   error: string | null;
   maxParticipants: number;
   setCourse: React.Dispatch<React.SetStateAction<MappedCourse | null>>;
@@ -90,12 +91,18 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
   // Participants state (for Deltakere tab)
   const [participants, setParticipants] = useState<SignupWithProfile[]>([]);
   const [participantsLoading, setParticipantsLoading] = useState(false);
+  // Failed fetch ≠ empty roster. Consumers must not render "ingen påmeldte"
+  // (or offer hard-delete, which is gated on zero signup records) on a failure.
+  const [participantsError, setParticipantsError] = useState(false);
 
   // Refetch trigger
   const [refetchKey, setRefetchKey] = useState(0);
 
   // Fetch course data from Supabase
   useEffect(() => {
+    // Cancellation guard: without it, navigating course A → course B fast can
+    // let A's slower response land last and render A's data under B's URL.
+    let cancelled = false;
     async function loadCourse() {
       if (!courseId) {
         setError('Fant ikke kurset.');
@@ -111,6 +118,7 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
           fetchCourseById(courseId),
           fetchDropInTier(courseId),
         ]);
+        if (cancelled) return;
 
         if (courseResult.error || !courseResult.data) {
           setError('Fant ikke kurset.');
@@ -121,22 +129,27 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
         setCourseData(mappedCourse);
         setMaxParticipants(mappedCourse.capacity);
       } catch {
-        setError('Noe gikk galt. Prøv igjen.');
+        if (!cancelled) setError('Noe gikk galt. Prøv igjen.');
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     }
 
     loadCourse();
+    return () => {
+      cancelled = true;
+    };
   }, [courseId, refetchKey]);
 
   // Fetch sessions when course is loaded
   useEffect(() => {
+    let cancelled = false;
     async function loadSessions() {
       if (!courseId || !courseData) return;
 
       setSessionsLoading(true);
       const { data: sessionsData } = await fetchCourseSessions(courseId);
+      if (cancelled) return;
       if (sessionsData) {
         setSessions(sessionsData);
       }
@@ -144,28 +157,43 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
     }
 
     loadSessions();
+    return () => {
+      cancelled = true;
+    };
   }, [courseId, courseData]);
 
   // Fetch participants when course is loaded
   useEffect(() => {
+    let cancelled = false;
     async function loadParticipants() {
       if (!courseId) return;
 
       setParticipantsLoading(true);
-      const { data: participantsData } = await fetchSignupsByCourseWithProfiles(courseId);
-      if (participantsData) {
+      setParticipantsError(false);
+      const { data: participantsData, error: participantsErr } = await fetchSignupsByCourseWithProfiles(courseId);
+      if (cancelled) return;
+      if (participantsErr) {
+        setParticipantsError(true);
+      } else if (participantsData) {
         setParticipants(participantsData);
       }
       setParticipantsLoading(false);
     }
 
     loadParticipants();
+    return () => {
+      cancelled = true;
+    };
   }, [courseId]);
 
   const refetchParticipants = useCallback(async () => {
     if (!courseId) return;
+    // Background refetch: on error keep last-known data (don't flip to error).
     const { data } = await fetchSignupsByCourseWithProfiles(courseId);
-    if (data) setParticipants(data);
+    if (data) {
+      setParticipants(data);
+      setParticipantsError(false);
+    }
   }, [courseId]);
 
   // Subscribe to real-time updates for this course's participants
@@ -185,6 +213,7 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
     participants,
     loading: isLoading,
     participantsLoading,
+    participantsError,
     error,
     maxParticipants,
     setCourse: setCourseData,
