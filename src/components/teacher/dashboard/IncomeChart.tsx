@@ -15,11 +15,9 @@ interface IncomeChartProps {
   tooltipContent?: ReactElement
 }
 
-// "30 dager", not "Måned" — the window is rolling (a trend line that always
-// spans the full width), and the label must not promise a calendar month.
 const RANGE_TABS: { key: IncomeRange; label: string }[] = [
   { key: 'week', label: 'Uke' },
-  { key: 'month', label: '30 dager' },
+  { key: 'month', label: 'Måned' },
   { key: 'year', label: 'År' },
 ]
 

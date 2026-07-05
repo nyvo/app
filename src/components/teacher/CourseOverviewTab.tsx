@@ -207,7 +207,7 @@ function FramedCard({
     <div className="flex flex-col rounded-2xl bg-primary-subtle p-2">
       <div className="flex items-center justify-between gap-3 px-3 py-2">
         <p className="text-sm font-medium text-primary">{title}</p>
-        {action && <span className="text-sm text-primary/65">{action}</span>}
+        {action && <span className="text-sm text-primary">{action}</span>}
       </div>
       <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-primary-border bg-surface">
         {children}
@@ -353,12 +353,22 @@ function TimeplanCard({
   const upcoming = sessions.filter((s) => s.session_date >= today);
   const preview =
     sessions.length > 3 && upcoming.length > 0 ? upcoming.slice(0, 3) : sessions.slice(0, 3);
+  // The next one actually being taught — first upcoming, non-cancelled (a
+  // future date that's been called off isn't "next"). `sessions` is already
+  // sorted ascending, so the first match is the earliest.
+  const nextId = sessions.find((s) => s.session_date >= today && s.status !== 'cancelled')?.id;
   return (
     <FramedCard title="Timeplan" action={statusLabel}>
       <div className="flex flex-1 flex-col p-5">
         <div className="space-y-1">
           {preview.map((s) => (
-            <SessionRow key={s.id} session={s} today={today} onEdit={() => onEditSession(s.id)} />
+            <SessionRow
+              key={s.id}
+              session={s}
+              today={today}
+              isNext={s.id === nextId}
+              onEdit={() => onEditSession(s.id)}
+            />
           ))}
         </div>
         {sessions.length > preview.length && (
@@ -378,10 +388,12 @@ function TimeplanCard({
 function SessionRow({
   session,
   today,
+  isNext,
   onEdit,
 }: {
   session: CourseSession;
   today: string;
+  isNext: boolean;
   onEdit: () => void;
 }) {
   const cancelled = session.status === 'cancelled';
@@ -389,13 +401,20 @@ function SessionRow({
   const editable = !cancelled && !past;
   const label = `${cap(weekdayLong(session.session_date))} ${dayMonth(session.session_date)}`;
 
-  // Accent line + date/time. Finished/cancelled rows dim, but their status
-  // badge stays full-opacity so it reads clearly.
+  // Accent line + date/time. Finished/cancelled rows dim; the "Avlyst" badge
+  // (cancelled only) stays full-opacity so it reads clearly.
   const left = (
     <div className={cn('flex min-w-0 flex-1 items-stretch gap-4', !editable && 'opacity-50')}>
       <span className="w-1 self-stretch rounded-full bg-primary/40" />
       <div className="min-w-0">
-        <p className="text-base font-medium text-foreground">{label}</p>
+        <p className="flex items-center gap-2 text-base font-medium text-foreground">
+          <span>{label}</span>
+          {isNext && (
+            <Badge variant="neutral" shape="pill" size="sm">
+              Neste
+            </Badge>
+          )}
+        </p>
         <p className="mt-0.5 text-sm tabular-nums text-foreground-muted">
           {sessionTimeRange(session)}
         </p>
@@ -421,16 +440,24 @@ function SessionRow({
     );
   }
 
+  // Completed (not cancelled) — the header status ("Uke x/x") already says
+  // the series is done, so repeating "Fullført" on every row is noise.
+  // Same silhouette as an editable row (chevron included), just dimmed.
+  if (!cancelled) {
+    return (
+      <div className={layout}>
+        {left}
+        <ChevronRight className="size-5 shrink-0 self-center text-foreground-subtle opacity-50" />
+      </div>
+    );
+  }
+
+  // Cancelled is the exception worth flagging per-row, so it keeps its badge.
   return (
     <div className={layout}>
       {left}
-      <Badge
-        variant={cancelled ? 'warning' : 'neutral'}
-        shape="pill"
-        size="sm"
-        className="shrink-0 self-center"
-      >
-        {cancelled ? 'Avlyst' : 'Fullført'}
+      <Badge variant="warning" shape="pill" size="sm" className="shrink-0 self-center">
+        Avlyst
       </Badge>
     </div>
   );

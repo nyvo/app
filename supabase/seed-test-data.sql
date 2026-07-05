@@ -351,6 +351,16 @@ BEGIN
       'upcoming');
   END LOOP;
 
+  -- c_series_draft — 8 Saturdays, starts in 3 weeks (matches courses row's
+  -- total_weeks/start_date — every other scenario has its session rows).
+  FOR i IN 1..8 LOOP
+    INSERT INTO public.course_sessions (course_id, session_number, session_date, start_time, end_time, status)
+    VALUES (c_series_draft, i,
+      (date_trunc('week', CURRENT_DATE + INTERVAL '21 days') + INTERVAL '5 days' + (i-1) * INTERVAL '7 days')::DATE,
+      '11:00', '12:00',
+      'upcoming');
+  END LOOP;
+
   -- c_series_completed — 8 Wednesdays, all complete
   FOR i IN 1..8 LOOP
     INSERT INTO public.course_sessions (course_id, session_number, session_date, start_time, end_time, status)

@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CourseSettingsTabProps {
   // General info
@@ -188,14 +189,6 @@ export const CourseSettingsTab = ({
     return allTimeSlots.filter((t) => timeToMin(t) >= startMin);
   }, [settingsTime, allTimeSlots]);
 
-  // Read-only display for a published series — its start date is in the past
-  // and per-session time changes go through the Oversikt reschedule (which
-  // notifies påmeldte), so the fields are locked here.
-  const startDateLabel = settingsDate
-    ? new Intl.DateTimeFormat('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' }).format(settingsDate)
-    : '—';
-  const timeLabel = settingsTime ? (endTime ? `${settingsTime}–${endTime}` : settingsTime) : '—';
-
   const handleEndTimeChange = (val: string) => {
     if (!settingsTime) return;
     const dur = timeToMin(val) - timeToMin(settingsTime);
@@ -352,72 +345,69 @@ export const CourseSettingsTab = ({
                   </p>
                 )}
               </div>
-            ) : isPublished ? (
-              /* Published series: start date is in the past and per-session
-                 time changes happen on Oversikt (notifies) — so lock it here. */
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <FieldLabel>Startdato</FieldLabel>
-                  <p className="text-base text-foreground">{startDateLabel}</p>
-                </div>
-                <div>
-                  <FieldLabel>Tidspunkt</FieldLabel>
-                  <p className="text-base tabular-nums text-foreground">{timeLabel}</p>
-                </div>
-              </div>
             ) : (
-              /* Draft series: editable start date + time. */
+              /* Series: start date + time. Once published, the start date is
+                 in the past and per-session time changes happen on Oversikt
+                 (notifies påmeldte) — so the fields stay visible but locked,
+                 with a tooltip explaining why. */
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <FieldLabel id="settings-date-label">Startdato</FieldLabel>
-                  <DatePicker
-                    aria-labelledby="settings-date-label"
-                    value={settingsDate}
-                    onChange={onDateChange}
-                    placeholder="Velg dato"
-                  />
+                  <ScheduleLockTooltip locked={isPublished}>
+                    <DatePicker
+                      aria-labelledby="settings-date-label"
+                      value={settingsDate}
+                      onChange={onDateChange}
+                      placeholder="Velg dato"
+                      disabled={isPublished}
+                    />
+                  </ScheduleLockTooltip>
                 </div>
                 <div>
                   <FieldLabel id="settings-time-label">Tidspunkt</FieldLabel>
-                  <div className="flex items-center gap-2">
-                    <Select
-                      value={settingsTime}
-                      onValueChange={(val) => {
-                        onTimeChange(val);
-                        // If current end time is now invalid, clear duration
-                        if (endTime && timeToMin(endTime) <= timeToMin(val)) {
-                          onDurationChange(null);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full" aria-label="Starttid">
-                        <SelectValue placeholder="Start" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        <SelectGroup>
-                          {allTimeSlots.map((slot) => (
-                            <SelectItem key={slot} value={slot}>{slot}</SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <span className="text-base font-medium shrink-0 text-foreground-muted">–</span>
-                    <Select
-                      value={endTime}
-                      onValueChange={handleEndTimeChange}
-                    >
-                      <SelectTrigger className="w-full" aria-label="Sluttid">
-                        <SelectValue placeholder="Slutt" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        <SelectGroup>
-                          {endTimeSlots.map((slot) => (
-                            <SelectItem key={slot} value={slot}>{slot}</SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <ScheduleLockTooltip locked={isPublished}>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={settingsTime}
+                        disabled={isPublished}
+                        onValueChange={(val) => {
+                          onTimeChange(val);
+                          // If current end time is now invalid, clear duration
+                          if (endTime && timeToMin(endTime) <= timeToMin(val)) {
+                            onDurationChange(null);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-full" aria-label="Starttid">
+                          <SelectValue placeholder="Start" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                          <SelectGroup>
+                            {allTimeSlots.map((slot) => (
+                              <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                      <span className="text-base font-medium shrink-0 text-foreground-muted">–</span>
+                      <Select
+                        value={endTime}
+                        disabled={isPublished}
+                        onValueChange={handleEndTimeChange}
+                      >
+                        <SelectTrigger className="w-full" aria-label="Sluttid">
+                          <SelectValue placeholder="Slutt" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                          <SelectGroup>
+                            {endTimeSlots.map((slot) => (
+                              <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </ScheduleLockTooltip>
                 </div>
               </div>
             )}
@@ -556,6 +546,20 @@ interface ActionRowProps {
   buttonLabel: string;
   onClick: () => void;
   tone?: 'default' | 'danger';
+}
+
+/** Wraps a disabled schedule field with a tooltip explaining the lock —
+ *  a no-op passthrough when `locked` is false. */
+function ScheduleLockTooltip({ locked, children }: { locked: boolean; children: React.ReactNode }) {
+  if (!locked) return <>{children}</>;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div>{children}</div>
+      </TooltipTrigger>
+      <TooltipContent>Kurset har startet og kan ikke endres her.</TooltipContent>
+    </Tooltip>
+  );
 }
 
 function FieldLabel({
