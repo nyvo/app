@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, CreditCard, User } from '@/lib/icons';
-import { DashboardSetupCard } from '@/components/teacher/dashboard/DashboardSetupCard';
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
-import type { SetupStep } from '@/hooks/use-setup-progress';
 import {
   PlatformFeeHint,
   RecentSignupsSection,
@@ -118,38 +115,6 @@ const RECENT_SIGNUPS: SignupWithDetails[] = [
   mockSignup('3', 'Anne Sørensen', 'Yin Yoga', 26),
 ];
 
-// A seller with a paid draft: account done, course expanded, payments pending
-// — exercises all three row states (done / expanded / collapsed) in one card.
-const SETUP_STEPS: SetupStep[] = [
-  {
-    id: 'account',
-    title: 'Opprett konto',
-    description: '',
-    isComplete: true,
-    actionLabel: '',
-    icon: User,
-  },
-  {
-    id: 'course',
-    title: 'Publiser ditt første kurs',
-    description: 'Legg ut et kurs, så kan elevene melde seg på.',
-    isComplete: false,
-    actionLabel: 'Opprett kurs',
-    actionHref: '/courses/new',
-    icon: BookOpen,
-    timeEstimate: 'ca. 3 min',
-  },
-  {
-    id: 'payments',
-    title: 'Aktiver betalinger',
-    description: 'Koble til Stripe så du kan ta betalt for kursene dine.',
-    isComplete: false,
-    actionLabel: 'Aktiver',
-    actionHref: '/settings/payouts',
-    icon: CreditCard,
-  },
-];
-
 /** All-zero series — exercises the chart's "Ingen inntekt" in-plot message. */
 function buildZeroIncome(range: IncomeRange): IncomeSeries {
   const base = buildMockIncome(range);
@@ -201,20 +166,6 @@ export default function DashboardPreview() {
               <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
               <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />
             </div>
-          </div>
-        </PreviewState>
-
-        {/* No activity sections here on purpose — with the setup card up and
-            nothing to show, TeacherDashboard drops them entirely. */}
-        <PreviewState label="Ny selger – oppsettskort, aktivitetsseksjonene skjult">
-          <div className="space-y-8">
-            <DashboardSetupCard steps={SETUP_STEPS} completedCount={1} totalCount={3} />
-            <IncomeChart
-              series={buildZeroIncome(range)}
-              isLoading={false}
-              range={range}
-              onRangeChange={setRange}
-            />
           </div>
         </PreviewState>
 
