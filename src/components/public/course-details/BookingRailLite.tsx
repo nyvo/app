@@ -50,7 +50,10 @@ interface TicketTile {
 export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublabel, metaLabel, seriesStarted = false, remainingSessions = 0 }: BookingRailLiteProps) {
   const spotsLeft = course.spots_available;
   const lowStock = spotsLeft > 0 && spotsLeft <= 3;
-  const soldOut = spotsLeft === 0;
+  // No cap (max_participants null) means unlimited spots — upstream
+  // spots_available bottoms out at 0 for uncapped courses, so guard on the
+  // cap itself. Mirrors courseBookability in studioFacts.
+  const soldOut = course.max_participants !== null && spotsLeft === 0;
 
   const tiles = buildTiles(course, dropInSublabel ?? null, seriesStarted, remainingSessions);
   const closed = !soldOut && tiles.length === 0 && seriesStarted;
@@ -130,24 +133,27 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
             {/* Price — line items + one prominent total (the focal price). */}
             {selectedTile && (
               ticketPrice > 0 ? (
-                <dl className="space-y-2.5">
-                  <div className="flex items-baseline justify-between gap-3 text-base">
-                    <dt className="text-foreground-muted">{selectedTile.label}</dt>
-                    <dd className="tabular-nums text-foreground">{formatKroner(ticketPrice)}</dd>
-                  </div>
-                  {serviceFee > 0 && (
+                <div className="space-y-2">
+                  <dl className="space-y-2.5">
                     <div className="flex items-baseline justify-between gap-3 text-base">
-                      <dt className="text-foreground-muted">Tjenestegebyr</dt>
-                      <dd className="tabular-nums text-foreground-muted">{formatKroner(serviceFee)}</dd>
+                      <dt className="text-foreground-muted">{selectedTile.label}</dt>
+                      <dd className="tabular-nums text-foreground">{formatKroner(ticketPrice)}</dd>
                     </div>
-                  )}
-                  <div className="flex items-baseline justify-between gap-3 border-t border-border pt-3">
-                    <dt className="text-base font-medium text-foreground">Totalt</dt>
-                    <dd className="text-xl font-medium tabular-nums text-foreground">
-                      {formatKroner(total)}
-                    </dd>
-                  </div>
-                </dl>
+                    {serviceFee > 0 && (
+                      <div className="flex items-baseline justify-between gap-3 text-base">
+                        <dt className="text-foreground-muted">Tjenestegebyr</dt>
+                        <dd className="tabular-nums text-foreground-muted">{formatKroner(serviceFee)}</dd>
+                      </div>
+                    )}
+                    <div className="flex items-baseline justify-between gap-3 border-t border-border pt-3">
+                      <dt className="text-base font-medium text-foreground">Totalt</dt>
+                      <dd className="text-xl font-medium tabular-nums text-foreground">
+                        {formatKroner(total)}
+                      </dd>
+                    </div>
+                  </dl>
+                  <p className="text-sm text-foreground-muted">Ingen mva. kommer i tillegg.</p>
+                </div>
               ) : (
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-base font-medium text-foreground">{selectedTile.label}</span>
@@ -162,7 +168,7 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
 
             {ticketPrice > 0 && (
               <div className="border-t border-border pt-4">
-                <p className="text-center text-xs text-foreground-muted">Sikker betaling</p>
+                <p className="text-center text-xs text-foreground-muted">Sikker betaling med Stripe</p>
               </div>
             )}
           </>
@@ -226,7 +232,7 @@ function TicketTileButton({
 }
 
 /** Label + sublabel for the "whole course" ticket. A series buys every week
- * ("Hele kurspakken · N uker"); a single buys one class ("Enkelttime"), or —
+ * ("Hele kurset · N uker"); a single buys one class ("Enkelttime"), or —
  * when it spans consecutive days — the whole multi-day course
  * ("Hele kurset · N dager"). */
 function wholeTicket(
@@ -235,7 +241,7 @@ function wholeTicket(
 ): { label: string; sublabel: string | null } {
   if (isSeries) {
     return {
-      label: 'Hele kurspakken',
+      label: 'Hele kurset',
       sublabel: course.total_weeks ? `${course.total_weeks} uker` : null,
     };
   }
@@ -279,7 +285,7 @@ function buildTiles(
       const perWeek = Math.round(course.price / course.total_weeks);
       tiles.push({
         id: 'main',
-        label: 'Kurspakke',
+        label: 'Hele kurset',
         sublabel: `${remainingSessions} ${remainingSessions === 1 ? 'uke' : 'uker'} igjen`,
         amount: perWeek * remainingSessions,
       });

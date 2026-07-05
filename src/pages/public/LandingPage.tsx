@@ -158,10 +158,10 @@ const LandingPage = () => {
           >
             <ProductFrame>
               <img
-                src="/localhost_5173_overview (1).png"
+                src="/landing-dashboard.webp"
                 alt="Openspot — oversikt over inntekter og kommende kurs"
-                width={4227}
-                height={2922}
+                width={2400}
+                height={1659}
                 fetchPriority="high"
                 className="block w-full h-auto"
                 style={{ imageRendering: '-webkit-optimize-contrast' }}
@@ -182,10 +182,10 @@ const LandingPage = () => {
         frameTight
       >
         <img
-          src="/localhost_5173_inspire-yogastudio (2).png"
+          src="/landing-storefront.webp"
           alt="Offentlig studio-side i Openspot"
-          width={2643}
-          height={2241}
+          width={1600}
+          height={1357}
           loading="lazy"
           decoding="async"
           className="block w-full h-auto"
@@ -209,10 +209,10 @@ const LandingPage = () => {
         frameTight
       >
         <img
-          src="/localhost_5173_inspire-yogastudio_seed-lunsj-yoga_pamelding_billett=drop-in.png"
+          src="/landing-payments.webp"
           alt="Påmelding og betaling i Openspot"
-          width={2499}
-          height={2727}
+          width={1600}
+          height={1746}
           loading="lazy"
           decoding="async"
           className="block w-full h-auto"
@@ -229,10 +229,10 @@ const LandingPage = () => {
         body="Hver påmelding havner i oversikten."
       >
         <img
-          src="/localhost_5173_courses_5139ffe5-7dcb-462d-ab71-cd9ad39a2c7e.png"
+          src="/landing-courses.webp"
           alt="Openspot — kursoversikt"
-          width={3840}
-          height={2010}
+          width={1600}
+          height={838}
           loading="lazy"
           decoding="async"
           className="block w-full h-auto"

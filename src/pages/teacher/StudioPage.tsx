@@ -635,7 +635,7 @@ function StudioPublicSettings({
 
             <SettingsRow
               title="Rom"
-              description="Sett antall plasser per rom – fylles inn automatisk når du bruker rommet på et kurs."
+              description="Sett antall plasser per rom."
             >
               <div className="space-y-3">
                 {rooms.length > 0 && (

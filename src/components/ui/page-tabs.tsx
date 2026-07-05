@@ -15,14 +15,44 @@ interface PageTabsProps {
  * underline and the badge — double signal, gentle hierarchy. Used as the
  * top-level section switcher on teacher pages.
  *
- * Container handles role + gap + bottom border. Drop `<PageTab>` children
- * inside.
+ * Container handles role + gap + bottom border + tablist keyboard support
+ * (arrow keys move focus and activate — auto-activation pattern, required
+ * because PageTab uses roving tabindex so inactive tabs are otherwise
+ * unreachable by keyboard). Drop `<PageTab>` children inside.
  */
 export function PageTabs({ ariaLabel, className, children }: PageTabsProps) {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const { key } = event;
+    if (key !== 'ArrowLeft' && key !== 'ArrowRight' && key !== 'Home' && key !== 'End') return;
+
+    const tabs = Array.from(
+      event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]:not(:disabled)'),
+    );
+    if (tabs.length === 0) return;
+
+    const currentIndex = tabs.indexOf(document.activeElement as HTMLButtonElement);
+    let nextIndex: number;
+    if (key === 'Home') {
+      nextIndex = 0;
+    } else if (key === 'End') {
+      nextIndex = tabs.length - 1;
+    } else {
+      const delta = key === 'ArrowRight' ? 1 : -1;
+      nextIndex = ((currentIndex === -1 ? 0 : currentIndex) + delta + tabs.length) % tabs.length;
+    }
+
+    event.preventDefault();
+    const next = tabs[nextIndex];
+    next.focus();
+    // Auto-activation: selection follows focus, matching PageTab's onClick.
+    next.click();
+  };
+
   return (
     <div
       role="tablist"
       aria-label={ariaLabel}
+      onKeyDown={handleKeyDown}
       className={cn('flex gap-6 border-b border-border overflow-x-auto no-scrollbar', className)}
     >
       {children}

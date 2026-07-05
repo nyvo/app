@@ -55,7 +55,7 @@ function mapSessionForDashboard(
   signupCount?: number,
 ): DashboardCourse {
   const styleType: DashboardCourseType = course.format === 'series' ? 'course-series' : 'event';
-  const subtitle = course.location || (course.format === 'series' ? 'Kursrekke' : 'Enkeltkurs');
+  const subtitle = course.location || (course.format === 'series' ? 'Kursrekke' : 'Enkelttime');
 
   return {
     id: course.id,

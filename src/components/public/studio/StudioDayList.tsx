@@ -327,69 +327,86 @@ function ClassRow({
 
   const bookability = courseBookability(course, todayKey);
   const isDisabled = bookability !== 'open';
+  // Cancelled courses stay listed through the 30-day grace window, but the
+  // detail fetch excludes them — a link would dead-end on an error page. Full
+  // and closed courses keep working detail pages, so only cancelled rows go
+  // inert.
+  const isCancelled = bookability === 'cancelled';
 
   const price = entryPrice(course);
   const placeLabel = course.delivery_mode === 'online' ? 'Nettkurs' : course.location;
 
+  const body = (
+    <>
+      <div className="min-w-0 flex-1">
+        <h4 className="text-base font-medium truncate text-foreground">
+          {course.title}
+        </h4>
+        <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm text-foreground-muted">
+          {time && (
+            <span className="inline-flex items-center gap-1.5">
+              <Clock className="size-3.5" aria-hidden />
+              <span className="tabular-nums">{formatTimeRange(time, course.duration)}</span>
+            </span>
+          )}
+          {course.instructor_name && (
+            <span className="inline-flex items-center gap-1.5 min-w-0">
+              <User className="size-3.5 shrink-0" aria-hidden />
+              <span className="truncate">{course.instructor_name}</span>
+            </span>
+          )}
+          {placeLabel && (
+            <span className="inline-flex items-center gap-1.5 min-w-0">
+              {course.delivery_mode === 'online'
+                ? <Monitor className="size-3.5 shrink-0" aria-hidden />
+                : <MapPin className="size-3.5 shrink-0" aria-hidden />}
+              <span className="truncate max-w-56">{placeLabel}</span>
+            </span>
+          )}
+        </p>
+      </div>
+
+      <div className="shrink-0 flex flex-col items-end justify-between gap-2 self-stretch py-0.5">
+        <span className="text-base font-medium tabular-nums whitespace-nowrap text-foreground">
+          {price.from && price.amount
+            ? <><span className="font-normal text-foreground-muted">fra </span>{formatKroner(price.amount)}</>
+            : formatCoursePrice(price.amount)}
+        </span>
+        <span
+          className={cn(
+            'inline-flex h-8 items-center rounded-full px-3.5 text-sm font-medium transition-colors duration-150',
+            isDisabled
+              ? 'bg-muted text-foreground-muted'
+              : 'bg-muted text-foreground group-hover:bg-foreground group-hover:text-background',
+          )}
+          aria-hidden
+        >
+          {CTA_LABELS[bookability]}
+        </span>
+      </div>
+    </>
+  );
+
   return (
     <li>
-      <Link
-        to={`/${linkSlug}/${course.slug}`}
-        state={{ fromSlug, fromName }}
-        className={cn(
-          'group flex items-center gap-4 sm:gap-5 py-5',
-          '-mx-3 px-3 rounded-xl transition-colors hover:bg-muted/50',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-        )}
-        aria-disabled={isDisabled || undefined}
-      >
-        <div className="min-w-0 flex-1">
-          <h4 className="text-base font-medium truncate text-foreground">
-            {course.title}
-          </h4>
-          <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm text-foreground-muted">
-            {time && (
-              <span className="inline-flex items-center gap-1.5">
-                <Clock className="size-3.5" aria-hidden />
-                <span className="tabular-nums">{formatTimeRange(time, course.duration)}</span>
-              </span>
-            )}
-            {course.instructor_name && (
-              <span className="inline-flex items-center gap-1.5 min-w-0">
-                <User className="size-3.5 shrink-0" aria-hidden />
-                <span className="truncate">{course.instructor_name}</span>
-              </span>
-            )}
-            {placeLabel && (
-              <span className="inline-flex items-center gap-1.5 min-w-0">
-                {course.delivery_mode === 'online'
-                  ? <Monitor className="size-3.5 shrink-0" aria-hidden />
-                  : <MapPin className="size-3.5 shrink-0" aria-hidden />}
-                <span className="truncate max-w-56">{placeLabel}</span>
-              </span>
-            )}
-          </p>
+      {isCancelled ? (
+        <div className="flex items-center gap-4 sm:gap-5 py-5 -mx-3 px-3 rounded-xl">
+          {body}
         </div>
-
-        <div className="shrink-0 flex flex-col items-end justify-between gap-2 self-stretch py-0.5">
-          <span className="text-base font-medium tabular-nums whitespace-nowrap text-foreground">
-            {price.from && price.amount
-              ? <><span className="font-normal text-foreground-muted">fra </span>{formatKroner(price.amount)}</>
-              : formatCoursePrice(price.amount)}
-          </span>
-          <span
-            className={cn(
-              'inline-flex h-8 items-center rounded-full px-3.5 text-sm font-medium transition-colors duration-150',
-              isDisabled
-                ? 'bg-muted text-foreground-muted'
-                : 'bg-muted text-foreground group-hover:bg-foreground group-hover:text-background',
-            )}
-            aria-hidden
-          >
-            {CTA_LABELS[bookability]}
-          </span>
-        </div>
-      </Link>
+      ) : (
+        <Link
+          to={`/${linkSlug}/${course.slug}`}
+          state={{ fromSlug, fromName }}
+          className={cn(
+            'group flex items-center gap-4 sm:gap-5 py-5',
+            '-mx-3 px-3 rounded-xl transition-colors hover:bg-muted/50',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          )}
+          aria-disabled={isDisabled || undefined}
+        >
+          {body}
+        </Link>
+      )}
     </li>
   );
 }
