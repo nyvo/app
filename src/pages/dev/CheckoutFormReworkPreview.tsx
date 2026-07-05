@@ -11,12 +11,12 @@ import type { PublicCourseWithDetails } from '@/services/publicCourses';
 /**
  * Preview for the combined checkout page. Mirrors the route that will live
  * at /:slug/:courseSlug/pamelding in production. Single page: ticket select
- * + contact info + terms + Dintero iframe (mocked here) all on one route.
+ * + contact info + terms + checkout iframe (mocked here) all on one route.
  * Two-column desktop (form/iframe left, persistent summary right); single
  * column on mobile with sticky bottom "Til betaling" scroll affordance.
  *
- * Mock data only. The "Dintero iframe" section is a static design mock
- * that approximates the embed — real Dintero wiring happens at cutover.
+ * Mock data only. The checkout iframe section is a static design mock
+ * that approximates the embed — real payment wiring happens at cutover.
  */
 
 type Variant = 'series-with-dropin' | 'series-only' | 'single' | 'free';
@@ -197,7 +197,7 @@ function Section({ title, id, children }: { title: string; id?: string; children
 }
 
 /**
- * Static mock of the Dintero embedded checkout. Approximates the real
+ * Static mock of the Stripe embedded checkout. Approximates the real
  * iframe's surface — Vipps express button at the top (per Vipps merchant
  * guidelines), divider, then card fields with a single pay action. When
  * `enabled` is false the whole block is disabled-looking, signaling the

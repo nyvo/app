@@ -11,6 +11,7 @@ import { PageShell } from '@/components/teacher/PageShell'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn, formatKroner } from '@/lib/utils'
 import { createStripeCheckoutSession, createStripePortalSession } from '@/services/billing'
+import { friendlyError } from '@/lib/error-messages'
 import { toast } from 'sonner'
 
 type SubscriptionPlan = string | null | undefined
@@ -114,7 +115,7 @@ const BillingPage = () => {
     const { url, error } = await createStripeCheckoutSession(currentSeller.id, interval)
     setCheckoutLoading(false)
     if (error || !url) {
-      toast.error(error?.message || 'Kunne ikke starte abonnement.')
+      toast.error(friendlyError(error, 'Kunne ikke starte abonnement.'))
       return
     }
     window.location.assign(url)
@@ -126,7 +127,7 @@ const BillingPage = () => {
     const { url, error } = await createStripePortalSession(currentSeller.id)
     setPortalLoading(false)
     if (error || !url) {
-      toast.error(error?.message || 'Kunne ikke åpne fakturering.')
+      toast.error(friendlyError(error, 'Kunne ikke åpne fakturering.'))
       return
     }
     window.location.assign(url)

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Check, ExternalLink, Plus, X } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
+import { UnsavedChangesDialog, useUnsavedChanges } from '@/components/ui/unsaved-changes';
 import { PageTab, PageTabs } from '@/components/ui/page-tabs';
 import { FieldError } from '@/components/ui/field-error';
 import { ErrorState } from '@/components/ui/error-state';
@@ -156,6 +157,9 @@ function StudioPublicSettings({
   }, [primaryLocation?.id, primaryLocation?.name, primaryLocation?.address, primaryLocation?.rooms]);
 
   const [isSaving, setIsSaving] = useState(false);
+  // Generic save failure (thrown/network) — field-specific errors go to the
+  // inline FieldErrors instead; this feeds the DirtyFormBar's error slot.
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Rooms save the moment you add/remove one — so they're a committed action,
   // not part of the dirty form. The bar below only tracks the text fields.
@@ -168,11 +172,14 @@ function StudioPublicSettings({
     return name.trim() !== seller.name || slug.trim() !== seller.slug || locationDirty;
   }, [address, name, placeName, primaryLocation, seller.name, slug, seller.slug]);
 
+  const { blocker } = useUnsavedChanges(isDirty);
+
   const handleCancel = () => {
     setName(seller.name);
     setSlug(seller.slug);
     setNameError(null);
     setSlugError(null);
+    setSaveError(null);
     setPlaceName(primaryLocation?.name ?? '');
     setAddress(primaryLocation?.address ?? '');
     setPlaceCoords(coordsFromLocation(primaryLocation));
@@ -289,6 +296,7 @@ function StudioPublicSettings({
 
   const handleSave = async () => {
     if (isSaving) return;
+    setSaveError(null);
 
     const trimmedName = name.trim();
     const trimmedSlug = slug.trim();
@@ -324,6 +332,11 @@ function StudioPublicSettings({
     }
 
     setIsSaving(true);
+    // Writes are sequential (name → slug → place) with no rollback. When a
+    // later step fails, refresh the seller so the already-persisted steps'
+    // baselines update — the bar then only tracks what actually failed, and
+    // Avbryt restores values that match the database.
+    let persistedAny = false;
     try {
       if (trimmedName !== seller.name) {
         const { error } = await updateSeller(seller.id, { name: trimmedName });
@@ -331,6 +344,7 @@ function StudioPublicSettings({
           setNameError(friendlyError(error, 'Kunne ikke lagre navnet.'));
           return;
         }
+        persistedAny = true;
         setName(trimmedName);
       }
 
@@ -342,8 +356,10 @@ function StudioPublicSettings({
           else if (msg.includes('reserved')) setSlugError('Denne nettadressen er reservert. Velg en annen.');
           else if (msg.includes('at least 3')) setSlugError('Bruk minst 3 tegn.');
           else setSlugError(friendlyError(error, 'Kunne ikke endre nettadressen.'));
+          if (persistedAny) await onSaved();
           return;
         }
+        persistedAny = true;
         setSlug(nextSlug);
       }
 
@@ -364,13 +380,17 @@ function StudioPublicSettings({
 
         if (result.error) {
           setPlaceError(friendlyError(result.error, 'Kunne ikke lagre sted og rom.'));
+          if (persistedAny) await onSaved();
           return;
         }
         await refetch();
       }
 
       await onSaved();
-      toast.success('Studioet er oppdatert.');
+      toast.success('Endringer lagret');
+    } catch (err) {
+      setSaveError(friendlyError(err, 'Kunne ikke lagre endringene.'));
+      if (persistedAny) await onSaved();
     } finally {
       setIsSaving(false);
     }
@@ -750,11 +770,13 @@ function StudioPublicSettings({
       )}
 
       <DirtyFormBar
-        visible={isDirty && tab !== 'samarbeid'}
+        visible={(isDirty || !!saveError) && tab !== 'samarbeid'}
+        error={saveError}
         isSaving={isSaving}
         onSave={handleSave}
         onCancel={handleCancel}
       />
+      <UnsavedChangesDialog blocker={blocker} />
     </div>
   );
 }

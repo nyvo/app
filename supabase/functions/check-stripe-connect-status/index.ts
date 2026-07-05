@@ -1,7 +1,5 @@
 // Check the current Stripe Connect (Express) onboarding status for a seller.
-// Mirrors check-dintero-seller-status: auth + service-role write of the
-// write-protected stripe_* columns. Stripe Connect superseded Dintero (plan
-// .context/plans/dintero-to-stripe-migration.md), so new payouts onboard here.
+// Auth + service-role write of the write-protected stripe_* columns.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
