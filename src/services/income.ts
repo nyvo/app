@@ -58,8 +58,8 @@ function dayLabel(d: Date): string {
 }
 
 function monthLabel(d: Date): string {
-  const m = MONTH_ABBR_NB[d.getMonth()]
-  return `${m.charAt(0).toUpperCase()}${m.slice(1)} ${String(d.getFullYear()).slice(2)}`
+  // Lowercase abbreviation to match dayLabel and Norwegian month convention.
+  return `${MONTH_ABBR_NB[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`
 }
 
 function monthKey(d: Date): string {

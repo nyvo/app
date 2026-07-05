@@ -241,7 +241,7 @@ export function useNotifications(): UseNotificationsReturn {
     const ids = snapshot.map((n) => n.id)
 
     runWithUndo({
-      message: 'Alle varsler ble fjernet',
+      message: 'Alle varsler fjernet',
       hide: () => setNotifications([]),
       restore: () =>
         setNotifications((prev) => {

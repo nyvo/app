@@ -340,7 +340,7 @@ const CoursePage = () => {
       if (settingsAllowsDropIn) {
         const { error: dropInError } = await syncCourseDropInTier(courseId, true, settingsDropInPrice);
         if (dropInError) {
-          setSaveError(friendlyError(dropInError, 'Kunne ikke lagre drop-in pris.'));
+          setSaveError(friendlyError(dropInError, 'Kunne ikke lagre drop-in-pris.'));
           setIsSaving(false);
           return;
         }

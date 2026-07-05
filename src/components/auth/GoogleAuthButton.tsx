@@ -40,9 +40,9 @@ export function GoogleAuthButton({
       const params = new URLSearchParams(hash.replace('#', ''))
       const errorDesc = params.get('error_description')
       if (errorDesc) {
-        toast.error('Innloggingen feilet', {
-          description: errorDesc.replace(/\+/g, ' '),
-        })
+        // The provider's error_description is English-only, so we show our own
+        // localized message instead of leaking it into a Norwegian toast.
+        toast.error('Kunne ikke logge inn med Google. Prøv igjen.')
         // Clean up the hash
         window.history.replaceState(null, '', window.location.pathname + window.location.search)
       }

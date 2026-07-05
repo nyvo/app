@@ -29,7 +29,7 @@ const variantClasses = {
  */
 export const ErrorState = React.memo(function ErrorState({
   title = 'Kunne ikke laste innholdet',
-  message = 'Sjekk forbindelsen og prøv igjen. Hvis problemet vedvarer, ta kontakt med oss.',
+  message = 'Sjekk nettforbindelsen og prøv igjen.',
   onRetry,
   retryLabel = 'Prøv igjen',
   className,

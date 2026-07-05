@@ -50,7 +50,7 @@ const TermsPage = () => {
               <h2 className="text-lg font-medium text-foreground">3. Påmelding og betaling</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Før du betaler ser du kursnavn, pris, eventuell tjenesteavgift og totalbeløp.
-                Ved påmelding godtar du å betale beløpet som vises i checkout.
+                Ved påmelding godtar du å betale beløpet som vises i kassen.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Betalingen gjennomføres når du fullfører betalingen hos betalingsleverandøren.

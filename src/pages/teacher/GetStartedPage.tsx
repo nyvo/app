@@ -76,7 +76,7 @@ export default function GetStartedPage() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-base font-medium text-foreground">
-                  Studioet ditt er live
+                  Studioet ditt er klart
                 </p>
                 <p className="text-base text-foreground-muted">
                   Du kan ta imot påmeldinger og betaling. Gjør gjerne siden ferdig nedenfor.

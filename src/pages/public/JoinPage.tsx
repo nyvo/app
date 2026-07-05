@@ -399,7 +399,7 @@ export default function JoinPage() {
         Bli med i {team.name}
       </h1>
       <p className="text-base text-foreground-muted mb-8">
-        Kursene dine vil vises på studio-siden deres.
+        Kursene dine vises på studiosiden deres.
       </p>
       <Button
         size="cta"
