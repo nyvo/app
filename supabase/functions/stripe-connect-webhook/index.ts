@@ -1,5 +1,4 @@
 // Stripe Connect webhook (platform-account events).
-// Stripe-side counterpart to dintero-webhook (Phase 2 of the Dintero → Stripe migration).
 //
 // Verifies the Stripe-Signature header against STRIPE_CONNECT_WEBHOOK_SECRET, then routes on
 // event.type. Destination charges are platform-owned, so these are "Your account" events.

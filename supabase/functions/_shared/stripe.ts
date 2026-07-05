@@ -2,7 +2,7 @@
 // Covers two integrations that share STRIPE_SECRET_KEY:
 //   1. Stripe Billing (Pro subscription) — customers, checkout/portal sessions, webhook verify.
 //   2. Stripe Connect (marketplace) — Express onboarding, destination-charge PaymentIntents
-//      (manual capture + on_behalf_of; see .context/plans/dintero-to-stripe-migration.md C1/C6/C7),
+//      (manual capture + on_behalf_of),
 //      refunds, and settlement reporting.
 
 const STRIPE_API_BASE = 'https://api.stripe.com/v1'
@@ -290,7 +290,7 @@ export async function verifyStripeSignature(params: {
 
 // ---------------------------------------------------------------------------
 // Stripe Connect (marketplace) — Express onboarding, destination charges, settlements.
-// Shares STRIPE_SECRET_KEY with Billing above. Plan: .context/plans/dintero-to-stripe-migration.md.
+// Shares STRIPE_SECRET_KEY with Billing above.
 // ---------------------------------------------------------------------------
 
 export interface StripeConnectedAccount {

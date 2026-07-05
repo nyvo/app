@@ -1,11 +1,9 @@
 // Create a Stripe (Connect) PaymentIntent for the embedded checkout flow.
-// Stripe-side counterpart to create-dintero-session (Phase 2 of the Dintero → Stripe migration).
 //
-// Mirrors create-dintero-session's validation 1:1 (rate-limit, course/seller/ticket checks,
-// duplicate guard, soft capacity check, payment_attempts insert). The only provider difference
-// is the charge: instead of a Dintero session with two split line items, we create ONE
-// destination-charge PaymentIntent (manual capture + on_behalf_of + transfer_data +
-// application_fee_amount). See plan §2 / C1 / C4 / C7.
+// Validation: rate-limit, course/seller/ticket checks, duplicate guard, soft
+// capacity check, payment_attempts insert. The charge is ONE destination-charge
+// PaymentIntent (manual capture + on_behalf_of + transfer_data +
+// application_fee_amount).
 //
 // Flow:
 //   1. Validate course + seller + Stripe Connect onboarding status.
