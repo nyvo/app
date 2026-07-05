@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ChevronRight, FileText, MoreHorizontal } from '@/lib/icons';
@@ -52,6 +52,7 @@ import { publishNeedsPaymentSetup } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 import { cn, formatKroner } from '@/lib/utils';
 import type {
+  CourseSession,
   PaymentStatus,
   SignupStatus,
 } from '@/types/database';
@@ -70,6 +71,18 @@ function formatLocalYMD(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+/** Build the per-day editor rows from session rows (single format). */
+function buildSessionDays(sessions: CourseSession[]): SessionDay[] {
+  return [...sessions]
+    .sort((a, b) => a.session_date.localeCompare(b.session_date))
+    .map((s) => ({
+      id: s.id,
+      date: parseLocalDate(s.session_date),
+      startTime: s.start_time.slice(0, 5),
+      endTime: s.end_time ? s.end_time.slice(0, 5) : '',
+    }));
 }
 
 /** Minutes since midnight → HH:MM. */
@@ -190,18 +203,18 @@ const CoursePage = () => {
 
   // Populate per-day session editor from loaded sessions (single format only).
   // Re-runs whenever sessions are (re)fetched so discard/refetch stays in sync.
+  // handleSave raises the skip flag when it re-baselines `sessions` after a
+  // partial failure — rebuilding here would wipe the user's remaining unsaved
+  // day edits, which must survive so they can retry the save.
+  const skipNextDaysSyncRef = useRef(false);
   useEffect(() => {
     if (!courseData || courseData.format !== 'single') return;
     if (sessions.length === 0) return;
-    const sorted = [...sessions].sort((a, b) => a.session_date.localeCompare(b.session_date));
-    setSessionDays(
-      sorted.map((s) => ({
-        id: s.id,
-        date: parseLocalDate(s.session_date),
-        startTime: s.start_time.slice(0, 5),
-        endTime: s.end_time ? s.end_time.slice(0, 5) : '',
-      })),
-    );
+    if (skipNextDaysSyncRef.current) {
+      skipNextDaysSyncRef.current = false;
+      return;
+    }
+    setSessionDays(buildSessionDays(sessions));
   }, [sessions, courseData?.format]);
 
   const isSettingsDirty = useMemo(() => {
@@ -297,6 +310,10 @@ const CoursePage = () => {
     if (!courseId || !courseData) return;
     setIsSaving(true);
     setSaveError(null);
+    // Session baseline tracked through the single-format save loop below —
+    // hoisted out of the try so the catch can re-baseline after a thrown
+    // (network) failure too, not just a returned error.
+    let committedSessions = sessions;
     try {
       // Rebuild the denormalized schedule label in the same shape createDraft
       // wrote it: singles from the earliest day ("Lørdag, 10:00–16:00"),
@@ -380,8 +397,24 @@ const CoursePage = () => {
       if (courseData.format === 'single') {
         // Per-day session persistence for single/enkeltkurs courses.
         // Build a lookup of original sessions by id for change detection.
+        // `committed` tracks the baseline as each write lands: a mid-loop
+        // failure re-baselines `sessions` to exactly what the DB now holds,
+        // so retrying the save skips the already-persisted days instead of
+        // re-running them — which for published courses would re-notify
+        // participants about a reschedule that already happened.
         const origById = new Map(sessions.map((s) => [s.id, s]));
         const isDraft = courseData.status === 'draft';
+
+        const failSessionSave = (message: string) => {
+          if (committedSessions !== sessions) {
+            // Update the baseline without letting the populate effect rebuild
+            // sessionDays — the user's remaining unsaved edits must survive.
+            skipNextDaysSyncRef.current = true;
+            setSessions(committedSessions);
+          }
+          setSaveError(message);
+          setIsSaving(false);
+        };
 
         // 1. Handle removed days (only for drafts — safety constraint).
         if (isDraft) {
@@ -390,10 +423,10 @@ const CoursePage = () => {
           for (const s of removedSessions) {
             const { error: delError } = await deleteCourseSession(s.id);
             if (delError) {
-              setSaveError(friendlyError(delError, 'Kunne ikke slette dag. Prøv igjen.'));
-              setIsSaving(false);
+              failSessionSave(friendlyError(delError, 'Kunne ikke slette dag. Prøv igjen.'));
               return;
             }
+            committedSessions = committedSessions.filter((c) => c.id !== s.id);
           }
         }
 
@@ -409,17 +442,24 @@ const CoursePage = () => {
           if (!orig) {
             // New day (no existing session row) — only for drafts.
             if (!isDraft) continue;
-            const { error: createError } = await createCourseSession(courseId, {
+            const { data: createdSession, error: createError } = await createCourseSession(courseId, {
               session_date: dateStr,
               start_time: startTime,
               end_time: endTime ?? '',
               session_number: i + 1,
             });
-            if (createError) {
-              setSaveError(friendlyError(createError, 'Kunne ikke legge til dag. Prøv igjen.'));
-              setIsSaving(false);
+            if (createError || !createdSession) {
+              failSessionSave(friendlyError(createError, 'Kunne ikke legge til dag. Prøv igjen.'));
               return;
             }
+            committedSessions = [...committedSessions, createdSession];
+            // Swap the editor row's 'new-' placeholder id for the real one,
+            // so a retry after a later failure updates this row instead of
+            // creating a duplicate day.
+            const placeholderId = day.id;
+            setSessionDays((prev) =>
+              prev.map((d) => (d.id === placeholderId ? { ...d, id: createdSession.id } : d)),
+            );
           } else {
             // Existing session — diff to see if anything changed.
             const origDateStr = orig.session_date;
@@ -439,8 +479,7 @@ const CoursePage = () => {
                 end_time: endTime,
               });
               if (updError) {
-                setSaveError(friendlyError(updError, 'Kunne ikke oppdatere dag. Prøv igjen.'));
-                setIsSaving(false);
+                failSessionSave(friendlyError(updError, 'Kunne ikke oppdatere dag. Prøv igjen.'));
                 return;
               }
             } else {
@@ -452,11 +491,17 @@ const CoursePage = () => {
                 newEndTime: endTime ?? undefined,
               });
               if (reError) {
-                setSaveError(friendlyError(reError, 'Kunne ikke oppdatere dag. Prøv igjen.'));
-                setIsSaving(false);
+                failSessionSave(friendlyError(reError, 'Kunne ikke oppdatere dag. Prøv igjen.'));
                 return;
               }
             }
+            // Mirror the persisted values into the tracked baseline (the
+            // reschedule edge fn doesn't return the row).
+            committedSessions = committedSessions.map((c) =>
+              c.id === day.id
+                ? { ...c, session_date: dateStr, start_time: startTime, end_time: endTime }
+                : c,
+            );
           }
         }
 
@@ -542,6 +587,12 @@ const CoursePage = () => {
       );
       toast.success('Endringer lagret');
     } catch {
+      // A thrown mid-loop failure (network) needs the same re-baselining as
+      // a returned error, so the retry skips the already-persisted days.
+      if (committedSessions !== sessions) {
+        skipNextDaysSyncRef.current = true;
+        setSessions(committedSessions);
+      }
       setSaveError('Noe gikk galt. Prøv igjen.');
     } finally {
       setIsSaving(false);
@@ -767,15 +818,7 @@ const CoursePage = () => {
     if (timeMatch) setSettingsTime(timeMatch[1]);
     // Reset per-day session editor from the loaded sessions (single format).
     if (courseData.format === 'single' && sessions.length > 0) {
-      const sorted = [...sessions].sort((a, b) => a.session_date.localeCompare(b.session_date));
-      setSessionDays(
-        sorted.map((s) => ({
-          id: s.id,
-          date: parseLocalDate(s.session_date),
-          startTime: s.start_time.slice(0, 5),
-          endTime: s.end_time ? s.end_time.slice(0, 5) : '',
-        })),
-      );
+      setSessionDays(buildSessionDays(sessions));
     }
     setSaveError(null);
   };
