@@ -1,7 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "@fontsource-variable/geist";
-@import "@fontsource-variable/eb-garamond"; /* self-hosted — no Google CDN (GDPR + render-blocking) */
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));

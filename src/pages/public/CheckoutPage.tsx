@@ -88,10 +88,17 @@ const CheckoutPage = () => {
 
       // Load all standard-audience tiers via public RPC.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: tierData } = await (supabase.rpc as any)('available_ticket_types', {
+      const { data: tierData, error: tierErr } = await (supabase.rpc as any)('available_ticket_types', {
         p_course_id: courseData.id,
       });
       if (cancelled) return;
+      // Without tiers the form can never become valid — surface a retryable
+      // error instead of a silently disabled submit button.
+      if (tierErr) {
+        setError('load-failed');
+        setLoading(false);
+        return;
+      }
       const allTiers = ((tierData ?? []) as AvailableTicketType[]).filter(
         (t) => t.audience === 'standard',
       );
@@ -135,8 +142,12 @@ const CheckoutPage = () => {
   // hasn't started yet. Same model as BookingPanel; no session picker.
   // undefined = loading / not applicable, null = no upcoming session.
   const [dropInSessionId, setDropInSessionId] = useState<string | null | undefined>(undefined);
+  // Query failure is not "no sessions" — track it separately so the buyer
+  // sees a retryable error instead of the false "ingen kommende timer".
+  const [dropInLookupFailed, setDropInLookupFailed] = useState(false);
   useEffect(() => {
     let cancelled = false;
+    setDropInLookupFailed(false);
     if (!isDropInSelected || !course?.id) {
       setDropInSessionId(undefined);
       return;
@@ -150,7 +161,7 @@ const CheckoutPage = () => {
         hour: '2-digit', minute: '2-digit', second: '2-digit',
         hour12: false,
       }).format(new Date());
-      const { data } = await supabase
+      const { data, error: sessionsErr } = await supabase
         .from('course_sessions')
         .select('id, session_date, start_time, status')
         .eq('course_id', course.id)
@@ -160,6 +171,11 @@ const CheckoutPage = () => {
         .order('start_time', { ascending: true })
         .limit(10);
       if (cancelled) return;
+      if (sessionsErr) {
+        setDropInSessionId(undefined);
+        setDropInLookupFailed(true);
+        return;
+      }
       const next = (data as { id: string; session_date: string; start_time: string }[] | null)
         ?.find((s) => `${s.session_date} ${s.start_time}` > osloNow);
       setDropInSessionId(next?.id ?? null);
@@ -277,6 +293,9 @@ const CheckoutPage = () => {
   // ── States ──────────────────────────────────────────────────────────────
   if (loading) {
     return <CheckoutSkeleton />;
+  }
+  if (error === 'load-failed') {
+    return <PageState variant="server-error" />;
   }
   if (error || !course) {
     return <PageState variant="public-course" />;
@@ -427,6 +446,9 @@ const CheckoutPage = () => {
                       </Button>
                       {sessionError && (
                         <p className="text-sm text-danger text-center">{sessionError}</p>
+                      )}
+                      {isDropInSelected && dropInLookupFailed && (
+                        <p className="text-sm text-danger text-center">Kunne ikke hente neste time. Prøv igjen.</p>
                       )}
                       {isDropInSelected && dropInSessionId === null && (
                         <p className="text-sm text-danger text-center">Ingen kommende timer for drop-in.</p>
