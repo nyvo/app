@@ -38,6 +38,7 @@ import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
 import { cn, formatKroner } from '@/lib/utils';
 import { formatLocalDateKey } from '@/utils/dateUtils';
+import { singleScheduleLabel, seriesScheduleLabel } from '@/utils/timeSchedule';
 import type { CourseFormat } from '@/types/database';
 
 type FormatType = 'single' | 'series';
@@ -230,11 +231,6 @@ export default function CourseBuilderPage() {
 
     setIsSubmitting(true);
     try {
-      const formatWeekday = (date: Date) => {
-        const name = new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(date);
-        return name.charAt(0).toUpperCase() + name.slice(1);
-      };
-
       let courseStartDate: string;
       let timeSchedule: string;
       let duration: number;
@@ -249,8 +245,7 @@ export default function CourseBuilderPage() {
         );
         const day0 = sortedDays[0];
         courseStartDate = formatLocalDateKey(day0.date!);
-        const day0Name = formatWeekday(day0.date!);
-        timeSchedule = `${day0Name}, ${day0.startTime}–${day0.endTime}`;
+        timeSchedule = singleScheduleLabel(day0.date!, day0.startTime, day0.endTime);
         duration = timeToMin(day0.endTime) - timeToMin(day0.startTime);
         createOptions = {
           sessionDays: sortedDays.map((d) => ({
@@ -261,12 +256,12 @@ export default function CourseBuilderPage() {
         };
       } else {
         // series — startDate is guaranteed non-null (validated above)
-        const startDayName = formatWeekday(startDate!);
-        const timeRange = `${startTime}–${endTime}`;
-        timeSchedule = `${startDayName}er, ${timeRange}`;
+        timeSchedule = seriesScheduleLabel(startDate!, startTime, endTime);
         duration = timeToMin(endTime) - timeToMin(startTime);
         courseStartDate = formatLocalDateKey(startDate!);
-        createOptions = undefined;
+        // Structured time for the weekly session generation — createCourse
+        // must never have to parse it back out of the display label.
+        createOptions = { seriesStartTime: startTime, seriesEndTime: endTime };
       }
 
       const dbFormat: CourseFormat = format;

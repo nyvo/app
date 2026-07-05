@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase'
-import { logger } from '@/lib/logger'
 import { formatLocalDateKey, osloTodayKey } from '@/utils/dateUtils'
 import type {
   Course,
@@ -204,25 +203,6 @@ export async function fetchExistingSessions(
   return { data: result, error: null }
 }
 
-// Parse a start time from a time_schedule string (e.g., "Mandager, 18:00" -> "18:00").
-// Logs a warning and falls back to '09:00' when the regex does not match.
-function parseStartTime(timeSchedule: string | null | undefined): string {
-  if (!timeSchedule) {
-    logger.warn(
-      '[courses] parseStartTime: time_schedule is empty/null — defaulting to "09:00"'
-    )
-    return '09:00'
-  }
-  const match = timeSchedule.match(/(\d{1,2}:\d{2})/)
-  if (!match) {
-    logger.warn(
-      `[courses] parseStartTime: could not extract time from "${timeSchedule}" — defaulting to "09:00"`
-    )
-    return '09:00'
-  }
-  return match[1]
-}
-
 // Generate session date/time entries based on the course type.
 // Returns an array of { date, startTime } objects that can be used both for
 // conflict checking and for inserting course_sessions rows.
@@ -314,20 +294,33 @@ export async function createCourse(
     eventDays?: number // Number of days for multi-day events
     sessionTimeOverrides?: SessionTimeOverride[] // Custom times for specific days
     sessionDays?: SessionDaySpec[] // Explicit per-day specs (arbitrary dates + times)
+    seriesStartTime?: string // HH:MM — structured time for weekly generation
+    seriesEndTime?: string // HH:MM — optional end time for the generated rows
   }
 ): Promise<{ data: Course | null; error: Error | null }> {
-  const startTime = parseStartTime(courseData.time_schedule)
+  // Structured times come from the caller. time_schedule is a DISPLAY LABEL
+  // and is never parsed — the old regex fallback silently created sessions
+  // at 09:00 whenever the label's shape drifted. Missing times are a
+  // programmer error, surfaced loudly instead of papered over.
+  const hasExplicitDays = !!options?.sessionDays && options.sessionDays.length > 0
+  if (!hasExplicitDays && !options?.seriesStartTime) {
+    return {
+      data: null,
+      error: new Error('createCourse requires sessionDays or seriesStartTime'),
+    }
+  }
 
-  // When explicit per-day specs are provided, use them verbatim; otherwise
-  // fall back to the legacy consecutive-date generation.
   const sessionEntries: { date: string; startTime: string; endTime?: string }[] =
-    options?.sessionDays && options.sessionDays.length > 0
-      ? options.sessionDays.map((spec) => ({
+    hasExplicitDays
+      ? options!.sessionDays!.map((spec) => ({
           date: spec.date,
           startTime: spec.startTime,
           endTime: spec.endTime,
         }))
-      : generateSessionDates(courseData, startTime, options)
+      : generateSessionDates(courseData, options!.seriesStartTime!, options).map((entry) => ({
+          ...entry,
+          endTime: options?.seriesEndTime,
+        }))
 
   const baseSlug = slugifyTitle(courseData.title) || courseData.title.slice(0, 8)
   let data: Course | null = null

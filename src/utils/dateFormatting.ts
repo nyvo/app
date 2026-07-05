@@ -63,28 +63,4 @@ export function formatRelativeTimePast(dateStr: string | null | undefined): stri
   return date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })
 }
 
-/**
- * Extract day name from time schedule string
- * e.g., "Mandager, 18:00" -> "Mandag"
- * e.g., "Tirsdager, 09:00" -> "Tirsdag"
- */
-export function extractDayName(schedule: string | null | undefined): string | null {
-  if (!schedule) return null
-
-  const dayMap: Record<string, string> = {
-    'mandag': 'Mandag',
-    'tirsdag': 'Tirsdag',
-    'onsdag': 'Onsdag',
-    'torsdag': 'Torsdag',
-    'fredag': 'Fredag',
-    'lørdag': 'Lørdag',
-    'søndag': 'Søndag',
-  }
-
-  const lower = schedule.toLowerCase()
-  for (const [day, name] of Object.entries(dayMap)) {
-    if (lower.includes(day)) return name
-  }
-  return null
-}
 

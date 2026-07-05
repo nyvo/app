@@ -29,6 +29,7 @@ import { PageState } from '@/components/page-state/page-state';
 import { AddParticipantDrawer } from '@/components/teacher/AddParticipantDrawer';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { useCourseDetail } from '@/hooks/use-course-detail';
+import { singleScheduleLabel, seriesScheduleLabel } from '@/utils/timeSchedule';
 import {
   updateCourse,
   cancelCourse,
@@ -89,12 +90,6 @@ function minToTime(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-}
-
-/** Capitalized Norwegian weekday name for a date ("Mandag"). */
-function weekdayLabel(date: Date): string {
-  const name = new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(date);
-  return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 /**
@@ -178,6 +173,15 @@ const CoursePage = () => {
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false);
 
+  // The course's start time, from the session rows — the source of truth.
+  // time_schedule is a display label and is never parsed (the old regex here
+  // meant a label copy-edit could silently corrupt the schedule form).
+  const sessionsStartTime = useMemo(() => {
+    if (sessions.length === 0) return null;
+    const earliest = [...sessions].sort((a, b) => a.session_number - b.session_number)[0];
+    return earliest?.start_time?.slice(0, 5) ?? null;
+  }, [sessions]);
+
   useEffect(() => {
     if (!courseData) return;
     setSettingsTitle(courseData.title);
@@ -190,15 +194,14 @@ const CoursePage = () => {
         : null,
     );
     setSettingsImageUrl(courseData.imageUrl);
-    const timeMatch = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/);
-    if (timeMatch) setSettingsTime(timeMatch[1]);
+    if (sessionsStartTime) setSettingsTime(sessionsStartTime);
     setSettingsDuration(courseData.durationMinutes);
     setSettingsAllowsDropIn(courseData.allowsDropIn);
     setSettingsDropInPrice(courseData.dropInPrice);
     setSettingsAcceptsLateSignups(courseData.acceptsLateSignups);
     setSettingsPrice(courseData.price);
     if (courseData.startDate) setSettingsDate(new Date(courseData.startDate));
-  }, [courseData]);
+  }, [courseData, sessionsStartTime]);
 
   // Populate per-day session editor from loaded sessions (single format only).
   // Re-runs whenever sessions are (re)fetched so discard/refetch stays in
@@ -240,9 +243,9 @@ const CoursePage = () => {
       const origDate = courseData.startDate ? new Date(courseData.startDate).toDateString() : '';
       const currDate = settingsDate ? settingsDate.toDateString() : '';
       if (currDate !== origDate) return true;
-      const origTimeMatch = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/);
-      const origTime = origTimeMatch ? origTimeMatch[1] : '';
-      if (settingsTime !== origTime) return true;
+      // Compare against the session rows' time; skip until they've loaded so
+      // the default form value can't read as a phantom edit.
+      if (sessionsStartTime && settingsTime !== sessionsStartTime) return true;
     }
     // settingsAllowsDropIn intentionally excluded — drop-in toggle is
     // instant-commit, not part of the batched save flow.
@@ -250,7 +253,7 @@ const CoursePage = () => {
   }, [
     courseData, settingsTitle, settingsDescription, settingsLocation, settingsLocationAddress,
     maxParticipants, settingsDuration, settingsDate, settingsTime,
-    settingsPrice, settingsDropInPrice, sessionDays, sessions,
+    settingsPrice, settingsDropInPrice, sessionDays, sessions, sessionsStartTime,
   ]);
 
   const { blocker, bypass } = useUnsavedChanges(isSettingsDirty);
@@ -314,17 +317,13 @@ const CoursePage = () => {
           .filter((d) => d.date && d.startTime)
           .sort((a, b) => formatLocalYMD(a.date!).localeCompare(formatLocalYMD(b.date!)))[0];
         if (first) {
-          timeSchedule = first.endTime
-            ? `${weekdayLabel(first.date!)}, ${first.startTime}–${first.endTime}`
-            : `${weekdayLabel(first.date!)}, ${first.startTime}`;
+          timeSchedule = singleScheduleLabel(first.date!, first.startTime, first.endTime || null);
         }
       } else if (settingsDate && settingsTime) {
         const end = settingsDuration
           ? minToTime(timeToMin(settingsTime) + settingsDuration)
-          : '';
-        timeSchedule = end
-          ? `${weekdayLabel(settingsDate)}er, ${settingsTime}–${end}`
-          : `${weekdayLabel(settingsDate)}er, ${settingsTime}`;
+          : null;
+        timeSchedule = seriesScheduleLabel(settingsDate, settingsTime, end);
       }
 
       const updateData = {
@@ -672,8 +671,7 @@ const CoursePage = () => {
     // Drop-in is instant-commit, so it's intentionally NOT reset by Forkast —
     // any drop-in change has already been persisted independently.
     if (courseData.startDate) setSettingsDate(new Date(courseData.startDate));
-    const timeMatch = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/);
-    if (timeMatch) setSettingsTime(timeMatch[1]);
+    if (sessionsStartTime) setSettingsTime(sessionsStartTime);
     // Reset per-day session editor from the loaded sessions (single format).
     if (courseData.format === 'single' && sessions.length > 0) {
       setSessionDays(buildSessionDays(sessions));
