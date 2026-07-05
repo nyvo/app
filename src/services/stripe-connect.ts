@@ -43,7 +43,7 @@ export async function startStripeConnectOnboarding(sellerId: string): Promise<{
     const { data, error } = await supabase.functions.invoke('create-stripe-connect-account', {
       body: { sellerId },
     })
-    if (error) return { data: null, error: new Error(error.message || 'Kunne ikke starte onboarding') }
+    if (error) return { data: null, error: new Error(error.message || 'Kunne ikke starte betalingsoppsettet') }
     if (data?.error) return { data: null, error: new Error(data.error) }
     return { data: data as StartOnboardingResult, error: null }
   } catch (err) {

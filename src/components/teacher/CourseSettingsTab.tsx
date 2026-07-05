@@ -9,7 +9,13 @@ import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { ImageField } from '@/components/ui/image-upload';
 import { DatePicker } from '@/components/ui/date-picker';
 import { LocationField, type LocationCoords } from '@/components/ui/location-field';
-import { SessionDaysEditor, type SessionDay } from '@/components/teacher/SessionDaysEditor';
+import {
+  SessionDaysEditor,
+  timeToMin,
+  ALL_TIME_SLOTS,
+  endTimeSlotsFor,
+  type SessionDay,
+} from '@/components/teacher/SessionDaysEditor';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import {
   Select,
@@ -154,23 +160,6 @@ export const CourseSettingsTab = ({
   }, [courseFormat, totalWeeks, price]);
   const [priceInput, setPriceInput] = useState(String(perGangPrice));
 
-  // Time slot helpers (matching CreateCoursePage)
-  const allTimeSlots = useMemo(() => {
-    const slots: string[] = [];
-    for (let h = 6; h < 23; h++) {
-      for (const m of [0, 15, 30, 45]) {
-        slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-      }
-    }
-    slots.push('23:00');
-    return slots;
-  }, []);
-
-  const timeToMin = (t: string) => {
-    const [h, m] = t.split(':').map(Number);
-    return h * 60 + m;
-  };
-
   const minToTime = (mins: number) => {
     const h = Math.floor(mins / 60);
     const m = mins % 60;
@@ -183,11 +172,7 @@ export const CourseSettingsTab = ({
     return minToTime(timeToMin(settingsTime) + settingsDuration);
   }, [settingsTime, settingsDuration]);
 
-  const endTimeSlots = useMemo(() => {
-    if (!settingsTime) return allTimeSlots;
-    const startMin = timeToMin(settingsTime) + 15;
-    return allTimeSlots.filter((t) => timeToMin(t) >= startMin);
-  }, [settingsTime, allTimeSlots]);
+  const endTimeSlots = useMemo(() => endTimeSlotsFor(settingsTime), [settingsTime]);
 
   const handleEndTimeChange = (val: string) => {
     if (!settingsTime) return;
@@ -215,6 +200,13 @@ export const CourseSettingsTab = ({
       return;
     }
     const normalized = Math.floor(parsed);
+    // Only commit when the per-gang value actually changed — re-deriving the
+    // total from an untouched (rounded) per-gang would silently shift a stored
+    // total that isn't divisible by totalWeeks.
+    if (normalized === perGangPrice) {
+      setPriceInput(String(normalized));
+      return;
+    }
     const totalPrice = courseFormat === 'series' ? normalized * (totalWeeks || 1) : normalized;
     if (totalPrice !== price) {
       onPriceChange(totalPrice);
@@ -341,7 +333,7 @@ export const CourseSettingsTab = ({
                 />
                 {isPublished && sessionDays.length > 1 && (
                   <p className="mt-2 text-sm text-foreground-muted">
-                    Legg til eller fjern dager er deaktivert for publiserte kurs. Kontakt deltakere manuelt ved endringer i antall dager.
+                    Du kan ikke legge til eller fjerne dager på publiserte kurs. Kontakt deltakerne ved endringer i antall dager.
                   </p>
                 )}
               </div>
@@ -383,7 +375,7 @@ export const CourseSettingsTab = ({
                         </SelectTrigger>
                         <SelectContent className="max-h-60">
                           <SelectGroup>
-                            {allTimeSlots.map((slot) => (
+                            {ALL_TIME_SLOTS.map((slot) => (
                               <SelectItem key={slot} value={slot}>{slot}</SelectItem>
                             ))}
                           </SelectGroup>
@@ -557,7 +549,7 @@ function ScheduleLockTooltip({ locked, children }: { locked: boolean; children: 
       <TooltipTrigger asChild>
         <div>{children}</div>
       </TooltipTrigger>
-      <TooltipContent>Kurset har startet og kan ikke endres her.</TooltipContent>
+      <TooltipContent>Endre timene fra Timeplan på Oversikt-fanen.</TooltipContent>
     </Tooltip>
   );
 }

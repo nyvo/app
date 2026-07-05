@@ -28,5 +28,6 @@ verify_jwt = false
 [functions.send-pending-confirmations]
 verify_jwt = false
 
-[functions.send-booking-claim-link]
+# Cron-only (x-cron-secret / service-role checked inside).
+[functions.send-class-reminders]
 verify_jwt = false

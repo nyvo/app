@@ -237,7 +237,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
     return (
       <>
         <SheetHeader className="px-6 py-4 border-b border-border">
-          <SheetTitle>Kurs ikke funnet</SheetTitle>
+          <SheetTitle>Fant ikke kurset</SheetTitle>
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
           <p className="text-base text-foreground-muted">
@@ -494,7 +494,7 @@ function ScheduleQuickView({
     return (
       <>
         <SheetHeader className="px-6 py-4 border-b border-border">
-          <SheetTitle>Kurs ikke funnet</SheetTitle>
+          <SheetTitle>Fant ikke kurset</SheetTitle>
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
           <p className="text-base text-foreground-muted">

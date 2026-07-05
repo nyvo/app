@@ -17,12 +17,11 @@ import { COMPANY } from '@/lib/company';
 
 const WEEKDAYS = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
 const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
-const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
 const SUPPORT_EMAIL = COMPANY.email;
 
-// Today, Norwegian short form: "26. apr 2026". Used in the receipt footer.
+// Full Norwegian date, e.g. "26. april 2026". Used in the receipt footer.
 function formatBookingDate(d: Date): string {
-  return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+  return `${d.getDate()}. ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 // Short reference derived from the signup UUID — first 8 hex chars uppercase
@@ -37,8 +36,7 @@ interface SignupDetails {
   payment_status?: string | null;
   status?: string | null;
   // Masked (k•••@example.com) — the anon receipt lookup never returns the
-  // full address; the claim magic link is sent server-side by
-  // send-booking-claim-link, which resolves the address itself.
+  // full address.
   participant_email_masked: string;
   amount_paid: number;
   created_at?: string | null;

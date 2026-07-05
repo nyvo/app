@@ -19,8 +19,10 @@ import { toast } from 'sonner';
 const TeacherProfilePage = () => {
   const { profile, refreshSellers } = useAuth();
 
-  // Name is the only editable field — e-mail is the login identity and is
-  // shown read-only (changing it would need Supabase's confirm-email flow).
+  // State for form fields - initialized from auth context. E-post is the
+  // auth identity and is shown read-only — changing it would have to go
+  // through supabase.auth.updateUser's confirmation flow, which we don't
+  // support yet.
   const [name, setName] = useState('');
 
   useEffect(() => {
@@ -143,7 +145,7 @@ const TeacherProfilePage = () => {
                   aria-describedby="profile-email-hint"
                 />
                 <p id="profile-email-hint" className="text-sm text-foreground-muted">
-                  Brukes til innlogging og kan ikke endres.
+                  E-postadressen er knyttet til innloggingen din og kan ikke endres.
                 </p>
               </div>
             </SettingsRow>
