@@ -6,6 +6,62 @@ not strict dependency.
 
 ---
 
+## 2026-07-05 deep backend audit (5-agent) — fixes applied
+
+Full backend audit (payments, billing/Connect, email/cron, DB functions,
+schema/RLS/perf/tests). Fixes on branch **main-21**: 10 migrations
+(`20260705210000`–`214500`) + 19 files, in 3 commits. Findings artifact + detail
+in the session; ongoing state in memory `backend-audit-fixes-jul5.md`.
+
+### Done — migrations APPLIED to remote + committed on main-21
+
+- **P0 double-charge** — duplicate-signup unique index rebuilt on
+  `lower(participant_email)` + email normalized in `create_signup_if_available`.
+- **P0 oversell** — mint always takes the course lock + session lock for drop-ins.
+- **P0 billing clobber** — a stale `subscription.deleted` for an old subscription
+  can no longer downgrade a newer active Pro row.
+- **P0 ops config** — `ops-health-alert` declared `verify_jwt=false` in config.toml.
+- **P1** — `check_email_auth_status` keys on the trusted last XFF hop; aggregate
+  `seller_income_series`/`seller_platform_fee_month` RPCs (fix >1000-row income
+  truncation); signups financial CHECKs + revoked server-column INSERT grants;
+  `subscription_pending_reprice` flag; `ops_health_check` +3 checks; email 15s
+  timeout + fan-out pacing; confirmation-sweep run-lock; reminder stamp-unless-all-
+  failed; google-places rate-limits before billing Google; connect two-tab orphan.
+- **P2** — sweep index coverage; PI-cancel cancels the minted paid signup; sweep
+  cancels stale PI on abandon; cancel-course handles `processing` + bounds Stripe
+  concurrency; Idempotency-Keys on capture/cancel/refund; dropped dead
+  `signups_update_member` policy; `is_platform_admin` self/admin guard; ingress
+  text-length CHECKs; NULL capacity = unlimited; notifications purge; constant-time
+  cron-secret compares.
+
+All 24 edge functions were redeployed 2026-07-05 (so the shared `stripe.ts`
+idempotency keys, `email.ts` timeout, and `auth.ts` timing-safe compare
+propagate everywhere, incl. `teacher-cancel-signup`).
+
+### Still needs human / production action
+
+- **Merge `main-21` → `origin/main`** — migrations are applied to the DB and
+  committed on the branch, but not on main yet (drift rule: not DONE until the
+  files are on main).
+- **Verify Stripe dunning final action** — `unpaid`→`past_due` grants full Pro.
+  If Stripe's dunning final action is "mark unpaid" (not cancel), a non-payer
+  keeps Pro forever. Remap `unpaid`→`canceled` if so. (Not changed in code.)
+- **Investigate 5 abandoned paid confirmations** — the new
+  `ops_health_check.abandoned_confirmations` returned 5 live rows: paid signups
+  >24h old with `confirmation_sent_at`/`seller_notified_at` still NULL.
+- **Schedule the class-reminder cron** — `send-class-reminders` is deployed but
+  has no `cron.job` row; re-run the schedule from `20260705170000` before the
+  first course hits T-24h. Confirm the new `cleanup-old-notifications-monthly`
+  job runs.
+- **Set ops-alert env** — `OPS_ALERT_EMAIL` + Resend vars, or `ops-health-alert`
+  stays a no-op.
+- **Deferred (low)** — backend test suite (sweep/capacity/refund/RLS/webhook);
+  re-auth on `delete-account`; anon-RPC rate limits
+  (`get_signup_by_stripe_id`, `lookup_seller_invite_link`); advisor unused-index
+  drops after a post-launch recheck; yearly Stripe price env vars.
+
+---
+
 ## 2026-06-08 prelaunch checklist pass
 
 ### Done in this pass
