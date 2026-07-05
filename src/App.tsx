@@ -51,7 +51,6 @@ const CoursesListPreview = lazy(() => import('./pages/dev/CoursesListPreview'));
 const CheckoutFormReworkPreview = lazy(() => import('./pages/dev/CheckoutFormReworkPreview'));
 const DetailReworkPreview = lazy(() => import('./pages/dev/DetailReworkPreview'));
 const ModalsButtonsToastsPreview = lazy(() => import('./pages/dev/ModalsButtonsToastsPreview'));
-const TierPreview = lazy(() => import('./pages/dev/TierPreview'));
 const BillingPreview = lazy(() => import('./pages/dev/BillingPreview'));
 const CourseDetailPreview = lazy(() => import('./pages/dev/CourseDetailPreview'));
 const StudioPreview = lazy(() => import('./pages/dev/StudioPreview'));
@@ -156,7 +155,6 @@ function AppRoutes() {
             <Route path="/dev/checkout-form-rework" element={<CheckoutFormReworkPreview />} />
             <Route path="/dev/detail-rework" element={<DetailReworkPreview />} />
             <Route path="/dev/modals-buttons-toasts" element={<ModalsButtonsToastsPreview />} />
-            <Route path="/dev/tier-preview" element={<TierPreview />} />
             <Route path="/dev/billing-preview" element={<BillingPreview />} />
             <Route path="/dev/course-detail-preview" element={<CourseDetailPreview />} />
             <Route path="/dev/studio-preview" element={<StudioPreview />} />

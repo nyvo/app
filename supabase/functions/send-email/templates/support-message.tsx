@@ -121,7 +121,7 @@ SupportMessage.PreviewProps = {
   signupStatus: 'confirmed',
   paymentStatus: 'paid',
   supportSubject: 'Betaling og utbetaling',
-  message: 'Hei, jeg får ikke fullført Dintero-oppsettet. Hva bør jeg gjøre?',
+  message: 'Hei, jeg får ikke fullført utbetalingsoppsettet. Hva bør jeg gjøre?',
 } satisfies SupportMessageProps
 
 export default SupportMessage
