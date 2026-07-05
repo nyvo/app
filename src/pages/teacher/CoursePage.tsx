@@ -873,7 +873,6 @@ const CoursePage = () => {
               onMaxParticipantsChange={setMaxParticipants}
               currentEnrolled={courseData.enrolled || 0}
               courseFormat={courseData.format === 'series' ? 'series' : 'single'}
-              totalWeeks={courseData.totalWeeks || 0}
               price={settingsPrice}
               onPriceChange={setSettingsPrice}
               isDirty={isSettingsDirty}
