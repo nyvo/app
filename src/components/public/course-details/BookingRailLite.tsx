@@ -5,9 +5,15 @@ import { Badge } from '@/components/ui/badge';
 import { calculateServiceFee, calculateTotalPrice } from '@/lib/pricing';
 import { formatKroner, cn } from '@/lib/utils';
 import { singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
+import type { AvailableTicketType } from '@/types/database';
 
 interface BookingRailLiteProps {
   course: PublicCourseWithDetails;
+  /** Sellable tiers from the `available_ticket_types` RPC — the same rows
+   * checkout and the Stripe session resolve against, so the price shown here
+   * is definitionally the price charged (incl. the prorated package price
+   * once a series has started). */
+  tiers: AvailableTicketType[];
   studioSlug: string;
   /** Optional override for the CTA target. Defaults to /:slug/:courseSlug/pamelding. */
   checkoutHref?: string;
@@ -15,16 +21,9 @@ interface BookingRailLiteProps {
   dropInSublabel?: string | null;
   /** Compact meta line shown under the course title (e.g. "13. april · 06:45–07:30"). */
   metaLabel?: string | null;
-  /** True when the first session has already ended. The package tile stays
-   * available but is prorated to the sessions that are still ahead. */
-  seriesStarted?: boolean;
-  /** Non-cancelled sessions whose end is still in the future. Used to prorate
-   * the package price when `seriesStarted` is true. Mirrors the SQL in
-   * migration 20260520160000 so display matches what the RPC will charge. */
-  remainingSessions?: number;
 }
 
-export type TicketId = 'main' | 'drop-in' | 'free';
+export type TicketId = 'main' | 'drop-in';
 
 interface TicketTile {
   id: TicketId;
@@ -47,13 +46,17 @@ interface TicketTile {
  *  - Ticket choice uses brand-tinted selectable rows (not a heavy ring).
  *  - Soft elevation (`shadow-soft`) lifts the card off the flat white page.
  */
-export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublabel, metaLabel, seriesStarted = false, remainingSessions = 0 }: BookingRailLiteProps) {
+export function BookingRailLite({ course, tiers, studioSlug, checkoutHref, dropInSublabel, metaLabel }: BookingRailLiteProps) {
   const spotsLeft = course.spots_available;
   const lowStock = spotsLeft > 0 && spotsLeft <= 3;
-  const soldOut = spotsLeft === 0;
+  const courseFull = spotsLeft === 0;
 
-  const tiles = buildTiles(course, dropInSublabel ?? null, seriesStarted, remainingSessions);
-  const closed = !soldOut && tiles.length === 0 && seriesStarted;
+  const tiles = buildTiles(course, tiers, dropInSublabel ?? null, courseFull);
+  // Course-wide capacity only gates the package: a drop-in occupies a single
+  // class, so the RPC keeps offering it while the NEXT session has room even
+  // when the course-wide count is maxed (past drop-ins inflate that count).
+  const soldOut = courseFull && tiles.length === 0;
+  const closed = !courseFull && tiles.length === 0;
   const [selectedId, setSelectedId] = useState<TicketId>(tiles[0]?.id ?? 'main');
 
   const selectedTile = tiles.find((t) => t.id === selectedId) ?? tiles[0] ?? null;
@@ -225,78 +228,57 @@ function TicketTileButton({
   );
 }
 
-/** Label + sublabel for the "whole course" ticket. A series buys every week
- * ("Hele kurspakken · N uker"); a single buys one class ("Enkelttime"), or —
- * when it spans consecutive days — the whole multi-day course
- * ("Hele kurset · N dager"). */
-function wholeTicket(
-  course: PublicCourseWithDetails,
-  isSeries: boolean,
-): { label: string; sublabel: string | null } {
-  if (isSeries) {
-    return {
-      label: 'Hele kurspakken',
-      sublabel: course.total_weeks ? `${course.total_weeks} uker` : null,
-    };
-  }
-  const days = singleDayCount(course);
-  return days > 1
-    ? { label: 'Hele kurset', sublabel: `${days} dager` }
-    : { label: 'Enkelttime', sublabel: null };
-}
-
+/**
+ * Map RPC tier rows onto the rail's two tiles. The tier `label` comes from
+ * the database ("Hele kurspakken" / "Hele kurset" / "Enkelttime" / "Drop-in")
+ * — the same string the checkout summary shows and the signup snapshots — so
+ * no client-side re-derivation. The package tile is withheld when the course
+ * is full; the drop-in tile appears whenever the RPC offered it (its
+ * availability is per next class, gated server-side).
+ */
 function buildTiles(
   course: PublicCourseWithDetails,
+  tiers: AvailableTicketType[],
   dropInSublabel: string | null,
-  seriesStarted: boolean,
-  remainingSessions: number,
+  courseFull: boolean,
 ): TicketTile[] {
-  const isFree = !course.price || course.price === 0;
-  const isSeries = course.format === 'series';
-
-  // Free courses still show a tile so the booking card has the same shape
-  // as paid flows — single row, "0 kr" via formatKroner.
-  if (isFree) {
-    const { label, sublabel } = wholeTicket(course, isSeries);
-    return [{ id: 'free', label, sublabel, amount: 0 }];
-  }
+  const main =
+    tiers.find((t) => t.is_default && t.ticket_kind !== 'drop_in')
+    ?? tiers.find((t) => t.ticket_kind !== 'drop_in')
+    ?? null;
+  const dropIn = tiers.find((t) => t.ticket_kind === 'drop_in') ?? null;
 
   const tiles: TicketTile[] = [];
-
-  // Series + started: prorate the package to the sessions that are still
-  // ahead. The per-week package rate is price ÷ total_weeks, mirroring the
-  // SQL in available_ticket_types. The package stays available down to the
-  // very last session — drop-in shows alongside it when offered. Teachers
-  // opt out entirely via course.accepts_late_signups.
-  if (isSeries && seriesStarted) {
-    if (
-      course.accepts_late_signups
-      && remainingSessions > 0
-      && course.total_weeks
-      && course.total_weeks > 0
-      && course.price
-    ) {
-      const perWeek = Math.round(course.price / course.total_weeks);
-      tiles.push({
-        id: 'main',
-        label: 'Kurspakke',
-        sublabel: `${remainingSessions} ${remainingSessions === 1 ? 'uke' : 'uker'} igjen`,
-        amount: perWeek * remainingSessions,
-      });
-    }
-  } else {
-    const { label, sublabel } = wholeTicket(course, isSeries);
-    tiles.push({ id: 'main', label, sublabel, amount: course.price ?? 0 });
-  }
-
-  if (course.allows_drop_in && course.drop_in_price) {
+  if (main && !courseFull) {
     tiles.push({
-      id: 'drop-in',
-      label: 'Drop-in',
-      sublabel: dropInSublabel ?? 'Per gang',
-      amount: course.drop_in_price,
+      id: 'main',
+      label: main.label,
+      sublabel: mainSublabel(course, main),
+      amount: Number(main.price ?? 0),
     });
   }
-
+  if (dropIn) {
+    tiles.push({
+      id: 'drop-in',
+      label: dropIn.label,
+      sublabel: dropInSublabel ?? 'Per gang',
+      amount: Number(dropIn.price ?? 0),
+    });
+  }
   return tiles;
+}
+
+/** Sublabel under the package tile. Series show the week span — "N uker
+ * igjen" once the RPC has prorated it down to the remaining weeks. A single
+ * spanning consecutive days shows the day span; a one-day class needs none. */
+function mainSublabel(course: PublicCourseWithDetails, tier: AvailableTicketType): string | null {
+  if (course.format === 'series') {
+    const weeks = tier.weeks ?? course.total_weeks;
+    if (!weeks) return null;
+    const unit = weeks === 1 ? 'uke' : 'uker';
+    const prorated = course.total_weeks != null && weeks < course.total_weeks;
+    return prorated ? `${weeks} ${unit} igjen` : `${weeks} ${unit}`;
+  }
+  const days = singleDayCount(course);
+  return days > 1 ? `${days} dager` : null;
 }

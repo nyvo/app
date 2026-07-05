@@ -5,7 +5,7 @@ import { Clock, Calendar, ChevronLeft } from '@/lib/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { toLocalDate, formatLocalDateKey } from '@/utils/dateUtils';
+import { toLocalDate, osloNowKey, osloTodayKey } from '@/utils/dateUtils';
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import { resolveCourseImage, fetchPublicCourseBySlug, type PublicCourseWithDetai
 import { fetchSellerBySlug } from '@/services/sellers';
 import { supabase } from '@/lib/supabase';
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import type { CourseSession } from '@/types/database';
+import type { AvailableTicketType, CourseSession } from '@/types/database';
 
 interface DetailNavState {
   fromSlug?: string;
@@ -41,7 +41,12 @@ export default function PublicCourseDetailPage() {
   type DetailResult =
     | { kind: 'redirect'; to: string }
     | { kind: 'not-found' }
-    | { kind: 'ok'; course: PublicCourseWithDetails; sessions: CourseSession[] };
+    | {
+        kind: 'ok';
+        course: PublicCourseWithDetails;
+        sessions: CourseSession[];
+        tiers: AvailableTicketType[];
+      };
 
   const detailQuery = useQuery({
     queryKey: ['public-course', slug, courseSlug],
@@ -70,15 +75,25 @@ export default function PublicCourseDetailPage() {
         return { kind: 'redirect', to: `/${ownerSlug}/${courseSlug}` };
       }
 
-      const { data: sessionRows } = await supabase
-        .from('course_sessions')
-        .select('*')
-        .eq('course_id', courseRes.data.id)
-        .order('session_date', { ascending: true });
+      // Sessions (schedule dialog + "next class" labels) and sellable tiers.
+      // Tiers come from the same `available_ticket_types` RPC checkout prices
+      // from — single source of truth for availability and (prorated) price.
+      const [{ data: sessionRows }, tiersRes] = await Promise.all([
+        supabase
+          .from('course_sessions')
+          .select('*')
+          .eq('course_id', courseRes.data.id)
+          .order('session_date', { ascending: true }),
+        supabase.rpc('available_ticket_types', { p_course_id: courseRes.data.id }),
+      ]);
+      if (tiersRes.error) throw tiersRes.error;
       return {
         kind: 'ok',
         course: courseRes.data,
         sessions: (sessionRows ?? []) as CourseSession[],
+        tiers: ((tiersRes.data ?? []) as AvailableTicketType[]).filter(
+          (t) => t.audience === 'standard',
+        ),
       };
     },
   });
@@ -91,6 +106,7 @@ export default function PublicCourseDetailPage() {
 
   const course = detailQuery.data?.kind === 'ok' ? detailQuery.data.course : null;
   const sessions = detailQuery.data?.kind === 'ok' ? detailQuery.data.sessions : [];
+  const tiers = detailQuery.data?.kind === 'ok' ? detailQuery.data.tiers : [];
   const loading = detailQuery.isPending || detailQuery.data?.kind === 'redirect';
   const error =
     detailQuery.isError || detailQuery.data?.kind === 'not-found'
@@ -174,11 +190,10 @@ export default function PublicCourseDetailPage() {
                 <div className="md:sticky md:top-10">
                   <BookingRailLite
                     course={course}
+                    tiers={tiers}
                     studioSlug={slug || ''}
-                    dropInSublabel={course.allows_drop_in ? buildDropInSublabel(sessions) : null}
+                    dropInSublabel={buildDropInSublabel(sessions)}
                     metaLabel={buildCardMeta(course, nextSessionDate)}
-                    seriesStarted={course.format === 'series' && hasSeriesStarted(sessions, course.duration)}
-                    remainingSessions={countRemainingSessions(sessions, course.duration)}
                   />
                 </div>
               </aside>
@@ -450,22 +465,30 @@ function resolveTimeRange(timeSchedule: string | null, durationMinutes: number |
   return `${start}–${pad(endH)}:${pad(endM)}`;
 }
 
+/** "I dag"/"I morgen" relative to Oslo's today — session dates are naive
+ * Norwegian dates, so the viewer's own timezone must not shift the label. */
 function formatRelativeDate(dateStr: string | null): string {
   if (!dateStr) return '';
-  const d = toLocalDate(dateStr);
+  const key = dateStr.slice(0, 10);
+  const today = osloTodayKey();
+  if (key === today) return 'I dag';
+  if (key === nextDayKey(today)) return 'I morgen';
+  const d = toLocalDate(key);
   if (isNaN(d.getTime())) return '';
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(d);
-  target.setHours(0, 0, 0, 0);
-  const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (diff === 0) return 'I dag';
-  if (diff === 1) return 'I morgen';
   return `${d.getDate()}. ${MONTHS[d.getMonth()]}`;
 }
 
+/** YYYY-MM-DD of the day after `dateKey` (pure calendar arithmetic in UTC). */
+function nextDayKey(dateKey: string): string {
+  const d = new Date(`${dateKey}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 function formatFullDate(dateStr: string): string {
-  const d = new Date(dateStr);
+  // toLocalDate: `new Date('YYYY-MM-DD')` parses as UTC midnight, showing the
+  // wrong weekday for any viewer in a timezone west of UTC.
+  const d = toLocalDate(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   return `${WEEKDAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
 }
@@ -477,54 +500,38 @@ function buildCardMeta(course: PublicCourseWithDetails, nextSessionDate: string 
   return dateLabel || timeRange || null;
 }
 
-/** A session is "remaining" when it isn't cancelled and hasn't ended yet —
- * a class that's underway but not over still counts. Mirrors the SQL in
- * `available_ticket_types` (migration 20260520160000) so the prorated price
- * shown on the booking card matches what the RPC charges at checkout. */
-function isSessionRemaining(s: CourseSession, durationMinutes: number | null): boolean {
-  if (s.status === 'cancelled') return false;
-  const startIso = `${s.session_date}T${s.start_time ?? '00:00:00'}`;
-  const startMs = new Date(startIso).getTime();
-  if (isNaN(startMs)) return false;
-  const endMs = startMs + (durationMinutes ?? 60) * 60000;
-  return endMs > Date.now();
+/** "YYYY-MM-DD HH:mm:ss" end-of-session key, lexically comparable against
+ * `osloNowKey()`. Prefers the explicit `end_time` column, else start +
+ * duration. The Z-suffixed parse is pure calendar arithmetic — the viewer's
+ * timezone never shifts the result. Null when the session has no times. */
+function sessionEndKey(s: CourseSession, durationMinutes: number | null): string | null {
+  if (s.end_time) return `${s.session_date} ${s.end_time}`;
+  if (!s.start_time) return null;
+  const start = new Date(`${s.session_date}T${s.start_time}Z`);
+  if (isNaN(start.getTime())) return null;
+  const end = new Date(start.getTime() + (durationMinutes ?? 60) * 60000).toISOString();
+  return `${end.slice(0, 10)} ${end.slice(11, 19)}`;
 }
 
-/** A session is "finished" once its end time (start + duration) has passed —
- * the inverse of `isSessionRemaining`'s end-time check, so a class that's
- * underway isn't dimmed yet. A same-day session whose time has already gone by
- * therefore reads as finished, not upcoming. Without a start time we can only
- * judge by the calendar day. */
+/** A session is "finished" once its end has passed (in Oslo time), so a class
+ * that's underway isn't dimmed yet. Without any time we can only judge by the
+ * calendar day. Display-only — bookability comes from the tier RPC. */
 function hasSessionFinished(s: CourseSession, durationMinutes: number | null): boolean {
-  if (!s.start_time) return s.session_date < formatLocalDateKey(new Date());
-  const startMs = new Date(`${s.session_date}T${s.start_time}`).getTime();
-  if (isNaN(startMs)) return false;
-  return startMs + (durationMinutes ?? 60) * 60000 <= Date.now();
+  const endKey = sessionEndKey(s, durationMinutes);
+  if (!endKey) return s.session_date < osloTodayKey();
+  return endKey <= osloNowKey();
 }
 
-/** Series counts as "started" once the first non-cancelled session's end
- * time has passed. After that the package is offered at a prorated price
- * for the remaining sessions instead of being hidden. */
-function hasSeriesStarted(sessions: CourseSession[], durationMinutes: number | null): boolean {
-  const first = sessions.find((s) => s.status !== 'cancelled');
-  if (!first) return false;
-  return !isSessionRemaining(first, durationMinutes);
-}
-
-function countRemainingSessions(sessions: CourseSession[], durationMinutes: number | null): number {
-  return sessions.reduce((n, s) => (isSessionRemaining(s, durationMinutes) ? n + 1 : n), 0);
-}
-
-/** First non-cancelled session whose start instant is still in the future.
- * "Today's session at 06:45" is no longer upcoming once the clock passes
- * 06:45 — we skip to the next one. */
+/** First non-cancelled session whose start instant is still ahead in Oslo
+ * time. "Today's session at 06:45" is no longer upcoming once the clock
+ * passes 06:45 — we skip to the next one. Same comparison checkout uses to
+ * auto-pick the drop-in class, so the sublabel names the session that gets
+ * booked. */
 function findNextUpcomingSession(sessions: CourseSession[]): CourseSession | null {
-  const now = Date.now();
+  const now = osloNowKey();
   for (const s of sessions) {
     if (s.status === 'cancelled') continue;
-    const startIso = `${s.session_date}T${s.start_time ?? '23:59:59'}`;
-    const t = new Date(startIso).getTime();
-    if (!isNaN(t) && t > now) return s;
+    if (`${s.session_date} ${s.start_time ?? '23:59:59'}` > now) return s;
   }
   return null;
 }
