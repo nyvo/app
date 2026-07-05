@@ -1205,6 +1205,15 @@ export type Database = {
         Args: { p_new_slug: string; p_seller_id: string }
         Returns: string
       }
+      save_course_schedule: {
+        Args: {
+          p_course: Json
+          p_course_id: string
+          p_drop_in?: Json
+          p_sessions?: Json
+        }
+        Returns: Json
+      }
       set_operating_model: {
         Args: { p_operating_model: string; p_seller_id: string }
         Returns: Json
