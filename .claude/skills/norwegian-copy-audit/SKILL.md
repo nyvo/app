@@ -9,7 +9,7 @@ Audit Norwegian (Bokmål) UI copy so it reads like a native copywriter at Vipps 
 
 ## How to operate
 
-1. **Scope the audit.** If the user names a file or feature, audit only that. If they ask broadly ("audit our Norwegian copy"), start with the most visible surfaces: page titles, primary buttons, form labels, error messages, empty states, then expand. Use Grep to find Norwegian strings (search for `æ|ø|å`, `kr `, common words like `Lagre|Avbryt|Bekreft`).
+1. **Scope the audit.** If the user names a file or feature, audit only that. If they ask broadly ("audit our Norwegian copy"), start with the most visible surfaces: page titles, primary buttons, form labels, error messages, empty states, then expand. Use Grep to find Norwegian strings (search for `æ|ø|å`, `kr `, common words like `Lagre|Avbryt|Bekreft`). Copy hides beyond JSX text — also sweep toast calls, zod/validation messages, `placeholder`/`aria-label`/`alt`/`title` attributes, empty-state constants, and email templates (e.g. `supabase/functions/`). Audit only user-visible strings — never code identifiers, comments, or test fixtures.
 2. **Report findings as a structured list.** For each issue: file:line, current text, suggested fix, one-line reason. Group by severity:
    - **Blocker** — meaning changes, dangerous ambiguity, særskriving that changes parsing, false friends, invalid currency/date/time formatting, English fallback leakage (untranslated strings in a Norwegian view), mixed-language UI within a single surface
    - **Major** — Title Case headings, "vennligst" / "vær så snill", anglicisms with a clear Norwegian equivalent, machine-translated phrasing, bureaucratic register, user-blaming error voice, inconsistent infinitive endings within a product surface
@@ -24,14 +24,16 @@ Audit Norwegian (Bokmål) UI copy so it reads like a native copywriter at Vipps 
 - **Use "du" / "deg" / "din" in all consumer UX** unless the domain explicitly requires formal legal or governmental language. Even banks (DNB, Sbanken), insurers, health services, and Skatteetaten use "du" in product surfaces today. Reserve "De / Dem / Deres" for legal contracts, formal correspondence with public authorities, or product copy that explicitly targets that register.
 - **Zero tolerance for "vennligst"**. Drop it entirely; the imperative is polite enough. ("Vennligst logg inn" → "Logg inn".)
 - **Zero tolerance for "vær så snill"**. Even more wrong.
-- **Posessives**: prefer postposed in body copy ("kontoen din", "pakken din"), preposed only for headlines ("Din økonomi"). Spamming "din X, din Y, din Z" reads as marketing-translated.
-- **Drop redundant possessives**: "Velkommen til din dashbord" → "Velkommen til oversikten" or just "Velkommen".
+- **Possessives**: prefer postposed in body copy ("kontoen din", "pakken din"), preposed only for headlines ("Din økonomi"). Spamming "din X, din Y, din Z" reads as marketing-translated.
+- **Drop redundant possessives**: "Velkommen til ditt dashbord" → "Velkommen til oversikten" or just "Velkommen".
 
-### 1b. Infinitive consistency (conservative vs radical Bokmål)
-Norwegian Bokmål allows both conservative ("å sende", "å lagre", "å betale") and radical/feminine forms ("å senda" in dialect-flavored copy is rare; the real axis is in past tense and noun gender: "boken" vs "boka", "skrevet" vs "skrive"). Mixed registers within one product feel sloppy.
-- **Default to conservative Bokmål**: `-en` definite forms ("boken", "saken", "siden"), `-et` past participle ("har sendt", "har lagret"). This matches Vipps, DNB, Sbanken, Fiken.
+### 1b. Register consistency (conservative vs radical Bokmål)
+Bokmål allows two registers, and mixing them within one product feels sloppy. The axis is feminine definite forms, weak-verb past tense, and word variants:
+- Conservative: "boken", "siden", "kastet", "frem", "syv", "sen", "alene"
+- Radical: "boka", "sida", "kasta", "fram", "sju", "sein", "aleine"
+- **Default to conservative Bokmål** — matches Vipps, DNB, Sbanken, Fiken. (Some pairs are register-neutral today — "fram" passes in otherwise conservative copy — the rule is consistency, not purism.)
 - **Stay consistent within the product.** If one surface says "boka" and another says "boken", that's a Major issue — flag the inconsistency, don't argue the choice.
-- Radical forms (`-a` definite: "boka", "saka") are fine for brands deliberately targeting a younger or more dialect-aware voice — but only if applied throughout.
+- Radical forms are fine for brands deliberately targeting a younger or more dialect-aware voice — but only if applied throughout.
 
 ### 2. Sentence case (the #1 translation tell)
 - Norwegian uses **sentence case for everything**: headings, buttons, menu items, page titles, table headers.
@@ -45,7 +47,9 @@ Norwegian forms compound nouns by joining them. Splitting compounds is a meme-le
 Join (do NOT split):
 - kundeservice, nettside, e-postadresse, brukernavn, passord, betalingsmetode, kontoinformasjon, bestillingsbekreftelse, leveringsadresse, fakturaadresse, personvernerklæring, nyhetsbrev, kundenummer, ordrenummer, abonnementsavgift
 
-Hyphenate when one part is an abbreviation, acronym, single letter, or number: `e-postadresse`, `SMS-varsling`, `PIN-kode`, `kunde-ID`, `2-faktorautentisering`.
+Hyphenate when one part is an abbreviation, acronym, single letter, or number: `e-postadresse`, `SMS-varsling`, `PIN-kode`, `kunde-ID`, `A4-format`. (For 2FA, prefer `totrinnsbekreftelse` — the Vipps/Google term — or `tofaktorautentisering`.)
+
+Proper nouns compound with a hyphen: `Vipps-betaling`, `Stripe-konto`, `Excel-eksport` — never `Vipps betaling`.
 
 Two words (fixed phrases): "vilkår og betingelser".
 
@@ -57,7 +61,7 @@ Two words (fixed phrases): "vilkår og betingelser".
 - **Percent**: space before `%`. `19,5 %`, not `19,5%`.
 - **Full date**: `14. mai 2026` (period after day, lowercase month, no comma).
 - **Short date**: `14.05.2026`. Slashes are American — don't.
-- **Time**: `kl. 14:00`, 24-hour, colon separator. Never AM/PM. Never `14.00`.
+- **Time**: `kl. 14:00`, 24-hour. Never AM/PM. (Språkrådet's print norm is a period — `kl. 14.00` — so a period is not an *error*; pick the colon for product UI and flag mixing as a consistency issue.)
 - **Range**: en-dash, no spaces. `kl. 9–17`, `mandag–fredag`, `100–200 kr`.
 
 ### 5. Canonical UI strings — deviations read as machine translation
@@ -66,7 +70,8 @@ Two words (fixed phrases): "vilkår og betingelser".
 |---|---|---|
 | Log in | **Logg inn** | Logg på, Innlogg |
 | Log out | **Logg ut** | Logg av |
-| Sign up / Register | **Registrer deg** / **Opprett konto** | Tegn opp, Meld på |
+| Sign up (account) | **Registrer deg** / **Opprett konto** | Tegn opp |
+| Sign up (course/event) | **Meld deg på** / **Påmelding** | Registrer deg (too administrative for events) |
 | Save | **Lagre** | Spar (= save money) |
 | Cancel | **Avbryt** | Kanseller (anglicism), Avlys (= cancel event) |
 | Confirm | **Bekreft** | Konfirmer (= religious) |
@@ -89,6 +94,12 @@ Two words (fixed phrases): "vilkår og betingelser".
 | Add | **Legg til** | |
 | Required | **Obligatorisk** / **Påkrevd** | |
 | Optional | **Valgfritt** | |
+
+**Three different "cancel"s** — using the wrong one is a Blocker, not a style issue:
+- Abort an action / close a dialog = **Avbryt**
+- Call off a scheduled event or class = **Avlys** ("Avlys timen")
+- End a subscription or agreement = **Si opp** ("Si opp abonnementet")
+("Avbryt abonnementet" reads as "dismiss this dialog", not "cancel my subscription".)
 
 Confirmations are short, no "vellykket":
 - "Lagret", "Sendt", "Endringene er lagret"
@@ -153,6 +164,8 @@ Norwegian softens through structure, not "please":
 - **rar** ≠ rare (means "strange")
 - **billett** ≠ billet (means "ticket")
 - **konsekvent** ≠ consequent (means "consistent")
+- **resept** ≠ receipt (means "prescription" — receipt = "kvittering")
+- **annonsere** ≠ announce (means "advertise" — announce = "kunngjøre" / "lansere")
 
 ### 10. Anglicisms to translate
 - "kanseller" → "avbryt" / "si opp"
@@ -193,7 +206,7 @@ Keep these — they're standard Norwegian tech vocabulary:
 - app, e-post, SMS, PIN-kode, ID, nettside, nettleser, nettbank, nyhetsbrev, abonnement, faktura, kvittering, innboks, varsler, oversikt (preferred over "dashbord" in consumer; "dashbord" OK in B2B SaaS), kasse (checkout), innlogging, kundeservice, brukerstøtte, tilbakemelding, last ned / last opp
 
 ### 12. Punctuation & typography
-- **Quotation marks**: straight `"…"` in web UI. Don't import English curly quotes mid-paragraph.
+- **Quotation marks**: Norwegian typographic quotes are `«…»`; straight `"…"` is fine in web UI. Never English curly `“…”`. Pick one style per product.
 - **Dash**: en-dash with spaces ` – ` for parenthetical (where English uses em-dash). En-dash without spaces for ranges (`9–17`).
 - **No Oxford comma**: "epler, pærer og bananer".
 - **No apostrophe-s genitive**: "Olas konto", not "Ola's konto". Apostrophe only when name ends in s/x/z: "Hans' bok".
@@ -222,6 +235,7 @@ When you see these patterns, the copy was probably translated from English (by a
 | "for å sikre at…" before benign actions | English hedging | Drop or restructure |
 | Sentences starting with "I tillegg" / "Videre" / "Dessuten" stacked | English connector overuse | Norwegian prefers shorter sentences with fewer connectors |
 | Misplaced "ikke" in subordinate clauses ("…fordi jeg kan ikke se det") | Word-order error common in LLM output | "…fordi jeg ikke kan se det" |
+| Gender-agreement errors ("din kort", "ditt konto", "en abonnement") | Possessive/article doesn't match noun gender — classic LLM/non-native tell | "kortet ditt", "kontoen din", "et abonnement" |
 
 ### 15. SaaS cringe — empty pep, overpromise, marketing clichés
 
@@ -252,7 +266,7 @@ Translation correctness isn't enough. Copy can be grammatically perfect Norwegia
 
 **When in doubt, cut.** The most common cringe-fix is deletion. SaaS cringe almost always comes from over-explaining or over-promising. Norwegian voice prefers under-stating.
 
-## Final pass — the 18-point checklist
+## Final pass checklist
 
 For every audited string, verify:
 
@@ -273,8 +287,10 @@ For every audited string, verify:
 15. No "klikk her" — link text is a verb phrase
 16. No apostrophe-s genitives
 17. Postposed possessives in body copy, preposed sparingly
-18. Infinitive / definite-form register consistent across the product (conservative Bokmål unless brand says otherwise)
-19. No SaaS cringe (§15): no "fra første sekund/dag", no "med ett klikk", no "i sanntid" decorative, no "rett ut av boksen", no empty superlatives, no aspirational fluff. Apply the read-it-out-loud test.
+18. Register consistent across the product (conservative Bokmål — boken/kastet/frem — unless brand says otherwise)
+19. Possessive/article agrees with noun gender ("kortet ditt", not "din kort")
+20. Right "cancel": avbryt (action) / avlys (event) / si opp (subscription)
+21. No SaaS cringe (§15): no "fra første sekund/dag", no "med ett klikk", no "i sanntid" decorative, no "rett ut av boksen", no empty superlatives, no aspirational fluff. Apply the read-it-out-loud test.
 
 ## Output format
 
