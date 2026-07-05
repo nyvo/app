@@ -40,10 +40,12 @@ jobs:
         with:
           deno-version: v2.x
 
-      # Tests over the shared payment modules (webhook claim state machine,
-      # Stripe signature verification) — the logic every webhook depends on.
-      # Running them also type-checks the modules they import. A repo-wide
-      # `deno check supabase/functions` is currently blocked upstream:
-      # @supabase/functions-js edge-runtime.d.ts references npm:openai types.
-      - name: Edge function shared-module tests
-        run: deno test --allow-env supabase/functions/_shared/
+      # Edge-function tests: shared payment modules (claim state machine,
+      # signature verification) + handler-level suites (stripe-connect-webhook
+      # runs unmodified against a faked PostgREST/Stripe network). Running
+      # them also type-checks the modules they import. A repo-wide
+      # `deno check supabase/functions` is still blocked upstream:
+      # @supabase/functions-js edge-runtime.d.ts references npm:openai types
+      # (handlers keep that import in index.ts only, so tests avoid it).
+      - name: Edge function tests
+        run: deno test --allow-env supabase/functions/
