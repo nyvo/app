@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Check, ExternalLink, Plus, X } from '@/lib/icons';
+import { Check, ExternalLink } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { UnsavedChangesDialog, useUnsavedChanges } from '@/components/ui/unsaved-changes';
@@ -30,8 +30,6 @@ import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { createLocation, updateLocation } from '@/services/locations';
 import { fetchGuestHost, type GuestHost } from '@/services/affiliations';
-import { parseRooms, type Room } from '@/lib/rooms';
-import { runWithUndo } from '@/lib/undo';
 import { renameSellerSlug, updateSeller } from '@/services/sellers';
 import { deleteSellerLogo, uploadSellerLogo } from '@/services/storage';
 import type { Seller } from '@/types/database';
@@ -129,11 +127,6 @@ function StudioPublicSettings({
 
   const [placeName, setPlaceName] = useState('');
   const [address, setAddress] = useState('');
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [newRoom, setNewRoom] = useState('');
-  const [newRoomCapacity, setNewRoomCapacity] = useState('');
-  // The add-room form stays collapsed behind a card until the teacher opens it.
-  const [addingRoom, setAddingRoom] = useState(false);
   const [placeError, setPlaceError] = useState<string | null>(null);
   // Coords from the Google Place behind the address (null until a place is
   // picked, and cleared again the moment the name is edited by hand).
@@ -147,22 +140,16 @@ function StudioPublicSettings({
   useEffect(() => {
     setPlaceName(primaryLocation?.name ?? '');
     setAddress(primaryLocation?.address ?? '');
-    setRooms(parseRooms(primaryLocation?.rooms));
     setPlaceCoords(coordsFromLocation(primaryLocation));
-    setNewRoom('');
-    setNewRoomCapacity('');
-    setAddingRoom(false);
     setPlaceError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [primaryLocation?.id, primaryLocation?.name, primaryLocation?.address, primaryLocation?.rooms]);
+  }, [primaryLocation?.id, primaryLocation?.name, primaryLocation?.address]);
 
   const [isSaving, setIsSaving] = useState(false);
   // Generic save failure (thrown/network) — field-specific errors go to the
   // inline FieldErrors instead; this feeds the DirtyFormBar's error slot.
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Rooms save the moment you add/remove one — so they're a committed action,
-  // not part of the dirty form. The bar below only tracks the text fields.
   const isDirty = useMemo(() => {
     const locationDirty = primaryLocation
       ? placeName.trim() !== primaryLocation.name ||
@@ -184,114 +171,6 @@ function StudioPublicSettings({
     setAddress(primaryLocation?.address ?? '');
     setPlaceCoords(coordsFromLocation(primaryLocation));
     setPlaceError(null);
-  };
-
-  // A room's capacity is optional. Treat blank / < 1 as unset (null).
-  const normalizeCapacity = (value: number | null): number | null =>
-    value != null && Number.isFinite(value) && value >= 1 ? Math.floor(value) : null;
-
-  // Persist the next room list immediately. With a saved place we patch just
-  // its rooms; without one, the first room creates the place from the current
-  // field values. Reverts the optimistic UI on failure.
-  const persistRooms = async (next: Room[], previous: Room[]) => {
-    if (primaryLocation) {
-      const { error } = await updateLocation(primaryLocation.id, { rooms: next });
-      if (error) {
-        setRooms(previous);
-        toast.error('Kunne ikke lagre rommet.');
-      }
-      return;
-    }
-
-    const trimmedPlaceName = placeName.trim();
-    if (!trimmedPlaceName) {
-      setRooms(previous);
-      setPlaceError('Skriv inn et navn på stedet.');
-      return;
-    }
-
-    const { error } = await createLocation({
-      seller_id: seller.id,
-      name: trimmedPlaceName,
-      address: address.trim() || null,
-      rooms: next,
-      lat: placeCoords?.lat ?? null,
-      lon: placeCoords?.lon ?? null,
-      google_place_id: placeCoords?.placeId ?? null,
-    });
-    if (error) {
-      setRooms(previous);
-      toast.error('Kunne ikke lagre rommet.');
-      return;
-    }
-    await refetch();
-  };
-
-  const addRoom = () => {
-    const trimmed = newRoom.trim();
-    if (!trimmed || rooms.some((r) => r.name === trimmed)) {
-      setNewRoom('');
-      setNewRoomCapacity('');
-      return;
-    }
-    const previous = rooms;
-    const next = [
-      ...rooms,
-      { name: trimmed, capacity: normalizeCapacity(Number(newRoomCapacity)) },
-    ];
-    setRooms(next);
-    setNewRoom('');
-    setNewRoomCapacity('');
-    setAddingRoom(false);
-    void persistRooms(next, previous);
-  };
-
-  const cancelAddRoom = () => {
-    setNewRoom('');
-    setNewRoomCapacity('');
-    setAddingRoom(false);
-  };
-
-  const removeRoom = (name: string) => {
-    const previous = rooms;
-    const next = rooms.filter((r) => r.name !== name);
-
-    if (!primaryLocation) {
-      setRooms(next);
-      return;
-    }
-
-    runWithUndo({
-      message: 'Rommet er fjernet',
-      hide: () => setRooms(next),
-      restore: () => setRooms(previous),
-      commit: () => updateLocation(primaryLocation.id, { rooms: next }),
-      errorOf: (r) => r.error,
-      errorMessage: 'Kunne ikke fjerne rommet.',
-    });
-  };
-
-  // Inline capacity editing: keystrokes update the row optimistically; blur /
-  // Enter normalizes and persists only if it changed from the saved value.
-  const setRoomCapacityDraft = (name: string, value: string) => {
-    const num = value.trim() === '' ? null : Number(value);
-    setRooms((prev) =>
-      prev.map((r) =>
-        r.name === name ? { ...r, capacity: num != null && Number.isFinite(num) ? num : null } : r,
-      ),
-    );
-  };
-
-  const commitRoomCapacity = (name: string) => {
-    if (!primaryLocation) return;
-    const room = rooms.find((r) => r.name === name);
-    if (!room) return;
-    const normalized = normalizeCapacity(room.capacity);
-    const next = rooms.map((r) => (r.name === name ? { ...r, capacity: normalized } : r));
-    setRooms(next);
-    const saved = parseRooms(primaryLocation.rooms).find((r) => r.name === name)?.capacity ?? null;
-    if (normalized === saved) return;
-    void persistRooms(next, parseRooms(primaryLocation.rooms));
   };
 
   const handleSave = async () => {
@@ -318,8 +197,15 @@ function StudioPublicSettings({
       setSlugError(null);
     }
 
-    if ((primaryLocation || trimmedAddress || rooms.length > 0) && !trimmedPlaceName) {
+    // The place must come from the Google search — free text has no coords, so
+    // buyers would get a location line with no map or directions. Only enforced
+    // when the name changed, so legacy pin-less places can still save untouched.
+    const placeChanged = trimmedPlaceName !== (primaryLocation?.name ?? '');
+    if ((primaryLocation || trimmedAddress) && !trimmedPlaceName) {
       setPlaceError('Skriv inn et navn på stedet.');
+      blocked = true;
+    } else if (trimmedPlaceName && placeChanged && !placeCoords?.placeId) {
+      setPlaceError('Velg et sted fra listen.');
       blocked = true;
     } else {
       setPlaceError(null);
@@ -363,13 +249,11 @@ function StudioPublicSettings({
         setSlug(nextSlug);
       }
 
-      const shouldPersistLocation =
-        !!primaryLocation || !!trimmedPlaceName || !!trimmedAddress || rooms.length > 0;
+      const shouldPersistLocation = !!primaryLocation || !!trimmedPlaceName || !!trimmedAddress;
       if (shouldPersistLocation) {
         const payload = {
           name: trimmedPlaceName,
           address: trimmedAddress || null,
-          rooms,
           lat: placeCoords?.lat ?? null,
           lon: placeCoords?.lon ?? null,
           google_place_id: placeCoords?.placeId ?? null,
@@ -379,7 +263,7 @@ function StudioPublicSettings({
           : await createLocation({ seller_id: seller.id, ...payload });
 
         if (result.error) {
-          setPlaceError(friendlyError(result.error, 'Kunne ikke lagre sted og rom.'));
+          setPlaceError(friendlyError(result.error, 'Kunne ikke lagre stedet.'));
           if (persistedAny) await onSaved();
           return;
         }
@@ -631,123 +515,6 @@ function StudioPublicSettings({
                     />
                   )}
                 </div>
-            </SettingsRow>
-
-            <SettingsRow
-              title="Rom"
-              description="Sett antall plasser per rom."
-            >
-              <div className="space-y-3">
-                {rooms.length > 0 && (
-                  <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-surface">
-                    {rooms.map((room) => (
-                      <div key={room.name} className="flex items-center gap-3 px-3 py-2">
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-                          {room.name}
-                        </span>
-                        <Input
-                          type="number"
-                          inputMode="numeric"
-                          min="1"
-                          value={room.capacity == null ? '' : String(room.capacity)}
-                          onChange={(e) => setRoomCapacityDraft(room.name, e.target.value)}
-                          onBlur={() => commitRoomCapacity(room.name)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              (e.currentTarget as HTMLInputElement).blur();
-                            }
-                          }}
-                          disabled={isSaving || loadingLocations}
-                          placeholder="–"
-                          aria-label={`Antall plasser i ${room.name}`}
-                          className="h-8 w-16 shrink-0 text-center"
-                        />
-                        <span className="shrink-0 text-sm text-foreground-muted">plasser</span>
-                        <button
-                          type="button"
-                          onClick={() => removeRoom(room.name)}
-                          className="flex size-7 shrink-0 items-center justify-center rounded-md text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
-                          aria-label={`Fjern ${room.name}`}
-                        >
-                          <X className="size-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {addingRoom ? (
-                  <div className="flex items-center gap-3">
-                    <Input
-                      autoFocus
-                      value={newRoom}
-                      onChange={(e) => setNewRoom(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          addRoom();
-                        } else if (e.key === 'Escape') {
-                          e.preventDefault();
-                          cancelAddRoom();
-                        }
-                      }}
-                      disabled={isSaving || loadingLocations}
-                      placeholder="Sal 1, behandlingsrom, ute…"
-                      aria-label="Navn på rom"
-                      className="h-8 min-w-0 flex-1"
-                    />
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min="1"
-                      value={newRoomCapacity}
-                      onChange={(e) => setNewRoomCapacity(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          addRoom();
-                        } else if (e.key === 'Escape') {
-                          e.preventDefault();
-                          cancelAddRoom();
-                        }
-                      }}
-                      disabled={isSaving || loadingLocations}
-                      placeholder="–"
-                      aria-label="Antall plasser"
-                      className="h-8 w-16 shrink-0 text-center"
-                    />
-                    <span className="shrink-0 text-sm text-foreground-muted">plasser</span>
-                    <button
-                      type="button"
-                      onClick={addRoom}
-                      disabled={!newRoom.trim()}
-                      className="flex size-7 shrink-0 items-center justify-center rounded-md text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-foreground-muted"
-                      aria-label="Legg til rom"
-                    >
-                      <Check className="size-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={cancelAddRoom}
-                      className="flex size-7 shrink-0 items-center justify-center rounded-md text-foreground-muted transition-colors hover:bg-active hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
-                      aria-label="Avbryt"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setAddingRoom(true)}
-                    disabled={isSaving || loadingLocations}
-                    className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border bg-surface px-3 py-2.5 text-sm font-medium text-foreground-muted transition-colors hover:border-foreground/25 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <Plus className="size-4" />
-                    Legg til rom
-                  </button>
-                )}
-              </div>
             </SettingsRow>
           </SettingsRows>
         </div>

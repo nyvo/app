@@ -166,6 +166,7 @@ const CoursePage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [showCancelPreview, setShowCancelPreview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingCourse, setIsDeletingCourse] = useState(false);
@@ -312,6 +313,15 @@ const CoursePage = () => {
       return;
     }
     setTitleError(null);
+    // Same rule as the builder: a location must come from the Google search so
+    // buyers get coords/map, not bare text. Only enforced when it changed, so
+    // untouched legacy pin-less locations don't block unrelated edits.
+    const locationChanged = settingsLocation.trim() !== (courseData.location || '');
+    if (locationChanged && settingsLocation.trim() && !settingsLocationCoords?.placeId) {
+      setLocationError('Velg et sted fra listen.');
+      return;
+    }
+    setLocationError(null);
     setIsSaving(true);
     setSaveError(null);
     try {
@@ -706,6 +716,7 @@ const CoursePage = () => {
     }
     setSaveError(null);
     setTitleError(null);
+    setLocationError(null);
   };
 
   if (!courseId) {
@@ -888,7 +899,11 @@ const CoursePage = () => {
               settingsLocationCoords={settingsLocationCoords}
               onLocationChange={setSettingsLocation}
               onLocationAddressChange={setSettingsLocationAddress}
-              onLocationCoordsChange={setSettingsLocationCoords}
+              onLocationCoordsChange={(coords) => {
+                setSettingsLocationCoords(coords);
+                if (locationError && coords?.placeId) setLocationError(null);
+              }}
+              locationError={locationError}
               settingsImageUrl={settingsImageUrl}
               onImageFileChange={(file) => void handleImageSelected(file)}
               onImageRemove={() => void handleImageRemove()}

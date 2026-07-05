@@ -57,6 +57,9 @@ interface CourseSettingsTabProps {
   onLocationCoordsChange: (
     coords: { lat: number | null; lon: number | null; placeId: string | null } | null,
   ) => void;
+  /** Inline error under the location field — set by the parent when a save is
+   *  blocked (typed text without picking a place). */
+  locationError?: string | null;
 
   // Schedule — for series, used as-is. For single, sessionDays takes over.
   settingsDate: Date | undefined;
@@ -127,6 +130,7 @@ export const CourseSettingsTab = ({
   onLocationChange,
   onLocationAddressChange,
   onLocationCoordsChange,
+  locationError,
   settingsDate,
   onDateChange,
   settingsTime,
@@ -323,7 +327,7 @@ export const CourseSettingsTab = ({
           description="Hvor og når kurset holdes."
         >
           <div>
-            <FieldLabel>Sted</FieldLabel>
+            <FieldLabel error={!!locationError}>Sted</FieldLabel>
             <LocationField
               id="settings-location"
               value={settingsLocation}
@@ -331,6 +335,11 @@ export const CourseSettingsTab = ({
               coords={settingsLocationCoords}
               onChange={handleLocationChange}
             />
+            {locationError && (
+              <FieldError id="settings-location-error" className="mt-2">
+                {locationError}
+              </FieldError>
+            )}
           </div>
 
           {courseFormat === 'single' ? (
