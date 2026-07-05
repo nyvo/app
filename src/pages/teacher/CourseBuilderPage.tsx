@@ -633,7 +633,8 @@ export default function CourseBuilderPage() {
                   !showError('price') &&
                   !showError('weeks') && (
                     <div className="flex items-baseline justify-between gap-3 rounded-xl bg-muted px-4 py-3">
-                      <span className="text-base text-foreground-muted">
+                      {/* Full-ink label: -muted grey loses AA on the grey fill */}
+                      <span className="text-base text-foreground">
                         Totalt for {parseInt(weeks, 10) || 0} uker
                       </span>
                       <span className="text-base font-medium tabular-nums text-foreground">
