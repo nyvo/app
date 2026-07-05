@@ -50,6 +50,32 @@ export function getOsloTime(): Date {
 }
 
 /**
+ * Today's date key (YYYY-MM-DD) in Europe/Oslo — the product's operational
+ * timezone. session_date/start_date columns store naive Norwegian dates, so
+ * every "has it started / is it past" gate must compare against Oslo's today.
+ * `new Date().toISOString().split('T')[0]` is WRONG for this: between 00:00
+ * and 01:00/02:00 Oslo time the UTC date is still yesterday, and the client
+ * disagrees with the server (which gates in Oslo time) for that whole window.
+ * ('sv-SE' formats as YYYY-MM-DD.)
+ */
+export function osloTodayKey(): string {
+  return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Oslo' }).format(new Date());
+}
+
+/**
+ * "YYYY-MM-DD HH:mm:ss" in Europe/Oslo — lexically comparable against
+ * `${session_date} ${start_time}` strings from naive-Norwegian session rows.
+ */
+export function osloNowKey(): string {
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Europe/Oslo',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  }).format(new Date());
+}
+
+/**
  * Get the Monday of the week containing the given date
  * @param date - Any date in the week
  * @returns The Monday of that week
@@ -64,7 +90,7 @@ export function getMondayOfWeek(date: Date): Date {
 /**
  * Day name abbreviations in Norwegian
  */
-const DAY_NAMES_NO = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'] as const;
+const DAY_NAMES_NO = ['man', 'tir', 'ons', 'tor', 'fre', 'lør', 'søn'] as const;
 
 export interface WeekDay {
   name: string;

@@ -25,6 +25,6 @@ export async function extractEdgeError(
   }
   return {
     status: 0,
-    message: error instanceof Error ? error.message : 'Unknown error',
+    message: error instanceof Error ? error.message : 'Ukjent feil',
   }
 }

@@ -48,10 +48,10 @@ export function NotificationLiveRegion({
       if (enabled) {
         const newest = notifications.find((n) => n.id === maxId)
         if (newest) {
-          // Compose: "Ny varsel: <title>. <body>"
+          // Compose: "Nytt varsel: <title>. <body>"
           const announcement = newest.body
-            ? `Ny varsel: ${newest.title}. ${newest.body}`
-            : `Ny varsel: ${newest.title}`
+            ? `Nytt varsel: ${newest.title}. ${newest.body}`
+            : `Nytt varsel: ${newest.title}`
           // Reset before assigning so identical consecutive messages still
           // re-trigger announcement on some readers.
           setMessage('')

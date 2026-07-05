@@ -409,11 +409,11 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
     const trimmed = name.trim()
     const slug = generateSlug(trimmed)
     if (!trimmed) {
-      setErrors({ name: 'Skriv inn et navn.' })
+      setErrors({ name: 'Skriv inn et navn' })
       return
     }
     if (slug.length < 3) {
-      setErrors({ name: 'Bruk minst 3 bokstaver.' })
+      setErrors({ name: 'Bruk minst 3 bokstaver' })
       return
     }
 
@@ -426,7 +426,7 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
       if (msg.includes('already taken') || msg.includes('reserved')) {
         setErrors({ name: 'Dette navnet er opptatt. Velg et annet.' })
       } else if (msg.includes('Slug')) {
-        setErrors({ name: 'Velg et gyldig navn.' })
+        setErrors({ name: 'Velg et gyldig navn' })
       } else {
         toast.error('Kunne ikke fullføre oppsettet. Prøv igjen.')
       }

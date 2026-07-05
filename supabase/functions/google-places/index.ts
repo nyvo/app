@@ -9,7 +9,7 @@
 // of our Google quota.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
+import { handleCors, errorResponse, successResponse, getClientIp } from '../_shared/auth.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -42,7 +42,7 @@ Deno.serve(async (req: Request) => {
     // await it yet — run it concurrently with the Google call below so the DB
     // round-trip doesn't add latency to every keystroke.
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
-    const clientIp = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown'
+    const clientIp = getClientIp(req)
     const limitPromise = supabase.rpc('check_rate_limit', {
       p_key: `places:ip:${clientIp}`,
       p_limit: 200,

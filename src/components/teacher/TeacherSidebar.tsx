@@ -16,7 +16,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { isProSeller } from '@/lib/payments';
 import { routes } from '@/lib/routes';
-import { accountDisplayName } from '@/lib/utils';
+import { accountDisplayName, formatKroner } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -142,7 +142,7 @@ export const TeacherSidebar = () => {
           <div className="rounded-lg bg-muted px-3 py-2.5">
             <div className="text-sm font-medium text-sidebar-foreground">Start</div>
             <p className="mt-1 text-sm text-sidebar-foreground-muted">
-              Med Pro betaler du 0 kr i plattformgebyr.
+              Med Pro betaler du {formatKroner(0)} i plattformgebyr.
             </p>
             <Button asChild className="mt-2.5 w-full">
               <Link to={routes.settingsBilling}>Oppgrader til Pro</Link>

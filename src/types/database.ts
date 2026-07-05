@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       course_sessions: {
@@ -21,6 +46,7 @@ export type Database = {
           end_time: string | null
           id: string
           notes: string | null
+          reminder_sent_at: string | null
           session_date: string
           session_number: number
           start_time: string
@@ -33,6 +59,7 @@ export type Database = {
           end_time?: string | null
           id?: string
           notes?: string | null
+          reminder_sent_at?: string | null
           session_date: string
           session_number: number
           start_time: string
@@ -45,6 +72,7 @@ export type Database = {
           end_time?: string | null
           id?: string
           notes?: string | null
+          reminder_sent_at?: string | null
           session_date?: string
           session_number?: number
           start_time?: string
@@ -1009,6 +1037,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      count_signups_by_ticket_type: {
+        Args: { p_course_id: string; p_ticket_type_id: string }
+        Returns: number
+      }
       count_signups_for_session: {
         Args: { p_course_session_id: string }
         Returns: number
@@ -1037,9 +1069,6 @@ export type Database = {
           p_buyer_id?: string
           p_course_id: string
           p_course_session_id?: string
-          p_dintero_merchant_reference?: string
-          p_dintero_session_id?: string
-          p_dintero_transaction_id?: string
           p_note?: string
           p_participant_email: string
           p_participant_name: string
@@ -1096,6 +1125,7 @@ export type Database = {
         Args: { p_payment_intent_id?: string }
         Returns: Json
       }
+      has_own_password: { Args: never; Returns: boolean }
       is_platform_admin: { Args: { user_uuid: string }; Returns: boolean }
       is_seller_member: {
         Args: { p_seller_id: string; p_user_id: string }
@@ -1174,6 +1204,15 @@ export type Database = {
       rename_seller_slug: {
         Args: { p_new_slug: string; p_seller_id: string }
         Returns: string
+      }
+      save_course_schedule: {
+        Args: {
+          p_course: Json
+          p_course_id: string
+          p_drop_in?: Json
+          p_sessions?: Json
+        }
+        Returns: Json
       }
       set_operating_model: {
         Args: { p_operating_model: string; p_seller_id: string }
@@ -1343,6 +1382,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       course_format: ["single", "series"],

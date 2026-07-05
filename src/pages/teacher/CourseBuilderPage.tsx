@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { UnsavedChangesDialog, useUnsavedChanges } from '@/components/ui/unsaved-changes';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import {
   SessionDaysEditor,
@@ -29,14 +30,14 @@ import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { LocationField } from '@/components/ui/location-field';
 import { useAuth } from '@/contexts/AuthContext';
 import { createCourse, updateCourse, publishCourse } from '@/services/courses';
-import { isProSeller, publishNeedsPaymentSetup } from '@/lib/payments';
-import { calculatePlatformFee } from '@/lib/pricing';
+import { publishNeedsPaymentSetup } from '@/lib/payments';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
 import { cn, formatKroner } from '@/lib/utils';
 import { formatLocalDateKey } from '@/utils/dateUtils';
+import { singleScheduleLabel, seriesScheduleLabel } from '@/utils/timeSchedule';
 import type { CourseFormat } from '@/types/database';
 
 type FormatType = 'single' | 'series';
@@ -199,6 +200,25 @@ export default function CourseBuilderPage() {
   const isValid = Object.keys(errors).length === 0;
   const showError = (field: keyof FormErrors) => submitAttempted && !!errors[field];
 
+  // Anything typed or picked counts as unsaved work until createDraft lands —
+  // the whole form is lost on navigation since nothing persists before then.
+  const isDirty = useMemo(
+    () =>
+      title.trim() !== '' ||
+      description.replace(/<[^>]*>/g, '').trim() !== '' ||
+      location.trim() !== '' ||
+      capacity !== '' ||
+      price !== '' ||
+      weeks !== '' ||
+      startDate != null ||
+      startTime !== '' ||
+      endTime !== '' ||
+      imageFile != null ||
+      sessionDays.some((d) => d.date != null || d.startTime !== '' || d.endTime !== ''),
+    [title, description, location, capacity, price, weeks, startDate, startTime, endTime, imageFile, sessionDays],
+  );
+  const { blocker, bypass } = useUnsavedChanges(isDirty);
+
   // Creates the course as a draft (+ uploads the cover image). Returns the new
   // course id, or null if validation failed or the request errored. Both
   // footer actions go through this — "Publiser" then flips the draft live.
@@ -210,11 +230,6 @@ export default function CourseBuilderPage() {
 
     setIsSubmitting(true);
     try {
-      const formatWeekday = (date: Date) => {
-        const name = new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(date);
-        return name.charAt(0).toUpperCase() + name.slice(1);
-      };
-
       let courseStartDate: string;
       let timeSchedule: string;
       let duration: number;
@@ -229,8 +244,7 @@ export default function CourseBuilderPage() {
         );
         const day0 = sortedDays[0];
         courseStartDate = formatLocalDateKey(day0.date!);
-        const day0Name = formatWeekday(day0.date!);
-        timeSchedule = `${day0Name}, ${day0.startTime}–${day0.endTime}`;
+        timeSchedule = singleScheduleLabel(day0.date!, day0.startTime, day0.endTime);
         duration = timeToMin(day0.endTime) - timeToMin(day0.startTime);
         createOptions = {
           sessionDays: sortedDays.map((d) => ({
@@ -241,12 +255,12 @@ export default function CourseBuilderPage() {
         };
       } else {
         // series — startDate is guaranteed non-null (validated above)
-        const startDayName = formatWeekday(startDate!);
-        const timeRange = `${startTime}–${endTime}`;
-        timeSchedule = `${startDayName}er, ${timeRange}`;
+        timeSchedule = seriesScheduleLabel(startDate!, startTime, endTime);
         duration = timeToMin(endTime) - timeToMin(startTime);
         courseStartDate = formatLocalDateKey(startDate!);
-        createOptions = undefined;
+        // Structured time for the weekly session generation — createCourse
+        // must never have to parse it back out of the display label.
+        createOptions = { seriesStartTime: startTime, seriesEndTime: endTime };
       }
 
       const dbFormat: CourseFormat = format;
@@ -282,6 +296,10 @@ export default function CourseBuilderPage() {
         setIsSubmitting(false);
         return null;
       }
+
+      // The draft exists in the DB from here on — the form is no longer
+      // unsaved work, so navigation (save/publish/gate dialog) is safe.
+      bypass();
 
       // Upload the picked cover image now that we have the course id. A failed
       // upload doesn't block creation — the teacher can add it on the course page.
@@ -585,34 +603,7 @@ export default function CourseBuilderPage() {
                   <Field
                     label={format === 'series' ? 'Pris per gang' : 'Pris'}
                     htmlFor="cb-price"
-                    error={
-                      <>
-                        {format === 'series' &&
-                          price !== '' &&
-                          weeks !== '' &&
-                          !showError('price') &&
-                          !showError('weeks') && (
-                            <p className="mt-2 text-base text-foreground-muted">
-                              Totalt{' '}
-                              {formatKroner(
-                                (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0),
-                              )}{' '}
-                              for {parseInt(weeks, 10) || 0} uker
-                            </p>
-                          )}
-                        {/* Free-tier payout preview — the 5% take is visible
-                            where the price decision is made, never in checkout. */}
-                        {!isProSeller(currentSeller) &&
-                          !showError('price') &&
-                          coursePriceTotal > 0 && (
-                            <p className="mt-2 text-base text-foreground-muted">
-                              Du får {formatKroner(coursePriceTotal - calculatePlatformFee(coursePriceTotal))}{' '}
-                              utbetalt (5&nbsp;% plattformgebyr)
-                            </p>
-                          )}
-                        {showError('price') && <FieldError>{errors.price}</FieldError>}
-                      </>
-                    }
+                    error={showError('price') && <FieldError>{errors.price}</FieldError>}
                   >
                     <div className="relative">
                       <Input
@@ -635,6 +626,23 @@ export default function CourseBuilderPage() {
                     </div>
                   </Field>
                 </div>
+
+                {format === 'series' &&
+                  price !== '' &&
+                  weeks !== '' &&
+                  !showError('price') &&
+                  !showError('weeks') && (
+                    <div className="flex items-baseline justify-between gap-3 rounded-xl bg-muted px-4 py-3">
+                      <span className="text-base text-foreground-muted">
+                        Totalt for {parseInt(weeks, 10) || 0} uker
+                      </span>
+                      <span className="text-base font-medium tabular-nums text-foreground">
+                        {formatKroner(
+                          (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0),
+                        )}
+                      </span>
+                    </div>
+                  )}
               </section>
             </div>
           </Card>
@@ -683,6 +691,8 @@ export default function CourseBuilderPage() {
         }}
         courseTitle={title.trim() || undefined}
       />
+
+      <UnsavedChangesDialog blocker={blocker} />
     </main>
   );
 }

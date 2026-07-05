@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { osloTodayKey, toLocalDate, formatLocalDateKey } from '@/utils/dateUtils'
 import type { CourseFormat, DeliveryMode, CourseStatus } from '@/types/database'
 
 interface PublicCourseInstructor {
@@ -56,10 +57,6 @@ interface CourseQueryResult {
   seller: SellerJoinRow | null
 }
 
-interface StorefrontSellerScopeRow {
-  owner_seller_id: string
-  seller_id: string
-}
 
 interface StorefrontSellerScope {
   ownerSellerId: string
@@ -175,13 +172,9 @@ export function singleDayCount(
 async function fetchStorefrontSellerScope(
   storefrontSlug: string,
 ): Promise<{ data: StorefrontSellerScope | null; error: Error | null }> {
-  const { data, error } = await (supabase.rpc as unknown as (
-    fn: string,
-    args: { p_slug: string },
-  ) => Promise<{ data: StorefrontSellerScopeRow[] | null; error: Error | null }>)(
-    'public_storefront_scope',
-    { p_slug: storefrontSlug },
-  )
+  const { data, error } = await supabase.rpc('public_storefront_scope', {
+    p_slug: storefrontSlug,
+  })
 
   if (error) {
     logger.error('Error fetching storefront seller scope:', error)
@@ -281,7 +274,7 @@ export async function fetchPublicCourses(
   }
 
   // Apply past/active date filter in the DB query (not client-side) so pagination works correctly
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = osloTodayKey()
   if (filters?.includePast) {
     // Archive: courses whose end_date (or start_date if no end_date) is before today
     query = query.or(`end_date.lt.${todayStr},and(end_date.is.null,start_date.lt.${todayStr})`)
@@ -289,9 +282,9 @@ export async function fetchPublicCourses(
     // Active: courses whose end_date (or start_date if no end_date) is today or later,
     // OR has no dates at all, OR is a recently-cancelled course within the 30-day grace window
     // (caller then runs client-side isVisible() for the strict rule).
-    const graceFloor = new Date()
+    const graceFloor = toLocalDate(todayStr)
     graceFloor.setDate(graceFloor.getDate() - 30)
-    const graceFloorStr = graceFloor.toISOString().split('T')[0]
+    const graceFloorStr = formatLocalDateKey(graceFloor)
     query = query.or(
       `end_date.gte.${todayStr},` +
       `and(end_date.is.null,start_date.gte.${todayStr}),` +
@@ -300,8 +293,13 @@ export async function fetchPublicCourses(
     )
   }
 
-  // Apply pagination
-  const limit = filters?.limit || 20 // Default 20 courses per page
+  // Apply pagination. Callers (storefront, embed calendar) pass no limit and
+  // render everything they get — a low default silently hides the furthest-out
+  // (still-selling) courses for studios with a big schedule, since the sort is
+  // start_date ascending. 100 keeps one query cheap while being far above any
+  // realistic simultaneous-upcoming count; real pagination comes with the
+  // server-state-library migration.
+  const limit = filters?.limit || 100
   const offset = filters?.offset || 0
 
   query = query.range(offset, offset + limit - 1)
@@ -323,8 +321,7 @@ export async function fetchPublicCourses(
   // RPC returns only (course_id, confirmed_count) — no row data exposed to anon.
   // Cast: generated types regenerated after the migration is deployed.
   const [signupsResult, sessionsResult, dropInTiersResult] = await Promise.all([
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase.rpc as any)('public_signup_counts', { p_course_ids: courseIds }),
+    supabase.rpc('public_signup_counts', { p_course_ids: courseIds }),
     supabase
       .from('course_sessions')
       .select('course_id, session_date, session_number, status, start_time')
@@ -399,7 +396,7 @@ export async function fetchPublicCourses(
   }
 
   // Map to public format with spots available and next session
-  const today = new Date().toISOString().split('T')[0]
+  const today = osloTodayKey()
   const publicCourses: PublicCourseWithDetails[] = courses.map(course => {
     const maxParticipants = course.max_participants || 0
     const confirmedCount = signupCountMap[course.id] || 0
@@ -528,8 +525,7 @@ export async function fetchPublicCourseBySlug(
 
   // Get signup count and drop-in tier in parallel.
   const [countResult, dropInResult] = await Promise.all([
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase.rpc as any)('public_signup_counts', { p_course_ids: [typedCourse.id] }),
+    supabase.rpc('public_signup_counts', { p_course_ids: [typedCourse.id] }),
     supabase
       .from('course_signup_packages')
       .select('price')
@@ -551,7 +547,7 @@ export async function fetchPublicCourseBySlug(
   // Drop-in availability: an active drop-in tier exists (teacher policy)
   // AND the series has started + has spots open. Price is the explicit tier
   // price set by the teacher.
-  const today = new Date().toISOString().split('T')[0]
+  const today = osloTodayKey()
   const courseStarted = !!typedCourse.start_date && typedCourse.start_date <= today
   const isEligibleSeries = typedCourse.format === 'series' && courseStarted && spotsAvailable > 0
   const dropInTier = dropInResult.data as { price: number } | null

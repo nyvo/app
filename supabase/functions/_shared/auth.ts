@@ -208,6 +208,19 @@ export function handleCors(req: Request): Response | null {
 }
 
 /**
+ * Client IP for rate-limit bucketing. Proxies APPEND to x-forwarded-for, so
+ * the FIRST entry is client-supplied and spoofable — an attacker sending a
+ * random XFF per request would get a fresh bucket every time, voiding the
+ * limit entirely. The LAST entry is written by the closest trusted hop
+ * (Supabase's edge), so key buckets on that.
+ */
+export function getClientIp(req: Request): string {
+  const xff = req.headers.get('x-forwarded-for') || ''
+  const parts = xff.split(',').map((p) => p.trim()).filter(Boolean)
+  return parts[parts.length - 1] || 'unknown'
+}
+
+/**
  * Escape HTML special characters to prevent XSS in email templates.
  * Apply this to all user-supplied values before interpolating into HTML.
  */

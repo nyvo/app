@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ import { createStripeSession } from '@/services/checkout';
 import { createFreeSignup } from '@/services/signups';
 import { supabase } from '@/lib/supabase';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { osloNowKey, toLocalDate } from '@/utils/dateUtils';
 import type { AvailableTicketType } from '@/types/database';
 
 interface FormState {
@@ -42,11 +44,6 @@ const CheckoutPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [course, setCourse] = useState<PublicCourseWithDetails | null>(null);
-  const [tiers, setTiers] = useState<AvailableTicketType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({ name: '', email: '', phone: '', note: '', terms: false });
   const [phoneTouched, setPhoneTouched] = useState(false);
@@ -58,67 +55,79 @@ const CheckoutPage = () => {
   const [step, setStep] = useState<'contact' | 'payment'>('contact');
 
   // ── Load course + tiers ────────────────────────────────────────────────
-  useEffect(() => {
-    let cancelled = false;
-    if (!slug || !courseSlug) {
-      setError('not-found');
-      setLoading(false);
-      return;
-    }
-    void (async () => {
-      const { data: courseData, error: courseErr } = await fetchPublicCourseBySlug(slug, courseSlug);
-      if (cancelled) return;
-      if (courseErr || !courseData) {
-        setError('not-found');
-        setLoading(false);
-        return;
-      }
+  // One query owns the load; redirect decisions come back as data and are
+  // performed by the effect below (queryFn stays side-effect-free). A failed
+  // tier fetch throws → retryable server-error page instead of a silently
+  // disabled submit button.
+  type CheckoutData =
+    | { kind: 'redirect'; ownerSlug: string }
+    | { kind: 'not-found' }
+    | { kind: 'ok'; course: PublicCourseWithDetails; tiers: AvailableTicketType[] };
+
+  const checkoutQuery = useQuery({
+    queryKey: ['checkout', slug, courseSlug],
+    enabled: !!slug && !!courseSlug,
+    queryFn: async (): Promise<CheckoutData> => {
+      const { data: courseData, error: courseErr } = await fetchPublicCourseBySlug(slug!, courseSlug!);
+      if (courseErr || !courseData) return { kind: 'not-found' };
 
       const ownerSlug = courseData.seller?.slug;
       if (ownerSlug && ownerSlug !== slug) {
-        const query = searchParams.toString();
-        navigate(
-          `/${ownerSlug}/${courseSlug}/pamelding${query ? `?${query}` : ''}`,
-          { replace: true },
-        );
-        return;
+        return { kind: 'redirect', ownerSlug };
       }
 
-      setCourse(courseData);
-
       // Load all standard-audience tiers via public RPC.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: tierData } = await (supabase.rpc as any)('available_ticket_types', {
+      const { data: tierData, error: tierErr } = await supabase.rpc('available_ticket_types', {
         p_course_id: courseData.id,
       });
-      if (cancelled) return;
+      if (tierErr) throw tierErr;
       const allTiers = ((tierData ?? []) as AvailableTicketType[]).filter(
         (t) => t.audience === 'standard',
       );
-      setTiers(allTiers);
+      return { kind: 'ok', course: courseData, tiers: allTiers };
+    },
+  });
 
-      // Honour ?billett= from the detail-page rail. "main" → primary tier
-      // (first non-drop-in), "drop-in" → drop-in tier. Fall back to the
-      // primary tier when missing/invalid.
-      const requested = searchParams.get('billett');
-      const dropIn = allTiers.find((t) => t.ticket_kind === 'drop_in');
-      const main =
-        allTiers.find((t) => t.is_default && t.ticket_kind !== 'drop_in')
-        ?? allTiers.find((t) => t.ticket_kind !== 'drop_in')
-        ?? allTiers[0];
+  useEffect(() => {
+    if (checkoutQuery.data?.kind !== 'redirect') return;
+    const query = searchParams.toString();
+    navigate(
+      `/${checkoutQuery.data.ownerSlug}/${courseSlug}/pamelding${query ? `?${query}` : ''}`,
+      { replace: true },
+    );
+  }, [checkoutQuery.data, courseSlug, searchParams, navigate]);
 
-      let initial: AvailableTicketType | undefined;
-      if (requested === 'drop-in' && dropIn) initial = dropIn;
-      else if (requested === 'main' && main) initial = main;
-      else initial = main ?? allTiers[0];
-      setSelectedTierId(initial?.id ?? null);
+  const course = checkoutQuery.data?.kind === 'ok' ? checkoutQuery.data.course : null;
+  const tiers = useMemo(
+    () => (checkoutQuery.data?.kind === 'ok' ? checkoutQuery.data.tiers : []),
+    [checkoutQuery.data],
+  );
+  const loading = checkoutQuery.isPending || checkoutQuery.data?.kind === 'redirect';
+  const error = !slug || !courseSlug || checkoutQuery.data?.kind === 'not-found'
+    ? 'not-found'
+    : checkoutQuery.isError
+      ? 'load-failed'
+      : null;
 
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [slug, courseSlug, searchParams, navigate]);
+  // Honour ?billett= from the detail-page rail once tiers arrive. "main" →
+  // primary tier (first non-drop-in), "drop-in" → drop-in tier. Fall back to
+  // the primary tier when missing/invalid. Runs once (selectedTierId guard),
+  // so a background refetch never clobbers the buyer's own selection.
+  useEffect(() => {
+    if (selectedTierId !== null || tiers.length === 0) return;
+    const requested = searchParams.get('billett');
+    const dropIn = tiers.find((t) => t.ticket_kind === 'drop_in');
+    const main =
+      tiers.find((t) => t.is_default && t.ticket_kind !== 'drop_in')
+      ?? tiers.find((t) => t.ticket_kind !== 'drop_in')
+      ?? tiers[0];
+
+    let initial: AvailableTicketType | undefined;
+    if (requested === 'drop-in' && dropIn) initial = dropIn;
+    else if (requested === 'main' && main) initial = main;
+    else initial = main ?? tiers[0];
+    setSelectedTierId(initial?.id ?? null);
+  }, [tiers, searchParams, selectedTierId]);
 
   const isFree = !course?.price || course.price <= 0;
   const isCancelled = course?.status === 'cancelled';
@@ -135,22 +144,21 @@ const CheckoutPage = () => {
   // hasn't started yet. Same model as BookingPanel; no session picker.
   // undefined = loading / not applicable, null = no upcoming session.
   const [dropInSessionId, setDropInSessionId] = useState<string | null | undefined>(undefined);
+  // Query failure is not "no sessions" — track it separately so the buyer
+  // sees a retryable error instead of the false "ingen kommende timer".
+  const [dropInLookupFailed, setDropInLookupFailed] = useState(false);
   useEffect(() => {
     let cancelled = false;
+    setDropInLookupFailed(false);
     if (!isDropInSelected || !course?.id) {
       setDropInSessionId(undefined);
       return;
     }
     void (async () => {
       // Session rows store naive Norwegian local times — compare against "now"
-      // in Europe/Oslo (sv-SE gives "YYYY-MM-DD HH:mm:ss", lexically ordered).
-      const osloNow = new Intl.DateTimeFormat('sv-SE', {
-        timeZone: 'Europe/Oslo',
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit',
-        hour12: false,
-      }).format(new Date());
-      const { data } = await supabase
+      // in Europe/Oslo ("YYYY-MM-DD HH:mm:ss", lexically ordered).
+      const osloNow = osloNowKey();
+      const { data, error: sessionsErr } = await supabase
         .from('course_sessions')
         .select('id, session_date, start_time, status')
         .eq('course_id', course.id)
@@ -160,6 +168,11 @@ const CheckoutPage = () => {
         .order('start_time', { ascending: true })
         .limit(10);
       if (cancelled) return;
+      if (sessionsErr) {
+        setDropInSessionId(undefined);
+        setDropInLookupFailed(true);
+        return;
+      }
       const next = (data as { id: string; session_date: string; start_time: string }[] | null)
         ?.find((s) => `${s.session_date} ${s.start_time}` > osloNow);
       setDropInSessionId(next?.id ?? null);
@@ -277,6 +290,9 @@ const CheckoutPage = () => {
   // ── States ──────────────────────────────────────────────────────────────
   if (loading) {
     return <CheckoutSkeleton />;
+  }
+  if (error === 'load-failed') {
+    return <PageState variant="server-error" />;
   }
   if (error || !course) {
     return <PageState variant="public-course" />;
@@ -427,6 +443,9 @@ const CheckoutPage = () => {
                       </Button>
                       {sessionError && (
                         <p className="text-sm text-danger text-center">{sessionError}</p>
+                      )}
+                      {isDropInSelected && dropInLookupFailed && (
+                        <p className="text-sm text-danger text-center">Kunne ikke hente neste time. Prøv igjen.</p>
                       )}
                       {isDropInSelected && dropInSessionId === null && (
                         <p className="text-sm text-danger text-center">Ingen kommende timer for drop-in.</p>
@@ -776,7 +795,9 @@ function buildMeta(course: PublicCourseWithDetails): string | null {
   const time = m ? m[1] : null;
   const dateStr = course.next_session?.session_date ?? course.start_date;
   if (course.format === 'series' && dateStr && time) {
-    const d = new Date(dateStr);
+    // toLocalDate: `new Date('YYYY-MM-DD')` parses as UTC midnight, showing
+    // the wrong weekday for any buyer in a timezone west of UTC.
+    const d = toLocalDate(dateStr);
     if (!isNaN(d.getTime())) {
       return `${typeLabel} · ${SHORT_WEEKDAYS[d.getDay()]} kl. ${time}`;
     }

@@ -160,7 +160,10 @@ const LandingPage = () => {
               <img
                 src="/localhost_5173_overview (1).png"
                 alt="Openspot — oversikt over inntekter og kommende kurs"
-                className="block w-full"
+                width={4227}
+                height={2922}
+                fetchPriority="high"
+                className="block w-full h-auto"
                 style={{ imageRendering: '-webkit-optimize-contrast' }}
               />
             </ProductFrame>
@@ -181,6 +184,10 @@ const LandingPage = () => {
         <img
           src="/localhost_5173_inspire-yogastudio (2).png"
           alt="Offentlig studio-side i Openspot"
+          width={2643}
+          height={2241}
+          loading="lazy"
+          decoding="async"
           className="block w-full h-auto"
           style={{ imageRendering: '-webkit-optimize-contrast' }}
         />
@@ -192,7 +199,7 @@ const LandingPage = () => {
       <FeatureSplit
         eyebrow="Påmelding og betaling"
         title="Enkel påmelding."
-        description="Deltakeren velger time og betaler — alt på én side."
+        description="Deltakeren velger time og betaler – alt på én side."
         bullets={[
           'Sikker kortbetaling',
           'Automatisk kvittering på e-post',
@@ -204,6 +211,10 @@ const LandingPage = () => {
         <img
           src="/localhost_5173_inspire-yogastudio_seed-lunsj-yoga_pamelding_billett=drop-in.png"
           alt="Påmelding og betaling i Openspot"
+          width={2499}
+          height={2727}
+          loading="lazy"
+          decoding="async"
           className="block w-full h-auto"
           style={{ imageRendering: '-webkit-optimize-contrast' }}
         />
@@ -220,7 +231,11 @@ const LandingPage = () => {
         <img
           src="/localhost_5173_courses_5139ffe5-7dcb-462d-ab71-cd9ad39a2c7e.png"
           alt="Openspot — kursoversikt"
-          className="block w-full"
+          width={3840}
+          height={2010}
+          loading="lazy"
+          decoding="async"
+          className="block w-full h-auto"
           style={{ imageRendering: '-webkit-optimize-contrast' }}
         />
       </FeatureWide>
@@ -269,7 +284,7 @@ const LandingPage = () => {
                 cta: PRELAUNCH
                   ? { label: 'Ta kontakt', to: '#varsle' }
                   : { label: 'Start gratis', to: '/auth?intent=seller' },
-                caption: PRELAUNCH ? 'Kommer snart.' : 'Ingen kort nødvendig.',
+                caption: PRELAUNCH ? 'Kommer snart.' : 'Du trenger ikke kort.',
               }}
             />
             <PricingTier

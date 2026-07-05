@@ -380,7 +380,7 @@ const AuthPage = () => {
             role="status"
           >
             <Spinner size="sm" />
-            Logger inn …
+            Logger inn…
           </div>
         ) : (
           <>

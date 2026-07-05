@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { typedFrom } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { routes } from '@/lib/routes'
 import { useMultiTableSubscription } from '@/hooks/use-realtime-subscription'
 import { useSetupProgress } from '@/hooks/use-setup-progress'
@@ -41,11 +41,11 @@ export function useSellerSetupStatus() {
     // required — plus the newest draft's id so the course step can resume it
     // instead of starting over.
     const [{ data: courses }, { count: locationCount }] = await Promise.all([
-      typedFrom('courses')
+      supabase.from('courses')
         .select('id, status, price')
         .eq('seller_id', currentSeller.id)
         .order('created_at', { ascending: false }),
-      typedFrom('teacher_locations')
+      supabase.from('teacher_locations')
         .select('id', { count: 'exact', head: true })
         .eq('seller_id', currentSeller.id),
     ])
@@ -90,7 +90,7 @@ export function useSellerSetupStatus() {
   useEffect(() => {
     if (!progress.isSetupComplete) return
     if (!profile?.id || profile.setup_complete_seen_at) return
-    void typedFrom('profiles')
+    void supabase.from('profiles')
       .update({ setup_complete_seen_at: new Date().toISOString() })
       .eq('id', profile.id)
   }, [progress.isSetupComplete, profile?.id, profile?.setup_complete_seen_at])

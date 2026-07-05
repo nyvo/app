@@ -307,7 +307,7 @@ function EmbedClassRow({
   const bookability = courseBookability(course, todayKey);
   const isDisabled = bookability !== 'open';
   const price = entryPrice(course);
-  const placeLabel = course.delivery_mode === 'online' ? 'Online' : course.location;
+  const placeLabel = course.delivery_mode === 'online' ? 'Nettkurs' : course.location;
 
   // Link to the storefront the visitor loaded; the detail page canonicalizes to
   // the owner's slug when it differs. Absolute URL + new tab so the row escapes

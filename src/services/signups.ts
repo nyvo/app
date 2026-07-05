@@ -1,4 +1,4 @@
-import { supabase, typedFrom } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { extractEdgeError } from '@/lib/edge-errors'
 import type { Signup, SignupInsert, Profile, Course } from '@/types/database'
 
@@ -44,9 +44,7 @@ export interface BuyerSignup extends Pick<Signup,
 // SECURITY DEFINER RPC (migration 20260611192342) — idempotent, never touches
 // already-claimed rows. Returns how many rows were claimed.
 export async function claimMySignups(): Promise<{ count: number; error: Error | null }> {
-  const { data, error } = await (supabase.rpc as unknown as (
-    fn: string
-  ) => ReturnType<typeof supabase.rpc>)('claim_my_signups')
+  const { data, error } = await supabase.rpc('claim_my_signups')
 
   if (error) {
     return { count: 0, error: error as Error }
@@ -198,7 +196,7 @@ export async function createSignup(
     }
   }
 
-  const { data, error } = await typedFrom('signups')
+  const { data, error } = await supabase.from('signups')
     .insert(resolved)
     .select()
     .single()
@@ -247,6 +245,10 @@ export async function fetchAllSignups(
     `)
     .eq('seller_id', sellerId)
     .order('created_at', { ascending: false })
+    // PostgREST silently truncates at 1000 rows anyway — make the bound
+    // deliberate (the 1000 most recent bookings) until this list gets real
+    // pagination.
+    .limit(1000)
 
   if (error) {
     return { data: null, error: error as Error }

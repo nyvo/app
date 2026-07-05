@@ -2,7 +2,7 @@
 // Covers two integrations that share STRIPE_SECRET_KEY:
 //   1. Stripe Billing (Pro subscription) — customers, checkout/portal sessions, webhook verify.
 //   2. Stripe Connect (marketplace) — Express onboarding, destination-charge PaymentIntents
-//      (manual capture + on_behalf_of; see .context/plans/dintero-to-stripe-migration.md C1/C6/C7),
+//      (manual capture + on_behalf_of),
 //      refunds, and settlement reporting.
 
 const STRIPE_API_BASE = 'https://api.stripe.com/v1'
@@ -87,7 +87,11 @@ async function stripeRequest<T>(
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey
 
   let url = `${STRIPE_API_BASE}${path}`
-  const init: RequestInit = { method, headers }
+  // Timeout: a hung Stripe connection would otherwise pin the isolate until
+  // the platform's wall-clock kill — the hard-kill that leaves webhook-claim
+  // tombstones and ambiguous capture states. A thrown timeout is handled by
+  // callers (capture paths re-check the live PI before acting).
+  const init: RequestInit = { method, headers, signal: AbortSignal.timeout(15_000) }
   if (method === 'GET') {
     const query = params.toString()
     if (query) url += `?${query}`
@@ -290,7 +294,7 @@ export async function verifyStripeSignature(params: {
 
 // ---------------------------------------------------------------------------
 // Stripe Connect (marketplace) — Express onboarding, destination charges, settlements.
-// Shares STRIPE_SECRET_KEY with Billing above. Plan: .context/plans/dintero-to-stripe-migration.md.
+// Shares STRIPE_SECRET_KEY with Billing above.
 // ---------------------------------------------------------------------------
 
 export interface StripeConnectedAccount {

@@ -1,5 +1,5 @@
 // Fetch a Stripe Connect studio's balance + recent payouts, plus a single-use
-// Express dashboard link. Stripe counterpart to get-dintero-settlements.
+// Express dashboard link.
 //
 // Stripe endpoints used (via _shared/stripe.ts, connected-account context):
 //   GET  /v1/balance                       -> retrieveBalance(accountId)

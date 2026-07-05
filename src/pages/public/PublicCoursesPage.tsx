@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageState } from '@/components/page-state/page-state';
@@ -38,60 +39,70 @@ function getDisplayDateMs(course: PublicCourseWithDetails): number {
 const PublicCoursesPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const [organization, setOrganization] = useState<PublicSeller | null>(null);
-  const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
-  const [studioLocation, setStudioLocation] = useState<StudioLocationRow | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [errorKind, setErrorKind] = useState<ErrorKind | null>(null);
   const [typeFilter, setTypeFilter] = useState<CourseTypeFilter>('all');
   const [instructorFilter, setInstructorFilter] = useState<string>('all');
 
-  useDocumentTitle(organization?.name);
+  // Seller lookup keyed on the raw URL slug (which may be an archived alias).
+  // useQuery replaces the old hand-rolled effect: overlapping loads from fast
+  // A→B navigation can no longer land out of order, and revisits within
+  // staleTime render from cache instantly.
+  const sellerQuery = useQuery({
+    queryKey: ['public-seller', slug],
+    enabled: !!slug,
+    queryFn: async () => {
+      const { data, error } = await fetchSellerBySlug(slug!);
+      if (error) throw error;
+      return data; // null = no such studio
+    },
+  });
 
+  // Archived-alias rewrite: settle shares/bookmarks on the canonical slug.
   useEffect(() => {
-    async function loadData() {
-      if (!slug) {
-        setErrorKind('not-found');
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setErrorKind(null);
-
-      const { data: sellerData, error: sellerError } = await fetchSellerBySlug(slug);
-      if (sellerError || !sellerData) {
-        setErrorKind('not-found');
-        setLoading(false);
-        return;
-      }
-
-      // The URL slug may be an archived alias — rewrite to the canonical slug
-      // so shares/bookmarks settle on the current URL. The effect re-runs with
-      // the new param, so bail out here and let the next pass do the work.
-      if (sellerData.slug !== slug) {
-        navigate(`/${sellerData.slug}`, { replace: true });
-        return;
-      }
-
-      setOrganization(sellerData);
-
-      // Courses (required) + the studio's canonical location (best-effort) in
-      // parallel. A missing/undeployed location RPC just yields null.
-      const [activeResult, locationResult] = await Promise.all([
-        fetchPublicCourses({ teamSlug: sellerData.slug }),
-        fetchStudioLocation(sellerData.slug),
-      ]);
-      if (activeResult.error) {
-        setErrorKind('load-failed');
-        setLoading(false);
-        return;
-      }
-      setCourses(activeResult.data || []);
-      setStudioLocation(locationResult.data);
-      setLoading(false);
+    const seller = sellerQuery.data;
+    if (seller && slug && seller.slug !== slug) {
+      navigate(`/${seller.slug}`, { replace: true });
     }
-    loadData();
-  }, [slug, navigate]);
+  }, [sellerQuery.data, slug, navigate]);
+
+  const isCanonical = !!sellerQuery.data && sellerQuery.data.slug === slug;
+
+  // Courses (required) + the studio's canonical location (best-effort) in
+  // parallel. A missing/undeployed location RPC just yields null.
+  const contentQuery = useQuery({
+    queryKey: ['storefront', slug],
+    enabled: isCanonical,
+    queryFn: async () => {
+      const [activeResult, locationResult] = await Promise.all([
+        fetchPublicCourses({ teamSlug: slug! }),
+        fetchStudioLocation(slug!),
+      ]);
+      if (activeResult.error) throw activeResult.error;
+      return {
+        courses: activeResult.data || [],
+        location: locationResult.data as StudioLocationRow | null,
+      };
+    },
+  });
+
+  const organization: PublicSeller | null = isCanonical ? (sellerQuery.data ?? null) : null;
+  const courses = contentQuery.data?.courses ?? [];
+  const studioLocation = contentQuery.data?.location ?? null;
+
+  const redirecting = !!sellerQuery.data && !!slug && sellerQuery.data.slug !== slug;
+  const loading =
+    sellerQuery.isPending || redirecting || (isCanonical && contentQuery.isPending);
+  // A transient seller-fetch failure is 'load-failed' (retryable), NOT
+  // 'not-found' — telling a visitor the studio doesn't exist on a network
+  // blip is the false-empty-state bug this migration exists to kill.
+  const errorKind: ErrorKind | null = !slug
+    ? 'not-found'
+    : !sellerQuery.isPending && sellerQuery.data === null
+      ? 'not-found'
+      : sellerQuery.isError || contentQuery.isError
+        ? 'load-failed'
+        : null;
+
+  useDocumentTitle(organization?.name);
 
   const visible = useMemo(() => courses.filter(isVisible), [courses]);
 
@@ -124,7 +135,7 @@ const PublicCoursesPage = () => {
       { value: 'series', label: 'Kursrekker' },
       { value: 'workshop', label: 'Workshops' },
       { value: 'drop-in', label: 'Drop-in' },
-      { value: 'online', label: 'Online' },
+      { value: 'online', label: 'Nettkurs' },
     ];
     return candidates.filter(
       (option) => option.value === 'all'

@@ -25,7 +25,6 @@ const PREVIEWS = [
   'courses-grid-preview',
   'courses-list-preview',
   'income-chart-preview',
-  'tier-preview',
   'billing-preview',
   'modals-buttons-toasts',
   'settings-rows-preview',

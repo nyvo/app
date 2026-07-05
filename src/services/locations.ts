@@ -1,4 +1,4 @@
-import { typedFrom } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import type {
   TeacherLocation,
   TeacherLocationInsert,
@@ -8,7 +8,7 @@ import type {
 export async function fetchLocations(
   sellerId: string
 ): Promise<{ data: TeacherLocation[]; error: Error | null }> {
-  const { data, error } = await typedFrom('teacher_locations')
+  const { data, error } = await supabase.from('teacher_locations')
     .select('*')
     .eq('seller_id', sellerId)
     .order('created_at', { ascending: true })
@@ -20,7 +20,7 @@ export async function fetchLocations(
 export async function createLocation(
   location: TeacherLocationInsert
 ): Promise<{ data: TeacherLocation | null; error: Error | null }> {
-  const { data, error } = await typedFrom('teacher_locations')
+  const { data, error } = await supabase.from('teacher_locations')
     .insert(location)
     .select()
     .single()
@@ -33,7 +33,7 @@ export async function updateLocation(
   id: string,
   updates: TeacherLocationUpdate
 ): Promise<{ data: TeacherLocation | null; error: Error | null }> {
-  const { data, error } = await typedFrom('teacher_locations')
+  const { data, error } = await supabase.from('teacher_locations')
     .update(updates)
     .eq('id', id)
     .select()
@@ -46,7 +46,7 @@ export async function updateLocation(
 export async function deleteLocation(
   id: string
 ): Promise<{ error: Error | null }> {
-  const { error } = await typedFrom('teacher_locations')
+  const { error } = await supabase.from('teacher_locations')
     .delete()
     .eq('id', id)
 

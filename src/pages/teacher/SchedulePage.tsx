@@ -117,15 +117,15 @@ const SchedulePage = () => {
     const isActive = rangeFilter === 'active';
 
     (async () => {
-      const query = supabase
+      const base = supabase
         .from('course_sessions')
         .select(
           'id, course_id, session_date, start_time, end_time, course:courses!inner(id, title, location, format, delivery_mode, max_participants)',
         )
         .eq('course.seller_id', currentSeller.id)
         .neq('course.status', 'cancelled')
-        .neq('status', 'cancelled')
-        [isActive ? 'gte' : 'lt']('session_date', today)
+        .neq('status', 'cancelled');
+      const query = (isActive ? base.gte('session_date', today) : base.lt('session_date', today))
         .order('session_date', { ascending: isActive })
         .order('start_time', { ascending: isActive });
 
@@ -142,17 +142,15 @@ const SchedulePage = () => {
 
       // Confirmed signup count per course (capacity is per-course on the schema
       // today; drop-ins use per-session capacity but we keep the simpler
-      // course-level count here for display).
+      // course-level count here for display). Aggregated server-side — fetching
+      // rows to count in JS silently truncates at PostgREST's 1000-row cap.
       const counts: Record<string, number> = {};
       if (courseIds.length > 0) {
-        const { data: signupRows } = await supabase
-          .from('signups')
-          .select('course_id, status')
-          .eq('seller_id', currentSeller.id)
-          .in('course_id', courseIds)
-          .eq('status', 'confirmed');
-        for (const r of (signupRows ?? []) as Array<{ course_id: string }>) {
-          counts[r.course_id] = (counts[r.course_id] ?? 0) + 1;
+        const { data: countRows } = await supabase.rpc('public_signup_counts', {
+          p_course_ids: courseIds,
+        });
+        for (const r of countRows ?? []) {
+          counts[r.course_id] = r.confirmed_count;
         }
       }
 
@@ -373,7 +371,7 @@ export function TimelineDay({
  */
 export function SessionCard({ session }: { session: SessionRow }) {
   const isOnline = session.deliveryMode === 'online';
-  const placeLabel = isOnline ? 'Online' : session.courseLocation;
+  const placeLabel = isOnline ? 'Nettkurs' : session.courseLocation;
   const countLabel =
     session.maxParticipants != null
       ? `${session.signupCount} / ${session.maxParticipants}`

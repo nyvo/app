@@ -19,6 +19,7 @@ import {
   capturePaymentIntent,
   cancelPaymentIntent,
 } from '../_shared/stripe.ts'
+import { claimEvent, releaseEventClaim } from '../_shared/webhook-claims.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -32,6 +33,13 @@ const GRACE_MINUTES = 2
 // Abandonment window: attempts older than this whose buyer never completed the
 // Stripe payment are treated as abandoned.
 const ABANDON_HOURS = 24
+// Per-run cap: 1-4 serial Stripe round-trips per attempt means an unbounded
+// backlog (e.g. after a webhook outage) would blow past the cron cadence and
+// the isolate wall clock. Oldest-first keeps the backlog draining FIFO.
+const MAX_ATTEMPTS_PER_RUN = 100
+// Overlap guard key in processed_webhook_events (claimEvent's stale-reclaim
+// means a hard-killed run blocks followers for at most ~5 minutes).
+const RUN_LOCK_KEY = 'sweep-pending-payments:run'
 
 Deno.serve(async (req: Request) => {
   const auth = req.headers.get('authorization') || ''
@@ -43,9 +51,20 @@ Deno.serve(async (req: Request) => {
     return new Response('Unauthorized', { status: 401 })
   }
 
-  try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+  const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+  // Overlap guard: runs fire every 2 minutes; one that outlives the cadence
+  // (big backlog, slow Stripe) must not race a newer run on the same attempts —
+  // capture is idempotent at Stripe, but the cancel/void branches are not.
+  const runClaim = await claimEvent(supabase, RUN_LOCK_KEY, 'cron_lock')
+  if (runClaim !== 'claimed') {
+    return new Response(JSON.stringify({ skipped: 'run_in_progress' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  try {
     const graceCutoff = new Date(Date.now() - GRACE_MINUTES * 60 * 1000).toISOString()
 
     const summary = {
@@ -74,6 +93,8 @@ Deno.serve(async (req: Request) => {
       .in('status', ['pending', 'authorized'])
       .not('stripe_payment_intent_id', 'is', null)
       .lt('created_at', graceCutoff)
+      .order('created_at', { ascending: true })
+      .limit(MAX_ATTEMPTS_PER_RUN)
 
     if (stripeErr) {
       // Don't fail the whole sweep — log and continue.
@@ -138,16 +159,19 @@ Deno.serve(async (req: Request) => {
           })
           if (rpcErr) { summary.errors++; continue } // transient — retry next sweep
 
-          // already_signed_up = the signup exists (race/retry); fall through to capture.
-          if ((!signupResult || !signupResult.success) && signupResult?.error !== 'already_signed_up') {
-            // Genuine capacity/validation reject — cancel the auth + void the attempt.
+          // ANY reject → cancel + void, never capture. This includes 'duplicate_signup': the
+          // buyer already holds a confirmed booking via a DIFFERENT payment (two-tab double
+          // checkout) — capturing THIS PI would charge them twice with no signup row to show
+          // for it. The PI-retry case ("signup exists for this PI") never lands here: the RPC's
+          // dedup path returns it as already_processed SUCCESS, handled below.
+          if (!signupResult || !signupResult.success) {
             try { await cancelPaymentIntent(piId) } catch (_e) { /* non-fatal */ }
             await supabase.from('payment_attempts').update({ status: 'voided', payment_product: 'stripe' }).eq('id', attempt.id)
             summary.marked_failed++
             continue
           }
 
-          // Signup exists (created / already_processed / already_signed_up) → ensure captured.
+          // Signup exists (created / already_processed) → ensure captured.
           try {
             await capturePaymentIntent(piId)
           } catch (_err) {
@@ -199,5 +223,11 @@ Deno.serve(async (req: Request) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown'
     return new Response(`Sweep error: ${message}`, { status: 500 })
+  } finally {
+    try {
+      await releaseEventClaim(supabase, RUN_LOCK_KEY)
+    } catch (_e) {
+      // Non-fatal — a leaked lock is stale-reclaimed by claimEvent in ~5 min.
+    }
   }
 })

@@ -1,11 +1,9 @@
 // Create a Stripe (Connect) PaymentIntent for the embedded checkout flow.
-// Stripe-side counterpart to create-dintero-session (Phase 2 of the Dintero → Stripe migration).
 //
-// Mirrors create-dintero-session's validation 1:1 (rate-limit, course/seller/ticket checks,
-// duplicate guard, soft capacity check, payment_attempts insert). The only provider difference
-// is the charge: instead of a Dintero session with two split line items, we create ONE
-// destination-charge PaymentIntent (manual capture + on_behalf_of + transfer_data +
-// application_fee_amount). See plan §2 / C1 / C4 / C7.
+// Validation: rate-limit, course/seller/ticket checks, duplicate guard, soft
+// capacity check, payment_attempts insert. The charge is ONE destination-charge
+// PaymentIntent (manual capture + on_behalf_of + transfer_data +
+// application_fee_amount).
 //
 // Flow:
 //   1. Validate course + seller + Stripe Connect onboarding status.
@@ -19,7 +17,7 @@
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
+import { handleCors, errorResponse, successResponse, getClientIp } from '../_shared/auth.ts'
 import { calculatePricing } from '../_shared/pricing.ts'
 import { isCourseEnded } from '../_shared/course-status.ts'
 import { createPaymentIntent } from '../_shared/stripe.ts'
@@ -110,16 +108,23 @@ Deno.serve(async (req: Request) => {
 
     // Abuse protection: per-IP + per-email fixed-window rate limit. Each call creates a
     // PaymentIntent and writes a payment_attempts row, so cap it. Check IP FIRST and return on
-    // block. Fail open — only block on an explicit `false`.
-    const clientIp = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown'
+    // block. Fail CLOSED on limiter errors — an uncapped unauthenticated PaymentIntent
+    // factory is worse than a briefly paused checkout.
+    const clientIp = getClientIp(req)
     const { data: ipAllowed, error: ipLimitErr } = await supabase.rpc('check_rate_limit', { p_key: `checkout:ip:${clientIp}`, p_limit: 20, p_window_seconds: 3600 })
-    if (ipLimitErr) console.error('check_rate_limit (ip) failed:', ipLimitErr)
+    if (ipLimitErr) {
+      console.error('check_rate_limit (ip) failed:', ipLimitErr)
+      return errorResponse('Prøv igjen om litt.', 503, req)
+    }
     if (ipAllowed === false) {
       return errorResponse('For mange forsøk. Prøv igjen om litt.', 429, req)
     }
     const emailKey = customerEmail.trim().toLowerCase()
     const { data: emailAllowed, error: emailLimitErr } = await supabase.rpc('check_rate_limit', { p_key: `checkout:email:${emailKey}`, p_limit: 10, p_window_seconds: 3600 })
-    if (emailLimitErr) console.error('check_rate_limit (email) failed:', emailLimitErr)
+    if (emailLimitErr) {
+      console.error('check_rate_limit (email) failed:', emailLimitErr)
+      return errorResponse('Prøv igjen om litt.', 503, req)
+    }
     if (emailAllowed === false) {
       return errorResponse('For mange forsøk. Prøv igjen om litt.', 429, req)
     }

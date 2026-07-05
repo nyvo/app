@@ -1,5 +1,15 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  createRoutesFromElements,
+  Navigate,
+  Outlet,
+  Route,
+  RouterProvider,
+  useParams,
+} from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/query-client';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -8,11 +18,15 @@ import { PageSkeleton } from './components/ui/page-skeleton';
 import { RESERVED_SLUGS } from '@/lib/reservedSlugs';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Persistent layouts (no lazy — always mounted)
-import TeacherLayout from './layouts/TeacherLayout';
 import { RoleRoute } from './components/RoleRoute';
 
-// Lazy load all route components for code splitting
+// Lazy load all route components for code splitting.
+// TeacherLayout too: it pulls the sidebar, icon set and course drawer into
+// whatever chunk it lands in — eager, that was the ENTRY chunk, so anonymous
+// buyers downloaded the dashboard chrome before checkout could render. It
+// stays mounted across dashboard routes once loaded; lazy only moves the
+// module into its own chunk behind the existing root Suspense.
+const TeacherLayout = lazy(() => import('./layouts/TeacherLayout'));
 const DashboardRouter = lazy(() => import('./pages/teacher/DashboardRouter'));
 const GetStartedPage = lazy(() => import('./pages/teacher/GetStartedPage'));
 const HelpPage = lazy(() => import('./pages/teacher/HelpPage'));
@@ -45,13 +59,11 @@ const CreateCoursePreview = lazy(() => import('./pages/dev/CreateCoursePreview')
 const CoursesGridPreview = lazy(() => import('./pages/dev/CoursesGridPreview'));
 const PayoutPreview = lazy(() => import('./pages/dev/PayoutPreview'));
 const IncomeChartPreview = lazy(() => import('./pages/dev/IncomeChartPreview'));
-const EntityCardPreview = lazy(() => import('./pages/dev/EntityCardPreview'));
 const DashboardPreview = lazy(() => import('./pages/dev/DashboardPreview'));
 const CoursesListPreview = lazy(() => import('./pages/dev/CoursesListPreview'));
 const CheckoutFormReworkPreview = lazy(() => import('./pages/dev/CheckoutFormReworkPreview'));
 const DetailReworkPreview = lazy(() => import('./pages/dev/DetailReworkPreview'));
 const ModalsButtonsToastsPreview = lazy(() => import('./pages/dev/ModalsButtonsToastsPreview'));
-const TierPreview = lazy(() => import('./pages/dev/TierPreview'));
 const BillingPreview = lazy(() => import('./pages/dev/BillingPreview'));
 const CourseDetailPreview = lazy(() => import('./pages/dev/CourseDetailPreview'));
 const StudioPreview = lazy(() => import('./pages/dev/StudioPreview'));
@@ -91,10 +103,30 @@ function RootRoute() {
   return <LandingPage />;
 }
 
-function AppRoutes() {
+/**
+ * Root chrome — toaster + error boundary + suspense wrap every route via a
+ * pathless layout route. Lives *inside* the router (data mode) so route
+ * components can use useBlocker for unsaved-changes guards.
+ */
+function RootChrome() {
   return (
     <>
-      <Routes>
+      <Toaster />
+      <ErrorBoundary>
+        <Suspense fallback={<DelayedFallback><PageSkeleton /></DelayedFallback>}>
+          <Outlet />
+        </Suspense>
+      </ErrorBoundary>
+    </>
+  );
+}
+
+// Data router (createBrowserRouter) instead of declarative <BrowserRouter> —
+// required for useBlocker (see components/ui/unsaved-changes.tsx). The route
+// JSX is unchanged, just hoisted out of <Routes> into the router config.
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route element={<RootChrome />}>
         {/* Public Routes */}
         <Route path="/" element={<RootRoute />} />
         <Route
@@ -150,13 +182,11 @@ function AppRoutes() {
             <Route path="/dev/courses-grid-preview" element={<CoursesGridPreview />} />
             <Route path="/dev/payout-preview" element={<PayoutPreview />} />
             <Route path="/dev/income-chart-preview" element={<IncomeChartPreview />} />
-            <Route path="/dev/entity-card-preview" element={<EntityCardPreview />} />
             <Route path="/dev/dashboard-preview" element={<DashboardPreview />} />
             <Route path="/dev/courses-list-preview" element={<CoursesListPreview />} />
             <Route path="/dev/checkout-form-rework" element={<CheckoutFormReworkPreview />} />
             <Route path="/dev/detail-rework" element={<DetailReworkPreview />} />
             <Route path="/dev/modals-buttons-toasts" element={<ModalsButtonsToastsPreview />} />
-            <Route path="/dev/tier-preview" element={<TierPreview />} />
             <Route path="/dev/billing-preview" element={<BillingPreview />} />
             <Route path="/dev/course-detail-preview" element={<CourseDetailPreview />} />
             <Route path="/dev/studio-preview" element={<StudioPreview />} />
@@ -208,23 +238,17 @@ function AppRoutes() {
 
         {/* 404 Catch-all */}
         <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </>
-  );
-}
+    </Route>
+  )
+);
 
 const App = () => {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Toaster />
-        <ErrorBoundary>
-          <Suspense fallback={<DelayedFallback><PageSkeleton /></DelayedFallback>}>
-            <AppRoutes />
-          </Suspense>
-        </ErrorBoundary>
-      </BrowserRouter>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
 

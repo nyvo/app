@@ -4,6 +4,11 @@
 // confirmed signup on the parent course via the session-rescheduled
 // email template. Best-effort notification: a failed email does not
 // roll back the update.
+//
+// notify_only mode: the save_course_schedule RPC already committed the
+// session change transactionally — this function then only fans out the
+// emails, using the caller-provided old date/time (the row already holds
+// the new values). No write happens in that mode.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
@@ -24,6 +29,11 @@ interface UpdateSessionRequest {
   new_date: string       // YYYY-MM-DD
   new_start_time: string // HH:MM or HH:MM:SS
   new_end_time?: string  // HH:MM or HH:MM:SS — optional
+  // notify_only: skip the write (already committed by save_course_schedule);
+  // old_* carry the pre-change values for the email copy.
+  notify_only?: boolean
+  old_date?: string
+  old_start_time?: string
 }
 
 function weekdayDate(input: string): string {
@@ -64,6 +74,9 @@ Deno.serve(async (req: Request) => {
   if (!body.session_id || !body.new_date || !body.new_start_time) {
     return errorResponse('Missing session_id, new_date, or new_start_time', 400, req)
   }
+  if (body.notify_only && (!body.old_date || !body.old_start_time)) {
+    return errorResponse('notify_only requires old_date and old_start_time', 400, req)
+  }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
@@ -99,34 +112,38 @@ Deno.serve(async (req: Request) => {
     return errorResponse(authz.error || 'Forbidden', 403, req)
   }
 
-  // 3. Capture old values for the email, then update
-  const oldDate = session.session_date
-  const oldStart = shortTime(session.start_time)
+  // 3. Capture old values for the email, then update (skipped in notify_only —
+  // the RPC already committed the change, so the row holds the NEW values and
+  // the caller supplies the old ones).
+  const oldDate = body.notify_only ? body.old_date! : session.session_date
+  const oldStart = shortTime(body.notify_only ? body.old_start_time! : session.start_time)
 
-  const { error: updateError } = await supabase
-    .from('course_sessions')
-    .update({
-      session_date: body.new_date,
-      start_time: body.new_start_time,
-      end_time: body.new_end_time ?? null,
-    })
-    .eq('id', body.session_id)
+  if (!body.notify_only) {
+    const { error: updateError } = await supabase
+      .from('course_sessions')
+      .update({
+        session_date: body.new_date,
+        start_time: body.new_start_time,
+        end_time: body.new_end_time ?? null,
+      })
+      .eq('id', body.session_id)
 
-  if (updateError) {
-    console.error('[update-session] update error', updateError)
-    return errorResponse('Could not update session', 500, req)
+    if (updateError) {
+      console.error('[update-session] update error', updateError)
+      return errorResponse('Could not update session', 500, req)
+    }
   }
 
   // 4. Notify confirmed signups — best-effort. The update is already committed.
   let notified = 0
   let failed = 0
   try {
+    // Recipients come from the signup's own participant_email — not a
+    // profiles join — so guest bookings (buyer_id NULL, the common
+    // checkout path) are reached too.
     const { data: signups, error: signupsError } = await supabase
       .from('signups')
-      .select(`
-        id,
-        profile:profiles(email, name)
-      `)
+      .select('id, participant_name, participant_email')
       .eq('course_id', course.id)
       .eq('status', 'confirmed')
 
@@ -140,13 +157,12 @@ Deno.serve(async (req: Request) => {
 
       // Sequential — keeps Resend rate-limit happy on long lists.
       for (const s of signups) {
-        const profile = (s as { profile?: { email?: string; name?: string | null } | null }).profile
-        if (!profile?.email) continue
+        if (!s.participant_email) continue
         const result = await sendEmail({
           template: 'session-rescheduled',
-          to: profile.email,
+          to: s.participant_email,
           props: {
-            buyerName: profile.name || 'Hei',
+            buyerName: s.participant_name || 'Hei',
             studioName,
             courseTitle: course.title,
             oldDate: oldDateLabel,
@@ -158,7 +174,7 @@ Deno.serve(async (req: Request) => {
         })
         if (result.error) {
           failed += 1
-          console.error('[update-session] email failed', { to: profile.email, error: result.error })
+          console.error('[update-session] email failed', { to: s.participant_email, error: result.error })
         } else {
           notified += 1
         }

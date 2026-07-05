@@ -56,7 +56,7 @@ export function ImageField({
   changeLabel = 'Bytt bilde',
   removeLabel = 'Fjern',
   loadingLabel = 'Laster opp',
-  emptyLabel = 'Dra inn bildet her, eller klikk for å laste opp.',
+  emptyLabel = 'Dra bildet hit, eller klikk for å laste opp.',
   ariaLabel,
   className,
 }: ImageFieldProps) {

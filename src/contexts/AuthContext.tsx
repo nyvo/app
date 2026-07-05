@@ -23,6 +23,10 @@ interface AuthContextType {
   currentSeller: Seller | null
   sellers: Seller[]
   userRole: SellerMemberRole | null
+  // True when the seller_members fetch FAILED (network/5xx) — as opposed to
+  // "loaded, zero memberships". Role guards must not demote a seller to buyer
+  // on a failed fetch.
+  sellersLoadFailed: boolean
 
   // Auth methods
   signInWithGoogle: (redirectTo?: string) => Promise<{ error: Error | null }>
@@ -92,7 +96,7 @@ async function fetchProfileData(userId: string): Promise<Profile | null> {
   return data
 }
 
-async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], memberships: SellerMembership[] }> {
+async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], memberships: SellerMembership[], failed: boolean }> {
   // Explicit column list — only the public grant set is selected here.
   // Operational fields (operating_model, updated_at) are hydrated separately via
   // get_seller_operational for the active seller.
@@ -117,7 +121,9 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
 
   if (memberError) {
     logger.error('Error fetching seller memberships:', memberError)
-    return { sellers: [], memberships: [] }
+    // failed=true: "we don't know", NOT "no memberships" — consumers must not
+    // treat this as an authoritative buyer verdict.
+    return { sellers: [], memberships: [], failed: true }
   }
 
   // The embedded select returns only the public columns; the Seller type
@@ -155,7 +161,7 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
   }) as SellerMembership[]
   const sellers = typedMemberships.map((m) => m.seller).filter(Boolean)
 
-  return { sellers, memberships: typedMemberships }
+  return { sellers, memberships: typedMemberships, failed: false }
 }
 
 // Hydrate operational fields (operating_model, subscription plan/status, updated_at)
@@ -193,6 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentSeller, setCurrentSeller] = useState<Seller | null>(null)
   const [sellers, setSellers] = useState<Seller[]>([])
   const [userRole, setUserRole] = useState<SellerMemberRole | null>(null)
+  const [sellersLoadFailed, setSellersLoadFailed] = useState(false)
 
   // Refs to track values without causing re-renders in callbacks
   const currentSellerRef = useRef<Seller | null>(null)
@@ -226,9 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ensure_own_profile is a SECURITY DEFINER RPC that (re)creates the caller's
       // own profile row idempotently — profiles is SELECT-only for the client, so
       // creation goes through the definer function, not a direct insert.
-      const { error: healError } = await (
-        supabase.rpc as unknown as (fn: string) => ReturnType<typeof supabase.rpc>
-      )('ensure_own_profile')
+      const { error: healError } = await supabase.rpc('ensure_own_profile')
       if (healError) {
         logger.error('Failed to self-heal missing profile, signing out:', healError)
         await supabase.auth.signOut()
@@ -253,7 +258,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) logger.error('claim_my_signups failed (background):', error)
     })
 
-    const { sellers: loadedSellers, memberships } = await fetchSellersData(userId)
+    const { sellers: loadedSellers, memberships, failed } = await fetchSellersData(userId)
+    setSellersLoadFailed(failed)
     setSellers(loadedSellers)
 
     if (loadedSellers.length > 0 && !currentSellerRef.current) {
@@ -307,6 +313,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false)
         setIsInitialized(true)
       }
+    }).catch((err) => {
+      // getSession can reject (corrupted persisted token, storage access
+      // failure). Without this catch isInitialized never flips and every
+      // guard renders null forever — a permanent blank page. Fall back to
+      // the unauthenticated state instead.
+      logger.error('getSession failed during init:', err)
+      if (!mounted) return
+      setIsLoading(false)
+      setIsInitialized(true)
     })
 
     // Listen for auth changes
@@ -328,6 +343,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSellers([])
           setCurrentSeller(null)
           setUserRole(null)
+          setSellersLoadFailed(false)
           clearStoredCurrentSellerId(signedOutUserId)
           return
         }
@@ -370,7 +386,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!userRef.current) return
 
     // Refresh profile alongside sellers (e.g. after onboarding writes to profiles)
-    const [profileData, { sellers: loadedSellers, memberships }] = await Promise.all([
+    const [profileData, { sellers: loadedSellers, memberships, failed }] = await Promise.all([
       fetchProfileData(userRef.current.id),
       fetchSellersData(userRef.current.id),
     ])
@@ -378,6 +394,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (profileData) {
       setProfile(profileData)
     }
+
+    setSellersLoadFailed(failed)
+    // On a failed refresh keep the last-known sellers instead of clobbering a
+    // working seller session with [] (which would demote the UI to buyer).
+    if (failed) return
 
     setSellers(loadedSellers)
 
@@ -461,12 +482,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // API for this by design. SECURITY DEFINER RPC (20260630140000). Returns exists
   // + has_password so the page can branch: sign in / sign up / code-bridge.
   const checkEmailAuthStatus = useCallback(async (email: string) => {
-    const { data, error } = await (
-      supabase.rpc as unknown as (
-        fn: string,
-        args: { p_email: string },
-      ) => ReturnType<typeof supabase.rpc>
-    )('check_email_auth_status', { p_email: email })
+    const { data, error } = await supabase.rpc('check_email_auth_status', { p_email: email })
     if (error) return { exists: false, hasPassword: false, error: error as Error }
     const row = (data as Array<{ email_exists: boolean; has_password: boolean }> | null)?.[0]
     return { exists: !!row?.email_exists, hasPassword: !!row?.has_password, error: null }
@@ -494,9 +510,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // state (userRef) is updated via onAuthStateChange.
   const ensureSeller = useCallback(async (name: string, slug: string, operatingModel: string = 'solo') => {
     // Call hardened RPC — no user_id param, uses auth.uid() server-side
-    const { data, error } = await (supabase.rpc as unknown as (
-      fn: string, args: Record<string, string>
-    ) => ReturnType<typeof supabase.rpc>)('ensure_seller_for_user', {
+    const { data, error } = await supabase.rpc('ensure_seller_for_user', {
       p_seller_name: name,
       p_slug: slug,
       p_operating_model: operatingModel,
@@ -567,10 +581,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setRole = useCallback(async (role: UserRole | null) => {
     const userId = userRef.current?.id
     if (!userId) return { error: new Error('Ikke logget inn') }
-    const { data, error } = await (supabase.rpc as unknown as (
-      fn: string, args: { p_role: UserRole | null }
-    ) => ReturnType<typeof supabase.rpc>)('set_user_role', {
-      p_role: role,
+    const { data, error } = await supabase.rpc('set_user_role', {
+      // p_role is nullable at the SQL level (null = back to the role chooser);
+      // generated types can't express nullable RPC params.
+      p_role: role as unknown as string,
     })
     if (error) return { error: error as Error }
     const updatedProfile = data as Profile | null
@@ -583,12 +597,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const completeBuyerOnboarding = useCallback(async (input: { name: string; phone?: string }) => {
     const userId = userRef.current?.id
     if (!userId) return { error: new Error('Ikke logget inn') }
-    const { data, error } = await (supabase.rpc as unknown as (
-      fn: string,
-      args: { p_name: string; p_phone: string | null }
-    ) => ReturnType<typeof supabase.rpc>)('complete_buyer_onboarding', {
+    const { data, error } = await supabase.rpc('complete_buyer_onboarding', {
       p_name: input.name.trim(),
-      p_phone: input.phone?.trim() || null,
+      // Omit rather than send null — the RPC's param default is NULL anyway.
+      p_phone: input.phone?.trim() || undefined,
     })
     if (error) return { error: error as Error }
     const updatedProfile = data as Profile | null
@@ -601,10 +613,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const markOnboardingComplete = useCallback(async () => {
     const userId = userRef.current?.id
     if (!userId) return { error: new Error('Ikke logget inn') }
-    const { data, error } = await (supabase.rpc as unknown as (
-      fn: string,
-      args?: Record<string, never>
-    ) => ReturnType<typeof supabase.rpc>)('mark_seller_onboarding_complete')
+    const { data, error } = await supabase.rpc('mark_seller_onboarding_complete')
     if (error) return { error: error as Error }
     const updatedProfile = data as Profile | null
     setProfile((prev) => updatedProfile ?? prev)
@@ -658,6 +667,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     currentSeller,
     sellers,
     userRole,
+    sellersLoadFailed,
     signInWithGoogle,
     signOut,
     sendMagicLink,
@@ -680,6 +690,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     currentSeller,
     sellersKey,
     userRole,
+    sellersLoadFailed,
     signInWithGoogle,
     signOut,
     sendMagicLink,
