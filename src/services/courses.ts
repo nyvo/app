@@ -11,6 +11,7 @@ import type {
   CourseFormat,
   DeliveryMode,
   SessionStatus,
+  Json,
 } from '@/types/database'
 
 // Internal types for Supabase join query results
@@ -639,6 +640,73 @@ export async function sendCourseMessage(input: {
   if (error) return { data: null, error: error as Error }
   const result = data as { notified?: number; failed?: number }
   return { data: { notified: result.notified ?? 0, failed: result.failed ?? 0 }, error: null }
+}
+
+// Desired-state element for save_course_schedule. `keep` marks an existing
+// row the editor holds incompletely (no date/time yet) — the RPC leaves it
+// untouched instead of deleting it.
+export type DesiredSession =
+  | { id: string; keep: true }
+  | { id: string | null; session_date: string; start_time: string; end_time?: string | null }
+
+export interface SaveCourseScheduleResult {
+  success: boolean
+  rescheduled: Array<{
+    session_id: string
+    old_date: string
+    old_start_time: string
+    new_date: string
+    new_start_time: string
+  }>
+  skipped_new_days: number
+}
+
+/**
+ * One transactional save for the course editor: course fields + drop-in tier
+ * + the full desired session state, diffed server-side. Every write commits
+ * or none do — no half-saved schedules, no client-side re-baselining.
+ * Published-course session changes come back in `rescheduled`; the caller
+ * decides which of them trigger participant notifications.
+ */
+export async function saveCourseSchedule(input: {
+  courseId: string
+  course: Record<string, unknown>
+  dropIn?: { price: number } | null
+  sessions?: DesiredSession[] | null
+}): Promise<{ data: SaveCourseScheduleResult | null; error: Error | null }> {
+  const { data, error } = await supabase.rpc('save_course_schedule', {
+    p_course_id: input.courseId,
+    p_course: input.course as Json,
+    p_drop_in: (input.dropIn ?? undefined) as Json | undefined,
+    p_sessions: (input.sessions ?? undefined) as unknown as Json | undefined,
+  })
+  if (error) return { data: null, error: error as Error }
+  return { data: data as unknown as SaveCourseScheduleResult, error: null }
+}
+
+/**
+ * Notify participants about an ALREADY-COMMITTED session reschedule (the
+ * save_course_schedule RPC did the write). Best-effort — the schedule change
+ * stands regardless of email outcome.
+ */
+export async function notifySessionRescheduled(input: {
+  sessionId: string
+  oldDate: string
+  oldStartTime: string
+  newDate: string
+  newStartTime: string
+}): Promise<{ error: Error | null }> {
+  const { error } = await supabase.functions.invoke('update-session', {
+    body: {
+      session_id: input.sessionId,
+      new_date: input.newDate,
+      new_start_time: input.newStartTime,
+      notify_only: true,
+      old_date: input.oldDate,
+      old_start_time: input.oldStartTime,
+    },
+  })
+  return { error: (error as Error) ?? null }
 }
 
 /**
