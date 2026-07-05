@@ -14,9 +14,10 @@
 // dedupes on payout id).
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
-import { createClient, SupabaseClient } from 'jsr:@supabase/supabase-js@2'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { verifyStripeSignature, retrieveAccount, type StripeConnectedAccount } from '../_shared/stripe.ts'
 import { enqueueNotification } from '../_shared/notifications.ts'
+import { claimEvent, markEventResult, releaseEventClaim } from '../_shared/webhook-claims.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -41,32 +42,6 @@ function mapAccountStatus(account: StripeConnectedAccount): AccountStatus {
   if (account.requirements?.disabled_reason?.startsWith('rejected')) return 'rejected'
   if (account.charges_enabled === true) return 'enabled'
   return 'restricted'
-}
-
-async function claimEvent(
-  supabase: SupabaseClient,
-  eventId: string,
-  eventType: string,
-): Promise<boolean> {
-  const { error } = await supabase
-    .from('processed_webhook_events')
-    .insert({ event_id: eventId, event_type: eventType, result: { status: 'processing' }, processed_at: null })
-  if (error) {
-    if (error.code === '23505') return false
-    return true
-  }
-  return true
-}
-
-async function markEventResult(
-  supabase: SupabaseClient,
-  eventId: string,
-  result: Record<string, unknown>,
-): Promise<void> {
-  await supabase
-    .from('processed_webhook_events')
-    .update({ result, processed_at: new Date().toISOString() })
-    .eq('event_id', eventId)
 }
 
 Deno.serve(async (req: Request) => {
@@ -98,9 +73,15 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
   const eventKey = `stripe:${event.id}`
-  const claimed = await claimEvent(supabase, eventKey, event.type)
-  if (!claimed) {
+  const claim = await claimEvent(supabase, eventKey, event.type)
+  if (claim === 'duplicate') {
     return new Response(JSON.stringify({ status: 'already_processed' }), { status: 200 })
+  }
+  if (claim === 'in_flight') {
+    // Another isolate holds a fresh claim. Non-2xx so Stripe redelivers — a 200
+    // here would permanently drop the event if that isolate was hard-killed, and
+    // account-status syncs have no other backstop.
+    return new Response('Event claim in flight', { status: 409 })
   }
 
   try {
@@ -170,13 +151,10 @@ Deno.serve(async (req: Request) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown'
     // Release the claim if work never reached a terminal result, so Stripe's retry re-runs instead
-    // of hitting the already_processed fast-path.
+    // of hitting the already_processed fast-path. If this release itself fails, the stale-claim
+    // reclaim in claimEvent recovers the event on a later retry.
     try {
-      await supabase
-        .from('processed_webhook_events')
-        .delete()
-        .eq('event_id', eventKey)
-        .is('processed_at', null)
+      await releaseEventClaim(supabase, eventKey)
     } catch (_releaseErr) {
       // Non-fatal — surfacing the original error to Stripe (→ retry) is what matters.
     }

@@ -138,16 +138,19 @@ Deno.serve(async (req: Request) => {
           })
           if (rpcErr) { summary.errors++; continue } // transient — retry next sweep
 
-          // already_signed_up = the signup exists (race/retry); fall through to capture.
-          if ((!signupResult || !signupResult.success) && signupResult?.error !== 'already_signed_up') {
-            // Genuine capacity/validation reject — cancel the auth + void the attempt.
+          // ANY reject → cancel + void, never capture. This includes 'duplicate_signup': the
+          // buyer already holds a confirmed booking via a DIFFERENT payment (two-tab double
+          // checkout) — capturing THIS PI would charge them twice with no signup row to show
+          // for it. The PI-retry case ("signup exists for this PI") never lands here: the RPC's
+          // dedup path returns it as already_processed SUCCESS, handled below.
+          if (!signupResult || !signupResult.success) {
             try { await cancelPaymentIntent(piId) } catch (_e) { /* non-fatal */ }
             await supabase.from('payment_attempts').update({ status: 'voided', payment_product: 'stripe' }).eq('id', attempt.id)
             summary.marked_failed++
             continue
           }
 
-          // Signup exists (created / already_processed / already_signed_up) → ensure captured.
+          // Signup exists (created / already_processed) → ensure captured.
           try {
             await capturePaymentIntent(piId)
           } catch (_err) {

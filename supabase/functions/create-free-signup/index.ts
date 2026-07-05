@@ -147,6 +147,7 @@ Deno.serve(async (req: Request) => {
       }
       const status = rpcResult.error === 'course_full' ? 409
         : rpcResult.error === 'already_signed_up' ? 409
+        : rpcResult.error === 'duplicate_signup' ? 409
         : rpcResult.error === 'course_not_found' ? 404
         : 400
       return errorResponse(rpcResult.message || 'Kunne ikke fullføre påmelding', status, req)
