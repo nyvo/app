@@ -27,6 +27,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCourseDetail } from '@/hooks/use-course-detail';
 import { publishCourse, unpublishCourse } from '@/services/courses';
 import { friendlyError } from '@/lib/error-messages';
+import { runWithRevert } from '@/lib/undo';
 import { publishNeedsPaymentSetup } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 
@@ -183,26 +184,14 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
   const handleUnpublish = async () => {
     if (!courseId || !courseData) return;
     const previousStatus = courseData.status;
-    setCourse({ ...courseData, status: 'draft' });
-    const { error: unpubError } = await unpublishCourse(courseId);
-    if (unpubError) {
-      setCourse({ ...courseData, status: previousStatus });
-      toast.error(friendlyError(unpubError, 'Kunne ikke avpublisere kurset'));
-      return;
-    }
-    toast.success('Kurset er lagret som utkast', {
-      duration: 8000,
-      action: {
-        label: 'Angre',
-        onClick: async () => {
-          setCourse({ ...courseData, status: previousStatus });
-          const { error: revertError } = await publishCourse(courseId);
-          if (revertError) {
-            setCourse({ ...courseData, status: 'draft' });
-            toast.error(friendlyError(revertError, 'Kunne ikke gjenopprette publisering'));
-          }
-        },
-      },
+    await runWithRevert({
+      message: 'Kurset er lagret som utkast',
+      apply: () => setCourse({ ...courseData, status: 'draft' }),
+      revert: () => setCourse({ ...courseData, status: previousStatus }),
+      commit: () => unpublishCourse(courseId),
+      undo: () => publishCourse(courseId),
+      commitErrorMessage: (e) => friendlyError(e, 'Kunne ikke avpublisere kurset'),
+      undoErrorMessage: (e) => friendlyError(e, 'Kunne ikke gjenopprette publisering'),
     });
   };
 

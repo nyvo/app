@@ -4,6 +4,7 @@ import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { UnsavedChangesDialog, useUnsavedChanges } from '@/components/ui/unsaved-changes';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PasswordRow } from '@/components/teacher/PasswordRow';
 import { PageShell } from '@/components/teacher/PageShell';
@@ -11,6 +12,7 @@ import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, typedFrom } from '@/lib/supabase';
 import { resolveDisplayName } from '@/lib/utils';
+import { friendlyError } from '@/lib/error-messages';
 import { extractEdgeError } from '@/lib/edge-errors';
 import { toast } from 'sonner';
 
@@ -36,15 +38,19 @@ const TeacherProfilePage = () => {
   }, [profile, name]);
 
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const { blocker, bypass } = useUnsavedChanges(isDirty);
 
   const handleCancel = () => {
     if (profile) {
       setName(resolveDisplayName(profile.name, profile.email));
     }
+    setSaveError(null);
   };
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSaveError(null);
 
     // Save profile name. Empty input clears the column (NULL) — the trigger
     // seeds it from Google's display name on signup, but the user can wipe it.
@@ -55,7 +61,7 @@ const TeacherProfilePage = () => {
         .eq('id', profile.id);
 
       if (profileError) {
-        toast.error('Kunne ikke lagre profildata');
+        setSaveError(friendlyError(profileError, 'Kunne ikke lagre endringene.'));
         setIsSaving(false);
         return;
       }
@@ -79,6 +85,9 @@ const TeacherProfilePage = () => {
   // Logout all devices handler
   const handleLogoutAllDevices = async () => {
     setIsLoggingOutAll(true);
+    // Signing out redirects via the router — don't let a dirty name field
+    // block it behind the unsaved-changes dialog.
+    bypass();
     await supabase.auth.signOut({ scope: 'global' });
   };
 
@@ -96,6 +105,7 @@ const TeacherProfilePage = () => {
       setIsDeletingAccount(false);
       return;
     }
+    bypass();
     await supabase.auth.signOut();
     toast.success('Kontoen din er slettet');
   };
@@ -201,11 +211,13 @@ const TeacherProfilePage = () => {
           </SettingsRows>
 
           <DirtyFormBar
-            visible={isDirty}
+            visible={isDirty || !!saveError}
+            error={saveError}
             isSaving={isSaving}
             onSave={handleSave}
             onCancel={handleCancel}
           />
+          <UnsavedChangesDialog blocker={blocker} />
         </PageShell>
     </main>
   );
