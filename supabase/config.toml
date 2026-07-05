@@ -31,3 +31,10 @@ verify_jwt = false
 # Cron-only (x-cron-secret / service-role checked inside).
 [functions.send-class-reminders]
 verify_jwt = false
+
+# Cron-only ops monitor. The daily cron POSTs x-cron-secret with no JWT, so this
+# MUST stay verify_jwt=false — without this block a plain `supabase functions
+# deploy` would apply the config default (true) and the gateway would 401 the
+# cron before it runs, silently taking monitoring offline.
+[functions.ops-health-alert]
+verify_jwt = false
