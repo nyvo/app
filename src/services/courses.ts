@@ -1,6 +1,6 @@
-import { supabase, typedFrom } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { formatLocalDateKey } from '@/utils/dateUtils'
+import { formatLocalDateKey, osloTodayKey } from '@/utils/dateUtils'
 import type {
   Course,
   CourseInsert,
@@ -163,7 +163,7 @@ export async function fetchExistingSessions(
 ): Promise<{ data: ExistingSession[]; error: Error | null }> {
   if (dates.length === 0) return { data: [], error: null }
 
-  const { data: sessions, error } = await typedFrom('course_sessions')
+  const { data: sessions, error } = await supabase.from('course_sessions')
     .select(`
       session_date,
       start_time,
@@ -280,10 +280,10 @@ async function insertCourseSessionsOrRollback(
     status: 'upcoming' as const,
   }))
 
-  const { error: sessionsError } = await typedFrom('course_sessions').insert(sessions)
+  const { error: sessionsError } = await supabase.from('course_sessions').insert(sessions)
   if (sessionsError) {
     // Rollback: delete the orphaned course
-    await typedFrom('courses').delete().eq('id', courseId)
+    await supabase.from('courses').delete().eq('id', courseId)
     return { error: sessionsError as Error }
   }
 
@@ -337,7 +337,7 @@ export async function createCourse(
       ? baseSlug
       : `${baseSlug.slice(0, 60 - 1 - String(suffix).length)}-${suffix}`
 
-    const { data: inserted, error } = await typedFrom('courses')
+    const { data: inserted, error } = await supabase.from('courses')
       .insert({ ...courseData, slug: candidateSlug })
       .select()
       .single()
@@ -391,7 +391,7 @@ export async function createCourse(
 }
 
 export async function updateCourse(courseId: string, courseData: CourseUpdate): Promise<{ data: Course | null; error: Error | null }> {
-  const { data, error } = await typedFrom('courses')
+  const { data, error } = await supabase.from('courses')
     .update(courseData)
     .eq('id', courseId)
     .select()
@@ -530,7 +530,7 @@ export async function cancelCourse(
 }
 
 export async function fetchCourseSessions(courseId: string): Promise<{ data: CourseSession[] | null; error: Error | null }> {
-  const { data, error } = await typedFrom('course_sessions')
+  const { data, error } = await supabase.from('course_sessions')
     .select('*')
     .eq('course_id', courseId)
     .order('session_number', { ascending: true })
@@ -546,7 +546,7 @@ export async function updateCourseSession(
   sessionId: string,
   sessionData: CourseSessionUpdate
 ): Promise<{ data: CourseSession | null; error: Error | null }> {
-  const { data, error } = await typedFrom('course_sessions')
+  const { data, error } = await supabase.from('course_sessions')
     .update(sessionData)
     .eq('id', sessionId)
     .select()
@@ -568,7 +568,7 @@ export async function createCourseSession(
   courseId: string,
   spec: { session_date: string; start_time: string; end_time: string; session_number: number },
 ): Promise<{ data: CourseSession | null; error: Error | null }> {
-  const { data, error } = await typedFrom('course_sessions')
+  const { data, error } = await supabase.from('course_sessions')
     .insert({
       course_id: courseId,
       session_date: spec.session_date,
@@ -593,7 +593,7 @@ export async function createCourseSession(
  * payment_attempts). Caller MUST verify status === 'draft' before calling.
  */
 export async function deleteCourseSession(sessionId: string): Promise<{ error: Error | null }> {
-  const { error } = await typedFrom('course_sessions')
+  const { error } = await supabase.from('course_sessions')
     .delete()
     .eq('id', sessionId)
 
@@ -684,7 +684,7 @@ export async function fetchNextSessions(sellerId: string, limit = 3): Promise<{
   }> | null
   error: Error | null
 }> {
-  const today = new Date().toISOString().split('T')[0]
+  const today = osloTodayKey()
 
   const { data: sessionsData, error: sessionsError } = await supabase
     .from('course_sessions')
@@ -729,16 +729,14 @@ export async function fetchNextSessions(sellerId: string, limit = 3): Promise<{
   const signupCountMap: Record<string, number> = {}
 
   if (courseIds.length > 0) {
-    const { data: countRows } = await supabase
-      .from('signups')
-      .select('course_id')
-      .in('course_id', courseIds)
-      .eq('status', 'confirmed')
+    // Aggregate server-side — fetching signup rows to count in JS silently
+    // truncates at PostgREST's 1000-row cap and undercounts busy studios.
+    const { data: countRows } = await supabase.rpc('public_signup_counts', {
+      p_course_ids: courseIds,
+    })
 
-    if (countRows) {
-      for (const row of countRows as Array<{ course_id: string }>) {
-        signupCountMap[row.course_id] = (signupCountMap[row.course_id] || 0) + 1
-      }
+    for (const row of countRows ?? []) {
+      signupCountMap[row.course_id] = row.confirmed_count
     }
   }
 

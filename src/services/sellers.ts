@@ -1,4 +1,4 @@
-import { supabase, typedFrom } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import type { Seller, SellerUpdate } from '@/types/database'
 
 /**
@@ -81,13 +81,7 @@ export interface StudioLocationRow {
 export async function fetchStudioLocation(
   slug: string
 ): Promise<{ data: StudioLocationRow | null; error: Error | null }> {
-  const { data, error } = await (supabase.rpc as unknown as (
-    fn: string,
-    args: { p_slug: string }
-  ) => Promise<{
-    data: { name: string; address: string | null; lat: number | null; lon: number | null; google_place_id: string | null }[] | null
-    error: Error | null
-  }>)('public_studio_location', { p_slug: slug })
+  const { data, error } = await supabase.rpc('public_studio_location', { p_slug: slug })
 
   // The RPC may not be deployed yet — treat any error as "no canonical
   // location" so the storefront falls back to a course-derived one.
@@ -117,7 +111,7 @@ export async function updateSeller(
   id: string,
   updates: Pick<SellerUpdate, 'name' | 'logo_url' | 'cover_image_url'>
 ): Promise<{ data: Seller | null; error: Error | null }> {
-  const { data, error } = await typedFrom('sellers')
+  const { data, error } = await supabase.from('sellers')
     .update(updates)
     .eq('id', id)
     .select('id, name, logo_url, slug, cover_image_url, default_course_image_url, stripe_onboarding_complete, created_at')
@@ -208,9 +202,7 @@ export interface SellerOperational {
 export async function fetchSellerOperational(
   sellerId: string
 ): Promise<{ data: SellerOperational | null; error: Error | null }> {
-  const { data, error } = await (supabase.rpc as unknown as (
-    fn: string, args: Record<string, string>
-  ) => ReturnType<typeof supabase.rpc>)('get_seller_operational', {
+  const { data, error } = await supabase.rpc('get_seller_operational', {
     p_seller_id: sellerId,
   })
 

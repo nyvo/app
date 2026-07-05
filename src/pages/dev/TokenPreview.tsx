@@ -46,7 +46,7 @@ const CAL_TOKENS: TokenSet = {
 // Linear's signature is "borders so faint they almost disappear", relying on
 // subtle shadows for card separation. Canvas stays slightly off-white.
 const LINEAR_TOKENS: TokenSet = {
-  // @ts-expect-error
+  // @ts-expect-error -- partial TokenSet on purpose: preview only overrides a subset
   '--background': 'oklch(0.99 0 0)',
   '--foreground': 'oklch(0.18 0.005 260)',
   '--card': 'oklch(1 0 0)',
@@ -82,7 +82,7 @@ const LINEAR_TOKENS: TokenSet = {
 // warm-gray text tiers, orange/brown undertone. The "soft, grounded, human"
 // axis. Card stays pure-warm-white, canvas slightly darker warm off-white.
 const WARM_TOKENS: TokenSet = {
-  // @ts-expect-error
+  // @ts-expect-error -- partial TokenSet on purpose: preview only overrides a subset
   '--background': 'oklch(0.98 0.006 75)',
   '--foreground': 'oklch(0.18 0.006 60)',
   '--card': 'oklch(0.995 0.003 75)',

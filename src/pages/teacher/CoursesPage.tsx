@@ -17,7 +17,8 @@ import { foldNorwegian } from '@/lib/utils';
 import { fetchCourses } from '@/services/courses';
 import type { SessionScheduleRow } from '@/services/courses';
 import type { Course } from '@/types/database';
-import { typedFrom } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { osloTodayKey } from '@/utils/dateUtils';
 
 /**
  * Maps a Course to a SessionScheduleRow shape for display in the table.
@@ -114,26 +115,24 @@ const CoursesPage = () => {
       const courseIds = coursesData.map(c => c.id);
 
       if (courseIds.length > 0) {
-        const { data: signupsData, error: signupsError } = await typedFrom('signups')
-          .select('course_id, created_at, amount_paid')
-          .in('course_id', courseIds)
-          .eq('status', 'confirmed');
+        // Aggregate server-side — fetching signup rows to count in JS silently
+        // truncates at PostgREST's 1000-row cap and undercounts busy studios.
+        const { data: countRows, error: signupsError } = await supabase.rpc('public_signup_counts', {
+          p_course_ids: courseIds,
+        });
 
         if (signupsError) {
-          logger.error('Failed to fetch signups counts:', signupsError);
+          logger.error('Failed to fetch signup counts:', signupsError);
         }
 
-        type SignupRow = { course_id: string; created_at: string | null; amount_paid: number | null };
-        const signupRows = (signupsData as SignupRow[] | null) ?? [];
-
         const counts: Record<string, number> = {};
-        signupRows.forEach(s => {
-          counts[s.course_id] = (counts[s.course_id] || 0) + 1;
+        (countRows ?? []).forEach(r => {
+          counts[r.course_id] = r.confirmed_count;
         });
         setSignupsCounts(counts);
 
-        const today = new Date().toISOString().split('T')[0];
-        const { data: sessionsData } = await typedFrom('course_sessions')
+        const today = osloTodayKey();
+        const { data: sessionsData } = await supabase.from('course_sessions')
           .select('course_id, session_date')
           .in('course_id', courseIds)
           .gte('session_date', today)
@@ -149,7 +148,7 @@ const CoursesPage = () => {
 
         // Drop-in availability lives on tier rows now. A course "allows drop-in"
         // iff it has at least one active drop-in ticket type.
-        const { data: dropInTiers } = await typedFrom('course_signup_packages')
+        const { data: dropInTiers } = await supabase.from('course_signup_packages')
           .select('course_id')
           .in('course_id', courseIds)
           .eq('ticket_kind', 'drop_in')
@@ -179,7 +178,7 @@ const CoursesPage = () => {
   }, [courses, signupsCounts, nextSessionDates, dropInCourseIds]);
 
   const filteredRows = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = osloTodayKey();
     const q = foldNorwegian(searchQuery.trim());
 
     const isPast = (course: Course) => {

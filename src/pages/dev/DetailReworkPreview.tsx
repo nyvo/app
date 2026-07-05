@@ -368,6 +368,7 @@ function makeMockSessions(courseId: string, variant: Variant): CourseSession[] {
       end_time: '20:00',
       status: 'upcoming',
       notes: null,
+      reminder_sent_at: null,
       created_at: null,
       updated_at: null,
     } satisfies CourseSession];
@@ -386,6 +387,7 @@ function makeMockSessions(courseId: string, variant: Variant): CourseSession[] {
       end_time: '19:15',
       status: 'upcoming',
       notes: null,
+      reminder_sent_at: null,
       created_at: null,
       updated_at: null,
     } satisfies CourseSession;

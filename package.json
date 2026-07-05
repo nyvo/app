@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "lint": "eslint src",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -17,6 +18,7 @@
     "smoke:public": "node scripts/smoke-public-storefront.mjs"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.58.2",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.0.8",
@@ -30,6 +32,9 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.22",
+    "eslint": "^10.6.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.7.0",
     "jsdom": "^27.4.0",
     "postcss": "^8.5.6",
     "react-email": "^6.1.4",
@@ -37,6 +42,7 @@
     "supabase": "^2.72.8",
     "tailwindcss": "^4.1.17",
     "typescript": "~5.9.3",
+    "typescript-eslint": "^8.62.1",
     "vite": "^7.2.4",
     "vitest": "^4.0.17"
   },

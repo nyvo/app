@@ -20,6 +20,7 @@ import { createStripeSession } from '@/services/checkout';
 import { createFreeSignup } from '@/services/signups';
 import { supabase } from '@/lib/supabase';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { osloNowKey, toLocalDate } from '@/utils/dateUtils';
 import type { AvailableTicketType } from '@/types/database';
 
 interface FormState {
@@ -87,8 +88,7 @@ const CheckoutPage = () => {
       setCourse(courseData);
 
       // Load all standard-audience tiers via public RPC.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: tierData, error: tierErr } = await (supabase.rpc as any)('available_ticket_types', {
+      const { data: tierData, error: tierErr } = await supabase.rpc('available_ticket_types', {
         p_course_id: courseData.id,
       });
       if (cancelled) return;
@@ -154,13 +154,8 @@ const CheckoutPage = () => {
     }
     void (async () => {
       // Session rows store naive Norwegian local times — compare against "now"
-      // in Europe/Oslo (sv-SE gives "YYYY-MM-DD HH:mm:ss", lexically ordered).
-      const osloNow = new Intl.DateTimeFormat('sv-SE', {
-        timeZone: 'Europe/Oslo',
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit',
-        hour12: false,
-      }).format(new Date());
+      // in Europe/Oslo ("YYYY-MM-DD HH:mm:ss", lexically ordered).
+      const osloNow = osloNowKey();
       const { data, error: sessionsErr } = await supabase
         .from('course_sessions')
         .select('id, session_date, start_time, status')
@@ -798,7 +793,9 @@ function buildMeta(course: PublicCourseWithDetails): string | null {
   const time = m ? m[1] : null;
   const dateStr = course.next_session?.session_date ?? course.start_date;
   if (course.format === 'series' && dateStr && time) {
-    const d = new Date(dateStr);
+    // toLocalDate: `new Date('YYYY-MM-DD')` parses as UTC midnight, showing
+    // the wrong weekday for any buyer in a timezone west of UTC.
+    const d = toLocalDate(dateStr);
     if (!isNaN(d.getTime())) {
       return `${typeLabel} · ${SHORT_WEEKDAYS[d.getDay()]} kl. ${time}`;
     }

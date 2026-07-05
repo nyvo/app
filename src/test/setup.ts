@@ -47,5 +47,4 @@ vi.mock('@/lib/supabase', () => ({
       })),
     },
   },
-  typedFrom: vi.fn(mockQueryBuilder),
 }))

@@ -87,7 +87,11 @@ async function stripeRequest<T>(
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey
 
   let url = `${STRIPE_API_BASE}${path}`
-  const init: RequestInit = { method, headers }
+  // Timeout: a hung Stripe connection would otherwise pin the isolate until
+  // the platform's wall-clock kill — the hard-kill that leaves webhook-claim
+  // tombstones and ambiguous capture states. A thrown timeout is handled by
+  // callers (capture paths re-check the live PI before acting).
+  const init: RequestInit = { method, headers, signal: AbortSignal.timeout(15_000) }
   if (method === 'GET') {
     const query = params.toString()
     if (query) url += `?${query}`
