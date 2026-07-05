@@ -30,6 +30,9 @@ interface TicketTile {
   label: string;
   sublabel: string | null;
   amount: number;
+  /** True when the amount is the RPC's prorated package price (series
+   * started, fewer weeks left than total). */
+  prorated?: boolean;
 }
 
 /**
@@ -135,7 +138,14 @@ export function BookingRailLite({ course, tiers, studioSlug, checkoutHref, dropI
               ticketPrice > 0 ? (
                 <dl className="space-y-2.5">
                   <div className="flex items-baseline justify-between gap-3 text-base">
-                    <dt className="text-foreground-muted">{selectedTile.label}</dt>
+                    <dt className="text-foreground-muted">
+                      {selectedTile.label}
+                      {/* Prorated with no selector on screen: the weeks-left
+                          cue is the only thing explaining the reduced price. */}
+                      {tiles.length === 1 && selectedTile.prorated && selectedTile.sublabel && (
+                        <span className="block text-sm">{selectedTile.sublabel}</span>
+                      )}
+                    </dt>
                     <dd className="tabular-nums text-foreground">{formatKroner(ticketPrice)}</dd>
                   </div>
                   {serviceFee > 0 && (
@@ -252,8 +262,8 @@ function buildTiles(
   if (main && !courseFull) {
     tiles.push({
       id: 'main',
+      ...mainSublabel(course, main),
       label: main.label,
-      sublabel: mainSublabel(course, main),
       amount: Number(main.price ?? 0),
     });
   }
@@ -271,14 +281,19 @@ function buildTiles(
 /** Sublabel under the package tile. Series show the week span — "N uker
  * igjen" once the RPC has prorated it down to the remaining weeks. A single
  * spanning consecutive days shows the day span; a one-day class needs none. */
-function mainSublabel(course: PublicCourseWithDetails, tier: AvailableTicketType): string | null {
+function mainSublabel(
+  course: PublicCourseWithDetails,
+  tier: AvailableTicketType,
+): { sublabel: string | null; prorated: boolean } {
   if (course.format === 'series') {
     const weeks = tier.weeks ?? course.total_weeks;
-    if (!weeks) return null;
+    if (!weeks) return { sublabel: null, prorated: false };
     const unit = weeks === 1 ? 'uke' : 'uker';
     const prorated = course.total_weeks != null && weeks < course.total_weeks;
-    return prorated ? `${weeks} ${unit} igjen` : `${weeks} ${unit}`;
+    return prorated
+      ? { sublabel: `${weeks} ${unit} igjen`, prorated: true }
+      : { sublabel: `${weeks} ${unit}`, prorated: false };
   }
   const days = singleDayCount(course);
-  return days > 1 ? `${days} dager` : null;
+  return { sublabel: days > 1 ? `${days} dager` : null, prorated: false };
 }
