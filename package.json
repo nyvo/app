@@ -12,6 +12,7 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "npx playwright test",
+    "test:visual": "npx playwright test e2e/visual-previews.spec.ts",
     "test:e2e:ui": "npx playwright test --ui",
     "test:e2e:headed": "npx playwright test --headed",
     "email:preview": "email dev --dir supabase/functions/send-email/templates",

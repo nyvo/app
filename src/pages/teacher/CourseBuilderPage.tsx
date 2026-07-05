@@ -30,13 +30,12 @@ import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { LocationField } from '@/components/ui/location-field';
 import { useAuth } from '@/contexts/AuthContext';
 import { createCourse, updateCourse, publishCourse } from '@/services/courses';
-import { isProSeller, publishNeedsPaymentSetup } from '@/lib/payments';
-import { calculatePlatformFee } from '@/lib/pricing';
+import { publishNeedsPaymentSetup } from '@/lib/payments';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
-import { cn, formatKroner } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { formatLocalDateKey } from '@/utils/dateUtils';
 import { singleScheduleLabel, seriesScheduleLabel } from '@/utils/timeSchedule';
 import type { CourseFormat } from '@/types/database';
@@ -106,11 +105,9 @@ export default function CourseBuilderPage() {
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
 
-  // The stored course price — per-gang × uker on a series (mirrors createDraft).
-  const coursePriceTotal =
-    format === 'series'
-      ? (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0)
-      : parseInt(price, 10) || 0;
+  // The teacher enters the full course price directly — input, stored value
+  // and charged amount are the same number for both formats.
+  const coursePriceTotal = parseInt(price, 10) || 0;
 
   // Cover image is picked locally and uploaded AFTER createCourse (the storage
   // path needs the new course id — same pattern as the course detail page).
@@ -281,10 +278,7 @@ export default function CourseBuilderPage() {
           location_lat: locationCoords?.lat ?? null,
           location_lon: locationCoords?.lon ?? null,
           location_place_id: locationCoords?.placeId ?? null,
-          price:
-            format === 'series'
-              ? (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0)
-              : parseInt(price, 10) || 0,
+          price: coursePriceTotal,
           max_participants: parseInt(capacity, 10),
           status: 'draft' as const,
           idempotency_key: idempotencyKeyRef.current,
@@ -602,36 +596,9 @@ export default function CourseBuilderPage() {
                   </Field>
 
                   <Field
-                    label={format === 'series' ? 'Pris per gang' : 'Pris'}
+                    label={format === 'series' ? 'Pris for hele kurset' : 'Pris'}
                     htmlFor="cb-price"
-                    error={
-                      <>
-                        {format === 'series' &&
-                          price !== '' &&
-                          weeks !== '' &&
-                          !showError('price') &&
-                          !showError('weeks') && (
-                            <p className="mt-2 text-base text-foreground-muted">
-                              Totalt{' '}
-                              {formatKroner(
-                                (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0),
-                              )}{' '}
-                              for {parseInt(weeks, 10) || 0} uker
-                            </p>
-                          )}
-                        {/* Free-tier payout preview — the 5% take is visible
-                            where the price decision is made, never in checkout. */}
-                        {!isProSeller(currentSeller) &&
-                          !showError('price') &&
-                          coursePriceTotal > 0 && (
-                            <p className="mt-2 text-base text-foreground-muted">
-                              Du får {formatKroner(coursePriceTotal - calculatePlatformFee(coursePriceTotal))}{' '}
-                              utbetalt (5&nbsp;% plattformgebyr)
-                            </p>
-                          )}
-                        {showError('price') && <FieldError>{errors.price}</FieldError>}
-                      </>
-                    }
+                    error={showError('price') && <FieldError>{errors.price}</FieldError>}
                   >
                     <div className="relative">
                       <Input

@@ -23,7 +23,23 @@ Do these first, in order. Don't open a blank file and invent.
    - `mcp__mobbin__search_flows` — multi-screen sequences (checkout flow, onboarding flow).
    - `mcp__mobbin__search_screens` — single-screen shots (booking confirmation, empty dashboard).
    - `mcp__mobbin__search_sections` — isolated patterns (headers, cards, nav bars).
-4. **Study comparable production apps**, not generic SaaS templates. Match a real, well-built reference closely — a faithful copy of a proven screen beats invented styling.
+
+   This is PER COMPONENT, not per task. A general research pass earlier in the
+   session does not cover a new component you're about to build — run a fresh
+   search for that exact component type ("dashboard setup checklist card", not
+   "onboarding trends") and NAME the reference screen you're copying in a code
+   comment. If you can't name one, you're designing from memory — stop.
+4. **Match the reference's context and density, not just its topic.** Before
+   copying a reference's structure, ask: *how much of that screen does the
+   component own?* A full-page setup guide (Shopify, Patreon) has bordered
+   rows, embedded buttons, and accordions **because it owns the page** — the
+   same structure transplanted into a card sharing a column with other content
+   is oversized and over-bordered (this exact failure shipped and was rejected:
+   the dashboard "Kom i gang" card had to be rebuilt twice). If your component
+   is a card among peers, the reference must be a card among peers (e.g.
+   Eventbrite's compact home checklist). Count the visual zones and borders in
+   the reference and do not exceed them.
+5. **Study comparable production apps**, not generic SaaS templates. Match a real, well-built reference closely — a faithful copy of a proven screen beats invented styling.
 
 ## This project's design system (non-negotiable)
 
@@ -78,6 +94,7 @@ Always show the user a live preview to react to **before** committing new or cha
 2. Route to the closest preview. Many surfaces have an auth-free `/dev/*` preview route (defined in `src/App.tsx`, files in `src/pages/dev/`): e.g. `/dev/token-preview`, `/dev/checkout-rework`, `/dev/checkout-form-rework`, `/dev/detail-rework`, `/dev/dashboard-preview`, `/dev/courses-grid-preview`, `/dev/courses-list-preview`, `/dev/month-grid-preview`, `/dev/payout-preview`, `/dev/income-chart-preview`, `/dev/entity-card-preview`, `/dev/onboarding-preview`, `/dev/create-course-preview`, `/dev/tier-preview`, `/dev/billing-preview`, `/dev/modals-buttons-toasts`, `/dev/settings-rows-preview`, `/dev/embed-preview`, `/dev/embed-code-preview`. If you're building something new, add or extend a `/dev/*` preview so it's viewable without auth.
 3. Screenshot it. These browser tools are deferred — load first: `ToolSearch select:mcp__chrome-devtools__navigate_page,mcp__chrome-devtools__take_screenshot`, then `mcp__chrome-devtools__navigate_page` to the route and `mcp__chrome-devtools__take_screenshot`.
 4. Show the screenshot to the user and iterate on the visual details first. Only commit once they've reacted.
+5. **Run the visual regression suite:** `PW_PORT=5199 npm run test:visual` (PowerShell: `$env:PW_PORT='5199'; npm run test:visual`). It snapshots the curated `/dev/*` previews (`e2e/visual-previews.spec.ts`) against committed baselines. A diff on a preview you didn't mean to touch is a regression — fix it. A diff you intended: re-run with `--update-snapshots` and commit the new PNGs with the code. Always set `PW_PORT` — port 5173 may be another worktree's server, and reusing it snapshots the wrong code.
 
 ## Delegate, don't duplicate
 

@@ -1,8 +1,16 @@
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { X } from '@/lib/icons'
 import { routes } from '@/lib/routes'
+import { useAuth } from '@/contexts/AuthContext'
 import { SidebarMenuButton, SidebarSeparator } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 import { useSellerSetupStatus } from '@/hooks/use-seller-setup-status'
+
+// The polish-phase entry is a nag, not a gate — it must be dismissible
+// (Outseta's "Remove 'Setup' from the sidebar" pattern). Per-seller,
+// device-local; the /get-started page itself stays reachable via URL.
+const polishDismissKey = (sellerId: string) => `setup-polish-dismissed:${sellerId}`
 
 // Sits under the primary sidebar nav. Pattern from
 // Notion / Vercel / Intercom — small card with progress count + thin
@@ -17,8 +25,16 @@ import { useSellerSetupStatus } from '@/hooks/use-seller-setup-status'
 // (skill §16 + components.md "Setup checklist").
 export function SidebarSetupCard() {
   const location = useLocation()
+  const { currentSeller } = useAuth()
   const { completedCount, totalCount, isSetupComplete, optionalSteps, isLoading } =
     useSellerSetupStatus()
+
+  const sellerId = currentSeller?.id
+  const [polishDismissed, setPolishDismissed] = useState(false)
+  useEffect(() => {
+    if (!sellerId) return
+    setPolishDismissed(localStorage.getItem(polishDismissKey(sellerId)) === '1')
+  }, [sellerId])
 
   const remainingOptional = optionalSteps.filter((step) => !step.isComplete).length
   const isActive = location.pathname === routes.getStarted
@@ -36,20 +52,34 @@ export function SidebarSetupCard() {
   // Everything done — required and polish alike. Nothing left to nudge.
   if (isSetupComplete && remainingOptional === 0) return null
 
-  // Phase 2 — live, but polish remains. Quiet, no progress bar.
+  // Phase 2 — live, but polish remains. Quiet, no progress bar, dismissible.
   if (isSetupComplete) {
+    if (polishDismissed) return null
     return (
       <div className="mt-2">
         <SidebarSeparator className="mx-0 mb-2" />
-        <SidebarMenuButton asChild isActive={isActive} tooltip="Oppsett">
-          <Link
-            to={routes.getStarted}
-            aria-label={`Oppsett — ${overallDone} av ${overallTotal} fullført`}
+        <div className="group/setup relative">
+          <SidebarMenuButton asChild isActive={isActive} tooltip="Oppsett">
+            <Link
+              to={routes.getStarted}
+              aria-label={`Oppsett — ${overallDone} av ${overallTotal} fullført`}
+            >
+              <ProgressRing progress={overallProgress} />
+              <span>Oppsett</span>
+            </Link>
+          </SidebarMenuButton>
+          <button
+            type="button"
+            aria-label="Skjul oppsett"
+            onClick={() => {
+              if (sellerId) localStorage.setItem(polishDismissKey(sellerId), '1')
+              setPolishDismissed(true)
+            }}
+            className="absolute right-1 top-1/2 grid size-5 -translate-y-1/2 place-items-center rounded-md text-sidebar-foreground-muted transition-opacity hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring md:opacity-0 md:group-hover/setup:opacity-100"
           >
-            <ProgressRing progress={overallProgress} />
-            <span>Oppsett</span>
-          </Link>
-        </SidebarMenuButton>
+            <X className="size-3.5" strokeWidth={1.75} />
+          </button>
+        </div>
       </div>
     )
   }
