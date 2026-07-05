@@ -286,11 +286,16 @@ export default function CourseBuilderPage() {
       // upload doesn't block creation — the teacher can add it on the course page.
       if (imageFile) {
         const { url, error: upErr } = await uploadCourseImage(created.id, imageFile);
+        let imageSaved = false;
         if (url && !upErr) {
           const { error: updErr } = await updateCourse(created.id, { image_url: url });
           if (updErr && currentSeller?.id) {
             void deleteCourseImage(created.id, url, currentSeller.id);
           }
+          imageSaved = !updErr;
+        }
+        if (!imageSaved) {
+          toast.error('Bildet ble ikke lastet opp — du kan legge det til på kurssiden.');
         }
       }
 

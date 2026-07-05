@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
-import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -11,101 +10,40 @@ import { PageShell } from '@/components/teacher/PageShell';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, typedFrom } from '@/lib/supabase';
-import { isValidEmail, resolveDisplayName } from '@/lib/utils';
-import { AUTH_VALIDATION } from '@/lib/auth-messages';
+import { resolveDisplayName } from '@/lib/utils';
 import { extractEdgeError } from '@/lib/edge-errors';
 import { toast } from 'sonner';
 
 const TeacherProfilePage = () => {
   const { profile, refreshSellers } = useAuth();
 
-  // State for form fields - initialized from auth context
+  // State for form fields - initialized from auth context. E-post is the
+  // auth identity and is shown read-only — changing it would have to go
+  // through supabase.auth.updateUser's confirmation flow, which we don't
+  // support yet.
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
 
   useEffect(() => {
     if (profile) {
       setName(resolveDisplayName(profile.name, profile.email));
-      setEmail(profile.email || '');
     }
   }, [profile]);
 
   // Dirty state tracking
   const isDirty = useMemo(() => {
     if (!profile) return false;
-    const origName = resolveDisplayName(profile.name, profile.email);
-    const origEmail = profile.email || '';
-    return name !== origName || email !== origEmail;
-  }, [profile, name, email]);
+    return name !== resolveDisplayName(profile.name, profile.email);
+  }, [profile, name]);
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    let isValid = true;
-
-    if (!email.trim()) {
-      newErrors.email = AUTH_VALIDATION.emailRequired;
-      isValid = false;
-    } else if (!isValidEmail(email)) {
-      newErrors.email = AUTH_VALIDATION.emailInvalid;
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleBlur = (field: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-
-    const newErrors = { ...errors };
-
-    if (field === 'email') {
-      if (!email.trim()) {
-        newErrors.email = AUTH_VALIDATION.emailRequired;
-      } else if (!isValidEmail(email)) {
-        newErrors.email = AUTH_VALIDATION.emailInvalid;
-      } else {
-        delete newErrors.email;
-      }
-    }
-
-    setErrors(newErrors);
-  };
-
-  const clearError = (field: string) => {
-    if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
-  };
 
   const handleCancel = () => {
     if (profile) {
       setName(resolveDisplayName(profile.name, profile.email));
-      setEmail(profile.email || '');
     }
-    setErrors({});
-    setTouched({});
   };
 
   const handleSave = async () => {
-    setTouched({ name: true, email: true });
-
-    if (!validateForm()) {
-      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
-      if (firstErrorField) {
-        firstErrorField.focus();
-      }
-      return;
-    }
-
     setIsSaving(true);
 
     // Save profile name. Empty input clears the column (NULL) — the trigger
@@ -188,24 +126,17 @@ const TeacherProfilePage = () => {
               </div>
 
               <div className="grid gap-2">
-                <Label
-                  htmlFor="profile-email"
-                  data-error={(errors.email && touched.email) || undefined}
-                >
-                  E-post
-                </Label>
+                <Label htmlFor="profile-email">E-post</Label>
                 <Input
                   id="profile-email"
                   type="email"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
-                  onBlur={() => handleBlur('email')}
-                  aria-invalid={!!(errors.email && touched.email) || undefined}
-                  aria-describedby={errors.email && touched.email ? 'profile-email-error' : undefined}
+                  value={profile?.email || ''}
+                  disabled
+                  aria-describedby="profile-email-hint"
                 />
-                {errors.email && touched.email && (
-                  <FieldError id="profile-email-error" className="mt-0">{errors.email}</FieldError>
-                )}
+                <p id="profile-email-hint" className="text-sm text-foreground-muted">
+                  E-postadressen er knyttet til innloggingen din og kan ikke endres.
+                </p>
               </div>
             </SettingsRow>
 

@@ -45,7 +45,6 @@ const CreateCoursePreview = lazy(() => import('./pages/dev/CreateCoursePreview')
 const CoursesGridPreview = lazy(() => import('./pages/dev/CoursesGridPreview'));
 const PayoutPreview = lazy(() => import('./pages/dev/PayoutPreview'));
 const IncomeChartPreview = lazy(() => import('./pages/dev/IncomeChartPreview'));
-const EntityCardPreview = lazy(() => import('./pages/dev/EntityCardPreview'));
 const DashboardPreview = lazy(() => import('./pages/dev/DashboardPreview'));
 const CoursesListPreview = lazy(() => import('./pages/dev/CoursesListPreview'));
 const CheckoutFormReworkPreview = lazy(() => import('./pages/dev/CheckoutFormReworkPreview'));
@@ -150,7 +149,6 @@ function AppRoutes() {
             <Route path="/dev/courses-grid-preview" element={<CoursesGridPreview />} />
             <Route path="/dev/payout-preview" element={<PayoutPreview />} />
             <Route path="/dev/income-chart-preview" element={<IncomeChartPreview />} />
-            <Route path="/dev/entity-card-preview" element={<EntityCardPreview />} />
             <Route path="/dev/dashboard-preview" element={<DashboardPreview />} />
             <Route path="/dev/courses-list-preview" element={<CoursesListPreview />} />
             <Route path="/dev/checkout-form-rework" element={<CheckoutFormReworkPreview />} />
