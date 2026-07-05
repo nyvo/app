@@ -14,6 +14,7 @@ export function useSellerSetupStatus() {
   const { currentSeller, profile } = useAuth()
   const navigate = useNavigate()
   const [hasPublishedCourse, setHasPublishedCourse] = useState(false)
+  const [hasPaidCourse, setHasPaidCourse] = useState(false)
   const [hasLocation, setHasLocation] = useState(false)
   const [draftCourseId, setDraftCourseId] = useState<string | null>(null)
   // True until the first courses/locations fetch resolves. Without this, the
@@ -27,26 +28,30 @@ export function useSellerSetupStatus() {
   const refresh = useCallback(async () => {
     if (!currentSeller?.id) {
       setHasPublishedCourse(false)
+      setHasPaidCourse(false)
       setHasLocation(false)
       setDraftCourseId(null)
       setIsLoading(false)
       return
     }
-    // One courses fetch drives both signals: "published" = any course past
+    // One courses fetch drives three signals: "published" = any course past
     // draft (a draft isn't bookable, and completed/cancelled still count as
-    // "has launched" so the checklist never resurfaces), plus the newest
-    // draft's id so the course step can resume it instead of starting over.
+    // "has launched" so the checklist never resurfaces), "paid" = any course
+    // (drafts included) with a price — that's what makes the Stripe step
+    // required — plus the newest draft's id so the course step can resume it
+    // instead of starting over.
     const [{ data: courses }, { count: locationCount }] = await Promise.all([
       typedFrom('courses')
-        .select('id, status')
+        .select('id, status, price')
         .eq('seller_id', currentSeller.id)
         .order('created_at', { ascending: false }),
       typedFrom('teacher_locations')
         .select('id', { count: 'exact', head: true })
         .eq('seller_id', currentSeller.id),
     ])
-    const rows = (courses ?? []) as Array<{ id: string; status: string | null }>
+    const rows = (courses ?? []) as Array<{ id: string; status: string | null; price: number | null }>
     setHasPublishedCourse(rows.some((c) => c.status !== 'draft'))
+    setHasPaidCourse(rows.some((c) => (c.price ?? 0) > 0))
     setDraftCourseId(rows.find((c) => c.status === 'draft')?.id ?? null)
     setHasLocation((locationCount ?? 0) > 0)
     setIsLoading(false)
@@ -74,6 +79,7 @@ export function useSellerSetupStatus() {
     currentSeller,
     hasLocation,
     hasPublishedCourse,
+    hasPaidCourse,
     draftCourseId,
     onConnectPayments,
   })

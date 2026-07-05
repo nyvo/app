@@ -7,7 +7,9 @@ import { NotificationsPopover } from '@/components/notifications/NotificationsPo
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
+import { DashboardSetupCard } from '@/components/teacher/dashboard/DashboardSetupCard';
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
+import { useSellerSetupStatus } from '@/hooks/use-seller-setup-status';
 import {
   fetchIncomeSeries,
   fetchPlatformFeeMonth,
@@ -83,6 +85,10 @@ function dayLabel(dateStr?: string): string {
 const TeacherDashboard = () => {
   const { currentSeller } = useAuth();
   const isPro = isProSeller(currentSeller);
+  // First-run setup card — rendered above the income chart until every
+  // required step is done (the sidebar card stays as the persistent anchor).
+  const setup = useSellerSetupStatus();
+  const showSetupCard = !setup.isLoading && !setup.isSetupComplete && setup.nextStep !== null;
   const [dashboardCourses, setDashboardCourses] = useState<DashboardCourse[] | null>(null);
   const [recentSignupsRaw, setRecentSignupsRaw] = useState<SignupWithDetails[] | null>(null);
   const [incomeSeries, setIncomeSeries] = useState<IncomeSeries | null>(null);
@@ -93,6 +99,18 @@ const TeacherDashboard = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedSignupId, setSelectedSignupId] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
+
+  // While the setup card is up and there's no activity to show, the two
+  // activity sections are just empty boxes repeating the card's CTA — drop
+  // them. Keyed on actual emptiness, NOT on setup status: a seller with a
+  // published paid course but pending Stripe KYC has live data to show.
+  // (While the fetch is unresolved we also hide — a skeleton that collapses
+  // is worse than sections appearing once real data proves them non-empty.)
+  const hideActivitySections =
+    showSetupCard &&
+    (dashboardCourses === null ||
+      recentSignupsRaw === null ||
+      (dashboardCourses.length === 0 && recentSignupsRaw.length === 0));
 
   function processDashboardResults(
     nextSessionsResult: Awaited<ReturnType<typeof fetchNextSessions>>,
@@ -249,6 +267,13 @@ const TeacherDashboard = () => {
             />
           ) : (
             <div className="space-y-8">
+              {showSetupCard && (
+                <DashboardSetupCard
+                  steps={setup.steps}
+                  completedCount={setup.completedCount}
+                  totalCount={setup.totalCount}
+                />
+              )}
               <div className="space-y-3">
                 <IncomeChart
                   series={incomeSeries}
@@ -261,14 +286,16 @@ const TeacherDashboard = () => {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <UpcomingCoursesSection courses={dashboardCourses} isLoading={isLoading} />
-                <RecentSignupsSection
-                  signups={recentSignupsRaw}
-                  isLoading={isLoading}
-                  onSelect={setSelectedSignupId}
-                />
-              </div>
+              {!hideActivitySections && (
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  <UpcomingCoursesSection courses={dashboardCourses} isLoading={isLoading} />
+                  <RecentSignupsSection
+                    signups={recentSignupsRaw}
+                    isLoading={isLoading}
+                    onSelect={setSelectedSignupId}
+                  />
+                </div>
+              )}
             </div>
           )}
       </PageShell>
@@ -290,16 +317,17 @@ const TeacherDashboard = () => {
  */
 export function PlatformFeeHint({ feeNok }: { feeNok: number }) {
   const month = new Intl.DateTimeFormat('nb-NO', { month: 'long' }).format(new Date());
+  // Bordered container, text left + action right (the Rox billing / Kajabi
+  // upgrade-prompt shape) — not a floating line under the chart.
   return (
-    <p className="px-1 text-sm text-foreground-muted">
-      Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: 0 kr.{' '}
-      <Link
-        to={routes.settingsBilling}
-        className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
-      >
-        Se Pro
-      </Link>
-    </p>
+    <div className="flex flex-col gap-3 rounded-xl border border-border px-5 py-4 sm:flex-row sm:items-center">
+      <p className="min-w-0 flex-1 text-sm text-foreground-muted">
+        Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: 0 kr.
+      </p>
+      <Button asChild variant="secondary" className="w-full shrink-0 sm:w-auto">
+        <Link to={routes.settingsBilling}>Se Pro</Link>
+      </Button>
+    </div>
   );
 }
 

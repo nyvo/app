@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation, useSearchParams, type Location } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Eye, EyeOff, ChevronLeft } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -94,6 +94,9 @@ const AuthPage = () => {
   const [isVerifying, setIsVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState<string | null>(null)
   const [isResending, setIsResending] = useState(false)
+  // Seconds until "Send på nytt" re-enables — mirrors Supabase's 60 s
+  // per-address OTP rate limit so resending can't run into a 429.
+  const [resendCooldown, setResendCooldown] = useState(0)
   const [codeCtx, setCodeCtx] = useState<{
     reason: 'confirm' | 'login'
     hasPasswordFallback: boolean
@@ -141,6 +144,30 @@ const AuthPage = () => {
     }
   }, [code, email, codeCtx])
 
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = setTimeout(() => setResendCooldown((s) => s - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [resendCooldown])
+
+  // Safety net for the password step's success path — same idea as the code
+  // screen's hang timer: on success we stay in the loading state until the
+  // navigate effect unmounts us, so if the profile load stalls, surface an
+  // error instead of spinning forever.
+  const passwordHangTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(
+    () => () => {
+      if (passwordHangTimerRef.current) clearTimeout(passwordHangTimerRef.current)
+    },
+    [],
+  )
+  const armPasswordHangTimer = () => {
+    passwordHangTimerRef.current = setTimeout(() => {
+      setPasswordError(AUTH_ERRORS.generic)
+      setIsSubmitting(false)
+    }, 12000)
+  }
+
   const rateOrGeneric = (error: Error) =>
     error.message.includes('rate') || (error as { status?: number }).status === 429
       ? AUTH_ERRORS.rateLimited
@@ -150,6 +177,7 @@ const AuthPage = () => {
     setCode('')
     setVerifyError(null)
     setCodeCtx(ctx)
+    setResendCooldown(60) // a code was just sent
     setStep('code')
   }
 
@@ -221,8 +249,10 @@ const AuthPage = () => {
         if (needsConfirmation) {
           goToCode({ reason: 'confirm', hasPasswordFallback: false })
           setIsSubmitting(false)
+        } else {
+          // Session created → keep loading until the navigate effect fires.
+          armPasswordHangTimer()
         }
-        // else session created → keep loading until the navigate effect fires
         return
       }
       const { error } = await signInWithPassword(email, password)
@@ -254,7 +284,8 @@ const AuthPage = () => {
         setIsSubmitting(false)
         return
       }
-      // success → keep loading until the navigate effect fires
+      // Success → keep loading until the navigate effect fires.
+      armPasswordHangTimer()
     } catch {
       toast.error(AUTH_ERRORS.generic)
       setIsSubmitting(false)
@@ -282,7 +313,7 @@ const AuthPage = () => {
   }
 
   const handleResend = async () => {
-    if (isResending) return
+    if (isResending || resendCooldown > 0) return
     setIsResending(true)
     const { error } =
       codeCtx.reason === 'confirm'
@@ -295,6 +326,7 @@ const AuthPage = () => {
     }
     setCode('')
     setVerifyError(null)
+    setResendCooldown(60)
   }
 
   const backToIdentify = () => {
@@ -353,15 +385,23 @@ const AuthPage = () => {
         ) : (
           <>
             <p className="mt-6 text-center text-sm text-foreground-muted">
-              Fikk du ingen kode?{' '}
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={isResending}
-                className="font-medium text-foreground hover:underline disabled:cursor-not-allowed disabled:text-foreground-muted"
-              >
-                Send på nytt
-              </button>
+              {resendCooldown > 0 ? (
+                <span className="tabular-nums">
+                  Du kan sende ny kode om {resendCooldown} s
+                </span>
+              ) : (
+                <>
+                  Fikk du ingen kode?{' '}
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={isResending}
+                    className="font-medium text-foreground hover:underline disabled:cursor-not-allowed disabled:text-foreground-muted"
+                  >
+                    Send på nytt
+                  </button>
+                </>
+              )}
             </p>
 
             <button
@@ -395,10 +435,13 @@ const AuthPage = () => {
         >
           <ChevronLeft className="size-5" />
         </button>
-        <div className="mb-8 text-center">
+        <div className="mb-8 space-y-2 text-center">
           <h1 className="text-2xl font-medium text-foreground">
             {isSignup ? 'Lag et passord' : 'Skriv inn passordet'}
           </h1>
+          {/* Echo the address so a typo is caught here — not after a
+              confirmation code never arrives. The chevron edits it. */}
+          <p className="text-base text-foreground-muted">{email}</p>
         </div>
 
         <form className="w-full space-y-5" onSubmit={handlePassword}>
@@ -445,13 +488,15 @@ const AuthPage = () => {
 
         {!isSignup && (
           <div className="mt-5 text-center">
+            {/* Also the recovery path — code login, then a new password in
+                innstillinger — so it carries the label users scan for. */}
             <button
               type="button"
               onClick={handleUseCode}
               disabled={isSubmitting}
               className="text-sm font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Send meg en kode i stedet
+              Glemt passordet? Logg inn med kode
             </button>
           </div>
         )}
