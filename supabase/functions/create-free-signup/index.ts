@@ -139,6 +139,12 @@ Deno.serve(async (req: Request) => {
     const rpcResult = result as { success: boolean; signup_id?: string; error?: string; message?: string }
 
     if (!rpcResult.success) {
+      // database_error carries raw SQLERRM (internal table/constraint names) —
+      // log it, never forward it to the caller.
+      if (rpcResult.error === 'database_error') {
+        console.error('create_signup_if_available database_error:', rpcResult.message)
+        return errorResponse('Kunne ikke fullføre påmelding', 500, req)
+      }
       const status = rpcResult.error === 'course_full' ? 409
         : rpcResult.error === 'already_signed_up' ? 409
         : rpcResult.error === 'course_not_found' ? 404

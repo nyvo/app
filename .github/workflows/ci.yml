@@ -22,3 +22,8 @@ jobs:
 
       - name: Unit tests
         run: npm run test:run
+
+      # tsc already ran above; vite build alone catches asset-pipeline
+      # breakage (e.g. fonts/images missing from dist) that tsc can't.
+      - name: Build
+        run: npx vite build
