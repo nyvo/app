@@ -71,16 +71,37 @@ Deno.serve(async (req: Request) => {
       })
       accountId = account.id
 
-      const { error: updateError } = await supabase
+      // Persist ONLY if the seller still has no account (guards the two-tab
+      // race: both tabs saw null and each created an account). Without the
+      // .is(null) guard the second write would win, but the first tab would
+      // already have redirected the user into onboarding for the now-orphaned
+      // account — whose account.updated events match zero seller rows, leaving
+      // the seller permanently "pending". Whoever persists first wins; the
+      // loser re-reads the stored id and onboards THAT account instead (its own
+      // freshly-created account is discarded, never onboarded).
+      const { data: persisted, error: updateError } = await supabase
         .from('sellers')
         .update({
           stripe_account_id: accountId,
           stripe_account_status: 'pending',
         })
         .eq('id', seller.id)
+        .is('stripe_account_id', null)
+        .select('id')
 
       if (updateError) {
         return errorResponse('Kunne ikke lagre Stripe-kontoen.', 500, req)
+      }
+
+      if (!persisted || persisted.length === 0) {
+        const { data: current } = await supabase
+          .from('sellers')
+          .select('stripe_account_id')
+          .eq('id', seller.id)
+          .single()
+        if (current?.stripe_account_id) {
+          accountId = current.stripe_account_id
+        }
       }
     }
 
