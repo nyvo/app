@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,11 +44,6 @@ const CheckoutPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [course, setCourse] = useState<PublicCourseWithDetails | null>(null);
-  const [tiers, setTiers] = useState<AvailableTicketType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({ name: '', email: '', phone: '', note: '', terms: false });
   const [phoneTouched, setPhoneTouched] = useState(false);
@@ -59,73 +55,79 @@ const CheckoutPage = () => {
   const [step, setStep] = useState<'contact' | 'payment'>('contact');
 
   // ── Load course + tiers ────────────────────────────────────────────────
-  useEffect(() => {
-    let cancelled = false;
-    if (!slug || !courseSlug) {
-      setError('not-found');
-      setLoading(false);
-      return;
-    }
-    void (async () => {
-      const { data: courseData, error: courseErr } = await fetchPublicCourseBySlug(slug, courseSlug);
-      if (cancelled) return;
-      if (courseErr || !courseData) {
-        setError('not-found');
-        setLoading(false);
-        return;
-      }
+  // One query owns the load; redirect decisions come back as data and are
+  // performed by the effect below (queryFn stays side-effect-free). A failed
+  // tier fetch throws → retryable server-error page instead of a silently
+  // disabled submit button.
+  type CheckoutData =
+    | { kind: 'redirect'; ownerSlug: string }
+    | { kind: 'not-found' }
+    | { kind: 'ok'; course: PublicCourseWithDetails; tiers: AvailableTicketType[] };
+
+  const checkoutQuery = useQuery({
+    queryKey: ['checkout', slug, courseSlug],
+    enabled: !!slug && !!courseSlug,
+    queryFn: async (): Promise<CheckoutData> => {
+      const { data: courseData, error: courseErr } = await fetchPublicCourseBySlug(slug!, courseSlug!);
+      if (courseErr || !courseData) return { kind: 'not-found' };
 
       const ownerSlug = courseData.seller?.slug;
       if (ownerSlug && ownerSlug !== slug) {
-        const query = searchParams.toString();
-        navigate(
-          `/${ownerSlug}/${courseSlug}/pamelding${query ? `?${query}` : ''}`,
-          { replace: true },
-        );
-        return;
+        return { kind: 'redirect', ownerSlug };
       }
-
-      setCourse(courseData);
 
       // Load all standard-audience tiers via public RPC.
       const { data: tierData, error: tierErr } = await supabase.rpc('available_ticket_types', {
         p_course_id: courseData.id,
       });
-      if (cancelled) return;
-      // Without tiers the form can never become valid — surface a retryable
-      // error instead of a silently disabled submit button.
-      if (tierErr) {
-        setError('load-failed');
-        setLoading(false);
-        return;
-      }
+      if (tierErr) throw tierErr;
       const allTiers = ((tierData ?? []) as AvailableTicketType[]).filter(
         (t) => t.audience === 'standard',
       );
-      setTiers(allTiers);
+      return { kind: 'ok', course: courseData, tiers: allTiers };
+    },
+  });
 
-      // Honour ?billett= from the detail-page rail. "main" → primary tier
-      // (first non-drop-in), "drop-in" → drop-in tier. Fall back to the
-      // primary tier when missing/invalid.
-      const requested = searchParams.get('billett');
-      const dropIn = allTiers.find((t) => t.ticket_kind === 'drop_in');
-      const main =
-        allTiers.find((t) => t.is_default && t.ticket_kind !== 'drop_in')
-        ?? allTiers.find((t) => t.ticket_kind !== 'drop_in')
-        ?? allTiers[0];
+  useEffect(() => {
+    if (checkoutQuery.data?.kind !== 'redirect') return;
+    const query = searchParams.toString();
+    navigate(
+      `/${checkoutQuery.data.ownerSlug}/${courseSlug}/pamelding${query ? `?${query}` : ''}`,
+      { replace: true },
+    );
+  }, [checkoutQuery.data, courseSlug, searchParams, navigate]);
 
-      let initial: AvailableTicketType | undefined;
-      if (requested === 'drop-in' && dropIn) initial = dropIn;
-      else if (requested === 'main' && main) initial = main;
-      else initial = main ?? allTiers[0];
-      setSelectedTierId(initial?.id ?? null);
+  const course = checkoutQuery.data?.kind === 'ok' ? checkoutQuery.data.course : null;
+  const tiers = useMemo(
+    () => (checkoutQuery.data?.kind === 'ok' ? checkoutQuery.data.tiers : []),
+    [checkoutQuery.data],
+  );
+  const loading = checkoutQuery.isPending || checkoutQuery.data?.kind === 'redirect';
+  const error = !slug || !courseSlug || checkoutQuery.data?.kind === 'not-found'
+    ? 'not-found'
+    : checkoutQuery.isError
+      ? 'load-failed'
+      : null;
 
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [slug, courseSlug, searchParams, navigate]);
+  // Honour ?billett= from the detail-page rail once tiers arrive. "main" →
+  // primary tier (first non-drop-in), "drop-in" → drop-in tier. Fall back to
+  // the primary tier when missing/invalid. Runs once (selectedTierId guard),
+  // so a background refetch never clobbers the buyer's own selection.
+  useEffect(() => {
+    if (selectedTierId !== null || tiers.length === 0) return;
+    const requested = searchParams.get('billett');
+    const dropIn = tiers.find((t) => t.ticket_kind === 'drop_in');
+    const main =
+      tiers.find((t) => t.is_default && t.ticket_kind !== 'drop_in')
+      ?? tiers.find((t) => t.ticket_kind !== 'drop_in')
+      ?? tiers[0];
+
+    let initial: AvailableTicketType | undefined;
+    if (requested === 'drop-in' && dropIn) initial = dropIn;
+    else if (requested === 'main' && main) initial = main;
+    else initial = main ?? tiers[0];
+    setSelectedTierId(initial?.id ?? null);
+  }, [tiers, searchParams, selectedTierId]);
 
   const isFree = !course?.price || course.price <= 0;
   const isCancelled = course?.status === 'cancelled';
