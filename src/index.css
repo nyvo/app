@@ -229,7 +229,7 @@
   /* Foreground */
   --foreground: var(--neutral-12);
   --foreground-muted: var(--neutral-11);             /* WCAG AA on bg */
-  --foreground-subtle: var(--neutral-9);             /* recessive grey: placeholders + decorative input icons (quieter than -muted, not a disabled state) */
+  --foreground-subtle: var(--neutral-9);             /* recessive grey: decorative glyphs/icons only (quieter than -muted, not a disabled state). Fails AA for text (~3.3:1) — real text and placeholders use -muted */
   --foreground-disabled: var(--neutral-8);
 
   /* Brand / interaction — periwinkle (#5564c4). White text = 5.2:1 AA. */
@@ -290,8 +290,8 @@
   --border: var(--neutral-7);                         /* visible divider (was neutral-6, too faint on white) */
   --border-card: var(--neutral-4);                    /* card/panel EDGE on canvas — definition, not decoration; the fill contrast does the separating (--border stays for dividers/inputs, which need visibility on white) */
   --border-subtle: var(--neutral-6);
-  --border-strong: var(--neutral-8);                  /* hover/emphasis edge on interactive surfaces (Radix step-8 role) */
-  --input: var(--neutral-7);                          /* crisp field edge */
+  --border-strong: var(--neutral-9);                  /* form-control boundary (checkbox border, unchecked switch track) — ≥3:1 non-text contrast on white per WCAG 1.4.11; also hover/emphasis edge on interactive surfaces (was neutral-8, which fails 3:1) */
+  --input: var(--neutral-8);                          /* text-field edge (was neutral-7 @ ~1.6:1; neutral-8 ≈ 1.9:1 — still below the 3:1 of 1.4.11, kept lighter than -strong as a deliberate design call) */
   --ring: var(--foreground);                          /* neutral focus ring — matches button.tsx focus style; never brand-colored */
   --ring-subtle: color-mix(in oklab, var(--foreground) 15%, transparent);
                                                       /* soft focus halo — replaces the raw `ring-foreground/15` idiom.

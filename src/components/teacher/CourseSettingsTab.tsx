@@ -31,6 +31,9 @@ interface CourseSettingsTabProps {
   // General info
   settingsTitle: string;
   onTitleChange: (title: string) => void;
+  /** Inline error under the title input — set by the parent when a save is
+   *  blocked (e.g. empty title). */
+  titleError?: string | null;
   settingsDescription: string;
   onDescriptionChange: (description: string) => void;
 
@@ -54,6 +57,9 @@ interface CourseSettingsTabProps {
   onLocationCoordsChange: (
     coords: { lat: number | null; lon: number | null; placeId: string | null } | null,
   ) => void;
+  /** Inline error under the location field — set by the parent when a save is
+   *  blocked (typed text without picking a place). */
+  locationError?: string | null;
 
   // Schedule — for series, used as-is. For single, sessionDays takes over.
   settingsDate: Date | undefined;
@@ -108,6 +114,7 @@ interface CourseSettingsTabProps {
 export const CourseSettingsTab = ({
   settingsTitle,
   onTitleChange,
+  titleError,
   settingsDescription,
   onDescriptionChange,
   settingsImageUrl,
@@ -121,6 +128,7 @@ export const CourseSettingsTab = ({
   onLocationChange,
   onLocationAddressChange,
   onLocationCoordsChange,
+  locationError,
   settingsDate,
   onDateChange,
   settingsTime,
@@ -217,8 +225,7 @@ export const CourseSettingsTab = ({
     setParticipantsInput(String(normalized));
   };
 
-  // Selecting a room pre-fills Plasser from the room's capacity, but only when
-  // the field is still empty — never clobber a value the teacher typed.
+  // Copies the picked place's name, address and coords into the form state.
   const handleLocationChange = (next: {
     name: string;
     address: string;
@@ -268,14 +275,21 @@ export const CourseSettingsTab = ({
 
         <SettingsRow title="Detaljer" description="Tittel og beskrivelse slik de vises på kurssiden.">
           <div>
-            <FieldLabel htmlFor="settings-title">Tittel</FieldLabel>
+            <FieldLabel htmlFor="settings-title" error={!!titleError}>Tittel</FieldLabel>
             <Input
               id="settings-title"
               type="text"
               value={settingsTitle}
               onChange={(e) => onTitleChange(e.target.value)}
+              aria-invalid={titleError ? 'true' : undefined}
+              aria-describedby={titleError ? 'settings-title-error' : undefined}
               className="text-base"
             />
+            {titleError && (
+              <FieldError id="settings-title-error" className="mt-2">
+                {titleError}
+              </FieldError>
+            )}
           </div>
 
           <div id="course-edit-description" className="scroll-mt-24">
@@ -295,7 +309,7 @@ export const CourseSettingsTab = ({
           description="Hvor og når kurset holdes."
         >
           <div>
-            <FieldLabel>Sted</FieldLabel>
+            <FieldLabel error={!!locationError}>Sted</FieldLabel>
             <LocationField
               id="settings-location"
               value={settingsLocation}
@@ -303,6 +317,11 @@ export const CourseSettingsTab = ({
               coords={settingsLocationCoords}
               onChange={handleLocationChange}
             />
+            {locationError && (
+              <FieldError id="settings-location-error" className="mt-2">
+                {locationError}
+              </FieldError>
+            )}
           </div>
 
           {courseFormat === 'single' ? (

@@ -165,6 +165,8 @@ const CoursePage = () => {
   const [settingsPrice, setSettingsPrice] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [showCancelPreview, setShowCancelPreview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingCourse, setIsDeletingCourse] = useState(false);
@@ -305,6 +307,21 @@ const CoursePage = () => {
 
   const handleSave = async () => {
     if (!courseId || !courseData) return;
+    // A live course must never save an empty title — block before any write.
+    if (!settingsTitle.trim()) {
+      setTitleError('Kurset må ha en tittel.');
+      return;
+    }
+    setTitleError(null);
+    // Same rule as the builder: a location must come from the Google search so
+    // buyers get coords/map, not bare text. Only enforced when it changed, so
+    // untouched legacy pin-less locations don't block unrelated edits.
+    const locationChanged = settingsLocation.trim() !== (courseData.location || '');
+    if (locationChanged && settingsLocation.trim() && !settingsLocationCoords?.placeId) {
+      setLocationError('Velg et sted fra listen.');
+      return;
+    }
+    setLocationError(null);
     setIsSaving(true);
     setSaveError(null);
     try {
@@ -553,6 +570,27 @@ const CoursePage = () => {
     toast.success(next ? 'Drop-in slått på' : 'Drop-in slått av');
   };
 
+  // The Oversikt drop-in price input has no save bar — commit on blur so an
+  // edited price can't sit as invisible dirty state and get silently dropped.
+  // Same instant-commit path as the toggle; only fires when drop-in is on and
+  // the value actually changed.
+  const handleDropInPriceBlur = async () => {
+    if (!courseId || !courseData) return;
+    if (!settingsAllowsDropIn) return;
+    if (settingsDropInPrice <= 0) return;
+    if (settingsDropInPrice === courseData.dropInPrice) return;
+    const previousPrice = courseData.dropInPrice;
+    setCourseData((prev) => (prev ? { ...prev, dropInPrice: settingsDropInPrice } : prev));
+    const { error } = await syncCourseDropInTier(courseId, true, settingsDropInPrice);
+    if (error) {
+      setSettingsDropInPrice(previousPrice);
+      setCourseData((prev) => (prev ? { ...prev, dropInPrice: previousPrice } : prev));
+      toast.error(friendlyError(error, 'Kunne ikke oppdatere drop-in-prisen.'));
+      return;
+    }
+    toast.success('Drop-in-pris oppdatert');
+  };
+
   // Late-join toggle is instant-commit like drop-in. Persists straight to
   // courses.accepts_late_signups; the public RPC reads it at booking time.
   const handleToggleAcceptsLateSignups = async (next: boolean) => {
@@ -677,6 +715,8 @@ const CoursePage = () => {
       setSessionDays(buildSessionDays(sessions));
     }
     setSaveError(null);
+    setTitleError(null);
+    setLocationError(null);
   };
 
   if (!courseId) {
@@ -816,6 +856,7 @@ const CoursePage = () => {
               onAllowsDropInChange={handleToggleDropIn}
               dropInPrice={settingsDropInPrice}
               onDropInPriceChange={setSettingsDropInPrice}
+              onDropInPriceBlur={() => void handleDropInPriceBlur()}
               acceptsLateSignups={settingsAcceptsLateSignups}
               onAcceptsLateSignupsChange={handleToggleAcceptsLateSignups}
               onPublish={handlePublish}
@@ -846,7 +887,11 @@ const CoursePage = () => {
           {activeTab === 'rediger' && (
             <CourseSettingsTab
               settingsTitle={settingsTitle}
-              onTitleChange={setSettingsTitle}
+              onTitleChange={(next) => {
+                setSettingsTitle(next);
+                if (titleError && next.trim()) setTitleError(null);
+              }}
+              titleError={titleError}
               settingsDescription={settingsDescription}
               onDescriptionChange={setSettingsDescription}
               settingsLocation={settingsLocation}
@@ -854,7 +899,11 @@ const CoursePage = () => {
               settingsLocationCoords={settingsLocationCoords}
               onLocationChange={setSettingsLocation}
               onLocationAddressChange={setSettingsLocationAddress}
-              onLocationCoordsChange={setSettingsLocationCoords}
+              onLocationCoordsChange={(coords) => {
+                setSettingsLocationCoords(coords);
+                if (locationError && coords?.placeId) setLocationError(null);
+              }}
+              locationError={locationError}
               settingsImageUrl={settingsImageUrl}
               onImageFileChange={(file) => void handleImageSelected(file)}
               onImageRemove={() => void handleImageRemove()}

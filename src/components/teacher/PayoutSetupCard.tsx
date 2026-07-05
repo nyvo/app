@@ -91,7 +91,7 @@ function StepMarker({ index, status, tone }: { index: number; status: StepStatus
     );
   }
 
-  const numeralClass = status === 'current' ? 'bg-muted text-foreground' : 'bg-muted text-foreground-subtle';
+  const numeralClass = status === 'current' ? 'bg-muted text-foreground' : 'bg-muted text-foreground-muted';
   return (
     <span
       className={`flex size-[26px] shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums ${numeralClass}`}
@@ -106,7 +106,7 @@ function StepTitle({ status, title }: { status: StepStatus; title: string }) {
     return <p className="text-base font-normal text-foreground-muted leading-normal">{title}</p>;
   }
   if (status === 'upcoming') {
-    return <p className="text-base font-normal text-foreground-subtle leading-normal">{title}</p>;
+    return <p className="text-base font-normal text-foreground-muted leading-normal">{title}</p>;
   }
   return <p className="text-base font-medium text-foreground leading-normal">{title}</p>;
 }
@@ -119,7 +119,7 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
       <CardContent>
         <div className="flex items-baseline justify-between gap-4 mb-6">
           <h2 className="text-base font-medium text-foreground">{h2}</h2>
-          <span className="text-xs text-foreground-subtle tabular-nums whitespace-nowrap">{counter}</span>
+          <span className="text-xs text-foreground-muted tabular-nums whitespace-nowrap">{counter}</span>
         </div>
 
         <ol>
