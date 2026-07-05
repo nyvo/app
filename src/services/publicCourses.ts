@@ -293,8 +293,13 @@ export async function fetchPublicCourses(
     )
   }
 
-  // Apply pagination
-  const limit = filters?.limit || 20 // Default 20 courses per page
+  // Apply pagination. Callers (storefront, embed calendar) pass no limit and
+  // render everything they get — a low default silently hides the furthest-out
+  // (still-selling) courses for studios with a big schedule, since the sort is
+  // start_date ascending. 100 keeps one query cheap while being far above any
+  // realistic simultaneous-upcoming count; real pagination comes with the
+  // server-state-library migration.
+  const limit = filters?.limit || 100
   const offset = filters?.offset || 0
 
   query = query.range(offset, offset + limit - 1)

@@ -30,3 +30,20 @@ jobs:
       # breakage (e.g. fonts/images missing from dist) that tsc can't.
       - name: Build
         run: npx vite build
+
+  edge-functions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # Tests over the shared payment modules (webhook claim state machine,
+      # Stripe signature verification) — the logic every webhook depends on.
+      # Running them also type-checks the modules they import. A repo-wide
+      # `deno check supabase/functions` is currently blocked upstream:
+      # @supabase/functions-js edge-runtime.d.ts references npm:openai types.
+      - name: Edge function shared-module tests
+        run: deno test --allow-env supabase/functions/_shared/

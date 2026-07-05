@@ -75,7 +75,7 @@ const CheckoutSuccessPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [signup, setSignup] = useState<SignupDetails | null>(null);
-  const [error, _setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [bookingFailed, setBookingFailed] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState(false);
   const [attemptCount, setAttemptCount] = useState(0);
@@ -91,6 +91,10 @@ const CheckoutSuccessPage = () => {
       // Poll for the signup — the webhook captures + creates the signup async.
       const maxRetries = 12;
       const delays = [500, 1000, 2000, 2000, 4000, 4000, 4000, 8000, 8000, 8000, 8000, 8000];
+      // Distinguishes "server answered, signup not minted yet" (webhook slow →
+      // optimistic fallback) from "every request failed" (buyer offline →
+      // telling them 'vi behandler påmeldingen' would be a guess).
+      let anyResponseReceived = false;
 
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         if (cancelled) return;
@@ -106,6 +110,7 @@ const CheckoutSuccessPage = () => {
           p_payment_intent_id: paymentIntentId,
         });
         if (cancelled) return;
+        if (!fetchError) anyResponseReceived = true;
 
         if (data && !fetchError) {
           const row = data as unknown as SignupDetails;
@@ -147,8 +152,17 @@ const CheckoutSuccessPage = () => {
           logger.warn('Signup not found after max retries:', {
             paymentIntentId,
             attempts: maxRetries,
+            anyResponseReceived,
             lastError: fetchError?.message || 'No data returned',
           });
+
+          if (!anyResponseReceived) {
+            // Never reached the server — network problem on the buyer's end.
+            // Don't claim we're processing anything; we don't know.
+            setError('Får ikke kontakt med serveren. Sjekk nettet og last siden på nytt.');
+            setLoading(false);
+            return;
+          }
 
           // Show softer fallback — payment succeeded but webhook is slow
           setBookingFailed(true);

@@ -313,6 +313,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false)
         setIsInitialized(true)
       }
+    }).catch((err) => {
+      // getSession can reject (corrupted persisted token, storage access
+      // failure). Without this catch isInitialized never flips and every
+      // guard renders null forever — a permanent blank page. Fall back to
+      // the unauthenticated state instead.
+      logger.error('getSession failed during init:', err)
+      if (!mounted) return
+      setIsLoading(false)
+      setIsInitialized(true)
     })
 
     // Listen for auth changes
