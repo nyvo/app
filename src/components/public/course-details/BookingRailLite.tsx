@@ -118,6 +118,14 @@ export function BookingRailLite({ course, tiers, studioSlug, checkoutHref, dropI
           </div>
         ) : (
           <>
+            {/* The package tile was withheld because the course is full, but
+                drop-in is still open — say why the package is missing. This is
+                the steady state of a running drop-in series (past drop-ins
+                accumulate in the course-wide count), not a rare edge. */}
+            {courseFull && (
+              <p className="text-sm text-foreground-muted">Kurspakken er full.</p>
+            )}
+
             {/* Choice — only when there's a real one. A single ticket type is
                 conveyed by the price breakdown below, no selector needed. */}
             {tiles.length > 1 && (
