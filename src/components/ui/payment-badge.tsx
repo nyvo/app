@@ -9,7 +9,7 @@ type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
 
 const config: Record<PaymentStatus, { variant: BadgeVariant; label: string }> = {
   paid:     { variant: 'success',     label: 'Betalt' },
-  pending:  { variant: 'warning',     label: 'Venter betaling' },
+  pending:  { variant: 'warning',     label: 'Venter på betaling' },
   failed:   { variant: 'destructive', label: 'Betaling feilet' },
   refunded: { variant: 'neutral',     label: 'Refundert' },
   // Historical only: the off-platform payment path is deleted (all paid

@@ -373,7 +373,7 @@ export function TimelineDay({
  */
 export function SessionCard({ session }: { session: SessionRow }) {
   const isOnline = session.deliveryMode === 'online';
-  const placeLabel = isOnline ? 'Online' : session.courseLocation;
+  const placeLabel = isOnline ? 'Nettkurs' : session.courseLocation;
   const countLabel =
     session.maxParticipants != null
       ? `${session.signupCount} / ${session.maxParticipants}`

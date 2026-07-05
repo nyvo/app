@@ -329,7 +329,7 @@ function ClassRow({
   const isDisabled = bookability !== 'open';
 
   const price = entryPrice(course);
-  const placeLabel = course.delivery_mode === 'online' ? 'Online' : course.location;
+  const placeLabel = course.delivery_mode === 'online' ? 'Nettkurs' : course.location;
 
   return (
     <li>

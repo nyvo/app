@@ -333,7 +333,7 @@ export const CourseSettingsTab = ({
                 />
                 {isPublished && sessionDays.length > 1 && (
                   <p className="mt-2 text-sm text-foreground-muted">
-                    Legg til eller fjern dager er deaktivert for publiserte kurs. Kontakt deltakere manuelt ved endringer i antall dager.
+                    Du kan ikke legge til eller fjerne dager på publiserte kurs. Kontakt deltakerne ved endringer i antall dager.
                   </p>
                 )}
               </div>

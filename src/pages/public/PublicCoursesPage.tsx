@@ -124,7 +124,7 @@ const PublicCoursesPage = () => {
       { value: 'series', label: 'Kursrekker' },
       { value: 'workshop', label: 'Workshops' },
       { value: 'drop-in', label: 'Drop-in' },
-      { value: 'online', label: 'Online' },
+      { value: 'online', label: 'Nettkurs' },
     ];
     return candidates.filter(
       (option) => option.value === 'all'

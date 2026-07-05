@@ -60,7 +60,7 @@ const PRO_FEATURES = [
 const PRO_YEARLY = {
   price: formatKroner(4990),
   priceSub: '/år',
-  savings: 'Spar 998 kr',
+  savings: `Spar ${formatKroner(998)}`,
 } as const
 
 const BillingPage = () => {
@@ -256,7 +256,7 @@ export function BillingPlanSections({
     <div className="space-y-8">
       {isPastDue && onManage && (
         <Alert variant="warning" icon={false} className="border-transparent bg-muted">
-          <AlertTitle className="text-base">Betalingen mislyktes</AlertTitle>
+          <AlertTitle className="text-base">Betalingen gikk ikke gjennom</AlertTitle>
           <AlertDescription className="text-base text-foreground">
             Oppdater betalingsmåten for å beholde Pro-abonnementet.
           </AlertDescription>

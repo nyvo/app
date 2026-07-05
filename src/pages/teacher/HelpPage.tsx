@@ -170,7 +170,7 @@ export default function HelpPage() {
                   </label>
                   <Select value={courseId} onValueChange={setCourseId} disabled={loadingCourses}>
                     <SelectTrigger id="help-course" className="w-full">
-                      <SelectValue placeholder={loadingCourses ? 'Henter kurs...' : 'Velg kurs'} />
+                      <SelectValue placeholder={loadingCourses ? 'Henter kurs…' : 'Velg kurs'} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -191,7 +191,7 @@ export default function HelpPage() {
                     </label>
                     <Select value={signupId} onValueChange={setSignupId} disabled={loadingSignups}>
                       <SelectTrigger id="help-signup" className="w-full">
-                        <SelectValue placeholder={loadingSignups ? 'Henter påmeldinger...' : 'Valgfritt'} />
+                        <SelectValue placeholder={loadingSignups ? 'Henter påmeldinger…' : 'Valgfritt'} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -223,7 +223,7 @@ export default function HelpPage() {
 
             <div className="flex justify-end">
               <Button type="submit" disabled={!canSubmit || submitting}>
-                {submitting ? 'Sender...' : 'Send'}
+                {submitting ? 'Sender…' : 'Send'}
               </Button>
             </div>
           </form>

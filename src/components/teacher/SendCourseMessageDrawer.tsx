@@ -46,7 +46,7 @@ export function SendCourseMessageDrawer({
 
   const recipientLabel =
     recipientCount === 0
-      ? 'Ingen påmeldte enda'
+      ? 'Ingen påmeldte ennå'
       : `${recipientCount} ${recipientCount === 1 ? 'deltaker' : 'deltakere'}`;
 
   const canSend = !submitting && body.trim().length > 0 && recipientCount > 0;

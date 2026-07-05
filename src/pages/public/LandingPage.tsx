@@ -192,7 +192,7 @@ const LandingPage = () => {
       <FeatureSplit
         eyebrow="Påmelding og betaling"
         title="Enkel påmelding."
-        description="Deltakeren velger time og betaler — alt på én side."
+        description="Deltakeren velger time og betaler – alt på én side."
         bullets={[
           'Sikker kortbetaling',
           'Automatisk kvittering på e-post',
@@ -269,7 +269,7 @@ const LandingPage = () => {
                 cta: PRELAUNCH
                   ? { label: 'Ta kontakt', to: '#varsle' }
                   : { label: 'Start gratis', to: '/auth?intent=seller' },
-                caption: PRELAUNCH ? 'Kommer snart.' : 'Ingen kort nødvendig.',
+                caption: PRELAUNCH ? 'Kommer snart.' : 'Du trenger ikke kort.',
               }}
             />
             <PricingTier
