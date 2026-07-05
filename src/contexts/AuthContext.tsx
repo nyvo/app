@@ -23,6 +23,10 @@ interface AuthContextType {
   currentSeller: Seller | null
   sellers: Seller[]
   userRole: SellerMemberRole | null
+  // True when the seller_members fetch FAILED (network/5xx) — as opposed to
+  // "loaded, zero memberships". Role guards must not demote a seller to buyer
+  // on a failed fetch.
+  sellersLoadFailed: boolean
 
   // Auth methods
   signInWithGoogle: (redirectTo?: string) => Promise<{ error: Error | null }>
@@ -92,7 +96,7 @@ async function fetchProfileData(userId: string): Promise<Profile | null> {
   return data
 }
 
-async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], memberships: SellerMembership[] }> {
+async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], memberships: SellerMembership[], failed: boolean }> {
   // Explicit column list — only the public grant set is selected here.
   // Operational fields (operating_model, updated_at) are hydrated separately via
   // get_seller_operational for the active seller.
@@ -117,7 +121,9 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
 
   if (memberError) {
     logger.error('Error fetching seller memberships:', memberError)
-    return { sellers: [], memberships: [] }
+    // failed=true: "we don't know", NOT "no memberships" — consumers must not
+    // treat this as an authoritative buyer verdict.
+    return { sellers: [], memberships: [], failed: true }
   }
 
   // The embedded select returns only the public columns; the Seller type
@@ -155,7 +161,7 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
   }) as SellerMembership[]
   const sellers = typedMemberships.map((m) => m.seller).filter(Boolean)
 
-  return { sellers, memberships: typedMemberships }
+  return { sellers, memberships: typedMemberships, failed: false }
 }
 
 // Hydrate operational fields (operating_model, subscription plan/status, updated_at)
@@ -193,6 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentSeller, setCurrentSeller] = useState<Seller | null>(null)
   const [sellers, setSellers] = useState<Seller[]>([])
   const [userRole, setUserRole] = useState<SellerMemberRole | null>(null)
+  const [sellersLoadFailed, setSellersLoadFailed] = useState(false)
 
   // Refs to track values without causing re-renders in callbacks
   const currentSellerRef = useRef<Seller | null>(null)
@@ -253,7 +260,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) logger.error('claim_my_signups failed (background):', error)
     })
 
-    const { sellers: loadedSellers, memberships } = await fetchSellersData(userId)
+    const { sellers: loadedSellers, memberships, failed } = await fetchSellersData(userId)
+    setSellersLoadFailed(failed)
     setSellers(loadedSellers)
 
     if (loadedSellers.length > 0 && !currentSellerRef.current) {
@@ -328,6 +336,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSellers([])
           setCurrentSeller(null)
           setUserRole(null)
+          setSellersLoadFailed(false)
           clearStoredCurrentSellerId(signedOutUserId)
           return
         }
@@ -370,7 +379,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!userRef.current) return
 
     // Refresh profile alongside sellers (e.g. after onboarding writes to profiles)
-    const [profileData, { sellers: loadedSellers, memberships }] = await Promise.all([
+    const [profileData, { sellers: loadedSellers, memberships, failed }] = await Promise.all([
       fetchProfileData(userRef.current.id),
       fetchSellersData(userRef.current.id),
     ])
@@ -378,6 +387,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (profileData) {
       setProfile(profileData)
     }
+
+    setSellersLoadFailed(failed)
+    // On a failed refresh keep the last-known sellers instead of clobbering a
+    // working seller session with [] (which would demote the UI to buyer).
+    if (failed) return
 
     setSellers(loadedSellers)
 
@@ -658,6 +672,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     currentSeller,
     sellers,
     userRole,
+    sellersLoadFailed,
     signInWithGoogle,
     signOut,
     sendMagicLink,
@@ -680,6 +695,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     currentSeller,
     sellersKey,
     userRole,
+    sellersLoadFailed,
     signInWithGoogle,
     signOut,
     sendMagicLink,

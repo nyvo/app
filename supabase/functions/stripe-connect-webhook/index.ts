@@ -25,9 +25,11 @@ import {
   capturePaymentIntent,
   cancelPaymentIntent,
   retrieveCharge,
+  retrievePaymentIntent,
   type StripeEvent,
   type StripePaymentIntent,
 } from '../_shared/stripe.ts'
+import { claimEvent, markEventResult, releaseEventClaim } from '../_shared/webhook-claims.ts'
 import { enqueueNotification } from '../_shared/notifications.ts'
 import { sendEmail } from '../_shared/email.ts'
 import { formatKroner, formatNorwegianDate, shortBookingId } from '../_shared/format.ts'
@@ -56,33 +58,6 @@ interface PaymentAttempt {
   course_session_id: string | null
   ticket_type_id: string | null
   total_price_nok: number | null
-}
-
-async function claimEvent(
-  supabase: SupabaseClient,
-  eventId: string,
-  eventType: string,
-): Promise<boolean> {
-  const { error } = await supabase
-    .from('processed_webhook_events')
-    .insert({ event_id: eventId, event_type: eventType, result: { status: 'processing' }, processed_at: null })
-  if (error) {
-    if (error.code === '23505') return false
-    // Other errors: allow processing to continue; downstream idempotency is safe.
-    return true
-  }
-  return true
-}
-
-async function markEventResult(
-  supabase: SupabaseClient,
-  eventId: string,
-  result: Record<string, unknown>,
-): Promise<void> {
-  await supabase
-    .from('processed_webhook_events')
-    .update({ result, processed_at: new Date().toISOString() })
-    .eq('event_id', eventId)
 }
 
 // Best-effort notification for a capture failure on a freshly-minted signup.
@@ -145,9 +120,14 @@ Deno.serve(async (req: Request) => {
 
   // C5: globally-unique Stripe event id is the idempotency key.
   const eventKey = `stripe:${event.id}`
-  const claimed = await claimEvent(supabase, eventKey, event.type)
-  if (!claimed) {
+  const claim = await claimEvent(supabase, eventKey, event.type)
+  if (claim === 'duplicate') {
     return new Response(JSON.stringify({ status: 'already_processed' }), { status: 200 })
+  }
+  if (claim === 'in_flight') {
+    // Another isolate holds a fresh claim. Non-2xx so Stripe redelivers — a 200
+    // here would permanently drop the event if that isolate was hard-killed.
+    return new Response('Event claim in flight', { status: 409 })
   }
 
   try {
@@ -243,16 +223,18 @@ Deno.serve(async (req: Request) => {
 
         if (!signupResult || !signupResult.success) {
           const errorType = (signupResult && signupResult.error) || 'unknown'
-          // Unique-index race backstop: the RPC's dedup SELECT missed a concurrent INSERT and the
-          // partial unique index on signups.stripe_payment_intent_id fired — the signup WAS minted
-          // (and captured) by the race winner. Treat as idempotent success: do NOT cancel the PI
-          // (it's captured; the cancel would silently fail) or void the attempt. This is the
-          // caller invariant documented in the create_signup_if_available migration.
+          // Transition compat: the pre-20260705190000 RPC returned 'already_signed_up' for a
+          // unique-violation on the PI index — the signup WAS minted by the race winner. Treat as
+          // idempotent success (do NOT cancel the captured PI). The current RPC returns the
+          // already_processed success shape for that case, so this branch is dormant.
           if (errorType === 'already_signed_up') {
             await markEventResult(supabase, eventKey, { type: 'embedded', status: 'already_signed_up_race' })
             return new Response('OK', { status: 200 })
           }
-          // Genuine capacity/validation reject — cancel the auth, void the attempt.
+          // Genuine reject — including 'duplicate_signup' (this EMAIL already holds a confirmed
+          // booking via a DIFFERENT payment: two-tab double checkout). Cancel the auth so the
+          // buyer isn't charged twice and doesn't carry a ~7-day card hold; void the attempt so
+          // the sweep never revisits (and never captures) this PI.
           try { await cancelPaymentIntent(pi.id) } catch (_e) { /* non-fatal */ }
           await supabase.from('payment_attempts').update({ status: 'voided' }).eq('id', attempt.id)
           await markEventResult(supabase, eventKey, { type: 'embedded', status: 'voided', error: errorType })
@@ -273,6 +255,31 @@ Deno.serve(async (req: Request) => {
           await capturePaymentIntent(pi.id)
         } catch (captureErr) {
           const message = captureErr instanceof Error ? captureErr.message : 'Unknown'
+          // A capture throw does NOT prove the capture failed — a network timeout after Stripe
+          // committed it is common. Read the live PI before deciding anything destructive.
+          let livePi: { status: string } | null = null
+          try { livePi = await retrievePaymentIntent(pi.id) } catch (_e) { livePi = null }
+
+          if (livePi?.status === 'succeeded') {
+            // The capture landed — this is the success path, not a failure.
+            await supabase.from('payment_attempts').update({ status: 'captured' }).eq('id', attempt.id)
+            await deliverBookingConfirmations(supabase, signupResult.signup_id, attempt, amountNok)
+            await markEventResult(supabase, eventKey, {
+              type: 'embedded', signup_id: signupResult.signup_id, status: 'confirmed',
+              note: 'capture_confirmed_on_recheck',
+            })
+            return new Response('OK', { status: 200 })
+          }
+
+          if (!livePi || livePi.status === 'requires_capture') {
+            // Truth unknown, or the auth is still capturable after a transient Stripe failure.
+            // Never cancel a possibly-captured/still-valid payment here — throw so the claim is
+            // released and Stripe retries; the sweep also recovers 'authorized' attempts whose
+            // PI is requires_capture.
+            throw new Error(`capture failed (${message}); live PI status: ${livePi?.status ?? 'unavailable'}`)
+          }
+
+          // Live PI is terminal and not succeeded (e.g. canceled) — the capture truly failed.
           // The signup was created by this PI and the buyer was never told it succeeded — cancel
           // it so it stops consuming capacity and the roster isn't confirmed-but-unpaid.
           // This path is terminal (event finalized below, attempt → 'failed', sweep skips it), so
@@ -511,13 +518,10 @@ Deno.serve(async (req: Request) => {
     const message = err instanceof Error ? err.message : 'Unknown'
     // Release the claim if work never reached a terminal result (processed_at still null), so
     // Stripe's retry re-runs the capture path instead of hitting the already_processed fast-path
-    // and letting the auth expire uncaptured. Terminal rows are preserved.
+    // and letting the auth expire uncaptured. Terminal rows are preserved. If this release itself
+    // fails, the stale-claim reclaim in claimEvent recovers the event on a later retry.
     try {
-      await supabase
-        .from('processed_webhook_events')
-        .delete()
-        .eq('event_id', eventKey)
-        .is('processed_at', null)
+      await releaseEventClaim(supabase, eventKey)
     } catch (_releaseErr) {
       // Non-fatal — surfacing the original error to Stripe (→ retry) is what matters.
     }

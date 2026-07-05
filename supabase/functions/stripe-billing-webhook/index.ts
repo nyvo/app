@@ -7,6 +7,7 @@ import {
   type StripeEvent,
   type StripeSubscription,
 } from '../_shared/stripe.ts'
+import { claimEvent, markEventResult, releaseEventClaim } from '../_shared/webhook-claims.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -20,42 +21,6 @@ function stripeStatusToSellerStatus(status: string): 'active' | 'past_due' | 'ca
   if (status === 'past_due' || status === 'unpaid') return 'past_due'
   if (status === 'canceled' || status === 'incomplete_expired' || status === 'paused') return 'canceled'
   return 'none'
-}
-
-async function claimEvent(supabase: SupabaseClient, event: StripeEvent): Promise<boolean> {
-  const { error } = await supabase
-    .from('processed_webhook_events')
-    .insert({
-      event_id: `stripe:${event.id}`,
-      event_type: event.type,
-      result: { status: 'processing' },
-      processed_at: null,
-    })
-
-  if (error) {
-    if (error.code === '23505') return false
-    console.error('stripe-billing-webhook claimEvent failed:', error)
-  }
-  return true
-}
-
-async function markEventResult(
-  supabase: SupabaseClient,
-  event: StripeEvent,
-  result: Record<string, unknown>,
-): Promise<void> {
-  await supabase
-    .from('processed_webhook_events')
-    .update({ result, processed_at: new Date().toISOString() })
-    .eq('event_id', `stripe:${event.id}`)
-}
-
-async function releaseEventClaim(supabase: SupabaseClient, event: StripeEvent): Promise<void> {
-  await supabase
-    .from('processed_webhook_events')
-    .delete()
-    .eq('event_id', `stripe:${event.id}`)
-    .is('processed_at', null)
 }
 
 async function syncSubscription(
@@ -120,9 +85,16 @@ Deno.serve(async (req: Request) => {
   const event = JSON.parse(payload) as StripeEvent
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-  const shouldProcess = await claimEvent(supabase, event)
-  if (!shouldProcess) {
+  const eventKey = `stripe:${event.id}`
+  const claim = await claimEvent(supabase, eventKey, event.type)
+  if (claim === 'duplicate') {
     return successResponse({ received: true, duplicate: true }, 200, req)
+  }
+  if (claim === 'in_flight') {
+    // Another isolate holds a fresh claim. Non-2xx so Stripe redelivers — a 200
+    // here would permanently drop the event if that isolate was hard-killed, and
+    // subscription syncs have no other backstop.
+    return errorResponse('Event claim in flight', 409, req)
   }
 
   try {
@@ -166,11 +138,11 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    await markEventResult(supabase, event, result)
+    await markEventResult(supabase, eventKey, result)
     return successResponse({ received: true }, 200, req)
   } catch (error) {
     console.error('stripe-billing-webhook error:', error)
-    await releaseEventClaim(supabase, event)
+    await releaseEventClaim(supabase, eventKey)
     return errorResponse('Webhook processing failed', 500, req)
   }
 })
