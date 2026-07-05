@@ -1037,9 +1037,6 @@ export type Database = {
           p_buyer_id?: string
           p_course_id: string
           p_course_session_id?: string
-          p_dintero_merchant_reference?: string
-          p_dintero_session_id?: string
-          p_dintero_transaction_id?: string
           p_note?: string
           p_participant_email: string
           p_participant_name: string
