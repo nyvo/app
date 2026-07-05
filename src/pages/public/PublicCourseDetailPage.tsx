@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Clock, Calendar, ChevronLeft } from '@/lib/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -33,37 +34,30 @@ export default function PublicCourseDetailPage() {
   const location = useLocation();
   const navState = (location.state ?? null) as DetailNavState | null;
 
-  const [course, setCourse] = useState<PublicCourseWithDetails | null>(null);
-  const [sessions, setSessions] = useState<CourseSession[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // One query owns the whole load. Redirect decisions are returned as data
+  // (not performed inside the fetch) so the queryFn stays side-effect-free;
+  // the effect below navigates, which changes the key and starts the next
+  // load. Cache makes detail → back → detail instant within staleTime.
+  type DetailResult =
+    | { kind: 'redirect'; to: string }
+    | { kind: 'not-found' }
+    | { kind: 'ok'; course: PublicCourseWithDetails; sessions: CourseSession[] };
 
-  useDocumentTitle(course?.title);
-
-  useEffect(() => {
-    let active = true;
-    async function load() {
-      if (!slug || !courseSlug) return;
-      setLoading(true);
-      setError(null);
-
+  const detailQuery = useQuery({
+    queryKey: ['public-course', slug, courseSlug],
+    enabled: !!slug && !!courseSlug,
+    queryFn: async (): Promise<DetailResult> => {
       // If the team-slug segment is an archived alias, redirect to the
       // canonical storefront URL first — the course lookup below scopes to a
-      // current team slug, so passing the alias through would 404. The effect
-      // re-runs after the redirect.
-      const sellerLookup = await fetchSellerBySlug(slug);
-      if (!active) return;
+      // current team slug, so passing the alias through would 404.
+      const sellerLookup = await fetchSellerBySlug(slug!);
       if (sellerLookup.data && sellerLookup.data.slug !== slug) {
-        navigate(`/${sellerLookup.data.slug}/${courseSlug}`, { replace: true, state: location.state });
-        return;
+        return { kind: 'redirect', to: `/${sellerLookup.data.slug}/${courseSlug}` };
       }
 
-      const courseRes = await fetchPublicCourseBySlug(slug, courseSlug);
-      if (!active) return;
+      const courseRes = await fetchPublicCourseBySlug(slug!, courseSlug!);
       if (courseRes.error || !courseRes.data) {
-        setError('Kurset finnes ikke eller er ikke tilgjengelig.');
-        setLoading(false);
-        return;
+        return { kind: 'not-found' };
       }
 
       // Canonical URL = owner's team slug. If the visitor landed via a
@@ -73,24 +67,37 @@ export default function PublicCourseDetailPage() {
       // came from — payment context and navigation context can differ.
       const ownerSlug = courseRes.data.seller?.slug;
       if (ownerSlug && ownerSlug !== slug) {
-        navigate(`/${ownerSlug}/${courseSlug}`, { replace: true, state: location.state });
-        return;
+        return { kind: 'redirect', to: `/${ownerSlug}/${courseSlug}` };
       }
-
-      setCourse(courseRes.data);
 
       const { data: sessionRows } = await supabase
         .from('course_sessions')
         .select('*')
         .eq('course_id', courseRes.data.id)
         .order('session_date', { ascending: true });
-      if (!active) return;
-      setSessions((sessionRows ?? []) as CourseSession[]);
-      setLoading(false);
+      return {
+        kind: 'ok',
+        course: courseRes.data,
+        sessions: (sessionRows ?? []) as CourseSession[],
+      };
+    },
+  });
+
+  useEffect(() => {
+    if (detailQuery.data?.kind === 'redirect') {
+      navigate(detailQuery.data.to, { replace: true, state: location.state });
     }
-    load();
-    return () => { active = false; };
-  }, [slug, courseSlug, navigate, location.state]);
+  }, [detailQuery.data, navigate, location.state]);
+
+  const course = detailQuery.data?.kind === 'ok' ? detailQuery.data.course : null;
+  const sessions = detailQuery.data?.kind === 'ok' ? detailQuery.data.sessions : [];
+  const loading = detailQuery.isPending || detailQuery.data?.kind === 'redirect';
+  const error =
+    detailQuery.isError || detailQuery.data?.kind === 'not-found'
+      ? 'Kurset finnes ikke eller er ikke tilgjengelig.'
+      : null;
+
+  useDocumentTitle(course?.title);
 
   // Back link: prefer the viewing storefront (state) over the canonical
   // owner. Direct-link visitors get the owner.

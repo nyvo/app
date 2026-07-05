@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug, type PublicSeller } from '@/services/sellers';
@@ -33,12 +34,6 @@ function isVisible(course: PublicCourseWithDetails): boolean {
  */
 const EmbedCalendarPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [seller, setSeller] = useState<PublicSeller | null>(null);
-  const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorKind, setErrorKind] = useState<ErrorKind | null>(null);
-
-  useDocumentTitle(seller?.name);
 
   // Keep this route out of search indexes; restore on unmount so navigating
   // away (dev) doesn't leave a stray noindex on other pages.
@@ -52,44 +47,33 @@ const EmbedCalendarPage = () => {
     };
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function loadData() {
-      if (!slug) {
-        setErrorKind('not-found');
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setErrorKind(null);
+  // Single query: seller lookup, then courses on the canonical slug (handles
+  // archived-alias URLs) while keeping the loaded slug for the out-links; the
+  // detail page canonicalizes those on arrival. `null` data = no such studio.
+  const embedQuery = useQuery({
+    queryKey: ['embed-calendar', slug],
+    enabled: !!slug,
+    queryFn: async () => {
+      const { data: sellerData, error: sellerError } = await fetchSellerBySlug(slug!);
+      if (sellerError) throw sellerError;
+      if (!sellerData) return null;
 
-      const { data: sellerData, error: sellerError } = await fetchSellerBySlug(slug);
-      if (cancelled) return;
-      if (sellerError || !sellerData) {
-        setErrorKind('not-found');
-        setLoading(false);
-        return;
-      }
-      setSeller(sellerData);
-
-      // Use the canonical slug for the course query (handles archived-alias
-      // URLs) while keeping the loaded slug for the out-links; the detail page
-      // canonicalizes those on arrival.
       const { data, error } = await fetchPublicCourses({ teamSlug: sellerData.slug });
-      if (cancelled) return;
-      if (error) {
-        setErrorKind('load-failed');
-        setLoading(false);
-        return;
-      }
-      setCourses(data || []);
-      setLoading(false);
-    }
-    loadData();
-    return () => {
-      cancelled = true;
-    };
-  }, [slug]);
+      if (error) throw error;
+      return { seller: sellerData as PublicSeller, courses: data || [] };
+    },
+  });
+
+  const seller = embedQuery.data?.seller ?? null;
+  const courses = embedQuery.data?.courses ?? [];
+  const loading = !!slug && embedQuery.isPending;
+  const errorKind: ErrorKind | null = !slug || (!embedQuery.isPending && embedQuery.data === null)
+    ? 'not-found'
+    : embedQuery.isError
+      ? 'load-failed'
+      : null;
+
+  useDocumentTitle(seller?.name);
 
   const visible = useMemo(() => courses.filter(isVisible), [courses]);
 
