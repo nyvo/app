@@ -17,7 +17,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
-import { SessionDaysEditor, newSessionDay, timeToMin } from '@/components/teacher/SessionDaysEditor';
+import {
+  SessionDaysEditor,
+  newSessionDay,
+  timeToMin,
+  ALL_TIME_SLOTS,
+  endTimeSlotsFor,
+} from '@/components/teacher/SessionDaysEditor';
 import type { SessionDay } from '@/components/teacher/SessionDaysEditor';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { LocationField } from '@/components/ui/location-field';
@@ -35,8 +41,6 @@ import type { CourseFormat } from '@/types/database';
 
 type FormatType = 'single' | 'series';
 
-// ── Time helpers (series path only — single path uses SessionDaysEditor) ────
-
 interface FormErrors {
   title?: string;
   description?: string;
@@ -51,19 +55,6 @@ interface FormErrors {
   capacity?: string;
   price?: string;
 }
-
-function generateTimeSlots(startHour = 6, endHour = 23): string[] {
-  const slots: string[] = [];
-  for (let h = startHour; h < endHour; h++) {
-    for (const m of [0, 15, 30, 45]) {
-      slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-    }
-  }
-  slots.push(`${String(endHour).padStart(2, '0')}:00`);
-  return slots;
-}
-
-const ALL_TIME_SLOTS = generateTimeSlots();
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="text-base font-medium text-foreground">{children}</h2>;
@@ -143,6 +134,9 @@ export default function CourseBuilderPage() {
 
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // One key per builder visit — a retry after a failed request reuses it, so
+  // a double submit can't create two courses (unique index on the column).
+  const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
   // Pro sellers who hit "Publiser" without payouts set up: the course is saved
   // as a draft, the gate dialog explains, and dismissing it lands them on the
   // (saved) course page.
@@ -183,6 +177,11 @@ export default function CourseBuilderPage() {
       );
       if (sessionDays.length === 0 || invalidDay) {
         e.sessionDays = 'Alle dager må ha dato, starttid og sluttid (sluttid etter starttid)';
+      } else {
+        const dateKeys = sessionDays.map((d) => formatLocalDateKey(d.date!));
+        if (new Set(dateKeys).size !== dateKeys.length) {
+          e.sessionDays = 'To dager kan ikke ha samme dato';
+        }
       }
     }
 
@@ -222,18 +221,19 @@ export default function CourseBuilderPage() {
       let createOptions: Parameters<typeof createCourse>[1];
 
       if (format === 'single') {
-        const day0 = sessionDays[0];
-        // day0.date is guaranteed non-null here (validation passed)
+        // Sort chronologically — entry order isn't guaranteed, and start_date/
+        // end_date/session_number all derive from position. Dates are
+        // guaranteed non-null here (validation passed).
+        const sortedDays = [...sessionDays].sort((a, b) =>
+          formatLocalDateKey(a.date!).localeCompare(formatLocalDateKey(b.date!)),
+        );
+        const day0 = sortedDays[0];
         courseStartDate = formatLocalDateKey(day0.date!);
         const day0Name = formatWeekday(day0.date!);
-        const timeRange = `${day0.startTime}–${day0.endTime}`;
-        timeSchedule =
-          sessionDays.length === 1
-            ? `${day0Name}, ${timeRange}`
-            : `${day0Name}, ${timeRange}`;
+        timeSchedule = `${day0Name}, ${day0.startTime}–${day0.endTime}`;
         duration = timeToMin(day0.endTime) - timeToMin(day0.startTime);
         createOptions = {
-          sessionDays: sessionDays.map((d) => ({
+          sessionDays: sortedDays.map((d) => ({
             date: formatLocalDateKey(d.date!),
             startTime: d.startTime,
             endTime: d.endTime,
@@ -272,6 +272,7 @@ export default function CourseBuilderPage() {
               : parseInt(price, 10) || 0,
           max_participants: parseInt(capacity, 10),
           status: 'draft' as const,
+          idempotency_key: idempotencyKeyRef.current,
         },
         createOptions,
       );
@@ -286,16 +287,14 @@ export default function CourseBuilderPage() {
       // upload doesn't block creation — the teacher can add it on the course page.
       if (imageFile) {
         const { url, error: upErr } = await uploadCourseImage(created.id, imageFile);
-        let imageSaved = false;
         if (url && !upErr) {
           const { error: updErr } = await updateCourse(created.id, { image_url: url });
-          if (updErr && currentSeller?.id) {
-            void deleteCourseImage(created.id, url, currentSeller.id);
+          if (updErr) {
+            if (currentSeller?.id) void deleteCourseImage(created.id, url, currentSeller.id);
+            toast.error('Bildet ble ikke lastet opp — legg det til fra kurssiden.');
           }
-          imageSaved = !updErr;
-        }
-        if (!imageSaved) {
-          toast.error('Bildet ble ikke lastet opp — du kan legge det til på kurssiden.');
+        } else {
+          toast.error('Bildet ble ikke lastet opp — legg det til fra kurssiden.');
         }
       }
 
@@ -505,9 +504,7 @@ export default function CourseBuilderPage() {
                               <SelectValue placeholder="Slutt" />
                             </SelectTrigger>
                             <SelectContent className="max-h-60">
-                              {ALL_TIME_SLOTS.filter(
-                                (slot) => !startTime || timeToMin(slot) > timeToMin(startTime),
-                              ).map((slot) => (
+                              {endTimeSlotsFor(startTime).map((slot) => (
                                 <SelectItem key={slot} value={slot}>
                                   {slot}
                                 </SelectItem>
