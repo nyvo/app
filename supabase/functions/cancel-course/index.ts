@@ -10,9 +10,8 @@
 // Per-signup routing is driven by the live Stripe PaymentIntent status, not
 // our cached `payment_status`, so we correctly handle signups stuck in
 // requires_capture (e.g. from an earlier capture failure) by cancelling instead
-// of attempting a refund on an uncaptured authorization. Dintero is
-// decommissioned (Phase 6); legacy Dintero signups are marked cancelled without
-// a refund attempt.
+// of attempting a refund on an uncaptured authorization. Non-Stripe signups
+// (free or manually marked paid) are cancelled without a refund attempt.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
@@ -315,8 +314,8 @@ Deno.serve(async (req: Request) => {
         return { kind: 'no_action_needed', signup_id: signup.id, ...participant }
       }
 
-      // Non-Stripe signup — free, manually marked paid, or a legacy Dintero booking. Dintero is
-      // decommissioned (Phase 6), so no refund is attempted; just mark the row cancelled.
+      // Non-Stripe signup — free or manually marked paid — so no refund is
+      // attempted; just mark the row cancelled.
       await supabase
         .from('signups')
         .update({

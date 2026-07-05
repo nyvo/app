@@ -1,5 +1,4 @@
 // Initiate Stripe Connect (Express) seller onboarding.
-// Stripe-side counterpart to create-dintero-seller (Phase 1 of the Dintero → Stripe migration).
 //
 // Flow:
 //  1. Teacher clicks "kom i gang" on the dashboard payments page.
