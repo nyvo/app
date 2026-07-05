@@ -153,11 +153,14 @@ export default function OnboardingPage() {
 
 function RoleChooser() {
   const { setRole } = useAuth()
-  const [pick, setPick] = useState<UserRole>('buyer')
+  // No pre-selection — an explicit pick enables Fortsett, so a reflexive
+  // first click can't submit the wrong account type.
+  const [pick, setPick] = useState<UserRole | null>(null)
   const [saving, setSaving] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!pick) return
     setSaving(true)
     const { error } = await setRole(pick)
     if (error) {
@@ -175,7 +178,7 @@ function RoleChooser() {
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-2xl">
         <h1 className="mb-8 text-2xl font-medium text-foreground">
-          Velg kontotype
+          Hva vil du gjøre?
         </h1>
 
         <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -219,7 +222,13 @@ function RoleChooser() {
           })}
         </fieldset>
 
-        <Button type="submit" size="cta" loading={saving} className="mt-8 w-full">
+        <Button
+          type="submit"
+          size="cta"
+          loading={saving}
+          disabled={pick === null}
+          className="mt-8 w-full"
+        >
           Fortsett
         </Button>
       </form>
@@ -350,7 +359,7 @@ function BuyerSetupForm({
 
           <div className="grid gap-2">
             <label htmlFor="buyer-phone" className="text-sm font-medium text-foreground">
-              Telefonnummer
+              Telefonnummer <span className="font-normal text-foreground-muted">(valgfritt)</span>
             </label>
             <Input
               id="buyer-phone"
@@ -382,6 +391,10 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
   const [name, setName] = useState(() => resolveDisplayName(profile?.name, profile?.email))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+
+  // Live address preview — the name silently becomes a public URL, so show
+  // it. Without this, the "opptatt" collision error is inexplicable.
+  const slugPreview = generateSlug(name.trim())
 
   const handleBack = async () => {
     const { error } = await setRole(null)
@@ -423,8 +436,13 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
 
     const { error: stampError } = await markOnboardingComplete()
     if (stampError) {
+      // Fatal in practice: without the stamp, ProtectedRoute bounces the
+      // navigation right back here — so surface it and let the user resubmit
+      // (ensureSeller is idempotent, the retry only re-stamps).
       logger.error('Onboarding: markOnboardingComplete failed', stampError)
-      // Non-fatal — the seller is created, just route onward.
+      toast.error('Kunne ikke fullføre oppsettet. Prøv igjen.')
+      setSaving(false)
+      return
     }
     navigate(nextPath, { replace: true })
   }
@@ -453,7 +471,9 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
             aria-describedby={`seller-name-hint${errors.name ? ' seller-name-error' : ''}`}
           />
           <p id="seller-name-hint" className="text-sm text-foreground-muted">
-            Bruk ditt eget navn eller navnet på studioet.
+            {slugPreview.length >= 3
+              ? `Adressen blir ${window.location.host}/${slugPreview}`
+              : 'Bruk ditt eget navn eller navnet på studioet.'}
           </p>
           {errors.name && (
             <FieldError id="seller-name-error" className="mt-0">{errors.name}</FieldError>

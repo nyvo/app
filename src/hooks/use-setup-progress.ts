@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
-import { CreditCard, BookOpen, MapPin, Image } from '@/lib/icons'
+import { CreditCard, BookOpen, MapPin, Image, User } from '@/lib/icons'
 import type { LucideIcon } from '@/lib/icons'
 import type { Seller } from '@/types/database'
 import { routes } from '@/lib/routes'
 
 export interface SetupStep {
-  id: 'payments' | 'location' | 'course' | 'logo'
+  id: 'account' | 'payments' | 'location' | 'course' | 'logo'
   title: string
   description: string
   isComplete: boolean
@@ -22,6 +22,8 @@ interface UseSetupProgressParams {
   currentSeller: Seller | null
   hasLocation: boolean
   hasPublishedCourse: boolean
+  /** Any course (any status) with a price > 0 — makes Stripe onboarding required. */
+  hasPaidCourse: boolean
   /** Most recent draft course, if any — lets the course step resume it. */
   draftCourseId: string | null
   onConnectPayments: () => void
@@ -50,26 +52,44 @@ export function useSetupProgress({
   currentSeller,
   hasLocation,
   hasPublishedCourse,
+  hasPaidCourse,
   draftCourseId,
   onConnectPayments,
 }: UseSetupProgressParams): UseSetupProgressResult {
   return useMemo(() => {
     const seller = currentSeller
 
-    // Required steps. Every seller connects payouts (the KYC long pole) —
-    // integrated payments are open to all tiers, and a paid course can't be
-    // published without it. A course can be published with a free-typed
-    // location, so a saved studio address is polish, not a publish blocker
-    // → it lives below.
+    // Stripe onboarding is only a publish blocker for PAID courses (see
+    // publishNeedsPaymentSetup + the DB trigger) — a free-course seller must
+    // be able to finish setup without KYC. So the step is required once a
+    // paid course exists (or once payouts are already connected, so the
+    // completed step stays visible), and sits under "Valgfritt" until then.
+    const paymentsRequired = hasPaidCourse || !!seller?.stripe_onboarding_complete
+    const paymentsStep: SetupStep = {
+      id: 'payments',
+      title: 'Aktiver betalinger',
+      description: paymentsRequired
+        ? 'Koble til Stripe så du kan ta betalt for kursene dine.'
+        : 'Trengs først når du tar betalt for et kurs.',
+      isComplete: !!seller?.stripe_onboarding_complete,
+      actionLabel: 'Aktiver',
+      actionOnClick: onConnectPayments,
+      icon: CreditCard,
+      optional: !paymentsRequired,
+    }
+
+    // Required steps. The pre-completed account step seeds the progress bar
+    // (endowed progress — it never starts at zero), and the first course comes
+    // before payouts: the builder is the quick, motivating task, KYC the slow
+    // one, and only a paid course actually needs Stripe to publish.
     const steps: SetupStep[] = [
       {
-        id: 'payments' as const,
-        title: 'Aktiver betalinger',
-        description: 'Koble til Stripe så du kan ta betalt for kursene dine.',
-        isComplete: !!seller?.stripe_onboarding_complete,
-        actionLabel: 'Aktiver',
-        actionOnClick: onConnectPayments,
-        icon: CreditCard,
+        id: 'account',
+        title: 'Opprett konto',
+        description: '',
+        isComplete: true,
+        actionLabel: '',
+        icon: User,
       },
       {
         id: 'course',
@@ -82,11 +102,13 @@ export function useSetupProgress({
         icon: BookOpen,
         timeEstimate: 'ca. 3 min',
       },
+      ...(paymentsRequired ? [paymentsStep] : []),
     ]
 
     // Optional polish — improves the storefront but isn't required to take
     // bookings, so it sits apart from the X/N progress count.
     const optionalSteps: SetupStep[] = [
+      ...(paymentsRequired ? [] : [paymentsStep]),
       {
         id: 'location',
         title: 'Legg til studioadresse',
@@ -123,5 +145,5 @@ export function useSetupProgress({
       nextStep,
       motivationalSubtitle,
     }
-  }, [currentSeller, hasLocation, hasPublishedCourse, draftCourseId, onConnectPayments])
+  }, [currentSeller, hasLocation, hasPublishedCourse, hasPaidCourse, draftCourseId, onConnectPayments])
 }

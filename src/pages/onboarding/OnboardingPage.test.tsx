@@ -57,7 +57,7 @@ describe('OnboardingPage intent handling', () => {
         profile: { role: null, onboarding_completed_at: null, name: null, email: 'a@b.no', phone: null },
       }),
     )
-    expect(screen.getByText('Velg kontotype')).toBeInTheDocument()
+    expect(screen.getByText('Hva vil du gjøre?')).toBeInTheDocument()
   })
 
   it('pre-sets the role from intent and skips the chooser', async () => {
@@ -70,7 +70,7 @@ describe('OnboardingPage intent handling', () => {
       }),
     )
     // Chooser must not flash while the intent write is in flight.
-    expect(screen.queryByText('Velg kontotype')).not.toBeInTheDocument()
+    expect(screen.queryByText('Hva vil du gjøre?')).not.toBeInTheDocument()
     await waitFor(() => expect(setRole).toHaveBeenCalledWith('seller'))
     expect(setRole).toHaveBeenCalledTimes(1)
   })

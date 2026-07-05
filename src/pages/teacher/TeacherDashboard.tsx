@@ -245,16 +245,17 @@ const TeacherDashboard = () => {
  */
 export function PlatformFeeHint({ feeNok }: { feeNok: number }) {
   const month = new Intl.DateTimeFormat('nb-NO', { month: 'long' }).format(new Date());
+  // Bordered container, text left + action right (the Rox billing / Kajabi
+  // upgrade-prompt shape) — not a floating line under the chart.
   return (
-    <p className="px-1 text-sm text-foreground-muted">
-      Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: 0 kr.{' '}
-      <Link
-        to={routes.settingsBilling}
-        className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
-      >
-        Se Pro
-      </Link>
-    </p>
+    <div className="flex flex-col gap-3 rounded-xl border border-border px-5 py-4 sm:flex-row sm:items-center">
+      <p className="min-w-0 flex-1 text-sm text-foreground-muted">
+        Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: 0 kr.
+      </p>
+      <Button asChild variant="secondary" className="w-full shrink-0 sm:w-auto">
+        <Link to={routes.settingsBilling}>Se Pro</Link>
+      </Button>
+    </div>
   );
 }
 

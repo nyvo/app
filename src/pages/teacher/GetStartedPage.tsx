@@ -132,8 +132,11 @@ export default function GetStartedPage() {
 }
 
 function StepRow({ step, isLast }: { step: SetupStep; isLast: boolean }) {
+  const hasAction = !!step.actionHref || !!step.actionOnClick
   const rowClass = cn(
-    'group flex w-full items-center gap-4 px-5 py-4 text-left no-underline transition-colors hover:bg-muted focus-visible:outline-none focus-visible:bg-muted',
+    'group flex w-full items-center gap-4 px-5 py-4 text-left no-underline',
+    hasAction &&
+      'transition-colors hover:bg-muted focus-visible:outline-none focus-visible:bg-muted',
     !isLast && 'border-b border-border',
   )
 
@@ -156,24 +159,38 @@ function StepRow({ step, isLast }: { step: SetupStep; isLast: boolean }) {
         >
           {step.title}
         </p>
-        <p className="text-base text-foreground-muted">{step.description}</p>
+        {step.description && (
+          <p className="text-base text-foreground-muted">{step.description}</p>
+        )}
       </div>
-      <HugeiconsIcon
-        icon={ArrowRight01Icon}
-        size={16}
-        strokeWidth={1.75}
-        className="text-foreground-muted shrink-0"
-      />
+      {!step.isComplete && step.timeEstimate && (
+        <span className="shrink-0 text-sm text-foreground-muted">{step.timeEstimate}</span>
+      )}
+      {hasAction && (
+        <HugeiconsIcon
+          icon={ArrowRight01Icon}
+          size={16}
+          strokeWidth={1.75}
+          className="text-foreground-muted shrink-0"
+        />
+      )}
     </>
   )
 
-  return step.actionHref ? (
-    <Link to={step.actionHref} className={rowClass}>
-      {body}
-    </Link>
-  ) : (
-    <button type="button" onClick={step.actionOnClick} className={rowClass}>
-      {body}
-    </button>
-  )
+  if (step.actionHref) {
+    return (
+      <Link to={step.actionHref} className={rowClass}>
+        {body}
+      </Link>
+    )
+  }
+  if (step.actionOnClick) {
+    return (
+      <button type="button" onClick={step.actionOnClick} className={rowClass}>
+        {body}
+      </button>
+    )
+  }
+  // No action (the pre-completed account step) — a static row, not a control.
+  return <div className={rowClass}>{body}</div>
 }
