@@ -12,6 +12,7 @@ import {
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { UnsavedChangesDialog, useUnsavedChanges } from '@/components/ui/unsaved-changes';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
@@ -46,6 +47,7 @@ import { teacherCancelSignup } from '@/services/signups';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { useAuth } from '@/contexts/AuthContext';
 import { friendlyError } from '@/lib/error-messages';
+import { runWithRevert } from '@/lib/undo';
 import { publishNeedsPaymentSetup } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 import { cn, formatKroner } from '@/lib/utils';
@@ -231,6 +233,8 @@ const CoursePage = () => {
     settingsPrice, settingsDropInPrice, sessionDays, sessions,
   ]);
 
+  const { blocker, bypass } = useUnsavedChanges(isSettingsDirty);
+
   const refundPreview = useMemo(() => {
     const paidSignups = participants.filter((p) => p.payment_status === 'paid');
     const totalRefund = paidSignups.reduce((sum, p) => sum + (p.amount_paid || 0), 0);
@@ -308,6 +312,28 @@ const CoursePage = () => {
         return;
       }
 
+      // Baseline the just-persisted course fields immediately — if a later
+      // step fails, the dirty bar and Avbryt then only track what's actually
+      // still unsaved instead of reverting to values the DB no longer holds.
+      setCourseData((prev) =>
+        prev
+          ? {
+              ...prev,
+              title: settingsTitle.trim(),
+              description: settingsDescription.trim(),
+              location: settingsLocation.trim() || null,
+              locationAddress: settingsLocationAddress.trim() || null,
+              locationLat: settingsLocationCoords?.lat ?? null,
+              locationLon: settingsLocationCoords?.lon ?? null,
+              locationPlaceId: settingsLocationCoords?.placeId ?? null,
+              capacity: maxParticipants,
+              price: settingsPrice,
+              timeSchedule: timeSchedule || prev.timeSchedule,
+              durationMinutes: settingsDuration || prev.durationMinutes,
+            }
+          : null,
+      );
+
       if (settingsAllowsDropIn) {
         const { error: dropInError } = await syncCourseDropInTier(courseId, true, settingsDropInPrice);
         if (dropInError) {
@@ -316,6 +342,11 @@ const CoursePage = () => {
           return;
         }
       }
+      setCourseData((prev) =>
+        prev
+          ? { ...prev, allowsDropIn: settingsAllowsDropIn, dropInPrice: settingsDropInPrice }
+          : null,
+      );
 
       if (courseData.format === 'single') {
         // Per-day session persistence for single/enkeltkurs courses.
@@ -413,26 +444,6 @@ const CoursePage = () => {
         }
       }
 
-      setCourseData((prev) =>
-        prev
-          ? {
-              ...prev,
-              title: settingsTitle.trim(),
-              description: settingsDescription.trim(),
-              location: settingsLocation.trim() || null,
-              locationAddress: settingsLocationAddress.trim() || null,
-              locationLat: settingsLocationCoords?.lat ?? null,
-              locationLon: settingsLocationCoords?.lon ?? null,
-              locationPlaceId: settingsLocationCoords?.placeId ?? null,
-              capacity: maxParticipants,
-              price: settingsPrice,
-              timeSchedule: timeSchedule || prev.timeSchedule,
-              durationMinutes: settingsDuration || prev.durationMinutes,
-              allowsDropIn: settingsAllowsDropIn,
-              dropInPrice: settingsDropInPrice,
-            }
-          : null,
-      );
       toast.success('Endringer lagret');
     } catch {
       setSaveError('Noe gikk galt. Prøv igjen.');
@@ -566,6 +577,7 @@ const CoursePage = () => {
     }
     setShowDeleteConfirm(false);
     toast.success('Kurset er slettet');
+    bypass();
     navigate(routes.courses);
   };
 
@@ -586,6 +598,7 @@ const CoursePage = () => {
         : 'Kurset er avlyst.';
       setShowCancelPreview(false);
       toast.success('Kurs avlyst');
+      bypass();
       navigate(routes.courses, { state: { message } });
     } catch (err) {
       setSaveError(friendlyError(err, 'Kunne ikke avlyse kurset. Prøv igjen.'));
@@ -625,26 +638,14 @@ const CoursePage = () => {
   const handleUnpublish = async () => {
     if (!courseId || !courseData) return;
     const previousStatus = courseData.status;
-    setCourseData((prev) => (prev ? { ...prev, status: 'draft' } : prev));
-    const { error: unpubError } = await unpublishCourse(courseId);
-    if (unpubError) {
-      setCourseData((prev) => (prev ? { ...prev, status: previousStatus } : prev));
-      toast.error(friendlyError(unpubError, 'Kunne ikke avpublisere kurset'));
-      return;
-    }
-    toast.success('Kurset er lagret som utkast', {
-      duration: 8000,
-      action: {
-        label: 'Angre',
-        onClick: async () => {
-          setCourseData((prev) => (prev ? { ...prev, status: previousStatus } : prev));
-          const { error: revertError } = await publishCourse(courseId);
-          if (revertError) {
-            setCourseData((prev) => (prev ? { ...prev, status: 'draft' } : prev));
-            toast.error(friendlyError(revertError, 'Kunne ikke gjenopprette publisering'));
-          }
-        },
-      },
+    await runWithRevert({
+      message: 'Kurset er lagret som utkast',
+      apply: () => setCourseData((prev) => (prev ? { ...prev, status: 'draft' } : prev)),
+      revert: () => setCourseData((prev) => (prev ? { ...prev, status: previousStatus } : prev)),
+      commit: () => unpublishCourse(courseId),
+      undo: () => publishCourse(courseId),
+      commitErrorMessage: (e) => friendlyError(e, 'Kunne ikke avpublisere kurset'),
+      undoErrorMessage: (e) => friendlyError(e, 'Kunne ikke gjenopprette publisering'),
     });
   };
 
@@ -1132,6 +1133,8 @@ const CoursePage = () => {
         loadingText="Sletter"
         onConfirm={handleDeleteCourse}
       />
+
+      <UnsavedChangesDialog blocker={blocker} />
     </div>
   );
 };

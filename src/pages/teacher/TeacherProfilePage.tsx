@@ -1,112 +1,54 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
-import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { UnsavedChangesDialog, useUnsavedChanges } from '@/components/ui/unsaved-changes';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PasswordRow } from '@/components/teacher/PasswordRow';
 import { PageShell } from '@/components/teacher/PageShell';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, typedFrom } from '@/lib/supabase';
-import { isValidEmail, resolveDisplayName } from '@/lib/utils';
-import { AUTH_VALIDATION } from '@/lib/auth-messages';
+import { resolveDisplayName } from '@/lib/utils';
+import { friendlyError } from '@/lib/error-messages';
 import { extractEdgeError } from '@/lib/edge-errors';
 import { toast } from 'sonner';
 
 const TeacherProfilePage = () => {
   const { profile, refreshSellers } = useAuth();
 
-  // State for form fields - initialized from auth context
+  // Name is the only editable field — e-mail is the login identity and is
+  // shown read-only (changing it would need Supabase's confirm-email flow).
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
 
   useEffect(() => {
     if (profile) {
       setName(resolveDisplayName(profile.name, profile.email));
-      setEmail(profile.email || '');
     }
   }, [profile]);
 
   // Dirty state tracking
   const isDirty = useMemo(() => {
     if (!profile) return false;
-    const origName = resolveDisplayName(profile.name, profile.email);
-    const origEmail = profile.email || '';
-    return name !== origName || email !== origEmail;
-  }, [profile, name, email]);
+    return name !== resolveDisplayName(profile.name, profile.email);
+  }, [profile, name]);
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    let isValid = true;
-
-    if (!email.trim()) {
-      newErrors.email = AUTH_VALIDATION.emailRequired;
-      isValid = false;
-    } else if (!isValidEmail(email)) {
-      newErrors.email = AUTH_VALIDATION.emailInvalid;
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleBlur = (field: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-
-    const newErrors = { ...errors };
-
-    if (field === 'email') {
-      if (!email.trim()) {
-        newErrors.email = AUTH_VALIDATION.emailRequired;
-      } else if (!isValidEmail(email)) {
-        newErrors.email = AUTH_VALIDATION.emailInvalid;
-      } else {
-        delete newErrors.email;
-      }
-    }
-
-    setErrors(newErrors);
-  };
-
-  const clearError = (field: string) => {
-    if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
-  };
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const { blocker, bypass } = useUnsavedChanges(isDirty);
 
   const handleCancel = () => {
     if (profile) {
       setName(resolveDisplayName(profile.name, profile.email));
-      setEmail(profile.email || '');
     }
-    setErrors({});
-    setTouched({});
+    setSaveError(null);
   };
 
   const handleSave = async () => {
-    setTouched({ name: true, email: true });
-
-    if (!validateForm()) {
-      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
-      if (firstErrorField) {
-        firstErrorField.focus();
-      }
-      return;
-    }
-
     setIsSaving(true);
+    setSaveError(null);
 
     // Save profile name. Empty input clears the column (NULL) — the trigger
     // seeds it from Google's display name on signup, but the user can wipe it.
@@ -117,7 +59,7 @@ const TeacherProfilePage = () => {
         .eq('id', profile.id);
 
       if (profileError) {
-        toast.error('Kunne ikke lagre profildata');
+        setSaveError(friendlyError(profileError, 'Kunne ikke lagre endringene.'));
         setIsSaving(false);
         return;
       }
@@ -141,6 +83,9 @@ const TeacherProfilePage = () => {
   // Logout all devices handler
   const handleLogoutAllDevices = async () => {
     setIsLoggingOutAll(true);
+    // Signing out redirects via the router — don't let a dirty name field
+    // block it behind the unsaved-changes dialog.
+    bypass();
     await supabase.auth.signOut({ scope: 'global' });
   };
 
@@ -158,6 +103,7 @@ const TeacherProfilePage = () => {
       setIsDeletingAccount(false);
       return;
     }
+    bypass();
     await supabase.auth.signOut();
     toast.success('Kontoen din er slettet');
   };
@@ -188,24 +134,17 @@ const TeacherProfilePage = () => {
               </div>
 
               <div className="grid gap-2">
-                <Label
-                  htmlFor="profile-email"
-                  data-error={(errors.email && touched.email) || undefined}
-                >
-                  E-post
-                </Label>
+                <Label htmlFor="profile-email">E-post</Label>
                 <Input
                   id="profile-email"
                   type="email"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
-                  onBlur={() => handleBlur('email')}
-                  aria-invalid={!!(errors.email && touched.email) || undefined}
-                  aria-describedby={errors.email && touched.email ? 'profile-email-error' : undefined}
+                  value={profile?.email || ''}
+                  disabled
+                  aria-describedby="profile-email-hint"
                 />
-                {errors.email && touched.email && (
-                  <FieldError id="profile-email-error" className="mt-0">{errors.email}</FieldError>
-                )}
+                <p id="profile-email-hint" className="text-sm text-foreground-muted">
+                  Brukes til innlogging og kan ikke endres.
+                </p>
               </div>
             </SettingsRow>
 
@@ -270,11 +209,13 @@ const TeacherProfilePage = () => {
           </SettingsRows>
 
           <DirtyFormBar
-            visible={isDirty}
+            visible={isDirty || !!saveError}
+            error={saveError}
             isSaving={isSaving}
             onSave={handleSave}
             onCancel={handleCancel}
           />
+          <UnsavedChangesDialog blocker={blocker} />
         </PageShell>
     </main>
   );

@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SessionRescheduleForm } from '@/components/teacher/SessionRescheduleForm';
@@ -82,6 +83,9 @@ export function SessionsModal({
   const [view, setView] = useState<View>('list');
   const [editing, setEditing] = useState<CourseSession | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Reschedule failure — shown inline in the dialog (like the drawers'
+  // submit errors), not as a toast behind the overlay.
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // On open: jump straight into reschedule if a session was targeted (the
   // Timeplan pencil), otherwise show the list.
@@ -109,12 +113,14 @@ export function SessionsModal({
 
   function startReschedule(session: CourseSession) {
     setEditing(session);
+    setSubmitError(null);
     setView('reschedule');
   }
 
   function backToList() {
     setView('list');
     setEditing(null);
+    setSubmitError(null);
   }
 
   async function submitReschedule(args: {
@@ -124,13 +130,14 @@ export function SessionsModal({
   }) {
     if (!editing) return;
     setSubmitting(true);
+    setSubmitError(null);
     const { data, error } = await rescheduleCourseSession({
       sessionId: editing.id,
       ...args,
     });
     setSubmitting(false);
     if (error) {
-      toast.error(friendlyError(error, 'Kunne ikke endre tid'));
+      setSubmitError(friendlyError(error, 'Kunne ikke lagre den nye tiden.'));
       return;
     }
     const notified = data?.notified ?? 0;
@@ -239,14 +246,21 @@ export function SessionsModal({
         )}
 
         {view === 'reschedule' && editing && (
-          <SessionRescheduleForm
-            key={editing.id}
-            session={editing}
-            defaultDurationMinutes={defaultDurationMinutes}
-            submitting={submitting}
-            onCancel={backToList}
-            onSave={submitReschedule}
-          />
+          <>
+            {submitError && (
+              <Alert variant="error" size="sm">
+                {submitError}
+              </Alert>
+            )}
+            <SessionRescheduleForm
+              key={editing.id}
+              session={editing}
+              defaultDurationMinutes={defaultDurationMinutes}
+              submitting={submitting}
+              onCancel={backToList}
+              onSave={submitReschedule}
+            />
+          </>
         )}
       </DialogContent>
     </Dialog>

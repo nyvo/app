@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { UnsavedChangesDialog, useUnsavedChanges } from '@/components/ui/unsaved-changes';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import { SessionDaysEditor, newSessionDay, timeToMin } from '@/components/teacher/SessionDaysEditor';
 import type { SessionDay } from '@/components/teacher/SessionDaysEditor';
@@ -200,6 +201,25 @@ export default function CourseBuilderPage() {
   const isValid = Object.keys(errors).length === 0;
   const showError = (field: keyof FormErrors) => submitAttempted && !!errors[field];
 
+  // Anything typed or picked counts as unsaved work until createDraft lands —
+  // the whole form is lost on navigation since nothing persists before then.
+  const isDirty = useMemo(
+    () =>
+      title.trim() !== '' ||
+      description.replace(/<[^>]*>/g, '').trim() !== '' ||
+      location.trim() !== '' ||
+      capacity !== '' ||
+      price !== '' ||
+      weeks !== '' ||
+      startDate != null ||
+      startTime !== '' ||
+      endTime !== '' ||
+      imageFile != null ||
+      sessionDays.some((d) => d.date != null || d.startTime !== '' || d.endTime !== ''),
+    [title, description, location, capacity, price, weeks, startDate, startTime, endTime, imageFile, sessionDays],
+  );
+  const { blocker, bypass } = useUnsavedChanges(isDirty);
+
   // Creates the course as a draft (+ uploads the cover image). Returns the new
   // course id, or null if validation failed or the request errored. Both
   // footer actions go through this — "Publiser" then flips the draft live.
@@ -281,6 +301,10 @@ export default function CourseBuilderPage() {
         setIsSubmitting(false);
         return null;
       }
+
+      // The draft exists in the DB from here on — the form is no longer
+      // unsaved work, so navigation (save/publish/gate dialog) is safe.
+      bypass();
 
       // Upload the picked cover image now that we have the course id. A failed
       // upload doesn't block creation — the teacher can add it on the course page.
@@ -681,6 +705,8 @@ export default function CourseBuilderPage() {
         }}
         courseTitle={title.trim() || undefined}
       />
+
+      <UnsavedChangesDialog blocker={blocker} />
     </main>
   );
 }

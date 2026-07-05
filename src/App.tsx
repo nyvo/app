@@ -1,5 +1,13 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  createRoutesFromElements,
+  Navigate,
+  Outlet,
+  Route,
+  RouterProvider,
+  useParams,
+} from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -91,10 +99,30 @@ function RootRoute() {
   return <LandingPage />;
 }
 
-function AppRoutes() {
+/**
+ * Root chrome — toaster + error boundary + suspense wrap every route via a
+ * pathless layout route. Lives *inside* the router (data mode) so route
+ * components can use useBlocker for unsaved-changes guards.
+ */
+function RootChrome() {
   return (
     <>
-      <Routes>
+      <Toaster />
+      <ErrorBoundary>
+        <Suspense fallback={<DelayedFallback><PageSkeleton /></DelayedFallback>}>
+          <Outlet />
+        </Suspense>
+      </ErrorBoundary>
+    </>
+  );
+}
+
+// Data router (createBrowserRouter) instead of declarative <BrowserRouter> —
+// required for useBlocker (see components/ui/unsaved-changes.tsx). The route
+// JSX is unchanged, just hoisted out of <Routes> into the router config.
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route element={<RootChrome />}>
         {/* Public Routes */}
         <Route path="/" element={<RootRoute />} />
         <Route
@@ -208,22 +236,14 @@ function AppRoutes() {
 
         {/* 404 Catch-all */}
         <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </>
-  );
-}
+    </Route>
+  )
+);
 
 const App = () => {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Toaster />
-        <ErrorBoundary>
-          <Suspense fallback={<DelayedFallback><PageSkeleton /></DelayedFallback>}>
-            <AppRoutes />
-          </Suspense>
-        </ErrorBoundary>
-      </BrowserRouter>
+      <RouterProvider router={router} />
     </AuthProvider>
   );
 };
