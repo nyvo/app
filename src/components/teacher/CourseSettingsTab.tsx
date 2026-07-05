@@ -462,13 +462,18 @@ export const CourseSettingsTab = ({
                 />
                 <InputGroupAddon align="inline-end" aria-hidden="true">kr</InputGroupAddon>
               </InputGroup>
-              {courseFormat === 'series' && priceInput !== '' && totalWeeks > 0 && (
-                <p className="mt-2 text-sm text-foreground-muted">
-                  Totalt {formatKroner((parseInt(priceInput, 10) || 0) * totalWeeks)} for {totalWeeks} uker
-                </p>
-              )}
             </div>
           </div>
+          {courseFormat === 'series' && priceInput !== '' && totalWeeks > 0 && (
+            <div className="flex items-baseline justify-between gap-3 rounded-xl bg-muted px-4 py-3">
+              <span className="text-base text-foreground-muted">
+                Totalt for {totalWeeks} uker
+              </span>
+              <span className="text-base font-medium tabular-nums text-foreground">
+                {formatKroner((parseInt(priceInput, 10) || 0) * totalWeeks)}
+              </span>
+            </div>
+          )}
         </SettingsRow>
       </SettingsRows>
 
