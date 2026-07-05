@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { logger } from '@/lib/logger';
 import { Link } from 'react-router-dom';
 import { routes } from '@/lib/routes';
@@ -7,7 +7,12 @@ import { NotificationsPopover } from '@/components/notifications/NotificationsPo
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
-import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
+// Lazy: IncomeChart is the only recharts consumer in product code, and
+// recharts alone is a ~350 KB chunk — keep it out of the dashboard's own
+// chunk so the overview paints without waiting for chart internals.
+const IncomeChart = lazy(() =>
+  import('@/components/teacher/dashboard/IncomeChart').then((m) => ({ default: m.IncomeChart })),
+);
 import {
   fetchIncomeSeries,
   fetchPlatformFeeMonth,
@@ -260,12 +265,14 @@ const TeacherDashboard = () => {
           ) : (
             <div className="space-y-8">
               <div className="space-y-3">
-                <IncomeChart
-                  series={incomeSeries}
-                  isLoading={incomeSeries === null}
-                  range={incomeRange}
-                  onRangeChange={setIncomeRange}
-                />
+                <Suspense fallback={<Skeleton className="h-[280px] w-full rounded-lg" />}>
+                  <IncomeChart
+                    series={incomeSeries}
+                    isLoading={incomeSeries === null}
+                    range={incomeRange}
+                    onRangeChange={setIncomeRange}
+                  />
+                </Suspense>
                 {!isPro && monthPlatformFee > 0 && (
                   <PlatformFeeHint feeNok={monthPlatformFee} />
                 )}
