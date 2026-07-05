@@ -275,7 +275,13 @@ export async function checkCourseAvailability(
     return { available: 0, total: 0, error: courseError as Error }
   }
 
-  const total = (course as unknown as { max_participants: number })?.max_participants || 0
+  // NULL max_participants means UNLIMITED — the same convention the
+  // create_signup_if_available RPC uses (it skips capacity checks when NULL).
+  // The old `max_participants || 0` reported those courses as full (0 spots),
+  // so a course bookable via checkout was blocked in the manual-add drawer.
+  const rawMax = (course as unknown as { max_participants: number | null })?.max_participants
+  const isUnlimited = rawMax === null || rawMax === undefined
+  const total = isUnlimited ? Infinity : rawMax
 
   // Count confirmed signups via the public counts RPC. A direct count on
   // `signups` only works for seller members — anon (guest checkout) has no
@@ -288,12 +294,12 @@ export async function checkCourseAvailability(
   )
 
   if (countError) {
-    return { available: 0, total, error: countError as Error }
+    return { available: isUnlimited ? Infinity : 0, total, error: countError as Error }
   }
 
   const confirmed = (counts as { course_id: string; confirmed_count: number }[] | null)
     ?.find((c) => c.course_id === courseId)?.confirmed_count ?? 0
-  const available = Math.max(0, total - confirmed)
+  const available = isUnlimited ? Infinity : Math.max(0, total - confirmed)
 
   return { available, total, error: null }
 }

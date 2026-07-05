@@ -137,7 +137,7 @@ Deno.serve(async (req: Request) => {
       message: '',
     }
 
-    const refundPromises = (signups || []).map(async (signup) => {
+    const runOne = async (signup: NonNullable<typeof signups>[number]) => {
       const participantName = signup.participant_name || ''
       const participantEmail = signup.participant_email || ''
       const stripePaymentIntentId = signup.stripe_payment_intent_id as string | null
@@ -302,7 +302,21 @@ Deno.serve(async (req: Request) => {
           }
         }
 
-        // canceled / processing / already refunded at Stripe — nothing to do; terminalize.
+        // Settlement in flight: refunding isn't possible yet, and terminalizing
+        // now would strand the buyer paid-for-a-cancelled-course once it
+        // settles. Leave the row 'confirmed' and surface it so a re-run refunds
+        // it once the PI reaches 'succeeded' (mirrors lookup_failed).
+        if (piStatus === 'processing') {
+          return {
+            kind: 'refund_failed',
+            signup_id: signup.id,
+            participant_name: participantName,
+            participant_email: participantEmail,
+            error: 'Betalingen er under oppgjør. Kjør avlysningen på nytt om litt for å refundere.',
+          }
+        }
+
+        // canceled / already refunded at Stripe — no money moved; terminalize.
         await supabase
           .from('signups')
           .update({
@@ -325,9 +339,19 @@ Deno.serve(async (req: Request) => {
         })
         .eq('id', signup.id)
       return { kind: 'no_payment', signup_id: signup.id, ...participant }
-    })
+    }
 
-    const refundResults = await Promise.allSettled(refundPromises)
+    // Bound Stripe concurrency: a course with hundreds of signups otherwise
+    // fires hundreds of parallel retrieve/refund calls and trips Stripe's rate
+    // limiter (429s surface as refund_failed noise). Process in small batches;
+    // failed rows stay 'confirmed' and are retried on the next cancel run.
+    const REFUND_CONCURRENCY = 8
+    const allSignups = signups || []
+    const refundResults: PromiseSettledResult<Awaited<ReturnType<typeof runOne>>>[] = []
+    for (let i = 0; i < allSignups.length; i += REFUND_CONCURRENCY) {
+      const batch = allSignups.slice(i, i + REFUND_CONCURRENCY).map((s) => runOne(s))
+      refundResults.push(...(await Promise.allSettled(batch)))
+    }
     for (const r of refundResults) {
       if (r.status !== 'fulfilled') {
         results.refunds_failed++
