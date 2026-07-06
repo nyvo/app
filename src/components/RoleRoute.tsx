@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
+import { PageState } from '@/components/page-state/page-state'
 
 type Role = 'buyer' | 'seller'
 
@@ -20,8 +21,16 @@ interface RoleRouteProps {
  * TeacherLayout guarantees onboarding is complete.
  */
 export function RoleRoute({ allow }: RoleRouteProps) {
-  const { isInitialized, sellers } = useAuth()
-  if (!isInitialized) return null
+  const { isInitialized, isLoading, sellers, sellersLoadFailed } = useAuth()
+  // Hold while auth data is loading — mid-login, profile can land before
+  // sellers, and routing on that window would bounce a seller deep-link.
+  if (!isInitialized || isLoading) return null
+
+  // Failed fetch is "unknown", not "buyer" — never demote a seller because
+  // the memberships query timed out. Reload re-runs the whole auth init.
+  if (sellersLoadFailed) {
+    return <PageState variant="server-error" />
+  }
 
   const isSeller = sellers.length > 0
   const effectiveRole: Role = isSeller ? 'seller' : 'buyer'

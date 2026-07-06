@@ -129,7 +129,7 @@ export default function CourseBuilderEventbrite() {
                   <Field label="Antall plasser">
                     <input className={inputCls} defaultValue="12" inputMode="numeric" />
                   </Field>
-                  <Field label={format === 'series' ? 'Pris per gang' : 'Pris'}>
+                  <Field label={format === 'series' ? 'Pris for hele kurset' : 'Pris'}>
                     <div className="relative">
                       <input className={`${inputCls} pr-12`} defaultValue="350" inputMode="numeric" />
                       <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[15px] text-neutral-400">kr</span>

@@ -10,7 +10,7 @@ import { PasswordRow } from '@/components/teacher/PasswordRow';
 import { PageShell } from '@/components/teacher/PageShell';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, typedFrom } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { resolveDisplayName } from '@/lib/utils';
 import { friendlyError } from '@/lib/error-messages';
 import { extractEdgeError } from '@/lib/edge-errors';
@@ -56,7 +56,7 @@ const TeacherProfilePage = () => {
     // seeds it from Google's display name on signup, but the user can wipe it.
     if (profile?.id) {
       const trimmed = name.trim();
-      const { error: profileError } = await typedFrom('profiles')
+      const { error: profileError } = await supabase.from('profiles')
         .update({ name: trimmed || null })
         .eq('id', profile.id);
 

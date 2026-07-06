@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchCourseById, fetchCourseSessions, fetchDropInTier } from '@/services/courses';
 import { fetchSignupsByCourseWithProfiles, type SignupWithProfile } from '@/services/signups';
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
@@ -66,6 +67,7 @@ export interface UseCourseDetailReturn {
   participants: SignupWithProfile[];
   loading: boolean;
   participantsLoading: boolean;
+  participantsError: boolean;
   error: string | null;
   maxParticipants: number;
   setCourse: React.Dispatch<React.SetStateAction<MappedCourse | null>>;
@@ -76,97 +78,115 @@ export interface UseCourseDetailReturn {
   refetch: () => void;
 }
 
+/**
+ * Course detail server state on TanStack Query. External API is unchanged
+ * from the useState era, so CoursePage/CourseDrawer work as before — but the
+ * data now lives in the query cache: CourseDrawer's second invocation shares
+ * this page's fetch instead of duplicating it, and drawer → page navigation
+ * renders from cache.
+ *
+ * The set* "setters" write through to the cache (setQueryData). They exist
+ * for the legacy hand-patching in CoursePage's save flow; the endgame is
+ * mutations + invalidation, at which point they disappear.
+ *
+ * refetchOnWindowFocus is OFF for these keys: CoursePage holds unsaved form
+ * state that effects re-sync from `sessions`/`course`, so a background
+ * refetch mid-edit could wipe user input. Data changes only via explicit
+ * refetch()/refetchParticipants() (+ the realtime subscription), exactly as
+ * before.
+ */
 export function useCourseDetail(courseId: string | undefined): UseCourseDetailReturn {
-  // State for fetched course data
-  const [courseData, setCourseData] = useState<MappedCourse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  // maxParticipants is FORM state (the editable capacity field): dirty-checked
+  // against course.capacity, submitted on save, reset by Forkast. It is
+  // initialized from the course once per courseId / explicit refetch — never
+  // by cache writes, which would wipe an unsaved capacity edit when an
+  // instant-commit action (image upload, drop-in toggle) patches the course.
   const [maxParticipants, setMaxParticipants] = useState(0);
+  const initedForRef = useRef<string | null>(null);
 
-  // Sessions state (for Kursplan)
-  const [sessions, setSessions] = useState<CourseSession[]>([]);
-  const [_sessionsLoading, setSessionsLoading] = useState(false);
+  const courseQuery = useQuery({
+    queryKey: ['course-detail', courseId],
+    enabled: !!courseId,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+    queryFn: async (): Promise<MappedCourse | null> => {
+      const [courseResult, dropInTier] = await Promise.all([
+        fetchCourseById(courseId!),
+        fetchDropInTier(courseId!),
+      ]);
+      if (courseResult.error) throw courseResult.error;
+      if (!courseResult.data) return null; // not found
+      return mapCourseToComponentFormat(courseResult.data, dropInTier.active, dropInTier.price);
+    },
+  });
 
-  // Participants state (for Deltakere tab)
-  const [participants, setParticipants] = useState<SignupWithProfile[]>([]);
-  const [participantsLoading, setParticipantsLoading] = useState(false);
-
-  // Refetch trigger
-  const [refetchKey, setRefetchKey] = useState(0);
-
-  // Fetch course data from Supabase
   useEffect(() => {
-    async function loadCourse() {
-      if (!courseId) {
-        setError('Fant ikke kurset.');
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const [courseResult, dropInTier] = await Promise.all([
-          fetchCourseById(courseId),
-          fetchDropInTier(courseId),
-        ]);
-
-        if (courseResult.error || !courseResult.data) {
-          setError('Fant ikke kurset.');
-          return;
-        }
-
-        const mappedCourse = mapCourseToComponentFormat(courseResult.data, dropInTier.active, dropInTier.price);
-        setCourseData(mappedCourse);
-        setMaxParticipants(mappedCourse.capacity);
-      } catch {
-        setError('Noe gikk galt. Prøv igjen.');
-      } finally {
-        setIsLoading(false);
-      }
+    if (courseQuery.data && courseId && initedForRef.current !== courseId) {
+      initedForRef.current = courseId;
+      setMaxParticipants(courseQuery.data.capacity);
     }
+  }, [courseQuery.data, courseId]);
 
-    loadCourse();
-  }, [courseId, refetchKey]);
+  const sessionsQuery = useQuery({
+    queryKey: ['course-sessions', courseId],
+    enabled: !!courseId,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+    queryFn: async (): Promise<CourseSession[]> => {
+      const { data, error } = await fetchCourseSessions(courseId!);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-  // Fetch sessions when course is loaded
-  useEffect(() => {
-    async function loadSessions() {
-      if (!courseId || !courseData) return;
+  const participantsQuery = useQuery({
+    queryKey: ['course-participants', courseId],
+    enabled: !!courseId,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+    queryFn: async (): Promise<SignupWithProfile[]> => {
+      const { data, error } = await fetchSignupsByCourseWithProfiles(courseId!);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-      setSessionsLoading(true);
-      const { data: sessionsData } = await fetchCourseSessions(courseId);
-      if (sessionsData) {
-        setSessions(sessionsData);
-      }
-      setSessionsLoading(false);
-    }
+  // Cache-writing setters, API-compatible with the old useState dispatchers.
+  const setCourse = useCallback<React.Dispatch<React.SetStateAction<MappedCourse | null>>>(
+    (action) => {
+      queryClient.setQueryData<MappedCourse | null>(['course-detail', courseId], (prev) =>
+        typeof action === 'function' ? action(prev ?? null) : action,
+      );
+    },
+    [queryClient, courseId],
+  );
 
-    loadSessions();
-  }, [courseId, courseData]);
+  const setSessions = useCallback<React.Dispatch<React.SetStateAction<CourseSession[]>>>(
+    (action) => {
+      queryClient.setQueryData<CourseSession[]>(['course-sessions', courseId], (prev) =>
+        typeof action === 'function' ? action(prev ?? []) : action,
+      );
+    },
+    [queryClient, courseId],
+  );
 
-  // Fetch participants when course is loaded
-  useEffect(() => {
-    async function loadParticipants() {
-      if (!courseId) return;
-
-      setParticipantsLoading(true);
-      const { data: participantsData } = await fetchSignupsByCourseWithProfiles(courseId);
-      if (participantsData) {
-        setParticipants(participantsData);
-      }
-      setParticipantsLoading(false);
-    }
-
-    loadParticipants();
-  }, [courseId]);
+  const setParticipants = useCallback<React.Dispatch<React.SetStateAction<SignupWithProfile[]>>>(
+    (action) => {
+      queryClient.setQueryData<SignupWithProfile[]>(['course-participants', courseId], (prev) =>
+        typeof action === 'function' ? action(prev ?? []) : action,
+      );
+    },
+    [queryClient, courseId],
+  );
 
   const refetchParticipants = useCallback(async () => {
     if (!courseId) return;
-    const { data } = await fetchSignupsByCourseWithProfiles(courseId);
-    if (data) setParticipants(data);
-  }, [courseId]);
+    // Background refetch: on error TanStack keeps the last-known data.
+    await participantsQuery.refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId, participantsQuery.refetch]);
 
   // Subscribe to real-time updates for this course's participants
   useRealtimeSubscription(
@@ -176,18 +196,31 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
   );
 
   const refetch = useCallback(() => {
-    setRefetchKey(prev => prev + 1);
-  }, []);
+    // Full reload (used after saves): re-init maxParticipants from the fresh
+    // course, matching the old refetchKey behavior.
+    initedForRef.current = null;
+    void queryClient.invalidateQueries({ queryKey: ['course-detail', courseId] });
+    void queryClient.invalidateQueries({ queryKey: ['course-sessions', courseId] });
+  }, [queryClient, courseId]);
+
+  const error = !courseId
+    ? 'Fant ikke kurset.'
+    : courseQuery.isError
+      ? 'Noe gikk galt. Prøv igjen.'
+      : !courseQuery.isPending && courseQuery.data === null
+        ? 'Fant ikke kurset.'
+        : null;
 
   return {
-    course: courseData,
-    sessions,
-    participants,
-    loading: isLoading,
-    participantsLoading,
+    course: courseQuery.data ?? null,
+    sessions: sessionsQuery.data ?? [],
+    participants: participantsQuery.data ?? [],
+    loading: !!courseId && courseQuery.isPending,
+    participantsLoading: !!courseId && participantsQuery.isPending,
+    participantsError: participantsQuery.isError,
     error,
     maxParticipants,
-    setCourse: setCourseData,
+    setCourse,
     setSessions,
     setParticipants,
     setMaxParticipants,

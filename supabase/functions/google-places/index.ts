@@ -9,7 +9,7 @@
 // of our Google quota.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
+import { handleCors, errorResponse, successResponse, getClientIp } from '../_shared/auth.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -38,18 +38,17 @@ Deno.serve(async (req: Request) => {
 
     // Per-IP fixed-window limit. Autocomplete fires per keystroke, so the bucket
     // is generous; fail open (only block on an explicit false) so a limiter
-    // hiccup never wedges a teacher mid-search. Kick the check off now but don't
-    // await it yet — run it concurrently with the Google call below so the DB
-    // round-trip doesn't add latency to every keystroke.
+    // hiccup never wedges a teacher mid-search. Awaited BEFORE the Google call
+    // so an over-limit caller never actually bills our Places quota — the cost
+    // is one DB round-trip per keystroke, not a billed Google request.
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
-    const clientIp = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown'
-    const limitPromise = supabase.rpc('check_rate_limit', {
-      p_key: `places:ip:${clientIp}`,
-      p_limit: 200,
-      p_window_seconds: 3600,
-    })
+    const clientIp = getClientIp(req)
     const isRateLimited = async () => {
-      const { data: allowed, error: limitErr } = await limitPromise
+      const { data: allowed, error: limitErr } = await supabase.rpc('check_rate_limit', {
+        p_key: `places:ip:${clientIp}`,
+        p_limit: 200,
+        p_window_seconds: 3600,
+      })
       if (limitErr) console.error('check_rate_limit failed:', limitErr)
       return allowed === false
     }
@@ -58,24 +57,23 @@ Deno.serve(async (req: Request) => {
       const input = (body.input || '').trim()
       if (input.length < 3) return successResponse({ suggestions: [] }, 200, req)
 
-      const [limited, res] = await Promise.all([
-        isRateLimited(),
-        fetch(`${PLACES_BASE}/places:autocomplete`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Goog-Api-Key': googleApiKey,
-          },
-          body: JSON.stringify({
-            input,
-            sessionToken: body.sessionToken,
-            languageCode: 'no',
-            regionCode: 'NO',
-            includedRegionCodes: ['no'],
-          }),
+      if (await isRateLimited()) {
+        return errorResponse('For mange søk. Prøv igjen om litt.', 429, req)
+      }
+      const res = await fetch(`${PLACES_BASE}/places:autocomplete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': googleApiKey,
+        },
+        body: JSON.stringify({
+          input,
+          sessionToken: body.sessionToken,
+          languageCode: 'no',
+          regionCode: 'NO',
+          includedRegionCodes: ['no'],
         }),
-      ])
-      if (limited) return errorResponse('For mange søk. Prøv igjen om litt.', 429, req)
+      })
       if (!res.ok) {
         console.error('places:autocomplete', res.status, await res.text())
         return errorResponse('Søket feilet. Prøv igjen.', 502, req)

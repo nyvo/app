@@ -4,6 +4,11 @@
 // confirmed signup on the parent course via the session-rescheduled
 // email template. Best-effort notification: a failed email does not
 // roll back the update.
+//
+// notify_only mode: the save_course_schedule RPC already committed the
+// session change transactionally — this function then only fans out the
+// emails, using the caller-provided old date/time (the row already holds
+// the new values). No write happens in that mode.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
@@ -24,6 +29,11 @@ interface UpdateSessionRequest {
   new_date: string       // YYYY-MM-DD
   new_start_time: string // HH:MM or HH:MM:SS
   new_end_time?: string  // HH:MM or HH:MM:SS — optional
+  // notify_only: skip the write (already committed by save_course_schedule);
+  // old_* carry the pre-change values for the email copy.
+  notify_only?: boolean
+  old_date?: string
+  old_start_time?: string
 }
 
 function weekdayDate(input: string): string {
@@ -64,6 +74,9 @@ Deno.serve(async (req: Request) => {
   if (!body.session_id || !body.new_date || !body.new_start_time) {
     return errorResponse('Missing session_id, new_date, or new_start_time', 400, req)
   }
+  if (body.notify_only && (!body.old_date || !body.old_start_time)) {
+    return errorResponse('notify_only requires old_date and old_start_time', 400, req)
+  }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
@@ -99,22 +112,33 @@ Deno.serve(async (req: Request) => {
     return errorResponse(authz.error || 'Forbidden', 403, req)
   }
 
-  // 3. Capture old values for the email, then update
-  const oldDate = session.session_date
-  const oldStart = shortTime(session.start_time)
+  // 3. Capture old values for the email, then update (skipped in notify_only —
+  // the RPC already committed the change, so the row holds the NEW values and
+  // the caller supplies the old ones).
+  const oldDate = body.notify_only ? body.old_date! : session.session_date
+  const oldStart = shortTime(body.notify_only ? body.old_start_time! : session.start_time)
 
-  const { error: updateError } = await supabase
-    .from('course_sessions')
-    .update({
+  if (!body.notify_only) {
+    // Only touch end_time when the caller actually sent it. `?? null` wiped a
+    // previously-set end time whenever new_end_time was omitted (it's optional,
+    // and some callers only move the date/start). undefined = leave as-is;
+    // explicit null still clears it.
+    const updatePayload: Record<string, unknown> = {
       session_date: body.new_date,
       start_time: body.new_start_time,
-      end_time: body.new_end_time ?? null,
-    })
-    .eq('id', body.session_id)
+    }
+    if (body.new_end_time !== undefined) {
+      updatePayload.end_time = body.new_end_time
+    }
+    const { error: updateError } = await supabase
+      .from('course_sessions')
+      .update(updatePayload)
+      .eq('id', body.session_id)
 
-  if (updateError) {
-    console.error('[update-session] update error', updateError)
-    return errorResponse('Could not update session', 500, req)
+    if (updateError) {
+      console.error('[update-session] update error', updateError)
+      return errorResponse('Could not update session', 500, req)
+    }
   }
 
   // 4. Notify confirmed signups — best-effort. The update is already committed.
@@ -138,9 +162,13 @@ Deno.serve(async (req: Request) => {
       const oldDateLabel = weekdayDate(oldDate)
       const studioName = course.seller?.name ?? ''
 
-      // Sequential — keeps Resend rate-limit happy on long lists.
+      // Sequential with a small gap — Resend's default is ~2 req/s and a tight
+      // loop over a long list 429s mid-way, dropping "ny tid" notices.
+      let first = true
       for (const s of signups) {
         if (!s.participant_email) continue
+        if (!first) await new Promise((r) => setTimeout(r, 550))
+        first = false
         const result = await sendEmail({
           template: 'session-rescheduled',
           to: s.participant_email,

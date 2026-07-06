@@ -158,6 +158,10 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
   }
 
   try {
+    // Bound the call: without a timeout a hung Resend/edge connection stalls
+    // the whole batch loop (reminders, confirmations, course messages) until the
+    // isolate is wall-clock-killed, leaving the unsent tail unstamped and
+    // re-sent next run. 15s mirrors the Stripe helper.
     const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
       method: 'POST',
       headers: {
@@ -165,6 +169,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
         Authorization: `Bearer ${serviceRoleKey}`,
       },
       body: JSON.stringify(input),
+      signal: AbortSignal.timeout(15_000),
     })
 
     if (!res.ok) {

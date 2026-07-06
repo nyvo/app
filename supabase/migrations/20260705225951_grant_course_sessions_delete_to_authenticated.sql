@@ -1,0 +1,13 @@
+-- save_course_schedule (SECURITY INVOKER, 20260705200000) executes
+-- `DELETE FROM course_sessions ...` whenever a session list is passed, but
+-- authenticated has never held DELETE on course_sessions — the production
+-- baseline granted only SELECT, INSERT, UPDATE. Postgres checks the table
+-- privilege before RLS and regardless of how many rows would match, so every
+-- schedule save fails with `permission denied for table course_sessions`
+-- (42501 → PostgREST 403), even when nothing is being removed.
+--
+-- The member-only RLS policy (course_sessions_delete_member) has existed all
+-- along; it just had no table privilege to run under, so this grant stays
+-- scoped to seller members. The same gap silently broke the client's
+-- deleteCourseSession() draft-day removal.
+GRANT DELETE ON TABLE public.course_sessions TO authenticated;

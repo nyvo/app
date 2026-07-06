@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ import { createStripeSession } from '@/services/checkout';
 import { createFreeSignup } from '@/services/signups';
 import { supabase } from '@/lib/supabase';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { osloNowKey, toLocalDate } from '@/utils/dateUtils';
 import type { AvailableTicketType } from '@/types/database';
 
 interface FormState {
@@ -42,15 +44,11 @@ const CheckoutPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [course, setCourse] = useState<PublicCourseWithDetails | null>(null);
-  const [tiers, setTiers] = useState<AvailableTicketType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({ name: '', email: '', phone: '', note: '', terms: false });
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
+  const [attempted, setAttempted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [emailMessage, setEmailMessage] = useState<string | null>(null);
   // Two-step in-place flow: 'contact' shows the kontaktinfo form, 'payment'
@@ -58,99 +56,116 @@ const CheckoutPage = () => {
   const [step, setStep] = useState<'contact' | 'payment'>('contact');
 
   // ── Load course + tiers ────────────────────────────────────────────────
-  useEffect(() => {
-    let cancelled = false;
-    if (!slug || !courseSlug) {
-      setError('not-found');
-      setLoading(false);
-      return;
-    }
-    void (async () => {
-      const { data: courseData, error: courseErr } = await fetchPublicCourseBySlug(slug, courseSlug);
-      if (cancelled) return;
-      if (courseErr || !courseData) {
-        setError('not-found');
-        setLoading(false);
-        return;
-      }
+  // One query owns the load; redirect decisions come back as data and are
+  // performed by the effect below (queryFn stays side-effect-free). A failed
+  // tier fetch throws → retryable server-error page instead of a silently
+  // disabled submit button.
+  type CheckoutData =
+    | { kind: 'redirect'; ownerSlug: string }
+    | { kind: 'not-found' }
+    | { kind: 'ok'; course: PublicCourseWithDetails; tiers: AvailableTicketType[] };
+
+  const checkoutQuery = useQuery({
+    queryKey: ['checkout', slug, courseSlug],
+    enabled: !!slug && !!courseSlug,
+    queryFn: async (): Promise<CheckoutData> => {
+      const { data: courseData, error: courseErr } = await fetchPublicCourseBySlug(slug!, courseSlug!);
+      if (courseErr || !courseData) return { kind: 'not-found' };
 
       const ownerSlug = courseData.seller?.slug;
       if (ownerSlug && ownerSlug !== slug) {
-        const query = searchParams.toString();
-        navigate(
-          `/${ownerSlug}/${courseSlug}/pamelding${query ? `?${query}` : ''}`,
-          { replace: true },
-        );
-        return;
+        return { kind: 'redirect', ownerSlug };
       }
 
-      setCourse(courseData);
-
       // Load all standard-audience tiers via public RPC.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: tierData } = await (supabase.rpc as any)('available_ticket_types', {
+      const { data: tierData, error: tierErr } = await supabase.rpc('available_ticket_types', {
         p_course_id: courseData.id,
       });
-      if (cancelled) return;
+      if (tierErr) throw tierErr;
       const allTiers = ((tierData ?? []) as AvailableTicketType[]).filter(
         (t) => t.audience === 'standard',
       );
-      setTiers(allTiers);
+      return { kind: 'ok', course: courseData, tiers: allTiers };
+    },
+  });
 
-      // Honour ?billett= from the detail-page rail. "main" → primary tier
-      // (first non-drop-in), "drop-in" → drop-in tier. Fall back to the
-      // primary tier when missing/invalid.
-      const requested = searchParams.get('billett');
-      const dropIn = allTiers.find((t) => t.ticket_kind === 'drop_in');
-      const main =
-        allTiers.find((t) => t.is_default && t.ticket_kind !== 'drop_in')
-        ?? allTiers.find((t) => t.ticket_kind !== 'drop_in')
-        ?? allTiers[0];
+  useEffect(() => {
+    if (checkoutQuery.data?.kind !== 'redirect') return;
+    const query = searchParams.toString();
+    navigate(
+      `/${checkoutQuery.data.ownerSlug}/${courseSlug}/pamelding${query ? `?${query}` : ''}`,
+      { replace: true },
+    );
+  }, [checkoutQuery.data, courseSlug, searchParams, navigate]);
 
-      let initial: AvailableTicketType | undefined;
-      if (requested === 'drop-in' && dropIn) initial = dropIn;
-      else if (requested === 'main' && main) initial = main;
-      else initial = main ?? allTiers[0];
-      setSelectedTierId(initial?.id ?? null);
+  const course = checkoutQuery.data?.kind === 'ok' ? checkoutQuery.data.course : null;
+  const tiers = useMemo(
+    () => (checkoutQuery.data?.kind === 'ok' ? checkoutQuery.data.tiers : []),
+    [checkoutQuery.data],
+  );
+  const loading = checkoutQuery.isPending || checkoutQuery.data?.kind === 'redirect';
+  const error = !slug || !courseSlug || checkoutQuery.data?.kind === 'not-found'
+    ? 'not-found'
+    : checkoutQuery.isError
+      ? 'load-failed'
+      : null;
 
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [slug, courseSlug, searchParams, navigate]);
+  // Honour ?billett= from the detail-page rail once tiers arrive. "main" →
+  // primary tier (first non-drop-in), "drop-in" → drop-in tier. Fall back to
+  // the primary tier when missing/invalid. Runs once (selectedTierId guard),
+  // so a background refetch never clobbers the buyer's own selection.
+  useEffect(() => {
+    if (selectedTierId !== null || tiers.length === 0) return;
+    const requested = searchParams.get('billett');
+    const dropIn = tiers.find((t) => t.ticket_kind === 'drop_in');
+    const main =
+      tiers.find((t) => t.is_default && t.ticket_kind !== 'drop_in')
+      ?? tiers.find((t) => t.ticket_kind !== 'drop_in')
+      ?? tiers[0];
+
+    let initial: AvailableTicketType | undefined;
+    if (requested === 'drop-in' && dropIn) initial = dropIn;
+    else if (requested === 'main' && main) initial = main;
+    else initial = main ?? tiers[0];
+    setSelectedTierId(initial?.id ?? null);
+  }, [tiers, searchParams, selectedTierId]);
 
   const isFree = !course?.price || course.price <= 0;
   const isCancelled = course?.status === 'cancelled';
-  const isFull =
-    course?.max_participants != null && course.spots_available <= 0;
   // Free signups need no payment rails; paid needs Stripe onboarding complete.
   const paymentReady =
     isFree || (course?.seller?.stripe_onboarding_complete ?? false);
 
   const selectedTier = tiers.find((t) => t.id === selectedTierId) ?? null;
   const isDropInSelected = selectedTier?.ticket_kind === 'drop_in';
+  // Course-wide capacity gates the package tiers only. A drop-in occupies a
+  // single class, so it stays purchasable while the NEXT session has room —
+  // available_ticket_types gates its visibility per session and the edge
+  // function enforces that capacity before authorizing payment.
+  const isFull =
+    course?.max_participants != null
+    && course.spots_available <= 0
+    && !isDropInSelected;
 
   // Drop-in flow: pick the next class automatically — the first session that
   // hasn't started yet. Same model as BookingPanel; no session picker.
   // undefined = loading / not applicable, null = no upcoming session.
   const [dropInSessionId, setDropInSessionId] = useState<string | null | undefined>(undefined);
+  // Query failure is not "no sessions" — track it separately so the buyer
+  // sees a retryable error instead of the false "ingen kommende timer".
+  const [dropInLookupFailed, setDropInLookupFailed] = useState(false);
   useEffect(() => {
     let cancelled = false;
+    setDropInLookupFailed(false);
     if (!isDropInSelected || !course?.id) {
       setDropInSessionId(undefined);
       return;
     }
     void (async () => {
       // Session rows store naive Norwegian local times — compare against "now"
-      // in Europe/Oslo (sv-SE gives "YYYY-MM-DD HH:mm:ss", lexically ordered).
-      const osloNow = new Intl.DateTimeFormat('sv-SE', {
-        timeZone: 'Europe/Oslo',
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit',
-        hour12: false,
-      }).format(new Date());
-      const { data } = await supabase
+      // in Europe/Oslo ("YYYY-MM-DD HH:mm:ss", lexically ordered).
+      const osloNow = osloNowKey();
+      const { data, error: sessionsErr } = await supabase
         .from('course_sessions')
         .select('id, session_date, start_time, status')
         .eq('course_id', course.id)
@@ -160,6 +175,11 @@ const CheckoutPage = () => {
         .order('start_time', { ascending: true })
         .limit(10);
       if (cancelled) return;
+      if (sessionsErr) {
+        setDropInSessionId(undefined);
+        setDropInLookupFailed(true);
+        return;
+      }
       const next = (data as { id: string; session_date: string; start_time: string }[] | null)
         ?.find((s) => `${s.session_date} ${s.start_time}` > osloNow);
       setDropInSessionId(next?.id ?? null);
@@ -174,21 +194,14 @@ const CheckoutPage = () => {
   const fee = calculateServiceFee(tierPrice);
   const total = tierPrice + fee;
 
-  // ── Form validity ───────────────────────────────────────────────────────
-  const formValid =
-    form.name.trim().length > 0
-    && isValidEmail(form.email)
-    && isValidPhone(form.phone)
-    && form.terms
-    && !!selectedTier
-    // Drop-in needs a resolved next class before the buyer can continue.
-    && (!isDropInSelected || typeof dropInSessionId === 'string');
+  // ── Form validation ─────────────────────────────────────────────────────
+  // Blur shows format errors on non-empty fields; a failed submit attempt
+  // (`attempted`) surfaces every invalid field, empty ones included.
+  const nameError =
+    attempted && form.name.trim().length === 0 ? 'Skriv inn navnet ditt.' : null;
 
-  // Inline phone error, shown only after blur and only when the field holds
-  // something that isn't a valid number — an empty field just keeps the
-  // submit button disabled (matches the app's field-error pattern).
   const phoneError =
-    phoneTouched && form.phone.trim().length > 0 && !isValidPhone(form.phone)
+    !isValidPhone(form.phone) && (attempted || (phoneTouched && form.phone.trim().length > 0))
       ? 'Skriv inn et gyldig telefonnummer.'
       : null;
 
@@ -196,10 +209,12 @@ const CheckoutPage = () => {
   // emailMessage (e.g. "already signed up") shares the same slot — the two
   // can't co-occur, since a malformed email never reaches the server.
   const emailFormatError =
-    emailTouched && form.email.trim().length > 0 && !isValidEmail(form.email)
+    !isValidEmail(form.email.trim()) && (attempted || (emailTouched && form.email.trim().length > 0))
       ? 'Skriv inn en gyldig e-postadresse.'
       : null;
   const emailError = emailFormatError || emailMessage;
+
+  const termsError = attempted && !form.terms ? 'Du må godta vilkårene.' : null;
 
   // ── Stripe session state ─────────────────────────────────────────────────
   const [sessionError, setSessionError] = useState<string | null>(null);
@@ -211,6 +226,8 @@ const CheckoutPage = () => {
   //    so a 409 or "fullt" stays on the form with the right error visible.
   async function handleAdvanceToPayment() {
     if (isFree || !course || !slug || !selectedTier || submitting) return;
+    // Drop-in needs a resolved next class before the buyer can continue.
+    if (isDropInSelected && typeof dropInSessionId !== 'string') return;
     setSubmitting(true);
     setSessionError(null);
     setEmailMessage(null);
@@ -274,9 +291,31 @@ const CheckoutPage = () => {
     window.location.href = `/checkout/success?free=true&org=${slug}`;
   }
 
+  // ── Contact-step submit — validate on attempt, focus the first invalid
+  //    field, otherwise hand off to the free/paid flow.
+  function handleContactSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setAttempted(true);
+    const firstInvalid =
+      form.name.trim().length === 0 ? 'name'
+      : !isValidEmail(form.email.trim()) ? 'email'
+      : !isValidPhone(form.phone) ? 'phone'
+      : !form.terms ? 'terms'
+      : null;
+    if (firstInvalid) {
+      document.getElementById(firstInvalid)?.focus();
+      return;
+    }
+    if (isFree) void handleFreeSubmit();
+    else void handleAdvanceToPayment();
+  }
+
   // ── States ──────────────────────────────────────────────────────────────
   if (loading) {
     return <CheckoutSkeleton />;
+  }
+  if (error === 'load-failed') {
+    return <PageState variant="server-error" />;
   }
   if (error || !course) {
     return <PageState variant="public-course" />;
@@ -331,114 +370,139 @@ const CheckoutPage = () => {
               <>
                 <CheckoutStepHeader step={1} showSteps={!isFree} />
 
-                <div className="px-2 sm:px-6">
-                  <div className="space-y-4">
-                    <Field label="Navn" htmlFor="name">
-                      <Input
-                        id="name"
-                        type="text"
-                        autoComplete="name"
-                        value={form.name}
-                        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                      />
-                    </Field>
-                    <Field label="E-post" htmlFor="email">
-                      <Input
-                        id="email"
-                        type="email"
-                        autoComplete="email"
-                        value={form.email}
-                        onChange={(e) => {
-                          setForm((f) => ({ ...f, email: e.target.value }));
-                          if (emailMessage || sessionError) {
-                            setEmailMessage(null);
-                            setSessionError(null);
-                          }
-                        }}
-                        onBlur={() => setEmailTouched(true)}
-                        aria-invalid={!!emailError}
-                        aria-describedby={emailError ? 'email-error' : undefined}
-                        className={emailError ? 'border-danger bg-danger-subtle' : undefined}
-                      />
-                      {emailError && <FieldError id="email-error">{emailError}</FieldError>}
-                    </Field>
-                    <Field label="Telefon" htmlFor="phone">
-                      <Input
-                        id="phone"
-                        type="tel"
-                        autoComplete="tel"
-                        value={form.phone}
-                        onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                        onBlur={() => setPhoneTouched(true)}
-                        aria-invalid={!!phoneError}
-                        aria-describedby={phoneError ? 'phone-error' : undefined}
-                        className={phoneError ? 'border-danger bg-danger-subtle' : undefined}
-                      />
-                      {phoneError && <FieldError id="phone-error">{phoneError}</FieldError>}
-                    </Field>
-                    <Field label="Melding (valgfritt)" htmlFor="note">
-                      <Textarea
-                        id="note"
-                        value={form.note}
-                        onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-                        placeholder="Allergier, skader eller annet vi bør vite."
-                        rows={4}
-                      />
-                    </Field>
-                    <label className="flex items-start gap-3 cursor-pointer text-sm text-foreground pt-1">
-                      <Checkbox
-                        checked={form.terms}
-                        onCheckedChange={(v) =>
-                          setForm((f) => ({ ...f, terms: v === true }))
-                        }
-                        className="mt-0.5"
-                      />
-                      <span>
-                        Jeg godtar{' '}
-                        <Link
-                          to="/terms"
-                          className="underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
-                        >
-                          vilkår og angrerett
-                        </Link>
-                        .
-                      </span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="px-2 sm:px-6 space-y-2">
-                  {isFree ? (
-                    <Button
-                      className="w-full"
-                      disabled={!formValid || submitting || !paymentReady || isFull || isCancelled}
-                      onClick={handleFreeSubmit}
-                    >
-                      Bekreft påmelding
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        className="w-full"
-                        disabled={!formValid || submitting || !paymentReady || isFull || isCancelled}
-                        onClick={handleAdvanceToPayment}
-                      >
-                        {submitting ? 'Et øyeblikk…' : 'Fortsett til betaling'}
-                      </Button>
-                      {sessionError && (
-                        <p className="text-sm text-danger text-center">{sessionError}</p>
-                      )}
-                      {isDropInSelected && dropInSessionId === null && (
-                        <p className="text-sm text-danger text-center">Ingen kommende timer for drop-in.</p>
-                      )}
-                      {course.seller?.name && (
-                        <p className="text-sm text-foreground-muted text-center">
-                          Påmeldingen er hos {course.seller.name}.
+                <form onSubmit={handleContactSubmit} noValidate className="space-y-6">
+                  <div className="px-2 sm:px-6">
+                    <div className="space-y-4">
+                      <Field label="Navn" htmlFor="name">
+                        <Input
+                          id="name"
+                          type="text"
+                          autoComplete="name"
+                          value={form.name}
+                          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                          aria-invalid={!!nameError}
+                          aria-describedby={nameError ? 'name-error' : undefined}
+                          className={nameError ? 'border-danger bg-danger-subtle' : undefined}
+                        />
+                        {nameError && <FieldError id="name-error">{nameError}</FieldError>}
+                      </Field>
+                      <Field label="E-post" htmlFor="email">
+                        <Input
+                          id="email"
+                          type="email"
+                          autoComplete="email"
+                          value={form.email}
+                          onChange={(e) => {
+                            setForm((f) => ({ ...f, email: e.target.value }));
+                            if (emailMessage || sessionError) {
+                              setEmailMessage(null);
+                              setSessionError(null);
+                            }
+                          }}
+                          onBlur={() => setEmailTouched(true)}
+                          aria-invalid={!!emailError}
+                          aria-describedby={emailError ? 'email-error' : undefined}
+                          className={emailError ? 'border-danger bg-danger-subtle' : undefined}
+                        />
+                        {emailError && <FieldError id="email-error">{emailError}</FieldError>}
+                      </Field>
+                      <Field label="Telefon" htmlFor="phone">
+                        <Input
+                          id="phone"
+                          type="tel"
+                          autoComplete="tel"
+                          value={form.phone}
+                          onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                          onBlur={() => setPhoneTouched(true)}
+                          aria-invalid={!!phoneError}
+                          aria-describedby={phoneError ? 'phone-error' : undefined}
+                          className={phoneError ? 'border-danger bg-danger-subtle' : undefined}
+                        />
+                        {phoneError && <FieldError id="phone-error">{phoneError}</FieldError>}
+                      </Field>
+                      <Field label="Melding (valgfritt)" htmlFor="note">
+                        <Textarea
+                          id="note"
+                          value={form.note}
+                          onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+                          placeholder="Allergier, skader eller annet vi bør vite."
+                          rows={4}
+                        />
+                      </Field>
+                      <div className="pt-1">
+                        <label className="flex items-start gap-3 cursor-pointer text-sm text-foreground">
+                          <Checkbox
+                            id="terms"
+                            checked={form.terms}
+                            onCheckedChange={(v) =>
+                              setForm((f) => ({ ...f, terms: v === true }))
+                            }
+                            aria-invalid={!!termsError}
+                            aria-describedby={termsError ? 'terms-error' : undefined}
+                            className="mt-0.5"
+                          />
+                          <span>
+                            Jeg godtar{' '}
+                            <a
+                              href="/terms"
+                              target="_blank"
+                              rel="noreferrer"
+                              className="underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+                            >
+                              vilkår og angrerett
+                            </a>
+                            .
+                          </span>
+                        </label>
+                        {termsError && (
+                          <FieldError id="terms-error" className="pl-7">{termsError}</FieldError>
+                        )}
+                        <p className="mt-1.5 pl-7 text-xs text-foreground-muted">
+                          Kurs med fastsatt dato er unntatt angrerett. Se vilkårene.
                         </p>
-                      )}
-                    </>
-                  )}
-                </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-2 sm:px-6 space-y-2">
+                    {isFree ? (
+                      <Button
+                        type="submit"
+                        className="w-full"
+                        loading={submitting}
+                        disabled={!paymentReady || isFull || isCancelled}
+                      >
+                        Bekreft påmelding
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          type="submit"
+                          className="w-full"
+                          loading={submitting}
+                          loadingText="Et øyeblikk…"
+                          disabled={!paymentReady || isFull || isCancelled}
+                        >
+                          Fortsett til betaling
+                        </Button>
+                        {sessionError && (
+                          <p className="text-sm text-danger text-center">{sessionError}</p>
+                        )}
+                        {isDropInSelected && dropInLookupFailed && (
+                          <p className="text-sm text-danger text-center">Kunne ikke hente neste time. Prøv igjen.</p>
+                        )}
+                        {isDropInSelected && dropInSessionId === null && (
+                          <p className="text-sm text-danger text-center">Ingen kommende timer for drop-in.</p>
+                        )}
+                        {course.seller?.name && (
+                          <p className="text-sm text-foreground-muted text-center">
+                            Påmeldingen er hos {course.seller.name}.
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </form>
               </>
             ) : (
               <>
@@ -719,18 +783,23 @@ function CheckoutSummary({
                 <div className="border-t border-border" />
               </>
             )}
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-base font-medium text-foreground">Totalt</span>
-              <span className="text-xl font-medium tabular-nums text-foreground">
-                {formatKroner(total)}
-              </span>
+            <div className="space-y-1">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-base font-medium text-foreground">Totalt</span>
+                <span className="text-xl font-medium tabular-nums text-foreground">
+                  {formatKroner(total)}
+                </span>
+              </div>
+              {!isFree && (
+                <p className="text-xs text-foreground-muted">Ingen mva. kommer i tillegg.</p>
+              )}
             </div>
           </>
         )}
 
         {!isFree && (
           <div className="border-t border-border pt-4">
-            <p className="text-center text-xs text-foreground-muted">Sikker betaling</p>
+            <p className="text-center text-xs text-foreground-muted">Sikker betaling med Stripe</p>
           </div>
         )}
       </div>
@@ -776,7 +845,9 @@ function buildMeta(course: PublicCourseWithDetails): string | null {
   const time = m ? m[1] : null;
   const dateStr = course.next_session?.session_date ?? course.start_date;
   if (course.format === 'series' && dateStr && time) {
-    const d = new Date(dateStr);
+    // toLocalDate: `new Date('YYYY-MM-DD')` parses as UTC midnight, showing
+    // the wrong weekday for any buyer in a timezone west of UTC.
+    const d = toLocalDate(dateStr);
     if (!isNaN(d.getTime())) {
       return `${typeLabel} · ${SHORT_WEEKDAYS[d.getDay()]} kl. ${time}`;
     }

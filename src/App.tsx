@@ -8,6 +8,8 @@ import {
   RouterProvider,
   useParams,
 } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/query-client';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -16,11 +18,15 @@ import { PageSkeleton } from './components/ui/page-skeleton';
 import { RESERVED_SLUGS } from '@/lib/reservedSlugs';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Persistent layouts (no lazy — always mounted)
-import TeacherLayout from './layouts/TeacherLayout';
 import { RoleRoute } from './components/RoleRoute';
 
-// Lazy load all route components for code splitting
+// Lazy load all route components for code splitting.
+// TeacherLayout too: it pulls the sidebar, icon set and course drawer into
+// whatever chunk it lands in — eager, that was the ENTRY chunk, so anonymous
+// buyers downloaded the dashboard chrome before checkout could render. It
+// stays mounted across dashboard routes once loaded; lazy only moves the
+// module into its own chunk behind the existing root Suspense.
+const TeacherLayout = lazy(() => import('./layouts/TeacherLayout'));
 const DashboardRouter = lazy(() => import('./pages/teacher/DashboardRouter'));
 const GetStartedPage = lazy(() => import('./pages/teacher/GetStartedPage'));
 const HelpPage = lazy(() => import('./pages/teacher/HelpPage'));
@@ -238,9 +244,11 @@ const router = createBrowserRouter(
 
 const App = () => {
   return (
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
 

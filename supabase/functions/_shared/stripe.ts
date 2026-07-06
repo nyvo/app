@@ -87,7 +87,11 @@ async function stripeRequest<T>(
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey
 
   let url = `${STRIPE_API_BASE}${path}`
-  const init: RequestInit = { method, headers }
+  // Timeout: a hung Stripe connection would otherwise pin the isolate until
+  // the platform's wall-clock kill — the hard-kill that leaves webhook-claim
+  // tombstones and ambiguous capture states. A thrown timeout is handled by
+  // callers (capture paths re-check the live PI before acting).
+  const init: RequestInit = { method, headers, signal: AbortSignal.timeout(15_000) }
   if (method === 'GET') {
     const query = params.toString()
     if (query) url += `?${query}`
@@ -495,15 +499,23 @@ export async function capturePaymentIntent(
   paymentIntentId: string,
   amountToCapture?: number,
 ): Promise<StripePaymentIntent> {
+  // Idempotency-Key so a retry after a timed-out capture (the webhook and the
+  // every-2-min sweep both drive capture) returns the same result instead of a
+  // second attempt against an already-moving PI.
   return stripeRequest<StripePaymentIntent>(
     `/payment_intents/${paymentIntentId}/capture`,
     amountToCapture !== undefined ? { amount_to_capture: amountToCapture } : {},
+    { idempotencyKey: `capture:${paymentIntentId}:${amountToCapture ?? 'full'}` },
   )
 }
 
 /** Cancel/void an uncaptured PaymentIntent (no capacity, abandoned checkout, etc.). */
 export async function cancelPaymentIntent(paymentIntentId: string): Promise<StripePaymentIntent> {
-  return stripeRequest<StripePaymentIntent>(`/payment_intents/${paymentIntentId}/cancel`, {})
+  return stripeRequest<StripePaymentIntent>(
+    `/payment_intents/${paymentIntentId}/cancel`,
+    {},
+    { idempotencyKey: `cancel:${paymentIntentId}` },
+  )
 }
 
 export async function retrievePaymentIntent(paymentIntentId: string): Promise<StripePaymentIntent> {
@@ -533,13 +545,20 @@ export async function refundPaymentIntent(params: {
   reverseTransfer?: boolean
   refundApplicationFee?: boolean
 }): Promise<StripeRefund> {
-  return stripeRequest<StripeRefund>('/refunds', {
-    payment_intent: params.paymentIntentId,
-    amount: params.amount,
-    // Default true per C6: the supported mode is a full refund where the studio's transfer is
-    // reversed and the platform service fee is returned. Pass false only to deliberately have
-    // the platform absorb the refund.
-    reverse_transfer: params.reverseTransfer ?? true,
-    refund_application_fee: params.refundApplicationFee ?? true,
-  })
+  return stripeRequest<StripeRefund>(
+    '/refunds',
+    {
+      payment_intent: params.paymentIntentId,
+      amount: params.amount,
+      // Default true per C6: the supported mode is a full refund where the studio's transfer is
+      // reversed and the platform service fee is returned. Pass false only to deliberately have
+      // the platform absorb the refund.
+      reverse_transfer: params.reverseTransfer ?? true,
+      refund_application_fee: params.refundApplicationFee ?? true,
+    },
+    // Idempotency-Key so a refund POST that times out after Stripe committed
+    // isn't re-issued on retry. Keyed by PI + amount so a full refund and any
+    // (future) partial refund of a different amount aren't collapsed together.
+    { idempotencyKey: `refund:${params.paymentIntentId}:${params.amount ?? 'full'}` },
+  )
 }

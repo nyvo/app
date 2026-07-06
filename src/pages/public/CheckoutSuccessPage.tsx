@@ -75,7 +75,7 @@ const CheckoutSuccessPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [signup, setSignup] = useState<SignupDetails | null>(null);
-  const [error, _setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [bookingFailed, setBookingFailed] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState(false);
   const [attemptCount, setAttemptCount] = useState(0);
@@ -83,7 +83,7 @@ const CheckoutSuccessPage = () => {
   useEffect(() => {
     let cancelled = false;
     async function fetchSignupDetails() {
-      if (!isStripe) {
+      if (!paymentIntentId) {
         setLoading(false);
         return;
       }
@@ -91,6 +91,10 @@ const CheckoutSuccessPage = () => {
       // Poll for the signup — the webhook captures + creates the signup async.
       const maxRetries = 12;
       const delays = [500, 1000, 2000, 2000, 4000, 4000, 4000, 8000, 8000, 8000, 8000, 8000];
+      // Distinguishes "server answered, signup not minted yet" (webhook slow →
+      // optimistic fallback) from "every request failed" (buyer offline →
+      // telling them 'vi behandler påmeldingen' would be a guess).
+      let anyResponseReceived = false;
 
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         if (cancelled) return;
@@ -102,11 +106,11 @@ const CheckoutSuccessPage = () => {
 
         // Server-side lookup via SECURITY DEFINER RPC — avoids exposing
         // all paid signups through a broad SELECT RLS policy.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error: fetchError } = await (supabase.rpc as any)('get_signup_by_stripe_id', {
+        const { data, error: fetchError } = await supabase.rpc('get_signup_by_stripe_id', {
           p_payment_intent_id: paymentIntentId,
         });
         if (cancelled) return;
+        if (!fetchError) anyResponseReceived = true;
 
         if (data && !fetchError) {
           const row = data as unknown as SignupDetails;
@@ -132,8 +136,7 @@ const CheckoutSuccessPage = () => {
         // cancelled the PI and never minted a signup), the buyer is NOT enrolled and was NOT
         // charged. Surface that instead of the optimistic "we're processing" fallback below.
         if (attemptRef) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { data: attemptStatus } = await (supabase.rpc as any)('get_payment_attempt_status', {
+          const { data: attemptStatus } = await supabase.rpc('get_payment_attempt_status', {
             p_attempt_id: attemptRef,
           });
           if (cancelled) return;
@@ -149,8 +152,17 @@ const CheckoutSuccessPage = () => {
           logger.warn('Signup not found after max retries:', {
             paymentIntentId,
             attempts: maxRetries,
+            anyResponseReceived,
             lastError: fetchError?.message || 'No data returned',
           });
+
+          if (!anyResponseReceived) {
+            // Never reached the server — network problem on the buyer's end.
+            // Don't claim we're processing anything; we don't know.
+            setError('Får ikke kontakt med serveren. Sjekk nettet og last siden på nytt.');
+            setLoading(false);
+            return;
+          }
 
           // Show softer fallback — payment succeeded but webhook is slow
           setBookingFailed(true);
@@ -400,6 +412,9 @@ const CheckoutSuccessPage = () => {
                             {isFree ? 'Gratis' : formatKroner(signup.amount_paid)}
                           </span>
                         </div>
+                        {!isFree && (
+                          <p className="text-xs text-foreground-muted">Ingen mva. kommer i tillegg.</p>
+                        )}
                         <div className="flex items-center justify-between">
                           <span className="text-foreground-muted">Referanse</span>
                           <span className="font-medium text-foreground tabular-nums">{shortRef(signup.id)}</span>

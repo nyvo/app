@@ -5,7 +5,7 @@
 // when the client inserted signups directly.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
+import { handleCors, errorResponse, successResponse, getClientIp } from '../_shared/auth.ts'
 import { isCourseEnded } from '../_shared/course-status.ts'
 import { deliverBookingConfirmations } from '../_shared/booking-notifications.ts'
 
@@ -42,17 +42,24 @@ Deno.serve(async (req: Request) => {
     // Abuse protection: per-IP + per-email fixed-window rate limit. This path is
     // unauthenticated and fires a confirmation email, so cap both axes. Check IP
     // FIRST and return on block, so a rate-limited IP can't keep incrementing /
-    // creating arbitrary email buckets. Fail open (only block on an explicit
-    // `false`) so a limiter hiccup never wedges legitimate signups.
-    const clientIp = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown'
+    // creating arbitrary email buckets. Fail CLOSED on limiter errors — an
+    // unauthenticated email-sending endpoint with a broken limiter is a spam
+    // engine, so a limiter outage pauses signups rather than uncapping them.
+    const clientIp = getClientIp(req)
     const { data: ipAllowed, error: ipLimitErr } = await supabase.rpc('check_rate_limit', { p_key: `free-signup:ip:${clientIp}`, p_limit: 10, p_window_seconds: 3600 })
-    if (ipLimitErr) console.error('check_rate_limit (ip) failed:', ipLimitErr)
+    if (ipLimitErr) {
+      console.error('check_rate_limit (ip) failed:', ipLimitErr)
+      return errorResponse('Prøv igjen om litt.', 503, req)
+    }
     if (ipAllowed === false) {
       return errorResponse('For mange forsøk. Prøv igjen om litt.', 429, req)
     }
     const emailKey = participantEmail.trim().toLowerCase()
     const { data: emailAllowed, error: emailLimitErr } = await supabase.rpc('check_rate_limit', { p_key: `free-signup:email:${emailKey}`, p_limit: 5, p_window_seconds: 3600 })
-    if (emailLimitErr) console.error('check_rate_limit (email) failed:', emailLimitErr)
+    if (emailLimitErr) {
+      console.error('check_rate_limit (email) failed:', emailLimitErr)
+      return errorResponse('Prøv igjen om litt.', 503, req)
+    }
     if (emailAllowed === false) {
       return errorResponse('For mange forsøk. Prøv igjen om litt.', 429, req)
     }
@@ -139,8 +146,15 @@ Deno.serve(async (req: Request) => {
     const rpcResult = result as { success: boolean; signup_id?: string; error?: string; message?: string }
 
     if (!rpcResult.success) {
+      // database_error carries raw SQLERRM (internal table/constraint names) —
+      // log it, never forward it to the caller.
+      if (rpcResult.error === 'database_error') {
+        console.error('create_signup_if_available database_error:', rpcResult.message)
+        return errorResponse('Kunne ikke fullføre påmelding', 500, req)
+      }
       const status = rpcResult.error === 'course_full' ? 409
         : rpcResult.error === 'already_signed_up' ? 409
+        : rpcResult.error === 'duplicate_signup' ? 409
         : rpcResult.error === 'course_not_found' ? 404
         : 400
       return errorResponse(rpcResult.message || 'Kunne ikke fullføre påmelding', status, req)

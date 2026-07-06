@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ChevronRight, FileText, MoreHorizontal } from '@/lib/icons';
@@ -29,19 +29,19 @@ import { PageState } from '@/components/page-state/page-state';
 import { AddParticipantDrawer } from '@/components/teacher/AddParticipantDrawer';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { useCourseDetail } from '@/hooks/use-course-detail';
+import { singleScheduleLabel, seriesScheduleLabel } from '@/utils/timeSchedule';
 import {
   updateCourse,
   cancelCourse,
-  fetchCourseSessions,
-  updateCourseSession,
-  rescheduleCourseSession,
-  createCourseSession,
-  deleteCourseSession,
+  saveCourseSchedule,
+  notifySessionRescheduled,
+  type DesiredSession,
   syncCourseDropInTier,
   publishCourse,
   unpublishCourse,
   deleteCourse,
 } from '@/services/courses';
+import { logger } from '@/lib/logger';
 import { type SessionDay, timeToMin } from '@/components/teacher/SessionDaysEditor';
 import { teacherCancelSignup } from '@/services/signups';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
@@ -92,12 +92,6 @@ function minToTime(mins: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-/** Capitalized Norwegian weekday name for a date ("Mandag"). */
-function weekdayLabel(date: Date): string {
-  const name = new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(date);
-  return name.charAt(0).toUpperCase() + name.slice(1);
-}
-
 /**
  * Course not-found shell — wraps the canonical NotFoundState in the
  * teacher-layout scroll container + mobile header so chrome stays consistent
@@ -130,10 +124,10 @@ const CoursePage = () => {
     sessions,
     participants,
     participantsLoading,
+    participantsError,
     loading: isLoading,
     error,
     setCourse: setCourseData,
-    setSessions,
     setMaxParticipants,
     maxParticipants,
     refetchParticipants,
@@ -171,6 +165,8 @@ const CoursePage = () => {
   const [settingsPrice, setSettingsPrice] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [showCancelPreview, setShowCancelPreview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingCourse, setIsDeletingCourse] = useState(false);
@@ -178,6 +174,15 @@ const CoursePage = () => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false);
+
+  // The course's start time, from the session rows — the source of truth.
+  // time_schedule is a display label and is never parsed (the old regex here
+  // meant a label copy-edit could silently corrupt the schedule form).
+  const sessionsStartTime = useMemo(() => {
+    if (sessions.length === 0) return null;
+    const earliest = [...sessions].sort((a, b) => a.session_number - b.session_number)[0];
+    return earliest?.start_time?.slice(0, 5) ?? null;
+  }, [sessions]);
 
   useEffect(() => {
     if (!courseData) return;
@@ -191,29 +196,23 @@ const CoursePage = () => {
         : null,
     );
     setSettingsImageUrl(courseData.imageUrl);
-    const timeMatch = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/);
-    if (timeMatch) setSettingsTime(timeMatch[1]);
+    if (sessionsStartTime) setSettingsTime(sessionsStartTime);
     setSettingsDuration(courseData.durationMinutes);
     setSettingsAllowsDropIn(courseData.allowsDropIn);
     setSettingsDropInPrice(courseData.dropInPrice);
     setSettingsAcceptsLateSignups(courseData.acceptsLateSignups);
     setSettingsPrice(courseData.price);
     if (courseData.startDate) setSettingsDate(new Date(courseData.startDate));
-  }, [courseData]);
+  }, [courseData, sessionsStartTime]);
 
   // Populate per-day session editor from loaded sessions (single format only).
-  // Re-runs whenever sessions are (re)fetched so discard/refetch stays in sync.
-  // handleSave raises the skip flag when it re-baselines `sessions` after a
-  // partial failure — rebuilding here would wipe the user's remaining unsaved
-  // day edits, which must survive so they can retry the save.
-  const skipNextDaysSyncRef = useRef(false);
+  // Re-runs whenever sessions are (re)fetched so discard/refetch stays in
+  // sync. Saves are transactional now (save_course_schedule RPC), so there is
+  // no partial-failure re-baselining to guard against anymore: a failed save
+  // changes nothing and this effect doesn't fire.
   useEffect(() => {
     if (!courseData || courseData.format !== 'single') return;
     if (sessions.length === 0) return;
-    if (skipNextDaysSyncRef.current) {
-      skipNextDaysSyncRef.current = false;
-      return;
-    }
     setSessionDays(buildSessionDays(sessions));
   }, [sessions, courseData?.format]);
 
@@ -246,9 +245,9 @@ const CoursePage = () => {
       const origDate = courseData.startDate ? new Date(courseData.startDate).toDateString() : '';
       const currDate = settingsDate ? settingsDate.toDateString() : '';
       if (currDate !== origDate) return true;
-      const origTimeMatch = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/);
-      const origTime = origTimeMatch ? origTimeMatch[1] : '';
-      if (settingsTime !== origTime) return true;
+      // Compare against the session rows' time; skip until they've loaded so
+      // the default form value can't read as a phantom edit.
+      if (sessionsStartTime && settingsTime !== sessionsStartTime) return true;
     }
     // settingsAllowsDropIn intentionally excluded — drop-in toggle is
     // instant-commit, not part of the batched save flow.
@@ -256,7 +255,7 @@ const CoursePage = () => {
   }, [
     courseData, settingsTitle, settingsDescription, settingsLocation, settingsLocationAddress,
     maxParticipants, settingsDuration, settingsDate, settingsTime,
-    settingsPrice, settingsDropInPrice, sessionDays, sessions,
+    settingsPrice, settingsDropInPrice, sessionDays, sessions, sessionsStartTime,
   ]);
 
   const { blocker, bypass } = useUnsavedChanges(isSettingsDirty);
@@ -308,12 +307,23 @@ const CoursePage = () => {
 
   const handleSave = async () => {
     if (!courseId || !courseData) return;
+    // A live course must never save an empty title — block before any write.
+    if (!settingsTitle.trim()) {
+      setTitleError('Kurset må ha en tittel.');
+      return;
+    }
+    setTitleError(null);
+    // Same rule as the builder: a location must come from the Google search so
+    // buyers get coords/map, not bare text. Only enforced when it changed, so
+    // untouched legacy pin-less locations don't block unrelated edits.
+    const locationChanged = settingsLocation.trim() !== (courseData.location || '');
+    if (locationChanged && settingsLocation.trim() && !settingsLocationCoords?.placeId) {
+      setLocationError('Velg et sted fra listen.');
+      return;
+    }
+    setLocationError(null);
     setIsSaving(true);
     setSaveError(null);
-    // Session baseline tracked through the single-format save loop below —
-    // hoisted out of the try so the catch can re-baseline after a thrown
-    // (network) failure too, not just a returned error.
-    let committedSessions = sessions;
     try {
       // Rebuild the denormalized schedule label in the same shape createDraft
       // wrote it: singles from the earliest day ("Lørdag, 10:00–16:00"),
@@ -324,17 +334,13 @@ const CoursePage = () => {
           .filter((d) => d.date && d.startTime)
           .sort((a, b) => formatLocalYMD(a.date!).localeCompare(formatLocalYMD(b.date!)))[0];
         if (first) {
-          timeSchedule = first.endTime
-            ? `${weekdayLabel(first.date!)}, ${first.startTime}–${first.endTime}`
-            : `${weekdayLabel(first.date!)}, ${first.startTime}`;
+          timeSchedule = singleScheduleLabel(first.date!, first.startTime, first.endTime || null);
         }
       } else if (settingsDate && settingsTime) {
         const end = settingsDuration
           ? minToTime(timeToMin(settingsTime) + settingsDuration)
-          : '';
-        timeSchedule = end
-          ? `${weekdayLabel(settingsDate)}er, ${settingsTime}–${end}`
-          : `${weekdayLabel(settingsDate)}er, ${settingsTime}`;
+          : null;
+        timeSchedule = seriesScheduleLabel(settingsDate, settingsTime, end);
       }
 
       const updateData = {
@@ -351,224 +357,97 @@ const CoursePage = () => {
         duration: settingsDuration,
       };
 
-      const { error: updateError } = await updateCourse(courseId, updateData);
-      if (updateError) {
-        setSaveError(friendlyError(updateError, 'Kunne ikke lagre endringer. Prøv igjen.'));
-        setIsSaving(false);
-        return;
-      }
-
-      // Baseline the just-persisted course fields immediately — if a later
-      // step fails, the dirty bar and Avbryt then only track what's actually
-      // still unsaved instead of reverting to values the DB no longer holds.
-      setCourseData((prev) =>
-        prev
-          ? {
-              ...prev,
-              title: settingsTitle.trim(),
-              description: settingsDescription.trim(),
-              location: settingsLocation.trim() || null,
-              locationAddress: settingsLocationAddress.trim() || null,
-              locationLat: settingsLocationCoords?.lat ?? null,
-              locationLon: settingsLocationCoords?.lon ?? null,
-              locationPlaceId: settingsLocationCoords?.placeId ?? null,
-              capacity: maxParticipants,
-              price: settingsPrice,
-              timeSchedule: timeSchedule || prev.timeSchedule,
-              durationMinutes: settingsDuration || prev.durationMinutes,
-            }
-          : null,
-      );
-
-      if (settingsAllowsDropIn) {
-        const { error: dropInError } = await syncCourseDropInTier(courseId, true, settingsDropInPrice);
-        if (dropInError) {
-          setSaveError(friendlyError(dropInError, 'Kunne ikke lagre drop-in-pris.'));
-          setIsSaving(false);
-          return;
-        }
-      }
-      setCourseData((prev) =>
-        prev
-          ? { ...prev, allowsDropIn: settingsAllowsDropIn, dropInPrice: settingsDropInPrice }
-          : null,
-      );
-
+      // Desired full session state for the RPC's server-side diff.
+      let desiredSessions: DesiredSession[] | null = null;
       if (courseData.format === 'single') {
-        // Per-day session persistence for single/enkeltkurs courses.
-        // Build a lookup of original sessions by id for change detection.
-        // `committed` tracks the baseline as each write lands: a mid-loop
-        // failure re-baselines `sessions` to exactly what the DB now holds,
-        // so retrying the save skips the already-persisted days instead of
-        // re-running them — which for published courses would re-notify
-        // participants about a reschedule that already happened.
-        const origById = new Map(sessions.map((s) => [s.id, s]));
-        const isDraft = courseData.status === 'draft';
-
-        const failSessionSave = (message: string) => {
-          if (committedSessions !== sessions) {
-            // Update the baseline without letting the populate effect rebuild
-            // sessionDays — the user's remaining unsaved edits must survive.
-            skipNextDaysSyncRef.current = true;
-            setSessions(committedSessions);
-          }
-          setSaveError(message);
-          setIsSaving(false);
-        };
-
-        // 1. Handle removed days (only for drafts — safety constraint).
-        if (isDraft) {
-          const keptIds = new Set(sessionDays.map((d) => d.id));
-          const removedSessions = sessions.filter((s) => !keptIds.has(s.id));
-          for (const s of removedSessions) {
-            const { error: delError } = await deleteCourseSession(s.id);
-            if (delError) {
-              failSessionSave(friendlyError(delError, 'Kunne ikke slette dag. Prøv igjen.'));
-              return;
+        desiredSessions = sessionDays
+          .map((day): DesiredSession | null => {
+            const isExisting = !day.id.startsWith('new-');
+            if (!day.date || !day.startTime) {
+              // Incomplete editor row: keep an existing session untouched;
+              // an incomplete new row has nothing to create yet.
+              return isExisting ? { id: day.id, keep: true } : null;
             }
-            committedSessions = committedSessions.filter((c) => c.id !== s.id);
-          }
-        }
-
-        // 2. Update or create each day.
-        for (let i = 0; i < sessionDays.length; i++) {
-          const day = sessionDays[i];
-          if (!day.date || !day.startTime) continue;
-          const dateStr = formatLocalYMD(day.date);
-          const startTime = day.startTime;
-          const endTime = day.endTime || null;
-
-          const orig = origById.get(day.id);
-          if (!orig) {
-            // New day (no existing session row) — only for drafts.
-            if (!isDraft) continue;
-            const { data: createdSession, error: createError } = await createCourseSession(courseId, {
-              session_date: dateStr,
-              start_time: startTime,
-              end_time: endTime ?? '',
-              session_number: i + 1,
-            });
-            if (createError || !createdSession) {
-              failSessionSave(friendlyError(createError, 'Kunne ikke legge til dag. Prøv igjen.'));
-              return;
-            }
-            committedSessions = [...committedSessions, createdSession];
-            // Swap the editor row's 'new-' placeholder id for the real one,
-            // so a retry after a later failure updates this row instead of
-            // creating a duplicate day.
-            const placeholderId = day.id;
-            setSessionDays((prev) =>
-              prev.map((d) => (d.id === placeholderId ? { ...d, id: createdSession.id } : d)),
-            );
-          } else {
-            // Existing session — diff to see if anything changed.
-            const origDateStr = orig.session_date;
-            const origStart = orig.start_time.slice(0, 5);
-            const origEnd = orig.end_time ? orig.end_time.slice(0, 5) : '';
-            const hasChanged =
-              dateStr !== origDateStr ||
-              startTime !== origStart ||
-              (endTime ?? '') !== origEnd;
-            if (!hasChanged) continue;
-
-            if (isDraft) {
-              // Draft: plain update (no notifications).
-              const { error: updError } = await updateCourseSession(day.id, {
-                session_date: dateStr,
-                start_time: startTime,
-                end_time: endTime,
-              });
-              if (updError) {
-                failSessionSave(friendlyError(updError, 'Kunne ikke oppdatere dag. Prøv igjen.'));
-                return;
-              }
-            } else {
-              // Published: reschedule via edge function to notify participants.
-              const { error: reError } = await rescheduleCourseSession({
-                sessionId: day.id,
-                newDate: dateStr,
-                newStartTime: startTime,
-                newEndTime: endTime ?? undefined,
-              });
-              if (reError) {
-                failSessionSave(friendlyError(reError, 'Kunne ikke oppdatere dag. Prøv igjen.'));
-                return;
-              }
-            }
-            // Mirror the persisted values into the tracked baseline (the
-            // reschedule edge fn doesn't return the row).
-            committedSessions = committedSessions.map((c) =>
-              c.id === day.id
-                ? { ...c, session_date: dateStr, start_time: startTime, end_time: endTime }
-                : c,
-            );
-          }
-        }
-
-        // Refetch sessions so UI reflects the saved state.
-        const updatedSessions = await fetchCourseSessions(courseId);
-        if (updatedSessions.data) setSessions(updatedSessions.data);
+            return {
+              id: isExisting ? day.id : null,
+              session_date: formatLocalYMD(day.date),
+              start_time: day.startTime,
+              end_time: day.endTime || null,
+            };
+          })
+          .filter((d): d is DesiredSession => d !== null);
       } else if (sessions.length > 0) {
         const sorted = [...sessions].sort((a, b) => a.session_number - b.session_number);
         if (courseData.status === 'draft' && settingsDate) {
           // Draft series: startdato/tid edits regenerate the weekly session
-          // dates in place — plain updates, nobody to notify on a draft. The
-          // sync_course_date_bounds DB trigger keeps courses.start_date/
-          // end_date in step with the session rows.
-          let changed = false;
-          for (let i = 0; i < sorted.length; i++) {
+          // dates. The sync_course_date_bounds DB trigger keeps
+          // courses.start_date/end_date in step with the session rows.
+          desiredSessions = sorted.map((s, i) => {
             const d = new Date(settingsDate);
             d.setDate(settingsDate.getDate() + i * 7);
-            const dateStr = formatLocalYMD(d);
-            const s = sorted[i];
-            const timeChanged = !!settingsTime && s.start_time.slice(0, 5) !== settingsTime;
-            if (s.session_date === dateStr && !timeChanged) continue;
-            const { error: sessError } = await updateCourseSession(s.id, {
-              session_date: dateStr,
-              ...(settingsTime ? { start_time: settingsTime } : {}),
-            });
-            if (sessError) {
-              setSaveError(friendlyError(sessError, 'Kunne ikke oppdatere timeplanen. Prøv igjen.'));
-              setIsSaving(false);
-              return;
-            }
-            changed = true;
-          }
-          if (changed) {
-            const updatedSessions = await fetchCourseSessions(courseId);
-            if (updatedSessions.data) setSessions(updatedSessions.data);
-          }
+            return {
+              id: s.id,
+              session_date: formatLocalYMD(d),
+              start_time: settingsTime || s.start_time.slice(0, 5),
+            };
+          });
         } else if (settingsTime) {
-          // Published series: bulk-apply start time to all sessions
-          // (unchanged behavior — dates are locked once live).
-          const oldTime = sorted[0]?.start_time;
-          if (oldTime && oldTime !== settingsTime) {
-            await Promise.all(sorted.map((s) => updateCourseSession(s.id, { start_time: settingsTime })));
-            const updatedSessions = await fetchCourseSessions(courseId);
-            if (updatedSessions.data) setSessions(updatedSessions.data);
-          }
+          // Published series: bulk-apply start time (dates locked once live).
+          desiredSessions = sorted.map((s) => ({
+            id: s.id,
+            session_date: s.session_date,
+            start_time: settingsTime,
+          }));
         }
       }
 
-      // Keep local startDate in step with the saved schedule (the DB derives
-      // courses.start_date from the session rows). Re-applies the same course
-      // fields as the early baseline above — harmless, and it picks up the
-      // saved startDate which is only known after the session writes.
-      const savedStartDate =
-        courseData.format === 'single'
-          ? [...sessionDays]
-              .filter((d) => d.date)
-              .map((d) => formatLocalYMD(d.date!))
-              .sort()[0] ?? null
-          : courseData.status === 'draft' && settingsDate
-            ? formatLocalYMD(settingsDate)
-            : null;
+      // One transactional RPC: course fields + drop-in tier + session diff
+      // all commit or none do. The old browser-side write loop (and its
+      // committedSessions re-baselining apparatus) is gone — a failed save
+      // changes nothing, so retry is trivially safe.
+      const { data: result, error: saveErr } = await saveCourseSchedule({
+        courseId,
+        course: updateData,
+        dropIn: settingsAllowsDropIn ? { price: settingsDropInPrice } : null,
+        sessions: desiredSessions,
+      });
+      if (saveErr || !result?.success) {
+        setSaveError(friendlyError(saveErr, 'Kunne ikke lagre endringer. Prøv igjen.'));
+        return;
+      }
 
+      // Participant notifications for published single-format reschedules —
+      // best-effort AFTER the committed save. Series bulk time changes don't
+      // notify (parity with the old flow). Re-notification on retry is
+      // structurally impossible now: a second save diffs to nothing.
+      if (courseData.format === 'single' && courseData.status !== 'draft') {
+        let notifyFailed = false;
+        for (const r of result.rescheduled) {
+          const { error: notifyErr } = await notifySessionRescheduled({
+            sessionId: r.session_id,
+            oldDate: r.old_date,
+            oldStartTime: r.old_start_time,
+            newDate: r.new_date,
+            newStartTime: r.new_start_time,
+          });
+          if (notifyErr) {
+            notifyFailed = true;
+            logger.error('Reschedule notification failed (change is saved):', notifyErr);
+          }
+        }
+        if (notifyFailed) {
+          toast.error('Lagret, men deltakerne ble ikke varslet om ny tid.');
+        }
+      }
+
+      // Instant dirty-bar clear: mirror the saved fields into the cache now,
+      // then refetch for the authoritative state (session rows, trigger-
+      // derived start/end dates). The refetch replaces the old flow's five
+      // hand-patching blocks.
       setCourseData((prev) =>
         prev
           ? {
               ...prev,
-              startDate: savedStartDate ?? prev.startDate,
               title: settingsTitle.trim(),
               description: settingsDescription.trim(),
               location: settingsLocation.trim() || null,
@@ -585,14 +464,9 @@ const CoursePage = () => {
             }
           : null,
       );
+      refetch();
       toast.success('Endringer lagret');
     } catch {
-      // A thrown mid-loop failure (network) needs the same re-baselining as
-      // a returned error, so the retry skips the already-persisted days.
-      if (committedSessions !== sessions) {
-        skipNextDaysSyncRef.current = true;
-        setSessions(committedSessions);
-      }
       setSaveError('Noe gikk galt. Prøv igjen.');
     } finally {
       setIsSaving(false);
@@ -694,6 +568,27 @@ const CoursePage = () => {
       return;
     }
     toast.success(next ? 'Drop-in slått på' : 'Drop-in slått av');
+  };
+
+  // The Oversikt drop-in price input has no save bar — commit on blur so an
+  // edited price can't sit as invisible dirty state and get silently dropped.
+  // Same instant-commit path as the toggle; only fires when drop-in is on and
+  // the value actually changed.
+  const handleDropInPriceBlur = async () => {
+    if (!courseId || !courseData) return;
+    if (!settingsAllowsDropIn) return;
+    if (settingsDropInPrice <= 0) return;
+    if (settingsDropInPrice === courseData.dropInPrice) return;
+    const previousPrice = courseData.dropInPrice;
+    setCourseData((prev) => (prev ? { ...prev, dropInPrice: settingsDropInPrice } : prev));
+    const { error } = await syncCourseDropInTier(courseId, true, settingsDropInPrice);
+    if (error) {
+      setSettingsDropInPrice(previousPrice);
+      setCourseData((prev) => (prev ? { ...prev, dropInPrice: previousPrice } : prev));
+      toast.error(friendlyError(error, 'Kunne ikke oppdatere drop-in-prisen.'));
+      return;
+    }
+    toast.success('Drop-in-pris oppdatert');
   };
 
   // Late-join toggle is instant-commit like drop-in. Persists straight to
@@ -814,13 +709,14 @@ const CoursePage = () => {
     // Drop-in is instant-commit, so it's intentionally NOT reset by Forkast —
     // any drop-in change has already been persisted independently.
     if (courseData.startDate) setSettingsDate(new Date(courseData.startDate));
-    const timeMatch = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/);
-    if (timeMatch) setSettingsTime(timeMatch[1]);
+    if (sessionsStartTime) setSettingsTime(sessionsStartTime);
     // Reset per-day session editor from the loaded sessions (single format).
     if (courseData.format === 'single' && sessions.length > 0) {
       setSessionDays(buildSessionDays(sessions));
     }
     setSaveError(null);
+    setTitleError(null);
+    setLocationError(null);
   };
 
   if (!courseId) {
@@ -860,8 +756,9 @@ const CoursePage = () => {
   // Whether the course has ANY signup rows (confirmed OR cancelled). Cancelled
   // signups still carry payment records under retention, so a finished course
   // is only safe to hard-delete when there are none at all. Treat the
-  // not-yet-loaded state as "has records" so we never offer delete prematurely.
-  const hasSignupRecords = participantsLoading || participants.length > 0;
+  // not-yet-loaded state AND a failed fetch as "has records" so we never offer
+  // delete on incomplete information.
+  const hasSignupRecords = participantsLoading || participantsError || participants.length > 0;
 
   const courseUrl =
     currentSeller?.slug && courseData.slug
@@ -959,6 +856,7 @@ const CoursePage = () => {
               onAllowsDropInChange={handleToggleDropIn}
               dropInPrice={settingsDropInPrice}
               onDropInPriceChange={setSettingsDropInPrice}
+              onDropInPriceBlur={() => void handleDropInPriceBlur()}
               acceptsLateSignups={settingsAcceptsLateSignups}
               onAcceptsLateSignupsChange={handleToggleAcceptsLateSignups}
               onPublish={handlePublish}
@@ -989,7 +887,11 @@ const CoursePage = () => {
           {activeTab === 'rediger' && (
             <CourseSettingsTab
               settingsTitle={settingsTitle}
-              onTitleChange={setSettingsTitle}
+              onTitleChange={(next) => {
+                setSettingsTitle(next);
+                if (titleError && next.trim()) setTitleError(null);
+              }}
+              titleError={titleError}
               settingsDescription={settingsDescription}
               onDescriptionChange={setSettingsDescription}
               settingsLocation={settingsLocation}
@@ -997,7 +899,11 @@ const CoursePage = () => {
               settingsLocationCoords={settingsLocationCoords}
               onLocationChange={setSettingsLocation}
               onLocationAddressChange={setSettingsLocationAddress}
-              onLocationCoordsChange={setSettingsLocationCoords}
+              onLocationCoordsChange={(coords) => {
+                setSettingsLocationCoords(coords);
+                if (locationError && coords?.placeId) setLocationError(null);
+              }}
+              locationError={locationError}
               settingsImageUrl={settingsImageUrl}
               onImageFileChange={(file) => void handleImageSelected(file)}
               onImageRemove={() => void handleImageRemove()}
@@ -1016,7 +922,6 @@ const CoursePage = () => {
               onMaxParticipantsChange={setMaxParticipants}
               currentEnrolled={courseData.enrolled || 0}
               courseFormat={courseData.format === 'series' ? 'series' : 'single'}
-              totalWeeks={courseData.totalWeeks || 0}
               price={settingsPrice}
               onPriceChange={setSettingsPrice}
               isDirty={isSettingsDirty}
@@ -1086,7 +991,15 @@ const CoursePage = () => {
                     </div>
 
                     <div className="rounded-lg border border-card bg-surface overflow-hidden">
-                      {visible.length === 0 ? (
+                      {participantsError && visible.length === 0 ? (
+                      // Failed fetch ≠ empty roster — never tell the teacher
+                      // "ingen påmeldte" when we simply couldn't load them.
+                      <EmptyState
+                        title="Kunne ikke laste deltakerne"
+                        description="Sjekk nettet og last siden på nytt."
+                        className="py-12"
+                      />
+                    ) : visible.length === 0 ? (
                       <EmptyState
                         title={
                           sortedParticipants.length === 0

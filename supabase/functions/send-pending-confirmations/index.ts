@@ -15,6 +15,8 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { deliverBookingConfirmations } from '../_shared/booking-notifications.ts'
+import { claimEvent, releaseEventClaim } from '../_shared/webhook-claims.ts'
+import { timingSafeEqual } from '../_shared/auth.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -28,20 +30,35 @@ const GRACE_SECONDS = 30
 // the source of truth at that point and a stuck row is a real bug to
 // investigate rather than to keep hammering.
 const ABANDON_HOURS = 24
+// Overlap guard key in processed_webhook_events. Sends are stamp-AFTER-send
+// with a per-row NULL gate, so a run that outlives the 5-min cadence could let
+// the next run pick up the same not-yet-stamped rows and double-send. Mirror
+// the sweep's run-lock; claimEvent's ~5-min stale-reclaim covers a hard kill.
+const RUN_LOCK_KEY = 'send-pending-confirmations:run'
 
 Deno.serve(async (req: Request) => {
   const auth = req.headers.get('authorization') || ''
   const providedSecret = req.headers.get('x-cron-secret') || ''
-  const hasServiceRole = auth === `Bearer ${supabaseServiceKey}`
-  const hasCronSecret = cronSecret && providedSecret === cronSecret
+  const hasServiceRole = timingSafeEqual(auth, `Bearer ${supabaseServiceKey}`)
+  const hasCronSecret = timingSafeEqual(providedSecret, cronSecret)
 
   if (!hasServiceRole && !hasCronSecret) {
     return new Response('Unauthorized', { status: 401 })
   }
 
-  try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+  const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+  // Overlap guard: a run that outlives the 5-min cadence must not race a newer
+  // run onto the same not-yet-stamped rows and double-send.
+  const runClaim = await claimEvent(supabase, RUN_LOCK_KEY, 'cron_lock')
+  if (runClaim !== 'claimed') {
+    return new Response(JSON.stringify({ skipped: 'run_in_progress' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  try {
     const graceCutoff = new Date(Date.now() - GRACE_SECONDS * 1000).toISOString()
     const abandonCutoff = new Date(Date.now() - ABANDON_HOURS * 60 * 60 * 1000).toISOString()
 
@@ -52,6 +69,9 @@ Deno.serve(async (req: Request) => {
       .or('confirmation_sent_at.is.null,seller_notified_at.is.null')
       .lt('created_at', graceCutoff)
       .gt('created_at', abandonCutoff)
+      // Oldest-first so a backlog > the page size drains FIFO instead of
+      // starving the earliest paid buyers within their 24h retry life.
+      .order('created_at', { ascending: true })
       .limit(100)
 
     if (error) {
@@ -86,5 +106,9 @@ Deno.serve(async (req: Request) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown'
     return new Response(`Sweep error: ${message}`, { status: 500 })
+  } finally {
+    // Free the lock for the next run; a crash before this is covered by the
+    // ~5-min stale-reclaim in claimEvent.
+    await releaseEventClaim(supabase, RUN_LOCK_KEY)
   }
 })

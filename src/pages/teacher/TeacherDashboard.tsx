@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { logger } from '@/lib/logger';
+import { useState, useCallback, lazy, Suspense } from 'react';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,12 @@ import { NotificationsPopover } from '@/components/notifications/NotificationsPo
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
-import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
+// Lazy: IncomeChart is the only recharts consumer in product code, and
+// recharts alone is a ~350 KB chunk — keep it out of the dashboard's own
+// chunk so the overview paints without waiting for chart internals.
+const IncomeChart = lazy(() =>
+  import('@/components/teacher/dashboard/IncomeChart').then((m) => ({ default: m.IncomeChart })),
+);
 import {
   fetchIncomeSeries,
   fetchPlatformFeeMonth,
@@ -22,7 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchCourses, fetchNextSessions } from '@/services/courses';
+import { fetchNextSessions } from '@/services/courses';
 import type { Course as CourseDB, CourseSession } from '@/types/database';
 import {
   fetchRecentSignups,
@@ -50,7 +55,7 @@ function mapSessionForDashboard(
   signupCount?: number,
 ): DashboardCourse {
   const styleType: DashboardCourseType = course.format === 'series' ? 'course-series' : 'event';
-  const subtitle = course.location || (course.format === 'series' ? 'Kursrekke' : 'Enkeltkurs');
+  const subtitle = course.location || (course.format === 'series' ? 'Kursrekke' : 'Enkelttime');
 
   return {
     id: course.id,
@@ -83,49 +88,71 @@ function dayLabel(dateStr?: string): string {
 const TeacherDashboard = () => {
   const { currentSeller } = useAuth();
   const isPro = isProSeller(currentSeller);
-  const [dashboardCourses, setDashboardCourses] = useState<DashboardCourse[] | null>(null);
-  const [recentSignupsRaw, setRecentSignupsRaw] = useState<SignupWithDetails[] | null>(null);
-  const [incomeSeries, setIncomeSeries] = useState<IncomeSeries | null>(null);
+  const sellerId = currentSeller?.id;
+  const queryClient = useQueryClient();
   const [incomeRange, setIncomeRange] = useState<IncomeRange>('month');
-  const incomeRangeRef = useRef<IncomeRange>('month');
-  incomeRangeRef.current = incomeRange;
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedSignupId, setSelectedSignupId] = useState<string | null>(null);
-  const hasLoadedRef = useRef(false);
 
-  function processDashboardResults(
-    nextSessionsResult: Awaited<ReturnType<typeof fetchNextSessions>>,
-    signupsResult: Awaited<ReturnType<typeof fetchRecentSignups>>,
-  ) {
-    if (nextSessionsResult.data && nextSessionsResult.data.length > 0) {
-      setDashboardCourses(
-        nextSessionsResult.data.map(({ session, course, signupCount }) =>
-          mapSessionForDashboard(session, course, signupCount),
-        ),
+  // Server state on TanStack Query. What the old hand-rolled version needed
+  // bespoke code for comes free here: background refetch errors keep
+  // last-known data (no false empty states), realtime events invalidate
+  // instead of re-orchestrating fetches, and focus-refetch keeps a kept-open
+  // dashboard current.
+  const nextSessionsQuery = useQuery({
+    queryKey: ['dashboard-next-sessions', sellerId],
+    enabled: !!sellerId,
+    queryFn: async (): Promise<DashboardCourse[]> => {
+      const { data, error } = await fetchNextSessions(sellerId!, ROW_LIMIT);
+      if (error) throw error;
+      return (data ?? []).map(({ session, course, signupCount }) =>
+        mapSessionForDashboard(session, course, signupCount),
       );
-    } else {
-      setDashboardCourses([]);
-    }
+    },
+  });
 
-    setRecentSignupsRaw(signupsResult.data ?? []);
-  }
+  const recentSignupsQuery = useQuery({
+    queryKey: ['dashboard-recent-signups', sellerId],
+    enabled: !!sellerId,
+    queryFn: async (): Promise<SignupWithDetails[]> => {
+      const { data, error } = await fetchRecentSignups(sellerId!, ROW_LIMIT);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-  const refetchDashboardData = useCallback(async () => {
-    if (!currentSeller?.id) return;
+  // Income chart — keyed on the range so toggling Uke/Måned/År is cached per
+  // range; keepPreviousData shows the old series while the next one loads
+  // instead of flashing a skeleton.
+  const incomeQuery = useQuery({
+    queryKey: ['income-series', sellerId, incomeRange],
+    enabled: !!sellerId,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<IncomeSeries> => {
+      const { data, error } = await fetchIncomeSeries(sellerId!, incomeRange);
+      if (error || !data) throw error ?? new Error('Income series unavailable');
+      return data;
+    },
+  });
 
-    const [, nextSessionsResult, signupsResult, incomeResult] = await Promise.all([
-      fetchCourses(currentSeller.id),
-      fetchNextSessions(currentSeller.id, ROW_LIMIT),
-      fetchRecentSignups(currentSeller.id, ROW_LIMIT),
-      fetchIncomeSeries(currentSeller.id, incomeRangeRef.current),
-    ]);
+  // Free-tier fee line — this month's platform take, the seller's self-serve
+  // Pro crossover math. Not fetched for Pro (their take is 0).
+  const feeQuery = useQuery({
+    queryKey: ['platform-fee-month', sellerId],
+    enabled: !!sellerId && !isPro,
+    queryFn: async (): Promise<number> => {
+      const { data, error } = await fetchPlatformFeeMonth(sellerId!);
+      if (error) throw error;
+      return data;
+    },
+  });
 
-    processDashboardResults(nextSessionsResult, signupsResult);
-    if (incomeResult.data) setIncomeSeries(incomeResult.data);
-  }, [currentSeller?.id]);
+  const refetchDashboardData = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ['dashboard-next-sessions', sellerId] });
+    void queryClient.invalidateQueries({ queryKey: ['dashboard-recent-signups', sellerId] });
+    void queryClient.invalidateQueries({ queryKey: ['income-series', sellerId] });
+  }, [queryClient, sellerId]);
 
-  // Drawer actions mirror the course page; refetch refreshes the recent list.
+  // Drawer actions mirror the course page; invalidation refreshes the lists.
   const handleCancelEnrollment = async (signupId: string, refund: boolean) => {
     const { error } = await teacherCancelSignup(signupId, { refund });
     if (error) {
@@ -146,92 +173,18 @@ const TeacherDashboard = () => {
     currentSeller?.id,
   );
 
-  // Initial data fetch
-  useEffect(() => {
-    let isActive = true;
-
-    async function loadDashboardData() {
-      if (!currentSeller?.id) {
-        setIsLoading(false);
-        return;
-      }
-
-      if (!hasLoadedRef.current) {
-        setIsLoading(true);
-      }
-      setLoadError(null);
-
-      try {
-        const [coursesResult, nextSessionsResult, signupsResult] = await Promise.all([
-          fetchCourses(currentSeller.id),
-          fetchNextSessions(currentSeller.id, ROW_LIMIT),
-          fetchRecentSignups(currentSeller.id, ROW_LIMIT),
-        ]);
-
-        if (!isActive) return;
-
-        if (coursesResult.error) {
-          logger.error('Failed to fetch courses:', coursesResult.error);
-          setLoadError('Kunne ikke laste kurs');
-        }
-
-        processDashboardResults(nextSessionsResult, signupsResult);
-      } catch (err) {
-        logger.error('Dashboard load error:', err);
-        if (isActive) {
-          setLoadError('Noe gikk galt. Prøv igjen.');
-        }
-      } finally {
-        if (isActive) {
-          setIsLoading(false);
-          hasLoadedRef.current = true;
-        }
-      }
-    }
-
-    loadDashboardData();
-
-    return () => {
-      isActive = false;
-    };
-  }, [currentSeller?.id]);
-
-  // Income chart — refetches whenever the range toggle changes, independent
-  // of the main dashboard loader so toggling Uke/Måned/År stays snappy.
-  useEffect(() => {
-    if (!currentSeller?.id) {
-      setIncomeSeries(null);
-      return;
-    }
-    let isActive = true;
-    fetchIncomeSeries(currentSeller.id, incomeRange).then((result) => {
-      if (!isActive) return;
-      if (result.data) setIncomeSeries(result.data);
-      else if (result.error) logger.error('Failed to fetch income:', result.error);
-    });
-    return () => {
-      isActive = false;
-    };
-  }, [currentSeller?.id, incomeRange]);
-
-  // Free-tier fee line — this month's platform take, the seller's self-serve
-  // Pro crossover math. Not fetched for Pro (their take is 0).
-  const [monthPlatformFee, setMonthPlatformFee] = useState(0);
-  useEffect(() => {
-    if (!currentSeller?.id || isPro) {
-      setMonthPlatformFee(0);
-      return;
-    }
-    let isActive = true;
-    fetchPlatformFeeMonth(currentSeller.id).then((result) => {
-      if (!isActive) return;
-      if (result.error) logger.error('Failed to fetch platform fees:', result.error);
-      else setMonthPlatformFee(result.data);
-    });
-    return () => {
-      isActive = false;
-    };
-  }, [currentSeller?.id, isPro]);
+  const dashboardCourses = nextSessionsQuery.data ?? null;
+  const recentSignupsRaw = recentSignupsQuery.data ?? null;
+  const incomeSeries = incomeQuery.data ?? null;
+  const monthPlatformFee = feeQuery.data ?? 0;
+  const isLoading = !!sellerId && (nextSessionsQuery.isPending || recentSignupsQuery.isPending);
+  // Error page only when a list failed with NOTHING to show — a failed
+  // background refetch keeps rendering last-known data.
+  const loadError =
+    (nextSessionsQuery.isError && nextSessionsQuery.data === undefined) ||
+    (recentSignupsQuery.isError && recentSignupsQuery.data === undefined)
+      ? 'Kunne ikke laste oversikten.'
+      : null;
 
   return (
     <div className="flex-1 overflow-y-auto bg-canvas h-full">
@@ -250,12 +203,14 @@ const TeacherDashboard = () => {
           ) : (
             <div className="space-y-8">
               <div className="space-y-3">
-                <IncomeChart
-                  series={incomeSeries}
-                  isLoading={incomeSeries === null}
-                  range={incomeRange}
-                  onRangeChange={setIncomeRange}
-                />
+                <Suspense fallback={<Skeleton className="h-[280px] w-full rounded-lg" />}>
+                  <IncomeChart
+                    series={incomeSeries}
+                    isLoading={incomeSeries === null}
+                    range={incomeRange}
+                    onRangeChange={setIncomeRange}
+                  />
+                </Suspense>
                 {!isPro && monthPlatformFee > 0 && (
                   <PlatformFeeHint feeNok={monthPlatformFee} />
                 )}
@@ -290,16 +245,17 @@ const TeacherDashboard = () => {
  */
 export function PlatformFeeHint({ feeNok }: { feeNok: number }) {
   const month = new Intl.DateTimeFormat('nb-NO', { month: 'long' }).format(new Date());
+  // Bordered container, text left + action right (the Rox billing / Kajabi
+  // upgrade-prompt shape) — not a floating line under the chart.
   return (
-    <p className="px-1 text-sm text-foreground-muted">
-      Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: 0 kr.{' '}
-      <Link
-        to={routes.settingsBilling}
-        className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
-      >
-        Se Pro
-      </Link>
-    </p>
+    <div className="flex flex-col gap-3 rounded-xl border border-border px-5 py-4 sm:flex-row sm:items-center">
+      <p className="min-w-0 flex-1 text-sm text-foreground-muted">
+        Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: 0 kr.
+      </p>
+      <Button asChild variant="secondary" className="w-full shrink-0 sm:w-auto">
+        <Link to={routes.settingsBilling}>Se Pro</Link>
+      </Button>
+    </div>
   );
 }
 

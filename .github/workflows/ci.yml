@@ -20,5 +20,44 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      - name: Lint
+        run: npm run lint
+
       - name: Unit tests
         run: npm run test:run
+
+      # tsc already ran above; vite build alone catches asset-pipeline
+      # breakage (e.g. fonts/images missing from dist) that tsc can't.
+      - name: Build
+        run: npx vite build
+
+  edge-functions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # The repo-root package.json puts Deno in bring-your-own-node_modules
+      # mode, and jsr:@supabase/supabase-js resolves npm:@supabase/realtime-js
+      # from node_modules — without this install the whole job fails at
+      # dependency resolution (it worked locally only because dev machines
+      # have node_modules).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Edge-function tests: shared payment modules (claim state machine,
+      # signature verification) + handler-level suites (stripe-connect-webhook
+      # runs unmodified against a faked PostgREST/Stripe network). Running
+      # them also type-checks the modules they import. A repo-wide
+      # `deno check supabase/functions` is still blocked upstream:
+      # @supabase/functions-js edge-runtime.d.ts references npm:openai types
+      # (handlers keep that import in index.ts only, so tests avoid it).
+      - name: Edge function tests
+        run: deno test --allow-env supabase/functions/

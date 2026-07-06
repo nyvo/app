@@ -73,9 +73,9 @@ function ticketLabel(
 ): string {
   if (kind === 'drop_in') return 'Drop-in';
   if (audience && audience !== 'standard') {
-    return `Kursrekke — ${AUDIENCE_LABEL[audience].toLowerCase()}`;
+    return `Hele kurset – ${AUDIENCE_LABEL[audience].toLowerCase()}`;
   }
-  return 'Kursrekke';
+  return 'Hele kurset';
 }
 
 type ActivityTone = 'success' | 'danger' | 'warning' | 'neutral';

@@ -1,6 +1,5 @@
-import { supabase, typedFrom } from '@/lib/supabase'
-import { logger } from '@/lib/logger'
-import { formatLocalDateKey } from '@/utils/dateUtils'
+import { supabase } from '@/lib/supabase'
+import { formatLocalDateKey, osloTodayKey } from '@/utils/dateUtils'
 import type {
   Course,
   CourseInsert,
@@ -11,6 +10,7 @@ import type {
   CourseFormat,
   DeliveryMode,
   SessionStatus,
+  Json,
 } from '@/types/database'
 
 // Internal types for Supabase join query results
@@ -163,7 +163,7 @@ export async function fetchExistingSessions(
 ): Promise<{ data: ExistingSession[]; error: Error | null }> {
   if (dates.length === 0) return { data: [], error: null }
 
-  const { data: sessions, error } = await typedFrom('course_sessions')
+  const { data: sessions, error } = await supabase.from('course_sessions')
     .select(`
       session_date,
       start_time,
@@ -201,25 +201,6 @@ export async function fetchExistingSessions(
   })
 
   return { data: result, error: null }
-}
-
-// Parse a start time from a time_schedule string (e.g., "Mandager, 18:00" -> "18:00").
-// Logs a warning and falls back to '09:00' when the regex does not match.
-function parseStartTime(timeSchedule: string | null | undefined): string {
-  if (!timeSchedule) {
-    logger.warn(
-      '[courses] parseStartTime: time_schedule is empty/null — defaulting to "09:00"'
-    )
-    return '09:00'
-  }
-  const match = timeSchedule.match(/(\d{1,2}:\d{2})/)
-  if (!match) {
-    logger.warn(
-      `[courses] parseStartTime: could not extract time from "${timeSchedule}" — defaulting to "09:00"`
-    )
-    return '09:00'
-  }
-  return match[1]
 }
 
 // Generate session date/time entries based on the course type.
@@ -280,10 +261,10 @@ async function insertCourseSessionsOrRollback(
     status: 'upcoming' as const,
   }))
 
-  const { error: sessionsError } = await typedFrom('course_sessions').insert(sessions)
+  const { error: sessionsError } = await supabase.from('course_sessions').insert(sessions)
   if (sessionsError) {
     // Rollback: delete the orphaned course
-    await typedFrom('courses').delete().eq('id', courseId)
+    await supabase.from('courses').delete().eq('id', courseId)
     return { error: sessionsError as Error }
   }
 
@@ -313,20 +294,33 @@ export async function createCourse(
     eventDays?: number // Number of days for multi-day events
     sessionTimeOverrides?: SessionTimeOverride[] // Custom times for specific days
     sessionDays?: SessionDaySpec[] // Explicit per-day specs (arbitrary dates + times)
+    seriesStartTime?: string // HH:MM — structured time for weekly generation
+    seriesEndTime?: string // HH:MM — optional end time for the generated rows
   }
 ): Promise<{ data: Course | null; error: Error | null }> {
-  const startTime = parseStartTime(courseData.time_schedule)
+  // Structured times come from the caller. time_schedule is a DISPLAY LABEL
+  // and is never parsed — the old regex fallback silently created sessions
+  // at 09:00 whenever the label's shape drifted. Missing times are a
+  // programmer error, surfaced loudly instead of papered over.
+  const hasExplicitDays = !!options?.sessionDays && options.sessionDays.length > 0
+  if (!hasExplicitDays && !options?.seriesStartTime) {
+    return {
+      data: null,
+      error: new Error('createCourse requires sessionDays or seriesStartTime'),
+    }
+  }
 
-  // When explicit per-day specs are provided, use them verbatim; otherwise
-  // fall back to the legacy consecutive-date generation.
   const sessionEntries: { date: string; startTime: string; endTime?: string }[] =
-    options?.sessionDays && options.sessionDays.length > 0
-      ? options.sessionDays.map((spec) => ({
+    hasExplicitDays
+      ? options!.sessionDays!.map((spec) => ({
           date: spec.date,
           startTime: spec.startTime,
           endTime: spec.endTime,
         }))
-      : generateSessionDates(courseData, startTime, options)
+      : generateSessionDates(courseData, options!.seriesStartTime!, options).map((entry) => ({
+          ...entry,
+          endTime: options?.seriesEndTime,
+        }))
 
   const baseSlug = slugifyTitle(courseData.title) || courseData.title.slice(0, 8)
   let data: Course | null = null
@@ -337,7 +331,7 @@ export async function createCourse(
       ? baseSlug
       : `${baseSlug.slice(0, 60 - 1 - String(suffix).length)}-${suffix}`
 
-    const { data: inserted, error } = await typedFrom('courses')
+    const { data: inserted, error } = await supabase.from('courses')
       .insert({ ...courseData, slug: candidateSlug })
       .select()
       .single()
@@ -391,7 +385,7 @@ export async function createCourse(
 }
 
 export async function updateCourse(courseId: string, courseData: CourseUpdate): Promise<{ data: Course | null; error: Error | null }> {
-  const { data, error } = await typedFrom('courses')
+  const { data, error } = await supabase.from('courses')
     .update(courseData)
     .eq('id', courseId)
     .select()
@@ -530,7 +524,7 @@ export async function cancelCourse(
 }
 
 export async function fetchCourseSessions(courseId: string): Promise<{ data: CourseSession[] | null; error: Error | null }> {
-  const { data, error } = await typedFrom('course_sessions')
+  const { data, error } = await supabase.from('course_sessions')
     .select('*')
     .eq('course_id', courseId)
     .order('session_number', { ascending: true })
@@ -546,7 +540,7 @@ export async function updateCourseSession(
   sessionId: string,
   sessionData: CourseSessionUpdate
 ): Promise<{ data: CourseSession | null; error: Error | null }> {
-  const { data, error } = await typedFrom('course_sessions')
+  const { data, error } = await supabase.from('course_sessions')
     .update(sessionData)
     .eq('id', sessionId)
     .select()
@@ -568,7 +562,7 @@ export async function createCourseSession(
   courseId: string,
   spec: { session_date: string; start_time: string; end_time: string; session_number: number },
 ): Promise<{ data: CourseSession | null; error: Error | null }> {
-  const { data, error } = await typedFrom('course_sessions')
+  const { data, error } = await supabase.from('course_sessions')
     .insert({
       course_id: courseId,
       session_date: spec.session_date,
@@ -593,7 +587,7 @@ export async function createCourseSession(
  * payment_attempts). Caller MUST verify status === 'draft' before calling.
  */
 export async function deleteCourseSession(sessionId: string): Promise<{ error: Error | null }> {
-  const { error } = await typedFrom('course_sessions')
+  const { error } = await supabase.from('course_sessions')
     .delete()
     .eq('id', sessionId)
 
@@ -641,6 +635,73 @@ export async function sendCourseMessage(input: {
   return { data: { notified: result.notified ?? 0, failed: result.failed ?? 0 }, error: null }
 }
 
+// Desired-state element for save_course_schedule. `keep` marks an existing
+// row the editor holds incompletely (no date/time yet) — the RPC leaves it
+// untouched instead of deleting it.
+export type DesiredSession =
+  | { id: string; keep: true }
+  | { id: string | null; session_date: string; start_time: string; end_time?: string | null }
+
+export interface SaveCourseScheduleResult {
+  success: boolean
+  rescheduled: Array<{
+    session_id: string
+    old_date: string
+    old_start_time: string
+    new_date: string
+    new_start_time: string
+  }>
+  skipped_new_days: number
+}
+
+/**
+ * One transactional save for the course editor: course fields + drop-in tier
+ * + the full desired session state, diffed server-side. Every write commits
+ * or none do — no half-saved schedules, no client-side re-baselining.
+ * Published-course session changes come back in `rescheduled`; the caller
+ * decides which of them trigger participant notifications.
+ */
+export async function saveCourseSchedule(input: {
+  courseId: string
+  course: Record<string, unknown>
+  dropIn?: { price: number } | null
+  sessions?: DesiredSession[] | null
+}): Promise<{ data: SaveCourseScheduleResult | null; error: Error | null }> {
+  const { data, error } = await supabase.rpc('save_course_schedule', {
+    p_course_id: input.courseId,
+    p_course: input.course as Json,
+    p_drop_in: (input.dropIn ?? undefined) as Json | undefined,
+    p_sessions: (input.sessions ?? undefined) as unknown as Json | undefined,
+  })
+  if (error) return { data: null, error: error as Error }
+  return { data: data as unknown as SaveCourseScheduleResult, error: null }
+}
+
+/**
+ * Notify participants about an ALREADY-COMMITTED session reschedule (the
+ * save_course_schedule RPC did the write). Best-effort — the schedule change
+ * stands regardless of email outcome.
+ */
+export async function notifySessionRescheduled(input: {
+  sessionId: string
+  oldDate: string
+  oldStartTime: string
+  newDate: string
+  newStartTime: string
+}): Promise<{ error: Error | null }> {
+  const { error } = await supabase.functions.invoke('update-session', {
+    body: {
+      session_id: input.sessionId,
+      new_date: input.newDate,
+      new_start_time: input.newStartTime,
+      notify_only: true,
+      old_date: input.oldDate,
+      old_start_time: input.oldStartTime,
+    },
+  })
+  return { error: (error as Error) ?? null }
+}
+
 /**
  * Reschedule a single session (date + start/end time) AND notify every
  * confirmed participant via the session-rescheduled email template.
@@ -684,7 +745,7 @@ export async function fetchNextSessions(sellerId: string, limit = 3): Promise<{
   }> | null
   error: Error | null
 }> {
-  const today = new Date().toISOString().split('T')[0]
+  const today = osloTodayKey()
 
   const { data: sessionsData, error: sessionsError } = await supabase
     .from('course_sessions')
@@ -729,16 +790,14 @@ export async function fetchNextSessions(sellerId: string, limit = 3): Promise<{
   const signupCountMap: Record<string, number> = {}
 
   if (courseIds.length > 0) {
-    const { data: countRows } = await supabase
-      .from('signups')
-      .select('course_id')
-      .in('course_id', courseIds)
-      .eq('status', 'confirmed')
+    // Aggregate server-side — fetching signup rows to count in JS silently
+    // truncates at PostgREST's 1000-row cap and undercounts busy studios.
+    const { data: countRows } = await supabase.rpc('public_signup_counts', {
+      p_course_ids: courseIds,
+    })
 
-    if (countRows) {
-      for (const row of countRows as Array<{ course_id: string }>) {
-        signupCountMap[row.course_id] = (signupCountMap[row.course_id] || 0) + 1
-      }
+    for (const row of countRows ?? []) {
+      signupCountMap[row.course_id] = row.confirmed_count
     }
   }
 

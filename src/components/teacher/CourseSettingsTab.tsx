@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { cn, formatKroner } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,9 @@ interface CourseSettingsTabProps {
   // General info
   settingsTitle: string;
   onTitleChange: (title: string) => void;
+  /** Inline error under the title input — set by the parent when a save is
+   *  blocked (e.g. empty title). */
+  titleError?: string | null;
   settingsDescription: string;
   onDescriptionChange: (description: string) => void;
 
@@ -54,6 +57,9 @@ interface CourseSettingsTabProps {
   onLocationCoordsChange: (
     coords: { lat: number | null; lon: number | null; placeId: string | null } | null,
   ) => void;
+  /** Inline error under the location field — set by the parent when a save is
+   *  blocked (typed text without picking a place). */
+  locationError?: string | null;
 
   // Schedule — for series, used as-is. For single, sessionDays takes over.
   settingsDate: Date | undefined;
@@ -76,11 +82,9 @@ interface CourseSettingsTabProps {
   onMaxParticipantsChange: (value: number) => void;
   currentEnrolled: number;
 
-  // Pricing — for series the input is per-gang; the stored value (passed in
-  // via `price`) is the total (per-gang × total_weeks), matching the create
-  // flow's convention.
+  // Pricing — the input IS the stored total for both formats (the full course
+  // price the buyer is charged), matching the create flow's convention.
   courseFormat: 'single' | 'series';
-  totalWeeks: number;
   price: number;
   onPriceChange: (totalPrice: number) => void;
 
@@ -110,6 +114,7 @@ interface CourseSettingsTabProps {
 export const CourseSettingsTab = ({
   settingsTitle,
   onTitleChange,
+  titleError,
   settingsDescription,
   onDescriptionChange,
   settingsImageUrl,
@@ -123,6 +128,7 @@ export const CourseSettingsTab = ({
   onLocationChange,
   onLocationAddressChange,
   onLocationCoordsChange,
+  locationError,
   settingsDate,
   onDateChange,
   settingsTime,
@@ -136,7 +142,6 @@ export const CourseSettingsTab = ({
   onMaxParticipantsChange,
   currentEnrolled,
   courseFormat,
-  totalWeeks,
   price,
   onPriceChange,
   isDirty,
@@ -151,14 +156,7 @@ export const CourseSettingsTab = ({
   const minParticipants = Math.max(currentEnrolled || 1, 1);
   const [participantsInput, setParticipantsInput] = useState(String(maxParticipants));
 
-  // Per-gang for series, total for single. Mirrors create-course's input shape.
-  const perGangPrice = useMemo(() => {
-    if (courseFormat === 'series' && totalWeeks > 0) {
-      return Math.round(price / totalWeeks);
-    }
-    return price;
-  }, [courseFormat, totalWeeks, price]);
-  const [priceInput, setPriceInput] = useState(String(perGangPrice));
+  const [priceInput, setPriceInput] = useState(String(price));
 
   const minToTime = (mins: number) => {
     const h = Math.floor(mins / 60);
@@ -185,31 +183,23 @@ export const CourseSettingsTab = ({
   }, [maxParticipants]);
 
   useEffect(() => {
-    setPriceInput(String(perGangPrice));
-  }, [perGangPrice]);
+    setPriceInput(String(price));
+  }, [price]);
 
   const commitPriceInput = () => {
     const trimmed = priceInput.trim();
     if (trimmed === '') {
-      setPriceInput(String(perGangPrice));
+      setPriceInput(String(price));
       return;
     }
     const parsed = Number(trimmed);
     if (Number.isNaN(parsed) || parsed < 0) {
-      setPriceInput(String(perGangPrice));
+      setPriceInput(String(price));
       return;
     }
     const normalized = Math.floor(parsed);
-    // Only commit when the per-gang value actually changed — re-deriving the
-    // total from an untouched (rounded) per-gang would silently shift a stored
-    // total that isn't divisible by totalWeeks.
-    if (normalized === perGangPrice) {
-      setPriceInput(String(normalized));
-      return;
-    }
-    const totalPrice = courseFormat === 'series' ? normalized * (totalWeeks || 1) : normalized;
-    if (totalPrice !== price) {
-      onPriceChange(totalPrice);
+    if (normalized !== price) {
+      onPriceChange(normalized);
     }
     setPriceInput(String(normalized));
   };
@@ -235,8 +225,7 @@ export const CourseSettingsTab = ({
     setParticipantsInput(String(normalized));
   };
 
-  // Selecting a room pre-fills Plasser from the room's capacity, but only when
-  // the field is still empty — never clobber a value the teacher typed.
+  // Copies the picked place's name, address and coords into the form state.
   const handleLocationChange = (next: {
     name: string;
     address: string;
@@ -286,14 +275,21 @@ export const CourseSettingsTab = ({
 
         <SettingsRow title="Detaljer" description="Tittel og beskrivelse slik de vises på kurssiden.">
           <div>
-            <FieldLabel htmlFor="settings-title">Tittel</FieldLabel>
+            <FieldLabel htmlFor="settings-title" error={!!titleError}>Tittel</FieldLabel>
             <Input
               id="settings-title"
               type="text"
               value={settingsTitle}
               onChange={(e) => onTitleChange(e.target.value)}
+              aria-invalid={titleError ? 'true' : undefined}
+              aria-describedby={titleError ? 'settings-title-error' : undefined}
               className="text-base"
             />
+            {titleError && (
+              <FieldError id="settings-title-error" className="mt-2">
+                {titleError}
+              </FieldError>
+            )}
           </div>
 
           <div id="course-edit-description" className="scroll-mt-24">
@@ -313,7 +309,7 @@ export const CourseSettingsTab = ({
           description="Hvor og når kurset holdes."
         >
           <div>
-            <FieldLabel>Sted</FieldLabel>
+            <FieldLabel error={!!locationError}>Sted</FieldLabel>
             <LocationField
               id="settings-location"
               value={settingsLocation}
@@ -321,6 +317,11 @@ export const CourseSettingsTab = ({
               coords={settingsLocationCoords}
               onChange={handleLocationChange}
             />
+            {locationError && (
+              <FieldError id="settings-location-error" className="mt-2">
+                {locationError}
+              </FieldError>
+            )}
           </div>
 
           {courseFormat === 'single' ? (
@@ -442,7 +443,7 @@ export const CourseSettingsTab = ({
             </div>
             <div>
               <FieldLabel htmlFor="settings-price">
-                {courseFormat === 'series' ? 'Pris per gang' : 'Pris'}
+                {courseFormat === 'series' ? 'Pris for hele kurset' : 'Pris'}
               </FieldLabel>
               <InputGroup>
                 <InputGroupInput
@@ -462,11 +463,6 @@ export const CourseSettingsTab = ({
                 />
                 <InputGroupAddon align="inline-end" aria-hidden="true">kr</InputGroupAddon>
               </InputGroup>
-              {courseFormat === 'series' && priceInput !== '' && totalWeeks > 0 && (
-                <p className="mt-2 text-sm text-foreground-muted">
-                  Totalt {formatKroner((parseInt(priceInput, 10) || 0) * totalWeeks)} for {totalWeeks} uker
-                </p>
-              )}
             </div>
           </div>
         </SettingsRow>

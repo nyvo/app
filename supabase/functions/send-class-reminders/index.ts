@@ -17,6 +17,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { sendEmail } from '../_shared/email.ts'
+import { timingSafeEqual } from '../_shared/auth.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -77,8 +78,8 @@ function osloDate(daysAhead: number): string {
 Deno.serve(async (req: Request) => {
   const auth = req.headers.get('authorization') || ''
   const providedSecret = req.headers.get('x-cron-secret') || ''
-  const hasServiceRole = auth === `Bearer ${supabaseServiceKey}`
-  const hasCronSecret = cronSecret && providedSecret === cronSecret
+  const hasServiceRole = timingSafeEqual(auth, `Bearer ${supabaseServiceKey}`)
+  const hasCronSecret = timingSafeEqual(providedSecret, cronSecret)
 
   if (!hasServiceRole && !hasCronSecret) {
     return new Response('Unauthorized', { status: 401 })
@@ -99,6 +100,11 @@ Deno.serve(async (req: Request) => {
       .eq('status', 'upcoming')
       .gte('session_date', osloDate(0))
       .lte('session_date', osloDate(2))
+      // Soonest-first: without an ORDER BY, which rows fill the LIMIT page is
+      // planner-dependent, and out-of-window rows could starve in-window
+      // sessions indefinitely once the range holds > MAX_SESSIONS_PER_RUN rows.
+      .order('session_date', { ascending: true })
+      .order('start_time', { ascending: true })
       .limit(MAX_SESSIONS_PER_RUN)
 
     if (sessionsError) {
@@ -106,7 +112,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const now = Date.now()
-    const summary = { checked: sessions?.length || 0, sessions: 0, sent: 0, failed: 0 }
+    const summary = { checked: sessions?.length || 0, sessions: 0, sent: 0, failed: 0, expired: 0 }
 
     for (const session of sessions || []) {
       const course = session.course as unknown as {
@@ -116,12 +122,27 @@ Deno.serve(async (req: Request) => {
         status: string
         seller: { name: string } | null
       } | null
-      if (!course || course.status !== 'published') continue
+      // Live courses only. NOTE: 'published' is not a course_status value
+      // (draft/upcoming/active/completed/cancelled) — the old
+      // `status !== 'published'` check skipped EVERY session, so no reminder
+      // could ever send.
+      if (!course || (course.status !== 'upcoming' && course.status !== 'active')) continue
 
       const startEpoch = sessionStartEpoch(session.session_date, session.start_time)
       if (startEpoch === null) continue
       const hoursUntil = (startEpoch - now) / (60 * 60 * 1000)
-      if (hoursUntil < WINDOW_MIN_HOURS || hoursUntil > WINDOW_MAX_HOURS) continue
+      if (hoursUntil < WINDOW_MIN_HOURS) {
+        // The window has permanently passed (all hourly retries missed, or the
+        // class already started) — a "day before" reminder now would be wrong.
+        // Stamp it so it stops occupying the LIMIT page on every future run.
+        summary.expired += 1
+        await supabase
+          .from('course_sessions')
+          .update({ reminder_sent_at: new Date().toISOString() })
+          .eq('id', session.id)
+        continue
+      }
+      if (hoursUntil > WINDOW_MAX_HOURS) continue
 
       const { data: signups, error: signupsError } = await supabase
         .from('signups')
@@ -141,11 +162,17 @@ Deno.serve(async (req: Request) => {
       summary.sessions += 1
       const courseStart = reminderStartLabel(session.session_date, session.start_time)
       const studioName = course.seller?.name ?? ''
-      let anySent = false
+      let anySucceeded = false
+      let attempted = 0
+      let first = true
 
-      // Sequential — keeps Resend rate-limit happy on long lists.
+      // Sequential with a small gap — Resend's default limit is ~2 req/s, and
+      // a tight loop over a full class 429s mid-list.
       for (const s of signups || []) {
         if (!s.participant_email) continue
+        if (!first) await new Promise((r) => setTimeout(r, 550))
+        first = false
+        attempted += 1
         const result = await sendEmail({
           template: 'class-reminder',
           to: s.participant_email,
@@ -165,15 +192,19 @@ Deno.serve(async (req: Request) => {
             error: result.error,
           })
         } else {
+          anySucceeded = true
           summary.sent += 1
-          anySent = true
         }
       }
 
-      // Stamp once at least one participant was reached, or when there was
-      // nobody to remind. A total send failure leaves the row unstamped so
-      // the next hourly run inside the window retries it.
-      if (anySent || (signups || []).length === 0) {
+      // Stamp when at least one send landed, or there was nobody to remind.
+      // The old rule (stamp only if EVERY send succeeded) meant a single
+      // permanently-rejected address kept the session unstamped through all ~8
+      // hourly windows, re-sending to everyone else each run. Now one bad
+      // address costs that one recipient their reminder (logged above) instead
+      // of spamming the whole class. A TOTAL failure (every attempt failed,
+      // e.g. Resend down) leaves the session unstamped so the next run retries.
+      if (anySucceeded || attempted === 0) {
         await supabase
           .from('course_sessions')
           .update({ reminder_sent_at: new Date().toISOString() })
