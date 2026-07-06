@@ -10,6 +10,7 @@
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { timingSafeEqual } from '../_shared/auth.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -25,8 +26,8 @@ const resendFromName = Deno.env.get('RESEND_FROM_NAME') || 'Openspot'
 Deno.serve(async (req: Request) => {
   const auth = req.headers.get('authorization') || ''
   const providedSecret = req.headers.get('x-cron-secret') || ''
-  const hasServiceRole = auth === `Bearer ${supabaseServiceKey}`
-  const hasCronSecret = cronSecret && providedSecret === cronSecret
+  const hasServiceRole = timingSafeEqual(auth, `Bearer ${supabaseServiceKey}`)
+  const hasCronSecret = timingSafeEqual(providedSecret, cronSecret)
 
   if (!hasServiceRole && !hasCronSecret) {
     return new Response('Unauthorized', { status: 401 })

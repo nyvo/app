@@ -438,6 +438,18 @@ export async function handleStripeConnectWebhook(req: Request): Promise<Response
             .eq('id', attemptId)
             .in('status', ['pending', 'authorized'])
         }
+        // A signup is minted (confirmed/paid) BEFORE capture. If the PI is
+        // canceled — most importantly when the ~7-day authorization expires
+        // after sustained capture failures — that "paid" seat was never charged
+        // and must not linger on the roster. A canceled PI can never have been
+        // captured, so flipping it to cancelled/failed is safe. Mirrors the
+        // capture-failure terminal path.
+        await supabase
+          .from('signups')
+          .update({ status: 'cancelled', payment_status: 'failed' })
+          .eq('stripe_payment_intent_id', pi.id)
+          .eq('status', 'confirmed')
+          .eq('payment_status', 'paid')
         await markEventResult(supabase, eventKey, { type: 'voided' })
         return new Response('OK', { status: 200 })
       }

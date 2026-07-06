@@ -366,7 +366,7 @@ function makeMockTiers(course: PublicCourseWithDetails): AvailableTicketType[] {
     {
       id: 'tier-main',
       course_id: course.id,
-      label: course.format === 'series' ? 'Hele kurspakken' : 'Enkelttime',
+      label: course.format === 'series' ? 'Hele kurset' : 'Enkelttime',
       description: '',
       price: course.price ?? 0,
       weeks: course.format === 'series' ? (course.total_weeks ?? 1) : 1,

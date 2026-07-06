@@ -926,7 +926,6 @@ export type Database = {
           lat: number | null
           lon: number | null
           name: string
-          rooms: Json
           seller_id: string
           updated_at: string
         }
@@ -938,7 +937,6 @@ export type Database = {
           lat?: number | null
           lon?: number | null
           name: string
-          rooms?: Json
           seller_id: string
           updated_at?: string
         }
@@ -950,7 +948,6 @@ export type Database = {
           lat?: number | null
           lon?: number | null
           name?: string
-          rooms?: Json
           seller_id?: string
           updated_at?: string
         }
@@ -1213,6 +1210,14 @@ export type Database = {
           p_sessions?: Json
         }
         Returns: Json
+      }
+      seller_income_series: {
+        Args: { p_from: string; p_seller_id: string }
+        Returns: { bucket_day: string; net_nok: number }[]
+      }
+      seller_platform_fee_month: {
+        Args: { p_seller_id: string }
+        Returns: number
       }
       set_operating_model: {
         Args: { p_operating_model: string; p_seller_id: string }

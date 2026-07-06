@@ -306,6 +306,11 @@ function EmbedClassRow({
   const timeRange = formatTimeRange(time, course.duration);
   const bookability = courseBookability(course, todayKey);
   const isDisabled = bookability !== 'open';
+  // Cancelled courses stay listed through the 30-day grace window, but the
+  // detail fetch excludes them — a link would dead-end on an error page. Full
+  // and closed courses keep working detail pages, so only cancelled rows go
+  // inert.
+  const isCancelled = bookability === 'cancelled';
   const price = entryPrice(course);
   const placeLabel = course.delivery_mode === 'online' ? 'Nettkurs' : course.location;
 
@@ -314,50 +319,62 @@ function EmbedClassRow({
   // the iframe to our app where booking happens.
   const href = `${window.location.origin}/${slug}/${course.slug}`;
 
+  const body = (
+    <>
+      <span className="w-[96px] shrink-0 text-sm font-normal leading-5 tabular-nums text-foreground">
+        {timeRange || '—'}
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <h4 className="text-sm font-medium leading-5 text-foreground">
+          {course.title}
+        </h4>
+        {(course.instructor_name || placeLabel) && (
+          <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.8125rem] text-foreground-muted">
+            {course.instructor_name && (
+              <span className="truncate">{course.instructor_name}</span>
+            )}
+            {placeLabel && (
+              <span className="truncate max-w-56">{placeLabel}</span>
+            )}
+          </p>
+        )}
+      </div>
+
+      <div className="flex shrink-0 flex-col items-end gap-1">
+        <span className="text-sm font-medium leading-5 tabular-nums whitespace-nowrap text-foreground">
+          {price.from && price.amount
+            ? <><span className="font-normal text-foreground-muted">fra </span>{formatKroner(price.amount)}</>
+            : formatCoursePrice(price.amount)}
+        </span>
+        {/* The whole card is the link; a state label appears only when the
+            course can't be booked. */}
+        {isDisabled && (
+          <span className="text-[0.8125rem] leading-5 text-foreground-muted">
+            {CTA_LABELS[bookability]}
+          </span>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <li>
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-disabled={isDisabled || undefined}
-        className="group flex items-start gap-4 rounded-xl bg-hover p-4 transition-colors hover:bg-pressed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      >
-        <span className="w-[96px] shrink-0 text-sm font-normal leading-5 tabular-nums text-foreground">
-          {timeRange || '—'}
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-medium leading-5 text-foreground">
-            {course.title}
-          </h4>
-          {(course.instructor_name || placeLabel) && (
-            <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.8125rem] text-foreground-muted">
-              {course.instructor_name && (
-                <span className="truncate">{course.instructor_name}</span>
-              )}
-              {placeLabel && (
-                <span className="truncate max-w-56">{placeLabel}</span>
-              )}
-            </p>
-          )}
+      {isCancelled ? (
+        <div className="flex items-start gap-4 rounded-xl bg-hover p-4">
+          {body}
         </div>
-
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="text-sm font-medium leading-5 tabular-nums whitespace-nowrap text-foreground">
-            {price.from && price.amount
-              ? <><span className="font-normal text-foreground-muted">fra </span>{formatKroner(price.amount)}</>
-              : formatCoursePrice(price.amount)}
-          </span>
-          {/* The whole card is the link; a state label appears only when the
-              course can't be booked. */}
-          {isDisabled && (
-            <span className="text-[0.8125rem] leading-5 text-foreground-muted">
-              {CTA_LABELS[bookability]}
-            </span>
-          )}
-        </div>
-      </a>
+      ) : (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-disabled={isDisabled || undefined}
+          className="group flex items-start gap-4 rounded-xl bg-hover p-4 transition-colors hover:bg-pressed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          {body}
+        </a>
+      )}
     </li>
   );
 }

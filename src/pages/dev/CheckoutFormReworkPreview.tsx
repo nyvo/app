@@ -525,7 +525,7 @@ function buildOptions(course: PublicCourseWithDetails): TicketOption[] {
 
   opts.push({
     id: 'main',
-    label: isSeries ? 'Hele kurspakken' : 'Enkelttime',
+    label: isSeries ? 'Hele kurset' : 'Enkelttime',
     sublabel: isSeries && course.total_weeks
       ? `${course.total_weeks} uker — full pakke`
       : 'Én klasse',

@@ -25,6 +25,11 @@ interface PlacesAutocompleteProps {
 
 const newToken = () => crypto.randomUUID();
 
+// Norwegian mobile networks put the edge function's cold start + TLS handshake
+// at several hundred ms — paid once. Fire a sub-3-char no-op search on first
+// focus so that cost lands before the user has typed anything searchable.
+let warmedUp = false;
+
 export function PlacesAutocomplete({
   value,
   onChange,
@@ -51,8 +56,11 @@ export function PlacesAutocomplete({
   const lastTyped = useRef<string | null>(null);
   // "Latest request wins" — ignore responses from superseded keystrokes.
   const reqId = useRef(0);
+  // Per-session response cache so backspacing/retyping re-renders instantly
+  // instead of re-querying. Cleared with the session token after a selection.
+  const cache = useRef(new Map<string, PlaceSuggestion[]>());
 
-  const debounced = useDebounce(value, 250);
+  const debounced = useDebounce(value, 150);
 
   useEffect(() => {
     if (debounced !== lastTyped.current) return;
@@ -63,12 +71,23 @@ export function PlacesAutocomplete({
       setOpen(false);
       return;
     }
+    const cached = cache.current.get(q);
+    if (cached) {
+      setResults(cached);
+      setActiveIndex(cached.length > 0 ? 0 : -1);
+      setLoading(false);
+      setOpen(cached.length > 0);
+      return;
+    }
     const id = ++reqId.current;
     setLoading(true);
     searchPlaces(q, sessionToken.current).then(({ data }) => {
       if (id !== reqId.current) return;
+      cache.current.set(q, data);
       setResults(data);
-      setActiveIndex(-1);
+      // Pre-highlight the top hit so a bare Enter picks it — the fastest path
+      // to a resolved place, and one less way to end up with free text.
+      setActiveIndex(data.length > 0 ? 0 : -1);
       setLoading(false);
       setOpen(data.length > 0);
     });
@@ -78,6 +97,7 @@ export function PlacesAutocomplete({
     setOpen(false);
     const { data } = await getPlaceDetails(placeId, sessionToken.current);
     sessionToken.current = newToken();
+    cache.current.clear();
     setResults([]);
     // Forget the typed query so the programmatic name fill below can't re-match
     // and re-open the dropdown.
@@ -106,6 +126,10 @@ export function PlacesAutocomplete({
           onChange(e.target.value);
         }}
         onFocus={() => {
+          if (!warmedUp) {
+            warmedUp = true;
+            void searchPlaces('', sessionToken.current);
+          }
           if (results.length > 0) setOpen(true);
         }}
         onBlur={() => {

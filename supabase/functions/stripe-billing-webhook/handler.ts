@@ -45,10 +45,30 @@ async function syncSubscription(
     subscription_external_id: subscription.id,
   }
 
-  const query = supabase.from('sellers').update(update, { count: 'exact' })
-  const { error, count } = sellerId
-    ? await query.eq('id', sellerId)
-    : await query.eq('subscription_external_id', subscription.id)
+  // A downgrade (canceled/none) must never clobber a row that already points at
+  // a DIFFERENT subscription. Otherwise a late-retried subscription.deleted for
+  // an OLD subscription — after the seller cancelled and re-subscribed — would
+  // overwrite the newer active Pro row with free/canceled (Stripe redelivers
+  // for up to 3 days). Scope the downgrade to this subscription (or a seller
+  // with no subscription yet). Grants/active syncs are keyed on seller_id and
+  // overwrite unconditionally, which is correct — live state is authoritative.
+  const isDowngrade = sellerStatus === 'canceled' || sellerStatus === 'none'
+
+  let query = supabase.from('sellers').update(update, { count: 'exact' })
+  if (sellerId) {
+    query = query.eq('id', sellerId)
+    if (isDowngrade) {
+      query = query.or(
+        `subscription_external_id.eq.${subscription.id},subscription_external_id.is.null`,
+      )
+    }
+  } else {
+    // No seller_id on the event — key on the subscription id, which is already
+    // scoped to exactly this subscription.
+    query = query.eq('subscription_external_id', subscription.id)
+  }
+
+  const { error, count } = await query
 
   if (error) throw error
 

@@ -52,7 +52,10 @@ interface TicketTile {
 export function BookingRailLite({ course, tiers, studioSlug, checkoutHref, dropInSublabel, metaLabel }: BookingRailLiteProps) {
   const spotsLeft = course.spots_available;
   const lowStock = spotsLeft > 0 && spotsLeft <= 3;
-  const courseFull = spotsLeft === 0;
+  // No cap (max_participants null) means unlimited spots — upstream
+  // spots_available bottoms out at 0 for uncapped courses, so guard on the
+  // cap itself. Mirrors courseBookability in studioFacts.
+  const courseFull = course.max_participants !== null && spotsLeft === 0;
 
   const tiles = buildTiles(course, tiers, dropInSublabel ?? null, courseFull);
   // Course-wide capacity only gates the package: a drop-in occupies a single
@@ -144,31 +147,34 @@ export function BookingRailLite({ course, tiers, studioSlug, checkoutHref, dropI
             {/* Price — line items + one prominent total (the focal price). */}
             {selectedTile && (
               ticketPrice > 0 ? (
-                <dl className="space-y-2.5">
-                  <div className="flex items-baseline justify-between gap-3 text-base">
-                    <dt className="text-foreground-muted">
-                      {selectedTile.label}
-                      {/* Prorated with no selector on screen: the weeks-left
-                          cue is the only thing explaining the reduced price. */}
-                      {tiles.length === 1 && selectedTile.prorated && selectedTile.sublabel && (
-                        <span className="block text-sm">{selectedTile.sublabel}</span>
-                      )}
-                    </dt>
-                    <dd className="tabular-nums text-foreground">{formatKroner(ticketPrice)}</dd>
-                  </div>
-                  {serviceFee > 0 && (
+                <div className="space-y-2">
+                  <dl className="space-y-2.5">
                     <div className="flex items-baseline justify-between gap-3 text-base">
-                      <dt className="text-foreground-muted">Tjenestegebyr</dt>
-                      <dd className="tabular-nums text-foreground-muted">{formatKroner(serviceFee)}</dd>
+                      <dt className="text-foreground-muted">
+                        {selectedTile.label}
+                        {/* Prorated with no selector on screen: the weeks-left
+                            cue is the only thing explaining the reduced price. */}
+                        {tiles.length === 1 && selectedTile.prorated && selectedTile.sublabel && (
+                          <span className="block text-sm">{selectedTile.sublabel}</span>
+                        )}
+                      </dt>
+                      <dd className="tabular-nums text-foreground">{formatKroner(ticketPrice)}</dd>
                     </div>
-                  )}
-                  <div className="flex items-baseline justify-between gap-3 border-t border-border pt-3">
-                    <dt className="text-base font-medium text-foreground">Totalt</dt>
-                    <dd className="text-xl font-medium tabular-nums text-foreground">
-                      {formatKroner(total)}
-                    </dd>
-                  </div>
-                </dl>
+                    {serviceFee > 0 && (
+                      <div className="flex items-baseline justify-between gap-3 text-base">
+                        <dt className="text-foreground-muted">Tjenestegebyr</dt>
+                        <dd className="tabular-nums text-foreground-muted">{formatKroner(serviceFee)}</dd>
+                      </div>
+                    )}
+                    <div className="flex items-baseline justify-between gap-3 border-t border-border pt-3">
+                      <dt className="text-base font-medium text-foreground">Totalt</dt>
+                      <dd className="text-xl font-medium tabular-nums text-foreground">
+                        {formatKroner(total)}
+                      </dd>
+                    </div>
+                  </dl>
+                  <p className="text-sm text-foreground-muted">Ingen mva. kommer i tillegg.</p>
+                </div>
               ) : (
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-base font-medium text-foreground">{selectedTile.label}</span>
@@ -183,7 +189,7 @@ export function BookingRailLite({ course, tiers, studioSlug, checkoutHref, dropI
 
             {ticketPrice > 0 && (
               <div className="border-t border-border pt-4">
-                <p className="text-center text-xs text-foreground-muted">Sikker betaling</p>
+                <p className="text-center text-xs text-foreground-muted">Sikker betaling med Stripe</p>
               </div>
             )}
           </>
@@ -248,7 +254,7 @@ function TicketTileButton({
 
 /**
  * Map RPC tier rows onto the rail's two tiles. The tier `label` comes from
- * the database ("Hele kurspakken" / "Hele kurset" / "Enkelttime" / "Drop-in")
+ * the database ("Hele kurset" / "Enkelttime" / "Drop-in")
  * — the same string the checkout summary shows and the signup snapshots — so
  * no client-side re-derivation. The package tile is withheld when the course
  * is full; the drop-in tile appears whenever the RPC offered it (its

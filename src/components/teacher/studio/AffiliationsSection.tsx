@@ -262,7 +262,7 @@ function IndividualView({
           onOpenChange={setConfirmLeave}
           ariaLabel="Stopp visning"
           title="Stopp visning"
-          body={<><strong>{host.name}</strong> fjernes fra studiosiden.</>}
+          body={<>Kursene dine fjernes fra siden til <strong>{host.name}</strong>.</>}
           actionLabel="Stopp visning"
           destructive
           onConfirm={handleLeave}

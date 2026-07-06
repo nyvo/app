@@ -27,6 +27,9 @@ interface CourseOverviewTabProps {
   onAllowsDropInChange: (next: boolean) => void;
   dropInPrice: number;
   onDropInPriceChange: (next: number) => void;
+  /** Commits an edited drop-in price (fires on input blur) — this tab has no
+   *  save bar, so the price persists the moment the field is left. */
+  onDropInPriceBlur?: () => void;
   acceptsLateSignups: boolean;
   onAcceptsLateSignupsChange: (next: boolean) => void;
   /** Opens the full "Se alle timer" modal (session list). */
@@ -115,6 +118,7 @@ export function CourseOverviewTab({
   onAllowsDropInChange,
   dropInPrice,
   onDropInPriceChange,
+  onDropInPriceBlur,
   acceptsLateSignups,
   onAcceptsLateSignupsChange,
   onOpenKursplan,
@@ -186,6 +190,7 @@ export function CourseOverviewTab({
           onAllowsDropInChange={onAllowsDropInChange}
           dropInPrice={dropInPrice}
           onDropInPriceChange={onDropInPriceChange}
+          onDropInPriceBlur={onDropInPriceBlur}
           acceptsLateSignups={acceptsLateSignups}
           onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
         />
@@ -531,6 +536,7 @@ interface TogglesSectionProps {
   onAllowsDropInChange: (next: boolean) => void;
   dropInPrice: number;
   onDropInPriceChange: (next: number) => void;
+  onDropInPriceBlur?: () => void;
   acceptsLateSignups: boolean;
   onAcceptsLateSignupsChange: (next: boolean) => void;
 }
@@ -541,6 +547,7 @@ function TogglesSection({
   onAllowsDropInChange,
   dropInPrice,
   onDropInPriceChange,
+  onDropInPriceBlur,
   acceptsLateSignups,
   onAcceptsLateSignupsChange,
 }: TogglesSectionProps) {
@@ -551,6 +558,7 @@ function TogglesSection({
         onChange={onAllowsDropInChange}
         price={dropInPrice}
         onPriceChange={onDropInPriceChange}
+        onPriceBlur={onDropInPriceBlur}
       />
       <ToggleRow
         label="Tillat påmelding etter oppstart"
@@ -592,9 +600,10 @@ interface DropInToggleRowProps {
   onChange: (next: boolean) => void;
   price: number;
   onPriceChange: (next: number) => void;
+  onPriceBlur?: () => void;
 }
 
-function DropInToggleRow({ checked, onChange, price, onPriceChange }: DropInToggleRowProps) {
+function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur }: DropInToggleRowProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [priceError, setPriceError] = useState(false);
 
@@ -634,6 +643,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange }: DropInTogg
                 const next = Number(e.target.value);
                 handlePriceChange(Number.isFinite(next) ? next : 0);
               }}
+              onBlur={onPriceBlur}
               aria-invalid={priceError || undefined}
               className="h-8 w-[120px] pr-9 tabular-nums"
             />
