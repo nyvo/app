@@ -76,8 +76,8 @@ Section title
 content ...
 ```
 - Sections stack vertically, separated by whitespace + title. No
-  card-per-section — the page's wrapper card (white surface on canvas with
-  `border-card`) already frames the content.
+  card-per-section — content sits directly on the white page; secondary
+  groupings use `bg-panel`.
 - Tabs (`PageTabs`) only when there are 3+ genuinely distinct facets. Two
   facets = stack them.
 - Related-object lists inside a detail screen reuse the list-row recipe,
