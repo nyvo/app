@@ -319,10 +319,10 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-foreground">{course.title}</p>
-        <p className="truncate text-base text-foreground-muted">{when || '—'}</p>
+        <p className="truncate text-base text-foreground">{when || '—'}</p>
       </div>
       {hasCapacity && (
-        <span className="shrink-0 text-sm tabular-nums text-foreground-muted">
+        <span className="shrink-0 text-sm tabular-nums text-foreground">
           {course.signups} / {course.capacity}
         </span>
       )}
@@ -392,7 +392,7 @@ function SignupRow({
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="flex w-full items-center gap-3 rounded-lg py-4 text-left outline-none transition-colors duration-150 cursor-pointer hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-ring-subtle"
+      className="-mx-2 flex w-full items-center gap-3 rounded-lg px-2 py-4 text-left outline-none transition-colors duration-150 cursor-pointer hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-ring-subtle"
     >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">

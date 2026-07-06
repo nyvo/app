@@ -24,9 +24,10 @@
    cool-tinted grey (hue 250, chroma 0.001–0.013 scaled by step) —
    re-tinted 2026-07 from the gen-3 pure-neutral ramp to match the
    sharper Slate-like reference the product moved to. Lightness steps
-   are unchanged (accessibility-tuned) except neutral-2 (canvas,
-   darkened for card contrast) and neutral-12 (foreground, darkened
-   for punch). Status scales are Jade / Amber / Red / Blue.
+   are unchanged (accessibility-tuned) except neutral-2 (the `--panel`
+   utility fill — no longer darkens the canvas, which is white) and
+   neutral-12 (foreground, darkened for punch). Status scales are
+   Jade / Amber / Red / Blue.
    Primary is azure blue (oklch(0.540 0.150 245)).
    ============================================================ */
 
@@ -199,9 +200,10 @@
   /* Neutral — cool-tinted grey (hue 250, chroma scaled 0.001→0.013 by step,
      Slate-like). Lightness ramp preserved from the accessibility-tuned
      pure-neutral gen except two deliberate moves: neutral-2 darkened
-     0.983→0.976 so white cards pop harder on the canvas, neutral-12
-     darkened 0.241→0.185 (≈#111315) for sharper text — both only
-     INCREASE contrast. Keep the L values; tune hue/chroma only. */
+     0.983→0.976 — it's the `--panel` utility fill, not a canvas tint
+     (canvas is white), neutral-12 darkened 0.241→0.185 (≈#111315) for
+     sharper text — both only INCREASE contrast. Keep the L values;
+     tune hue/chroma only. */
   --neutral-1:  oklch(0.991 0.001 250);
   --neutral-2:  oklch(0.976 0.002 250);
   --neutral-3:  oklch(0.956 0.003 250);
@@ -212,7 +214,7 @@
   --neutral-8:  oklch(0.794 0.009 250);
   --neutral-9:  oklch(0.645 0.011 250);
   --neutral-10: oklch(0.611 0.012 250);
-  --neutral-11: oklch(0.550 0.013 250);   /* secondary-text grey — lifted from 0.502 for clearer primary/secondary hierarchy; 4.86:1 AA on white, 4.53:1 on canvas */
+  --neutral-11: oklch(0.550 0.013 250);   /* secondary-text grey — lifted from 0.502 for clearer primary/secondary hierarchy; 4.86:1 AA on white, 4.53:1 on --panel */
   --neutral-12: oklch(0.185 0.006 250);
 
   /* Status — jade (success) / amber (warning) / red (danger) / blue (info) */
@@ -310,7 +312,7 @@
   --border-subtle: var(--neutral-4);                /* hairline — lightened from neutral-6 for the white-bg system
                                                        (rows/dividers whisper; --border stays for visible dividers). */
   --border-strong: var(--neutral-9);                  /* form-control boundary (checkbox border, unchecked switch track) — ≥3:1 non-text contrast on white per WCAG 1.4.11; also hover/emphasis edge on interactive surfaces (was neutral-8, which fails 3:1) */
-  --input: var(--neutral-8);                          /* text-field edge (was neutral-7 @ ~1.6:1; neutral-8 ≈ 1.9:1 — still below the 3:1 of 1.4.11, kept lighter than -strong as a deliberate design call) */
+  --input: var(--neutral-8);                          /* no longer edges text fields (fields are filled/borderless now) — kept for the booking-rail tier border (was neutral-7 @ ~1.6:1; neutral-8 ≈ 1.9:1 — still below the 3:1 of 1.4.11, kept lighter than -strong as a deliberate design call) */
   --ring: var(--foreground);                          /* neutral focus ring — matches button.tsx focus style; never brand-colored */
   --ring-subtle: color-mix(in oklab, var(--foreground) 15%, transparent);
                                                       /* soft focus halo — replaces the raw `ring-foreground/15` idiom.

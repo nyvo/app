@@ -124,8 +124,8 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
   const showEmptyMessage = !isLoading && series !== null && !hasIncome
 
   return (
-    <section className="rounded-xl p-0">
-      <header className="flex flex-wrap items-start justify-between gap-4 pb-4">
+    <section>
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-foreground-muted">Inntekt</p>
           <div className="mt-2 flex items-baseline gap-3">

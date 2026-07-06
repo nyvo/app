@@ -22,9 +22,10 @@ only. Categorical blues (`--category-*`) are identity markers only.
    never skip ahead:** whitespace → hairline (`border-subtle`) → background tint
    (`bg-muted` / `--primary-subtle`) → visible border (`border-card` / `border`)
    → shadow (`shadow-soft` on focal floating cards; `shadow-float` on overlays).
-   Borders are a legitimate rung here, not a smell: `--border-card` gives card
-   edges definition on the canvas, `--border` divides content on white,
-   `--border-strong` bounds form controls (3:1 non-text contrast).
+   Borders are a legitimate rung here, not a smell, but `border-card` is
+   reserved exclusively for the floating-focal-card edge (booking rail,
+   checkout) — it is not a general card border. Plain `border` is for
+   dividers and form-control boundaries on white, not for framing cards.
 2. **No brand color on chrome.** Primary actions are near-black fills
    (`bg-foreground text-background`). Active states are grey fills
    (`bg-muted`) or foreground text. The blue primary appears only as sprinkle:
@@ -57,7 +58,7 @@ All tokens live in `src/index.css` (3-layer OKLCH: primitives → semantic →
 | Dashboard page background | `bg-canvas` (= white; legacy name) |
 | Utility panel fill (secondary content) | `bg-panel` — the only grey fill muted text is AA on |
 | Tinted interactive card + hover | `bg-primary-subtle` → `hover:bg-selection` |
-| Card / panel / popover surface | `bg-surface` (white) + `border-border-card` on canvas |
+| Floating focal card (booking rail, checkout) | `bg-surface` + `border-border-card` + `shadow-soft` — the ONLY carded surface |
 | THE light neutral fill (secondary buttons, active nav, chips) | `bg-muted` |
 | Hover / pressed fill on any surface, any theme | `bg-hover` / `bg-pressed` (foreground ink @ 6% / 12%) |
 | Primary text | `text-foreground` |
@@ -68,7 +69,7 @@ All tokens live in `src/index.css` (3-layer OKLCH: primitives → semantic →
 | Status | `text-success` / `-warning` / `-danger` / `-info`; tinted fills via the `-subtle` pair (never `/10` opacity hacks) |
 | Categorical identity markers (tags, chart series) | `bg-category-1/2/3` — small marker fills only, never text/surfaces/actions |
 | Dividers | `border-border-subtle` (hairline) or `border-border` (visible, on white) |
-| Form-control boundary | `border-border-strong` (checkbox, switch track); text fields use `--input` |
+| Form-control boundary | `border-border-strong` (checkbox, switch track); text fields are borderless (filled) |
 | Focus ring | `ring-2 ring-ring` (neutral foreground — never brand-colored) + offset; soft halo = `ring-ring-subtle`, never as the only cue |
 | Dark chrome (toasts, marketing bands — NOT the sidebar) | `--chrome-*` |
 | Currency | `formatKroner()` from `@/lib/utils`, always |
@@ -159,9 +160,11 @@ foreground underline. No pill tabs, no boxed tabs.
 
 ### Inputs
 
-White/`bg-surface` field with an `--input` edge, `rounded-md`. Focus:
-`ring-2 ring-ring` (neutral) — never a brand-colored ring. Labels above inputs:
-`text-sm font-medium text-foreground` (not muted — labels are read).
+Filled and borderless: `bg-muted` with a transparent border, `rounded-xl`.
+Focus: `border-foreground` + soft ring. Inside grey panels, fields override to
+`bg-background dark:bg-muted` so they don't vanish. `--input` no longer edges
+text fields. Labels above inputs: `text-sm font-medium text-foreground` (not
+muted — labels are read).
 
 ### Chips / badges / status
 

@@ -389,7 +389,7 @@ export function SessionCard({ session }: { session: SessionRow }) {
         {session.courseTitle}
       </p>
 
-      <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground-muted">
+      <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground">
         <span className="inline-flex items-center gap-1.5">
           <Clock className="size-3.5 shrink-0" aria-hidden="true" />
           <span className="tabular-nums">

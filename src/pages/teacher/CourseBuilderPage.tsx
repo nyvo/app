@@ -403,7 +403,7 @@ export default function CourseBuilderPage() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="relative flex h-44 w-full cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden border-b border-border bg-muted text-foreground-muted transition-colors hover:bg-active"
+              className="relative flex h-44 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl overflow-hidden border-b border-border bg-muted text-foreground-muted transition-colors hover:bg-active"
             >
               {imagePreview ? (
                 <img src={imagePreview} alt="" className="absolute inset-0 size-full object-cover" />
