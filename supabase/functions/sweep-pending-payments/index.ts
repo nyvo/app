@@ -205,6 +205,18 @@ Deno.serve(async (req: Request) => {
           // completed. Abandon only once past the 24h floor; until then a retry may still finish.
           const createdMs = attempt.created_at ? new Date(attempt.created_at as string).getTime() : Date.now()
           if (createdMs < abandonCutoffMs) {
+            // Cancel the still-confirmable PI as we abandon the attempt. Otherwise
+            // a buyer reopening a stale tab (after the 14-day purge deleted the
+            // attempt) could still authorize a charge that maps to no signup —
+            // an orphaned ~7-day card hold with no booking. Cancel is legal in
+            // these non-terminal PI states; tolerate a race where it already
+            // moved on.
+            try {
+              await cancelPaymentIntent(attempt.stripe_payment_intent_id as string)
+            } catch (_cancelErr) {
+              // Already canceled/succeeded/processing elsewhere — the status
+              // branches above handle those on the next run.
+            }
             await supabase.from('payment_attempts').update({ status: 'failed', payment_product: 'stripe' }).eq('id', attempt.id)
             summary.marked_failed++
           } else {

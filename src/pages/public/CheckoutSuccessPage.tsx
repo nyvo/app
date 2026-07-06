@@ -412,6 +412,9 @@ const CheckoutSuccessPage = () => {
                             {isFree ? 'Gratis' : formatKroner(signup.amount_paid)}
                           </span>
                         </div>
+                        {!isFree && (
+                          <p className="text-xs text-foreground-muted">Ingen mva. kommer i tillegg.</p>
+                        )}
                         <div className="flex items-center justify-between">
                           <span className="text-foreground-muted">Referanse</span>
                           <span className="font-medium text-foreground tabular-nums">{shortRef(signup.id)}</span>

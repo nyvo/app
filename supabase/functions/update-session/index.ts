@@ -119,13 +119,20 @@ Deno.serve(async (req: Request) => {
   const oldStart = shortTime(body.notify_only ? body.old_start_time! : session.start_time)
 
   if (!body.notify_only) {
+    // Only touch end_time when the caller actually sent it. `?? null` wiped a
+    // previously-set end time whenever new_end_time was omitted (it's optional,
+    // and some callers only move the date/start). undefined = leave as-is;
+    // explicit null still clears it.
+    const updatePayload: Record<string, unknown> = {
+      session_date: body.new_date,
+      start_time: body.new_start_time,
+    }
+    if (body.new_end_time !== undefined) {
+      updatePayload.end_time = body.new_end_time
+    }
     const { error: updateError } = await supabase
       .from('course_sessions')
-      .update({
-        session_date: body.new_date,
-        start_time: body.new_start_time,
-        end_time: body.new_end_time ?? null,
-      })
+      .update(updatePayload)
       .eq('id', body.session_id)
 
     if (updateError) {
@@ -155,9 +162,13 @@ Deno.serve(async (req: Request) => {
       const oldDateLabel = weekdayDate(oldDate)
       const studioName = course.seller?.name ?? ''
 
-      // Sequential — keeps Resend rate-limit happy on long lists.
+      // Sequential with a small gap — Resend's default is ~2 req/s and a tight
+      // loop over a long list 429s mid-way, dropping "ny tid" notices.
+      let first = true
       for (const s of signups) {
         if (!s.participant_email) continue
+        if (!first) await new Promise((r) => setTimeout(r, 550))
+        first = false
         const result = await sendEmail({
           template: 'session-rescheduled',
           to: s.participant_email,

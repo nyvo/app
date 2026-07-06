@@ -35,7 +35,7 @@ import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
-import { cn, formatKroner } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { formatLocalDateKey } from '@/utils/dateUtils';
 import { singleScheduleLabel, seriesScheduleLabel } from '@/utils/timeSchedule';
 import type { CourseFormat } from '@/types/database';
@@ -105,11 +105,9 @@ export default function CourseBuilderPage() {
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
 
-  // The stored course price — per-gang × uker on a series (mirrors createDraft).
-  const coursePriceTotal =
-    format === 'series'
-      ? (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0)
-      : parseInt(price, 10) || 0;
+  // The teacher enters the full course price directly — input, stored value
+  // and charged amount are the same number for both formats.
+  const coursePriceTotal = parseInt(price, 10) || 0;
 
   // Cover image is picked locally and uploaded AFTER createCourse (the storage
   // path needs the new course id — same pattern as the course detail page).
@@ -134,7 +132,10 @@ export default function CourseBuilderPage() {
   };
 
   const [submitAttempted, setSubmitAttempted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Which footer action is in flight — only the clicked button shows its
+  // spinner; the other is merely disabled.
+  const [submitting, setSubmitting] = useState<'draft' | 'publish' | null>(null);
+  const isSubmitting = submitting !== null;
   // One key per builder visit — a retry after a failed request reuses it, so
   // a double submit can't create two courses (unique index on the column).
   const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
@@ -200,6 +201,36 @@ export default function CourseBuilderPage() {
   const isValid = Object.keys(errors).length === 0;
   const showError = (field: keyof FormErrors) => submitAttempted && !!errors[field];
 
+  // With the actions pinned in the footer, validation errors can sit
+  // scrolled off-screen — bring the first invalid field into view and focus
+  // it so a failed submit never looks like a dead click.
+  const FIELD_ANCHORS: [keyof FormErrors, string][] = [
+    ['title', 'cb-title'],
+    ['description', 'cb-description'],
+    ['location', 'cb-location'],
+    ['startDate', 'cb-date'],
+    ['startTime', 'cb-start-time'],
+    ['endTime', 'cb-end-time'],
+    ['weeks', 'cb-weeks'],
+    ['sessionDays', 'cb-session-days'],
+    ['capacity', 'cb-capacity'],
+    ['price', 'cb-price'],
+  ];
+
+  const focusFirstInvalidField = () => {
+    const anchor = FIELD_ANCHORS.find(([field]) => errors[field]);
+    if (!anchor) return;
+    const el = document.getElementById(anchor[1]);
+    if (!el) return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+    const focusable = el.matches('input, button, textarea, select')
+      ? el
+      : el.querySelector<HTMLElement>('[contenteditable="true"]') ??
+        el.querySelector<HTMLElement>('input, button, textarea, select');
+    focusable?.focus({ preventScroll: true });
+  };
+
   // Anything typed or picked counts as unsaved work until createDraft lands —
   // the whole form is lost on navigation since nothing persists before then.
   const isDirty = useMemo(
@@ -222,13 +253,17 @@ export default function CourseBuilderPage() {
   // Creates the course as a draft (+ uploads the cover image). Returns the new
   // course id, or null if validation failed or the request errored. Both
   // footer actions go through this — "Publiser" then flips the draft live.
-  const createDraft = async (): Promise<string | null> => {
+  const createDraft = async (action: 'draft' | 'publish'): Promise<string | null> => {
     setSubmitAttempted(true);
-    if (!isValid || !currentSeller?.id) return null;
+    if (!isValid) {
+      focusFirstInvalidField();
+      return null;
+    }
+    if (!currentSeller?.id) return null;
     // For series we still need startDate; for single the days carry their own dates.
     if (format === 'series' && !startDate) return null;
 
-    setIsSubmitting(true);
+    setSubmitting(action);
     try {
       let courseStartDate: string;
       let timeSchedule: string;
@@ -280,10 +315,7 @@ export default function CourseBuilderPage() {
           location_lat: locationCoords?.lat ?? null,
           location_lon: locationCoords?.lon ?? null,
           location_place_id: locationCoords?.placeId ?? null,
-          price:
-            format === 'series'
-              ? (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0)
-              : parseInt(price, 10) || 0,
+          price: coursePriceTotal,
           max_participants: parseInt(capacity, 10),
           status: 'draft' as const,
           idempotency_key: idempotencyKeyRef.current,
@@ -293,7 +325,7 @@ export default function CourseBuilderPage() {
 
       if (error || !created) {
         toast.error(friendlyError(error, 'Kunne ikke opprette kurset.'));
-        setIsSubmitting(false);
+        setSubmitting(null);
         return null;
       }
 
@@ -319,27 +351,27 @@ export default function CourseBuilderPage() {
       return created.id;
     } catch {
       toast.error('Noe gikk galt. Prøv igjen.');
-      setIsSubmitting(false);
+      setSubmitting(null);
       return null;
     }
   };
 
   const handleSaveDraft = async () => {
-    const id = await createDraft();
+    const id = await createDraft('draft');
     if (!id) return;
     toast.success('Utkast lagret');
     navigate(routes.course(id));
   };
 
   const handlePublish = async () => {
-    const id = await createDraft();
+    const id = await createDraft('publish');
     if (!id) return;
     // A paid course can't go live until Stripe payouts are set up. Keep the
     // draft, surface the gate dialog; dismissing it routes to the saved course page.
     if (publishNeedsPaymentSetup(currentSeller, coursePriceTotal > 0)) {
       setCreatedCourseId(id);
       setShowPublishDialog(true);
-      setIsSubmitting(false);
+      setSubmitting(null);
       return;
     }
     const { error } = await publishCourse(id);
@@ -409,7 +441,9 @@ export default function CourseBuilderPage() {
                   label="Beskrivelse"
                   error={showError('description') && <FieldError>{errors.description}</FieldError>}
                 >
-                  <RichTextEditor value={description} onChange={setDescription} />
+                  <div id="cb-description">
+                    <RichTextEditor value={description} onChange={setDescription} />
+                  </div>
                 </Field>
               </section>
 
@@ -426,8 +460,8 @@ export default function CourseBuilderPage() {
                       setFormat(v);
                     }}
                     tabs={[
-                      { key: 'single', label: 'Enkeltkurs' },
-                      { key: 'series', label: 'Kursserie' },
+                      { key: 'single', label: 'Enkelttime' },
+                      { key: 'series', label: 'Kursrekke' },
                     ]}
                     ariaLabel="Type"
                     stretch
@@ -436,7 +470,7 @@ export default function CourseBuilderPage() {
 
                 {/* Single format: per-day editor */}
                 {format === 'single' && (
-                  <div>
+                  <div id="cb-session-days">
                     <SessionDaysEditor value={sessionDays} onChange={setSessionDays} />
                     {showError('sessionDays') && (
                       <FieldError>{errors.sessionDays}</FieldError>
@@ -485,6 +519,7 @@ export default function CourseBuilderPage() {
                             }}
                           >
                             <SelectTrigger
+                              id="cb-start-time"
                               className={cn(
                                 'w-full gap-2.5 rounded-xl',
                                 showError('startTime') && 'border-danger focus-visible:ring-danger',
@@ -511,6 +546,7 @@ export default function CourseBuilderPage() {
                           </span>
                           <Select value={endTime} onValueChange={setEndTime}>
                             <SelectTrigger
+                              id="cb-end-time"
                               className={cn(
                                 'w-full gap-2.5 rounded-xl',
                                 showError('endTime') && 'border-danger focus-visible:ring-danger',
@@ -601,7 +637,7 @@ export default function CourseBuilderPage() {
                   </Field>
 
                   <Field
-                    label={format === 'series' ? 'Pris per gang' : 'Pris'}
+                    label={format === 'series' ? 'Pris for hele kurset' : 'Pris'}
                     htmlFor="cb-price"
                     error={showError('price') && <FieldError>{errors.price}</FieldError>}
                   >
@@ -626,24 +662,6 @@ export default function CourseBuilderPage() {
                     </div>
                   </Field>
                 </div>
-
-                {format === 'series' &&
-                  price !== '' &&
-                  weeks !== '' &&
-                  !showError('price') &&
-                  !showError('weeks') && (
-                    <div className="flex items-baseline justify-between gap-3 rounded-xl bg-muted px-4 py-3">
-                      {/* Full-ink label: -muted grey loses AA on the grey fill */}
-                      <span className="text-base text-foreground">
-                        Totalt for {parseInt(weeks, 10) || 0} uker
-                      </span>
-                      <span className="text-base font-medium tabular-nums text-foreground">
-                        {formatKroner(
-                          (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0),
-                        )}
-                      </span>
-                    </div>
-                  )}
               </section>
             </div>
           </Card>
@@ -666,7 +684,8 @@ export default function CourseBuilderPage() {
               variant="secondary"
               size="lg"
               onClick={handleSaveDraft}
-              loading={isSubmitting}
+              loading={submitting === 'draft'}
+              disabled={submitting === 'publish'}
               loadingText="Lagrer"
             >
               Lagre utkast
@@ -674,7 +693,8 @@ export default function CourseBuilderPage() {
             <Button
               size="lg"
               onClick={handlePublish}
-              loading={isSubmitting}
+              loading={submitting === 'publish'}
+              disabled={submitting === 'draft'}
               loadingText="Publiserer"
             >
               Publiser

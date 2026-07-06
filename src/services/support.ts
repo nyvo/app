@@ -1,5 +1,8 @@
 import { supabase } from '@/lib/supabase';
 import { extractEdgeError } from '@/lib/edge-errors';
+import { friendlyError } from '@/lib/error-messages';
+
+const FALLBACK_MESSAGE = 'Kunne ikke sende meldingen.';
 
 interface SendSupportMessageParams {
   subject: string;
@@ -18,16 +21,17 @@ export async function sendSupportMessage(
     });
 
     if (error) {
+      // The edge function's error strings are English — translate before the UI.
       const { message } = await extractEdgeError(error);
-      return { error: new Error(message || 'Kunne ikke sende meldingen.') };
+      return { error: new Error(friendlyError(message, FALLBACK_MESSAGE)) };
     }
 
     if (data?.error) {
-      return { error: new Error(data.error) };
+      return { error: new Error(friendlyError(data.error, FALLBACK_MESSAGE)) };
     }
 
     return { error: null };
   } catch (err) {
-    return { error: err instanceof Error ? err : new Error('Ukjent feil') };
+    return { error: new Error(friendlyError(err, FALLBACK_MESSAGE)) };
   }
 }

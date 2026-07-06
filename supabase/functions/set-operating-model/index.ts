@@ -10,6 +10,7 @@ import { retrieveSubscription, updateSubscriptionItemPrice } from '../_shared/st
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
 interface RequestBody {
   sellerId: string
@@ -75,6 +76,11 @@ Deno.serve(async (req: Request) => {
     const result = rpcData as SetOperatingModelResult
 
     let repriced = false
+    // Stripe is on the correct price for the new model (either we swapped it or
+    // it was already right). Only then do we clear the durable pending-reprice
+    // flag the RPC set — a swallowed failure must leave the flag set so the
+    // obligation isn't silently lost (and ops_health_check can surface it).
+    let repriceSettled = false
     if (result.repricing_needed && result.subscription_external_id) {
       try {
         const subscription = await retrieveSubscription(result.subscription_external_id)
@@ -89,10 +95,24 @@ Deno.serve(async (req: Request) => {
           })
           repriced = true
         }
+        repriceSettled = true
       } catch (repriceError) {
-        // Non-fatal: the operating model change is already committed in the DB — a failed
-        // Stripe price swap just means the old price carries over until the next attempt.
+        // Non-fatal for the request: the model change is already committed. The
+        // pending-reprice flag stays set so the swap isn't forgotten.
         console.error('set-operating-model reprice failed:', repriceError)
+      }
+    }
+
+    // Clear the durable obligation once Stripe matches (needs service role — the
+    // column is server-controlled and not client-writable).
+    if (!result.repricing_needed || repriceSettled) {
+      if (supabaseServiceKey) {
+        const admin = createClient(supabaseUrl, supabaseServiceKey)
+        const { error: clearError } = await admin
+          .from('sellers')
+          .update({ subscription_pending_reprice: false })
+          .eq('id', body.sellerId)
+        if (clearError) console.error('set-operating-model clear-flag failed:', clearError)
       }
     }
 
