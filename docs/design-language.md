@@ -54,9 +54,9 @@ All tokens live in `src/index.css` (3-layer OKLCH: primitives → semantic →
 | Need | Token / utility |
 |---|---|
 | Page background | `bg-background` (white) |
-| Dashboard page background | bg-canvas (= white; legacy name) |
-| Utility panel fill (secondary content) | bg-panel — the only grey fill muted text is AA on |
-| Tinted interactive card + hover | bg-primary-subtle → hover:bg-selection |
+| Dashboard page background | `bg-canvas` (= white; legacy name) |
+| Utility panel fill (secondary content) | `bg-panel` — the only grey fill muted text is AA on |
+| Tinted interactive card + hover | `bg-primary-subtle` → `hover:bg-selection` |
 | Card / panel / popover surface | `bg-surface` (white) + `border-border-card` on canvas |
 | THE light neutral fill (secondary buttons, active nav, chips) | `bg-muted` |
 | Hover / pressed fill on any surface, any theme | `bg-hover` / `bg-pressed` (foreground ink @ 6% / 12%) |
@@ -135,7 +135,9 @@ Three recipes — pick by role:
 2. **Framed/tinted card (interactive or selected list items):** selected state
    uses `--selection-light`; framed emphasis cards use `bg-primary-subtle` +
    `border-primary-border`. No shadow.
-3. **Utility panel:** `bg-panel`, `rounded-xl`, no border, no shadow — page background is white; `border-card` + `shadow-soft` survives only on floating focal cards (booking rail, checkout, landing hero).
+3. **Utility panel:** `bg-panel`, `rounded-xl`, no border, no shadow — page
+   background is white; `border-card` + `shadow-soft` survives only on floating
+   focal cards (booking rail, checkout, landing hero).
 
 Focal floating cards (booking rail, checkout summary, receipt) additionally get
 `rounded-2xl` + `shadow-soft`. Hover on interactive cards: `bg-hover` overlay —
@@ -247,9 +249,9 @@ alone; form-control boundaries keep 3:1 (`--border-strong`).
 
 ## 6. One-line summary (for quick prompts)
 
-> Monochrome UI on white: near-black `bg-foreground` primary buttons at
-> `rounded-xl`, white cards with faint `border-card` edges on a grey canvas,
-> separation by an escalation ladder (space → hairline → tint → border → shadow),
+> Monochrome UI on a white page: near-black `bg-foreground` primary buttons at
+> `rounded-xl`, separation via `bg-panel` fills and hairline dividers (border +
+> `shadow-soft` only on floating focal cards like the booking rail and checkout),
 > `bg-hover`/`bg-pressed` ink overlays for interaction, compressed type scale
 > with medium-weight hierarchy and muted-grey supporting text (bold banned),
 > azure blue only as sprinkle on links/selected tints, jade/amber/red as status
