@@ -561,7 +561,7 @@ function PricingTier({ tier }: { tier: Tier }) {
     <motion.div
       variants={scrollVariants}
       transition={scrollTransition}
-      className="flex flex-col rounded-xl border border-card bg-surface p-8"
+      className="flex flex-col rounded-xl bg-panel p-8"
     >
       <div className="mb-6">
         <h3 className="inline-flex items-center rounded-full bg-muted px-3 py-0.5 text-base font-medium text-foreground">
