@@ -22,9 +22,8 @@ import {
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-// Shared cron auth secret. Prefer CRON_SECRET; fall back to the legacy
-// DINTERO_CRON_SECRET name during the rename transition (not Dintero-specific).
-const cronSecret = Deno.env.get('CRON_SECRET') || Deno.env.get('DINTERO_CRON_SECRET') || ''
+// Shared cron auth secret, sent by the pg_cron jobs as the x-cron-secret header.
+const cronSecret = Deno.env.get('CRON_SECRET') || ''
 
 // Grace window: don't touch attempts younger than this (gives the client's own
 // finalize call a chance to run first without us racing it).

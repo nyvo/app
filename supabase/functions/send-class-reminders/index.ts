@@ -20,9 +20,8 @@ import { sendEmail } from '../_shared/email.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-// Shared cron auth secret. Prefer CRON_SECRET; fall back to the legacy
-// DINTERO_CRON_SECRET name during the rename transition (not Dintero-specific).
-const cronSecret = Deno.env.get('CRON_SECRET') || Deno.env.get('DINTERO_CRON_SECRET') || ''
+// Shared cron auth secret, sent by the pg_cron jobs as the x-cron-secret header.
+const cronSecret = Deno.env.get('CRON_SECRET') || ''
 
 // Sessions starting inside this window (hours from now) get their reminder.
 // Lower bound keeps a late cron run from reminding a class that's about to

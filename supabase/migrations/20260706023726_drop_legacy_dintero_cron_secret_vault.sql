@@ -1,0 +1,13 @@
+-- Retire the legacy `dintero_cron_secret` vault secret.
+--
+-- The shared cron auth secret finished its rename: the pg_cron jobs send the
+-- `cron_secret` vault value as x-cron-secret, and all four cron functions
+-- (sweep-pending-payments, send-pending-confirmations, ops-health-alert,
+-- send-class-reminders) now read only the `CRON_SECRET` function env — the
+-- `DINTERO_CRON_SECRET` fallback was removed. `dintero_cron_secret` was kept as a
+-- rollback net by 20260701190000_rename_cron_secret; it is no longer referenced by
+-- anything, so drop it.
+--
+-- The matching `DINTERO_CRON_SECRET` function-env secret is unset separately via
+-- the Supabase CLI (not tracked in migrations).
+DELETE FROM vault.secrets WHERE name = 'dintero_cron_secret';
