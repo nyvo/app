@@ -6,6 +6,83 @@ not strict dependency.
 
 ---
 
+## 2026-07-06 launch smoke run (manual runbook executed)
+
+The manual smoke-test runbook below was run against the live backend (prod
+Supabase + Stripe sandbox), driving the real UI from a local dev server.
+
+### Verified working end-to-end
+
+- **Stripe Connect KYC onboarding** — completed test-mode onboarding for
+  `kristoffer-studio` (simulated identity verification); return flow flipped
+  `stripe_onboarding_complete=true`, `stripe_account_status=enabled`.
+- **Paid checkout** — contact step (validation + terms gate), PaymentIntent
+  created (manual capture), authorized with the Stripe test card, webhook
+  captured + minted the signup in seconds, success page shows the receipt,
+  confirmation email stamped. Dashboard revenue/fee/participant views updated.
+- **Refund (single signup)** — "Avbestill og refunder" refunded 263 kr;
+  `payment_audit_log` shows paid→refunded `via_external=true` (recorded from
+  Stripe's webhook), buyer notified.
+- **Cancel course** — "Avlys kurs" cancelled a course with a participant;
+  signup → `course_cancelled`, buyer notified.
+- **Free signup** — separate `create-free-signup` path: confirmed instantly,
+  buyer confirmation + seller notification both sent.
+- **Course builder** — created + published a course via the UI (Places
+  autocomplete via `google-places`, consent-gated map, publish gate).
+- **Pro upgrade (monthly + yearly)** — reaches Stripe Checkout after the two
+  fixes below.
+- **Rate limiting** — `create-stripe-connect-session` 10/hour/email limiter
+  fired (429 + friendly Norwegian error) during the run.
+- **Crons** — `sweep-pending-payments` (every 2 min) and
+  `send-pending-confirmations` all green in `cron.job_run_details`;
+  `ops_health_check()` all zeros.
+
+### Fixed during the run (this commit + already deployed)
+
+- **Pro subscription checkout was DOWN in prod** — the 2026-07-05 mass
+  redeploy shipped `automatic_tax` in `_shared/stripe.ts` while Stripe Tax has
+  no NO registration → session creation failed ("Kunne ikke starte
+  abonnement."). Stripped the tax block (company is not MVA-registered; terms
+  promise "Ingen mva. kommer i tillegg."); re-enable only after configuring
+  Stripe Tax in the dashboard. `create-stripe-checkout-session` redeployed.
+- **Yearly Pro price was a one-time price** — created proper recurring yearly
+  prices in Stripe (solo 4 990 kr/yr, studio 9 990 kr/yr), archived the broken
+  one-time 4 990 price, set `STRIPE_PRO_YEARLY_PRICE_ID` /
+  `STRIPE_PRO_SOLO_YEARLY_PRICE_ID` / `STRIPE_PRO_STUDIO_YEARLY_PRICE_ID`.
+- **Email footer** said `hei@openspot.no`; now `hei@framio.no`
+  (`send-email` redeployed).
+- **`OPS_ALERT_EMAIL=hei@framio.no` set** — daily ops-health alert now live.
+
+### NEW LAUNCH BLOCKER found (needs Vercel dashboard)
+
+- **`VITE_STRIPE_PUBLISHABLE_KEY` is missing from the production build** — no
+  `pk_` key exists in any deployed JS chunk, so the paid checkout card form
+  cannot mount on openspot.no (shows the config error). Add it in Vercel env
+  (current test-mode value: the sandbox publishable key) and redeploy. Must be
+  switched to the live `pk_live_` key together with `STRIPE_SECRET_KEY` at
+  real-money cutover.
+
+### Notes / smaller findings
+
+- Billing page shows "499 kr/mnd" + "Spar 998 kr" for a **studio**-model
+  seller that Stripe actually charges 999 kr/mnd / 9 990 kr/yr — plan card
+  should price by operating model.
+- Stripe console warns: Link + Klarna are displayed in test mode but **not
+  activated** for live mode; Apple Pay domain not registered. Decide before
+  live cutover.
+- Live-account dunning: Smart Retries on (8 retries / 2 weeks); the new Stripe
+  UI has no "mark unpaid" final action (that only exists under Custom
+  retries), so the audit's `unpaid`→perpetual-Pro concern doesn't apply with
+  current settings. All customer billing emails are OFF in Stripe — intended?
+- DMARC now exists at `_dmarc.openspot.no` (`p=none`, monitor-only) — covers
+  the `mail.openspot.no` sender via org-domain fallback; consider
+  `p=quarantine` post-launch.
+- Sentry DSN is still not in the prod bundle (error monitoring dormant).
+- Drop-in tier purchase still untested live (no upcoming course has a drop-in
+  tier); the money path is shared with the verified package purchase.
+
+---
+
 ## 2026-07-05 deep backend audit (5-agent) — fixes applied
 
 Full backend audit (payments, billing/Connect, email/cron, DB functions,
