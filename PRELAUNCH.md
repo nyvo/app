@@ -38,21 +38,26 @@ All 24 edge functions were redeployed 2026-07-05 (so the shared `stripe.ts`
 idempotency keys, `email.ts` timeout, and `auth.ts` timing-safe compare
 propagate everywhere, incl. `teacher-cancel-signup`).
 
+### Closed since (2026-07-06)
+
+- **Merge `main-21` → `origin/main`** — done via PRs #84 and #89; all 10 audit
+  migrations plus `20260705225951` (course_sessions DELETE grant) and
+  `20260706120000` (ops-window bound) are on main and applied to remote.
+- **Investigate 5 abandoned paid confirmations** — all five were seed/demo rows
+  (no PaymentIntent, `@example.com`, never went through checkout); zero genuine
+  cases. Check bounded to a 24h–7d window in `20260706120000` so historical rows
+  age out; `ops_health_check()` returns all zeros.
+- **`cleanup-old-notifications-monthly` cron** — confirmed live and active in
+  `cron.job` (`45 3 1 * *`).
+
 ### Still needs human / production action
 
-- **Merge `main-21` → `origin/main`** — migrations are applied to the DB and
-  committed on the branch, but not on main yet (drift rule: not DONE until the
-  files are on main).
 - **Verify Stripe dunning final action** — `unpaid`→`past_due` grants full Pro.
   If Stripe's dunning final action is "mark unpaid" (not cancel), a non-payer
   keeps Pro forever. Remap `unpaid`→`canceled` if so. (Not changed in code.)
-- **Investigate 5 abandoned paid confirmations** — the new
-  `ops_health_check.abandoned_confirmations` returned 5 live rows: paid signups
-  >24h old with `confirmation_sent_at`/`seller_notified_at` still NULL.
 - **Schedule the class-reminder cron** — `send-class-reminders` is deployed but
-  has no `cron.job` row; re-run the schedule from `20260705170000` before the
-  first course hits T-24h. Confirm the new `cleanup-old-notifications-monthly`
-  job runs.
+  has no `cron.job` row (confirmed 2026-07-06); re-run the schedule from
+  `20260705170000` before the first course hits T-24h.
 - **Set ops-alert env** — `OPS_ALERT_EMAIL` + Resend vars, or `ops-health-alert`
   stays a no-op.
 - **Deferred (low)** — backend test suite (sweep/capacity/refund/RLS/webhook);
