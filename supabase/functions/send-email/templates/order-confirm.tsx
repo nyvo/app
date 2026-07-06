@@ -1,6 +1,6 @@
-import { Heading, Section, Text } from '@react-email/components'
+import { Heading, Text } from '@react-email/components'
 import * as React from 'react'
-import { EmailLayout, styles } from './_layout.tsx'
+import { DetailBlock, DetailRow, EmailLayout, styles } from './_layout.tsx'
 
 export interface OrderConfirmProps {
   buyerName: string
@@ -36,32 +36,19 @@ export const OrderConfirm = ({
       Hei {buyerName}, takk for påmeldingen til {courseTitle} hos {studioName}.
     </Text>
 
-    <Section style={styles.detailBlock}>
-      <Text style={styles.detailLabel}>Kurs</Text>
-      <Text style={styles.detailValue}>{courseTitle}</Text>
-
-      <Text style={styles.detailLabel}>Tid</Text>
-      <Text style={styles.detailValue}>{courseStart}</Text>
-
-      {courseLocation ? (
-        <>
-          <Text style={styles.detailLabel}>Sted</Text>
-          <Text style={styles.detailValue}>{courseLocation}</Text>
-        </>
-      ) : null}
-
-      <Text style={styles.detailLabel}>Beløp</Text>
-      <Text style={styles.detailValue}>{amount}</Text>
-
-      <Text style={styles.detailLabel}>Arrangør</Text>
-      <Text style={styles.detailValue}>
-        {studioName}
-        {arrangorOrgNumber ? ` · org.nr ${arrangorOrgNumber}` : ''}
-      </Text>
-
-      <Text style={styles.detailLabel}>Referanse</Text>
-      <Text style={styles.detailValueLast}>{bookingId}</Text>
-    </Section>
+    <DetailBlock>
+      <DetailRow label="Kurs" value={courseTitle} />
+      <DetailRow label="Tid" value={courseStart} />
+      {courseLocation ? <DetailRow label="Sted" value={courseLocation} /> : null}
+      <DetailRow
+        label="Arrangør"
+        value={
+          arrangorOrgNumber ? `${studioName} · org.nr ${arrangorOrgNumber}` : studioName
+        }
+      />
+      <DetailRow label="Referanse" value={bookingId} />
+      <DetailRow label="Beløp" value={amount} emphasis last />
+    </DetailBlock>
 
     {arrangorEmail ? (
       <Text style={styles.paragraphMuted}>

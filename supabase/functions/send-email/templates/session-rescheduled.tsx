@@ -1,6 +1,6 @@
-import { Heading, Section, Text } from '@react-email/components'
+import { Heading, Text } from '@react-email/components'
 import * as React from 'react'
-import { EmailLayout, styles } from './_layout.tsx'
+import { DetailBlock, DetailRow, EmailLayout, styles } from './_layout.tsx'
 
 export interface SessionRescheduledProps {
   buyerName: string
@@ -16,12 +16,6 @@ export interface SessionRescheduledProps {
   newTime: string
   courseLocation?: string
 }
-
-const struckLabel = {
-  ...styles.detailValue,
-  color: '#8c8780',
-  textDecoration: 'line-through',
-} as const
 
 export const SessionRescheduled = ({
   buyerName,
@@ -41,22 +35,16 @@ export const SessionRescheduled = ({
       Hei {buyerName}, vi har flyttet en time i {courseTitle} hos {studioName}.
     </Text>
 
-    <Section style={styles.detailBlock}>
-      <Text style={styles.detailLabel}>Ny tid</Text>
-      <Text style={styles.detailValue}>{newDate} kl. {newTime}</Text>
-
-      <Text style={styles.detailLabel}>Tidligere tid</Text>
-      <Text style={courseLocation ? struckLabel : { ...struckLabel, margin: 0 }}>
-        {oldDate} kl. {oldTime}
-      </Text>
-
-      {courseLocation ? (
-        <>
-          <Text style={styles.detailLabel}>Sted</Text>
-          <Text style={styles.detailValueLast}>{courseLocation}</Text>
-        </>
-      ) : null}
-    </Section>
+    <DetailBlock>
+      <DetailRow label="Ny tid" value={`${newDate} kl. ${newTime}`} emphasis />
+      <DetailRow
+        label="Tidligere tid"
+        value={`${oldDate} kl. ${oldTime}`}
+        struck
+        last={!courseLocation}
+      />
+      {courseLocation ? <DetailRow label="Sted" value={courseLocation} last /> : null}
+    </DetailBlock>
 
     <Text style={styles.paragraphMuted}>
       Resten av kurset står som planlagt.

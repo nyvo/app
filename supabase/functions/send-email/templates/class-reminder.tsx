@@ -1,6 +1,6 @@
-import { Heading, Section, Text } from '@react-email/components'
+import { Heading, Text } from '@react-email/components'
 import * as React from 'react'
-import { EmailLayout, styles } from './_layout.tsx'
+import { DetailBlock, DetailRow, EmailLayout, styles } from './_layout.tsx'
 
 export interface ClassReminderProps {
   buyerName: string
@@ -25,19 +25,10 @@ export const ClassReminder = ({
       Hei {buyerName}, en liten påminnelse om {courseTitle} hos {studioName}.
     </Text>
 
-    <Section style={styles.detailBlock}>
-      <Text style={styles.detailLabel}>Tid</Text>
-      <Text style={courseLocation ? styles.detailValue : styles.detailValueLast}>
-        {courseStart}
-      </Text>
-
-      {courseLocation ? (
-        <>
-          <Text style={styles.detailLabel}>Sted</Text>
-          <Text style={styles.detailValueLast}>{courseLocation}</Text>
-        </>
-      ) : null}
-    </Section>
+    <DetailBlock>
+      <DetailRow label="Tid" value={courseStart} last={!courseLocation} />
+      {courseLocation ? <DetailRow label="Sted" value={courseLocation} last /> : null}
+    </DetailBlock>
 
     <Text style={styles.paragraphMuted}>Vi gleder oss til å se deg.</Text>
   </EmailLayout>

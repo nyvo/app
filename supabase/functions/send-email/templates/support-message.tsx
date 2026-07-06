@@ -1,6 +1,6 @@
 import { Heading, Section, Text } from '@react-email/components'
 import * as React from 'react'
-import { EmailLayout, styles } from './_layout.tsx'
+import { DetailBlock, DetailRow, EmailLayout, styles } from './_layout.tsx'
 
 export interface SupportMessageProps {
   userId: string
@@ -19,9 +19,28 @@ export interface SupportMessageProps {
   message: string
 }
 
-const messageText = {
+// Internal email (support inbox) — function over form. The user's message
+// sits in a quoted block; lookup ids collect in a compact mono list at the
+// bottom for copy-paste into the dashboard.
+const quoteBlock = {
+  backgroundColor: '#f5f5f5',
+  borderRadius: '8px',
+  padding: '16px 20px',
+  margin: '0 0 28px',
+}
+
+const quoteText = {
   ...styles.paragraph,
   whiteSpace: 'pre-wrap',
+  margin: 0,
+} as const
+
+const idLine = {
+  ...styles.mono,
+  fontSize: '12px',
+  lineHeight: '20px',
+  color: '#8e8e8e',
+  margin: 0,
 } as const
 
 export const SupportMessage = ({
@@ -41,69 +60,42 @@ export const SupportMessage = ({
   message,
 }: SupportMessageProps) => (
   <EmailLayout preview={`Ny supportmelding — ${supportSubject}`}>
+    <Text style={styles.eyebrow}>
+      Fra {senderName || senderEmail} · svar går til {senderEmail}
+    </Text>
     <Heading as="h1" style={styles.h1}>
-      Ny supportmelding
+      {supportSubject}
     </Heading>
 
-    <Section style={styles.detailBlock}>
-      <Text style={styles.detailLabel}>Emne</Text>
-      <Text style={styles.detailValue}>{supportSubject}</Text>
-
-      <Text style={styles.detailLabel}>Navn</Text>
-      <Text style={styles.detailValue}>{senderName || 'Ikke oppgitt'}</Text>
-
-      <Text style={styles.detailLabel}>E-post</Text>
-      <Text style={styles.detailValue}>{senderEmail}</Text>
-
-      <Text style={styles.detailLabel}>Svar til</Text>
-      <Text style={styles.detailValue}>{senderEmail}</Text>
-
-      <Text style={styles.detailLabel}>Bruker-ID</Text>
-      <Text style={styles.detailValue}>{userId}</Text>
-
-      <Text style={styles.detailLabel}>Studio</Text>
-      <Text style={sellerId ? styles.detailValue : styles.detailValueLast}>
-        {sellerName || 'Ikke oppgitt'}
-      </Text>
-
-      {sellerId ? (
-        <>
-          <Text style={styles.detailLabel}>Studio-ID</Text>
-          <Text style={courseId ? styles.detailValue : styles.detailValueLast}>{sellerId}</Text>
-        </>
-      ) : null}
-
-      {courseId ? (
-        <>
-          <Text style={styles.detailLabel}>Kurs</Text>
-          <Text style={styles.detailValue}>{courseTitle || 'Ikke oppgitt'}</Text>
-
-          <Text style={styles.detailLabel}>Kurs-ID</Text>
-          <Text style={signupId ? styles.detailValue : styles.detailValueLast}>{courseId}</Text>
-        </>
-      ) : null}
-
-      {signupId ? (
-        <>
-          <Text style={styles.detailLabel}>Påmelding</Text>
-          <Text style={styles.detailValue}>{participantName || 'Ikke oppgitt'}</Text>
-
-          <Text style={styles.detailLabel}>Deltaker e-post</Text>
-          <Text style={styles.detailValue}>{participantEmail || 'Ikke oppgitt'}</Text>
-
-          <Text style={styles.detailLabel}>Status</Text>
-          <Text style={styles.detailValue}>{signupStatus || 'Ikke oppgitt'}</Text>
-
-          <Text style={styles.detailLabel}>Betaling</Text>
-          <Text style={styles.detailValue}>{paymentStatus || 'Ikke oppgitt'}</Text>
-
-          <Text style={styles.detailLabel}>Påmelding-ID</Text>
-          <Text style={styles.detailValueLast}>{signupId}</Text>
-        </>
-      ) : null}
+    <Section style={quoteBlock}>
+      <Text style={quoteText}>{message}</Text>
     </Section>
 
-    <Text style={messageText}>{message}</Text>
+    <DetailBlock>
+      <DetailRow label="Navn" value={senderName || 'Ikke oppgitt'} />
+      <DetailRow label="E-post" value={senderEmail} />
+      <DetailRow
+        label="Studio"
+        value={sellerName || 'Ikke oppgitt'}
+        last={!courseId && !signupId}
+      />
+      {courseId ? (
+        <DetailRow label="Kurs" value={courseTitle || 'Ikke oppgitt'} last={!signupId} />
+      ) : null}
+      {signupId ? (
+        <>
+          <DetailRow label="Påmelding" value={participantName || 'Ikke oppgitt'} />
+          <DetailRow label="Deltaker e-post" value={participantEmail || 'Ikke oppgitt'} />
+          <DetailRow label="Status" value={signupStatus || 'Ikke oppgitt'} />
+          <DetailRow label="Betaling" value={paymentStatus || 'Ikke oppgitt'} last />
+        </>
+      ) : null}
+    </DetailBlock>
+
+    <Text style={idLine}>bruker {userId}</Text>
+    {sellerId ? <Text style={idLine}>studio {sellerId}</Text> : null}
+    {courseId ? <Text style={idLine}>kurs {courseId}</Text> : null}
+    {signupId ? <Text style={idLine}>påmelding {signupId}</Text> : null}
   </EmailLayout>
 )
 

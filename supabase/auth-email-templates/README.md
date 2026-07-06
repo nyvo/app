@@ -16,9 +16,12 @@ sent via Resend.
 Placeholders are Go template syntax filled by GoTrue: `{{ .Token }}` (OTP code),
 `{{ .ConfirmationURL }}`, `{{ .Email }}`, `{{ .NewEmail }}`, `{{ .SiteURL }}`.
 
-All six sendable templates share one design (matching the app's warm neutrals):
-Openspot wordmark, 22px heading, 14px body, 32px monospace code block, hairline
-divider, 12px muted footer. Synced with the live config 2026-07-05.
+All six sendable templates share one design — the same shell as the Resend
+product templates (`send-email/templates/_layout.tsx`): white card on the
+app's `neutral-2` canvas (#f9f9f9), pure-neutral ramp from `src/index.css`
+(#1f1f1f foreground, #717171 muted, #8e8e8e subtle), Openspot wordmark, 22px
+heading, 32px monospace code block, centered support footer below the card.
+Synced with the live config 2026-07-06.
 
 | File | Auth config fields | Subject |
 | --- | --- | --- |

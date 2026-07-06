@@ -25,12 +25,12 @@ export const CourseMessage = ({
   body,
 }: CourseMessageProps) => (
   <EmailLayout preview={subject}>
+    <Text style={styles.eyebrow}>
+      Melding fra {studioName} · {courseTitle}
+    </Text>
     <Heading as="h1" style={styles.h1}>
       {subject}
     </Heading>
-    <Text style={styles.paragraphMuted}>
-      Melding fra {studioName} om {courseTitle}.
-    </Text>
     <Text style={bodyText}>
       {`Hei ${buyerName},\n\n${body}`}
     </Text>

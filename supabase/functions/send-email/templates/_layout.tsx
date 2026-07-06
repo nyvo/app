@@ -1,11 +1,12 @@
 import {
   Body,
+  Column,
   Container,
   Head,
-  Hr,
   Html,
   Link,
   Preview,
+  Row,
   Section,
   Text,
 } from '@react-email/components'
@@ -17,10 +18,16 @@ interface EmailLayoutProps {
   children?: ReactNode
 }
 
-// Studio-style transactional shell — calm, monochrome, sentence case.
-// Email-safe inline styles only; no Tailwind, no shared CSS.
+// Transactional shell on the app's design system — the pure-neutral
+// (chroma 0) ramp from src/index.css converted to email-safe hex:
+//   neutral-2 #f9f9f9 (canvas)   neutral-3 #f0f0f0 (muted fill / hairline)
+//   neutral-4 #e8e8e8 (block border)   neutral-9 #8e8e8e (subtle text)
+//   neutral-11 #717171 (muted text)    neutral-12 #1f1f1f (foreground)
+// White card floating on the canvas, hierarchy through spacing and the
+// neutral tiers — not weight. Email-safe inline styles only; Outlook
+// ignores border-radius and degrades to a square card.
 const main = {
-  backgroundColor: '#ffffff',
+  backgroundColor: '#f9f9f9',
   fontFamily:
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   margin: 0,
@@ -30,32 +37,34 @@ const main = {
 const container = {
   maxWidth: '560px',
   margin: '0 auto',
-  padding: '48px 24px 24px',
+  padding: '56px 16px 40px',
+}
+
+const card = {
+  backgroundColor: '#ffffff',
+  border: '1px solid #e8e8e8',
+  borderRadius: '12px',
+  padding: '48px 40px 40px',
 }
 
 const brand = {
   fontSize: '15px',
   fontWeight: 500,
-  color: '#191917',
+  color: '#1f1f1f',
   margin: '0 0 40px',
   letterSpacing: '-0.005em',
-}
-
-const hr = {
-  border: 'none',
-  borderTop: '1px solid #e6e3df',
-  margin: '40px 0 24px',
 }
 
 const footer = {
   fontSize: '12px',
   lineHeight: '20px',
-  color: '#8c8780',
-  margin: 0,
+  color: '#8e8e8e',
+  margin: '28px 0 0',
+  textAlign: 'center' as const,
 }
 
 const footerLink = {
-  color: '#191917',
+  color: '#717171',
   textDecoration: 'underline',
   textUnderlineOffset: '2px',
 }
@@ -66,18 +75,17 @@ export const EmailLayout = ({ preview, children }: EmailLayoutProps) => (
     <Preview>{preview}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Text style={brand}>Openspot</Text>
-        {children}
-        <Hr style={hr} />
-        <Section>
-          <Text style={footer}>
-            Spørsmål? Skriv til{' '}
-            <Link href="mailto:hei@openspot.no" style={footerLink}>
-              hei@openspot.no
-            </Link>
-            .
-          </Text>
+        <Section style={card}>
+          <Text style={brand}>Openspot</Text>
+          {children}
         </Section>
+        <Text style={footer}>
+          Spørsmål? Skriv til{' '}
+          <Link href="mailto:hei@openspot.no" style={footerLink}>
+            hei@openspot.no
+          </Link>
+          .
+        </Text>
       </Container>
     </Body>
   </Html>
@@ -89,45 +97,97 @@ export const styles = {
   h1: {
     fontSize: '22px',
     fontWeight: 600,
-    color: '#191917',
+    color: '#1f1f1f',
     letterSpacing: '-0.01em',
-    margin: '0 0 16px',
+    margin: '0 0 20px',
     lineHeight: '28px',
+  },
+  // Muted context line above the H1 ("Melding fra Lys Yoga · Vinyasa Flow").
+  eyebrow: {
+    fontSize: '12px',
+    color: '#8e8e8e',
+    lineHeight: '18px',
+    margin: '0 0 8px',
   },
   paragraph: {
     fontSize: '14px',
-    color: '#191917',
-    lineHeight: '22px',
+    color: '#1f1f1f',
+    lineHeight: '24px',
     margin: '0 0 16px',
   },
   paragraphMuted: {
     fontSize: '14px',
-    color: '#605c54',
-    lineHeight: '22px',
+    color: '#717171',
+    lineHeight: '24px',
     margin: '0 0 16px',
   },
-  detailBlock: {
-    borderTop: '1px solid #e6e3df',
-    borderBottom: '1px solid #e6e3df',
-    padding: '20px 0',
-    margin: '24px 0',
-  },
-  detailLabel: {
-    color: '#8c8780',
-    fontSize: '12px',
-    margin: '0 0 4px',
-    lineHeight: '18px',
-  },
-  detailValue: {
-    color: '#191917',
-    fontSize: '14px',
-    margin: '0 0 16px',
-    lineHeight: '20px',
-  },
-  detailValueLast: {
-    color: '#191917',
-    fontSize: '14px',
-    margin: 0,
-    lineHeight: '20px',
+  mono: {
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
   },
 } as const
+
+// ————— Detail rows —————
+// Two-column key/value rows (label left, value right-aligned), separated
+// by spacing and a neutral-3 hairline — the surface → border → muted-text
+// → foreground tier ladder, not weight.
+
+const detailBlockStyle = {
+  borderTop: '1px solid #e8e8e8',
+  borderBottom: '1px solid #e8e8e8',
+  margin: '32px 0',
+}
+
+const rowLabel = {
+  fontSize: '13px',
+  color: '#8e8e8e',
+  lineHeight: '20px',
+  margin: 0,
+}
+
+const rowValue = {
+  fontSize: '14px',
+  color: '#1f1f1f',
+  lineHeight: '20px',
+  margin: 0,
+  textAlign: 'right' as const,
+}
+
+const rowValueEmphasis = {
+  ...rowValue,
+  fontSize: '16px',
+  fontWeight: 600,
+}
+
+const rowValueStruck = {
+  ...rowValue,
+  color: '#8e8e8e',
+  textDecoration: 'line-through',
+}
+
+export interface DetailRowProps {
+  label: string
+  value: ReactNode
+  /** Total-style row — larger, semibold value. */
+  emphasis?: boolean
+  /** Strike the value (superseded info, e.g. the old session time). */
+  struck?: boolean
+  /** Suppress the hairline under this row (last row in a block). */
+  last?: boolean
+}
+
+export const DetailRow = ({ label, value, emphasis, struck, last }: DetailRowProps) => (
+  <Row style={{ borderBottom: last ? 'none' : '1px solid #f0f0f0' }}>
+    <Column style={{ padding: '16px 0', verticalAlign: 'top', width: '110px' }}>
+      <Text style={rowLabel}>{label}</Text>
+    </Column>
+    <Column style={{ padding: '16px 0', verticalAlign: 'top' }}>
+      <Text style={struck ? rowValueStruck : emphasis ? rowValueEmphasis : rowValue}>
+        {value}
+      </Text>
+    </Column>
+  </Row>
+)
+
+export const DetailBlock = ({ children }: { children: ReactNode }) => (
+  <Section style={detailBlockStyle}>{children}</Section>
+)

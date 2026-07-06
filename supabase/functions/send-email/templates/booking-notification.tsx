@@ -1,6 +1,6 @@
-import { Heading, Section, Text } from '@react-email/components'
+import { Heading, Text } from '@react-email/components'
 import * as React from 'react'
-import { EmailLayout, styles } from './_layout.tsx'
+import { DetailBlock, DetailRow, EmailLayout, styles } from './_layout.tsx'
 
 export interface BookingNotificationProps {
   buyerName: string
@@ -28,29 +28,14 @@ export const BookingNotification = ({
       {buyerName} har meldt seg på {courseTitle}.
     </Text>
 
-    <Section style={styles.detailBlock}>
-      <Text style={styles.detailLabel}>Deltaker</Text>
-      <Text style={styles.detailValue}>{buyerName}</Text>
-
-      {buyerEmail ? (
-        <>
-          <Text style={styles.detailLabel}>E-post</Text>
-          <Text style={styles.detailValue}>{buyerEmail}</Text>
-        </>
-      ) : null}
-
-      <Text style={styles.detailLabel}>Kurs</Text>
-      <Text style={styles.detailValue}>{courseTitle}</Text>
-
-      <Text style={styles.detailLabel}>Tid</Text>
-      <Text style={styles.detailValue}>{courseStart}</Text>
-
-      <Text style={styles.detailLabel}>Beløp</Text>
-      <Text style={styles.detailValue}>{amount}</Text>
-
-      <Text style={styles.detailLabel}>Referanse</Text>
-      <Text style={styles.detailValueLast}>{bookingId}</Text>
-    </Section>
+    <DetailBlock>
+      <DetailRow label="Deltaker" value={buyerName} />
+      {buyerEmail ? <DetailRow label="E-post" value={buyerEmail} /> : null}
+      <DetailRow label="Kurs" value={courseTitle} />
+      <DetailRow label="Tid" value={courseStart} />
+      <DetailRow label="Referanse" value={bookingId} />
+      <DetailRow label="Beløp" value={amount} emphasis last />
+    </DetailBlock>
 
     <Text style={styles.paragraphMuted}>
       Du finner deltakerlisten under kurset på Openspot.

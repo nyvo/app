@@ -1,6 +1,6 @@
-import { Heading, Section, Text } from '@react-email/components'
+import { Heading, Text } from '@react-email/components'
 import * as React from 'react'
-import { EmailLayout, styles } from './_layout.tsx'
+import { DetailBlock, DetailRow, EmailLayout, styles } from './_layout.tsx'
 
 export interface SignupCancelledProps {
   buyerName: string
@@ -37,19 +37,10 @@ export const SignupCancelled = ({
 
     {paymentNote ? <Text style={styles.paragraph}>{paymentNote}</Text> : null}
 
-    <Section style={styles.detailBlock}>
-      <Text style={styles.detailLabel}>Kurs</Text>
-      <Text style={courseStart ? styles.detailValue : styles.detailValueLast}>
-        {courseTitle}
-      </Text>
-
-      {courseStart ? (
-        <>
-          <Text style={styles.detailLabel}>Start</Text>
-          <Text style={styles.detailValueLast}>{courseStart}</Text>
-        </>
-      ) : null}
-    </Section>
+    <DetailBlock>
+      <DetailRow label="Kurs" value={courseTitle} last={!courseStart} />
+      {courseStart ? <DetailRow label="Start" value={courseStart} last /> : null}
+    </DetailBlock>
 
     {arrangorEmail ? (
       <Text style={styles.paragraphMuted}>
