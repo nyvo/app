@@ -372,7 +372,7 @@ function StudioPublicSettings({
       </PageTabs>
 
       {locationsError ? (
-        <div className="rounded-xl border border-card bg-background p-6 sm:p-10">
+        <div className="rounded-xl bg-panel p-6 sm:p-10">
           <ErrorState
             title="Kunne ikke hente studioet ditt"
             message="Sjekk forbindelsen og prøv igjen."

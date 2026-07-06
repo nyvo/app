@@ -17,7 +17,6 @@ import {
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { runWithUndo } from '@/lib/undo';
 import { friendlyError } from '@/lib/error-messages';
-import { cn } from '@/lib/utils';
 import {
   fetchHostAffiliates,
   revokeAffiliation,
@@ -276,7 +275,7 @@ function IndividualView({
 
 function ConnectionSkeleton() {
   return (
-    <div className="rounded-xl border border-card bg-surface p-6" role="status" aria-live="polite">
+    <div className="rounded-xl bg-panel p-6" role="status" aria-live="polite">
       <span className="sr-only">Laster samarbeid</span>
       <Skeleton className="h-5 w-64 max-w-full" />
       <Skeleton className="mt-2 h-5 w-80 max-w-full" />
@@ -307,7 +306,7 @@ function AffiliatesList({
 
   if (affiliates.length === 0) {
     return (
-      <div className="rounded-xl border border-card bg-surface p-6">
+      <div className="rounded-xl bg-panel p-6">
         <p className="text-base font-medium text-foreground">Ingen instruktører tilknyttet ennå</p>
         <p className="mt-1 max-w-md text-base text-foreground-muted">
           Send invitasjonslenken til en instruktør for å vise kursene deres her.
@@ -317,14 +316,11 @@ function AffiliatesList({
   }
 
   return (
-    <ul className="rounded-md border border-border bg-surface overflow-hidden">
-      {affiliates.map((affiliate, i) => (
+    <ul className="divide-y divide-border-subtle">
+      {affiliates.map((affiliate) => (
         <li
           key={affiliate.guest_seller_id}
-          className={cn(
-            'grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3',
-            i > 0 && 'border-t border-border',
-          )}
+          className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3"
         >
           <div className="flex min-w-0 items-center gap-3">
             <InstructorAvatar name={affiliate.guest.name} url={affiliate.guest.logo_url} />
@@ -487,7 +483,7 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
 function AffiliatesListSkeleton() {
   return (
     <ul
-      className="rounded-md border border-border bg-surface overflow-hidden"
+      className="divide-y divide-border-subtle"
       role="status"
       aria-live="polite"
     >
@@ -495,10 +491,7 @@ function AffiliatesListSkeleton() {
       {Array.from({ length: 3 }).map((_, i) => (
         <li
           key={i}
-          className={cn(
-            'grid items-center gap-4 px-4 py-3 grid-cols-[1fr_auto]',
-            i > 0 && 'border-t border-border',
-          )}
+          className="grid items-center gap-4 px-4 py-3 grid-cols-[1fr_auto]"
           aria-hidden="true"
         >
           <div className="flex min-w-0 items-center gap-3">

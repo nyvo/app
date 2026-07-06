@@ -154,7 +154,7 @@ const TeacherProfilePage = () => {
               title="Konto og sikkerhet"
               description="Passord, pålogging og sletting av kontoen."
             >
-              <div className="divide-y divide-border overflow-hidden rounded-xl border border-card bg-surface">
+              <div className="divide-y divide-border-subtle">
                 <PasswordRow />
                 <div className="flex items-center justify-between gap-4 px-5 py-4">
                   <span className="text-base font-medium text-foreground">Logg ut alle enheter</span>
