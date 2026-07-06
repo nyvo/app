@@ -47,7 +47,7 @@ Do these first, in order. Don't open a blank file and invent.
 
 - **Only design-token colors.** Use semantic tokens / their Tailwind utilities. No one-off hex or `oklch(...)` literals, no raw palette utilities for brand intent. If a token feels wrong, adjust it within the system — never hand-tune a value (a custom "honey" amber was rejected in favor of the on-token `--warning`).
 - **Neutral focus ring.** `--ring` = `--foreground`. Focus is never brand-colored.
-- **Primary is the only action color.** `--primary` is a mid-lightness indigo (OKLCH hue 270, L ≈ 0.52–0.56) tuned for AA white text. Warm accents are highlight/upsell surfaces ONLY, never an action or a button.
+- **Primary is the only action color.** `--primary` is a mid-lightness azure blue (OKLCH hue 245, L ≈ 0.52–0.56) tuned for AA white text. Warm accents are highlight/upsell surfaces ONLY, never an action or a button.
 - **State fills via tokens.** Hover/active use the semantic state fill (`--muted` / `--chrome-hover`/`--chrome-active` for dark chrome) — translucent-ink overlays, not new colors.
 - **Flat by default.** White-on-white + border. No arbitrary `shadow-[...]` or `rounded-[Npx]`; use the radius tokens (`--radius-*`) and the single `.shadow-soft` class, reserved for focal floating surfaces. Buttons/pills stay `rounded-full`.
 - **Type discipline.** Geist sans everywhere. No `tracking-*` utilities on typed text — per-size letter-spacing is baked into the `--text-*` token. Display caps at 5xl (48px); 6xl+ are intentionally unset and won't compile.
