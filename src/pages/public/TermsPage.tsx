@@ -50,10 +50,11 @@ const TermsPage = () => {
               <h2 className="text-lg font-medium text-foreground">3. Påmelding og betaling</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Før du betaler ser du kursnavn, pris, eventuell tjenesteavgift og totalbeløp.
+                Prisene som vises er totalpriser – det kommer ikke mva. i tillegg.
                 Ved påmelding godtar du å betale beløpet som vises i kassen.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Betalingen gjennomføres når du fullfører betalingen hos betalingsleverandøren.
+                Betalingen gjennomføres hos vår betalingsleverandør Stripe.
                 Påmeldingen bekreftes etter godkjent betaling. Du får bekreftelse og kvittering på e-post.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
@@ -77,17 +78,18 @@ const TermsPage = () => {
             <section className="space-y-4">
               <h2 className="text-lg font-medium text-foreground">5. Avbestilling, angrerett og refusjon</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
+                Kurs, timer og arrangementer skjer på en fastsatt dato eller i en bestemt periode, og er
+                derfor unntatt angrerett etter angrerettloven § 22 bokstav m. Påmeldingen er bindende når
+                betalingen er gjennomført.
+              </p>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Avlyser studioet eller arrangøren kurset, refunderes betalt kursavgift til samme
+                betalingsmåte.
+              </p>
+              <p className="text-base text-foreground-muted leading-relaxed">
                 Trenger du å avbestille, tar du kontakt med studioet eller arrangøren du har meldt deg på hos.
-                Du kan også sende en e-post til {COMPANY.email}, så hjelper vi deg videre.
-              </p>
-              <p className="text-base text-foreground-muted leading-relaxed">
-                Refusjon følger vilkårene som gjelder for kurset du har meldt deg på. Ved avlysning fra
-                studioet eller arrangøren refunderes betalt kursavgift.
-              </p>
-              <p className="text-base text-foreground-muted leading-relaxed">
-                Angreretten kan være begrenset for kurs, timer og arrangementer som skjer på en bestemt dato
-                eller i en bestemt periode. Hvis du er usikker på hva som gjelder for din påmelding, kontakt
-                oss eller arrangøren før du betaler.
+                Du kan også sende en e-post til {COMPANY.email}, så hjelper vi deg videre. Refusjon ved egen
+                avbestilling avgjøres av studioet eller arrangøren.
               </p>
             </section>
 
@@ -142,7 +144,7 @@ const TermsPage = () => {
           </div>
 
           <p className="text-sm text-foreground-muted">
-            Sist oppdatert: 21. mai 2026
+            Sist oppdatert: 6. juli 2026
           </p>
         </div>
       </main>
