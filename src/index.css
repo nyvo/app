@@ -308,7 +308,7 @@
 
   /* Structure */
   --border: var(--neutral-7);                         /* visible divider (was neutral-6, too faint on white) */
-  --border-card: var(--neutral-4);                    /* card/panel EDGE on canvas — definition, not decoration; the fill contrast does the separating (--border stays for dividers/inputs, which need visibility on white) */
+  --border-card: var(--neutral-4);                    /* floating-focal-card edge ONLY (booking rail, checkout, landing hero, embeds) — resting surfaces are borderless on the white page; --border stays for dividers/form-control boundaries */
   --border-subtle: var(--neutral-4);                /* hairline — lightened from neutral-6 for the white-bg system
                                                        (rows/dividers whisper; --border stays for visible dividers). */
   --border-strong: var(--neutral-9);                  /* form-control boundary (checkbox border, unchecked switch track) — ≥3:1 non-text contrast on white per WCAG 1.4.11; also hover/emphasis edge on interactive surfaces (was neutral-8, which fails 3:1) */

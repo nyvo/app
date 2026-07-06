@@ -79,9 +79,9 @@ All tokens live in `src/index.css` (3-layer OKLCH: primitives → semantic →
 App scale (do not import 16–20px card radii from other systems):
 
 - `rounded-sm` 4px — tight chips, mini thumbs
-- `rounded-md` 6px — inputs
+- `rounded-md` 6px — small controls (text fields themselves are `rounded-xl`)
 - `rounded-lg` 8px — list rows, badges, image thumbs
-- `rounded-xl` 10px — **THE surface radius**: cards, panels, dialogs, text buttons
+- `rounded-xl` 10px — **THE surface radius**: cards, panels, dialogs, text buttons, fields
 - `rounded-2xl` 12px — marketing surfaces + focal floating cards (with `shadow-soft`)
 - `rounded-3xl` 16px — oversized marketing bands
 - `rounded-full` — icon-only buttons, chips/badges, avatars, status dots
