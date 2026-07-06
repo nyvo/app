@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Calendar, Clock, ImageIcon } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
@@ -392,7 +391,7 @@ export default function CourseBuilderPage() {
         <div className="mx-auto max-w-3xl px-4 pb-10 pt-6 sm:px-6 lg:px-8 lg:pt-12">
           <h1 className="mb-6 text-2xl font-medium text-foreground">Nytt kurs</h1>
 
-          <Card className="gap-0 overflow-hidden p-0">
+          <div className="flex flex-col">
             {/* Cover banner */}
             <input
               ref={fileInputRef}
@@ -664,7 +663,7 @@ export default function CourseBuilderPage() {
                 </div>
               </section>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
 
