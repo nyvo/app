@@ -54,7 +54,9 @@ All tokens live in `src/index.css` (3-layer OKLCH: primitives → semantic →
 | Need | Token / utility |
 |---|---|
 | Page background | `bg-background` (white) |
-| Dashboard canvas behind cards | `bg-canvas` |
+| Dashboard page background | bg-canvas (= white; legacy name) |
+| Utility panel fill (secondary content) | bg-panel — the only grey fill muted text is AA on |
+| Tinted interactive card + hover | bg-primary-subtle → hover:bg-selection |
 | Card / panel / popover surface | `bg-surface` (white) + `border-border-card` on canvas |
 | THE light neutral fill (secondary buttons, active nav, chips) | `bg-muted` |
 | Hover / pressed fill on any surface, any theme | `bg-hover` / `bg-pressed` (foreground ink @ 6% / 12%) |
@@ -133,9 +135,7 @@ Three recipes — pick by role:
 2. **Framed/tinted card (interactive or selected list items):** selected state
    uses `--selection-light`; framed emphasis cards use `bg-primary-subtle` +
    `border-primary-border`. No shadow.
-3. **Surface card (default panel):** `bg-surface` on `bg-canvas` with
-   `border-border-card` edge — the fill contrast separates, the border defines.
-   `rounded-xl`, 20–24px padding.
+3. **Utility panel:** `bg-panel`, `rounded-xl`, no border, no shadow — page background is white; `border-card` + `shadow-soft` survives only on floating focal cards (booking rail, checkout, landing hero).
 
 Focal floating cards (booking rail, checkout summary, receipt) additionally get
 `rounded-2xl` + `shadow-soft`. Hover on interactive cards: `bg-hover` overlay —

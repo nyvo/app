@@ -41,6 +41,8 @@
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
   --color-surface-on-dark: var(--surface-on-dark);
+  --color-panel: var(--panel);
+  --color-selection: var(--selection);
 
   /* Chrome — the dark surface for toasts + marketing dark bands (the landing
      page previews the app's chrome). No longer the sidebar — that's a light rail now. */
@@ -228,7 +230,15 @@
 
   /* Surfaces */
   --background: oklch(1 0 0);                      /* pure white, per spec */
-  --canvas: var(--neutral-2);                      /* dampened dashboard page canvas — white surfaces (--surface) float on it */
+  --canvas: var(--background);                     /* white page bg (2026-07 white-bg adoption) — separation now comes
+                                                      from fills/hairlines, not card borders on grey. Kept as a token so
+                                                      the role can diverge again without touching pages. */
+  --panel: var(--neutral-2);                        /* utility-panel fill (R3) — the ONLY grey fill muted text is AA on
+                                                      (4.53:1). bg-muted (neutral-3) stays for chips/hover/active where
+                                                      text is full foreground. */
+  --selection: color-mix(in oklab, var(--primary) 10%, var(--background));
+                                                    /* opaque hover step for tinted cards — one notch deeper than
+                                                       --primary-subtle (#F2F7FB), same family as --selection-light. */
   --surface: oklch(1 0 0);                         /* cards, popovers, panels */
   --surface-elevated: oklch(1 0 0 / 0.8);          /* translucent backdrop-blur header */
   --surface-on-dark: oklch(1 0 0 / 0.06);          /* faint elevated surface over bg-primary */
@@ -297,7 +307,8 @@
   /* Structure */
   --border: var(--neutral-7);                         /* visible divider (was neutral-6, too faint on white) */
   --border-card: var(--neutral-4);                    /* card/panel EDGE on canvas — definition, not decoration; the fill contrast does the separating (--border stays for dividers/inputs, which need visibility on white) */
-  --border-subtle: var(--neutral-6);
+  --border-subtle: var(--neutral-4);                /* hairline — lightened from neutral-6 for the white-bg system
+                                                       (rows/dividers whisper; --border stays for visible dividers). */
   --border-strong: var(--neutral-9);                  /* form-control boundary (checkbox border, unchecked switch track) — ≥3:1 non-text contrast on white per WCAG 1.4.11; also hover/emphasis edge on interactive surfaces (was neutral-8, which fails 3:1) */
   --input: var(--neutral-8);                          /* text-field edge (was neutral-7 @ ~1.6:1; neutral-8 ≈ 1.9:1 — still below the 3:1 of 1.4.11, kept lighter than -strong as a deliberate design call) */
   --ring: var(--foreground);                          /* neutral focus ring — matches button.tsx focus style; never brand-colored */
@@ -367,6 +378,8 @@
   /* Surfaces */
   --background: var(--neutral-1);                  /* page canvas */
   --canvas: var(--neutral-1);                      /* dark mode unused — keep canvas == background */
+  --panel: var(--neutral-2);
+  --selection: color-mix(in oklab, var(--primary) 14%, var(--background));
   --surface: var(--neutral-1);                     /* same value as bg, per spec */
   --surface-elevated: oklch(0.205 0 0 / 0.8);
 
