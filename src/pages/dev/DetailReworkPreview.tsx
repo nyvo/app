@@ -4,7 +4,7 @@ import { Clock, Calendar, ChevronLeft } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
 import { BookingRailLite } from '@/components/public/course-details/BookingRailLite';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
-import type { CourseSession } from '@/types/database';
+import type { AvailableTicketType, CourseSession } from '@/types/database';
 
 /**
  * Preview for the reworked course detail page. Built against the synthesis
@@ -34,6 +34,7 @@ const DetailReworkPreview = () => {
   const courseLevel = useMemo(() => mockLevel(variant), [variant]);
   const instructorName = useMemo(() => mockInstructor(variant), [variant]);
   const sessions = useMemo(() => makeMockSessions(course.id, variant), [course.id, variant]);
+  const tiers = useMemo(() => makeMockTiers(course), [course]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -110,6 +111,7 @@ const DetailReworkPreview = () => {
             <div className="md:sticky md:top-10">
               <BookingRailLite
                 course={course}
+                tiers={tiers}
                 studioSlug="mock-studio"
                 checkoutHref="/dev/checkout-form-rework"
               />
@@ -355,6 +357,48 @@ function makeMockCourse(variant: Variant): PublicCourseWithDetails {
     default:
       return base;
   }
+}
+
+/** Mock tier rows shaped like `available_ticket_types` output — what the real
+ * page passes to BookingRailLite. Derived from the mock course fields. */
+function makeMockTiers(course: PublicCourseWithDetails): AvailableTicketType[] {
+  const tiers = [
+    {
+      id: 'tier-main',
+      course_id: course.id,
+      label: course.format === 'series' ? 'Hele kurset' : 'Enkelttime',
+      description: '',
+      price: course.price ?? 0,
+      weeks: course.format === 'series' ? (course.total_weeks ?? 1) : 1,
+      ticket_kind: 'package',
+      audience: 'standard',
+      is_default: true,
+      display_order: 0,
+      sales_starts_at: null,
+      sales_ends_at: null,
+      max_quantity: null,
+      seats_remaining: null,
+    },
+  ];
+  if (course.allows_drop_in && course.drop_in_price) {
+    tiers.push({
+      id: 'tier-drop-in',
+      course_id: course.id,
+      label: 'Drop-in',
+      description: '',
+      price: course.drop_in_price,
+      weeks: 1,
+      ticket_kind: 'drop_in',
+      audience: 'standard',
+      is_default: false,
+      display_order: 1,
+      sales_starts_at: null,
+      sales_ends_at: null,
+      max_quantity: null,
+      seats_remaining: null,
+    });
+  }
+  return tiers as unknown as AvailableTicketType[];
 }
 
 function makeMockSessions(courseId: string, variant: Variant): CourseSession[] {

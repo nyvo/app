@@ -132,14 +132,20 @@ const CheckoutPage = () => {
 
   const isFree = !course?.price || course.price <= 0;
   const isCancelled = course?.status === 'cancelled';
-  const isFull =
-    course?.max_participants != null && course.spots_available <= 0;
   // Free signups need no payment rails; paid needs Stripe onboarding complete.
   const paymentReady =
     isFree || (course?.seller?.stripe_onboarding_complete ?? false);
 
   const selectedTier = tiers.find((t) => t.id === selectedTierId) ?? null;
   const isDropInSelected = selectedTier?.ticket_kind === 'drop_in';
+  // Course-wide capacity gates the package tiers only. A drop-in occupies a
+  // single class, so it stays purchasable while the NEXT session has room —
+  // available_ticket_types gates its visibility per session and the edge
+  // function enforces that capacity before authorizing payment.
+  const isFull =
+    course?.max_participants != null
+    && course.spots_available <= 0
+    && !isDropInSelected;
 
   // Drop-in flow: pick the next class automatically — the first session that
   // hasn't started yet. Same model as BookingPanel; no session picker.
