@@ -90,7 +90,7 @@ export function PageTab({
       tabIndex={active ? 0 : -1}
       onClick={onClick}
       className={cn(
-        'inline-flex items-center py-1.5 -mb-px text-sm border-b-2 transition-colors outline-none focus-visible:text-foreground',
+        'inline-flex items-center py-1.5 -mb-px text-sm border-b-2 transition-colors outline-none focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
         active
           ? 'font-medium text-foreground border-foreground'
           : 'font-normal text-foreground-muted hover:text-foreground border-transparent',
@@ -106,7 +106,7 @@ export function PageTab({
         {typeof count === 'number' && count > 0 && (
           <span
             className={cn(
-              'inline-flex items-center px-1.5 py-px text-foreground text-sm font-medium rounded-full tabular-nums',
+              'inline-flex items-center px-1.5 py-px text-foreground text-xs tabular-nums rounded-full',
               // Inverted bg so the count stays visible against either tab state.
               active ? 'bg-background' : 'bg-muted',
             )}

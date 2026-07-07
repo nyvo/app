@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { VisuallyHidden as VisuallyHiddenPrimitive } from "radix-ui"
 
 import {
   AlertDialog,
@@ -14,6 +13,8 @@ import {
   Drawer,
   DrawerClose,
   DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
@@ -72,10 +73,10 @@ function ConfirmAlertDialog(props: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {trigger}
-      <AlertDialogContent aria-label={ariaLabel}>
-        <VisuallyHiddenPrimitive.Root>
-          <AlertDialogTitle>{ariaLabel}</AlertDialogTitle>
-        </VisuallyHiddenPrimitive.Root>
+      {/* Radix wires aria-labelledby to AlertDialogTitle automatically; clearing
+          it lets the explicit aria-label win so ariaLabel can differ from the
+          visible title (e.g. unsaved-changes' "Ulagrede endringer" vs "Forlat siden?"). */}
+      <AlertDialogContent aria-label={ariaLabel} aria-labelledby={undefined}>
         <ConfirmContent {...props} />
       </AlertDialogContent>
     </AlertDialog>
@@ -87,15 +88,8 @@ function ConfirmDrawer(props: ConfirmDialogProps) {
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} dismissible={!loading}>
-      <DrawerContent aria-label={ariaLabel}>
-        <VisuallyHiddenPrimitive.Root>
-          <DrawerTitle>{ariaLabel}</DrawerTitle>
-        </VisuallyHiddenPrimitive.Root>
-        {/* grid gap-6 mirrors AlertDialogContent so ConfirmContent's blocks
-            space identically on both devices (blocks carry no own margins) */}
-        <div className="grid gap-6 px-4 pt-5 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <ConfirmContent {...props} mobile />
-        </div>
+      <DrawerContent aria-label={ariaLabel} aria-labelledby={undefined}>
+        <ConfirmContent {...props} mobile />
       </DrawerContent>
     </Drawer>
   )
@@ -121,98 +115,116 @@ function ConfirmContent({
     !typeToConfirm || typeToConfirmValue.trim() === typeToConfirm
   const actionDisabled = disabled || !typeGateOpen
 
-  return (
-    <>
-      <div>
-        <h2 className="mb-2 text-lg font-medium text-foreground">
-          {title}
-        </h2>
-        <p className="text-sm leading-relaxed text-foreground-muted [&_strong]:font-medium [&_strong]:text-foreground">
-          {body}
-        </p>
-      </div>
+  const bodyText = (
+    <p className="text-sm leading-relaxed text-foreground-muted [&_strong]:font-medium [&_strong]:text-foreground">
+      {body}
+    </p>
+  )
 
-      {scopeList && scopeList.length > 0 ? (
-        <div className="max-h-72 overflow-y-auto rounded-lg bg-muted/40 p-3">
-          <div className="divide-y divide-border/60">
-            {scopeList.map((item, index) => (
-              <div
-                key={item.id ?? index}
-                className={cn(
-                  "flex items-center justify-between gap-3 py-2",
-                  index === 0 && "pt-0",
-                  index === scopeList.length - 1 && "pb-0",
-                )}
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {item.name}
-                  </p>
-                  {item.meta ? (
-                    <p className="mt-0.5 truncate text-sm text-foreground-muted">
-                      {item.meta}
+  const middleContent =
+    (scopeList && scopeList.length > 0) || typeToConfirm ? (
+      <>
+        {scopeList && scopeList.length > 0 ? (
+          <div className="max-h-72 overflow-y-auto rounded-lg bg-panel p-3">
+            <div className="divide-y divide-border-subtle">
+              {scopeList.map((item, index) => (
+                <div
+                  key={item.id ?? index}
+                  className={cn(
+                    "flex items-center justify-between gap-3 py-2",
+                    index === 0 && "pt-0",
+                    index === scopeList.length - 1 && "pb-0",
+                  )}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {item.name}
                     </p>
+                    {item.meta ? (
+                      <p className="mt-0.5 truncate text-sm text-foreground-muted">
+                        {item.meta}
+                      </p>
+                    ) : null}
+                  </div>
+                  {item.trailing ? (
+                    <span className="shrink-0 text-sm tabular-nums text-foreground">
+                      {item.trailing}
+                    </span>
                   ) : null}
                 </div>
-                {item.trailing ? (
-                  <span className="shrink-0 text-sm tabular-nums text-foreground">
-                    {item.trailing}
-                  </span>
-                ) : null}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      {typeToConfirm ? (
-        <label className="grid gap-2 text-sm text-foreground-muted">
-          <span>
-            Skriv{" "}
-            <strong className="font-medium text-foreground">
-              {typeToConfirm}
-            </strong>{" "}
-            for å bekrefte
-          </span>
-          <Input
-            value={typeToConfirmValue}
-            onChange={(event) => onTypeToConfirmChange?.(event.target.value)}
-            autoComplete="off"
-          />
-        </label>
-      ) : null}
+        {typeToConfirm ? (
+          <label className="grid gap-2 text-sm text-foreground-muted">
+            <span>
+              Skriv{" "}
+              <strong className="font-medium text-foreground">
+                {typeToConfirm}
+              </strong>{" "}
+              for å bekrefte
+            </span>
+            <Input
+              value={typeToConfirmValue}
+              onChange={(event) => onTypeToConfirmChange?.(event.target.value)}
+              autoComplete="off"
+            />
+          </label>
+        ) : null}
+      </>
+    ) : null
 
-      {mobile ? (
-        <div className="flex gap-2">
+  const actionButton = (
+    <ActionButton
+      onConfirm={onConfirm}
+      disabled={actionDisabled}
+      loading={loading}
+      loadingText={loadingText}
+      destructive={destructive}
+    >
+      {actionLabel}
+    </ActionButton>
+  )
+
+  if (mobile) {
+    return (
+      <>
+        <DrawerHeader>
+          <DrawerTitle className="text-lg font-medium text-foreground">
+            {title}
+          </DrawerTitle>
+          {bodyText}
+        </DrawerHeader>
+        {middleContent && <div className="grid gap-6 px-6 py-4">{middleContent}</div>}
+        <DrawerFooter className="flex-row pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <DrawerClose asChild>
             <Button variant="secondary" size="lg" className="flex-1" disabled={loading}>
               {cancelLabel}
             </Button>
           </DrawerClose>
-          <ActionButton
-            onConfirm={onConfirm}
-            disabled={actionDisabled}
-            loading={loading}
-            loadingText={loadingText}
-            destructive={destructive}
-          >
-            {actionLabel}
-          </ActionButton>
-        </div>
-      ) : (
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>{cancelLabel}</AlertDialogCancel>
-          <ActionButton
-            onConfirm={onConfirm}
-            disabled={actionDisabled}
-            loading={loading}
-            loadingText={loadingText}
-            destructive={destructive}
-          >
-            {actionLabel}
-          </ActionButton>
-        </AlertDialogFooter>
-      )}
+          {actionButton}
+        </DrawerFooter>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <div>
+        <AlertDialogTitle className="mb-2 text-lg font-medium text-foreground">
+          {title}
+        </AlertDialogTitle>
+        {bodyText}
+      </div>
+
+      {middleContent}
+
+      <AlertDialogFooter>
+        <AlertDialogCancel disabled={loading}>{cancelLabel}</AlertDialogCancel>
+        {actionButton}
+      </AlertDialogFooter>
     </>
   )
 }
@@ -288,7 +300,7 @@ export function ConfirmScopeRow({
     <div
       className={cn(
         "flex items-center justify-between px-4 py-2.5 text-sm text-foreground tabular-nums",
-        !first && "border-t border-border/60"
+        !first && "border-t border-border-subtle"
       )}
     >
       <span>{label}</span>

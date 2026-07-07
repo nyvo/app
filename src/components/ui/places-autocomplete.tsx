@@ -159,7 +159,7 @@ export function PlacesAutocomplete({
         <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-foreground-muted" />
       )}
       {open && results.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-md border border-border bg-surface shadow-md">
+        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-surface shadow-md">
           <ul className="max-h-60 overflow-y-auto p-1">
             {results.map((r, i) => (
               <li key={r.placeId}>
