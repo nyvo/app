@@ -5,12 +5,14 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/ui/field-error';
 import { checkCourseAvailability, createSignup } from '@/services/signups';
 import { friendlyError } from '@/lib/error-messages';
@@ -83,8 +85,27 @@ export function AddParticipantDrawer({
     setIsCheckingCapacity(false);
   };
 
-  const handleBlur = (field: string) => {
+  /** Shared per-field rule so blur validation and submit validation can't drift. */
+  const getFieldError = (field: 'name' | 'email', value: string): string | undefined => {
+    if (field === 'name') {
+      return value.trim() ? undefined : 'Skriv inn navnet på deltakeren';
+    }
+    if (!value.trim()) return AUTH_VALIDATION.emailRequired;
+    if (!isValidEmail(value)) return AUTH_VALIDATION.emailInvalid;
+    return undefined;
+  };
+
+  const handleBlur = (field: 'name' | 'email') => {
     setTouched((prev) => ({ ...prev, [field]: true }));
+    const message = getFieldError(field, formData[field]);
+    setErrors((prev) => {
+      if (!message) {
+        if (!(field in prev)) return prev;
+        const { [field]: _removed, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [field]: message };
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -103,16 +124,10 @@ export function AddParticipantDrawer({
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Skriv inn navnet på deltakeren';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = AUTH_VALIDATION.emailRequired;
-    } else if (!isValidEmail(formData.email)) {
-      newErrors.email = AUTH_VALIDATION.emailInvalid;
-    }
+    const nameError = getFieldError('name', formData.name);
+    if (nameError) newErrors.name = nameError;
+    const emailError = getFieldError('email', formData.email);
+    if (emailError) newErrors.email = emailError;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -188,6 +203,9 @@ export function AddParticipantDrawer({
       <SheetContent side="right" className="sm:max-w-[480px] p-0 gap-0">
         <SheetHeader>
           <SheetTitle>Legg til deltaker</SheetTitle>
+          <SheetDescription className="sr-only">
+            Registrer en deltaker manuelt på kurset.
+          </SheetDescription>
         </SheetHeader>
 
         {isCheckingCapacity ? (
@@ -221,13 +239,9 @@ export function AddParticipantDrawer({
 
             {/* Full name */}
             <div>
-              <label
-                htmlFor="name"
-                data-error={(errors.name && touched.name) || undefined}
-                className="text-sm font-medium mb-2 block text-foreground data-[error=true]:text-danger"
-              >
+              <Label htmlFor="name" data-error={(errors.name && touched.name) ? true : undefined}>
                 Navn
-              </label>
+              </Label>
               <Input
                 id="name"
                 type="text"
@@ -240,11 +254,6 @@ export function AddParticipantDrawer({
                 aria-describedby={errors.name && touched.name ? 'name-error' : undefined}
                 aria-required="true"
                 disabled={isSubmitting}
-                className={
-                  errors.name && touched.name
-                    ? 'border-danger bg-danger-subtle animate-shake'
-                    : ''
-                }
               />
               {errors.name && touched.name && (
                 <FieldError id="name-error">{errors.name}</FieldError>
@@ -253,13 +262,9 @@ export function AddParticipantDrawer({
 
             {/* Email */}
             <div>
-              <label
-                htmlFor="email"
-                data-error={(errors.email && touched.email) || undefined}
-                className="text-sm font-medium mb-2 block text-foreground data-[error=true]:text-danger"
-              >
+              <Label htmlFor="email" data-error={(errors.email && touched.email) ? true : undefined}>
                 E-post
-              </label>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -271,11 +276,6 @@ export function AddParticipantDrawer({
                 aria-describedby={errors.email && touched.email ? 'email-error' : undefined}
                 aria-required="true"
                 disabled={isSubmitting}
-                className={
-                  errors.email && touched.email
-                    ? 'border-danger bg-danger-subtle animate-shake'
-                    : ''
-                }
               />
               {errors.email && touched.email && (
                 <FieldError id="email-error">{errors.email}</FieldError>
