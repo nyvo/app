@@ -92,7 +92,7 @@ export function PageShell({
       )}
     >
       <div className={cn('w-full', narrow && narrowClass[narrow])}>
-        <header className={cn('mb-8', description && 'mb-10')}>
+        <header className={description ? 'mb-10' : 'mb-8'}>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3 flex-wrap min-w-0">
               <h1 className="text-2xl font-medium text-foreground">

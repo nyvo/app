@@ -126,7 +126,8 @@ export function NotificationRow({
         type="button"
         onClick={() => onArchive(notification)}
         aria-label="Fjern varsel"
-        className="absolute right-2 top-2 inline-flex size-6 items-center justify-center rounded-full text-foreground-muted opacity-0 transition-opacity duration-150 hover:bg-foreground/10 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+        // after:-inset-2.5 lifts the 24px visual button to a ~44px touch target
+        className="absolute right-2 top-2 inline-flex size-6 items-center justify-center rounded-full text-foreground-muted opacity-0 transition-opacity duration-150 after:absolute after:-inset-2.5 hover:bg-foreground/10 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none group-hover:opacity-100 [@media(hover:none)]:opacity-100"
       >
         <X className="size-3.5" />
       </button>

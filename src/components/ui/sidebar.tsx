@@ -331,7 +331,8 @@ function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sidebar-header"
       data-sidebar="header"
-      className={cn("flex flex-col gap-2 px-3 py-2", className)}
+      // px-4 matches SidebarGroup so header content shares the nav items' left edge
+      className={cn("flex flex-col gap-2 px-4 py-2", className)}
       {...props}
     />
   )
@@ -342,7 +343,8 @@ function SidebarFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sidebar-footer"
       data-sidebar="footer"
-      className={cn("flex flex-col gap-2 px-3 py-2", className)}
+      // px-4 matches SidebarGroup so footer content shares the nav items' left edge
+      className={cn("flex flex-col gap-2 px-4 py-2", className)}
       {...props}
     />
   )

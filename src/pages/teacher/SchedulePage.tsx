@@ -275,9 +275,9 @@ const SchedulePage = () => {
                   <Skeleton className="h-4 w-16" />
                   <Skeleton className="h-4 w-12" />
                 </div>
-                <div className="space-y-2.5 pb-6">
+                <div className="space-y-3 pb-6">
                   {[1, 2].map((j) => (
-                    <div key={j} className="rounded-xl bg-primary-subtle px-5 py-4">
+                    <div key={j} className="rounded-xl bg-muted px-5 py-4">
                       <Skeleton className="h-4 w-48" />
                       <Skeleton className="mt-2.5 h-3.5 w-72 max-w-full" />
                     </div>
@@ -302,7 +302,6 @@ const SchedulePage = () => {
                   ? 'Opprett et kurs for å fylle timeplanen.'
                   : 'Tidligere timer dukker opp her når de er ferdige.'
             }
-            className="py-16"
           />
         ) : (
           <div>
@@ -358,7 +357,9 @@ export function TimelineDay({
           <p className="text-base text-foreground-muted">{secondary}</p>
         </div>
       </div>
-      <div className="space-y-2.5 pb-6">{children}</div>
+      {/* Day-group separation is deliberately split: pb-6 here keeps the dotted
+          spine running through the gap; the next group's mt-2 tops it up to 32px. */}
+      <div className="space-y-3 pb-6">{children}</div>
     </div>
   );
 }
@@ -381,7 +382,7 @@ export function SessionCard({ session }: { session: SessionRow }) {
     <Link
       to={{ search: `?kurs=${session.courseId}&sess=${session.id}&from=schedule` }}
       className={cn(
-        'block rounded-xl bg-primary-subtle px-5 py-4 outline-none transition-colors duration-150 hover:bg-selection',
+        'block rounded-xl bg-muted px-5 py-4 outline-none transition-colors duration-150 hover:bg-pressed',
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
       )}
     >

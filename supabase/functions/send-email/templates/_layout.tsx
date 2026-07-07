@@ -81,8 +81,8 @@ export const EmailLayout = ({ preview, children }: EmailLayoutProps) => (
         </Section>
         <Text style={footer}>
           Spørsmål? Skriv til{' '}
-          <Link href="mailto:hei@openspot.no" style={footerLink}>
-            hei@openspot.no
+          <Link href="mailto:hei@framio.no" style={footerLink}>
+            hei@framio.no
           </Link>
           .
         </Text>

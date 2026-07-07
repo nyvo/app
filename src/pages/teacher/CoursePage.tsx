@@ -997,7 +997,6 @@ const CoursePage = () => {
                       <EmptyState
                         title="Kunne ikke laste deltakerne"
                         description="Sjekk nettet og last siden på nytt."
-                        className="py-12"
                       />
                     ) : visible.length === 0 ? (
                       <EmptyState
@@ -1011,13 +1010,12 @@ const CoursePage = () => {
                             ? 'Deltakere som melder seg på, dukker opp her.'
                             : 'Prøv et annet filter.'
                         }
-                        className="py-12"
                       />
                     ) : (
                       <div>
                         {/* Column header — anchored at the leading edge so the
                             "Navn" label sits above the avatar+name unit. */}
-                        <div className={cn(PARTICIPANT_COLS, 'hidden md:grid px-4 py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
+                        <div className={cn(PARTICIPANT_COLS, 'hidden md:grid py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
                           <span>Navn</span>
                           <span>Notat</span>
                           <span>Status</span>
@@ -1039,7 +1037,7 @@ const CoursePage = () => {
                                 onClick={() => setSelectedParticipantId(p.id)}
                                 className={cn(
                                   PARTICIPANT_COLS,
-                                  'w-full text-left px-4 py-3 transition-colors cursor-pointer',
+                                  'w-full text-left py-4 transition-colors cursor-pointer',
                                   'hover:bg-hover focus-visible:bg-hover outline-none',
                                   isCancelled && 'opacity-60',
                                 )}

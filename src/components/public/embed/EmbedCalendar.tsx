@@ -321,7 +321,7 @@ function EmbedClassRow({
 
   const body = (
     <>
-      <span className="w-[96px] shrink-0 text-sm font-normal leading-5 tabular-nums text-foreground">
+      <span className="w-24 shrink-0 text-sm font-normal leading-5 tabular-nums text-foreground">
         {timeRange || '—'}
       </span>
 

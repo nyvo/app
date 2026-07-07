@@ -87,7 +87,7 @@ export default function GetStartedPage() {
               </Button>
             </div>
 
-            <p className="mt-8 mb-3 text-base font-medium text-foreground">
+            <p className="mt-12 mb-3 text-base font-medium text-foreground">
               Gjør studiosiden ferdig
             </p>
             <Card className="overflow-hidden p-0 gap-0">
@@ -110,7 +110,7 @@ export default function GetStartedPage() {
 
             {optionalSteps.length > 0 && (
               <>
-                <p className="mt-8 mb-3 text-base font-medium text-foreground">
+                <p className="mt-12 mb-3 text-base font-medium text-foreground">
                   Valgfritt
                 </p>
                 <Card className="overflow-hidden p-0 gap-0">

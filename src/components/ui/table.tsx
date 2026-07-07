@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
  *   Table primitive never caps its own width.
  * - Header cells use label styling (text-xs font-medium tracking-wide text-foreground-muted).
  * - Body rows get a subtle hover (bg-muted) and divide-y via the body wrapper.
- * - Cell padding is uniform (px-4 py-4, sm:px-6).
+ * - Cell padding: body cells px-4 py-4 (sm:px-6); header cells px-4 py-3 (sm:px-6).
  *
  * Column-width rule: the first/identity column (avatar + name + meta) should get
  * `className="min-w-[220px] max-w-[360px] w-[40%]"` on its <TableHead> to prevent

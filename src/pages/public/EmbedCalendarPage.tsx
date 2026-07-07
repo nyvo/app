@@ -118,17 +118,20 @@ function EmbedSkeleton() {
             <Skeleton className="size-8 rounded-full" />
           </div>
         </div>
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1.5">
           {Array.from({ length: 42 }).map((_, i) => (
             <Skeleton key={i} className="aspect-square rounded-md" />
           ))}
         </div>
       </div>
-      <div className="space-y-4">
-        <Skeleton className="h-5 w-32" />
-        {Array.from({ length: 2 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-xl" />
-        ))}
+      {/* Mirrors the real class list: heading mb-3, rows space-y-2 */}
+      <div>
+        <Skeleton className="mb-3 h-5 w-32" />
+        <div className="space-y-2">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+          ))}
+        </div>
       </div>
     </div>
   );

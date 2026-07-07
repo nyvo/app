@@ -126,7 +126,7 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
           {steps.map((step, index) => {
             const isLast = index === steps.length - 1;
             return (
-              <li key={step.title + index} className="grid grid-cols-[26px_1fr] gap-x-3.5">
+              <li key={step.title + index} className="grid grid-cols-[26px_1fr] gap-x-3">
                 <div className="flex flex-col items-center">
                   <StepMarker index={index} status={step.status} tone={step.tone} />
                   {!isLast && (
@@ -173,9 +173,11 @@ const FAQ_ITEMS = [
 
 export function PayoutFaqSection() {
   return (
-    <section className="mt-10">
+    // mt-12 = THE page section gap; this component owns its distance from the
+    // setup card above it (PaymentsPage renders them as adjacent siblings).
+    <section className="mt-12">
       <h2 className="text-sm font-medium text-foreground">Vanlige spørsmål</h2>
-      <Accordion type="single" collapsible className="mt-2 border-t border-border-subtle">
+      <Accordion type="single" collapsible className="mt-3 border-t border-border-subtle">
         {FAQ_ITEMS.map((item) => (
           <AccordionItem key={item.q} value={item.q} className="border-border-subtle">
             <AccordionTrigger>{item.q}</AccordionTrigger>

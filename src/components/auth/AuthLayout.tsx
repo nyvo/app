@@ -34,7 +34,7 @@ export function AuthLayout({
         </Link>
       </header>
 
-      <main className="flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
+      <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
         <motion.div
           variants={authPageVariants}
           initial="initial"

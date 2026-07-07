@@ -21,7 +21,8 @@
      Slate / indigo). When in doubt, this file wins.
 
    Color format: OKLCH (perceptually uniform). Neutral ramp is a
-   cool-tinted grey (hue 250, chroma 0.001–0.013 scaled by step) —
+   cool-tinted grey (hue 250, chroma 0.001–0.011 scaled by step;
+   surfaces nearly chroma-free, text steps carry the tint) —
    re-tinted 2026-07 from the gen-3 pure-neutral ramp to match the
    sharper Slate-like reference the product moved to. Lightness steps
    are unchanged (accessibility-tuned) except neutral-2 (the `--panel`
@@ -205,17 +206,17 @@
      sharper text — both only INCREASE contrast. Keep the L values;
      tune hue/chroma only. */
   --neutral-1:  oklch(0.991 0.001 250);
-  --neutral-2:  oklch(0.976 0.002 250);
-  --neutral-3:  oklch(0.956 0.003 250);
-  --neutral-4:  oklch(0.932 0.004 250);
-  --neutral-5:  oklch(0.910 0.005 250);
-  --neutral-6:  oklch(0.887 0.006 250);
-  --neutral-7:  oklch(0.853 0.007 250);
-  --neutral-8:  oklch(0.794 0.009 250);
-  --neutral-9:  oklch(0.645 0.011 250);
-  --neutral-10: oklch(0.611 0.012 250);
-  --neutral-11: oklch(0.550 0.013 250);   /* secondary-text grey — lifted from 0.502 for clearer primary/secondary hierarchy; 4.86:1 AA on white, 4.53:1 on --panel */
-  --neutral-12: oklch(0.185 0.006 250);
+  --neutral-2:  oklch(0.976 0.0015 250);
+  --neutral-3:  oklch(0.967 0.0015 250);  /* lightened + de-tinted 2026-07 to match the reference fill #F4F4F5 (was 0.956/0.003 — read darker and bluer than the demo) */
+  --neutral-4:  oklch(0.932 0.003 250);
+  --neutral-5:  oklch(0.910 0.004 250);
+  --neutral-6:  oklch(0.887 0.005 250);
+  --neutral-7:  oklch(0.853 0.006 250);
+  --neutral-8:  oklch(0.794 0.008 250);
+  --neutral-9:  oklch(0.645 0.010 250);
+  --neutral-10: oklch(0.611 0.011 250);
+  --neutral-11: oklch(0.550 0.010 250);   /* secondary-text grey — lifted from 0.502 for clearer primary/secondary hierarchy; 4.86:1 AA on white, 4.53:1 on --panel; chroma matched to reference #6E7378 */
+  --neutral-12: oklch(0.185 0.004 250);
 
   /* Status — jade (success) / amber (warning) / red (danger) / blue (info) */
   --jade-3:   oklch(0.953 0.034 158);

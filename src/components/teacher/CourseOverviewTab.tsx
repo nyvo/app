@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { MapEmbed } from '@/components/ui/map-embed';
+import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
 import { cn, formatKroner } from '@/lib/utils';
 import { MapPin, ChevronRight } from '@/lib/icons';
 import type { MappedCourse } from '@/hooks/use-course-detail';
@@ -199,40 +200,16 @@ export function CourseOverviewTab({
   );
 }
 
-// ─── Framed card — tinted outer surface (header) + white inset panel ──────
-//
-// A faint-primary outer surface forms the header (title left, optional action
-// right); the content lives in a white bordered panel inset. No shadows —
-// hierarchy comes from the tint/white contrast.
-
-function FramedCard({
-  title,
-  action,
-  children,
-}: {
-  title: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col rounded-2xl bg-primary-subtle p-2">
-      <div className="flex items-center justify-between gap-3 px-3 py-2">
-        <p className="text-sm font-medium text-primary">{title}</p>
-        {action && <span className="text-sm text-primary">{action}</span>}
-      </div>
-      <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-primary-border bg-surface">
-        {children}
-      </div>
-    </div>
-  );
-}
+// FramedCard is the shared grouped-content container (see
+// components/teacher/FramedCard.tsx) — same setup here and on the
+// dashboard home.
 
 // ─── KPI spine (Nøkkeltall) ───────────────────────────────────────────────
 
 function StatRow({ stats }: { stats: [string, string][] }) {
   return (
     <FramedCard title="Nøkkeltall">
-      <div className="flex items-stretch">
+      <FramedCardPanel className="flex-row items-stretch">
         {stats.map(([label, value], i) => (
           <Fragment key={label}>
             {/* Short inset divider — subtle, not a full-height border. */}
@@ -243,7 +220,7 @@ function StatRow({ stats }: { stats: [string, string][] }) {
             </div>
           </Fragment>
         ))}
-      </div>
+      </FramedCardPanel>
     </FramedCard>
   );
 }
@@ -301,7 +278,7 @@ function ReadinessCard({
 
   return (
     <FramedCard title="Publisering">
-      <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <FramedCardPanel className="flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-md">
           <p className="text-lg font-medium text-foreground">{heading}</p>
           <p className="mt-1.5 text-base text-foreground-muted">{sub}</p>
@@ -314,7 +291,7 @@ function ReadinessCard({
         >
           {label}
         </Button>
-      </div>
+      </FramedCardPanel>
     </FramedCard>
   );
 }
@@ -345,7 +322,7 @@ function TimeplanCard({
     // from Rediger). Fills the card next to the Sted map.
     return (
       <FramedCard title="Timeplan" action={statusLabel}>
-        <div className="flex flex-1 flex-col items-center justify-center p-5 text-center">
+        <FramedCardPanel className="items-center justify-center p-5 text-center">
           {s ? (
             <>
               <p className="text-base capitalize text-foreground-muted">{weekdayLong(s.session_date)}</p>
@@ -355,7 +332,7 @@ function TimeplanCard({
           ) : (
             <p className="text-base text-foreground-muted">Ingen dato lagt til ennå</p>
           )}
-        </div>
+        </FramedCardPanel>
       </FramedCard>
     );
   }
@@ -372,28 +349,27 @@ function TimeplanCard({
   const nextId = sessions.find((s) => s.session_date >= today && s.status !== 'cancelled')?.id;
   return (
     <FramedCard title="Timeplan" action={statusLabel}>
-      <div className="flex flex-1 flex-col p-5">
-        <div className="space-y-1">
-          {preview.map((s) => (
-            <SessionRow
-              key={s.id}
-              session={s}
-              today={today}
-              isNext={s.id === nextId}
-              onEdit={() => onEditSession(s.id)}
-            />
-          ))}
-        </div>
+      <FramedCardPanel className="divide-y divide-border-subtle">
+        {preview.map((s) => (
+          <SessionRow
+            key={s.id}
+            session={s}
+            today={today}
+            isNext={s.id === nextId}
+            onEdit={() => onEditSession(s.id)}
+          />
+        ))}
         {sessions.length > preview.length && (
           <button
             type="button"
             onClick={onOpenAll}
-            className="mt-3 inline-flex w-fit text-sm font-medium text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground"
+            className="group flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
           >
             Se alle timer
+            <ChevronRight className="size-4 shrink-0 text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
           </button>
         )}
-      </div>
+      </FramedCardPanel>
     </FramedCard>
   );
 }
@@ -435,9 +411,11 @@ function SessionRow({
     </div>
   );
 
-  const layout = '-mx-3 flex w-[calc(100%+1.5rem)] items-stretch gap-4 rounded-lg px-3 py-2';
+  // Sessions are divided rows inside the white inset. Hover never changes
+  // the fill — affordance is the cursor, the chevron nudge and the focus ring.
+  const layout = 'flex w-full items-stretch gap-4 px-4 py-3';
 
-  // Editable (upcoming) rows are the tap target — chevron + hover, open the
+  // Editable (upcoming) rows are the tap target — chevron nudge, open the
   // reschedule modal.
   if (editable) {
     return (
@@ -445,7 +423,7 @@ function SessionRow({
         type="button"
         onClick={onEdit}
         aria-label={`Endre ${label}`}
-        className={cn(layout, 'group text-left transition-colors hover:bg-hover')}
+        className={cn(layout, 'group text-left')}
       >
         {left}
         <ChevronRight className="size-5 shrink-0 self-center text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
@@ -485,6 +463,7 @@ function StedCard({ course }: { course: MappedCourse }) {
 
   return (
     <FramedCard title="Sted">
+      <FramedCardPanel>
       <div className="p-5">
         {course.location ? (
           <>
@@ -497,10 +476,7 @@ function StedCard({ course }: { course: MappedCourse }) {
           <p className="text-base text-foreground-muted">Ikke lagt til ennå</p>
         )}
       </div>
-      <div
-        className="relative flex flex-1 items-center justify-center border-t border-border-subtle bg-muted"
-        style={{ minHeight: '9rem' }}
-      >
+      <div className="relative flex min-h-36 flex-1 items-center justify-center border-t border-border-subtle bg-muted">
         {hasCoords ? (
           <MapEmbed
             placeId={course.locationPlaceId}
@@ -512,6 +488,7 @@ function StedCard({ course }: { course: MappedCourse }) {
           <MapPin className="size-7 text-foreground-subtle" />
         )}
       </div>
+      </FramedCardPanel>
     </FramedCard>
   );
 }
@@ -521,9 +498,7 @@ function StedCard({ course }: { course: MappedCourse }) {
 function SettingsCard(props: TogglesSectionProps) {
   return (
     <FramedCard title="Kursinnstillinger">
-      <div className="p-5">
-        <TogglesSection {...props} />
-      </div>
+      <TogglesSection {...props} />
     </FramedCard>
   );
 }
@@ -552,7 +527,7 @@ function TogglesSection({
   onAcceptsLateSignupsChange,
 }: TogglesSectionProps) {
   return (
-    <div className="divide-y divide-border-subtle">
+    <FramedCardPanel className="divide-y divide-border-subtle px-4">
       <DropInToggleRow
         checked={allowsDropIn}
         onChange={onAllowsDropInChange}
@@ -570,7 +545,7 @@ function TogglesSection({
         checked={acceptsLateSignups}
         onChange={onAcceptsLateSignupsChange}
       />
-    </div>
+    </FramedCardPanel>
   );
 }
 

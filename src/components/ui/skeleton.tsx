@@ -36,7 +36,7 @@ function SkeletonTableRow({
 }: SkeletonTableRowProps) {
   return (
     <tr className={cn("border-b border-border", className)} aria-hidden="true" {...props}>
-      <td className="py-4 px-6">
+      <td className="px-4 py-4 sm:px-6">
         <div className="flex items-center gap-3">
           {hasAvatar && <Skeleton className="size-10 rounded-full" />}
           <div className="flex flex-col gap-1.5">
@@ -46,7 +46,7 @@ function SkeletonTableRow({
         </div>
       </td>
       {Array.from({ length: columns - 1 }).map((_, i) => (
-        <td key={i} className="py-4 px-6">
+        <td key={i} className="px-4 py-4 sm:px-6">
           <Skeleton className="h-4 w-24" />
         </td>
       ))}

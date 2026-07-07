@@ -91,7 +91,9 @@ function ConfirmDrawer(props: ConfirmDialogProps) {
         <VisuallyHiddenPrimitive.Root>
           <DrawerTitle>{ariaLabel}</DrawerTitle>
         </VisuallyHiddenPrimitive.Root>
-        <div className="px-4 pt-5 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        {/* grid gap-6 mirrors AlertDialogContent so ConfirmContent's blocks
+            space identically on both devices (blocks carry no own margins) */}
+        <div className="grid gap-6 px-4 pt-5 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <ConfirmContent {...props} mobile />
         </div>
       </DrawerContent>
@@ -131,7 +133,7 @@ function ConfirmContent({
       </div>
 
       {scopeList && scopeList.length > 0 ? (
-        <div className="mt-4 max-h-72 overflow-y-auto rounded-lg bg-muted/40 p-3">
+        <div className="max-h-72 overflow-y-auto rounded-lg bg-muted/40 p-3">
           <div className="divide-y divide-border/60">
             {scopeList.map((item, index) => (
               <div
@@ -164,7 +166,7 @@ function ConfirmContent({
       ) : null}
 
       {typeToConfirm ? (
-        <label className="mt-5 grid gap-2 text-sm text-foreground-muted">
+        <label className="grid gap-2 text-sm text-foreground-muted">
           <span>
             Skriv{" "}
             <strong className="font-medium text-foreground">
@@ -181,7 +183,7 @@ function ConfirmContent({
       ) : null}
 
       {mobile ? (
-        <div className="mt-6 flex gap-2">
+        <div className="flex gap-2">
           <DrawerClose asChild>
             <Button variant="secondary" size="lg" className="flex-1" disabled={loading}>
               {cancelLabel}
@@ -198,7 +200,7 @@ function ConfirmContent({
           </ActionButton>
         </div>
       ) : (
-        <AlertDialogFooter className="mt-6">
+        <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>{cancelLabel}</AlertDialogCancel>
           <ActionButton
             onConfirm={onConfirm}

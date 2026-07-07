@@ -100,8 +100,8 @@ export function SessionDaysEditor({ value, onChange, readOnly = false }: Session
               </div>
             )}
 
-            {/* Date + time as labelled columns; gap matches the rest of the form */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            {/* Date + time as labelled columns; gap-4 = the form-pair-grid canon */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <Label className="mb-2">Dato</Label>
                 <DatePicker

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { MoreHorizontal } from '@/lib/icons';
+import { CalendarDays, Clock, MoreHorizontal } from '@/lib/icons';
 import {
   Sheet,
   SheetContent,
@@ -69,7 +69,7 @@ function DrawerHeader({
   const showBadge = hideHealthyBadge ? badgeIsInformative : true;
 
   return (
-    <SheetHeader className="px-6 py-5 border-b border-border">
+    <SheetHeader>
       {/* Title owns its row (Cron/Notion Calendar event-panel model); state
           moves to its own row below the meta so nothing competes with it.
           StatusBadge centralizes all status treatments incl. Avlyst. */}
@@ -198,7 +198,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
   if (isLoading) {
     return (
       <>
-        <SheetHeader className="px-6 py-4 border-b border-border">
+        <SheetHeader>
           <Skeleton className="h-6 w-48" />
           <Skeleton className="mt-2 h-4 w-32" />
         </SheetHeader>
@@ -215,7 +215,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
           </section>
           {/* Påmeldte — heading + 3 participant rows */}
           <section className="px-6 py-6 border-b border-border">
-            <Skeleton className="h-5 w-32 mb-4" />
+            <Skeleton className="h-5 w-32 mb-3" />
             <div className="space-y-1">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 py-2">
@@ -236,7 +236,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
   if (error || !courseData) {
     return (
       <>
-        <SheetHeader className="px-6 py-4 border-b border-border">
+        <SheetHeader>
           <SheetTitle>Fant ikke kurset</SheetTitle>
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
@@ -357,7 +357,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
 
         {/* Påmeldte — the operational concern */}
         <section className="px-6 py-6 border-b border-border">
-          <div className="mb-4 flex items-baseline justify-between gap-3">
+          <div className="mb-3 flex items-baseline justify-between gap-3">
             <h3 className="text-base font-medium text-foreground">Påmeldte</h3>
             <span className="text-base tabular-nums text-foreground-muted">
               {confirmedCount}
@@ -397,7 +397,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
         {/* Sessions — only when multi-day. Read-only here; editing on /courses/:id. */}
         {isMultiDay && (
           <section className="px-6 py-6">
-            <h3 className="text-base font-medium text-foreground mb-4">
+            <h3 className="text-base font-medium text-foreground mb-3">
               Økter ({sessions.length})
             </h3>
             <div className="space-y-1">
@@ -476,7 +476,7 @@ function ScheduleQuickView({
   if (isLoading) {
     return (
       <>
-        <SheetHeader className="px-6 py-4 border-b border-border">
+        <SheetHeader>
           <Skeleton className="h-6 w-48" />
           <Skeleton className="mt-2 h-4 w-32" />
         </SheetHeader>
@@ -493,7 +493,7 @@ function ScheduleQuickView({
   if (error || !courseData) {
     return (
       <>
-        <SheetHeader className="px-6 py-4 border-b border-border">
+        <SheetHeader>
           <SheetTitle>Fant ikke kurset</SheetTitle>
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
@@ -523,36 +523,23 @@ function ScheduleQuickView({
       ? `${sessionTimeRange} · ${courseData.durationMinutes} min`
       : sessionTimeRange;
 
-  // Local-parsed date drives the boxed calendar chip (month band over day),
-  // avoiding UTC drift on the day number. The chip anchors a two-line when-row
-  // (long date over time+duration); location stays off — too wide for the
-  // narrow sheet, and the full picture lives on the course page.
-  const chipDate = currentSession
-    ? new Date(currentSession.session_date + 'T00:00:00')
-    : null;
+  // Single metadata row (list-row meta grammar): calendar icon + long date,
+  // clock icon + time+duration — all secondary text, no boxed date chip.
   const headerDescription =
-    chipDate && !isNaN(chipDate.getTime()) && (sessionDateLabel || sessionTimeLine) ? (
-      <div className="flex items-center gap-3">
-        <span className="flex size-11 flex-col overflow-hidden rounded-lg border border-border bg-surface">
-          <span className="flex h-4 items-center justify-center bg-muted text-[9px] font-semibold uppercase tracking-wide text-foreground-muted">
-            {MONTHS_SHORT[chipDate.getMonth()]}
+    sessionDateLabel || sessionTimeLine ? (
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground-muted">
+        {sessionDateLabel && (
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarDays className="size-4 shrink-0" strokeWidth={1.75} />
+            {sessionDateLabel}
           </span>
-          <span className="flex flex-1 items-center justify-center text-base font-medium text-foreground">
-            {chipDate.getDate()}
+        )}
+        {sessionTimeLine && (
+          <span className="inline-flex items-center gap-1.5 tabular-nums">
+            <Clock className="size-4 shrink-0" strokeWidth={1.75} />
+            {sessionTimeLine}
           </span>
-        </span>
-        <span className="min-w-0">
-          {sessionDateLabel && (
-            <span className="block text-sm font-medium text-foreground">
-              {sessionDateLabel}
-            </span>
-          )}
-          {sessionTimeLine && (
-            <span className="block text-sm tabular-nums text-foreground-muted">
-              {sessionTimeLine}
-            </span>
-          )}
-        </span>
+        )}
       </div>
     ) : undefined;
 
@@ -572,7 +559,7 @@ function ScheduleQuickView({
         <section className="px-6 py-6">
           {/* Heading + count as an aligned pair (schedule-card grammar):
               the word carries hierarchy, the number reads as a datum. */}
-          <div className="mb-4 flex items-baseline justify-between gap-3">
+          <div className="mb-3 flex items-baseline justify-between gap-3">
             <h3 className="text-base font-medium text-foreground">Påmeldte</h3>
             <span className="text-base tabular-nums text-foreground-muted">
               {confirmedCount}

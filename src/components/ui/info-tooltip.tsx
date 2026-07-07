@@ -30,7 +30,8 @@ export function InfoTooltip({
           <button
             type="button"
             className={cn(
-              'inline-flex items-center justify-center rounded-full p-0.5 text-foreground-muted transition-colors duration-150 ease-out hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
+              // after:-inset-2 extends the ~22px visual control to a ~38px touch target
+              'relative inline-flex items-center justify-center rounded-full p-1 text-foreground-muted transition-colors duration-150 ease-out after:absolute after:-inset-2 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
               className
             )}
             aria-label="Mer informasjon"

@@ -142,12 +142,12 @@ export default function HelpPage() {
         <Card>
           <CardContent>
           <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <label htmlFor="help-subject" className="text-sm font-medium text-foreground">
                 Hva gjelder det?
               </label>
               <Select value={subject} onValueChange={setSubject}>
-                <SelectTrigger id="help-subject" className="w-full bg-background dark:bg-muted">
+                <SelectTrigger id="help-subject" className="w-full">
                   <SelectValue placeholder="Velg emne" />
                 </SelectTrigger>
                 <SelectContent>
@@ -164,12 +164,12 @@ export default function HelpPage() {
 
             {showCourseFields && (
               <>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   <label htmlFor="help-course" className="text-sm font-medium text-foreground">
                     Gjelder kurs
                   </label>
                   <Select value={courseId} onValueChange={setCourseId} disabled={loadingCourses}>
-                    <SelectTrigger id="help-course" className="w-full bg-background dark:bg-muted">
+                    <SelectTrigger id="help-course" className="w-full">
                       <SelectValue placeholder={loadingCourses ? 'Henter kurs…' : 'Velg kurs'} />
                     </SelectTrigger>
                     <SelectContent>
@@ -185,12 +185,12 @@ export default function HelpPage() {
                 </div>
 
                 {showSignupField && (
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-2">
                     <label htmlFor="help-signup" className="text-sm font-medium text-foreground">
                       Gjelder påmelding
                     </label>
                     <Select value={signupId} onValueChange={setSignupId} disabled={loadingSignups}>
-                      <SelectTrigger id="help-signup" className="w-full bg-background dark:bg-muted">
+                      <SelectTrigger id="help-signup" className="w-full">
                         <SelectValue placeholder={loadingSignups ? 'Henter påmeldinger…' : 'Valgfritt'} />
                       </SelectTrigger>
                       <SelectContent>
@@ -208,13 +208,12 @@ export default function HelpPage() {
               </>
             )}
 
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <label htmlFor="help-message" className="text-sm font-medium text-foreground">
                 Melding
               </label>
               <Textarea
                 id="help-message"
-                className="bg-background dark:bg-muted"
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 rows={8}

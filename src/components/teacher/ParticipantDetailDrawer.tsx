@@ -249,7 +249,7 @@ export function ParticipantDetailDrawer({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="right"
-          className="sm:max-w-[420px] p-0 gap-0 bg-background"
+          className="p-0 gap-0 bg-background"
           // Read-only detail panel: keep focus on the row that opened it rather
           // than auto-focusing the first copy button (which would ring the email).
           onOpenAutoFocus={(e) => e.preventDefault()}
