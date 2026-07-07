@@ -23,12 +23,15 @@ const RANGE_TABS: { key: IncomeRange; label: string }[] = [
   { key: 'year', label: 'År' },
 ]
 
+/* Series ink stays azure (--primary) — ratified exception to the
+   --category-* chart-hue rule (design-language.md §Charts); user-reverted
+   2026-07-07, applies only to this chart. Do not "fix" to category-1. */
 const CHART_CONFIG = {
-  amount: { label: 'Inntekt', color: 'var(--color-category-1)' },
+  amount: { label: 'Inntekt', color: 'var(--color-primary)' },
 } as const
 
-const STROKE = 'var(--color-category-1)'
-const FILL = 'var(--color-category-1)'
+const STROKE = 'var(--color-primary)'
+const FILL = 'var(--color-primary)'
 
 /**
  * Empty-state floor — recharts collapses an all-zero series unless we pin
@@ -276,7 +279,7 @@ function IncomeTooltip({
       {hasCurrent && (
         <div className="mt-1.5 flex items-center justify-between gap-3">
           <span className="inline-flex items-center gap-2">
-            <span className="size-3 rounded-sm bg-category-1" />
+            <span className="size-3 rounded-sm bg-primary" />
             <span className="font-medium text-foreground tabular-nums">
               {formatKroner(point.amount)}
             </span>
