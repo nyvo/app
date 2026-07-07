@@ -1,7 +1,30 @@
 # New landing page — structure design (wireframe stage)
 
 **Date:** 2026-07-07
-**Status:** iteration 3 — editorial typographic direction, awaiting user review
+**Status:** iteration 4 — card composition, Geist only, awaiting user review
+
+## Iteration 4 (user feedback applied)
+
+Feedback on iteration 3: no serif ("geist is ok but only that for now"),
+stop floating text on empty canvas — use cards, be more visually creative,
+and iterate by LOOKING at the result, not just writing code.
+
+New composition (all copy contained on card surfaces):
+- Hero: one big rounded panel card (bg-panel, rounded-3xl); dashboard
+  screenshot bleeds off the card's bottom edge (Loom/FLORA card-crop move)
+- Steps: Miro-style 3-card row — white cards on the panel section,
+  screenshot block + number/title/body inside each card
+- Two sides: two tall panel cards (Samara), fixed-height screenshot crops
+  balanced left/right (fill-crop attempt looked zoomed-in; fixed h-72 won)
+- Triad: one wide panel card, three columns with vertical hairlines
+- Pricing: white focal cards on a panel section
+- FAQ: rows inside one white card, 4/8 split with the heading
+- Closing: bg-primary-subtle azure card — the page's single color moment
+- Tight card stack rhythm (space-y-4/6), Geist everywhere, no serif
+
+Refs: Miro https://mobbin.com/sites/sections/5cac9637-e51a-42a3-a848-05352428ce91 ;
+Samara https://mobbin.com/sites/sections/29d6b6a5-d217-4c82-9820-db16fae3e4ad ;
+Loom bento https://mobbin.com/sites/sections/4470dfca-a7ae-4a96-a9b4-a33395edbd07
 
 ## Iteration 3 (user feedback applied)
 
