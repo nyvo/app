@@ -4,40 +4,33 @@ import { formatKroner } from '@/lib/utils'
 import { COMPANY } from '@/lib/company'
 
 /**
- * STYLED DRAFT of the new landing page — iteration 4: CARD COMPOSITION.
- * User feedback on iteration 3: no serif (Geist only, for now), stop
- * floating text on empty canvas — use cards; be more creative visually.
+ * STYLED DRAFT of the new landing page — iteration 5: MIXED RHYTHM.
+ * User feedback on iteration 4: not literally everything as a card —
+ * cards are for SOME sections (how-it-works and similar) to break the
+ * layout; the rest breathes on the open canvas.
  *
- * The grammar of this page:
- *  - Geist sans only, no serif anywhere
- *  - every piece of copy sits ON a surface: panel cards, never loose text
- *    over bare canvas (matches the "no floating text outside containers"
- *    project rule)
- *  - hero = one big rounded panel card, the dashboard screenshot bleeds
- *    off the card's bottom edge (Loom/FLORA card-crop move)
- *  - steps = Miro 3-card row (screenshot block + text inside each card)
- *  - two sides = Samara tall cards (caption top, image below)
- *  - triad = one wide card, three columns inside
- *  - pricing = two cards (panel vs focal)
- *  - FAQ = rows inside one card
- *  - closing = soft azure card (--primary-subtle) — the page's single
- *    color moment
+ * Section rhythm (open ↔ carded):
+ *  - hero: OPEN on white — centered copy, one focal screenshot below
+ *  - slik fungerer det: CARD BAND (bg-panel) with 3 white step cards
+ *  - to sider: TWO CARDS side by side (a natural pair)
+ *  - verditriade: OPEN 3 columns under a hairline
+ *  - pris: OPEN heading + two pricing CARDS (tiers are naturally cards)
+ *  - FAQ: OPEN hairline rows
+ *  - closing: CARD BAND (bg-primary-subtle) — the single color moment
  *
- * References (Mobbin, seen 2026-07-07):
- *  Miro https://mobbin.com/sites/sections/5cac9637-e51a-42a3-a848-05352428ce91
- *  Samara https://mobbin.com/sites/sections/29d6b6a5-d217-4c82-9820-db16fae3e4ad
- *  Loom bento https://mobbin.com/sites/sections/4470dfca-a7ae-4a96-a9b4-a33395edbd07
+ * Geist only. Copy = approved quiet set. Placeholders remain for two
+ * missing captures (bookingside phone crop, kursbygger).
  */
 
 export default function LandingWireframe() {
   return (
     <div className="min-h-dvh bg-background text-foreground antialiased">
       <p className="border-b border-border-subtle px-6 py-2 text-xs text-foreground-muted">
-        Utkast – retning: kortkomposisjon, kun Geist
+        Utkast – retning: blandet rytme (åpne seksjoner + kort der de gjør nytte)
       </p>
 
       <Nav />
-      <main className="mx-auto max-w-6xl space-y-4 px-4 pb-4 md:space-y-6 md:px-6 md:pb-6">
+      <main className="mx-auto max-w-6xl px-4 md:px-6">
         <Hero />
         <HowItWorks />
         <TwoSurfaces />
@@ -51,7 +44,7 @@ export default function LandingWireframe() {
   )
 }
 
-/** Screenshot block used inside cards: white surface, hairline, soft radius. */
+/** Screenshot block: white surface, hairline, soft radius. */
 function Shot({
   src,
   alt,
@@ -112,28 +105,26 @@ function Nav() {
   )
 }
 
-/* ── hero — one big panel card, screenshot bleeds off the bottom ──── */
+/* ── hero — OPEN: centered copy, one focal screenshot ─────────────── */
 
 function Hero() {
   return (
-    <section className="overflow-hidden rounded-3xl bg-panel">
-      <div className="px-6 pt-14 md:px-16 md:pt-20">
-        <div className="max-w-2xl">
-          <p className="text-xs font-medium text-foreground-muted">For yogastudioer</p>
-          <h1 className="mt-4 text-4xl font-medium text-foreground md:text-5xl">
-            Påmelding og betaling for yogastudioet
-          </h1>
-          <p className="mt-4 max-w-md text-lg text-foreground-muted">
-            Deltakerne melder seg på og betaler selv. Du får oversikten.
-          </p>
-          <div className="mt-8 flex items-center gap-4">
-            <Button size="cta">Kom i gang gratis</Button>
-            <p className="text-sm text-foreground-muted">Du trenger ikke kort.</p>
-          </div>
+    <section className="pt-16 pb-20 md:pt-24 md:pb-28">
+      <div className="mx-auto max-w-2xl text-center">
+        <p className="text-xs font-medium text-foreground-muted">For yogastudioer</p>
+        <h1 className="mt-4 text-4xl font-medium text-foreground md:text-5xl">
+          Påmelding og betaling for yogastudioet
+        </h1>
+        <p className="mt-4 text-lg text-foreground-muted">
+          Deltakerne melder seg på og betaler selv. Du får oversikten.
+        </p>
+        <div className="mt-8">
+          <Button size="cta">Kom i gang gratis</Button>
         </div>
+        <p className="mt-3 text-sm text-foreground-muted">Du trenger ikke kort.</p>
       </div>
-      <div className="mt-12 px-6 md:mt-16 md:px-16">
-        <div className="overflow-hidden rounded-t-xl border border-b-0 border-border-subtle bg-background">
+      <div className="mx-auto mt-14 max-w-5xl md:mt-16">
+        <div className="overflow-hidden rounded-xl border border-border-card bg-background shadow-soft">
           <img
             src="/landing-dashboard.webp"
             alt="Openspot – oversikt over inntekter og kommende kurs"
@@ -148,7 +139,7 @@ function Hero() {
   )
 }
 
-/* ── slik fungerer det — Miro 3-card row ──────────────────────────── */
+/* ── slik fungerer det — CARD BAND with 3 step cards ──────────────── */
 
 const STEPS = [
   {
@@ -176,59 +167,63 @@ const STEPS = [
 
 function HowItWorks() {
   return (
-    <section id="slik" className="scroll-mt-16 rounded-3xl bg-panel px-6 py-14 md:px-16 md:py-20">
-      <h2 className="text-3xl font-medium text-foreground md:text-4xl">Slik fungerer det</h2>
-      <div className="mt-10 grid gap-4 md:grid-cols-3 md:gap-6">
-        {STEPS.map((s) => (
-          <div key={s.n} className="rounded-2xl bg-background p-4 shadow-soft md:p-5">
-            <Shot
-              src={s.src}
-              alt={s.title}
-              placeholder={s.placeholder}
-              className="aspect-[4/3]"
-            />
-            <div className="px-1 pt-5 pb-2">
-              <p className="text-sm font-medium text-foreground-muted">{s.n}</p>
-              <h3 className="mt-1 text-lg font-medium text-foreground">{s.title}</h3>
-              <p className="mt-1.5 text-base text-foreground-muted">{s.body}</p>
+    <section id="slik" className="scroll-mt-16 py-6">
+      <div className="rounded-3xl bg-panel px-6 py-14 md:px-16 md:py-20">
+        <h2 className="text-3xl font-medium text-foreground md:text-4xl">Slik fungerer det</h2>
+        <div className="mt-10 grid gap-4 md:grid-cols-3 md:gap-6">
+          {STEPS.map((s) => (
+            <div key={s.n} className="rounded-2xl bg-background p-4 shadow-soft md:p-5">
+              <Shot
+                src={s.src}
+                alt={s.title}
+                placeholder={s.placeholder}
+                className="aspect-[4/3]"
+              />
+              <div className="px-1 pt-5 pb-2">
+                <p className="text-sm font-medium text-foreground-muted">{s.n}</p>
+                <h3 className="mt-1 text-lg font-medium text-foreground">{s.title}</h3>
+                <p className="mt-1.5 text-base text-foreground-muted">{s.body}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   )
 }
 
-/* ── to sider — Samara tall cards ─────────────────────────────────── */
+/* ── to sider — a natural card pair ───────────────────────────────── */
 
 function TwoSurfaces() {
   return (
-    <section className="grid gap-4 md:grid-cols-2 md:gap-6">
-      <div className="rounded-3xl bg-panel p-6 md:p-10">
-        <p className="text-xs font-medium text-foreground-muted">Din side</p>
-        <h3 className="mt-1 text-2xl font-medium text-foreground">Full oversikt</h3>
-        <p className="mt-1.5 max-w-sm text-base text-foreground-muted">
-          Påmeldinger, inntekter og timeplan på ett sted.
-        </p>
-        <div className="mt-8">
-          <Shot src="/landing-courses.webp" alt="Kursoversikt i Openspot" className="h-72 w-full" />
+    <section className="py-6">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-6">
+        <div className="rounded-3xl bg-panel p-6 md:p-10">
+          <p className="text-xs font-medium text-foreground-muted">Din side</p>
+          <h3 className="mt-1 text-2xl font-medium text-foreground">Full oversikt</h3>
+          <p className="mt-1.5 max-w-sm text-base text-foreground-muted">
+            Påmeldinger, inntekter og timeplan på ett sted.
+          </p>
+          <div className="mt-8">
+            <Shot src="/landing-courses.webp" alt="Kursoversikt i Openspot" className="h-72 w-full" />
+          </div>
         </div>
-      </div>
-      <div className="rounded-3xl bg-panel p-6 md:p-10">
-        <p className="text-xs font-medium text-foreground-muted">Deltakernes side</p>
-        <h3 className="mt-1 text-2xl font-medium text-foreground">Enkel påmelding</h3>
-        <p className="mt-1.5 max-w-sm text-base text-foreground-muted">
-          Velg time, betal og få kvittering. Uten konto, uten app.
-        </p>
-        <div className="mt-8 flex justify-center">
-          <Shot placeholder="Bookingside (telefon)" className="h-72 w-44" />
+        <div className="rounded-3xl bg-panel p-6 md:p-10">
+          <p className="text-xs font-medium text-foreground-muted">Deltakernes side</p>
+          <h3 className="mt-1 text-2xl font-medium text-foreground">Enkel påmelding</h3>
+          <p className="mt-1.5 max-w-sm text-base text-foreground-muted">
+            Velg time, betal og få kvittering. Uten konto, uten app.
+          </p>
+          <div className="mt-8 flex justify-center">
+            <Shot placeholder="Bookingside (telefon)" className="h-72 w-44" />
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
-/* ── verditriade — one wide card, three columns inside ────────────── */
+/* ── verditriade — OPEN columns under a hairline ──────────────────── */
 
 const TRIAD = [
   { title: 'Enkelt å komme i gang', body: 'Lag kurset, sett prisen og publiser.' },
@@ -238,10 +233,10 @@ const TRIAD = [
 
 function ValueTriad() {
   return (
-    <section className="rounded-3xl bg-panel px-6 py-10 md:px-16 md:py-14">
-      <div className="grid gap-8 md:grid-cols-3 md:gap-0 md:divide-x md:divide-border-subtle">
-        {TRIAD.map((v, i) => (
-          <div key={v.title} className={i === 0 ? 'md:pr-10' : i === 1 ? 'md:px-10' : 'md:pl-10'}>
+    <section className="py-20 md:py-24">
+      <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-3">
+        {TRIAD.map((v) => (
+          <div key={v.title}>
             <h3 className="text-lg font-medium text-foreground">{v.title}</h3>
             <p className="mt-1.5 text-base text-foreground-muted">{v.body}</p>
           </div>
@@ -251,17 +246,17 @@ function ValueTriad() {
   )
 }
 
-/* ── pris — two cards inside a panel section ──────────────────────── */
+/* ── pris — OPEN heading, two pricing cards ───────────────────────── */
 
 function Pricing() {
   return (
-    <section id="pris" className="scroll-mt-16 rounded-3xl bg-panel px-6 py-14 md:px-16 md:py-20">
-      <div className="max-w-2xl">
+    <section id="pris" className="scroll-mt-16 border-t border-border-subtle py-20 md:py-24">
+      <div className="mx-auto max-w-2xl text-center">
         <p className="text-xs font-medium text-foreground-muted">Pris</p>
         <h2 className="mt-2 text-3xl font-medium text-foreground md:text-4xl">Gratis å starte</h2>
       </div>
-      <div className="mt-10 grid gap-4 md:grid-cols-2 md:gap-6">
-        <div className="rounded-2xl bg-background p-6 shadow-soft md:p-8">
+      <div className="mx-auto mt-12 grid max-w-4xl gap-4 md:grid-cols-2 md:gap-6">
+        <div className="rounded-2xl border border-border-card p-6 md:p-8">
           <h3 className="text-lg font-medium text-foreground">Start</h3>
           <p className="mt-3 text-3xl font-medium text-foreground">Gratis</p>
           <p className="mt-1 text-sm text-foreground-muted">5 % gebyr per betaling</p>
@@ -284,7 +279,7 @@ function Pricing() {
           </div>
           <p className="mt-3 text-center text-sm text-foreground-muted">Du trenger ikke kort.</p>
         </div>
-        <div className="rounded-2xl bg-background p-6 shadow-soft md:p-8">
+        <div className="rounded-2xl border border-border-card p-6 shadow-soft md:p-8">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium text-foreground">Pro</h3>
             <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground">
@@ -316,12 +311,14 @@ function Pricing() {
           <p className="mt-3 text-center text-sm text-foreground-muted">Ingen bindingstid.</p>
         </div>
       </div>
-      <p className="mt-8 text-sm text-foreground-muted">Betalinger håndteres av Stripe.</p>
+      <p className="mt-8 text-center text-sm text-foreground-muted">
+        Betalinger håndteres av Stripe.
+      </p>
     </section>
   )
 }
 
-/* ── spørsmål og svar — rows inside one card ──────────────────────── */
+/* ── spørsmål og svar — OPEN hairline rows ────────────────────────── */
 
 const FAQ = [
   'Hva koster det?',
@@ -334,15 +331,15 @@ const FAQ = [
 
 function Faq() {
   return (
-    <section className="rounded-3xl bg-panel px-6 py-14 md:px-16 md:py-20">
-      <div className="grid gap-10 md:grid-cols-12">
+    <section className="border-t border-border-subtle py-20 md:py-24">
+      <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-12">
         <h2 className="text-3xl font-medium text-foreground md:col-span-4">Spørsmål og svar</h2>
-        <div className="rounded-2xl bg-background px-6 shadow-soft md:col-span-8">
+        <div className="md:col-span-8">
           {FAQ.map((q, i) => (
             <div
               key={q}
-              className={`flex items-center justify-between py-5 ${
-                i > 0 ? 'border-t border-border-subtle' : ''
+              className={`flex items-center justify-between border-b border-border-subtle py-5 ${
+                i === 0 ? 'border-t' : ''
               }`}
             >
               <p className="text-base font-medium text-foreground">{q}</p>
@@ -357,17 +354,19 @@ function Faq() {
   )
 }
 
-/* ── closing — soft azure card, the page's one color moment ───────── */
+/* ── closing — azure card band, the single color moment ───────────── */
 
 function FinalCta() {
   return (
-    <section className="rounded-3xl bg-primary-subtle px-6 py-16 md:px-16 md:py-24">
-      <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 text-center">
-        <h2 className="text-3xl font-medium text-foreground md:text-4xl">Klar når du er.</h2>
-        <Button size="cta">Kom i gang gratis</Button>
-        <p className="text-sm text-foreground-muted">
-          Ingen bindingstid. Du trenger ikke kort.
-        </p>
+    <section className="pb-6">
+      <div className="rounded-3xl bg-primary-subtle px-6 py-16 md:px-16 md:py-24">
+        <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 text-center">
+          <h2 className="text-3xl font-medium text-foreground md:text-4xl">Klar når du er.</h2>
+          <Button size="cta">Kom i gang gratis</Button>
+          <p className="text-sm text-foreground-muted">
+            Ingen bindingstid. Du trenger ikke kort.
+          </p>
+        </div>
       </div>
     </section>
   )

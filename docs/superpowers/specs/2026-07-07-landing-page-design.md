@@ -1,7 +1,19 @@
 # New landing page — structure design (wireframe stage)
 
 **Date:** 2026-07-07
-**Status:** iteration 4 — card composition, Geist only, awaiting user review
+**Status:** iteration 5 — mixed rhythm (open + carded sections), awaiting user review
+
+## Iteration 5 (user feedback applied)
+
+Feedback on iteration 4: not literally EVERYTHING as a card — cards are for
+some sections (like how-it-works) to break the layout; no real site cards
+everything. (Matches the standing "pattern appropriateness" project rule.)
+
+Section rhythm now alternates open ↔ carded:
+open hero (centered copy, one focal screenshot) → panel CARD BAND with 3
+step cards → CARD PAIR (to sider) → open triad → open pricing heading with
+two bordered tier cards → open FAQ (4/8 hairline rows) → azure CARD BAND
+closing → footer. Geist only, copy unchanged.
 
 ## Iteration 4 (user feedback applied)
 
