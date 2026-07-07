@@ -76,6 +76,10 @@ interface CourseSettingsTabProps {
   /** True when the course is published (upcoming/active). Disables add/remove
    *  of days to prevent destructive changes without refund/notification flows. */
   isPublished: boolean;
+  /** Sessions query failed — the editor would otherwise render as a false
+   *  "no days yet" empty state. Saving is already neutralized elsewhere
+   *  (computeDesiredSessions), this just keeps the UI honest. */
+  sessionsError?: boolean;
 
   // Capacity
   maxParticipants: number;
@@ -138,6 +142,7 @@ export const CourseSettingsTab = ({
   sessionDays,
   onSessionDaysChange,
   isPublished,
+  sessionsError = false,
   maxParticipants,
   onMaxParticipantsChange,
   currentEnrolled,
@@ -327,15 +332,26 @@ export const CourseSettingsTab = ({
           {courseFormat === 'single' ? (
               /* Per-day editor for single/enkeltkurs courses */
               <div>
-                <SessionDaysEditor
-                  value={sessionDays}
-                  onChange={onSessionDaysChange}
-                  readOnly={isPublished}
-                />
-                {isPublished && sessionDays.length > 1 && (
-                  <p className="mt-2 text-sm text-foreground-muted">
-                    Du kan ikke legge til eller fjerne dager på publiserte kurs. Kontakt deltakerne ved endringer i antall dager.
+                {sessionsError ? (
+                  // Sessions failed to load — an inline notice, not a false
+                  // "no days yet" empty editor (saving is already neutralized
+                  // in computeDesiredSessions).
+                  <p className="text-sm text-foreground-muted" role="alert">
+                    Kunne ikke laste timene. Last siden på nytt.
                   </p>
+                ) : (
+                  <>
+                    <SessionDaysEditor
+                      value={sessionDays}
+                      onChange={onSessionDaysChange}
+                      readOnly={isPublished}
+                    />
+                    {isPublished && sessionDays.length > 1 && (
+                      <p className="mt-2 text-sm text-foreground-muted">
+                        Du kan ikke legge til eller fjerne dager på publiserte kurs. Kontakt deltakerne ved endringer i antall dager.
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             ) : (

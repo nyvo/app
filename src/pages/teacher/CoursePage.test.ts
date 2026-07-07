@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeDesiredSessions } from './CoursePage';
-import type { SessionDay } from '@/components/teacher/SessionDaysEditor';
+import { newSessionDay, type SessionDay } from '@/components/teacher/SessionDaysEditor';
 import type { CourseSession } from '@/types/database';
 
 function session(overrides: Partial<CourseSession>): CourseSession {
@@ -85,6 +85,18 @@ describe('computeDesiredSessions — single format', () => {
       sessionDays: [day({ id: 'new-abc' })],
     });
     expect(result?.[0]).toMatchObject({ id: null, session_date: '2026-08-01', start_time: '18:00' });
+  });
+
+  it('sends id:null for a day built by the real newSessionDay() (regression guard: an unprefixed uuid gets misread as an existing row)', () => {
+    const addedDay = newSessionDay();
+    expect(addedDay.id.startsWith('new-')).toBe(true);
+    const result = computeDesiredSessions({
+      ...base,
+      sessionDays: [{ ...addedDay, date: new Date(2026, 7, 1), startTime: '18:00', endTime: '19:30' }],
+    });
+    expect(result).toEqual([
+      { id: null, session_date: '2026-08-01', start_time: '18:00', end_time: '19:30' },
+    ]);
   });
 
   it('keeps an existing row untouched when it has no date/time yet', () => {

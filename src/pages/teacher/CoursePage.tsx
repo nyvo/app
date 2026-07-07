@@ -1038,6 +1038,7 @@ const CoursePage = () => {
               onDurationChange={setSettingsDuration}
               sessionDays={sessionDays}
               onSessionDaysChange={setSessionDays}
+              sessionsError={sessionsError}
               isPublished={courseData.status !== 'draft'}
               maxParticipants={maxParticipants}
               onMaxParticipantsChange={setMaxParticipants}
