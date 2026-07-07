@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Clock, MapPin, Monitor, Users } from '@/lib/icons';
 import { PageShell } from '@/components/teacher/PageShell';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -229,10 +228,7 @@ const SchedulePage = () => {
   }, [filtered]);
 
   return (
-    <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
-      <MobileTeacherHeader />
-
-      <PageShell
+    <PageShell
         title="Timeplan"
         tabs={
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
@@ -323,7 +319,6 @@ const SchedulePage = () => {
           </div>
         )}
       </PageShell>
-    </main>
   );
 };
 

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ImageIcon } from '@/lib/icons'
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { PageShell } from '@/components/teacher/PageShell'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ErrorState } from '@/components/ui/error-state'
@@ -210,10 +209,7 @@ export default function BuyerDashboard() {
   const past = (signups ?? []).filter((s) => isPastSignup(s, today))
 
   return (
-    <div className="flex-1 overflow-y-auto bg-canvas h-full">
-      <MobileTeacherHeader />
-
-      <PageShell title={firstName ? `Hei, ${firstName}` : 'Oversikt'}>
+    <PageShell title={firstName ? `Hei, ${firstName}` : 'Oversikt'}>
         {loadFailed ? (
           <div className="rounded-xl bg-panel p-6 sm:p-10">
             <ErrorState
@@ -242,6 +238,5 @@ export default function BuyerDashboard() {
           </div>
         )}
       </PageShell>
-    </div>
   )
 }

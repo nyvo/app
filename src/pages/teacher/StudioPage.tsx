@@ -18,7 +18,6 @@ import { PlacesAutocomplete } from '@/components/ui/places-autocomplete';
 import { MapEmbed } from '@/components/ui/map-embed';
 import type { PlaceDetails } from '@/services/places';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
@@ -41,10 +40,7 @@ const StudioPage = () => {
   const { currentSeller, refreshSellers } = useAuth();
 
   return (
-    <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
-      <MobileTeacherHeader />
-
-      <PageShell
+    <PageShell
         title="Studio"
         action={
           currentSeller?.slug ? (
@@ -66,7 +62,6 @@ const StudioPage = () => {
           </p>
         )}
       </PageShell>
-    </main>
   );
 };
 

@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { UnsavedChangesDialog, useUnsavedChanges } from '@/components/ui/unsaved-changes';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PasswordRow } from '@/components/teacher/PasswordRow';
 import { PageShell } from '@/components/teacher/PageShell';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
@@ -111,10 +110,7 @@ const TeacherProfilePage = () => {
   };
 
   return (
-    <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
-        <MobileTeacherHeader />
-
-        <PageShell title="Innstillinger">
+    <PageShell title="Innstillinger">
           <SettingsRows>
             <SettingsRow
               title="Personlig informasjon"
@@ -217,7 +213,6 @@ const TeacherProfilePage = () => {
           />
           <UnsavedChangesDialog blocker={blocker} />
         </PageShell>
-    </main>
   );
 };
 

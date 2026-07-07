@@ -161,7 +161,7 @@ const router = createBrowserRouter(
             <Route path="get-started" element={<GetStartedPage />} />
             <Route path="schedule" element={<SchedulePage />} />
             <Route path="courses" element={<CoursesPage />} />
-            <Route path="courses/new" element={<CourseBuilderPage />} />
+            <Route path="courses/new" element={<CourseBuilderPage />} handle={{ fullBleed: true }} />
             <Route path="courses/:id" element={<CoursePage />} />
             <Route path="studio" element={<StudioPage />} />
             {/* Samarbeid moved into the Studio page (2026-06). Old links and

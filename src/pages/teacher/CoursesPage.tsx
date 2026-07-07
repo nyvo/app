@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { CourseListView, CourseListSkeleton, type SortKey, type SortDir } from '@/components/teacher/CourseListView';
@@ -266,10 +265,6 @@ const CoursesPage = () => {
     : 'Ingen aktive eller kommende kurs akkurat nå.';
 
   return (
-      <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-canvas">
-
-        <MobileTeacherHeader />
-
         <PageShell
           title="Mine kurs"
           action={
@@ -353,7 +348,6 @@ const CoursesPage = () => {
             </>
           )}
         </PageShell>
-      </div>
   );
 };
 

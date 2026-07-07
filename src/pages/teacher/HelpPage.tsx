@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -131,10 +130,7 @@ export default function HelpPage() {
   }
 
   return (
-    <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
-      <MobileTeacherHeader />
-
-      <PageShell
+    <PageShell
         narrow="centered"
         title="Hjelp"
         description="Send oss en melding, så hjelper vi deg videre."
@@ -230,6 +226,5 @@ export default function HelpPage() {
           </CardContent>
         </Card>
       </PageShell>
-    </main>
   );
 }

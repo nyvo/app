@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { PageShell } from '@/components/teacher/PageShell'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn, formatKroner } from '@/lib/utils'
@@ -134,10 +133,7 @@ const BillingPage = () => {
   }, [currentSeller?.id])
 
   return (
-    <main className="min-h-full flex-1 overflow-y-auto bg-canvas">
-      <MobileTeacherHeader />
-
-      <PageShell
+    <PageShell
         narrow="centered"
         title="Abonnement"
         description={isPro && !isPastDue ? statusLine : undefined}
@@ -168,7 +164,6 @@ const BillingPage = () => {
           portalLoading={portalLoading}
         />
       </PageShell>
-    </main>
   )
 }
 

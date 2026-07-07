@@ -23,7 +23,6 @@ import { SessionsModal } from '@/components/teacher/SessionsModal';
 import { PageTabs, PageTab } from '@/components/ui/page-tabs';
 import { SendCourseMessageDrawer } from '@/components/teacher/SendCourseMessageDrawer';
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { PageState } from '@/components/page-state/page-state';
 import { AddParticipantDrawer } from '@/components/teacher/AddParticipantDrawer';
@@ -98,12 +97,7 @@ function minToTime(mins: number): string {
  * with the rest of the dashboard.
  */
 function CourseNotFound({ description }: { description?: string }) {
-  return (
-    <div className="flex-1 overflow-y-auto bg-canvas h-full">
-      <MobileTeacherHeader />
-      <PageState variant="course" description={description} />
-    </div>
-  );
+  return <PageState variant="course" description={description} />;
 }
 
 /**
@@ -725,17 +719,14 @@ const CoursePage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-1 overflow-y-auto bg-canvas h-full">
-        <MobileTeacherHeader />
-        <PageShell
-          title={<Skeleton className="h-7 w-64" />}
-          badgePlacement="below"
-          badge={<Skeleton className="h-4 w-32" />}
-          tabs={<Skeleton className="h-10 w-full max-w-md" />}
-        >
-          <Skeleton className="h-72 w-full" />
-        </PageShell>
-      </div>
+      <PageShell
+        title={<Skeleton className="h-7 w-64" />}
+        badgePlacement="below"
+        badge={<Skeleton className="h-4 w-32" />}
+        tabs={<Skeleton className="h-10 w-full max-w-md" />}
+      >
+        <Skeleton className="h-72 w-full" />
+      </PageShell>
     );
   }
 
@@ -775,9 +766,7 @@ const CoursePage = () => {
   // here.
 
   return (
-    <div className="flex-1 overflow-y-auto bg-canvas h-full">
-      <MobileTeacherHeader />
-
+    <>
       <PageShell
         title={courseData.title}
         badgePlacement="below"
@@ -1183,7 +1172,7 @@ const CoursePage = () => {
       />
 
       <UnsavedChangesDialog blocker={blocker} />
-    </div>
+    </>
   );
 };
 

@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
 import { ChevronRight } from '@/lib/icons';
@@ -189,9 +188,7 @@ const TeacherDashboard = () => {
       : null;
 
   return (
-    <div className="flex-1 overflow-y-auto bg-canvas h-full">
-      <MobileTeacherHeader />
-
+    <>
       <PageShell
         title="Oversikt"
         action={<NotificationsPopover />}
@@ -236,7 +233,7 @@ const TeacherDashboard = () => {
         signup={recentSignupsRaw?.find((s) => s.id === selectedSignupId) ?? null}
         onCancelEnrollment={handleCancelEnrollment}
       />
-    </div>
+    </>
   );
 };
 
