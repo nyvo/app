@@ -1,7 +1,26 @@
 # New landing page — structure design (wireframe stage)
 
 **Date:** 2026-07-07
-**Status:** iteration 2 — styled draft built, awaiting user review
+**Status:** iteration 3 — editorial typographic direction, awaiting user review
+
+## Iteration 3 (user feedback applied)
+
+Feedback on iteration 2: it reused the old landing page's expression
+(ProductFrame, grain, serif-centered hero, chrome band) — user had asked to
+"think new". User chose the **editorial typographic** direction from three
+options (vs. soft tinted bands, dark premium inverse).
+
+New expression, built from zero (old-page patterns explicitly banned here):
+- Left-aligned serif display everywhere (hero, section headings, closing)
+- Raw screenshots: square corners, hairline `border-subtle` only — no
+  frames, no grain, no panels, no shadows
+- Sections divided by full-width hairlines; vertical hairline dividers
+  inside two-column sections (two-surfaces, pricing)
+- Serif numerals (1/2/3) as the only decorative element (FLORA ref)
+- Pricing text-forward without cards (Slash ref); serif price display
+- Closing CTA = left-aligned serif statement, flat (Notion ref)
+- Dark chrome comparison variant removed
+- Copy unchanged from iteration 2 (approved quiet set)
 
 ## Iteration 2 (user feedback applied)
 

@@ -1,100 +1,94 @@
 import { Check } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
-import { Grain } from '@/components/public/Grain'
 import { formatKroner } from '@/lib/utils'
 import { COMPANY } from '@/lib/company'
 
 /**
- * STYLED DRAFT of the new landing page (was: structure wireframe).
- * Iteration 2 after user feedback: quieter copy (product speaks for
- * itself), yoga niche, single CTA per surface.
+ * STYLED DRAFT of the new landing page — iteration 3: EDITORIAL TYPOGRAPHIC.
+ * User-chosen direction: magazine-calm, deliberately NOT the old landing
+ * page's expression (no ProductFrame, no grain, no tinted panels, no dark
+ * chrome band, nothing centered by default).
  *
- * Section references (seen on Mobbin, 2026-07-07):
- *  - Hero: Equals — centered short headline, one-line sub, ONE CTA,
- *    full-width product shot below. Collage trick: Origin/Passionfroot.
- *  - Steps: ClassPass "Here's how it works" + Wise (terse captions,
- *    CTA directly under the steps).
- *  - Two surfaces: Fresha two-card; tinted panel treatment: Whereby.
- *  - Pricing: Craft two-card (serif heading, calm cards).
- *  - CTA band: FLAT (Notion "Let's talk" / Dropbox one-liner) — the
- *    dark-chrome alternative is rendered at the very bottom for
- *    comparison; pick one.
+ * The grammar of this page:
+ *  - left-aligned serif display (EB Garamond) on a white page
+ *  - raw screenshots, square corners, hairline borders only
+ *  - sections divided by full-width hairlines, extreme whitespace
+ *  - serif numerals as the only decorative element (FLORA-style)
+ *  - pill buttons (system primitive) as the single soft shape
  *
- * Screenshot slots without a real asset yet are labeled placeholders
- * (bookingside phone crop + course builder need fresh captures).
+ * References (Mobbin, seen 2026-07-07): mymind + Sanity airiness,
+ * FLORA oversized numerals, Slash text-forward pricing, Notion flat
+ * closing CTA. Tone: Fiken.
+ *
+ * Copy is the approved quiet set (iteration 2). Placeholders remain for
+ * two screenshots that need fresh capture: bookingside (phone crop) and
+ * kursbygger.
  */
 
 export default function LandingWireframe() {
   return (
     <div className="min-h-dvh bg-background text-foreground antialiased">
       <p className="border-b border-border-subtle px-6 py-2 text-xs text-foreground-muted">
-        Utkast med stil – alternativt mørkt CTA-band nederst på siden
+        Utkast – retning: redaksjonell typografi
       </p>
 
       <Nav />
-      <Hero />
-      <HowItWorks />
-      <TwoSurfaces />
-      <ValueTriad />
-      <Pricing />
-      <Faq />
-      <FinalCtaFlat />
+      <main className="mx-auto max-w-6xl px-6">
+        <Hero />
+        <HowItWorks />
+        <TwoSurfaces />
+        <ValueTriad />
+        <Pricing />
+        <Faq />
+        <FinalCta />
+      </main>
       <Footer />
-
-      {/* ── comparison only: dark chrome CTA-band variant ── */}
-      <div className="border-t border-border-subtle px-6 py-12">
-        <p className="mx-auto mb-4 max-w-6xl text-xs font-medium text-foreground-muted">
-          Alternativ: mørkt CTA-band (samme flate som dagens side)
-        </p>
-        <FinalCtaChrome />
-      </div>
     </div>
   )
 }
 
-/* ── product frame — the established marketing frame idiom ────────── */
-
-function ProductFrame({
-  children,
-  tight = false,
+/** Raw editorial image slot: hairline border, square corners, no chrome. */
+function Shot({
+  src,
+  alt,
+  placeholder,
+  className = '',
 }: {
-  children: React.ReactNode
-  tight?: boolean
+  src?: string
+  alt?: string
+  placeholder?: string
+  className?: string
 }) {
-  const padding = tight ? 'p-1.5 sm:p-3 md:p-4' : 'p-3 sm:p-6 md:p-8'
-  return (
-    <div className={`relative isolate overflow-hidden rounded-2xl bg-muted ${padding}`}>
-      <Grain opacity={0.6} baseFrequency={0.7} />
-      <div className="relative overflow-hidden rounded-lg border border-border-card bg-background shadow-soft">
-        {children}
+  if (!src) {
+    return (
+      <div
+        className={`flex items-center justify-center border border-border-subtle bg-background ${className}`}
+      >
+        <p className="max-w-[85%] text-center text-sm text-foreground-muted">{placeholder}</p>
       </div>
-    </div>
-  )
-}
-
-/** Placeholder for a screenshot that hasn't been captured yet. */
-function Slot({ shot, className = 'aspect-video' }: { shot: string; className?: string }) {
+    )
+  }
   return (
-    <div className={`flex items-center justify-center bg-background ${className}`}>
-      <p className="max-w-[85%] text-center text-sm text-foreground-muted">{shot}</p>
+    <div className={`overflow-hidden border border-border-subtle ${className}`}>
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        className="block h-full w-full object-cover object-top"
+      />
     </div>
   )
 }
 
-/* ── nav ──────────────────────────────────────────────────────────── */
+/* ── nav — wordmark + login + one CTA, hairline below ─────────────── */
 
 function Nav() {
   return (
-    <nav aria-label="Hovednavigasjon">
+    <nav aria-label="Hovednavigasjon" className="border-b border-border-subtle">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <span className="text-base font-medium text-foreground">Openspot</span>
+        <span className="font-serif text-xl font-medium text-foreground">Openspot</span>
         <div className="flex items-center gap-6">
-          <a
-            href="#slik"
-            className="hidden text-sm font-medium text-foreground-muted transition-colors hover:text-foreground md:block"
-          >
-            Slik fungerer det
-          </a>
           <a
             href="#pris"
             className="hidden text-sm font-medium text-foreground-muted transition-colors hover:text-foreground md:block"
@@ -114,153 +108,111 @@ function Nav() {
   )
 }
 
-/* ── hero — Equals shape: short, one CTA, product below ───────────── */
+/* ── hero — left-aligned serif display, raw full-width screenshot ── */
 
 function Hero() {
   return (
     <section className="pt-20 pb-24 md:pt-28 md:pb-32">
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="mb-4 text-xs font-medium text-foreground-muted">For yogastudioer</p>
-          <h1 className="font-serif text-4xl font-medium text-foreground md:text-5xl">
-            Påmelding og betaling for yogastudioet
-          </h1>
-          <p className="mt-4 text-lg text-foreground-muted">
-            Deltakerne melder seg på og betaler selv. Du får oversikten.
-          </p>
-          <div className="mt-8">
-            <Button size="cta">Kom i gang gratis</Button>
-          </div>
-          <p className="mt-3 text-sm text-foreground-muted">Du trenger ikke kort.</p>
-        </div>
+      <p className="text-xs font-medium text-foreground-muted">For yogastudioer</p>
+      <h1 className="mt-4 max-w-3xl font-serif text-4xl font-medium text-foreground md:text-5xl">
+        Påmelding og betaling for yogastudioet.
+      </h1>
+      <p className="mt-5 max-w-md text-lg text-foreground-muted">
+        Deltakerne melder seg på og betaler selv. Du får oversikten.
+      </p>
+      <div className="mt-8 flex items-center gap-4">
+        <Button size="cta">Kom i gang gratis</Button>
+        <p className="text-sm text-foreground-muted">Du trenger ikke kort.</p>
+      </div>
 
-        <div className="relative mx-auto mt-16 max-w-5xl md:mt-20">
-          <ProductFrame>
-            <img
-              src="/landing-dashboard.webp"
-              alt="Openspot – oversikt over inntekter og kommende kurs"
-              width={2400}
-              height={1659}
-              fetchPriority="high"
-              className="block h-auto w-full"
-            />
-          </ProductFrame>
-          <div className="absolute -bottom-10 right-6 w-36 overflow-hidden rounded-lg border border-border-card bg-background shadow-soft md:right-10 md:w-44">
-            <Slot shot="Bookingside (telefon)" className="aspect-[9/16]" />
-          </div>
-        </div>
-        <div className="h-10" />
+      <div className="mt-16 md:mt-20">
+        <Shot
+          src="/landing-dashboard.webp"
+          alt="Openspot – oversikt over inntekter og kommende kurs"
+        />
       </div>
     </section>
   )
 }
 
-/* ── slik fungerer det — ClassPass/Wise: heading IS the section ───── */
+/* ── slik fungerer det — serif numerals, text columns, small shots ── */
 
 const STEPS = [
   {
     n: '1',
     title: 'Lag kurset',
     body: 'Navn, tid og pris – så er kurset klart.',
-    img: null,
-    shot: 'Kursbygger',
+    src: undefined,
+    placeholder: 'Kursbygger',
   },
   {
     n: '2',
     title: 'Del bookingsiden',
     body: 'Én lenke til alt du tilbyr.',
-    img: { src: '/landing-storefront.webp', alt: 'Offentlig studioside i Openspot' },
-    shot: '',
+    src: '/landing-storefront.webp',
+    placeholder: undefined,
   },
   {
     n: '3',
     title: 'Få betalt',
     body: 'Deltakerne betaler ved påmelding. Pengene går rett til kontoen din.',
-    img: { src: '/landing-payments.webp', alt: 'Betaling i Openspot' },
-    shot: '',
+    src: '/landing-payments.webp',
+    placeholder: undefined,
   },
 ]
 
 function HowItWorks() {
   return (
-    <section id="slik" className="scroll-mt-16 py-24 md:py-32">
-      <div className="mx-auto max-w-6xl px-6">
-        <h2 className="text-center font-serif text-3xl font-medium text-foreground md:text-4xl">
-          Slik fungerer det
-        </h2>
-        <div className="mx-auto mt-14 grid max-w-5xl gap-10 md:grid-cols-3">
-          {STEPS.map((s) => (
-            <div key={s.n}>
-              <ProductFrame tight>
-                {s.img ? (
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img
-                      src={s.img.src}
-                      alt={s.img.alt}
-                      loading="lazy"
-                      decoding="async"
-                      className="block h-full w-full object-cover object-top"
-                    />
-                  </div>
-                ) : (
-                  <Slot shot={s.shot} className="aspect-[4/3]" />
-                )}
-              </ProductFrame>
-              <p className="mt-5 text-sm font-medium text-foreground-muted">{s.n}</p>
-              <h3 className="mt-1 text-lg font-medium text-foreground">{s.title}</h3>
-              <p className="mt-1.5 text-base text-foreground-muted">{s.body}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-14 text-center">
-          <Button size="cta">Kom i gang gratis</Button>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ── to sider — Fresha two-card on Whereby tinted panels ──────────── */
-
-function TwoSurfaces() {
-  return (
-    <section className="py-24 md:py-32">
-      <div className="mx-auto max-w-6xl px-6">
-        <h2 className="text-center font-serif text-3xl font-medium text-foreground md:text-4xl">
-          Én side for deg. Én for deltakerne.
-        </h2>
-        <div className="mx-auto mt-14 grid max-w-5xl gap-6 md:grid-cols-2">
-          <div className="relative isolate overflow-hidden rounded-2xl bg-panel p-6 md:p-8">
-            <p className="text-xs font-medium text-foreground-muted">Din side</p>
-            <p className="mt-1.5 text-base text-foreground">
-              Påmeldinger, inntekter og timeplan på ett sted.
-            </p>
-            <div className="mt-6 overflow-hidden rounded-lg border border-border-card bg-background">
-              <img
-                src="/landing-courses.webp"
-                alt="Kursoversikt i Openspot"
-                loading="lazy"
-                decoding="async"
-                className="block h-auto w-full"
+    <section id="slik" className="scroll-mt-16 border-t border-border-subtle py-20 md:py-28">
+      <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
+        Slik fungerer det
+      </h2>
+      <div className="mt-14 grid gap-x-10 gap-y-14 md:grid-cols-3">
+        {STEPS.map((s) => (
+          <div key={s.n}>
+            <p className="font-serif text-4xl font-medium text-foreground-muted">{s.n}</p>
+            <h3 className="mt-3 text-lg font-medium text-foreground">{s.title}</h3>
+            <p className="mt-1.5 max-w-xs text-base text-foreground-muted">{s.body}</p>
+            <div className="mt-6">
+              <Shot
+                src={s.src}
+                alt={s.title}
+                placeholder={s.placeholder}
+                className="aspect-[4/3]"
               />
             </div>
           </div>
-          <div className="relative isolate overflow-hidden rounded-2xl bg-panel p-6 md:p-8">
-            <p className="text-xs font-medium text-foreground-muted">Deltakernes side</p>
-            <p className="mt-1.5 text-base text-foreground">
-              Velg time, betal og få kvittering. Uten konto, uten app.
-            </p>
-            <div className="mt-6 flex justify-center">
-              <div className="w-44 overflow-hidden rounded-lg border border-border-card bg-background md:w-48">
-                <img
-                  src="/landing-payments.webp"
-                  alt="Påmelding og betaling i Openspot"
-                  loading="lazy"
-                  decoding="async"
-                  className="block h-auto w-full"
-                />
-              </div>
-            </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/* ── to sider — two columns, vertical hairline, raw shots ─────────── */
+
+function TwoSurfaces() {
+  return (
+    <section className="border-t border-border-subtle py-20 md:py-28">
+      <h2 className="max-w-2xl font-serif text-3xl font-medium text-foreground md:text-4xl">
+        Én side for deg. Én for deltakerne.
+      </h2>
+      <div className="mt-14 grid gap-10 md:grid-cols-2 md:gap-0 md:divide-x md:divide-border-subtle">
+        <div className="md:pr-12">
+          <p className="text-xs font-medium text-foreground-muted">Din side</p>
+          <p className="mt-1.5 max-w-sm text-base text-foreground">
+            Påmeldinger, inntekter og timeplan på ett sted.
+          </p>
+          <div className="mt-6">
+            <Shot src="/landing-courses.webp" alt="Kursoversikt i Openspot" />
+          </div>
+        </div>
+        <div className="md:pl-12">
+          <p className="text-xs font-medium text-foreground-muted">Deltakernes side</p>
+          <p className="mt-1.5 max-w-sm text-base text-foreground">
+            Velg time, betal og få kvittering. Uten konto, uten app.
+          </p>
+          <div className="mt-6 flex md:justify-start">
+            <Shot placeholder="Bookingside (telefon)" className="aspect-[9/16] w-44 md:w-48" />
           </div>
         </div>
       </div>
@@ -268,7 +220,7 @@ function TwoSurfaces() {
   )
 }
 
-/* ── verditriade — Fiken: enkelt / ro / hjelp ─────────────────────── */
+/* ── verditriade — text columns only ──────────────────────────────── */
 
 const TRIAD = [
   { title: 'Enkelt å komme i gang', body: 'Lag kurset, sett prisen og publiser.' },
@@ -278,100 +230,88 @@ const TRIAD = [
 
 function ValueTriad() {
   return (
-    <section className="py-24 md:py-32">
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="mx-auto grid max-w-5xl gap-10 border-t border-border-subtle pt-14 md:grid-cols-3">
-          {TRIAD.map((v) => (
-            <div key={v.title}>
-              <h3 className="text-lg font-medium text-foreground">{v.title}</h3>
-              <p className="mt-1.5 text-base text-foreground-muted">{v.body}</p>
-            </div>
-          ))}
-        </div>
+    <section className="border-t border-border-subtle py-20 md:py-28">
+      <div className="grid gap-10 md:grid-cols-3">
+        {TRIAD.map((v) => (
+          <div key={v.title}>
+            <h3 className="font-serif text-2xl font-medium text-foreground">{v.title}</h3>
+            <p className="mt-2 max-w-xs text-base text-foreground-muted">{v.body}</p>
+          </div>
+        ))}
       </div>
     </section>
   )
 }
 
-/* ── pris — Craft two-card ────────────────────────────────────────── */
+/* ── pris — text-forward, vertical hairline between tiers (Slash) ── */
 
 function Pricing() {
   return (
-    <section id="pris" className="scroll-mt-16 py-24 md:py-32">
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="mb-3 text-xs font-medium text-foreground-muted">Pris</p>
-          <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
-            Gratis å starte
-          </h2>
-        </div>
-        <div className="mx-auto mt-14 grid max-w-4xl gap-6 md:grid-cols-2">
-          <div className="rounded-2xl bg-panel p-6 md:p-8">
-            <h3 className="text-lg font-medium text-foreground">Start</h3>
-            <p className="mt-3 text-3xl font-medium text-foreground">Gratis</p>
-            <p className="mt-1 text-sm text-foreground-muted">5 % gebyr per betaling</p>
-            <ul className="mt-6 space-y-2.5">
-              {[
-                'Ubegrenset antall kurs og deltakere',
-                'Egen bookingside',
-                'Kortbetaling og automatiske utbetalinger',
-              ].map((f) => (
-                <li key={f} className="flex items-start gap-2.5 text-base text-foreground">
-                  <Check className="mt-1 size-4 flex-shrink-0 text-foreground-muted" />
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-8">
-              <Button variant="secondary" className="w-full">
-                Start gratis
-              </Button>
-            </div>
-            <p className="mt-3 text-center text-sm text-foreground-muted">
-              Du trenger ikke kort.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border-card bg-background p-6 shadow-soft md:p-8">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-foreground">Pro</h3>
-              <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground">
-                Mest valgt
-              </span>
-            </div>
-            <p className="mt-3 text-3xl font-medium text-foreground">
-              {formatKroner(499)}
-              <span className="text-sm font-normal text-foreground-muted"> / mnd eks. mva</span>
-            </p>
-            <p className="mt-1 text-sm text-foreground-muted">
-              Lønner seg fra rundt {formatKroner(10000)} i påmeldinger i måneden
-            </p>
-            <ul className="mt-6 space-y-2.5">
-              {[
-                'Alt i Start',
-                '0 % gebyr – du beholder hele kursprisen',
-                'Månedlig eller årlig betaling',
-              ].map((f) => (
-                <li key={f} className="flex items-start gap-2.5 text-base text-foreground">
-                  <Check className="mt-1 size-4 flex-shrink-0 text-foreground-muted" />
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-8">
-              <Button className="w-full">Velg Pro</Button>
-            </div>
-            <p className="mt-3 text-center text-sm text-foreground-muted">Ingen bindingstid.</p>
+    <section id="pris" className="scroll-mt-16 border-t border-border-subtle py-20 md:py-28">
+      <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">Pris</h2>
+      <div className="mt-14 grid gap-12 md:grid-cols-2 md:gap-0 md:divide-x md:divide-border-subtle">
+        <div className="md:pr-16">
+          <h3 className="text-base font-medium text-foreground">Start</h3>
+          <p className="mt-4 font-serif text-4xl font-medium text-foreground">Gratis</p>
+          <p className="mt-2 text-sm text-foreground-muted">5 % gebyr per betaling</p>
+          <ul className="mt-8 space-y-3">
+            {[
+              'Ubegrenset antall kurs og deltakere',
+              'Egen bookingside',
+              'Kortbetaling og automatiske utbetalinger',
+            ].map((f) => (
+              <li key={f} className="flex items-start gap-2.5 text-base text-foreground">
+                <Check className="mt-1 size-4 flex-shrink-0 text-foreground-muted" />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-10">
+            <Button variant="secondary">Start gratis</Button>
+            <p className="mt-3 text-sm text-foreground-muted">Du trenger ikke kort.</p>
           </div>
         </div>
-        <p className="mt-8 text-center text-sm text-foreground-muted">
-          Betalinger håndteres av Stripe.
-        </p>
+        <div className="md:pl-16">
+          <div className="flex items-center gap-3">
+            <h3 className="text-base font-medium text-foreground">Pro</h3>
+            <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground">
+              Mest valgt
+            </span>
+          </div>
+          <p className="mt-4 font-serif text-4xl font-medium text-foreground">
+            {formatKroner(499)}
+            <span className="font-sans text-sm font-normal text-foreground-muted">
+              {' '}
+              / mnd eks. mva
+            </span>
+          </p>
+          <p className="mt-2 text-sm text-foreground-muted">
+            Lønner seg fra rundt {formatKroner(10000)} i påmeldinger i måneden
+          </p>
+          <ul className="mt-8 space-y-3">
+            {[
+              'Alt i Start',
+              '0 % gebyr – du beholder hele kursprisen',
+              'Månedlig eller årlig betaling',
+            ].map((f) => (
+              <li key={f} className="flex items-start gap-2.5 text-base text-foreground">
+                <Check className="mt-1 size-4 flex-shrink-0 text-foreground-muted" />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-10">
+            <Button>Velg Pro</Button>
+            <p className="mt-3 text-sm text-foreground-muted">Ingen bindingstid.</p>
+          </div>
+        </div>
       </div>
+      <p className="mt-12 text-sm text-foreground-muted">Betalinger håndteres av Stripe.</p>
     </section>
   )
 }
 
-/* ── spørsmål og svar ─────────────────────────────────────────────── */
+/* ── spørsmål og svar — hairline rows ─────────────────────────────── */
 
 const FAQ = [
   'Hva koster det?',
@@ -384,14 +324,18 @@ const FAQ = [
 
 function Faq() {
   return (
-    <section className="py-24 md:py-32">
-      <div className="mx-auto max-w-2xl px-6">
-        <h2 className="font-serif text-3xl font-medium text-foreground">Spørsmål og svar</h2>
-        <div className="mt-10">
-          {FAQ.map((q) => (
+    <section className="border-t border-border-subtle py-20 md:py-28">
+      <div className="grid gap-10 md:grid-cols-12">
+        <h2 className="font-serif text-3xl font-medium text-foreground md:col-span-4">
+          Spørsmål og svar
+        </h2>
+        <div className="md:col-span-8">
+          {FAQ.map((q, i) => (
             <div
               key={q}
-              className="flex items-center justify-between border-b border-border-subtle py-5"
+              className={`flex items-center justify-between border-b border-border-subtle py-5 ${
+                i === 0 ? 'border-t' : ''
+              }`}
             >
               <p className="text-base font-medium text-foreground">{q}</p>
               <span aria-hidden="true" className="text-foreground-subtle">
@@ -405,39 +349,21 @@ function Faq() {
   )
 }
 
-/* ── CTA band, flat variant (Notion/Dropbox) — RECOMMENDED ────────── */
+/* ── closing — flat typographic statement ─────────────────────────── */
 
-function FinalCtaFlat() {
+function FinalCta() {
   return (
-    <section className="border-t border-border-subtle py-24 md:py-28">
-      <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-6 text-center">
-        <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
-          Klar når du er.
-        </h2>
+    <section className="border-t border-border-subtle py-24 md:py-32">
+      <h2 className="max-w-2xl font-serif text-4xl font-medium text-foreground md:text-5xl">
+        Klar når du er.
+      </h2>
+      <div className="mt-8 flex items-center gap-4">
         <Button size="cta">Kom i gang gratis</Button>
         <p className="text-sm text-foreground-muted">
           Ingen bindingstid. Du trenger ikke kort.
         </p>
       </div>
     </section>
-  )
-}
-
-/* ── CTA band, dark chrome variant (today's style) — comparison ───── */
-
-function FinalCtaChrome() {
-  return (
-    <div className="mx-auto max-w-6xl">
-      <div className="relative isolate flex flex-col items-center justify-between gap-8 overflow-hidden rounded-3xl bg-chrome px-8 py-16 md:flex-row md:gap-12 md:px-16 md:py-20">
-        <Grain opacity={0.4} baseFrequency={0.7} blend="soft-light" />
-        <h2 className="relative font-serif text-3xl font-medium text-chrome-foreground md:text-4xl">
-          Klar når du er.
-        </h2>
-        <div className="relative">
-          <Button size="cta">Kom i gang gratis</Button>
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -449,7 +375,7 @@ function Footer() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-10 md:grid-cols-12">
           <div className="md:col-span-6">
-            <p className="text-base font-medium text-foreground">Openspot</p>
+            <p className="font-serif text-xl font-medium text-foreground">Openspot</p>
             <p className="mt-4 max-w-sm text-base text-foreground-muted">
               Påmelding, betaling og kursoversikt for yogastudioer. Bygget i Norge.
             </p>
