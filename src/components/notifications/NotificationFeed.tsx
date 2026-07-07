@@ -83,7 +83,7 @@ export function NotificationFeed({
 function EmptyState() {
   return (
     <div className="flex flex-col items-center px-6 py-12 text-center">
-      <p className="text-sm text-foreground">Ingen nye varsler</p>
+      <p className="text-sm text-foreground">Ingen varsler</p>
     </div>
   )
 }
