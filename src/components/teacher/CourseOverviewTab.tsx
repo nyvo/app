@@ -363,7 +363,7 @@ function TimeplanCard({
           <button
             type="button"
             onClick={onOpenAll}
-            className="group flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+            className="group flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           >
             Se alle timer
             <ChevronRight className="size-4 shrink-0 text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
@@ -390,11 +390,10 @@ function SessionRow({
   const editable = !cancelled && !past;
   const label = `${cap(weekdayLong(session.session_date))} ${dayMonth(session.session_date)}`;
 
-  // Accent line + date/time. Finished/cancelled rows dim; the "Avlyst" badge
+  // Date/time. Finished/cancelled rows dim; the "Avlyst" badge
   // (cancelled only) stays full-opacity so it reads clearly.
   const left = (
     <div className={cn('flex min-w-0 flex-1 items-stretch gap-4', !editable && 'opacity-50')}>
-      <span className="w-1 self-stretch rounded-full bg-primary/40" />
       <div className="min-w-0">
         <p className="flex items-center gap-2 text-base font-medium text-foreground">
           <span>{label}</span>

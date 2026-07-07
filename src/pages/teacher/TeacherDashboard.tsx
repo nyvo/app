@@ -204,6 +204,17 @@ const TeacherDashboard = () => {
             />
           ) : (
             <div className="space-y-12">
+              {/* Lead with the actionable lists (ui-patterns §2.5) — the
+                  income trend is secondary and sits below. */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <UpcomingCoursesSection courses={dashboardCourses} isLoading={isLoading} />
+                <RecentSignupsSection
+                  signups={recentSignupsRaw}
+                  isLoading={isLoading}
+                  onSelect={setSelectedSignupId}
+                />
+              </div>
+
               <div className="space-y-3">
                 <Suspense fallback={<Skeleton className="h-[280px] w-full rounded-lg" />}>
                   <IncomeChart
@@ -216,15 +227,6 @@ const TeacherDashboard = () => {
                 {!isPro && monthPlatformFee > 0 && (
                   <PlatformFeeHint feeNok={monthPlatformFee} />
                 )}
-              </div>
-
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <UpcomingCoursesSection courses={dashboardCourses} isLoading={isLoading} />
-                <RecentSignupsSection
-                  signups={recentSignupsRaw}
-                  isLoading={isLoading}
-                  onSelect={setSelectedSignupId}
-                />
               </div>
             </div>
           )}
@@ -252,7 +254,7 @@ export function PlatformFeeHint({ feeNok }: { feeNok: number }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-panel px-5 py-4 sm:flex-row sm:items-center">
       <p className="min-w-0 flex-1 text-sm text-foreground-muted">
-        Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: 0 kr.
+        Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: {formatKroner(0)}.
       </p>
       <Button asChild variant="secondary" className="w-full shrink-0 sm:w-auto">
         <Link to={routes.settingsBilling}>Se Pro</Link>
@@ -313,7 +315,7 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="group flex items-center gap-3 px-5 py-4 no-underline outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="group flex items-center gap-3 px-5 py-4 no-underline outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
@@ -392,7 +394,7 @@ function SignupRow({
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="group flex w-full items-center gap-3 px-5 py-4 text-left outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="group flex w-full items-center gap-3 px-5 py-4 text-left outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">

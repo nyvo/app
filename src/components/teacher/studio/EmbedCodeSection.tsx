@@ -43,7 +43,7 @@ export function EmbedCodeSection({ slug }: { slug: string }) {
         <code>{snippet}</code>
       </pre>
       <div className="flex items-center gap-2">
-        <Button type="button" variant="outline" onClick={() => void handleCopy()}>
+        <Button type="button" variant="secondary" onClick={() => void handleCopy()}>
           {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
           {copied ? 'Kopiert' : 'Kopier kode'}
         </Button>

@@ -260,14 +260,13 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
       : courseData.timeSchedule
     : null;
 
+  // When-line and location as stacked lines — no "·" metadata separators
+  // (ui-patterns §2.1: separation via layout, not interpuncts).
   const headerDescription =
     whenLine || courseData.location ? (
       <>
-        {whenLine}
-        {whenLine && courseData.location && (
-          <span className="text-foreground-muted mx-2">·</span>
-        )}
-        {courseData.location}
+        {whenLine && <span className="block">{whenLine}</span>}
+        {courseData.location && <span className="block">{courseData.location}</span>}
       </>
     ) : undefined;
 

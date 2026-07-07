@@ -127,14 +127,14 @@ function ConfirmContent({
         <h2 className="mb-2 text-lg font-medium text-foreground">
           {title}
         </h2>
-        <p className="text-sm leading-relaxed text-foreground-muted [&_strong]:font-medium [&_strong]:text-foreground">
+        <p className="text-sm text-foreground-muted [&_strong]:font-medium [&_strong]:text-foreground">
           {body}
         </p>
       </div>
 
       {scopeList && scopeList.length > 0 ? (
-        <div className="max-h-72 overflow-y-auto rounded-lg bg-muted/40 p-3">
-          <div className="divide-y divide-border/60">
+        <div className="max-h-72 overflow-y-auto rounded-lg bg-panel p-3">
+          <div className="divide-y divide-border-subtle">
             {scopeList.map((item, index) => (
               <div
                 key={item.id ?? index}
@@ -288,7 +288,7 @@ export function ConfirmScopeRow({
     <div
       className={cn(
         "flex items-center justify-between px-4 py-2.5 text-sm text-foreground tabular-nums",
-        !first && "border-t border-border/60"
+        !first && "border-t border-border-subtle"
       )}
     >
       <span>{label}</span>

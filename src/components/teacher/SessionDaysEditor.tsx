@@ -92,7 +92,7 @@ export function SessionDaysEditor({ value, onChange, readOnly = false }: Session
                     type="button"
                     onClick={() => removeDay(day.id)}
                     aria-label={`Fjern dag ${idx + 1}`}
-                    className="inline-flex size-7 items-center justify-center rounded-md bg-danger/10 text-danger transition-colors hover:bg-danger/20"
+                    className="inline-flex size-7 items-center justify-center rounded-full text-danger transition-colors hover:bg-danger-subtle"
                   >
                     <Trash2 className="size-4" />
                   </button>

@@ -11,12 +11,14 @@ import { Skeleton } from './skeleton'
 export function PageSkeleton() {
   return (
     <div
-      className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 space-y-8"
+      // Mirrors the PageShell spacing canon (pt-6 lg:pt-12, header mb-8) so
+      // the swap to real content doesn't jump.
+      className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 lg:pt-12 pb-24 md:pb-12"
       role="status"
       aria-live="polite"
     >
       <span className="sr-only">Laster…</span>
-      <div className="space-y-3">
+      <div className="mb-8 space-y-3">
         <Skeleton className="h-7 w-48" />
         <Skeleton className="h-4 w-72" />
       </div>

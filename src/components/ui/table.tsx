@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils"
  * - Table fills the parent container. Page-level constraint is the PAGE'S job
  *   (e.g. `<main className="mx-auto max-w-6xl">` on the page wrapper) — the
  *   Table primitive never caps its own width.
- * - Header cells use label styling (text-xs font-medium tracking-wide text-foreground-muted).
- * - Body rows get a subtle hover (bg-muted) and divide-y via the body wrapper.
+ * - Header cells use label styling (text-xs font-medium text-foreground-muted).
+ * - Body rows get the ink hover overlay (bg-hover) and hairline divide-y via the body wrapper.
  * - Cell padding: body cells px-4 py-4 (sm:px-6); header cells px-4 py-3 (sm:px-6).
  *
  * Column-width rule: the first/identity column (avatar + name + meta) should get
@@ -50,7 +50,7 @@ function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
       data-slot="table-body"
-      className={cn("divide-y divide-border", className)}
+      className={cn("divide-y divide-border-subtle", className)}
       {...props}
     />
   )
@@ -61,7 +61,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "group transition-colors duration-150 hover:bg-muted data-[state=selected]:bg-muted",
+        "group transition-colors duration-150 hover:bg-hover data-[state=selected]:bg-muted",
         className,
       )}
       {...props}

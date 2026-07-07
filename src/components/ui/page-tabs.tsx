@@ -8,12 +8,11 @@ interface PageTabsProps {
 }
 
 /**
- * Underline tab strip with neutral-badge active state.
+ * Underline tab strip (design-language §Tabs: no pill tabs, no boxed tabs).
  *
- * Visual pattern: each tab is a small "chip" (rounded muted fill on the
- * active one) sitting on a bottom border. The active tab gets both the
- * underline and the badge — double signal, gentle hierarchy. Used as the
- * top-level section switcher on teacher pages.
+ * Visual pattern: text labels on a bottom border — muted when inactive,
+ * `font-medium text-foreground` with a 2px foreground underline when
+ * active. Used as the top-level section switcher on teacher pages.
  *
  * Container handles role + gap + bottom border + tablist keyboard support
  * (arrow keys move focus and activate — auto-activation pattern, required
@@ -90,27 +89,16 @@ export function PageTab({
       tabIndex={active ? 0 : -1}
       onClick={onClick}
       className={cn(
-        'inline-flex items-center py-1.5 -mb-px text-sm border-b-2 transition-colors outline-none focus-visible:text-foreground',
+        'group/tab inline-flex items-center py-1.5 -mb-px text-sm border-b-2 transition-colors outline-none',
         active
           ? 'font-medium text-foreground border-foreground'
           : 'font-normal text-foreground-muted hover:text-foreground border-transparent',
       )}
     >
-      <span
-        className={cn(
-          'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1',
-          active && 'bg-muted',
-        )}
-      >
+      <span className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 group-focus-visible/tab:ring-2 group-focus-visible/tab:ring-ring">
         {children}
         {typeof count === 'number' && count > 0 && (
-          <span
-            className={cn(
-              'inline-flex items-center px-1.5 py-px text-foreground text-sm font-medium rounded-full tabular-nums',
-              // Inverted bg so the count stays visible against either tab state.
-              active ? 'bg-background' : 'bg-muted',
-            )}
-          >
+          <span className="inline-flex items-center rounded-full bg-muted px-1.5 py-px text-sm font-medium text-foreground tabular-nums">
             {count}
           </span>
         )}

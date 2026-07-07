@@ -265,6 +265,9 @@ fill change (`--selection-light` or `bg-muted`), never a colored border alone.
 No vertical rules ever. Row separation: `border-subtle` hairline or spacing.
 Header row: `text-xs`/`text-sm`, muted, no fill. Tall rows; one weighted cell
 per row; metadata as small muted stroke-icon+text pairs. Row hover: `bg-hover`.
+No "·" interpuncts between metadata fields (separation via spacing/layout);
+the one sanctioned "·" is INSIDE a single composed when-string
+("fredag 28. nov · kl. 18:00") — date and time form one value, not two fields.
 
 ### Progress bars
 
@@ -287,9 +290,11 @@ Dialogs, popovers, dropdowns, toasts: `bg-surface`, `rounded-xl`,
 
 ### Icons
 
-One stroke set (Lucide), 1.5–2px stroke, 16–20px in UI. Decorative icons
-`text-foreground-subtle`; informative icons `text-foreground-muted`. Never mix
-in filled/solid sets.
+One stroke set (Lucide), 1.5–2px stroke, 16–20px in UI. Sanctioned exception:
+inline meta-row icons (clock/map-pin/users beside `text-xs`/`text-sm` metadata)
+are 14px (`size-3.5`) — the app-wide convention pairs the icon to the small
+text's cap height. Decorative icons `text-foreground-subtle`; informative
+icons `text-foreground-muted`. Never mix in filled/solid sets.
 
 ---
 

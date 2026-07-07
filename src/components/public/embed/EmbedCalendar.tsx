@@ -150,7 +150,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
   return (
     <div
       aria-label={sellerName ? `Kalender – ${sellerName}` : 'Kalender'}
-      className="@container overflow-hidden rounded-2xl border border-card bg-background text-foreground"
+      className="@container overflow-hidden rounded-2xl border border-border bg-background text-foreground"
     >
       <div className="flex flex-col @2xl:flex-row">
         {/* ── Calendar pane ─────────────────────────────────────────── */}
@@ -277,7 +277,8 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
 
       {/* ── Footer ──────────────────────────────────────────────────── */}
       <footer className="border-t border-border-subtle px-5 py-3">
-        <p className="text-[0.6875rem] text-foreground-subtle">
+        {/* -muted, not -subtle: this is real text and must stay AA (subtle is decorative-glyphs-only) */}
+        <p className="text-[0.6875rem] text-foreground-muted">
           Levert av{' '}
           <a
             href={window.location.origin}

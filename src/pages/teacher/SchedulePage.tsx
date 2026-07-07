@@ -279,7 +279,7 @@ const SchedulePage = () => {
                   {[1, 2].map((j) => (
                     <div key={j} className="rounded-xl bg-muted px-5 py-4">
                       <Skeleton className="h-4 w-48" />
-                      <Skeleton className="mt-2.5 h-3.5 w-72 max-w-full" />
+                      <Skeleton className="mt-1.5 h-3.5 w-72 max-w-full" />
                     </div>
                   ))}
                 </div>

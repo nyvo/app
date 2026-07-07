@@ -45,12 +45,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary — monochrome near-black (neutral-12 via --foreground); indigo
-        // is reserved as a sprinkle accent (links, selected states). Subtle
-        // hover lift; focus ring stays visible via the ring-offset.
-        default: "bg-foreground text-background hover:bg-foreground/90",
+        // Primary — monochrome near-black (neutral-12 via --foreground); azure
+        // is reserved as a sprinkle accent (links, selected states). No hover
+        // shift by design; focus ring stays visible via the ring-offset.
+        default: "bg-foreground text-background",
         outline:
-          "border-border bg-background shadow-xs hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-border dark:bg-surface-on-dark dark:hover:bg-surface-on-dark",
+          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-border dark:bg-surface-on-dark dark:hover:bg-surface-on-dark",
         "outline-soft":
           "border-border bg-background text-foreground-muted hover:border-ring hover:bg-muted hover:text-foreground dark:border-border dark:bg-surface-on-dark dark:hover:bg-surface-on-dark",
         secondary:
@@ -74,8 +74,8 @@ const buttonVariants = cva(
       },
     },
     compoundVariants: [
-      // Icon-only buttons stay circular regardless of variant — the base
-      // rounded-xl is for rectangular text buttons that sit beside inputs.
+      // Icon-only buttons are circular like every other button — the base is
+      // already rounded-full; these entries only guard against overrides.
       { size: "icon", className: "rounded-full" },
       { size: "icon-lg", className: "rounded-full" },
       // Plain variant strips chrome (height + padding) at every size.
