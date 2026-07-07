@@ -270,7 +270,7 @@ function ReadinessCard({
     onClick = onSetupPaymentsClick;
   } else {
     heading = 'Klar til å publisere';
-    sub = 'Alt er på plass — publiser for å åpne for påmelding.';
+    sub = 'Alt er på plass — publiser for å åpne for påmelding. Kurset blir synlig for alle.';
     label = 'Publiser kurs';
     onClick = onPublish;
     loading = publishing;
@@ -394,7 +394,7 @@ function SessionRow({
   // (cancelled only) stays full-opacity so it reads clearly.
   const left = (
     <div className={cn('flex min-w-0 flex-1 items-stretch gap-4', !editable && 'opacity-50')}>
-      <span className="w-1 self-stretch rounded-full bg-primary/40" />
+      <span className="w-1 self-stretch rounded-full bg-border-strong" />
       <div className="min-w-0">
         <p className="flex items-center gap-2 text-base font-medium text-foreground">
           <span>{label}</span>
@@ -598,6 +598,20 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
     onPriceChange(next);
   }
 
+  // This tab has no save bar — blur is the only commit point. While drop-in
+  // is ON, an invalid value (≤0 or cleared) must never commit silently: the
+  // input would go on showing the bad value while courseData quietly keeps
+  // the old price. Flag it inline instead and skip the commit entirely. When
+  // drop-in is OFF, 0/empty is just the unconfigured state — no error to show.
+  function handleBlur() {
+    if (checked && price <= 0) {
+      setPriceError(true);
+      return;
+    }
+    setPriceError(false);
+    onPriceBlur?.();
+  }
+
   return (
     <div className="flex items-start justify-between gap-6 py-5 first:pt-0 last:pb-0">
       <div className="min-w-0 flex-1">
@@ -618,7 +632,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
                 const next = Number(e.target.value);
                 handlePriceChange(Number.isFinite(next) ? next : 0);
               }}
-              onBlur={onPriceBlur}
+              onBlur={handleBlur}
               aria-invalid={priceError || undefined}
               className="h-8 w-[120px] pr-9 tabular-nums"
             />
@@ -628,7 +642,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
           </div>
         </div>
         {priceError && (
-          <p className="mt-2 text-sm text-danger">Sett en pris før du slår på drop-in.</p>
+          <p className="mt-2 text-sm text-danger">Drop-in krever en pris høyere enn 0 kr.</p>
         )}
       </div>
       <Switch checked={checked} onCheckedChange={handleToggle} className="mt-1 shrink-0" />
