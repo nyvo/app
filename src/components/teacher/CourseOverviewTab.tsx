@@ -363,7 +363,7 @@ function TimeplanCard({
           <button
             type="button"
             onClick={onOpenAll}
-            className="group flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+            className="group flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground outline-none focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
           >
             Se alle timer
             <ChevronRight className="size-4 shrink-0 text-foreground-subtle transition-transform group-hover:translate-x-0.5" />

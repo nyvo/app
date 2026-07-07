@@ -75,15 +75,6 @@ export function readFreeReceipt(signupId: string | null): FreeReceipt | null {
   }
 }
 
-/** One-shot cleanup once the receipt has been read into component state. */
-export function clearFreeReceipt(signupId: string): void {
-  try {
-    sessionStorage.removeItem(storageKey(signupId));
-  } catch {
-    // Storage unavailable — nothing to clean.
-  }
-}
-
 /**
  * Mirrors the server-side masking used by `get_signup_by_stripe_id` /
  * `get_signup_by_dintero_id` (`regexp_replace(email, '^(.)[^@]*@', '\1•••@')`)

@@ -14,7 +14,7 @@ import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { toLocalDate } from '@/utils/dateUtils';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { COMPANY } from '@/lib/company';
-import { readFreeReceipt, clearFreeReceipt, type FreeReceipt } from '@/lib/free-receipt';
+import { readFreeReceipt, type FreeReceipt } from '@/lib/free-receipt';
 import { downloadIcs, resolveEventEnd, type IcsEvent } from '@/utils/ics';
 import { directionsUrl } from '@/components/public/studio/studioFacts';
 
@@ -115,16 +115,14 @@ const CheckoutSuccessPage = () => {
   // Free path: the checkout page stashed a client-side receipt in
   // sessionStorage (keyed by ?sid=signup id) before redirecting — see
   // src/lib/free-receipt.ts for why there's no server-side lookup here. Read
-  // once into state (lazy initializer), then clear the storage entry — the
-  // recap renders from this state, and the entry has served its purpose. If
-  // it's missing or malformed (storage cleared, fresh tab, tampered), the
-  // page falls back to the generic no-recap free confirmation.
+  // once into state (lazy initializer) and left in storage — it's
+  // session-scoped and masked, so keeping it costs nothing and lets an F5 on
+  // the receipt page keep working. If it's missing or malformed (storage
+  // cleared, fresh tab, tampered), the page falls back to the generic
+  // no-recap free confirmation.
   const [freeReceipt] = useState<FreeReceipt | null>(() =>
     isFreeSignup ? readFreeReceipt(searchParams.get('sid')) : null,
   );
-  useEffect(() => {
-    if (freeReceipt) clearFreeReceipt(freeReceipt.signupId);
-  }, [freeReceipt]);
 
   useEffect(() => {
     let cancelled = false;
@@ -442,12 +440,29 @@ const CheckoutSuccessPage = () => {
             const bookedAt = displaySignup?.createdAt ? new Date(displaySignup.createdAt) : new Date();
             const whenLine = [dateLong, time ? `kl. ${time}` : null].filter(Boolean).join(' · ');
 
+            // Paid-path startDate is the course's first session, not the
+            // buyer's own next one — a drop-in bought mid-series would offer
+            // an ICS event for a class that's already over. The free path
+            // stashes next_session as its startDate (see free-receipt.ts), so
+            // it never needs this guard. Date-only, local time: a same-day
+            // class that already started should still get the calendar link.
+            const isPaidPastDate =
+              Boolean(signup) && displaySignup?.course.startDate
+                ? (() => {
+                    const d = toLocalDate(displaySignup.course.startDate!);
+                    d.setHours(0, 0, 0, 0);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return d.getTime() < today.getTime();
+                  })()
+                : false;
+
             // "Legg til i kalenderen" needs both a date AND a time to build a
             // meaningful event — a date-only VEVENT would default to midnight,
             // which is worse than not offering the download. The end comes from
             // resolveEventEnd: schedule range → course duration → 60-min default.
             const icsEvent: IcsEvent | null =
-              displaySignup?.course.startDate && time
+              displaySignup?.course.startDate && time && !isPaidPastDate
                 ? (() => {
                     const start = toLocalDate(displaySignup.course.startDate!);
                     const [h, m] = time.split(':').map(Number);

@@ -14,7 +14,7 @@ import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { Elements, PaymentElement, useStripe as useStripeHook, useElements } from '@stripe/react-stripe-js';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { ChevronLeft, Check } from '@/lib/icons';
-import { formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
+import { formatCoursePrice, formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
 import { calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
 import { fetchPublicCourseBySlug, resolveCourseImage, singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
@@ -135,13 +135,18 @@ const CheckoutPage = () => {
   const isCancelled = course?.status === 'cancelled';
 
   const selectedTier = tiers.find((t) => t.id === selectedTierId) ?? null;
-  // Derived from the SELECTED tier's price, not course.price — a course's
-  // listed price is really just its default tier, and a buyer can pick a
-  // different tier (e.g. a free info session) with a different price. Falls
-  // back to course.price only in the single frame before a tier is resolved
-  // (selectedTierId starts null), so the page doesn't flash the free-signup
-  // form for a paid course while tiers are still loading.
-  const isFree = selectedTier ? selectedTier.price <= 0 : (!course?.price || course.price <= 0);
+
+  // ── Pricing ─────────────────────────────────────────────────────────────
+  const tierPrice = selectedTier?.price ?? course?.price ?? 0;
+  const fee = calculateServiceFee(tierPrice);
+  const total = tierPrice + fee;
+
+  // The free-signup edge function (create-free-signup) rejects any course
+  // with price > 0 and only ever enrolls the course's default tier — a paid
+  // course can't be "freed" by picking a zero-price add-on tier. So both the
+  // selected tier AND the course itself must be free before this page can
+  // route to the no-payment flow.
+  const isFree = tierPrice === 0 && course?.price === 0;
   // Free signups need no payment rails; paid needs Stripe onboarding complete.
   const paymentReady =
     isFree || (course?.seller?.stripe_onboarding_complete ?? false);
@@ -197,11 +202,6 @@ const CheckoutPage = () => {
       cancelled = true;
     };
   }, [isDropInSelected, course?.id]);
-
-  // ── Pricing ─────────────────────────────────────────────────────────────
-  const tierPrice = selectedTier?.price ?? course?.price ?? 0;
-  const fee = calculateServiceFee(tierPrice);
-  const total = tierPrice + fee;
 
   // ── Form validation ─────────────────────────────────────────────────────
   // Blur shows format errors on non-empty fields; a failed submit attempt
@@ -412,7 +412,7 @@ const CheckoutPage = () => {
                   <div className="flex items-center justify-between gap-3 rounded-lg bg-panel px-4 py-3">
                     <span className="truncate text-sm font-medium text-foreground">{course.title}</span>
                     <span className="shrink-0 text-sm font-medium tabular-nums text-foreground">
-                      {formatKroner(total)}
+                      {formatCoursePrice(total)}
                     </span>
                   </div>
                 </div>
@@ -853,7 +853,7 @@ function CheckoutSummary({
               <div className="flex items-baseline justify-between gap-3">
                 <span className="text-base font-medium text-foreground">Totalt</span>
                 <span className="text-xl font-medium tabular-nums text-foreground">
-                  {formatKroner(total)}
+                  {formatCoursePrice(total)}
                 </span>
               </div>
               {!isFree && (

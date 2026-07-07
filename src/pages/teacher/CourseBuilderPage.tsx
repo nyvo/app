@@ -489,6 +489,7 @@ export default function CourseBuilderPage() {
                       { key: 'series', label: 'Kursrekke' },
                     ]}
                     ariaLabel="Type"
+                    role="radiogroup"
                     stretch
                   />
                 </Field>
