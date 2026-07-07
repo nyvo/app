@@ -3,9 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 import { MapEmbed } from '@/components/ui/map-embed';
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
 import { cn, formatKroner } from '@/lib/utils';
+import { osloTodayKey } from '@/utils/dateUtils';
 import { MapPin, ChevronRight } from '@/lib/icons';
 import type { MappedCourse } from '@/hooks/use-course-detail';
 import type { CourseSession } from '@/types/database';
@@ -47,6 +50,14 @@ interface CourseOverviewTabProps {
   /** All session rows (date + time per occurrence). Renders the Timeplan card
    *  for every format: single one-day, multi-day single, and weekly series. */
   sessions: CourseSession[];
+  /** Sessions query still loading — the Timeplan card shows a skeleton. */
+  sessionsLoading?: boolean;
+  /** Sessions query failed — the Timeplan card shows an inline error, never a
+   *  false "no dates yet". */
+  sessionsError?: boolean;
+  /** Participant-derived stats (Påmeldte/Inntekt) couldn't load — render `–`
+   *  instead of a fabricated 0. */
+  statsUnavailable?: boolean;
 }
 
 const WAITING_STATUSES = new Set(['pending', 'restricted']);
@@ -128,6 +139,9 @@ export function CourseOverviewTab({
   onPublish,
   publishing,
   sessions,
+  sessionsLoading = false,
+  sessionsError = false,
+  statsUnavailable = false,
 }: CourseOverviewTabProps) {
   const isSeries = course.format === 'series';
   const isFree = course.price <= 0;
@@ -145,11 +159,17 @@ export function CourseOverviewTab({
   const stats: [string, string][] = [
     [
       'Påmeldte',
-      course.capacity > 0 ? `${enrolledCount} / ${course.capacity}` : String(enrolledCount),
+      statsUnavailable
+        ? '–'
+        : course.capacity > 0
+          ? `${enrolledCount} / ${course.capacity}`
+          : String(enrolledCount),
     ],
     // Inntekt is omitted on 0 kr courses — no money flow, the zero would be
-    // a dead metric.
-    ...(hasPaidTier ? ([['Inntekt', formatKroner(revenue)]] as [string, string][]) : []),
+    // a dead metric. On a participant-fetch failure it reads `–`, not a fake 0.
+    ...(hasPaidTier
+      ? ([['Inntekt', statsUnavailable ? '–' : formatKroner(revenue)]] as [string, string][])
+      : []),
     ['Pris', course.price > 0 ? formatKroner(course.price) : 'Gratis'],
   ];
 
@@ -177,6 +197,8 @@ export function CourseOverviewTab({
       <div className="grid gap-4 lg:grid-cols-2">
         <TimeplanCard
           sessions={ordered}
+          loading={sessionsLoading}
+          error={sessionsError}
           progressUnit={isSeries ? 'Uke' : 'Dag'}
           onEditSession={onEditSession}
           onOpenAll={onOpenKursplan}
@@ -304,16 +326,51 @@ function ReadinessCard({
 
 function TimeplanCard({
   sessions,
+  loading = false,
+  error = false,
   progressUnit,
   onEditSession,
   onOpenAll,
 }: {
   sessions: CourseSession[];
+  loading?: boolean;
+  error?: boolean;
   progressUnit: 'Uke' | 'Dag';
   onEditSession: (id: string) => void;
   onOpenAll: () => void;
 }) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = osloTodayKey();
+
+  // Sessions failed to load — an inline error (not a false "no dates yet"), so
+  // the editor state is never mistaken for the authoritative schedule.
+  if (error) {
+    return (
+      <FramedCard title="Timeplan">
+        <FramedCardPanel className="items-center justify-center p-5">
+          <ErrorState
+            variant="inline"
+            title="Kunne ikke laste timene."
+            message="Last siden på nytt."
+          />
+        </FramedCardPanel>
+      </FramedCard>
+    );
+  }
+
+  if (loading) {
+    return (
+      <FramedCard title="Timeplan">
+        <FramedCardPanel className="gap-3 p-5">
+          <div className="space-y-3" role="status" aria-label="Laster timer">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-5 w-36" />
+          </div>
+        </FramedCardPanel>
+      </FramedCard>
+    );
+  }
+
   const statusLabel = timeplanHeaderStatus(sessions, today, progressUnit);
 
   if (sessions.length <= 1) {

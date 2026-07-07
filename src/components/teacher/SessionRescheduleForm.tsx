@@ -92,7 +92,8 @@ export function SessionRescheduleForm({
         <div>
           <Label htmlFor="reschedule-date">Dato</Label>
           <div className="mt-2">
-            <DatePicker id="reschedule-date" value={newDate} onChange={setNewDate} />
+            {/* Past dates can't be scheduled — same floor as the builder. */}
+            <DatePicker id="reschedule-date" value={newDate} onChange={setNewDate} fromDate={new Date()} />
           </div>
         </div>
 

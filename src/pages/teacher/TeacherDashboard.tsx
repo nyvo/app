@@ -155,14 +155,15 @@ const TeacherDashboard = () => {
   }, [queryClient, sellerId]);
 
   // Drawer actions mirror the course page; invalidation refreshes the lists.
-  const handleCancelEnrollment = async (signupId: string, refund: boolean) => {
+  const handleCancelEnrollment = async (signupId: string, refund: boolean): Promise<boolean> => {
     const { error } = await teacherCancelSignup(signupId, { refund });
     if (error) {
       toast.error(friendlyError(error, 'Kunne ikke avbestille påmeldingen.'));
-      return;
+      return false;
     }
     toast.success(refund ? 'Påmelding avbestilt og refusjon behandlet' : 'Påmelding avbestilt');
     refetchDashboardData();
+    return true;
   };
 
   useMultiTableSubscription(

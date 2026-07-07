@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ChevronRight, FileText, MoreHorizontal } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorState } from '@/components/ui/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { UnsavedChangesDialog, useUnsavedChanges } from '@/components/ui/unsaved-changes';
@@ -93,6 +94,92 @@ function minToTime(mins: number): string {
 }
 
 /**
+ * Build the desired-session payload for `save_course_schedule` from the current
+ * editor + form state. Pure + exported so the 🔴 data-loss guard is unit-tested
+ * in isolation.
+ *
+ * Returns `null` to mean "leave sessions untouched" (the RPC skips the session
+ * diff). The critical invariant: for a single-format course, an unpopulated
+ * editor — empty, still loading, or a failed sessions fetch — MUST yield `null`,
+ * never `[]`, because `[]` deletes every session row on a draft.
+ */
+export function computeDesiredSessions(args: {
+  format: 'single' | 'series';
+  status: string;
+  sessionDays: SessionDay[];
+  sessions: CourseSession[];
+  sessionsLoading: boolean;
+  sessionsError: boolean;
+  settingsDate?: Date;
+  settingsTime: string;
+  settingsDuration: number | null;
+}): DesiredSession[] | null {
+  const {
+    format, status, sessionDays, sessions,
+    sessionsLoading, sessionsError, settingsDate, settingsTime, settingsDuration,
+  } = args;
+
+  const editorAuthoritative =
+    format === 'single' && !sessionsLoading && !sessionsError && sessionDays.length > 0;
+
+  if (editorAuthoritative) {
+    return sessionDays
+      .map((day): DesiredSession | null => {
+        const isExisting = !day.id.startsWith('new-');
+        if (!day.date || !day.startTime) {
+          // Incomplete editor row: keep an existing session untouched;
+          // an incomplete new row has nothing to create yet.
+          return isExisting ? { id: day.id, keep: true } : null;
+        }
+        return {
+          id: isExisting ? day.id : null,
+          session_date: formatLocalYMD(day.date),
+          start_time: day.startTime,
+          end_time: day.endTime || null,
+        };
+      })
+      .filter((d): d is DesiredSession => d !== null);
+  }
+
+  if (format !== 'single' && sessions.length > 0) {
+    const sorted = [...sessions].sort((a, b) => a.session_number - b.session_number);
+    if (status === 'draft' && settingsDate) {
+      // Draft series: startdato/tid edits regenerate the weekly session dates.
+      // The sync_course_date_bounds DB trigger keeps courses.start_date/end_date
+      // in step with the session rows.
+      return sorted.map((s, i) => {
+        const d = new Date(settingsDate);
+        d.setDate(settingsDate.getDate() + i * 7);
+        const startTime = settingsTime || s.start_time.slice(0, 5);
+        // Carry the end time (start + duration) onto every row, so a draft
+        // series save persists the full slot instead of leaving end_time null.
+        const endTime = settingsDuration
+          ? minToTime(timeToMin(startTime) + settingsDuration)
+          : s.end_time
+            ? s.end_time.slice(0, 5)
+            : null;
+        return {
+          id: s.id,
+          session_date: formatLocalYMD(d),
+          start_time: startTime,
+          end_time: endTime,
+        };
+      });
+    }
+    if (settingsTime) {
+      // Published series: bulk-apply start time (dates locked once live).
+      return sorted.map((s) => ({
+        id: s.id,
+        session_date: s.session_date,
+        start_time: settingsTime,
+      }));
+    }
+  }
+
+  return null;
+}
+
+/**
  * Course not-found shell — wraps the canonical NotFoundState in the
  * teacher-layout scroll container + mobile header so chrome stays consistent
  * with the rest of the dashboard.
@@ -122,11 +209,14 @@ const CoursePage = () => {
   const {
     course: courseData,
     sessions,
+    sessionsLoading,
+    sessionsError,
     participants,
     participantsLoading,
     participantsError,
     loading: isLoading,
-    error,
+    notFound,
+    courseLoadError,
     setCourse: setCourseData,
     setMaxParticipants,
     maxParticipants,
@@ -134,7 +224,11 @@ const CoursePage = () => {
     refetch,
   } = useCourseDetail(courseId);
 
-  const [activeTab, setActiveTab] = useState<TabKey>('oversikt');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const initialTab: TabKey =
+    tabParam === 'pameldte' || tabParam === 'rediger' ? tabParam : 'oversikt';
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
   // When set, the sessions modal opens straight into reschedule for this
   // session (the Timeplan pencil); null opens the full list ("Se alle timer").
@@ -202,7 +296,7 @@ const CoursePage = () => {
     setSettingsDropInPrice(courseData.dropInPrice);
     setSettingsAcceptsLateSignups(courseData.acceptsLateSignups);
     setSettingsPrice(courseData.price);
-    if (courseData.startDate) setSettingsDate(new Date(courseData.startDate));
+    if (courseData.startDate) setSettingsDate(parseLocalDate(courseData.startDate));
   }, [courseData, sessionsStartTime]);
 
   // Populate per-day session editor from loaded sessions (single format only).
@@ -242,7 +336,7 @@ const CoursePage = () => {
         if (day.endTime !== origEnd) return true;
       }
     } else {
-      const origDate = courseData.startDate ? new Date(courseData.startDate).toDateString() : '';
+      const origDate = courseData.startDate ? parseLocalDate(courseData.startDate).toDateString() : '';
       const currDate = settingsDate ? settingsDate.toDateString() : '';
       if (currDate !== origDate) return true;
       // Compare against the session rows' time; skip until they've loaded so
@@ -299,6 +393,28 @@ const CoursePage = () => {
     )),
     [participants],
   );
+
+  // Tab ↔ URL sync (?tab=), matching the app's existing convention. Writing on
+  // change keeps the tab shareable/back-navigable; reading happens on mount.
+  const handleTabChange = (next: TabKey) => {
+    setActiveTab(next);
+    const params = new URLSearchParams(searchParams);
+    if (next === 'oversikt') params.delete('tab');
+    else params.set('tab', next);
+    setSearchParams(params, { replace: true });
+  };
+
+  // Unpublishing removes the Påmeldte tab (drafts have no signups view). If the
+  // user was on it, fall back to Oversikt so they aren't stranded on a hidden panel.
+  useEffect(() => {
+    if (courseData?.status === 'draft' && activeTab === 'pameldte') {
+      setActiveTab('oversikt');
+      const params = new URLSearchParams(searchParams);
+      params.delete('tab');
+      setSearchParams(params, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseData?.status, activeTab]);
 
   const handleMessageAllParticipants = () => {
     if (participantEmails.length === 0) return;
@@ -357,49 +473,20 @@ const CoursePage = () => {
         duration: settingsDuration,
       };
 
-      // Desired full session state for the RPC's server-side diff.
-      let desiredSessions: DesiredSession[] | null = null;
-      if (courseData.format === 'single') {
-        desiredSessions = sessionDays
-          .map((day): DesiredSession | null => {
-            const isExisting = !day.id.startsWith('new-');
-            if (!day.date || !day.startTime) {
-              // Incomplete editor row: keep an existing session untouched;
-              // an incomplete new row has nothing to create yet.
-              return isExisting ? { id: day.id, keep: true } : null;
-            }
-            return {
-              id: isExisting ? day.id : null,
-              session_date: formatLocalYMD(day.date),
-              start_time: day.startTime,
-              end_time: day.endTime || null,
-            };
-          })
-          .filter((d): d is DesiredSession => d !== null);
-      } else if (sessions.length > 0) {
-        const sorted = [...sessions].sort((a, b) => a.session_number - b.session_number);
-        if (courseData.status === 'draft' && settingsDate) {
-          // Draft series: startdato/tid edits regenerate the weekly session
-          // dates. The sync_course_date_bounds DB trigger keeps
-          // courses.start_date/end_date in step with the session rows.
-          desiredSessions = sorted.map((s, i) => {
-            const d = new Date(settingsDate);
-            d.setDate(settingsDate.getDate() + i * 7);
-            return {
-              id: s.id,
-              session_date: formatLocalYMD(d),
-              start_time: settingsTime || s.start_time.slice(0, 5),
-            };
-          });
-        } else if (settingsTime) {
-          // Published series: bulk-apply start time (dates locked once live).
-          desiredSessions = sorted.map((s) => ({
-            id: s.id,
-            session_date: s.session_date,
-            start_time: settingsTime,
-          }));
-        }
-      }
+      // Desired full session state for the RPC's server-side diff. The 🔴
+      // data-loss guard (empty/loading/errored editor → null, never []) lives
+      // in this pure helper so it can be unit-tested in isolation.
+      const desiredSessions = computeDesiredSessions({
+        format: courseData.format === 'series' ? 'series' : 'single',
+        status: courseData.status,
+        sessionDays,
+        sessions,
+        sessionsLoading,
+        sessionsError,
+        settingsDate,
+        settingsTime,
+        settingsDuration,
+      });
 
       // One transactional RPC: course fields + drop-in tier + session diff
       // all commit or none do. The old browser-side write loop (and its
@@ -465,7 +552,13 @@ const CoursePage = () => {
           : null,
       );
       refetch();
-      toast.success('Endringer lagret');
+      // The RPC silently drops brand-new days on a published course — tell the
+      // teacher instead of letting the edit look like it applied.
+      if (result.skipped_new_days > 0) {
+        toast.success('Lagret, men nye dager kan ikke legges til på et publisert kurs.');
+      } else {
+        toast.success('Endringer lagret');
+      }
     } catch {
       setSaveError('Noe gikk galt. Prøv igjen.');
     } finally {
@@ -535,14 +628,15 @@ const CoursePage = () => {
     }
   };
 
-  const handleCancelEnrollment = async (signupId: string, refund: boolean) => {
+  const handleCancelEnrollment = async (signupId: string, refund: boolean): Promise<boolean> => {
     const { error: cancelError } = await teacherCancelSignup(signupId, { refund });
     if (cancelError) {
       toast.error(friendlyError(cancelError, 'Kunne ikke avbestille påmeldingen.'));
-      return;
+      return false;
     }
     toast.success(refund ? 'Påmelding avbestilt og refusjon behandlet' : 'Påmelding avbestilt');
     refetchParticipants();
+    return true;
   };
 
   // Drop-in toggle is instant-commit (not part of batched save). Optimistic
@@ -577,7 +671,12 @@ const CoursePage = () => {
   const handleDropInPriceBlur = async () => {
     if (!courseId || !courseData) return;
     if (!settingsAllowsDropIn) return;
-    if (settingsDropInPrice <= 0) return;
+    // Invalid blur (empty/0/NaN): reset to the persisted price instead of
+    // leaving an unsynced phantom value that a later action could commit.
+    if (!Number.isFinite(settingsDropInPrice) || settingsDropInPrice <= 0) {
+      setSettingsDropInPrice(courseData.dropInPrice);
+      return;
+    }
     if (settingsDropInPrice === courseData.dropInPrice) return;
     const previousPrice = courseData.dropInPrice;
     setCourseData((prev) => (prev ? { ...prev, dropInPrice: settingsDropInPrice } : prev));
@@ -631,7 +730,10 @@ const CoursePage = () => {
         notify_participants: true,
       });
       if (cancelError) {
-        setSaveError(friendlyError(cancelError, 'Kunne ikke avlyse kurset.'));
+        // Cancellation failure is its own concern — surface it as a toast, not
+        // in the DirtyFormBar's saveError (which sits next to unrelated
+        // save/discard buttons).
+        toast.error(friendlyError(cancelError, 'Kunne ikke avlyse kurset.'));
         setShowCancelPreview(false);
         return;
       }
@@ -639,11 +741,11 @@ const CoursePage = () => {
         ? `Kurset er avlyst. ${result.refunds_processed} ${result.refunds_processed === 1 ? 'refusjon' : 'refusjoner'} behandlet, ${result.notifications_sent} ${result.notifications_sent === 1 ? 'deltaker' : 'deltakere'} varslet.`
         : 'Kurset er avlyst.';
       setShowCancelPreview(false);
-      toast.success('Kurs avlyst');
+      toast.success(message);
       bypass();
-      navigate(routes.courses, { state: { message } });
+      navigate(routes.courses);
     } catch (err) {
-      setSaveError(friendlyError(err, 'Kunne ikke avlyse kurset. Prøv igjen.'));
+      toast.error(friendlyError(err, 'Kunne ikke avlyse kurset. Prøv igjen.'));
       setShowCancelPreview(false);
     } finally {
       setIsDeleting(false);
@@ -708,7 +810,7 @@ const CoursePage = () => {
     setSettingsDropInPrice(courseData.dropInPrice);
     // Drop-in is instant-commit, so it's intentionally NOT reset by Forkast —
     // any drop-in change has already been persisted independently.
-    if (courseData.startDate) setSettingsDate(new Date(courseData.startDate));
+    if (courseData.startDate) setSettingsDate(parseLocalDate(courseData.startDate));
     if (sessionsStartTime) setSettingsTime(sessionsStartTime);
     // Reset per-day session editor from the loaded sessions (single format).
     if (courseData.format === 'single' && sessions.length > 0) {
@@ -739,8 +841,19 @@ const CoursePage = () => {
     );
   }
 
-  if (error || !courseData) {
-    return <CourseNotFound description={error || undefined} />;
+  // Fetch failure (network/RLS) is a retryable server error — distinct from a
+  // genuine not-found, which must not read as "the course was deleted".
+  if (courseLoadError) {
+    return (
+      <div className="flex-1 overflow-y-auto bg-canvas h-full">
+        <MobileTeacherHeader />
+        <PageState variant="server-error" />
+      </div>
+    );
+  }
+
+  if (notFound || !courseData) {
+    return <CourseNotFound />;
   }
 
   // A draft has no signups yet — "Påmeldte" would be a guaranteed-empty tab, so
@@ -749,7 +862,12 @@ const CoursePage = () => {
     { key: 'oversikt', label: 'Oversikt' },
     ...(courseData.status === 'draft'
       ? []
-      : [{ key: 'pameldte' as const, label: 'Påmeldte', count: participantKpis.confirmed }]),
+      : [{
+          key: 'pameldte' as const,
+          label: 'Påmeldte',
+          // Omit the badge while loading or on error — never a fabricated 0.
+          count: participantsError || participantsLoading ? undefined : participantKpis.confirmed,
+        }]),
     { key: 'rediger', label: 'Rediger' },
   ];
 
@@ -823,7 +941,7 @@ const CoursePage = () => {
               <PageTab
                 key={t.key}
                 active={activeTab === t.key}
-                onClick={() => setActiveTab(t.key)}
+                onClick={() => handleTabChange(t.key)}
                 count={t.count}
                 id={`course-tab-trigger-${t.key}`}
                 ariaControls={`course-tab-${t.key}`}
@@ -849,6 +967,7 @@ const CoursePage = () => {
               course={courseData}
               enrolledCount={participantKpis.confirmed}
               revenue={participantKpis.revenue}
+              statsUnavailable={participantsError}
               paymentSetupStatus={currentSeller?.stripe_account_status ?? null}
               paymentSetupComplete={currentSeller?.stripe_onboarding_complete ?? false}
               paymentSetupRequired={courseHasPaidTier}
@@ -871,6 +990,8 @@ const CoursePage = () => {
               }}
               onSetupPaymentsClick={() => navigate(routes.settingsPayouts)}
               sessions={sessions}
+              sessionsLoading={sessionsLoading}
+              sessionsError={sessionsError}
             />
           )}
         </div>
@@ -917,7 +1038,7 @@ const CoursePage = () => {
               onDurationChange={setSettingsDuration}
               sessionDays={sessionDays}
               onSessionDaysChange={setSessionDays}
-              isPublished={isLive}
+              isPublished={courseData.status !== 'draft'}
               maxParticipants={maxParticipants}
               onMaxParticipantsChange={setMaxParticipants}
               currentEnrolled={courseData.enrolled || 0}
@@ -969,9 +1090,14 @@ const CoursePage = () => {
                         as a heading rather than a boxed surface. */}
                     <div className="mb-4 flex flex-wrap items-center gap-3">
                       <span className="text-lg font-medium text-foreground tabular-nums mr-auto">
-                        {courseData.capacity > 0
-                          ? `${participantKpis.confirmed} av ${courseData.capacity} plasser fylt`
-                          : `${participantKpis.confirmed} påmeldt`}
+                        {participantsLoading || participantsError
+                          ? // Don't fabricate a count before the roster loads (or when it failed).
+                            courseData.capacity > 0
+                            ? `– av ${courseData.capacity} plasser fylt`
+                            : 'Påmeldte'
+                          : courseData.capacity > 0
+                            ? `${participantKpis.confirmed} av ${courseData.capacity} plasser fylt`
+                            : `${participantKpis.confirmed} påmeldt`}
                       </span>
                       <Button
                         variant="secondary"
@@ -991,25 +1117,32 @@ const CoursePage = () => {
                     </div>
 
                     <div>
-                      {participantsError && visible.length === 0 ? (
-                      // Failed fetch ≠ empty roster — never tell the teacher
-                      // "ingen påmeldte" when we simply couldn't load them.
-                      <EmptyState
+                      {participantsLoading && visible.length === 0 ? (
+                      // Roster still loading — skeleton rows, never a false empty.
+                      <div className="divide-y divide-border-subtle" role="status" aria-label="Laster deltakere">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <div key={i} className="flex items-center gap-3 py-4">
+                            <Skeleton className="size-8 rounded-full" />
+                            <div className="min-w-0 flex-1 space-y-1.5">
+                              <Skeleton className="h-4 w-36" />
+                              <Skeleton className="h-3 w-48 max-w-full" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : participantsError && visible.length === 0 ? (
+                      // Failed fetch ≠ empty roster — offer a retry, never tell
+                      // the teacher "ingen påmeldte" when we couldn't load them.
+                      <ErrorState
                         title="Kunne ikke laste deltakerne"
-                        description="Sjekk nettet og last siden på nytt."
+                        message="Sjekk nettet og prøv igjen."
+                        onRetry={refetchParticipants}
+                        variant="inline"
                       />
                     ) : visible.length === 0 ? (
                       <EmptyState
-                        title={
-                          sortedParticipants.length === 0
-                            ? 'Ingen påmeldte ennå'
-                            : 'Ingen treff'
-                        }
-                        description={
-                          sortedParticipants.length === 0
-                            ? 'Deltakere som melder seg på, dukker opp her.'
-                            : 'Prøv et annet filter.'
-                        }
+                        title="Ingen påmeldte ennå"
+                        description="Deltakere som melder seg på, dukker opp her."
                       />
                     ) : (
                       <div>

@@ -27,7 +27,9 @@ interface ParticipantDetailDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   signup: SignupWithProfile | null;
-  onCancelEnrollment: (signupId: string, refund: boolean) => Promise<void>;
+  /** Resolves to `true` on success, `false` on failure — the drawer stays open
+   *  on failure so the error toast isn't dismissed with the panel. */
+  onCancelEnrollment: (signupId: string, refund: boolean) => Promise<boolean>;
 }
 
 type ConfirmKind = 'cancel-no-refund' | 'cancel-with-refund' | 'refund-only' | null;
@@ -224,12 +226,16 @@ export function ParticipantDetailDrawer({
       ? 'Avtales direkte'
       : paymentMethodLabel(signup.payment_product);
 
-  const runAction = async (fn: () => Promise<void>) => {
+  const runAction = async (fn: () => Promise<boolean>) => {
     setLoading(true);
     try {
-      await fn();
-      setConfirmKind(null);
-      onOpenChange(false);
+      // Only dismiss the confirm dialog + drawer when the action succeeded —
+      // a failed refund keeps them open so the teacher can retry.
+      const ok = await fn();
+      if (ok) {
+        setConfirmKind(null);
+        onOpenChange(false);
+      }
     } finally {
       setLoading(false);
     }

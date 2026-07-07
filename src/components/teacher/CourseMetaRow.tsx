@@ -1,5 +1,6 @@
 import { Calendar, Clock, MapPin } from '@/lib/icons';
 import { cn } from '@/lib/utils';
+import { toLocalDate } from '@/utils/dateUtils';
 
 /**
  * CourseMetaRow — the shared "date · time · place" line shown under a course
@@ -84,7 +85,8 @@ export function nextUpcomingSession<T extends { session_date: string }>(
 // "2026-06-09" → "tirsdag 9. juni" (nb-NO, lowercase weekday). '' on bad input.
 export function formatCourseDate(input: string | null | undefined): string {
   if (!input) return '';
-  const date = new Date(input);
+  // Local-safe parse so a date-only `YYYY-MM-DD` doesn't shift a day west of UTC.
+  const date = toLocalDate(input);
   if (Number.isNaN(date.getTime())) return '';
   return new Intl.DateTimeFormat('nb-NO', {
     weekday: 'long',
