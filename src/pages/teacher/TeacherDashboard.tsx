@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
+import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
+import { ChevronRight } from '@/lib/icons';
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
 // Lazy: IncomeChart is the only recharts consumer in product code, and
 // recharts alone is a ~350 KB chunk — keep it out of the dashboard's own
@@ -272,36 +274,33 @@ export function UpcomingCoursesSection({
   const showSkeleton = isLoading && courses === null;
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-medium text-foreground">Neste kurs</h2>
-      <div className="flex min-h-56 flex-1 flex-col">
-        {showSkeleton ? (
-          <RowsSkeleton variant="course" />
-        ) : items.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center">
-            <EmptyState
-              variant="compact"
-              title="Ingen kommende kurs"
-              description="Opprett et kurs for å fylle timeplanen."
-              action={
-                <Button asChild variant="default">
-                  <Link to={routes.coursesNew}>Opprett kurs</Link>
-                </Button>
-              }
+    <FramedCard title="Neste kurs" className="min-h-56 flex-1">
+      {showSkeleton ? (
+        <RowsSkeleton variant="course" />
+      ) : items.length === 0 ? (
+        <FramedCardPanel className="items-center justify-center">
+          <EmptyState
+            variant="compact"
+            title="Ingen kommende kurs"
+            description="Opprett et kurs for å fylle timeplanen."
+            action={
+              <Button asChild variant="default">
+                <Link to={routes.coursesNew}>Opprett kurs</Link>
+              </Button>
+            }
+          />
+        </FramedCardPanel>
+      ) : (
+        <FramedCardPanel className="divide-y divide-border-subtle">
+          {items.map((course) => (
+            <UpcomingCourseRow
+              key={`${course.id}-${course.date}-${course.time}`}
+              course={course}
             />
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {items.map((course) => (
-              <UpcomingCourseRow
-                key={`${course.id}-${course.date}-${course.time}`}
-                course={course}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
+          ))}
+        </FramedCardPanel>
+      )}
+    </FramedCard>
   );
 }
 
@@ -314,18 +313,23 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="flex items-center gap-3 rounded-xl bg-primary-subtle px-5 py-4 no-underline outline-none transition-colors duration-150 hover:bg-selection focus-visible:bg-selection focus-visible:ring-2 focus-visible:ring-ring-subtle"
+      className="group flex items-center gap-3 px-5 py-4 no-underline outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-foreground">{course.title}</p>
-        <p className="truncate text-base text-foreground">{when || '—'}</p>
+        <p className="truncate text-base text-foreground-muted">{when || '—'}</p>
       </div>
-      {hasCapacity && (
-        <span className="shrink-0 text-sm tabular-nums text-foreground">
-          {course.signups} / {course.capacity}
-        </span>
-      )}
+      {/* Trailing slot: meta at rest, chevron on hover (150ms ease-out swap —
+          transform+opacity only; hover: is hover-capable-device gated). */}
+      <span className="relative flex min-w-4 shrink-0 items-center justify-end">
+        {hasCapacity && (
+          <span className="inline-block text-sm tabular-nums text-foreground-muted transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-1 group-hover:opacity-0">
+            {course.signups} / {course.capacity}
+          </span>
+        )}
+        <ChevronRight className="absolute right-0 size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
+      </span>
     </Link>
   );
 }
@@ -345,30 +349,25 @@ export function RecentSignupsSection({
   const showSkeleton = isLoading && signups === null;
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-medium text-foreground">
-        Siste påmeldinger
-      </h2>
-      <div className="flex min-h-56 flex-1 flex-col">
-        {showSkeleton ? (
-          <RowsSkeleton variant="signup" />
-        ) : items.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center">
-            <EmptyState
-              variant="compact"
-              title="Ingen påmeldinger ennå"
-              description="Nye påmeldinger vises her."
-            />
-          </div>
-        ) : (
-          <div className="divide-y divide-border-subtle">
-            {items.map((signup) => (
-              <SignupRow key={signup.id} signup={signup} onSelect={onSelect} />
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
+    <FramedCard title="Siste påmeldinger" className="min-h-56 flex-1">
+      {showSkeleton ? (
+        <RowsSkeleton variant="signup" />
+      ) : items.length === 0 ? (
+        <FramedCardPanel className="items-center justify-center">
+          <EmptyState
+            variant="compact"
+            title="Ingen påmeldinger ennå"
+            description="Nye påmeldinger vises her."
+          />
+        </FramedCardPanel>
+      ) : (
+        <FramedCardPanel className="divide-y divide-border-subtle">
+          {items.map((signup) => (
+            <SignupRow key={signup.id} signup={signup} onSelect={onSelect} />
+          ))}
+        </FramedCardPanel>
+      )}
+    </FramedCard>
   );
 }
 
@@ -382,17 +381,18 @@ function SignupRow({
   const name = signup.profile?.name || signup.participant_name || 'Ukjent deltaker';
   const courseTitle = signup.course?.title;
   const when = signup.created_at ? formatRelativeTimePast(signup.created_at) : '';
-  // Exception-only badge (silent on paid) — mirrors the course participants
-  // list so the same entity gets the same treatment. On exception rows the
-  // badge is the one trailing token on mobile; the timestamp yields (it
-  // remains in the participant drawer).
-  const hasExceptionBadge = !!signup.payment_status && signup.payment_status !== 'paid';
+  // Actionable-only badge: pending/failed call for attention. Settled states
+  // (paid, refunded, external) stay silent here — this card is a pulse, not
+  // a ledger; the full status lives in the participant drawer. On exception
+  // rows the badge is the one trailing token on mobile; the timestamp yields.
+  const hasExceptionBadge =
+    signup.payment_status === 'pending' || signup.payment_status === 'failed';
 
   return (
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="-mx-2 flex w-full items-center gap-3 rounded-lg px-2 py-4 text-left outline-none transition-colors duration-150 cursor-pointer hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-ring-subtle"
+      className="group flex w-full items-center gap-3 px-5 py-4 text-left outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
@@ -401,16 +401,21 @@ function SignupRow({
           {courseTitle ?? 'Ny påmelding'}
         </p>
       </div>
-      {signup.payment_status && (
+      {hasExceptionBadge && signup.payment_status && (
         <PaymentBadge status={signup.payment_status} className="shrink-0" />
       )}
+      {/* Trailing slot: timestamp at rest, chevron on hover (150ms ease-out
+          swap — transform+opacity only). The badge never yields to hover. */}
       <span
         className={cn(
-          'shrink-0 text-sm tabular-nums text-foreground-muted',
-          hasExceptionBadge && 'hidden sm:inline',
+          'relative flex min-w-4 shrink-0 items-center justify-end',
+          hasExceptionBadge && 'hidden sm:flex',
         )}
       >
-        {when}
+        <span className="inline-block text-sm tabular-nums text-foreground-muted transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-1 group-hover:opacity-0">
+          {when}
+        </span>
+        <ChevronRight className="absolute right-0 size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
       </span>
     </button>
   );
@@ -421,13 +426,13 @@ function SignupRow({
 function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
   // Mirrors the real row anatomy (leading 40px block + two 24px text lines +
   // trailing meta) so the list doesn't jump in height when data lands — and
-  // the real container recipe (tinted cards for courses, hairline rows for
-  // signups) so loading never flashes the wrong shape.
+  // the real container recipe (divided rows inside the white inset) so
+  // loading never flashes the wrong shape.
   if (variant === 'course') {
     return (
-      <div className="flex flex-col gap-3">
+      <FramedCardPanel className="divide-y divide-border-subtle">
         {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-xl bg-primary-subtle px-5 py-4">
+          <div key={i} className="flex items-center gap-3 px-5 py-4">
             <Skeleton className="size-10 rounded-lg" />
             <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
               <Skeleton className="h-3.5 w-32" />
@@ -436,14 +441,14 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
             <Skeleton className="h-3.5 w-8 shrink-0" />
           </div>
         ))}
-      </div>
+      </FramedCardPanel>
     );
   }
 
   return (
-    <div className="divide-y divide-border-subtle">
+    <FramedCardPanel className="divide-y divide-border-subtle">
       {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 py-4">
+        <div key={i} className="flex items-center gap-3 px-5 py-4">
           <Skeleton className="size-10 rounded-full" />
           <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
             <Skeleton className="h-3.5 w-32" />
@@ -452,7 +457,7 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
           <Skeleton className="h-3.5 w-8 shrink-0" />
         </div>
       ))}
-    </div>
+    </FramedCardPanel>
   );
 }
 

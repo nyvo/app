@@ -11,11 +11,14 @@ const config: Record<PaymentStatus, { variant: BadgeVariant; label: string }> = 
   paid:     { variant: 'success',     label: 'Betalt' },
   pending:  { variant: 'warning',     label: 'Venter på betaling' },
   failed:   { variant: 'destructive', label: 'Betaling feilet' },
-  refunded: { variant: 'neutral',     label: 'Refundert' },
+  // Settled/historical states use the quietest tier (plain muted text) —
+  // they inform, they don't call for action, so they shouldn't compete with
+  // "Venter på betaling" in dense lists.
+  refunded: { variant: 'subtle',      label: 'Refundert' },
   // Historical only: the off-platform payment path is deleted (all paid
   // bookings go through Stripe) and 'external' can no longer be minted. The
   // entry stays because the DB enum keeps the value for old rows.
-  external: { variant: 'neutral',     label: 'Betales direkte' },
+  external: { variant: 'subtle',      label: 'Betales direkte' },
 };
 
 interface PaymentBadgeProps {

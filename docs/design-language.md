@@ -29,16 +29,18 @@ only. Categorical blues (`--category-*`) are identity markers only.
 2. **No brand color on chrome.** Primary actions are near-black fills
    (`bg-foreground text-background`). Active states are grey fills
    (`bg-muted`) or foreground text. The blue primary appears only as sprinkle:
-   inline links, selected-state tint (`--selection-light`), framed-card tint
-   (`--primary-subtle` + `--primary-border`).
+   inline links and genuine SELECTED/semantic states (`--selection-light`,
+   `bg-primary-subtle` on a chosen booking tier, calendar days with
+   availability). Never on containers, cards, or list-item fills — no
+   exceptions; those are neutral (`bg-muted` shells / white insets).
 3. **Hierarchy through spacing and the tier gaps, not bold weights.** The tiers:
    surface → border → muted text (`text-foreground-muted`) → foreground. Weight
    contrast is `font-medium` vs normal; `font-semibold` is rare (stat figures,
    page titles), `font-bold` is effectively banned in app UI.
-4. **Soft-rounded, not pill-everything.** Surfaces use the 4–10px radius scale;
-   text buttons share the input radius (`rounded-xl`, 10px) so they sit flush
-   with form fields; only icon-only buttons, chips, badges, and avatars are
-   fully round.
+4. **Soft-rounded surfaces, pill actions.** Surfaces (cards, panels, fields)
+   use the 4–10px radius scale; ALL buttons are pills (`rounded-full`) — the
+   pill is the action affordance, the soft rectangle is the surface/field
+   affordance. Chips, badges, and avatars are also fully round.
 5. **Flat with subtle depth.** No shadows on resting cards. Two sanctioned
    exceptions: `shadow-soft` on the focal floating cards (booking rail, checkout
    summary, receipt pane — paired with `rounded-2xl`), and `shadow-float` on
@@ -57,7 +59,9 @@ All tokens live in `src/index.css` (3-layer OKLCH: primitives → semantic →
 | Page background | `bg-background` (white) |
 | Dashboard page background | `bg-canvas` (= white; legacy name) |
 | Utility panel fill (secondary content) | `bg-panel` — the only grey fill muted text is AA on |
-| Tinted interactive card + hover | `bg-primary-subtle` → `hover:bg-selection` |
+| Grouped-content container (dashboard sections, course-detail overview) | `FramedCard` (`@/components/teacher/FramedCard`): `rounded-2xl bg-muted p-2` shell, title in header, white inset with hairline rows → `hover:bg-hover` |
+| Interactive item card directly on white (schedule entries, modal rows) | `bg-muted` → `hover:bg-pressed`; full `text-foreground` inside |
+| Selected-state / semantic tint | `bg-primary-subtle` + `--selection-light` — chosen booking tier, calendar availability; never a generic card fill |
 | Floating focal card (booking rail, checkout) | `bg-surface` + `border-border-card` + `shadow-soft` — the ONLY carded surface |
 | THE light neutral fill (secondary buttons, active nav, chips) | `bg-muted` |
 | Hover / pressed fill on any surface, any theme | `bg-hover` / `bg-pressed` (foreground ink @ 6% / 12%) |
@@ -65,7 +69,7 @@ All tokens live in `src/index.css` (3-layer OKLCH: primitives → semantic →
 | Secondary text (AA on white) | `text-foreground-muted` |
 | Decorative glyphs/icons only (fails AA for text) | `text-foreground-subtle` |
 | Primary action fill | `bg-foreground text-background` |
-| Sprinkle accent (links, selected) | `text-primary`, `--selection-light`, `bg-primary-subtle` + `border-primary-border` |
+| Sprinkle accent (links, selected states only) | `text-primary`, `--selection-light`, `bg-primary-subtle` (selected tier / availability) |
 | Status | `text-success` / `-warning` / `-danger` / `-info`; tinted fills via the `-subtle` pair (never `/10` opacity hacks) |
 | Categorical identity markers (tags, chart series) | `bg-category-1/2/3` — small marker fills only, never text/surfaces/actions |
 | Dividers | `border-border-subtle` (hairline) or `border-border` (visible, on white) |
@@ -81,10 +85,10 @@ App scale (do not import 16–20px card radii from other systems):
 - `rounded-sm` 4px — tight chips, mini thumbs
 - `rounded-md` 6px — small controls (text fields themselves are `rounded-xl`)
 - `rounded-lg` 8px — list rows, badges, image thumbs
-- `rounded-xl` 10px — **THE surface radius**: cards, panels, dialogs, text buttons, fields
+- `rounded-xl` 10px — **THE surface radius**: cards, panels, dialogs, fields
 - `rounded-2xl` 12px — marketing surfaces + focal floating cards (with `shadow-soft`)
 - `rounded-3xl` 16px — oversized marketing bands
-- `rounded-full` — icon-only buttons, chips/badges, avatars, status dots
+- `rounded-full` — ALL buttons (text + icon-only), chips/badges, avatars, status dots
 
 ### Spacing
 
@@ -193,7 +197,7 @@ compile. Arbitrary sizes only below 12px (`text-[11px]` etc.) — never in the
   hover; row actions, nav), `soft` (persistent muted circle for icon controls:
   close ×, kebab, share), `outline` (special-case emphasis on filled/photo
   surfaces — default to `secondary` instead), `destructive`, `link`, `plain`.
-- Text buttons are `rounded-xl` (sit flush with inputs); icon-only are circular.
+- ALL buttons are pills (`rounded-full`) — text and icon-only alike.
 - Heights: 44px default/cta, 40px `lg` (modal footers). Touch surfaces: minimum 44px.
 - No hover scale/lift; the default variant deliberately has no hover darken
   (near-black + darken reads as noise).
@@ -204,9 +208,18 @@ Three recipes — pick by role:
 
 1. **Invisible card (table/list rows):** no fill, no border. Separation =
    `border-subtle` hairline + tall padding. Hover: `bg-hover`, `rounded-lg`.
-2. **Framed/tinted card (interactive or selected list items):** selected state
-   uses `--selection-light`; framed emphasis cards use `bg-primary-subtle` +
-   `border-primary-border`. No shadow.
+2. **Grouped-content container — `FramedCard`:** the ONE container pattern,
+   used identically on the dashboard home (incl. the Inntekt chart) and the
+   course-detail overview. Neutral `rounded-2xl bg-muted p-2` shell,
+   `text-sm font-medium` title (+ optional action) in the frame header.
+   Block content (chart, stat spine, copy) sits in ONE white
+   `FramedCardPanel` inset; list content renders each item as its OWN
+   white `rounded-xl bg-surface` card in the gap-1.5 column. Interactive
+   items do NOT change fill on hover — affordance is cursor, chevron nudge,
+   focus ring. Never azure — container color carries no meaning. Items
+   sitting DIRECTLY on the white page (schedule entries, modal rows)
+   invert: `bg-muted` fill, `hover:bg-pressed`, full `text-foreground`
+   inside. A row's SELECTED state — and only that — uses the azure tint.
 3. **Utility panel:** `bg-panel`, `rounded-xl`, no border, no shadow — page
    background is white; `border-card` + `shadow-soft` survives only on floating
    focal cards (booking rail, checkout, landing hero).
@@ -231,17 +244,19 @@ foreground underline. No pill tabs, no boxed tabs.
 
 ### Inputs
 
-Filled and borderless: `bg-muted` with a transparent border, `rounded-xl`.
-Focus: `border-foreground` + soft ring. Inside grey panels, fields override to
-`bg-background dark:bg-muted` so they don't vanish. `--input` no longer edges
-text fields. Labels above inputs: `text-sm font-medium text-foreground` (not
+Bordered and white: `bg-surface` with a `border-border` edge, `rounded-xl`.
+Focus: `border-foreground` + soft ring. Disabled: `bg-muted` grey fill — the
+filled look is the DISABLED affordance, which is why resting fields are never
+filled. Labels above inputs: `text-sm font-medium text-foreground` (not
 muted — labels are read).
 
 ### Chips / badges / status
 
 Soft-rounded or full pill, `bg-muted` fill, foreground or muted text, `text-xs`,
 medium. Status = a small `bg-success` / `bg-danger` dot beside muted text, or a
-`-subtle` tinted pill (`bg-success-subtle text-success`) — never a saturated
+`-subtle` tinted pill (`bg-success-subtle text-success`); settled/historical
+states (Refundert, Betales direkte) use the quietest tier — the Badge
+`subtle` variant, plain muted text with no fill — never a saturated
 filled badge, never color alone (pair with text). Selection on choice chips =
 fill change (`--selection-light` or `bg-muted`), never a colored border alone.
 

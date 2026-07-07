@@ -1015,7 +1015,7 @@ const CoursePage = () => {
                       <div>
                         {/* Column header — anchored at the leading edge so the
                             "Navn" label sits above the avatar+name unit. */}
-                        <div className={cn(PARTICIPANT_COLS, 'hidden md:grid px-4 py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
+                        <div className={cn(PARTICIPANT_COLS, 'hidden md:grid py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
                           <span>Navn</span>
                           <span>Notat</span>
                           <span>Status</span>
@@ -1037,7 +1037,7 @@ const CoursePage = () => {
                                 onClick={() => setSelectedParticipantId(p.id)}
                                 className={cn(
                                   PARTICIPANT_COLS,
-                                  'w-full text-left px-4 py-4 transition-colors cursor-pointer',
+                                  'w-full text-left py-4 transition-colors cursor-pointer',
                                   'hover:bg-hover focus-visible:bg-hover outline-none',
                                   isCancelled && 'opacity-60',
                                 )}
