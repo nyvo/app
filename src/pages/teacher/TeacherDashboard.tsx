@@ -1,4 +1,4 @@
-import { useState, useCallback, lazy, Suspense } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { routes } from '@/lib/routes';
@@ -94,6 +94,13 @@ const TeacherDashboard = () => {
   const queryClient = useQueryClient();
   const [incomeRange, setIncomeRange] = useState<IncomeRange>('month');
   const [selectedSignupId, setSelectedSignupId] = useState<string | null>(null);
+  // Snapshot of the drawer's signup, taken at click time and refreshed only
+  // while the row is still present in the top-3 cache. A realtime refetch can
+  // drop the row out of that top-3 window while the drawer is open — without
+  // this snapshot the drawer would blank mid-read instead of just going stale.
+  const [selectedSignupSnapshot, setSelectedSignupSnapshot] = useState<SignupWithDetails | null>(
+    null,
+  );
 
   // Server state on TanStack Query. What the old hand-rolled version needed
   // bespoke code for comes free here: background refetch errors keep
@@ -122,9 +129,9 @@ const TeacherDashboard = () => {
     },
   });
 
-  // Income chart — keyed on the range so toggling Uke/Måned/År is cached per
-  // range; keepPreviousData shows the old series while the next one loads
-  // instead of flashing a skeleton.
+  // Income chart — keyed on the range so toggling 7/30 dager/12 mnd is
+  // cached per range; keepPreviousData shows the old series while the next
+  // one loads instead of flashing a skeleton.
   const incomeQuery = useQuery({
     queryKey: ['income-series', sellerId, incomeRange],
     enabled: !!sellerId,
@@ -176,6 +183,24 @@ const TeacherDashboard = () => {
     currentSeller?.id,
   );
 
+  const handleSelectSignup = useCallback(
+    (signupId: string) => {
+      setSelectedSignupId(signupId);
+      setSelectedSignupSnapshot(
+        recentSignupsQuery.data?.find((s) => s.id === signupId) ?? null,
+      );
+    },
+    [recentSignupsQuery.data],
+  );
+
+  // Keep the snapshot current while the row is still present; otherwise keep
+  // the last-known value rather than blanking the open drawer.
+  useEffect(() => {
+    if (selectedSignupId === null) return;
+    const fresh = recentSignupsQuery.data?.find((s) => s.id === selectedSignupId);
+    if (fresh) setSelectedSignupSnapshot(fresh);
+  }, [recentSignupsQuery.data, selectedSignupId]);
+
   const dashboardCourses = nextSessionsQuery.data ?? null;
   const recentSignupsRaw = recentSignupsQuery.data ?? null;
   const incomeSeries = incomeQuery.data ?? null;
@@ -188,6 +213,11 @@ const TeacherDashboard = () => {
     (recentSignupsQuery.isError && recentSignupsQuery.data === undefined)
       ? 'Kunne ikke laste oversikten.'
       : null;
+  const incomeLoadFailed = incomeQuery.isError && incomeQuery.data === undefined;
+  const retryDashboardLists = useCallback(() => {
+    void nextSessionsQuery.refetch();
+    void recentSignupsQuery.refetch();
+  }, [nextSessionsQuery, recentSignupsQuery]);
 
   return (
     <div className="flex-1 overflow-y-auto bg-canvas h-full">
@@ -201,21 +231,35 @@ const TeacherDashboard = () => {
             <ErrorState
               title="Kunne ikke laste oversikten"
               message={loadError}
-              onRetry={() => window.location.reload()}
+              onRetry={retryDashboardLists}
             />
           ) : (
             <div className="space-y-12">
               {/* Chart-first is deliberate here (kept 2026-07-07 after an
                   audit proposed list-first per ui-patterns §2.5). */}
               <div className="space-y-3">
-                <Suspense fallback={<Skeleton className="h-[280px] w-full rounded-lg" />}>
-                  <IncomeChart
-                    series={incomeSeries}
-                    isLoading={incomeSeries === null}
-                    range={incomeRange}
-                    onRangeChange={setIncomeRange}
-                  />
-                </Suspense>
+                {incomeLoadFailed ? (
+                  <FramedCard title="Inntekt">
+                    <FramedCardPanel className="items-center justify-center">
+                      <ErrorState
+                        variant="inline"
+                        title="Kunne ikke laste inntekten"
+                        message="Prøv igjen om litt."
+                        onRetry={() => incomeQuery.refetch()}
+                      />
+                    </FramedCardPanel>
+                  </FramedCard>
+                ) : (
+                  <Suspense fallback={<Skeleton className="h-[280px] w-full rounded-lg" />}>
+                    <IncomeChart
+                      series={incomeSeries}
+                      isLoading={incomeSeries === null}
+                      isFetching={incomeQuery.isFetching && !incomeQuery.isPending}
+                      range={incomeRange}
+                      onRangeChange={setIncomeRange}
+                    />
+                  </Suspense>
+                )}
                 {!isPro && monthPlatformFee > 0 && (
                   <PlatformFeeHint feeNok={monthPlatformFee} />
                 )}
@@ -226,7 +270,7 @@ const TeacherDashboard = () => {
                 <RecentSignupsSection
                   signups={recentSignupsRaw}
                   isLoading={isLoading}
-                  onSelect={setSelectedSignupId}
+                  onSelect={handleSelectSignup}
                 />
               </div>
             </div>
@@ -235,8 +279,13 @@ const TeacherDashboard = () => {
 
       <ParticipantDetailDrawer
         open={selectedSignupId !== null}
-        onOpenChange={(open) => !open && setSelectedSignupId(null)}
-        signup={recentSignupsRaw?.find((s) => s.id === selectedSignupId) ?? null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedSignupId(null);
+            setSelectedSignupSnapshot(null);
+          }
+        }}
+        signup={selectedSignupSnapshot}
         onCancelEnrollment={handleCancelEnrollment}
       />
     </div>
@@ -286,10 +335,13 @@ export function UpcomingCoursesSection({
             variant="compact"
             title="Ingen kommende kurs"
             description="Opprett et kurs for å fylle timeplanen."
-            action={
-              <Button asChild variant="default">
-                <Link to={routes.coursesNew}>Opprett kurs</Link>
-              </Button>
+            inlineLink={
+              <Link
+                to={routes.coursesNew}
+                className="font-medium text-primary hover:underline"
+              >
+                Opprett kurs →
+              </Link>
             }
           />
         </FramedCardPanel>

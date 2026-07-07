@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { routes } from '@/lib/routes'
+import { logger } from '@/lib/logger'
 import { useMultiTableSubscription } from '@/hooks/use-realtime-subscription'
 import { useSetupProgress } from '@/hooks/use-setup-progress'
 
@@ -24,6 +25,10 @@ export function useSellerSetupStatus() {
   // flips to false (realtime refreshes never set it back true), so a live
   // refresh doesn't blink the UI back to a skeleton.
   const [isLoading, setIsLoading] = useState(true)
+  // True when the courses/locations fetch itself failed — distinct from "no
+  // courses yet". Consumers must not derive an incomplete checklist from a
+  // failed fetch (a false negative), so they gate on this instead.
+  const [loadFailed, setLoadFailed] = useState(false)
 
   const refresh = useCallback(async () => {
     if (!currentSeller?.id) {
@@ -31,6 +36,7 @@ export function useSellerSetupStatus() {
       setHasPaidCourse(false)
       setHasLocation(false)
       setDraftCourseId(null)
+      setLoadFailed(false)
       setIsLoading(false)
       return
     }
@@ -40,7 +46,10 @@ export function useSellerSetupStatus() {
     // (drafts included) with a price — that's what makes the Stripe step
     // required — plus the newest draft's id so the course step can resume it
     // instead of starting over.
-    const [{ data: courses }, { count: locationCount }] = await Promise.all([
+    const [
+      { data: courses, error: coursesError },
+      { count: locationCount, error: locationsError },
+    ] = await Promise.all([
       supabase.from('courses')
         .select('id, status, price')
         .eq('seller_id', currentSeller.id)
@@ -49,11 +58,20 @@ export function useSellerSetupStatus() {
         .select('id', { count: 'exact', head: true })
         .eq('seller_id', currentSeller.id),
     ])
+    if (coursesError || locationsError) {
+      logger.error('[setup-status] fetch failed', coursesError ?? locationsError)
+      // Don't touch the signals — a failed fetch must never commit a false
+      // "nothing done yet" over the last-known (or default) state.
+      setLoadFailed(true)
+      setIsLoading(false)
+      return
+    }
     const rows = (courses ?? []) as Array<{ id: string; status: string | null; price: number | null }>
     setHasPublishedCourse(rows.some((c) => c.status !== 'draft'))
     setHasPaidCourse(rows.some((c) => (c.price ?? 0) > 0))
     setDraftCourseId(rows.find((c) => c.status === 'draft')?.id ?? null)
     setHasLocation((locationCount ?? 0) > 0)
+    setLoadFailed(false)
     setIsLoading(false)
   }, [currentSeller?.id])
 
@@ -95,5 +113,5 @@ export function useSellerSetupStatus() {
       .eq('id', profile.id)
   }, [progress.isSetupComplete, profile?.id, profile?.setup_complete_seen_at])
 
-  return { ...progress, isLoading }
+  return { ...progress, isLoading, loadFailed, refresh }
 }

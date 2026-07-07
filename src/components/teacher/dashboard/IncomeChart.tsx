@@ -10,16 +10,23 @@ import type { IncomePoint, IncomeRange, IncomeSeries } from '@/services/income'
 interface IncomeChartProps {
   series: IncomeSeries | null
   isLoading: boolean
+  /** A background refetch (range switch, revalidation) is in flight — dims
+   *  the plot so stale data under a freshly-selected tab reads as refreshing,
+   *  not final. Distinct from `isLoading`, which is the very first fetch. */
+  isFetching?: boolean
   range: IncomeRange
   onRangeChange: (range: IncomeRange) => void
   /** Override the default custom tooltip — used by dev preview to A/B variants. */
   tooltipContent?: ReactElement
 }
 
+// Labels disclose the actual rolling window (services/income.ts) — no
+// ratified design reference mandates "Uke/Måned/År", and that phrasing read
+// as calendar-aligned periods the rolling windows don't match.
 const RANGE_TABS: { key: IncomeRange; label: string }[] = [
-  { key: 'week', label: 'Uke' },
-  { key: 'month', label: 'Måned' },
-  { key: 'year', label: 'År' },
+  { key: 'week', label: '7 dager' },
+  { key: 'month', label: '30 dager' },
+  { key: 'year', label: '12 mnd' },
 ]
 
 const CHART_CONFIG = {
@@ -94,7 +101,14 @@ function EdgeTick({ x, y, payload, points }: EdgeTickProps) {
   )
 }
 
-export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipContent }: IncomeChartProps) {
+export function IncomeChart({
+  series,
+  isLoading,
+  isFetching = false,
+  range,
+  onRangeChange,
+  tooltipContent,
+}: IncomeChartProps) {
   const gradientId = useId().replace(/:/g, '')
 
   const total = series?.total ?? 0
@@ -145,7 +159,7 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
           )}
         </div>
 
-        <div className="relative mt-6">
+        <div className={cn('relative mt-6 transition-opacity', isFetching && 'opacity-60')}>
         {showEmptyMessage && (
           <p
             className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center text-sm text-foreground-muted"
