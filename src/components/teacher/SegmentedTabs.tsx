@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface SegmentedTab<T extends string> {
@@ -5,6 +6,8 @@ export interface SegmentedTab<T extends string> {
   label: string;
   /** Optional inline count rendered tabular-nums next to the label. */
   count?: number;
+  /** Optional node rendered after the label (e.g. a savings-nudge badge). */
+  trailing?: ReactNode;
 }
 
 interface SegmentedTabsProps<T extends string> {
@@ -15,9 +18,12 @@ interface SegmentedTabsProps<T extends string> {
   className?: string;
   /** Stretch the control to fill its container; each tab gets equal width. */
   stretch?: boolean;
-  /** Control height. 'md' (default) = 36px track; 'lg' = 44px track for
+  /** Control height. 'md' = 36px track; 'lg' (default) = 44px track for
    *  generous, form-first surfaces (e.g. the course builder). */
   size?: 'md' | 'lg';
+  /** ARIA pattern: 'tablist' (default) for switching between views, or
+   *  'radiogroup' for a mutually-exclusive value choice (e.g. account type). */
+  role?: 'tablist' | 'radiogroup';
 }
 
 /**
@@ -33,11 +39,36 @@ export function SegmentedTabs<T extends string>({
   className,
   stretch = false,
   size = 'lg',
+  role = 'tablist',
 }: SegmentedTabsProps<T>) {
+  const isTablist = role === 'tablist';
+  const itemRole = isTablist ? 'tab' : 'radio';
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!isTablist) return;
+    const { key } = event;
+    if (key !== 'ArrowLeft' && key !== 'ArrowRight') return;
+
+    const items = Array.from(
+      event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]:not(:disabled)'),
+    );
+    if (items.length === 0) return;
+
+    const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
+    const delta = key === 'ArrowRight' ? 1 : -1;
+    const nextIndex = ((currentIndex === -1 ? 0 : currentIndex) + delta + items.length) % items.length;
+
+    event.preventDefault();
+    const next = items[nextIndex];
+    next.focus();
+    next.click();
+  };
+
   return (
     <div
-      role="tablist"
+      role={role}
       aria-label={ariaLabel}
+      onKeyDown={handleKeyDown}
       className={cn(
         'items-center rounded-full bg-muted p-1 gap-1',
         size === 'lg' ? 'h-11' : 'h-9',
@@ -51,28 +82,26 @@ export function SegmentedTabs<T extends string>({
           <button
             key={t.key}
             type="button"
-            role="tab"
-            aria-selected={active}
+            role={itemRole}
+            aria-selected={isTablist ? active : undefined}
+            aria-checked={isTablist ? undefined : active}
+            tabIndex={isTablist ? (active ? 0 : -1) : undefined}
             onClick={() => onChange(t.key)}
             className={cn(
               'inline-flex items-center justify-center gap-2 rounded-full text-sm font-medium transition-colors',
               size === 'lg' ? 'h-9 px-4' : 'h-7 px-3',
-              'outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
+              'outline-none focus-visible:ring-2 focus-visible:ring-ring',
               stretch && 'flex-1',
-              active
-                ? 'bg-surface text-foreground shadow-xs'
-                : 'text-foreground-muted hover:text-foreground',
+              active ? 'bg-surface text-foreground shadow-xs' : 'text-foreground',
             )}
           >
             {t.label}
             {t.count !== undefined && (
-              <span className={cn(
-                'tabular-nums text-sm',
-                active ? 'text-foreground' : 'text-foreground-muted',
-              )}>
+              <span className="tabular-nums text-sm text-foreground">
                 {t.count}
               </span>
             )}
+            {t.trailing}
           </button>
         );
       })}

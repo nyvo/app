@@ -32,24 +32,22 @@ function ToggleGroup({
     spacing?: number
     orientation?: "horizontal" | "vertical"
   }) {
-  const effectiveSpacing = variant === "segmented" && spacing === 0 ? 0.5 : spacing
   return (
     <ToggleGroupPrimitive.Root
       data-slot="toggle-group"
       data-variant={variant}
       data-size={size}
-      data-spacing={effectiveSpacing}
+      data-spacing={spacing}
       data-orientation={orientation}
-      style={{ "--gap": effectiveSpacing } as React.CSSProperties}
+      style={{ "--gap": spacing } as React.CSSProperties}
       className={cn(
         "group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] rounded-md data-vertical:flex-col data-vertical:items-stretch",
-        "data-[variant=segmented]:h-9 data-[variant=segmented]:border data-[variant=segmented]:border-border data-[variant=segmented]:bg-transparent",
         className
       )}
       {...props}
     >
       <ToggleGroupContext.Provider
-        value={{ variant, size, spacing: effectiveSpacing, orientation }}
+        value={{ variant, size, spacing, orientation }}
       >
         {children}
       </ToggleGroupContext.Provider>

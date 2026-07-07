@@ -4,7 +4,8 @@ import { ChartContainer } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard'
-import { cn, formatKroner } from '@/lib/utils'
+import { SegmentedTabs } from '@/components/teacher/SegmentedTabs'
+import { formatKroner } from '@/lib/utils'
 import type { IncomePoint, IncomeRange, IncomeSeries } from '@/services/income'
 
 interface IncomeChartProps {
@@ -127,7 +128,15 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
   return (
     <FramedCard
       title="Inntekt"
-      action={<QuietRangeToggle value={range} onChange={onRangeChange} />}
+      action={
+        <SegmentedTabs
+          value={range}
+          onChange={onRangeChange}
+          tabs={RANGE_TABS}
+          ariaLabel="Velg tidsrom"
+          size="md"
+        />
+      }
     >
       <FramedCardPanel className="p-5 sm:p-6">
         <div className="flex items-baseline gap-3">
@@ -230,47 +239,6 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
         </div>
       </FramedCardPanel>
     </FramedCard>
-  )
-}
-
-/**
- * Range toggle in the FramedCard header. The active period is a WHITE chip
- * (`bg-surface`) at the system surface radius (`rounded-xl`, 10px — NOT a
- * pill; pills are action buttons). White-on-muted is the container system's
- * own figure/ground (same as the insets), so the selection anchors without
- * shouting — azure was tried here and read as off. Inactive labels are
- * muted text.
- */
-function QuietRangeToggle({
-  value,
-  onChange,
-}: {
-  value: IncomeRange
-  onChange: (range: IncomeRange) => void
-}) {
-  return (
-    <div aria-label="Velg tidsrom" className="inline-flex items-center gap-1">
-      {RANGE_TABS.map((opt) => {
-        const isActive = opt.key === value
-        return (
-          <button
-            key={opt.key}
-            type="button"
-            aria-pressed={isActive}
-            onClick={() => onChange(opt.key)}
-            className={cn(
-              'rounded-xl px-2.5 py-1 text-sm font-medium outline-none transition-colors duration-150',
-              'focus-visible:ring-2 focus-visible:ring-ring-subtle',
-              isActive
-                ? 'bg-surface text-foreground'
-                : 'text-foreground-muted hover:text-foreground focus-visible:text-foreground',
-            )}
-          >
-            {opt.label}
-          </button>
-        )
-      })}
-    </div>
   )
 }
 

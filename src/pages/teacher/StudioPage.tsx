@@ -660,6 +660,7 @@ function AccountTypeSection({
             { key: 'studio', label: 'Jeg driver et studio' },
           ]}
           ariaLabel="Kontotype"
+          role="radiogroup"
         />
         <p className="mt-3 text-sm text-foreground-muted">
           {current === 'solo'
