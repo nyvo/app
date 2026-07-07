@@ -73,7 +73,7 @@ All tokens live in `src/index.css` (3-layer OKLCH: primitives → semantic →
 | Status | `text-success` / `-warning` / `-danger` / `-info`; tinted fills via the `-subtle` pair (never `/10` opacity hacks) |
 | Categorical identity markers (tags, chart series) | `bg-category-1/2/3` — small marker fills only, never text/surfaces/actions |
 | Dividers | `border-border-subtle` (hairline) or `border-border` (visible, on white) |
-| Form-control boundary | `border-border-strong` (checkbox, switch track); text fields are borderless (filled) |
+| Form-control boundary | `border-border-strong` (checkbox, switch track); text fields are bordered white (`border-border` + `bg-surface`) — grey fill = disabled only |
 | Focus ring | `ring-2 ring-ring` (neutral foreground — never brand-colored) + offset; soft halo = `ring-ring-subtle`, never as the only cue |
 | Dark chrome (toasts, marketing bands — NOT the sidebar) | `--chrome-*` |
 | Currency | `formatKroner()` from `@/lib/utils`, always |
@@ -319,7 +319,7 @@ When touching existing code, hunt for these and convert them:
 | Pure black `#000` text | `text-foreground` |
 | `box-shadow` on resting cards/buttons | Delete; shadows only on overlays + the sanctioned focal floating cards |
 | Radii outside the scale (arbitrary `rounded-[14px]` etc.) | Nearest scale step (§2) |
-| Pill-shaped text buttons | `rounded-xl` per button.tsx |
+| Non-pill buttons (`rounded-xl`/`rounded-lg` on any button) | `rounded-full` per button.tsx — all buttons are pills |
 | Brand-colored focus rings | `ring-ring` (neutral) |
 | Left-bar / underline / colored-text active nav | `--sidebar-active` fill behind the item |
 | Colored border as selection cue | Fill change (`--selection-light` / `bg-muted`) |
@@ -342,8 +342,8 @@ alone; form-control boundaries keep 3:1 (`--border-strong`).
 
 ## 6. One-line summary (for quick prompts)
 
-> Monochrome UI on a white page: near-black `bg-foreground` primary buttons at
-> `rounded-xl`, separation via `bg-panel` fills and hairline dividers (border +
+> Monochrome UI on a white page: near-black `bg-foreground` primary buttons as
+> pills (`rounded-full`), separation via `bg-panel` fills and hairline dividers (border +
 > `shadow-soft` only on floating focal cards like the booking rail and checkout),
 > `bg-hover`/`bg-pressed` ink overlays for interaction, compressed type scale
 > with medium-weight hierarchy and muted-grey supporting text (bold banned),
