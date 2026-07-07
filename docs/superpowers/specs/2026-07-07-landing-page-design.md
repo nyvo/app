@@ -1,7 +1,38 @@
 # New landing page — structure design (wireframe stage)
 
 **Date:** 2026-07-07
-**Status:** wireframe built, awaiting user review
+**Status:** iteration 2 — styled draft built, awaiting user review
+
+## Iteration 2 (user feedback applied)
+
+Feedback: copy too cliché / selling too hard — let the product speak; yoga
+niche at launch; single CTA; get Mobbin references (incl. for the CTA band).
+
+Changes in `/dev/landing-wireframe` (now a styled draft, not a grayscale wireframe):
+- **Copy rewritten quiet**: H1 "Påmelding og betaling for yogastudioet"
+  (descriptive category, no adjective), sub "Deltakerne melder seg på og
+  betaler selv. Du får oversikten." Cut "Booking som bare virker",
+  "Ikke en chatbot", "Neste kurs kan ligge ute i kveld" and other punches.
+- **Single CTA everywhere** — secondary hero button removed.
+- **Styled on tokens**: serif display (EB Garamond) for H1/H2, ProductFrame
+  (muted panel + grain + border-card) for screenshots, bg-panel tinted cards
+  for two-surfaces (Whereby treatment), Craft-style pricing asymmetry
+  (Start = panel, Pro = focal card + shadow-soft). Dark-ink buttons are the
+  system default. Real screenshots used where assets exist.
+- **CTA band**: flat typographic variant in the page flow (recommended);
+  dark chrome variant rendered at the very bottom for side-by-side choice.
+
+Mobbin references (seen, not just linked):
+- Hero: Equals (centered short headline, one CTA, big screenshot below)
+  https://mobbin.com/sites/sections/85da8987-9cb3-438d-9fb5-2ca3efd9ab1b ;
+  Craft https://mobbin.com/sites/sections/58c31ff2-407c-4d33-933f-3b0a08528728 ;
+  Whereby tinted panel https://mobbin.com/sites/sections/9d651204-98dd-4f81-9dde-e379ddf5db8e
+- Steps: ClassPass https://mobbin.com/sites/sections/193363c3-3373-49a5-a1d0-00ff01f07b4d ;
+  Wise https://mobbin.com/sites/sections/5913d254-146e-49b6-bc26-caaee21e868e
+- Pricing: Craft https://mobbin.com/sites/sections/bed3095e-daf9-4f59-b9d9-4455f460f72b ;
+  Notion https://mobbin.com/sites/sections/7a61fd6f-bbb3-4b55-81d2-8ad406caa55b
+- CTA band: Notion "Let's talk" https://mobbin.com/sites/sections/8abed1a3-73c3-46af-a057-9e45bf8840bf ;
+  Dropbox flat band https://mobbin.com/sites/sections/04aa390b-5421-43a5-8f43-950bc6c9886f
 **Wireframe:** `/dev/landing-wireframe` (`src/pages/dev/LandingWireframe.tsx`)
 **Scope of this doc:** page structure, section jobs, copy shape, image slots. NOT visual styling (serif/grain/chrome/motion decisions come in the styling pass).
 
