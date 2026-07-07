@@ -377,7 +377,7 @@ export function SessionCard({ session }: { session: SessionRow }) {
     <Link
       to={{ search: `?kurs=${session.courseId}&sess=${session.id}&from=schedule` }}
       className={cn(
-        'block rounded-xl bg-muted px-5 py-4 outline-none transition-colors duration-150 hover:bg-pressed',
+        'block rounded-xl bg-muted px-5 py-4 outline-none transition-colors duration-150 hover:bg-hover',
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
       )}
     >
