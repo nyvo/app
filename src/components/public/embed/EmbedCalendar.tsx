@@ -370,7 +370,6 @@ function EmbedClassRow({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          aria-disabled={isDisabled || undefined}
           className="group flex items-start gap-4 rounded-xl bg-hover p-4 transition-colors hover:bg-pressed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {body}

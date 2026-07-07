@@ -200,6 +200,12 @@ export function StudioDayList({ courses, viewingSlug, viewingName, headerAction 
     return d ?? today;
   }, [days, selectedKey, today]);
 
+  // Anchor for the roving tabindex. Keyed off the *resolved* day (which
+  // falls back to today when `selectedKey` no longer matches a rendered day,
+  // e.g. after a refetch shrinks the strip) so exactly one button always
+  // stays in the tab order.
+  const tabStopKey = dateKey(selectedDay);
+
   const selectedCourses = buckets.get(selectedKey) ?? [];
   const headingDay = days[Math.min(visibleIndex, days.length - 1)] ?? selectedDay;
   const monthLabel = MONTHS_NB[headingDay.getMonth()];
@@ -252,7 +258,7 @@ export function StudioDayList({ courses, viewingSlug, viewingName, headerAction 
                   onClick={() => handleDayClick(key)}
                   aria-pressed={isSelected}
                   aria-label={`${formatLongDay(day)}, ${countLabel}`}
-                  tabIndex={isSelected ? 0 : -1}
+                  tabIndex={key === tabStopKey ? 0 : -1}
                   className={cn(
                     // Sized so a desktop row shows ~7 days with the next card
                     // cut by the viewport edge — the cut card signals scroll.
