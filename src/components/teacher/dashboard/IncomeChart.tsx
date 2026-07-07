@@ -234,10 +234,12 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
 }
 
 /**
- * Range toggle in the FramedCard header. The active period is a solid azure
- * chip — same recipe as the pressed Toggle primitive (azure = "which one" per
- * the design language), at the system surface radius (`rounded-xl`, 10px —
- * NOT a pill; pills are action buttons). Inactive labels are muted text.
+ * Range toggle in the FramedCard header. The active period is a WHITE chip
+ * (`bg-surface`) at the system surface radius (`rounded-xl`, 10px — NOT a
+ * pill; pills are action buttons). White-on-muted is the container system's
+ * own figure/ground (same as the insets), so the selection anchors without
+ * shouting — azure was tried here and read as off. Inactive labels are
+ * muted text.
  */
 function QuietRangeToggle({
   value,
@@ -260,7 +262,7 @@ function QuietRangeToggle({
               'rounded-xl px-2.5 py-1 text-sm font-medium outline-none transition-colors duration-150',
               'focus-visible:ring-2 focus-visible:ring-ring-subtle',
               isActive
-                ? 'bg-primary text-primary-foreground'
+                ? 'bg-surface text-foreground'
                 : 'text-foreground-muted hover:text-foreground focus-visible:text-foreground',
             )}
           >
