@@ -1,7 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
-import { Check } from '@/lib/icons'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
+import { Check, ChevronRight } from '@/lib/icons'
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { PageShell } from '@/components/teacher/PageShell'
 import { Button } from '@/components/ui/button'
@@ -68,9 +66,10 @@ export default function GetStartedPage() {
           <>
             {/* Go-live banner — celebratory green panel + emoji, per the
                 approved /get-started preview. Uses the success-subtle (jade-3)
-                tint with a soft jade border. The dashboard button is the
-                deliberate exit that replaces the old auto-redirect. */}
-            <div className="flex flex-col gap-4 rounded-xl border border-success/20 bg-success-subtle px-5 py-4 sm:flex-row sm:items-center">
+                tint alone (no border — the opaque tint separates by itself).
+                The dashboard button is the deliberate exit that replaces the
+                old auto-redirect. */}
+            <div className="flex flex-col gap-4 rounded-xl bg-success-subtle px-5 py-4 sm:flex-row sm:items-center">
               <span aria-hidden="true" className="shrink-0 text-2xl leading-none">
                 🎉
               </span>
@@ -136,7 +135,7 @@ function StepRow({ step, isLast }: { step: SetupStep; isLast: boolean }) {
   const rowClass = cn(
     'group flex w-full items-center gap-4 px-5 py-4 text-left no-underline',
     hasAction &&
-      'transition-colors hover:bg-muted focus-visible:outline-none focus-visible:bg-muted',
+      'transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
     !isLast && 'border-b border-border',
   )
 
@@ -167,12 +166,7 @@ function StepRow({ step, isLast }: { step: SetupStep; isLast: boolean }) {
         <span className="shrink-0 text-sm text-foreground-muted">{step.timeEstimate}</span>
       )}
       {hasAction && (
-        <HugeiconsIcon
-          icon={ArrowRight01Icon}
-          size={16}
-          strokeWidth={1.75}
-          className="text-foreground-muted shrink-0"
-        />
+        <ChevronRight className="size-4 shrink-0 text-foreground-muted" strokeWidth={1.75} />
       )}
     </>
   )

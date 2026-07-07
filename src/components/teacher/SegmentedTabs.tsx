@@ -57,7 +57,7 @@ export function SegmentedTabs<T extends string>({
             className={cn(
               'inline-flex items-center justify-center gap-2 rounded-full text-sm font-medium transition-colors',
               size === 'lg' ? 'h-9 px-4' : 'h-7 px-3',
-              'outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
+              'outline-none focus-visible:ring-2 focus-visible:ring-ring-subtle',
               stretch && 'flex-1',
               active
                 ? 'bg-surface text-foreground shadow-xs'

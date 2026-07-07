@@ -256,7 +256,7 @@ export function BillingPlanSections({
   return (
     <div className="space-y-8">
       {isPastDue && onManage && (
-        <Alert variant="warning" icon={false} className="border-transparent bg-muted">
+        <Alert variant="warning">
           <AlertTitle className="text-base">Betalingen gikk ikke gjennom</AlertTitle>
           <AlertDescription className="text-base text-foreground">
             Oppdater betalingsmåten for å beholde Pro-abonnementet.
@@ -298,8 +298,10 @@ export function BillingPlanSections({
   )
 }
 
-/** Segmented Månedlig/Årlig switch — active segment is a white pill. The yearly
- *  segment carries the savings nudge so the cheaper option sells itself. */
+/** Segmented Månedlig/Årlig switch — mirrors SegmentedTabs construction
+ *  (muted track, bg-surface + shadow-xs active pill, ring-subtle focus) but
+ *  stays bespoke because the yearly segment carries the savings nudge, which
+ *  SegmentedTabs' string labels can't render. */
 function IntervalToggle({
   interval,
   onChange,
@@ -310,7 +312,7 @@ function IntervalToggle({
   savings?: string
 }) {
   return (
-    <div className="inline-flex items-center rounded-full bg-muted p-0.5 text-sm">
+    <div className="inline-flex h-9 items-center gap-1 rounded-full bg-muted p-1 text-sm">
       {(['month', 'year'] as const).map((value) => (
         <button
           key={value}
@@ -318,9 +320,10 @@ function IntervalToggle({
           onClick={() => onChange(value)}
           aria-pressed={interval === value}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-medium transition-colors',
+            'inline-flex h-7 items-center gap-1.5 rounded-full px-3 font-medium transition-colors',
+            'outline-none focus-visible:ring-2 focus-visible:ring-ring-subtle',
             interval === value
-              ? 'bg-background text-foreground shadow-sm'
+              ? 'bg-surface text-foreground shadow-xs'
               : 'text-foreground-muted hover:text-foreground',
           )}
         >
@@ -350,7 +353,7 @@ function PlanColumn({
     <div className="flex flex-col">
       {featured ? (
         <div className="flex h-10 items-center justify-center gap-1.5 rounded-t-2xl bg-muted text-sm font-medium text-foreground">
-          <Sparkles className="size-3.5 fill-current" aria-hidden />
+          <Sparkles className="size-3.5" aria-hidden />
           {label}
         </div>
       ) : (

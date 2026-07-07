@@ -343,7 +343,7 @@ export const CourseSettingsTab = ({
                  in the past and per-session time changes happen on Oversikt
                  (notifies påmeldte) — so the fields stay visible but locked,
                  with a tooltip explaining why. */
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <FieldLabel id="settings-date-label">Startdato</FieldLabel>
                   <ScheduleLockTooltip locked={isPublished}>
@@ -410,7 +410,7 @@ export const CourseSettingsTab = ({
           title="Påmelding"
           description="Plasser og pris for nye påmeldinger."
         >
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <FieldLabel htmlFor="settings-capacity" error={isBelowEnrolled}>
                 Plasser
@@ -489,8 +489,10 @@ export const CourseSettingsTab = ({
         const showDelete = isDraft || isCancelled || (isFinished && !hasSignupRecords);
         if (!showCancel && !showDelete) return null;
         return (
-          <section className="mt-12 rounded-lg border border-danger/20 bg-danger-subtle/40 p-6">
-            <div className="divide-y divide-danger/15">
+          // Destructive zone: plain hairline rows, no red-tinted panel
+          // (ui-patterns §2.4) — matches TeacherProfilePage.
+          <section className="mt-12">
+            <div className="divide-y divide-border-subtle">
               {showCancel && (
                 <ActionRow
                   title="Avlys kurset"
@@ -580,7 +582,7 @@ function ActionRow({ title, sub, buttonLabel, onClick, tone = 'default' }: Actio
     <div className="flex flex-wrap items-center justify-between gap-4 py-5 first:pt-0 last:pb-0">
       <div className="min-w-0">
         <p className="text-base font-medium text-foreground">{title}</p>
-        <p className="text-sm text-foreground-muted mt-0.5">{sub}</p>
+        <p className="text-sm text-foreground-muted">{sub}</p>
       </div>
       <Button
         variant={tone === 'danger' ? 'destructive' : 'secondary'}

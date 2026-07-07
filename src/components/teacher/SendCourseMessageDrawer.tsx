@@ -111,7 +111,7 @@ export function SendCourseMessageDrawer({
                 disabled={submitting}
                 className="resize-y min-h-[200px]"
               />
-              <p className="mt-1.5 text-sm text-foreground-muted text-right tabular-nums">
+              <p className="mt-2 text-sm text-foreground-muted text-right tabular-nums">
                 {body.length} / {BODY_MAX}
               </p>
             </div>

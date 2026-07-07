@@ -1038,7 +1038,7 @@ const CoursePage = () => {
                                 className={cn(
                                   PARTICIPANT_COLS,
                                   'w-full text-left py-4 transition-colors cursor-pointer',
-                                  'hover:bg-hover focus-visible:bg-hover outline-none',
+                                  'hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
                                   isCancelled && 'opacity-60',
                                 )}
                               >

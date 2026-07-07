@@ -215,13 +215,11 @@ export default function BuyerDashboard() {
 
       <PageShell title={firstName ? `Hei, ${firstName}` : 'Oversikt'}>
         {loadFailed ? (
-          <div className="rounded-xl bg-panel p-6 sm:p-10">
-            <ErrorState
-              title="Kunne ikke hente påmeldingene dine"
-              message="Sjekk forbindelsen og prøv igjen."
-              onRetry={loadSignups}
-            />
-          </div>
+          <ErrorState
+            title="Kunne ikke hente påmeldingene dine"
+            message="Sjekk forbindelsen og prøv igjen."
+            onRetry={loadSignups}
+          />
         ) : signups === null ? (
           // Skeleton held back 200ms (Studio § 10 — no flash-loader for
           // sub-second loads) so a fast query stays quiet.
@@ -229,12 +227,10 @@ export default function BuyerDashboard() {
             <DashboardSkeleton />
           </DelayedFallback>
         ) : signups.length === 0 ? (
-          <div className="rounded-xl bg-panel p-6 sm:p-10">
-            <EmptyState
-              title="Ingen påmeldinger ennå"
-              description="Når du melder deg på et kurs vil du finne det her."
-            />
-          </div>
+          <EmptyState
+            title="Ingen påmeldinger ennå"
+            description="Når du melder deg på et kurs vil du finne det her."
+          />
         ) : (
           <div className="space-y-12">
             <SignupSection title="Kommende" signups={upcoming} />
