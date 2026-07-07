@@ -199,12 +199,14 @@ export function CourseOverviewTab({
   );
 }
 
-// ─── Framed card — neutral outer surface (header) + white inset panel ─────
+// ─── Framed card — azure outer surface (header) + white inset panel ───────
 //
-// A neutral-muted outer surface forms the header (title left, optional action
-// right); the content lives in a white panel inset. No shadows, no borders —
-// hierarchy comes from the fill/white contrast (azure is reserved for
-// selected states, never generic card chrome).
+// A faint-primary outer surface forms the header (title left, optional action
+// right); the content lives in a white bordered panel inset. No shadows —
+// hierarchy comes from the tint/white contrast. The azure frame is a
+// DELIBERATE reserved emphasis tier: it marks the primary object's overview
+// panels (course detail) and nowhere else — generic containers/cards stay
+// neutral so this frame keeps its meaning.
 
 function FramedCard({
   title,
@@ -216,12 +218,12 @@ function FramedCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col rounded-2xl bg-muted p-2">
+    <div className="flex flex-col rounded-2xl bg-primary-subtle p-2">
       <div className="flex items-center justify-between gap-3 px-3 py-2">
-        <p className="text-sm font-medium text-foreground">{title}</p>
-        {action && <span className="text-sm text-foreground">{action}</span>}
+        <p className="text-sm font-medium text-primary">{title}</p>
+        {action && <span className="text-sm text-primary">{action}</span>}
       </div>
-      <div className="flex flex-1 flex-col overflow-hidden rounded-xl bg-surface">
+      <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-primary-border bg-surface">
         {children}
       </div>
     </div>

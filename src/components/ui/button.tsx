@@ -6,10 +6,10 @@ import { cn } from "@/lib/utils"
 import { Spinner } from "./spinner"
 
 /**
- * Button — text buttons share the input radius (`rounded-xl`, 10px) so they
- * sit consistently alongside form fields (inputs, selects, date pickers).
- * Icon-only buttons (`size="icon"` / `icon-lg`) stay circular (`rounded-full`)
- * — the X / kebab / back / share affordances.
+ * Button — all buttons are pills (`rounded-full`, 2026-07 white-bg language):
+ * text buttons and icon-only buttons (`size="icon"` / `icon-lg`) alike.
+ * Form fields stay `rounded-xl` — the pill is the action affordance, the
+ * soft rectangle is the field affordance.
  *
  * Variant axis (color + emphasis):
  *   default    — primary action per section (max 1–2 per screen). No hover
@@ -41,7 +41,7 @@ import { Spinner } from "./spinner"
  * `default` (44px); CTAs use `cta` (44px).
  */
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-colors duration-150 ease-out outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 dark:aria-invalid:border-danger/50 dark:aria-invalid:ring-danger/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 cursor-pointer",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-colors duration-150 ease-out outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 dark:aria-invalid:border-danger/50 dark:aria-invalid:ring-danger/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 cursor-pointer",
   {
     variants: {
       variant: {

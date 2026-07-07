@@ -163,7 +163,7 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-xl border border-transparent bg-muted transition-[color,border-color,box-shadow] duration-150 ease-out',
+        'overflow-hidden rounded-xl border border-border bg-surface transition-[color,border-color,box-shadow] duration-150 ease-out',
         'focus-within:border-foreground focus-within:ring-2 focus-within:ring-foreground/15',
         className,
       )}
