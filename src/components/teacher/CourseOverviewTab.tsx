@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { MapEmbed } from '@/components/ui/map-embed';
-import { FramedCard } from '@/components/teacher/FramedCard';
+import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
 import { cn, formatKroner } from '@/lib/utils';
 import { MapPin, ChevronRight } from '@/lib/icons';
 import type { MappedCourse } from '@/hooks/use-course-detail';
@@ -209,7 +209,7 @@ export function CourseOverviewTab({
 function StatRow({ stats }: { stats: [string, string][] }) {
   return (
     <FramedCard title="Nøkkeltall">
-      <div className="flex items-stretch">
+      <FramedCardPanel className="flex-row items-stretch">
         {stats.map(([label, value], i) => (
           <Fragment key={label}>
             {/* Short inset divider — subtle, not a full-height border. */}
@@ -220,7 +220,7 @@ function StatRow({ stats }: { stats: [string, string][] }) {
             </div>
           </Fragment>
         ))}
-      </div>
+      </FramedCardPanel>
     </FramedCard>
   );
 }
@@ -278,7 +278,7 @@ function ReadinessCard({
 
   return (
     <FramedCard title="Publisering">
-      <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <FramedCardPanel className="flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-md">
           <p className="text-lg font-medium text-foreground">{heading}</p>
           <p className="mt-1.5 text-base text-foreground-muted">{sub}</p>
@@ -291,7 +291,7 @@ function ReadinessCard({
         >
           {label}
         </Button>
-      </div>
+      </FramedCardPanel>
     </FramedCard>
   );
 }
@@ -322,7 +322,7 @@ function TimeplanCard({
     // from Rediger). Fills the card next to the Sted map.
     return (
       <FramedCard title="Timeplan" action={statusLabel}>
-        <div className="flex flex-1 flex-col items-center justify-center p-5 text-center">
+        <FramedCardPanel className="items-center justify-center p-5 text-center">
           {s ? (
             <>
               <p className="text-base capitalize text-foreground-muted">{weekdayLong(s.session_date)}</p>
@@ -332,7 +332,7 @@ function TimeplanCard({
           ) : (
             <p className="text-base text-foreground-muted">Ingen dato lagt til ennå</p>
           )}
-        </div>
+        </FramedCardPanel>
       </FramedCard>
     );
   }
@@ -349,28 +349,25 @@ function TimeplanCard({
   const nextId = sessions.find((s) => s.session_date >= today && s.status !== 'cancelled')?.id;
   return (
     <FramedCard title="Timeplan" action={statusLabel}>
-      <div className="flex flex-1 flex-col p-5">
-        <div className="space-y-1">
-          {preview.map((s) => (
-            <SessionRow
-              key={s.id}
-              session={s}
-              today={today}
-              isNext={s.id === nextId}
-              onEdit={() => onEditSession(s.id)}
-            />
-          ))}
-        </div>
-        {sessions.length > preview.length && (
-          <button
-            type="button"
-            onClick={onOpenAll}
-            className="mt-3 inline-flex w-fit text-sm font-medium text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground"
-          >
-            Se alle timer
-          </button>
-        )}
-      </div>
+      {preview.map((s) => (
+        <SessionRow
+          key={s.id}
+          session={s}
+          today={today}
+          isNext={s.id === nextId}
+          onEdit={() => onEditSession(s.id)}
+        />
+      ))}
+      {sessions.length > preview.length && (
+        <button
+          type="button"
+          onClick={onOpenAll}
+          className="group flex w-full items-center justify-between rounded-xl bg-surface px-4 py-3 text-left text-sm font-medium text-foreground"
+        >
+          Se alle timer
+          <ChevronRight className="size-4 shrink-0 text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
+        </button>
+      )}
     </FramedCard>
   );
 }
@@ -412,9 +409,11 @@ function SessionRow({
     </div>
   );
 
-  const layout = '-mx-3 flex w-[calc(100%+1.5rem)] items-stretch gap-4 rounded-lg px-3 py-2';
+  // Each session is its own white card inside the frame. Hover never changes
+  // the fill — affordance is the cursor, the chevron nudge and the focus ring.
+  const layout = 'flex w-full items-stretch gap-4 rounded-xl bg-surface px-4 py-3';
 
-  // Editable (upcoming) rows are the tap target — chevron + hover, open the
+  // Editable (upcoming) rows are the tap target — chevron nudge, open the
   // reschedule modal.
   if (editable) {
     return (
@@ -422,7 +421,7 @@ function SessionRow({
         type="button"
         onClick={onEdit}
         aria-label={`Endre ${label}`}
-        className={cn(layout, 'group text-left transition-colors hover:bg-hover')}
+        className={cn(layout, 'group text-left')}
       >
         {left}
         <ChevronRight className="size-5 shrink-0 self-center text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
@@ -462,6 +461,7 @@ function StedCard({ course }: { course: MappedCourse }) {
 
   return (
     <FramedCard title="Sted">
+      <FramedCardPanel>
       <div className="p-5">
         {course.location ? (
           <>
@@ -489,6 +489,7 @@ function StedCard({ course }: { course: MappedCourse }) {
           <MapPin className="size-7 text-foreground-subtle" />
         )}
       </div>
+      </FramedCardPanel>
     </FramedCard>
   );
 }
@@ -498,9 +499,7 @@ function StedCard({ course }: { course: MappedCourse }) {
 function SettingsCard(props: TogglesSectionProps) {
   return (
     <FramedCard title="Kursinnstillinger">
-      <div className="p-5">
-        <TogglesSection {...props} />
-      </div>
+      <TogglesSection {...props} />
     </FramedCard>
   );
 }
@@ -529,25 +528,29 @@ function TogglesSection({
   onAcceptsLateSignupsChange,
 }: TogglesSectionProps) {
   return (
-    <div className="divide-y divide-border-subtle">
-      <DropInToggleRow
-        checked={allowsDropIn}
-        onChange={onAllowsDropInChange}
-        price={dropInPrice}
-        onPriceChange={onDropInPriceChange}
-        onPriceBlur={onDropInPriceBlur}
-      />
-      <ToggleRow
-        label="Tillat påmelding etter oppstart"
-        help={
-          isFree
-            ? 'Lar deltakere melde seg på etter at kurset har startet.'
-            : 'Prisen blir justert automatisk etter antall uker igjen.'
-        }
-        checked={acceptsLateSignups}
-        onChange={onAcceptsLateSignupsChange}
-      />
-    </div>
+    <>
+      <div className="rounded-xl bg-surface px-4">
+        <DropInToggleRow
+          checked={allowsDropIn}
+          onChange={onAllowsDropInChange}
+          price={dropInPrice}
+          onPriceChange={onDropInPriceChange}
+          onPriceBlur={onDropInPriceBlur}
+        />
+      </div>
+      <div className="rounded-xl bg-surface px-4">
+        <ToggleRow
+          label="Tillat påmelding etter oppstart"
+          help={
+            isFree
+              ? 'Lar deltakere melde seg på etter at kurset har startet.'
+              : 'Prisen blir justert automatisk etter antall uker igjen.'
+          }
+          checked={acceptsLateSignups}
+          onChange={onAcceptsLateSignupsChange}
+        />
+      </div>
+    </>
   );
 }
 

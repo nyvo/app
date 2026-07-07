@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
-import { FramedCard } from '@/components/teacher/FramedCard';
+import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
 // Lazy: IncomeChart is the only recharts consumer in product code, and
 // recharts alone is a ~350 KB chunk — keep it out of the dashboard's own
@@ -277,7 +277,7 @@ export function UpcomingCoursesSection({
       {showSkeleton ? (
         <RowsSkeleton variant="course" />
       ) : items.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center">
+        <FramedCardPanel className="items-center justify-center">
           <EmptyState
             variant="compact"
             title="Ingen kommende kurs"
@@ -288,16 +288,14 @@ export function UpcomingCoursesSection({
               </Button>
             }
           />
-        </div>
+        </FramedCardPanel>
       ) : (
-        <div className="divide-y divide-border-subtle">
-          {items.map((course) => (
-            <UpcomingCourseRow
-              key={`${course.id}-${course.date}-${course.time}`}
-              course={course}
-            />
-          ))}
-        </div>
+        items.map((course) => (
+          <UpcomingCourseRow
+            key={`${course.id}-${course.date}-${course.time}`}
+            course={course}
+          />
+        ))
       )}
     </FramedCard>
   );
@@ -312,7 +310,7 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="flex items-center gap-3 px-5 py-4 no-underline outline-none transition-colors duration-150 hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="flex items-center gap-3 rounded-xl bg-surface px-5 py-4 no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring-subtle"
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
@@ -347,19 +345,17 @@ export function RecentSignupsSection({
       {showSkeleton ? (
         <RowsSkeleton variant="signup" />
       ) : items.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center">
+        <FramedCardPanel className="items-center justify-center">
           <EmptyState
             variant="compact"
             title="Ingen påmeldinger ennå"
             description="Nye påmeldinger vises her."
           />
-        </div>
+        </FramedCardPanel>
       ) : (
-        <div className="divide-y divide-border-subtle">
-          {items.map((signup) => (
-            <SignupRow key={signup.id} signup={signup} onSelect={onSelect} />
-          ))}
-        </div>
+        items.map((signup) => (
+          <SignupRow key={signup.id} signup={signup} onSelect={onSelect} />
+        ))
       )}
     </FramedCard>
   );
@@ -385,7 +381,7 @@ function SignupRow({
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="flex w-full items-center gap-3 px-5 py-4 text-left outline-none transition-colors duration-150 cursor-pointer hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="flex w-full items-center gap-3 rounded-xl bg-surface px-5 py-4 text-left outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-ring-subtle"
     >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
@@ -414,13 +410,13 @@ function SignupRow({
 function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
   // Mirrors the real row anatomy (leading 40px block + two 24px text lines +
   // trailing meta) so the list doesn't jump in height when data lands — and
-  // the real container recipe (hairline rows inside the FramedCard inset)
-  // so loading never flashes the wrong shape.
+  // the real container recipe (white item cards inside the frame) so
+  // loading never flashes the wrong shape.
   if (variant === 'course') {
     return (
-      <div className="divide-y divide-border-subtle">
+      <>
         {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 px-5 py-4">
+          <div key={i} className="flex items-center gap-3 rounded-xl bg-surface px-5 py-4">
             <Skeleton className="size-10 rounded-lg" />
             <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
               <Skeleton className="h-3.5 w-32" />
@@ -429,14 +425,14 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
             <Skeleton className="h-3.5 w-8 shrink-0" />
           </div>
         ))}
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="divide-y divide-border-subtle">
+    <>
       {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 px-5 py-4">
+        <div key={i} className="flex items-center gap-3 rounded-xl bg-surface px-5 py-4">
           <Skeleton className="size-10 rounded-full" />
           <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
             <Skeleton className="h-3.5 w-32" />
@@ -445,7 +441,7 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
           <Skeleton className="h-3.5 w-8 shrink-0" />
         </div>
       ))}
-    </div>
+    </>
   );
 }
 

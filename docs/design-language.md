@@ -146,14 +146,17 @@ Three recipes — pick by role:
 1. **Invisible card (table/list rows):** no fill, no border. Separation =
    `border-subtle` hairline + tall padding. Hover: `bg-hover`, `rounded-lg`.
 2. **Grouped-content container — `FramedCard`:** the ONE container pattern,
-   used identically on the dashboard home and the course-detail overview.
-   Neutral `rounded-2xl bg-muted p-2` shell, `text-sm font-medium` title in
-   the frame header, white `rounded-xl bg-surface` inset holding hairline
-   rows (`divide-border-subtle`, `hover:bg-hover`, `ring-inset` focus).
-   Never azure — container color carries no meaning. Items sitting DIRECTLY
-   on the white page (schedule entries, modal rows) invert: `bg-muted`
-   fill, `hover:bg-pressed`, full `text-foreground` inside. A row's
-   SELECTED state — and only that — uses the azure tint.
+   used identically on the dashboard home (incl. the Inntekt chart) and the
+   course-detail overview. Neutral `rounded-2xl bg-muted p-2` shell,
+   `text-sm font-medium` title (+ optional action) in the frame header.
+   Block content (chart, stat spine, copy) sits in ONE white
+   `FramedCardPanel` inset; list content renders each item as its OWN
+   white `rounded-xl bg-surface` card in the gap-1.5 column. Interactive
+   items do NOT change fill on hover — affordance is cursor, chevron nudge,
+   focus ring. Never azure — container color carries no meaning. Items
+   sitting DIRECTLY on the white page (schedule entries, modal rows)
+   invert: `bg-muted` fill, `hover:bg-pressed`, full `text-foreground`
+   inside. A row's SELECTED state — and only that — uses the azure tint.
 3. **Utility panel:** `bg-panel`, `rounded-xl`, no border, no shadow — page
    background is white; `border-card` + `shadow-soft` survives only on floating
    focal cards (booking rail, checkout, landing hero).
@@ -188,7 +191,9 @@ muted — labels are read).
 
 Soft-rounded or full pill, `bg-muted` fill, foreground or muted text, `text-xs`,
 medium. Status = a small `bg-success` / `bg-danger` dot beside muted text, or a
-`-subtle` tinted pill (`bg-success-subtle text-success`) — never a saturated
+`-subtle` tinted pill (`bg-success-subtle text-success`); settled/historical
+states (Refundert, Betales direkte) use the quietest tier — the Badge
+`subtle` variant, plain muted text with no fill — never a saturated
 filled badge, never color alone (pair with text). Selection on choice chips =
 fill change (`--selection-light` or `bg-muted`), never a colored border alone.
 

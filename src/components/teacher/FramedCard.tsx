@@ -2,15 +2,20 @@ import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * FramedCard — THE grouped-content container: a neutral muted shell forms
- * the header (title left, optional action right); content lives in a white
- * panel inset. No shadows, no borders — hierarchy comes from the fill/white
- * contrast. Used identically on the course-detail overview and the dashboard
- * home, so grouped panels read as one system everywhere.
+ * FramedCard — THE grouped-content container: a neutral muted shell with the
+ * title in its header row; content stacks in a gap-1.5 column below. Two
+ * content shapes:
  *
+ *  - Block content (chart, stat spine, copy + action, map): wrap it in ONE
+ *    `<FramedCardPanel>` — the white inset.
+ *  - List content (sessions, signups, toggle rows): each item is its OWN
+ *    white card (`rounded-xl bg-surface` + padding), stacked with the
+ *    column gap. Interactive items do NOT change fill on hover — affordance
+ *    comes from cursor, chevron nudge, and the focus ring.
+ *
+ * Used identically on the dashboard home and the course-detail overview.
  * Deliberately neutral: azure fills are reserved for genuine selected /
- * semantic states (chosen booking tier, calendar availability) — never for
- * container chrome (design-language.md §1.2).
+ * semantic states — never container chrome (design-language.md §1.2).
  */
 export function FramedCard({
   title,
@@ -29,9 +34,27 @@ export function FramedCard({
         <h2 className="text-sm font-medium text-foreground">{title}</h2>
         {action && <span className="text-sm text-foreground">{action}</span>}
       </div>
-      <div className="flex flex-1 flex-col overflow-hidden rounded-xl bg-surface">
-        {children}
-      </div>
+      <div className="flex flex-1 flex-col gap-1.5">{children}</div>
+    </div>
+  );
+}
+
+/** The white inset for block content inside a FramedCard. */
+export function FramedCardPanel({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex flex-1 flex-col overflow-hidden rounded-xl bg-surface',
+        className,
+      )}
+    >
+      {children}
     </div>
   );
 }

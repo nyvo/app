@@ -42,6 +42,11 @@ const badgeVariants = cva(
         neutral:
           // text-foreground, not -muted: neutral-11 on neutral-3 measures 4.27:1 — below AA for badge-size text
           "bg-muted text-foreground border-transparent",
+        subtle:
+          // Quietest status tier — plain muted text, no fill. For settled /
+          // historical states (Refundert) that shouldn't compete with
+          // actionable statuses. AA-safe on white surfaces only.
+          "bg-transparent border-transparent text-foreground-muted",
         inverted:
           "bg-foreground text-background border-transparent",
         link:
