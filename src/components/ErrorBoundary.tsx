@@ -5,6 +5,13 @@ import { captureError } from '@/lib/monitoring'
 interface Props {
   children: ReactNode
   fallback?: ReactNode
+  /**
+   * When this value changes while the boundary holds an error, the boundary
+   * resets and re-renders children — lets a fallback's retry button actually
+   * remount the crashed subtree (bump a counter on retry). Optional; without
+   * it the boundary keeps its original latch-until-unmount behaviour.
+   */
+  resetKey?: unknown
 }
 
 interface State {
@@ -25,6 +32,12 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, info.componentStack)
     captureError(error, { componentStack: info.componentStack })
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false, error: null })
+    }
   }
 
   render() {

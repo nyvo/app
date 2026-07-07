@@ -95,6 +95,9 @@ const TeacherDashboard = () => {
   const queryClient = useQueryClient();
   const [incomeRange, setIncomeRange] = useState<IncomeRange>('month');
   const [selectedSignupId, setSelectedSignupId] = useState<string | null>(null);
+  // Bumped by the chart error-fallback's retry and passed as the boundary's
+  // resetKey, so retry actually remounts the crashed chart subtree.
+  const [chartRetryCount, setChartRetryCount] = useState(0);
 
   // Server state on TanStack Query. What the old hand-rolled version needed
   // bespoke code for comes free here: background refetch errors keep
@@ -205,10 +208,17 @@ const TeacherDashboard = () => {
             <div className="space-y-12">
               <div className="space-y-3">
                 <ErrorBoundary
+                  resetKey={chartRetryCount}
                   fallback={
                     <FramedCard title="Inntekt">
                       <FramedCardPanel className="items-center justify-center p-6">
-                        <ErrorState variant="inline" onRetry={refetchDashboardData} />
+                        <ErrorState
+                          variant="inline"
+                          onRetry={() => {
+                            refetchDashboardData();
+                            setChartRetryCount((count) => count + 1);
+                          }}
+                        />
                       </FramedCardPanel>
                     </FramedCard>
                   }
@@ -252,11 +262,16 @@ const TeacherDashboard = () => {
 /**
  * Suspense fallback while the IncomeChart chunk (recharts) loads — mirrors the
  * real FramedCard shell and the chart's actual height so the chunk-load swap
- * doesn't jump the layout.
+ * doesn't jump the layout. The action skeleton stands in for the h-9 (md)
+ * SegmentedTabs range control (~180px wide) so the header row keeps its
+ * real height too.
  */
 function IncomeChartFallback() {
   return (
-    <FramedCard title="Inntekt">
+    <FramedCard
+      title="Inntekt"
+      action={<Skeleton className="h-9 w-44 rounded-full" />}
+    >
       <FramedCardPanel className="p-5 sm:p-6">
         <Skeleton className="h-9 w-40" />
         <Skeleton className="mt-6 h-[220px] w-full rounded-lg sm:h-[260px]" />
