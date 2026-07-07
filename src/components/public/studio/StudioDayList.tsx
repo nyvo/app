@@ -75,8 +75,11 @@ export function StudioDayList({ courses, viewingSlug, viewingName, headerAction 
     const stride = first && second
       ? second.offsetLeft - first.offsetLeft
       : first?.offsetWidth || 1;
+    // Read the gutter off the DOM too — it steps px-4 → sm:px-6 → lg:px-8,
+    // so a hardcoded 16 desyncs the heading at wider breakpoints.
+    const gutter = parseFloat(getComputedStyle(el).paddingLeft) || 0;
     const viewportCenter = el.scrollLeft + el.clientWidth / 2;
-    const idx = Math.max(0, Math.floor((viewportCenter - 16) / stride));
+    const idx = Math.max(0, Math.floor((viewportCenter - gutter) / stride));
     setVisibleIndex(idx);
   };
 
@@ -273,7 +276,7 @@ export function StudioDayList({ courses, viewingSlug, viewingName, headerAction 
       {/* Re-keyed so switching day cross-fades the list. */}
       <div key={selectedKey} className="animate-in fade-in duration-200">
         {selectedCourses.length === 0 ? (
-          <p className="py-10 text-center text-base text-foreground-muted">
+          <p className="py-12 text-center text-base text-foreground-muted">
             {selectedKey === dateKey(today)
               ? 'Ingen flere kurs i dag.'
               : 'Ingen kurs denne dagen.'}
@@ -374,7 +377,7 @@ function ClassRow({
         </span>
         <span
           className={cn(
-            'inline-flex h-8 items-center rounded-full px-3.5 text-sm font-medium transition-colors duration-150',
+            'inline-flex h-8 items-center rounded-full px-3 text-sm font-medium transition-colors duration-150',
             isDisabled
               ? 'bg-muted text-foreground-muted'
               : 'bg-muted text-foreground group-hover:bg-foreground group-hover:text-background',

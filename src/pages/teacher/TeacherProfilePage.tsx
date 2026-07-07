@@ -156,7 +156,7 @@ const TeacherProfilePage = () => {
             >
               <div className="divide-y divide-border-subtle">
                 <PasswordRow />
-                <div className="flex items-center justify-between gap-4 px-5 py-4">
+                <div className="flex items-center justify-between gap-4 py-5">
                   <span className="text-base font-medium text-foreground">Logg ut alle enheter</span>
                   <Button
                     variant="secondary"
@@ -166,7 +166,7 @@ const TeacherProfilePage = () => {
                     Logg ut alle
                   </Button>
                 </div>
-                <div className="flex items-center justify-between gap-4 px-5 py-4">
+                <div className="flex items-center justify-between gap-4 py-5 last:pb-0">
                   <span className="text-base font-medium text-foreground">Slett kontoen din</span>
                   <Button
                     variant="destructive"

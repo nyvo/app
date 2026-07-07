@@ -201,7 +201,7 @@ const TeacherDashboard = () => {
               onRetry={() => window.location.reload()}
             />
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-12">
               <div className="space-y-3">
                 <Suspense fallback={<Skeleton className="h-[280px] w-full rounded-lg" />}>
                   <IncomeChart
@@ -291,7 +291,7 @@ export function UpcomingCoursesSection({
             />
           </div>
         ) : (
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-3">
             {items.map((course) => (
               <UpcomingCourseRow
                 key={`${course.id}-${course.date}-${course.time}`}
@@ -425,7 +425,7 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
   // signups) so loading never flashes the wrong shape.
   if (variant === 'course') {
     return (
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-3">
         {Array.from({ length: ROW_LIMIT }).map((_, i) => (
           <div key={i} className="flex items-center gap-3 rounded-xl bg-primary-subtle px-5 py-4">
             <Skeleton className="size-10 rounded-lg" />

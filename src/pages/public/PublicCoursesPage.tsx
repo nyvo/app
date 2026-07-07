@@ -209,7 +209,7 @@ const PublicCoursesPage = () => {
                   />
                 </div>
               ) : (
-                <div className="pt-10 pb-20">
+                <div className="pt-10 pb-16">
                   {filteredCourses.length === 0 ? (
                     <EmptyState
                       title="Ingen kurs i filteret"
@@ -258,9 +258,17 @@ function StudioPageSkeleton() {
               <Skeleton key={i} className="h-[104px] w-28 shrink-0 rounded-2xl" />
             ))}
           </div>
-          <div className="space-y-1 pt-2">
+          {/* Mirrors the real list rows: transparent, hairline-divided, py-5 (~84px) */}
+          <div className="divide-y divide-border-subtle pt-2">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              <div key={i} className="flex items-center gap-4 py-5 sm:gap-5">
+                <Skeleton className="size-12 shrink-0 rounded-lg" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="h-4 w-48 max-w-full" />
+                  <Skeleton className="h-3.5 w-64 max-w-full" />
+                </div>
+                <Skeleton className="hidden h-8 w-20 shrink-0 rounded-full sm:block" />
+              </div>
             ))}
           </div>
         </div>

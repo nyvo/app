@@ -388,8 +388,8 @@ export default function CourseBuilderPage() {
       <MobileTeacherHeader />
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 pb-10 pt-6 sm:px-6 lg:px-8 lg:pt-12">
-          <h1 className="mb-6 text-2xl font-medium text-foreground">Nytt kurs</h1>
+        <div className="mx-auto max-w-3xl px-4 pb-12 pt-6 sm:px-6 lg:px-8 lg:pt-12">
+          <h1 className="mb-8 text-2xl font-medium text-foreground">Nytt kurs</h1>
 
           <div className="flex flex-col">
             {/* Cover banner */}
@@ -480,7 +480,7 @@ export default function CourseBuilderPage() {
                 {/* Series format: Startdato + Tidspunkt + Antall uker */}
                 {format === 'series' && (
                   <>
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <Field
                         label="Startdato"
                         htmlFor="cb-date"
@@ -614,7 +614,7 @@ export default function CourseBuilderPage() {
                   />
                 </Field>
 
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <Field
                     label="Antall plasser"
                     htmlFor="cb-capacity"
@@ -669,7 +669,7 @@ export default function CourseBuilderPage() {
 
       {/* Pinned footer */}
       <div className="border-t border-border bg-background">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-3 sm:px-6 lg:px-8">
           <Button
             variant="ghost"
             size="lg"

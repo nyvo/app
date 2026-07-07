@@ -87,7 +87,8 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-header"
-      className={cn("flex flex-col gap-1.5 px-6 py-4 border-b border-border", className)}
+      // py-5 = drawer-header canon; pr-14 clears the absolute 44px close button (top-4 right-4)
+      className={cn("flex flex-col gap-1.5 px-6 py-5 pr-14 border-b border-border", className)}
       {...props}
     />
   )

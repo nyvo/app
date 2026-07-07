@@ -997,7 +997,6 @@ const CoursePage = () => {
                       <EmptyState
                         title="Kunne ikke laste deltakerne"
                         description="Sjekk nettet og last siden på nytt."
-                        className="py-12"
                       />
                     ) : visible.length === 0 ? (
                       <EmptyState
@@ -1011,7 +1010,6 @@ const CoursePage = () => {
                             ? 'Deltakere som melder seg på, dukker opp her.'
                             : 'Prøv et annet filter.'
                         }
-                        className="py-12"
                       />
                     ) : (
                       <div>
@@ -1039,7 +1037,7 @@ const CoursePage = () => {
                                 onClick={() => setSelectedParticipantId(p.id)}
                                 className={cn(
                                   PARTICIPANT_COLS,
-                                  'w-full text-left px-4 py-3 transition-colors cursor-pointer',
+                                  'w-full text-left px-4 py-4 transition-colors cursor-pointer',
                                   'hover:bg-hover focus-visible:bg-hover outline-none',
                                   isCancelled && 'opacity-60',
                                 )}

@@ -64,7 +64,7 @@ function SignupRow({ signup }: { signup: BuyerSignup }) {
   const courseUrl = teamSlug && course?.slug ? routes.publicCourse(teamSlug, course.slug) : null
 
   return (
-    <li className="flex items-start gap-4 p-3.5 sm:items-center">
+    <li className="flex items-start gap-4 p-4 sm:items-center">
       <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted">
         {course?.image_url ? (
           <img src={course.image_url} alt="" className="absolute inset-0 size-full object-cover" />
@@ -128,13 +128,13 @@ function SignupRow({ signup }: { signup: BuyerSignup }) {
 // jump when the single query lands.
 function DashboardSkeleton() {
   return (
-    <div className="space-y-10" role="status" aria-live="polite">
+    <div className="space-y-12" role="status" aria-live="polite">
       <span className="sr-only">Laster…</span>
       <section>
         <Skeleton className="mb-3 h-4 w-20" />
         <ul className="divide-y divide-border-subtle">
           {Array.from({ length: 3 }).map((_, i) => (
-            <li key={i} className="flex items-start gap-4 p-3.5 sm:items-center">
+            <li key={i} className="flex items-start gap-4 p-4 sm:items-center">
               <Skeleton className="size-16 shrink-0 rounded-md" />
               <div className="min-w-0 flex-1 space-y-2">
                 <Skeleton className="h-4 w-40 max-w-full" />
@@ -236,7 +236,7 @@ export default function BuyerDashboard() {
             />
           </div>
         ) : (
-          <div className="space-y-10">
+          <div className="space-y-12">
             <SignupSection title="Kommende" signups={upcoming} />
             <SignupSection title="Tidligere" signups={past} />
           </div>

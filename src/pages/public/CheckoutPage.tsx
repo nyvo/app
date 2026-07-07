@@ -364,7 +364,7 @@ const CheckoutPage = () => {
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-6 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-8 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
           <div className="space-y-6 max-w-[552px] min-w-0">
             {step === 'contact' || isFree ? (
               <>
@@ -429,7 +429,7 @@ const CheckoutPage = () => {
                           rows={4}
                         />
                       </Field>
-                      <div className="pt-1">
+                      <div>
                         <label className="flex items-start gap-3 cursor-pointer text-sm text-foreground">
                           <Checkbox
                             id="terms"
@@ -615,7 +615,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <label htmlFor={htmlFor} className="text-sm font-medium text-foreground">
         {label}
       </label>
@@ -741,7 +741,7 @@ function CheckoutSummary({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-card bg-surface shadow-soft">
-      <div className="p-5 space-y-5">
+      <div className="p-6 space-y-5">
         {/* Course header — thumbnail + identity, so the buyer can see what
             they're paying for, like Airbnb/Expedia checkout summaries. */}
         <div className="flex gap-3">
@@ -766,7 +766,7 @@ function CheckoutSummary({
             <div className="border-t border-border" />
             {!isFree && (
               <>
-                <div className="space-y-2 text-base">
+                <div className="space-y-2.5 text-base">
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="text-foreground-muted">{selectedTier.label}</span>
                     <span className="tabular-nums text-foreground-muted">
@@ -815,7 +815,7 @@ function CheckoutSkeleton() {
       </header>
       <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">
         <Skeleton className="mb-8 h-4 w-32" />
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-6 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-8 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
           <div className="space-y-6 max-w-[552px]">
             <Skeleton className="h-20 w-full rounded-lg" />
             <Skeleton className="h-9 w-full" />

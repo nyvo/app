@@ -286,7 +286,7 @@ export const CourseSettingsTab = ({
               className="text-base"
             />
             {titleError && (
-              <FieldError id="settings-title-error" className="mt-2">
+              <FieldError id="settings-title-error">
                 {titleError}
               </FieldError>
             )}
@@ -318,7 +318,7 @@ export const CourseSettingsTab = ({
               onChange={handleLocationChange}
             />
             {locationError && (
-              <FieldError id="settings-location-error" className="mt-2">
+              <FieldError id="settings-location-error">
                 {locationError}
               </FieldError>
             )}
@@ -436,7 +436,7 @@ export const CourseSettingsTab = ({
                 className="text-left"
               />
               {isBelowEnrolled && (
-                <FieldError className="mt-2 tabular-nums">
+                <FieldError className="tabular-nums">
                   {currentEnrolled} er allerede påmeldt — kan ikke være lavere.
                 </FieldError>
               )}
@@ -577,7 +577,7 @@ function FieldLabel({
 
 function ActionRow({ title, sub, buttonLabel, onClick, tone = 'default' }: ActionRowProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
+    <div className="flex flex-wrap items-center justify-between gap-4 py-5 first:pt-0 last:pb-0">
       <div className="min-w-0">
         <p className="text-base font-medium text-foreground">{title}</p>
         <p className="text-sm text-foreground-muted mt-0.5">{sub}</p>

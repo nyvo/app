@@ -215,7 +215,7 @@ function TicketTileButton({
       aria-checked={selected}
       onClick={onSelect}
       className={cn(
-        'ios-ease w-full rounded-xl border px-3.5 py-2.5 text-left',
+        'ios-ease w-full rounded-xl border px-4 py-3 text-left',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         selected
           ? 'border-primary bg-selection-light'

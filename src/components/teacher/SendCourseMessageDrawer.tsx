@@ -86,7 +86,7 @@ export function SendCourseMessageDrawer({
         </SheetHeader>
 
         <div className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
             <Alert variant="info" size="sm">
               Meldingen sendes som e-post til {recipientLabel} på {courseTitle}.
             </Alert>
@@ -98,7 +98,7 @@ export function SendCourseMessageDrawer({
             )}
 
             <div>
-              <label htmlFor="message-body" className="text-sm font-medium mb-1.5 block text-foreground">
+              <label htmlFor="message-body" className="text-sm font-medium mb-2 block text-foreground">
                 Melding
               </label>
               <Textarea
