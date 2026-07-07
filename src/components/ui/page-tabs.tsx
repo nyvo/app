@@ -8,11 +8,14 @@ interface PageTabsProps {
 }
 
 /**
- * Underline tab strip (design-language §Tabs: no pill tabs, no boxed tabs).
+ * Underline tab strip with neutral-badge active state.
  *
- * Visual pattern: text labels on a bottom border — muted when inactive,
- * `font-medium text-foreground` with a 2px foreground underline when
- * active. Used as the top-level section switcher on teacher pages.
+ * Visual pattern: each tab is a small "chip" (rounded muted fill on the
+ * active one) sitting on a bottom border. The active tab gets both the
+ * underline and the badge — double signal, gentle hierarchy; a deliberate,
+ * sanctioned exception to the "no boxed tabs" rule (kept 2026-07-07 after
+ * an audit proposed removing it). Used as the top-level section switcher
+ * on teacher pages.
  *
  * Container handles role + gap + bottom border + tablist keyboard support
  * (arrow keys move focus and activate — auto-activation pattern, required
@@ -95,10 +98,21 @@ export function PageTab({
           : 'font-normal text-foreground-muted hover:text-foreground border-transparent',
       )}
     >
-      <span className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 group-focus-visible/tab:ring-2 group-focus-visible/tab:ring-ring">
+      <span
+        className={cn(
+          'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 group-focus-visible/tab:ring-2 group-focus-visible/tab:ring-ring',
+          active && 'bg-muted',
+        )}
+      >
         {children}
         {typeof count === 'number' && count > 0 && (
-          <span className="inline-flex items-center rounded-full bg-muted px-1.5 py-px text-sm font-medium text-foreground tabular-nums">
+          <span
+            className={cn(
+              'inline-flex items-center px-1.5 py-px text-foreground text-sm font-medium rounded-full tabular-nums',
+              // Inverted bg so the count stays visible against either tab state.
+              active ? 'bg-background' : 'bg-muted',
+            )}
+          >
             {count}
           </span>
         )}

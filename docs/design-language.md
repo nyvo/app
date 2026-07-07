@@ -240,7 +240,10 @@ and marketing bands only — not the sidebar.
 ### Tabs
 
 Text labels: muted inactive, `font-medium text-foreground` active with a 2px
-foreground underline. No pill tabs, no boxed tabs.
+foreground underline. No pill tabs, no boxed tabs. Sanctioned exception:
+`PageTabs`' active tab pairs the underline with a `bg-muted` chip (deliberate
+double signal, kept 2026-07-07) — don't remove it, and don't copy the chip
+into new tab components.
 
 ### Inputs
 
@@ -281,7 +284,10 @@ No axis lines, no gridlines, no boxed legends where labels can sit inline.
 Monochrome by default: inactive series in light neutral, active/current in
 `--foreground`. Series identity via `--category-1/2/3` (blue family) markers.
 Green/red only when the data itself is positive/negative. Rounded bar caps;
-small muted labels under the data.
+small muted labels under the data. Sanctioned exception: the dashboard
+`IncomeChart` keeps its faint dashed horizontal gridlines and azure
+(`--primary`) active series (deliberate, kept 2026-07-07) — the rule above
+still applies to every new chart.
 
 ### Overlays
 

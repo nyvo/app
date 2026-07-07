@@ -1,5 +1,5 @@
 import { useId, type ReactElement } from 'react'
-import { Area, AreaChart, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts'
 import { ChartContainer } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
@@ -22,14 +22,12 @@ const RANGE_TABS: { key: IncomeRange; label: string }[] = [
   { key: 'year', label: 'År' },
 ]
 
-// Monochrome chart (design-language §Charts): the active series is
-// --foreground; azure stays reserved for links/selected states.
 const CHART_CONFIG = {
-  amount: { label: 'Inntekt', color: 'var(--color-foreground)' },
+  amount: { label: 'Inntekt', color: 'var(--color-primary)' },
 } as const
 
-const STROKE = 'var(--color-foreground)'
-const FILL = 'var(--color-foreground)'
+const STROKE = 'var(--color-primary)'
+const FILL = 'var(--color-primary)'
 
 /**
  * Empty-state floor — recharts collapses an all-zero series unless we pin
@@ -170,6 +168,12 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
                 <stop offset="100%" stopColor={FILL} stopOpacity={0} />
               </linearGradient>
             </defs>
+            <CartesianGrid
+              vertical={false}
+              stroke="var(--color-border)"
+              strokeDasharray="3 5"
+              strokeOpacity={0.55}
+            />
             <XAxis
               dataKey="key"
               axisLine={false}
@@ -290,14 +294,14 @@ function IncomeTooltip({
   // previous-period row so the tooltip never implies a zero we don't have.
   const hasCurrent = point.amount != null
   return (
-    <div className="min-w-[180px] rounded-xl border border-border bg-background px-3 py-2.5 text-sm shadow-float">
+    <div className="min-w-[180px] rounded-xl border border-border bg-background px-3 py-2.5 text-sm shadow-soft">
       <div className="text-xs font-medium text-foreground-muted">Sum hittil</div>
       {/* Two tiers: the header is the quiet tier; both value rows share the
           same treatment — the markers alone tell the series apart. */}
       {hasCurrent && (
         <div className="mt-1.5 flex items-center justify-between gap-3">
           <span className="inline-flex items-center gap-2">
-            <span className="size-3 rounded-sm bg-foreground" />
+            <span className="size-3 rounded-sm bg-primary" />
             <span className="font-medium text-foreground tabular-nums">
               {formatKroner(point.amount)}
             </span>

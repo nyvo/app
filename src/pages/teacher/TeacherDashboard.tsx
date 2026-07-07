@@ -204,17 +204,8 @@ const TeacherDashboard = () => {
             />
           ) : (
             <div className="space-y-12">
-              {/* Lead with the actionable lists (ui-patterns §2.5) — the
-                  income trend is secondary and sits below. */}
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <UpcomingCoursesSection courses={dashboardCourses} isLoading={isLoading} />
-                <RecentSignupsSection
-                  signups={recentSignupsRaw}
-                  isLoading={isLoading}
-                  onSelect={setSelectedSignupId}
-                />
-              </div>
-
+              {/* Chart-first is deliberate here (kept 2026-07-07 after an
+                  audit proposed list-first per ui-patterns §2.5). */}
               <div className="space-y-3">
                 <Suspense fallback={<Skeleton className="h-[280px] w-full rounded-lg" />}>
                   <IncomeChart
@@ -227,6 +218,15 @@ const TeacherDashboard = () => {
                 {!isPro && monthPlatformFee > 0 && (
                   <PlatformFeeHint feeNok={monthPlatformFee} />
                 )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <UpcomingCoursesSection courses={dashboardCourses} isLoading={isLoading} />
+                <RecentSignupsSection
+                  signups={recentSignupsRaw}
+                  isLoading={isLoading}
+                  onSelect={setSelectedSignupId}
+                />
               </div>
             </div>
           )}
