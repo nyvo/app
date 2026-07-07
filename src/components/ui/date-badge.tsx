@@ -65,6 +65,7 @@ export function DateBadge({
 
   return (
     <div
+      role="img"
       aria-label={fullDateLabel}
       className={cn(
         'flex shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background',

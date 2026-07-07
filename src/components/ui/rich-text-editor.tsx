@@ -36,7 +36,7 @@ function ToolbarButton({ onClick, isActive, disabled, label, children }: Toolbar
       aria-label={label}
       title={label}
       className={cn(
-        'relative inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground-muted transition-colors duration-150 ease-out after:absolute after:-inset-1.5',
+        'inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground-muted transition-colors duration-150 ease-out',
         'hover:bg-muted hover:text-foreground',
         'focus-visible:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle',
         'disabled:pointer-events-none disabled:opacity-40',

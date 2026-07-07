@@ -241,7 +241,7 @@ export function ImageField({
             aria-label={ariaLabel ?? (displayUrl ? changeLabel : uploadLabel)}
             aria-invalid={displayError ? true : undefined}
             className={cn(
-              'relative size-16 shrink-0 overflow-hidden rounded-full bg-muted outline-none transition-colors focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:cursor-not-allowed',
+              'relative size-16 shrink-0 overflow-hidden rounded-full bg-muted outline-none transition-colors focus-visible:bg-active focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:cursor-not-allowed',
               !displayUrl && 'hover:bg-active',
               displayError && 'ring-2 ring-danger/20',
               isDisabled && !loading && 'opacity-50',
