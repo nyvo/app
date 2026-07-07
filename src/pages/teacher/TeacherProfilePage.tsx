@@ -181,7 +181,6 @@ const TeacherProfilePage = () => {
               <ConfirmDialog
                 open={logoutAllOpen}
                 onOpenChange={setLogoutAllOpen}
-                ariaLabel="Logg ut alle enheter"
                 title="Logg ut alle enheter"
                 body="Du blir logget ut fra alle nettlesere og enheter, inkludert denne."
                 actionLabel="Logg ut alle"
@@ -195,7 +194,6 @@ const TeacherProfilePage = () => {
                   setDeleteOpen(open);
                   if (!open) setDeleteConfirmText('');
                 }}
-                ariaLabel="Slett kontoen din"
                 title="Slett konto"
                 body={<>Kontoen <strong>{profile?.email}</strong> slettes permanent. Dette kan ikke angres.</>}
                 actionLabel="Slett konto"

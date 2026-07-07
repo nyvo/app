@@ -259,7 +259,6 @@ function IndividualView({
         <ConfirmDialog
           open={confirmLeave}
           onOpenChange={setConfirmLeave}
-          ariaLabel="Stopp visning"
           title="Stopp visning"
           body={<>Kursene dine fjernes fra siden til <strong>{host.name}</strong>.</>}
           actionLabel="Stopp visning"

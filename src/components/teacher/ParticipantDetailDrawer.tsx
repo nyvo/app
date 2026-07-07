@@ -421,7 +421,6 @@ export function ParticipantDetailDrawer({
       <ConfirmDialog
         open={confirmKind === 'cancel-no-refund'}
         onOpenChange={(o) => !o && !loading && setConfirmKind(null)}
-        ariaLabel="Avbestill påmelding"
         title="Avbestill påmelding"
         body={
           isPaid
@@ -439,7 +438,6 @@ export function ParticipantDetailDrawer({
       <ConfirmDialog
         open={confirmKind === 'cancel-with-refund'}
         onOpenChange={(o) => !o && !loading && setConfirmKind(null)}
-        ariaLabel="Avbestill og refunder"
         title="Avbestill og refunder"
         body={<><strong>{name}</strong> avbestilles og refunderes <strong>{formatKroner(signup.amount_paid ?? 0)}</strong>.</>}
         actionLabel="Avbestill og refunder"
@@ -453,7 +451,6 @@ export function ParticipantDetailDrawer({
       <ConfirmDialog
         open={confirmKind === 'refund-only'}
         onOpenChange={(o) => !o && !loading && setConfirmKind(null)}
-        ariaLabel="Refunder beløp"
         title="Refunder beløp"
         body={<><strong>{name}</strong> refunderes <strong>{formatKroner(signup.amount_paid ?? 0)}</strong>.</>}
         actionLabel="Refunder"

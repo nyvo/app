@@ -32,8 +32,10 @@ export interface ConfirmScopeListItem {
 export interface ConfirmDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** Screen-reader announcement. */
-  ariaLabel: string
+  /** Optional override of the accessible name. By default the visible title
+   *  is the accessible name (Radix wires aria-labelledby to it) — only pass
+   *  this if the announced name must differ from the visible title. */
+  ariaLabel?: string
   /** Short verb-noun title, e.g. "Avlys kurs". */
   title: React.ReactNode
   /** One sentence. Use inline <strong> for the affected entity / amount. */
@@ -73,10 +75,11 @@ function ConfirmAlertDialog(props: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {trigger}
-      {/* Radix wires aria-labelledby to AlertDialogTitle automatically; clearing
-          it lets the explicit aria-label win so ariaLabel can differ from the
-          visible title (e.g. unsaved-changes' "Ulagrede endringer" vs "Forlat siden?"). */}
-      <AlertDialogContent aria-label={ariaLabel} aria-labelledby={undefined}>
+      {/* By default Radix names the dialog via aria-labelledby → the visible
+          AlertDialogTitle, which is exactly right. Only an explicit ariaLabel
+          override clears aria-labelledby so the aria-label can win
+          (aria-labelledby beats aria-label otherwise). */}
+      <AlertDialogContent {...ariaNameOverride(ariaLabel)}>
         <ConfirmContent {...props} />
       </AlertDialogContent>
     </AlertDialog>
@@ -88,11 +91,19 @@ function ConfirmDrawer(props: ConfirmDialogProps) {
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} dismissible={!loading}>
-      <DrawerContent aria-label={ariaLabel} aria-labelledby={undefined}>
+      <DrawerContent {...ariaNameOverride(ariaLabel)}>
         <ConfirmContent {...props} mobile />
       </DrawerContent>
     </Drawer>
   )
+}
+
+/** Props replacing the default title-derived accessible name — only applied
+ *  when an explicit ariaLabel override is provided. */
+function ariaNameOverride(ariaLabel?: string) {
+  return ariaLabel
+    ? { "aria-label": ariaLabel, "aria-labelledby": undefined }
+    : {}
 }
 
 function ConfirmContent({
@@ -191,7 +202,9 @@ function ConfirmContent({
   if (mobile) {
     return (
       <>
-        <DrawerHeader>
+        {/* Without middle content the header would abut the footer — drop the
+            header's border so the seam is a single hairline, not two. */}
+        <DrawerHeader className={cn(!middleContent && "border-b-0")}>
           <DrawerTitle className="text-lg font-medium text-foreground">
             {title}
           </DrawerTitle>

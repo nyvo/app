@@ -1135,7 +1135,6 @@ const CoursePage = () => {
       <ConfirmDialog
         open={showCancelPreview}
         onOpenChange={setShowCancelPreview}
-        ariaLabel="Avlyse kurset"
         title="Avlys kurs"
         body={
           refundPreview.count > 0 ? (
@@ -1175,7 +1174,6 @@ const CoursePage = () => {
       <ConfirmDialog
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
-        ariaLabel="Slette kurset"
         title="Slett kurs"
         body={<><strong>{courseData.title}</strong> og all tilhørende data slettes permanent.</>}
         actionLabel="Slett kurs"

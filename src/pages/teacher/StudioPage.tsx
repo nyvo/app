@@ -673,7 +673,6 @@ function AccountTypeSection({
         onOpenChange={(open) => {
           if (!open && !pending) setConfirmTarget(null);
         }}
-        ariaLabel="Bytt kontotype"
         title="Bytt kontotype"
         body={
           confirmTarget === 'studio' ? (
