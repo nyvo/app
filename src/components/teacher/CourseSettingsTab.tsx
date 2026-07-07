@@ -223,9 +223,13 @@ export const CourseSettingsTab = ({
     }
 
     const normalized = Math.max(minParticipants, Math.floor(parsed));
-    // Flag when the typed value got clamped up — otherwise the silent reset
-    // reads as a bug rather than the enrollment floor doing its job.
-    setShowClampHint(parsed < minParticipants);
+    // Flag when the typed value got clamped up by the ENROLLMENT floor —
+    // otherwise the silent reset reads as a bug rather than the floor doing
+    // its job. Gated on currentEnrolled > 0 (same guard as isBelowEnrolled):
+    // with zero enrolled the floor is just "minst 1 plass", where the hint's
+    // "{0} er allerede påmeldt" copy would be untrue — that case keeps the
+    // existing silent reset to a valid value.
+    setShowClampHint(currentEnrolled > 0 && parsed < minParticipants);
     if (normalized !== maxParticipants) {
       onMaxParticipantsChange(normalized);
     }

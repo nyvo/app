@@ -599,16 +599,14 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
   }
 
   // This tab has no save bar — blur is the only commit point. While drop-in
-  // is ON, an invalid value (≤0 or cleared) must never commit silently: the
-  // input would go on showing the bad value while courseData quietly keeps
-  // the old price. Flag it inline instead and skip the commit entirely. When
-  // drop-in is OFF, 0/empty is just the unconfigured state — no error to show.
+  // is ON, an invalid value (≤0 or cleared) must never commit silently OR
+  // outlive the tab as lingering state a later "Lagre" could pick up. Flag it
+  // inline and still hand off to the parent, which reverts the state to the
+  // committed price (same snap-back grammar as the Plasser clamp — this error
+  // line is what explains the snap). When drop-in is OFF, 0/empty is just the
+  // unconfigured state — no error to show.
   function handleBlur() {
-    if (checked && price <= 0) {
-      setPriceError(true);
-      return;
-    }
-    setPriceError(false);
+    setPriceError(checked && price <= 0);
     onPriceBlur?.();
   }
 

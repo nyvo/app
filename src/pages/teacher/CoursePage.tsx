@@ -396,6 +396,13 @@ const CoursePage = () => {
         }
       }
 
+      // Defense in depth: settingsDropInPrice updates per keystroke, so an
+      // abandoned invalid edit (0/empty) on Oversikt could still be sitting in
+      // state when Lagre fires from Rediger. Never send ≤0 while the toggle is
+      // on — fall back to the committed price instead of zeroing the tier.
+      const effectiveDropInPrice =
+        settingsDropInPrice > 0 ? settingsDropInPrice : courseData.dropInPrice;
+
       // One transactional RPC: course fields + drop-in tier + session diff
       // all commit or none do. The old browser-side write loop (and its
       // committedSessions re-baselining apparatus) is gone — a failed save
@@ -403,7 +410,7 @@ const CoursePage = () => {
       const { data: result, error: saveErr } = await saveCourseSchedule({
         courseId,
         course: updateData,
-        dropIn: settingsAllowsDropIn ? { price: settingsDropInPrice } : null,
+        dropIn: settingsAllowsDropIn ? { price: effectiveDropInPrice } : null,
         sessions: desiredSessions,
       });
       if (saveErr || !result?.success) {
@@ -455,7 +462,7 @@ const CoursePage = () => {
               timeSchedule: timeSchedule || prev.timeSchedule,
               durationMinutes: settingsDuration || prev.durationMinutes,
               allowsDropIn: settingsAllowsDropIn,
-              dropInPrice: settingsDropInPrice,
+              dropInPrice: effectiveDropInPrice,
             }
           : null,
       );
@@ -581,7 +588,13 @@ const CoursePage = () => {
   const handleDropInPriceBlur = async () => {
     if (!courseId || !courseData) return;
     if (!settingsAllowsDropIn) return;
-    if (settingsDropInPrice <= 0) return;
+    if (settingsDropInPrice <= 0) {
+      // Invalid edit (0/empty) while drop-in is on: snap the state back to
+      // the committed price so it can't outlive the tab and leak into a
+      // later "Lagre" from Rediger. The row's inline error explains the snap.
+      setSettingsDropInPrice(courseData.dropInPrice);
+      return;
+    }
     if (settingsDropInPrice === courseData.dropInPrice) return;
     const previousPrice = courseData.dropInPrice;
     setCourseData((prev) => (prev ? { ...prev, dropInPrice: settingsDropInPrice } : prev));
