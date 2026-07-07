@@ -24,11 +24,11 @@ const RANGE_TABS: { key: IncomeRange; label: string }[] = [
 ]
 
 const CHART_CONFIG = {
-  amount: { label: 'Inntekt', color: 'var(--color-primary)' },
+  amount: { label: 'Inntekt', color: 'var(--color-category-1)' },
 } as const
 
-const STROKE = 'var(--color-primary)'
-const FILL = 'var(--color-primary)'
+const STROKE = 'var(--color-category-1)'
+const FILL = 'var(--color-category-1)'
 
 /**
  * Empty-state floor — recharts collapses an all-zero series unless we pin
@@ -148,7 +148,13 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
             </span>
           )}
           {hasDelta && (
-            <Badge variant={deltaVariant} size="sm" className="tabular-nums">
+            <Badge
+              variant={deltaVariant}
+              size="sm"
+              className="tabular-nums"
+              title="mot forrige periode"
+              aria-label={`${formatPercent(delta)} mot forrige periode`}
+            >
               {formatPercent(delta)}
             </Badge>
           )}
@@ -170,6 +176,7 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
           <AreaChart
             data={points}
             margin={{ top: 8, right: 8, left: 8, bottom: 18 }}
+            accessibilityLayer
           >
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -269,7 +276,7 @@ function IncomeTooltip({
       {hasCurrent && (
         <div className="mt-1.5 flex items-center justify-between gap-3">
           <span className="inline-flex items-center gap-2">
-            <span className="size-3 rounded-sm bg-primary" />
+            <span className="size-3 rounded-sm bg-category-1" />
             <span className="font-medium text-foreground tabular-nums">
               {formatKroner(point.amount)}
             </span>
