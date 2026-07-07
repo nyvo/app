@@ -95,13 +95,21 @@ columns, not shrinking rows. Err generous.
 ### Typography
 
 Use the built-in scale (`text-xs` … `text-5xl`) — per-size letter-spacing is part
-of the token; **never add `tracking-*` on top**. Display caps at `text-5xl`
-(48px); 6xl+ won't compile.
+of the token; **never add `tracking-*` on top**. One sanctioned exception:
+uppercase micro-labels at 12px or below (table headers, tiny badges) may add
+`tracking-wide` — wide tracking on uppercase is correct optics, and the scale's
+baked spacing assumes mixed case. Display caps at `text-5xl` (48px); 6xl+ won't
+compile. Arbitrary sizes only below 12px (`text-[11px]` etc.) — never in the
+12–48px range the scale covers.
 
 - App body: `text-base`. Meta/labels/controls: `text-sm`. Captions/chips: `text-xs`.
 - Page titles: `text-2xl`; dashboard hero: `text-3xl`. Public h1: `text-4xl`.
-- Weights: normal (body) and `font-medium` (labels, nav, buttons, emphasis).
-  `font-semibold` sparingly — stat figures, page titles. `font-bold`: no.
+- Weights: normal (body) and `font-medium` (labels, nav, buttons, emphasis,
+  titles, stat figures). Medium is the working ceiling — the app ships zero
+  bold and near-zero semibold; reach for `font-semibold` only when a display
+  figure genuinely needs it and say why. `font-bold`: no.
+- Long-form prose (public/legal pages, descriptions) may add `leading-relaxed`;
+  UI text keeps the token line-heights.
 - Three-tier rule: titles = medium/semibold + `text-foreground`; body = normal +
   `text-foreground`; supporting = normal + `text-foreground-muted`. Don't invent
   extra tiers with size.
