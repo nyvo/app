@@ -92,12 +92,12 @@ function minToTime(mins: number): string {
 }
 
 /**
- * Course not-found shell — wraps the canonical NotFoundState in the
- * teacher-layout scroll container + mobile header so chrome stays consistent
- * with the rest of the dashboard.
+ * Course not-found state — TeacherLayout owns the scroll container and
+ * mobile header now, so this renders just the canonical PageState (as a
+ * div: SidebarInset already provides the page's <main> landmark).
  */
 function CourseNotFound({ description }: { description?: string }) {
-  return <PageState variant="course" description={description} />;
+  return <PageState variant="course" description={description} as="div" />;
 }
 
 /**
