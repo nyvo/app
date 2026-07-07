@@ -29,11 +29,10 @@ only. Categorical blues (`--category-*`) are identity markers only.
 2. **No brand color on chrome.** Primary actions are near-black fills
    (`bg-foreground text-background`). Active states are grey fills
    (`bg-muted`) or foreground text. The blue primary appears only as sprinkle:
-   inline links, genuine SELECTED/semantic states (`--selection-light`,
+   inline links and genuine SELECTED/semantic states (`--selection-light`,
    `bg-primary-subtle` on a chosen booking tier, calendar days with
-   availability), and ONE reserved emphasis container — FramedCard on the
-   course-detail overview. Never as a generic card or list-item fill — those
-   are neutral (`bg-muted` shells / white items).
+   availability). Never on containers, cards, or list-item fills — no
+   exceptions; those are neutral (`bg-muted` shells / white insets).
 3. **Hierarchy through spacing and the tier gaps, not bold weights.** The tiers:
    surface → border → muted text (`text-foreground-muted`) → foreground. Weight
    contrast is `font-medium` vs normal; `font-semibold` is rare (stat figures,
@@ -60,9 +59,8 @@ All tokens live in `src/index.css` (3-layer OKLCH: primitives → semantic →
 | Page background | `bg-background` (white) |
 | Dashboard page background | `bg-canvas` (= white; legacy name) |
 | Utility panel fill (secondary content) | `bg-panel` — the only grey fill muted text is AA on |
-| Container card (dashboard sections) | `rounded-2xl bg-muted p-2` shell; items inside are white `bg-surface rounded-xl` cards → `hover:bg-hover` |
+| Grouped-content container (dashboard sections, course-detail overview) | `FramedCard` (`@/components/teacher/FramedCard`): `rounded-2xl bg-muted p-2` shell, title in header, white inset with hairline rows → `hover:bg-hover` |
 | Interactive item card directly on white (schedule entries, modal rows) | `bg-muted` → `hover:bg-pressed`; full `text-foreground` inside |
-| Emphasis frame (course-detail overview ONLY) | FramedCard: `bg-primary-subtle` frame + white `border-primary-border` inset — reserved; do not reuse on other cards |
 | Selected-state / semantic tint | `bg-primary-subtle` + `--selection-light` — chosen booking tier, calendar availability; never a generic card fill |
 | Floating focal card (booking rail, checkout) | `bg-surface` + `border-border-card` + `shadow-soft` — the ONLY carded surface |
 | THE light neutral fill (secondary buttons, active nav, chips) | `bg-muted` |
@@ -147,16 +145,15 @@ Three recipes — pick by role:
 
 1. **Invisible card (table/list rows):** no fill, no border. Separation =
    `border-subtle` hairline + tall padding. Hover: `bg-hover`, `rounded-lg`.
-2. **Container card + white items (dashboard sections):** a `rounded-2xl
-   bg-muted p-2` shell holds white `rounded-xl bg-surface` item cards
-   (gap-1.5), `hover:bg-hover` on interactive items; empty/skeleton states
-   render inside a white inset panel. Items sitting DIRECTLY on the white
-   page (schedule entries, modal rows) invert: `bg-muted` fill,
-   `hover:bg-pressed`, full `text-foreground` inside. A row's SELECTED
-   state — and only that — uses the azure tint. **FramedCard** (azure
-   `bg-primary-subtle` frame + white `border-primary-border` inset) is the
-   reserved emphasis tier for the course-detail overview panels — never
-   reuse it for generic containers or subscription cards.
+2. **Grouped-content container — `FramedCard`:** the ONE container pattern,
+   used identically on the dashboard home and the course-detail overview.
+   Neutral `rounded-2xl bg-muted p-2` shell, `text-sm font-medium` title in
+   the frame header, white `rounded-xl bg-surface` inset holding hairline
+   rows (`divide-border-subtle`, `hover:bg-hover`, `ring-inset` focus).
+   Never azure — container color carries no meaning. Items sitting DIRECTLY
+   on the white page (schedule entries, modal rows) invert: `bg-muted`
+   fill, `hover:bg-pressed`, full `text-foreground` inside. A row's
+   SELECTED state — and only that — uses the azure tint.
 3. **Utility panel:** `bg-panel`, `rounded-xl`, no border, no shadow — page
    background is white; `border-card` + `shadow-soft` survives only on floating
    focal cards (booking rail, checkout, landing hero).

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
+import { FramedCard } from '@/components/teacher/FramedCard';
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
 // Lazy: IncomeChart is the only recharts consumer in product code, and
 // recharts alone is a ~350 KB chunk — keep it out of the dashboard's own
@@ -272,36 +273,33 @@ export function UpcomingCoursesSection({
   const showSkeleton = isLoading && courses === null;
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-medium text-foreground">Neste kurs</h2>
-      <div className="flex min-h-56 flex-1 flex-col rounded-2xl bg-muted p-2">
-        {showSkeleton ? (
-          <RowsSkeleton variant="course" />
-        ) : items.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center rounded-xl bg-surface">
-            <EmptyState
-              variant="compact"
-              title="Ingen kommende kurs"
-              description="Opprett et kurs for å fylle timeplanen."
-              action={
-                <Button asChild variant="default">
-                  <Link to={routes.coursesNew}>Opprett kurs</Link>
-                </Button>
-              }
+    <FramedCard title="Neste kurs" className="min-h-56 flex-1">
+      {showSkeleton ? (
+        <RowsSkeleton variant="course" />
+      ) : items.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center">
+          <EmptyState
+            variant="compact"
+            title="Ingen kommende kurs"
+            description="Opprett et kurs for å fylle timeplanen."
+            action={
+              <Button asChild variant="default">
+                <Link to={routes.coursesNew}>Opprett kurs</Link>
+              </Button>
+            }
+          />
+        </div>
+      ) : (
+        <div className="divide-y divide-border-subtle">
+          {items.map((course) => (
+            <UpcomingCourseRow
+              key={`${course.id}-${course.date}-${course.time}`}
+              course={course}
             />
-          </div>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            {items.map((course) => (
-              <UpcomingCourseRow
-                key={`${course.id}-${course.date}-${course.time}`}
-                course={course}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
+          ))}
+        </div>
+      )}
+    </FramedCard>
   );
 }
 
@@ -314,7 +312,7 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="flex items-center gap-3 rounded-xl bg-surface px-5 py-4 no-underline outline-none transition-colors duration-150 hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-ring-subtle"
+      className="flex items-center gap-3 px-5 py-4 no-underline outline-none transition-colors duration-150 hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
@@ -345,30 +343,25 @@ export function RecentSignupsSection({
   const showSkeleton = isLoading && signups === null;
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-medium text-foreground">
-        Siste påmeldinger
-      </h2>
-      <div className="flex min-h-56 flex-1 flex-col rounded-2xl bg-muted p-2">
-        {showSkeleton ? (
-          <RowsSkeleton variant="signup" />
-        ) : items.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center rounded-xl bg-surface">
-            <EmptyState
-              variant="compact"
-              title="Ingen påmeldinger ennå"
-              description="Nye påmeldinger vises her."
-            />
-          </div>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            {items.map((signup) => (
-              <SignupRow key={signup.id} signup={signup} onSelect={onSelect} />
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
+    <FramedCard title="Siste påmeldinger" className="min-h-56 flex-1">
+      {showSkeleton ? (
+        <RowsSkeleton variant="signup" />
+      ) : items.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center">
+          <EmptyState
+            variant="compact"
+            title="Ingen påmeldinger ennå"
+            description="Nye påmeldinger vises her."
+          />
+        </div>
+      ) : (
+        <div className="divide-y divide-border-subtle">
+          {items.map((signup) => (
+            <SignupRow key={signup.id} signup={signup} onSelect={onSelect} />
+          ))}
+        </div>
+      )}
+    </FramedCard>
   );
 }
 
@@ -392,7 +385,7 @@ function SignupRow({
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="flex w-full items-center gap-3 rounded-xl bg-surface px-5 py-4 text-left outline-none transition-colors duration-150 cursor-pointer hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-ring-subtle"
+      className="flex w-full items-center gap-3 px-5 py-4 text-left outline-none transition-colors duration-150 cursor-pointer hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
@@ -421,13 +414,13 @@ function SignupRow({
 function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
   // Mirrors the real row anatomy (leading 40px block + two 24px text lines +
   // trailing meta) so the list doesn't jump in height when data lands — and
-  // the real container recipe (white item cards inside the muted container)
+  // the real container recipe (hairline rows inside the FramedCard inset)
   // so loading never flashes the wrong shape.
   if (variant === 'course') {
     return (
-      <div className="flex flex-col gap-1.5">
+      <div className="divide-y divide-border-subtle">
         {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-xl bg-surface px-5 py-4">
+          <div key={i} className="flex items-center gap-3 px-5 py-4">
             <Skeleton className="size-10 rounded-lg" />
             <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
               <Skeleton className="h-3.5 w-32" />
@@ -441,9 +434,9 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="divide-y divide-border-subtle">
       {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 rounded-xl bg-surface px-5 py-4">
+        <div key={i} className="flex items-center gap-3 px-5 py-4">
           <Skeleton className="size-10 rounded-full" />
           <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
             <Skeleton className="h-3.5 w-32" />
