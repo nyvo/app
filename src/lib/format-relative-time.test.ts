@@ -54,6 +54,11 @@ describe('formatRelativeTime', () => {
     expect(formatRelativeTime(new Date(2025, 4, 15, 12, 0, 0))).toBe('15. mai 2025')
   })
 
+  it('returns empty string for an unparseable timestamp instead of throwing', () => {
+    expect(() => formatRelativeTime('not-a-date')).not.toThrow()
+    expect(formatRelativeTime('not-a-date')).toBe('')
+  })
+
   it('never leaks the date-fns "omtrent"/"for … siden" envelope', () => {
     const samples = [0, 90, 45 * 60, 2 * 60 * 60, 23 * 60 * 60, 3 * 24 * 60 * 60]
     for (const s of samples) {

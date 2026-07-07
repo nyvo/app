@@ -167,6 +167,8 @@ export function useMultiTableSubscription(
 ) {
   const channelsRef = useRef<RealtimeChannel[]>([])
   const callbackRef = useRef(callback)
+  const retryTimeoutsRef = useRef<Array<ReturnType<typeof setTimeout> | null>>([])
+  const retryCountsRef = useRef<number[]>([])
 
   // Keep callback ref updated
   useEffect(() => {
@@ -174,16 +176,27 @@ export function useMultiTableSubscription(
   }, [callback])
 
   useEffect(() => {
-    if (!enabled || configs.length === 0) {
+    function teardown() {
       channelsRef.current.forEach(channel => {
-        supabase.removeChannel(channel)
+        if (channel) supabase.removeChannel(channel)
       })
       channelsRef.current = []
+      retryTimeoutsRef.current.forEach(timeout => {
+        if (timeout) clearTimeout(timeout)
+      })
+      retryTimeoutsRef.current = []
+      retryCountsRef.current = []
+    }
+
+    if (!enabled || configs.length === 0) {
+      teardown()
       return
     }
 
-    const channels = configs.map((config, index) => {
-      const { table, schema = 'public', event = '*', filter } = config
+    const MAX_RETRIES = 5
+
+    function subscribeAt(index: number) {
+      const { table, schema = 'public', event = '*', filter } = configs[index]
       const channelName = `multi-${table}-${index}-${Date.now()}-${nextChannelSeq()}`
 
       const subscriptionConfig: RealtimePostgresChangesFilter<'*'> = {
@@ -193,7 +206,7 @@ export function useMultiTableSubscription(
       }
       if (filter) subscriptionConfig.filter = filter
 
-      return supabase
+      const channel = supabase
         .channel(channelName)
         .on('postgres_changes', subscriptionConfig, () => {
           callbackRef.current()
@@ -201,17 +214,32 @@ export function useMultiTableSubscription(
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             logger.debug(`[Realtime] Multi-sub: ${table}${filter ? ` (${filter})` : ''}`)
+            retryCountsRef.current[index] = 0
+          } else if (status === 'CHANNEL_ERROR') {
+            logger.error(`[Realtime] Multi-sub error: ${table}`)
+            const retryCount = retryCountsRef.current[index] ?? 0
+            if (retryCount < MAX_RETRIES) {
+              const delay = Math.min(1000 * 2 ** retryCount, 30000)
+              retryCountsRef.current[index] = retryCount + 1
+              logger.debug(`[Realtime] Multi-sub: retrying ${table} in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`)
+              retryTimeoutsRef.current[index] = setTimeout(() => {
+                const stale = channelsRef.current[index]
+                if (stale) supabase.removeChannel(stale)
+                channelsRef.current[index] = subscribeAt(index)
+              }, delay)
+            } else {
+              logger.error(`[Realtime] Multi-sub: max retries reached for ${table}, giving up`)
+            }
           }
         })
-    })
 
-    channelsRef.current = channels
+      return channel
+    }
+
+    channelsRef.current = configs.map((_, index) => subscribeAt(index))
 
     return () => {
-      channelsRef.current.forEach(channel => {
-        supabase.removeChannel(channel)
-      })
-      channelsRef.current = []
+      teardown()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, enabled])

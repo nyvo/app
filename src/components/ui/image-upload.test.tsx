@@ -78,3 +78,18 @@ describe('ImageField — instant-save preview lifecycle', () => {
     expect(onChange).toHaveBeenCalledWith(file)
   })
 })
+
+describe('ImageField — file type validation', () => {
+  it('shows the accepted-formats message and does not call onChange for a rejected type', () => {
+    const onChange = vi.fn()
+    const { container, getByText } = render(
+      <ImageField value={null} onChange={onChange} onRemove={vi.fn()} />,
+    )
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    const file = new File(['x'], 'doc.pdf', { type: 'application/pdf' })
+    fireEvent.change(input, { target: { files: [file] } })
+
+    expect(getByText('Bildet kan ikke brukes. Bruk JPG, PNG eller WebP.')).toBeInTheDocument()
+    expect(onChange).not.toHaveBeenCalled()
+  })
+})

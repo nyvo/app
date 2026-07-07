@@ -34,7 +34,7 @@ interface ImageFieldProps {
 
 function validateFile(file: File): string | null {
   if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-    return 'Dette bildet kan ikke lastes opp. Prøv et annet bilde.'
+    return 'Bildet kan ikke brukes. Bruk JPG, PNG eller WebP.'
   }
   if (file.size > MAX_IMAGE_SIZE) {
     return `Bildet er for stort. Maks ${MAX_IMAGE_SIZE_MB} MB.`
