@@ -29,8 +29,10 @@ only. Categorical blues (`--category-*`) are identity markers only.
 2. **No brand color on chrome.** Primary actions are near-black fills
    (`bg-foreground text-background`). Active states are grey fills
    (`bg-muted`) or foreground text. The blue primary appears only as sprinkle:
-   inline links, selected-state tint (`--selection-light`), framed-card tint
-   (`--primary-subtle` + `--primary-border`).
+   inline links and genuine SELECTED/semantic states (`--selection-light`,
+   `bg-primary-subtle` on a chosen booking tier, calendar days with
+   availability). Never as a generic card or list-item fill — those are
+   neutral (`bg-muted`).
 3. **Hierarchy through spacing and the tier gaps, not bold weights.** The tiers:
    surface → border → muted text (`text-foreground-muted`) → foreground. Weight
    contrast is `font-medium` vs normal; `font-semibold` is rare (stat figures,
@@ -57,7 +59,8 @@ All tokens live in `src/index.css` (3-layer OKLCH: primitives → semantic →
 | Page background | `bg-background` (white) |
 | Dashboard page background | `bg-canvas` (= white; legacy name) |
 | Utility panel fill (secondary content) | `bg-panel` — the only grey fill muted text is AA on |
-| Tinted interactive card + hover | `bg-primary-subtle` → `hover:bg-selection` |
+| Interactive item card (schedule entries, dashboard lists) + hover | `bg-muted` → `hover:bg-pressed` — same fill as the sidebar sub-card; full `text-foreground` inside |
+| Selected-state / semantic tint | `bg-primary-subtle` + `--selection-light` — chosen booking tier, calendar availability; never a generic card fill |
 | Floating focal card (booking rail, checkout) | `bg-surface` + `border-border-card` + `shadow-soft` — the ONLY carded surface |
 | THE light neutral fill (secondary buttons, active nav, chips) | `bg-muted` |
 | Hover / pressed fill on any surface, any theme | `bg-hover` / `bg-pressed` (foreground ink @ 6% / 12%) |
@@ -65,7 +68,7 @@ All tokens live in `src/index.css` (3-layer OKLCH: primitives → semantic →
 | Secondary text (AA on white) | `text-foreground-muted` |
 | Decorative glyphs/icons only (fails AA for text) | `text-foreground-subtle` |
 | Primary action fill | `bg-foreground text-background` |
-| Sprinkle accent (links, selected) | `text-primary`, `--selection-light`, `bg-primary-subtle` + `border-primary-border` |
+| Sprinkle accent (links, selected states only) | `text-primary`, `--selection-light`, `bg-primary-subtle` (selected tier / availability) |
 | Status | `text-success` / `-warning` / `-danger` / `-info`; tinted fills via the `-subtle` pair (never `/10` opacity hacks) |
 | Categorical identity markers (tags, chart series) | `bg-category-1/2/3` — small marker fills only, never text/surfaces/actions |
 | Dividers | `border-border-subtle` (hairline) or `border-border` (visible, on white) |
@@ -141,9 +144,11 @@ Three recipes — pick by role:
 
 1. **Invisible card (table/list rows):** no fill, no border. Separation =
    `border-subtle` hairline + tall padding. Hover: `bg-hover`, `rounded-lg`.
-2. **Framed/tinted card (interactive or selected list items):** selected state
-   uses `--selection-light`; framed emphasis cards use `bg-primary-subtle` +
-   `border-primary-border`. No shadow.
+2. **Interactive item card (list items: schedule entries, dashboard rows):**
+   `bg-muted` fill, `rounded-xl`, no border, no shadow; `hover:bg-pressed`.
+   Full `text-foreground` inside (muted text fails AA on this fill). A row's
+   SELECTED state — and only that — uses the azure tint (`bg-primary-subtle`
+   or `--selection-light`).
 3. **Utility panel:** `bg-panel`, `rounded-xl`, no border, no shadow — page
    background is white; `border-card` + `shadow-soft` survives only on floating
    focal cards (booking rail, checkout, landing hero).

@@ -314,7 +314,7 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="flex items-center gap-3 rounded-xl bg-primary-subtle px-5 py-4 no-underline outline-none transition-colors duration-150 hover:bg-selection focus-visible:bg-selection focus-visible:ring-2 focus-visible:ring-ring-subtle"
+      className="flex items-center gap-3 rounded-xl bg-muted px-5 py-4 no-underline outline-none transition-colors duration-150 hover:bg-pressed focus-visible:bg-pressed focus-visible:ring-2 focus-visible:ring-ring-subtle"
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
@@ -361,7 +361,7 @@ export function RecentSignupsSection({
             />
           </div>
         ) : (
-          <div className="divide-y divide-border-subtle">
+          <div className="flex flex-col gap-2.5">
             {items.map((signup) => (
               <SignupRow key={signup.id} signup={signup} onSelect={onSelect} />
             ))}
@@ -392,12 +392,12 @@ function SignupRow({
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="-mx-2 flex w-full items-center gap-3 rounded-lg px-2 py-4 text-left outline-none transition-colors duration-150 cursor-pointer hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-ring-subtle"
+      className="flex w-full items-center gap-3 rounded-xl bg-muted px-5 py-4 text-left outline-none transition-colors duration-150 cursor-pointer hover:bg-pressed focus-visible:bg-pressed focus-visible:ring-2 focus-visible:ring-ring-subtle"
     >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-foreground">{name}</p>
-        <p className="truncate text-base text-foreground-muted">
+        <p className="truncate text-base text-foreground">
           {courseTitle ?? 'Ny påmelding'}
         </p>
       </div>
@@ -406,7 +406,7 @@ function SignupRow({
       )}
       <span
         className={cn(
-          'shrink-0 text-sm tabular-nums text-foreground-muted',
+          'shrink-0 text-sm tabular-nums text-foreground',
           hasExceptionBadge && 'hidden sm:inline',
         )}
       >
@@ -421,13 +421,13 @@ function SignupRow({
 function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
   // Mirrors the real row anatomy (leading 40px block + two 24px text lines +
   // trailing meta) so the list doesn't jump in height when data lands — and
-  // the real container recipe (tinted cards for courses, hairline rows for
-  // signups) so loading never flashes the wrong shape.
+  // the real container recipe (neutral filled cards for both lists) so
+  // loading never flashes the wrong shape.
   if (variant === 'course') {
     return (
       <div className="flex flex-col gap-2.5">
         {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-xl bg-primary-subtle px-5 py-4">
+          <div key={i} className="flex items-center gap-3 rounded-xl bg-muted px-5 py-4">
             <Skeleton className="size-10 rounded-lg" />
             <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
               <Skeleton className="h-3.5 w-32" />
@@ -441,9 +441,9 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
   }
 
   return (
-    <div className="divide-y divide-border-subtle">
+    <div className="flex flex-col gap-2.5">
       {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 py-4">
+        <div key={i} className="flex items-center gap-3 rounded-xl bg-muted px-5 py-4">
           <Skeleton className="size-10 rounded-full" />
           <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
             <Skeleton className="h-3.5 w-32" />

@@ -201,7 +201,7 @@ export function SessionsModal({
                     </p>
                     <div
                       className={cn(
-                        'mt-0.5 flex items-center gap-2 text-sm text-foreground-muted tabular-nums',
+                        'mt-0.5 flex items-center gap-2 text-sm text-foreground tabular-nums',
                         isCancelled && 'line-through',
                       )}
                     >
@@ -223,7 +223,7 @@ export function SessionsModal({
                   {editDisabled ? (
                     <div
                       className={cn(
-                        'flex items-center justify-between gap-3 rounded-xl bg-primary-subtle px-4 py-3',
+                        'flex items-center justify-between gap-3 rounded-xl bg-muted px-4 py-3',
                         dim && 'opacity-60',
                       )}
                     >
@@ -234,7 +234,7 @@ export function SessionsModal({
                       type="button"
                       onClick={() => startReschedule(s)}
                       aria-label={`Endre ${label}`}
-                      className="group flex w-full items-center justify-between gap-3 rounded-xl bg-primary-subtle px-4 py-3 text-left transition-colors hover:bg-primary-border"
+                      className="group flex w-full items-center justify-between gap-3 rounded-xl bg-muted px-4 py-3 text-left transition-colors hover:bg-pressed"
                     >
                       {cell}
                     </button>
