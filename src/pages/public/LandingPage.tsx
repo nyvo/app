@@ -601,7 +601,13 @@ function PricingTier({ tier }: { tier: Tier }) {
         size="cta"
         className="mt-auto w-full"
       >
-        <Link to={tier.cta.to}>{tier.cta.label}</Link>
+        {/* In-page anchors (PRELAUNCH '#varsle') need a native <a> — router
+            Link updates the hash without the native fragment scroll. */}
+        {tier.cta.to.startsWith('#') ? (
+          <a href={tier.cta.to}>{tier.cta.label}</a>
+        ) : (
+          <Link to={tier.cta.to}>{tier.cta.label}</Link>
+        )}
       </Button>
       {tier.caption && (
         <p className="mt-4 text-center text-base text-foreground-muted">
