@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
+import { DelayedFallback } from '@/components/ui/delayed-fallback'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -96,10 +98,19 @@ const AuthCallbackPage = () => {
   }
 
   // Callback resolution is fast (Supabase parses the URL hash and writes the
-  // session synchronously). Rendering nothing avoids the full-screen-spinner
-  // flash (Studio § 10). On the rare slow init the user briefly sees blank
-  // — the navigate fires as soon as `isInitialized` flips true.
-  return null
+  // session synchronously) — DelayedFallback holds the spinner back for
+  // 300ms so the common case doesn't flash it (Studio § 10). On the rare
+  // slow init the spinner appears; the navigate fires as soon as
+  // `isInitialized` flips true.
+  return (
+    <DelayedFallback delayMs={300}>
+      <AuthLayout title="" customContent>
+        <div className="flex w-full flex-1 items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      </AuthLayout>
+    </DelayedFallback>
+  )
 }
 
 export default AuthCallbackPage

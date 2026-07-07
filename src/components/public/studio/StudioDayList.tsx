@@ -112,6 +112,37 @@ export function StudioDayList({ courses, viewingSlug, viewingName, headerAction 
     setSelectedKey(key);
   };
 
+  // Roving tabindex (mirrors SegmentedTabs): the strip is one tab stop —
+  // only the selected day is in the tab order — and Left/Right (+ Home/End)
+  // move focus AND select, so arrowing through up to 90 days never needs 90
+  // tab presses.
+  const handleStripKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const { key } = event;
+    if (key !== 'ArrowLeft' && key !== 'ArrowRight' && key !== 'Home' && key !== 'End') return;
+
+    const items = Array.from(
+      event.currentTarget.querySelectorAll<HTMLButtonElement>('button[aria-pressed]'),
+    );
+    if (items.length === 0) return;
+
+    const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
+    let nextIndex: number;
+    if (key === 'Home') {
+      nextIndex = 0;
+    } else if (key === 'End') {
+      nextIndex = items.length - 1;
+    } else {
+      const delta = key === 'ArrowRight' ? 1 : -1;
+      nextIndex = ((currentIndex === -1 ? 0 : currentIndex) + delta + items.length) % items.length;
+    }
+
+    event.preventDefault();
+    const next = items[nextIndex];
+    next.focus();
+    next.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    next.click();
+  };
+
   const buckets = useMemo(() => {
     const map = new Map<string, PublicCourseWithDetails[]>();
     const todayKey = dateKey(today);
@@ -200,6 +231,7 @@ export function StudioDayList({ courses, viewingSlug, viewingName, headerAction 
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
           onPointerLeave={endDrag}
+          onKeyDown={handleStripKeyDown}
           className="px-4 sm:px-6 lg:px-8 overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing select-none"
           aria-label="Velg dag"
         >
@@ -220,6 +252,7 @@ export function StudioDayList({ courses, viewingSlug, viewingName, headerAction 
                   onClick={() => handleDayClick(key)}
                   aria-pressed={isSelected}
                   aria-label={`${formatLongDay(day)}, ${countLabel}`}
+                  tabIndex={isSelected ? 0 : -1}
                   className={cn(
                     // Sized so a desktop row shows ~7 days with the next card
                     // cut by the viewport edge — the cut card signals scroll.
@@ -382,7 +415,6 @@ function ClassRow({
               ? 'bg-muted text-foreground-muted'
               : 'bg-muted text-foreground group-hover:bg-foreground group-hover:text-background',
           )}
-          aria-hidden
         >
           {CTA_LABELS[bookability]}
         </span>
@@ -405,7 +437,6 @@ function ClassRow({
             '-mx-3 px-3 rounded-xl transition-colors hover:bg-muted/50',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           )}
-          aria-disabled={isDisabled || undefined}
         >
           {body}
         </Link>

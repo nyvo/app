@@ -32,6 +32,7 @@ function Rule({ met, children }: { met: boolean; children: React.ReactNode }) {
         {met && <Check className="size-2.5 text-background" strokeWidth={3} />}
       </span>
       {children}
+      <span className="sr-only">{met ? '(oppfylt)' : '(mangler)'}</span>
     </li>
   )
 }

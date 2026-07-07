@@ -9,7 +9,7 @@ interface GoogleAuthButtonProps {
   label?: string
   /** Visual variant override (default: filled near-black). */
   variant?: ButtonProps['variant']
-  /** Extra classes merged onto the button (e.g. rounded-xl). */
+  /** Extra classes merged onto the button. */
   className?: string
 }
 

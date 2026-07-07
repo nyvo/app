@@ -396,7 +396,7 @@ const AuthPage = () => {
                     type="button"
                     onClick={handleResend}
                     disabled={isResending}
-                    className="font-medium text-foreground hover:underline disabled:cursor-not-allowed disabled:text-foreground-muted"
+                    className="focus-ring rounded font-medium text-foreground hover:underline disabled:cursor-not-allowed disabled:text-foreground-muted"
                   >
                     Send på nytt
                   </button>
@@ -412,7 +412,7 @@ const AuthPage = () => {
                 if (codeCtx.hasPasswordFallback) setStep('password')
                 else backToIdentify()
               }}
-              className="mt-8 text-sm font-medium text-primary hover:underline"
+              className="focus-ring mt-8 rounded text-sm font-medium text-primary hover:underline"
             >
               {codeCtx.hasPasswordFallback ? 'Bruk passord i stedet' : 'Bruk en annen e-post'}
             </button>
@@ -462,14 +462,18 @@ const AuthPage = () => {
                 aria-invalid={!!passwordError || undefined}
                 aria-describedby={passwordError ? 'password-error' : undefined}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-foreground-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle"
-                aria-label={showPassword ? 'Skjul passord' : 'Vis passord'}
-              >
-                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-              </button>
+              <span className="absolute right-2 top-1/2 -translate-y-1/2">
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  // relative + after:-inset-2 pads the hit area out to ~44px
+                  // without inflating the visible glyph.
+                  className="relative rounded p-1 text-foreground-muted outline-none transition-colors after:absolute after:-inset-2 hover:text-foreground focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle"
+                  aria-label={showPassword ? 'Skjul passord' : 'Vis passord'}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </span>
             </div>
 
             {isSignup && <PasswordRules password={password} />}
@@ -481,7 +485,7 @@ const AuthPage = () => {
             )}
           </div>
 
-          <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
+          <Button type="submit" loading={isSubmitting} size="lg" className="w-full">
             {isSignup ? 'Opprett konto' : 'Logg inn'}
           </Button>
         </form>
@@ -494,7 +498,7 @@ const AuthPage = () => {
               type="button"
               onClick={handleUseCode}
               disabled={isSubmitting}
-              className="text-sm font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+              className="focus-ring rounded text-sm font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
             >
               Glemt passordet? Logg inn med kode
             </button>
@@ -511,7 +515,7 @@ const AuthPage = () => {
         <h1 className="text-2xl font-medium text-foreground">Logg inn eller opprett konto</h1>
       </div>
 
-      <GoogleAuthButton redirectTo={callbackUrl} variant="secondary" className="rounded-xl" />
+      <GoogleAuthButton redirectTo={callbackUrl} variant="secondary" />
 
       <div className="my-4 flex w-full justify-center">
         <span className="text-sm text-foreground-muted">eller</span>
@@ -540,7 +544,7 @@ const AuthPage = () => {
           )}
         </div>
 
-        <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
+        <Button type="submit" loading={isSubmitting} size="lg" className="w-full">
           Fortsett
         </Button>
       </form>
