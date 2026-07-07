@@ -7,6 +7,7 @@ import { NotificationsPopover } from '@/components/notifications/NotificationsPo
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
+import { ChevronRight } from '@/lib/icons';
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
 // Lazy: IncomeChart is the only recharts consumer in product code, and
 // recharts alone is a ~350 KB chunk — keep it out of the dashboard's own
@@ -310,18 +311,23 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="flex items-center gap-3 rounded-xl bg-surface px-5 py-4 no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring-subtle"
+      className="group flex items-center gap-3 rounded-xl bg-surface px-5 py-4 no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring-subtle"
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-foreground">{course.title}</p>
         <p className="truncate text-base text-foreground-muted">{when || '—'}</p>
       </div>
-      {hasCapacity && (
-        <span className="shrink-0 text-sm tabular-nums text-foreground-muted">
-          {course.signups} / {course.capacity}
-        </span>
-      )}
+      {/* Trailing slot: meta at rest, chevron on hover (150ms ease-out swap —
+          transform+opacity only; hover: is hover-capable-device gated). */}
+      <span className="relative flex min-w-4 shrink-0 items-center justify-end">
+        {hasCapacity && (
+          <span className="inline-block text-sm tabular-nums text-foreground-muted transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-1 group-hover:opacity-0">
+            {course.signups} / {course.capacity}
+          </span>
+        )}
+        <ChevronRight className="absolute right-0 size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
+      </span>
     </Link>
   );
 }
@@ -371,17 +377,18 @@ function SignupRow({
   const name = signup.profile?.name || signup.participant_name || 'Ukjent deltaker';
   const courseTitle = signup.course?.title;
   const when = signup.created_at ? formatRelativeTimePast(signup.created_at) : '';
-  // Exception-only badge (silent on paid) — mirrors the course participants
-  // list so the same entity gets the same treatment. On exception rows the
-  // badge is the one trailing token on mobile; the timestamp yields (it
-  // remains in the participant drawer).
-  const hasExceptionBadge = !!signup.payment_status && signup.payment_status !== 'paid';
+  // Actionable-only badge: pending/failed call for attention. Settled states
+  // (paid, refunded, external) stay silent here — this card is a pulse, not
+  // a ledger; the full status lives in the participant drawer. On exception
+  // rows the badge is the one trailing token on mobile; the timestamp yields.
+  const hasExceptionBadge =
+    signup.payment_status === 'pending' || signup.payment_status === 'failed';
 
   return (
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="flex w-full items-center gap-3 rounded-xl bg-surface px-5 py-4 text-left outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-ring-subtle"
+      className="group flex w-full items-center gap-3 rounded-xl bg-surface px-5 py-4 text-left outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-ring-subtle"
     >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
@@ -390,16 +397,21 @@ function SignupRow({
           {courseTitle ?? 'Ny påmelding'}
         </p>
       </div>
-      {signup.payment_status && (
+      {hasExceptionBadge && signup.payment_status && (
         <PaymentBadge status={signup.payment_status} className="shrink-0" />
       )}
+      {/* Trailing slot: timestamp at rest, chevron on hover (150ms ease-out
+          swap — transform+opacity only). The badge never yields to hover. */}
       <span
         className={cn(
-          'shrink-0 text-sm tabular-nums text-foreground-muted',
-          hasExceptionBadge && 'hidden sm:inline',
+          'relative flex min-w-4 shrink-0 items-center justify-end',
+          hasExceptionBadge && 'hidden sm:flex',
         )}
       >
-        {when}
+        <span className="inline-block text-sm tabular-nums text-foreground-muted transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-1 group-hover:opacity-0">
+          {when}
+        </span>
+        <ChevronRight className="absolute right-0 size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
       </span>
     </button>
   );

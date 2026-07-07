@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { MoreHorizontal } from '@/lib/icons';
+import { CalendarDays, Clock, MoreHorizontal } from '@/lib/icons';
 import {
   Sheet,
   SheetContent,
@@ -523,36 +523,23 @@ function ScheduleQuickView({
       ? `${sessionTimeRange} · ${courseData.durationMinutes} min`
       : sessionTimeRange;
 
-  // Local-parsed date drives the boxed calendar chip (month band over day),
-  // avoiding UTC drift on the day number. The chip anchors a two-line when-row
-  // (long date over time+duration); location stays off — too wide for the
-  // narrow sheet, and the full picture lives on the course page.
-  const chipDate = currentSession
-    ? new Date(currentSession.session_date + 'T00:00:00')
-    : null;
+  // Single metadata row (list-row meta grammar): calendar icon + long date,
+  // clock icon + time+duration — all secondary text, no boxed date chip.
   const headerDescription =
-    chipDate && !isNaN(chipDate.getTime()) && (sessionDateLabel || sessionTimeLine) ? (
-      <div className="flex items-center gap-3">
-        <span className="flex size-11 flex-col overflow-hidden rounded-lg border border-border bg-surface">
-          <span className="flex h-4 items-center justify-center bg-muted text-[9px] font-semibold uppercase tracking-wide text-foreground-muted">
-            {MONTHS_SHORT[chipDate.getMonth()]}
+    sessionDateLabel || sessionTimeLine ? (
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground-muted">
+        {sessionDateLabel && (
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarDays className="size-4 shrink-0" strokeWidth={1.75} />
+            {sessionDateLabel}
           </span>
-          <span className="flex flex-1 items-center justify-center text-base font-medium text-foreground">
-            {chipDate.getDate()}
+        )}
+        {sessionTimeLine && (
+          <span className="inline-flex items-center gap-1.5 tabular-nums">
+            <Clock className="size-4 shrink-0" strokeWidth={1.75} />
+            {sessionTimeLine}
           </span>
-        </span>
-        <span className="min-w-0">
-          {sessionDateLabel && (
-            <span className="block text-sm font-medium text-foreground">
-              {sessionDateLabel}
-            </span>
-          )}
-          {sessionTimeLine && (
-            <span className="block text-sm tabular-nums text-foreground-muted">
-              {sessionTimeLine}
-            </span>
-          )}
-        </span>
+        )}
       </div>
     ) : undefined;
 

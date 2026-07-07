@@ -234,9 +234,10 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
 }
 
 /**
- * Quiet text-button toggle — no track, no active pill. Each item is just a
- * label whose tone signals state (foreground vs muted). Keeps the chart
- * header light so the big income number reads as the hero.
+ * Range toggle in the FramedCard header. The active period is a solid azure
+ * chip — same recipe as the pressed Toggle primitive (azure = "which one" per
+ * the design language), at the system surface radius (`rounded-xl`, 10px —
+ * NOT a pill; pills are action buttons). Inactive labels are muted text.
  */
 function QuietRangeToggle({
   value,
@@ -256,11 +257,11 @@ function QuietRangeToggle({
             aria-pressed={isActive}
             onClick={() => onChange(opt.key)}
             className={cn(
-              'rounded-md px-2 py-1 text-sm font-medium outline-none transition-colors duration-150',
-              'focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle',
+              'rounded-xl px-2.5 py-1 text-sm font-medium outline-none transition-colors duration-150',
+              'focus-visible:ring-2 focus-visible:ring-ring-subtle',
               isActive
-                ? 'bg-muted text-foreground'
-                : 'text-foreground-muted hover:text-foreground',
+                ? 'bg-primary text-primary-foreground'
+                : 'text-foreground-muted hover:text-foreground focus-visible:text-foreground',
             )}
           >
             {opt.label}
