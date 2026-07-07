@@ -78,11 +78,14 @@ function isPathActive(pathname: string, href: string): boolean {
 export const TeacherSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, currentSeller } = useAuth();
+  const { signOut, profile, currentSeller, sellers } = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
-  const isSeller = profile?.role === 'seller';
+  // Seller authority = presence of a seller_members row (same test as
+  // RoleRoute), not the profiles.role UX hint — a seller whose role hint lags
+  // still gets the seller nav, setup card and upsell.
+  const isSeller = sellers.length > 0;
   const isPro = isProSeller(currentSeller);
-  const navItems = profile?.role === 'buyer' ? BUYER_NAV_ITEMS : SELLER_NAV_ITEMS;
+  const navItems = isSeller ? SELLER_NAV_ITEMS : BUYER_NAV_ITEMS;
   const displayName = accountDisplayName({
     profileName: profile?.name,
     sellerName: currentSeller?.name,
@@ -130,7 +133,7 @@ export const TeacherSidebar = () => {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
-            {profile?.role === 'seller' && <SidebarSetupCard />}
+            {isSeller && <SidebarSetupCard />}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
