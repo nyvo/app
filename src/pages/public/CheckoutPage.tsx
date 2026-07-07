@@ -752,9 +752,9 @@ function CheckoutSummary({
           )}
           <div className="min-w-0">
             <p className="truncate text-sm text-foreground-muted">{course.seller?.name}</p>
-            <h3 className="mt-0.5 text-base font-medium text-foreground">
+            <h2 className="mt-0.5 text-base font-medium text-foreground">
               {course.title}
-            </h3>
+            </h2>
             {meta && (
               <p className="mt-1 text-sm text-foreground-muted">{meta}</p>
             )}

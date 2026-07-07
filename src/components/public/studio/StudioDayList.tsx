@@ -342,9 +342,9 @@ function ClassRow({
   const body = (
     <>
       <div className="min-w-0 flex-1">
-        <h4 className="text-base font-medium truncate text-foreground">
+        <h3 className="text-base font-medium truncate text-foreground">
           {course.title}
-        </h4>
+        </h3>
         <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm text-foreground-muted">
           {time && (
             <span className="inline-flex items-center gap-1.5">

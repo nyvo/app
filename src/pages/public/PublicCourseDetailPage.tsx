@@ -14,7 +14,13 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { LocationCard } from '@/components/public/course-details/LocationCard';
-import { BookingRailLite } from '@/components/public/course-details/BookingRailLite';
+import {
+  BookingRailLite,
+  computeSelection,
+  getBookingTiles,
+  type TicketId,
+} from '@/components/public/course-details/BookingRailLite';
+import { MobilePriceBar } from '@/components/public/course-details/MobilePriceBar';
 import { RichTextContent } from '@/components/ui/rich-text-content';
 import { PageState } from '@/components/page-state/page-state';
 import { resolveCourseImage, fetchPublicCourseBySlug, type PublicCourseWithDetails } from '@/services/publicCourses';
@@ -33,6 +39,10 @@ export default function PublicCourseDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const navState = (location.state ?? null) as DetailNavState | null;
+  // Shared with BookingRailLite (controlled) so MobilePriceBar always shows
+  // the tier the buyer actually has selected in the rail — one source of
+  // truth, no forked selection state.
+  const [selectedTicketId, setSelectedTicketId] = useState<TicketId>('main');
 
   // One query owns the whole load. Redirect decisions are returned as data
   // (not performed inside the fetch) so the queryFn stays side-effect-free;
@@ -127,6 +137,17 @@ export default function PublicCourseDetailPage() {
     ? resolveNextSessionDate(sessions) ?? course.start_date
     : null;
 
+  // Same helpers BookingRailLite uses, off the same `selectedTicketId` state,
+  // so MobilePriceBar can never drift from the rail's tier/price/CTA logic.
+  const bookingTiles = course
+    ? getBookingTiles(course, tiers, buildDropInSublabel(sessions))
+    : { tiles: [], courseFull: false, soldOut: false, closed: false, spotsLeft: 0, lowStock: false };
+  const mobilePriceBarState = computeSelection(
+    bookingTiles.tiles,
+    selectedTicketId,
+    course ? `/${slug}/${course.slug}/pamelding` : '',
+  );
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
@@ -138,10 +159,11 @@ export default function PublicCourseDetailPage() {
       <main className="flex-1">
         {loading && <CourseDetailSkeleton />}
 
-        {error && !loading && <PageState variant="public-course" />}
+        {error && !loading && <PageState variant="public-course" as="div" />}
 
         {!loading && !error && course && (
-          <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16 animate-in fade-in duration-150">
+          <>
+          <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-28 md:pb-16 animate-in fade-in duration-150">
             {backLabel && (
               <Link
                 to={backHref}
@@ -164,9 +186,9 @@ export default function PublicCourseDetailPage() {
                 </div>
                 {course.description && (
                   <section className="border-t border-border pt-8">
-                    <p className="mb-3 text-sm font-medium text-foreground">
+                    <h2 className="mb-3 text-sm font-medium text-foreground">
                       Om kurset
-                    </p>
+                    </h2>
                     <RichTextContent
                       html={course.description}
                       className="text-base leading-relaxed text-foreground"
@@ -194,11 +216,21 @@ export default function PublicCourseDetailPage() {
                     studioSlug={slug || ''}
                     dropInSublabel={buildDropInSublabel(sessions)}
                     metaLabel={buildCardMeta(course, nextSessionDate)}
+                    selectedId={selectedTicketId}
+                    onSelectedIdChange={setSelectedTicketId}
                   />
                 </div>
               </aside>
             </div>
           </div>
+          <MobilePriceBar
+            selectedTile={mobilePriceBarState.selectedTile}
+            total={mobilePriceBarState.total}
+            href={mobilePriceBarState.href}
+            soldOut={bookingTiles.soldOut}
+            closed={bookingTiles.closed}
+          />
+          </>
         )}
       </main>
     </div>
@@ -214,7 +246,7 @@ export default function PublicCourseDetailPage() {
 function ArrangorSection({ seller }: { seller: NonNullable<PublicCourseWithDetails['seller']> }) {
   return (
     <section className="border-t border-border pt-8">
-      <p className="mb-3 text-sm font-medium text-foreground">Arrangør</p>
+      <h2 className="mb-3 text-sm font-medium text-foreground">Arrangør</h2>
       {seller.slug ? (
         <Link
           to={`/${seller.slug}`}
@@ -327,7 +359,7 @@ function SchedulePeek({ sessions, duration }: { sessions: CourseSession[]; durat
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="underline decoration-foreground-disabled underline-offset-2 hover:text-foreground hover:decoration-foreground transition-colors"
+        className="focus-ring rounded underline decoration-foreground-disabled underline-offset-2 hover:text-foreground hover:decoration-foreground transition-colors"
       >
         Se alle datoer
       </button>

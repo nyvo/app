@@ -36,7 +36,8 @@ import { Spinner } from "./spinner"
  *   icon     44px square              Icon-only controls
  *   icon-lg  40px square              Larger icon-only controls
  *
- * Touch surfaces (mobile booking, public pages, MobilePriceBar): minimum
+ * Touch surfaces (mobile booking, public pages, `MobilePriceBar` at
+ * src/components/public/course-details/MobilePriceBar.tsx): minimum
  * `default` (44px); CTAs use `cta` (44px).
  */
 const buttonVariants = cva(

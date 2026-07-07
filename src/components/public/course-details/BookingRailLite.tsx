@@ -21,11 +21,17 @@ interface BookingRailLiteProps {
   dropInSublabel?: string | null;
   /** Compact meta line shown under the course title (e.g. "13. april · 06:45–07:30"). */
   metaLabel?: string | null;
+  /** Controlled tier selection — pass together with `onSelectedIdChange` so a
+   * sibling (e.g. `MobilePriceBar`) can mirror the rail's selection from the
+   * same state instead of forking the tier/price/CTA logic. Uncontrolled
+   * (internal state) when omitted. */
+  selectedId?: TicketId;
+  onSelectedIdChange?: (id: TicketId) => void;
 }
 
 export type TicketId = 'main' | 'drop-in';
 
-interface TicketTile {
+export interface TicketTile {
   id: TicketId;
   label: string;
   sublabel: string | null;
@@ -49,32 +55,32 @@ interface TicketTile {
  *  - Ticket choice uses brand-tinted selectable rows (not a heavy ring).
  *  - Soft elevation (`shadow-soft`) lifts the card off the flat white page.
  */
-export function BookingRailLite({ course, tiers, studioSlug, checkoutHref, dropInSublabel, metaLabel }: BookingRailLiteProps) {
-  const spotsLeft = course.spots_available;
-  const lowStock = spotsLeft > 0 && spotsLeft <= 3;
-  // No cap (max_participants null) means unlimited spots — upstream
-  // spots_available bottoms out at 0 for uncapped courses, so guard on the
-  // cap itself. Mirrors courseBookability in studioFacts.
-  const courseFull = course.max_participants !== null && spotsLeft === 0;
+export function BookingRailLite({
+  course,
+  tiers,
+  studioSlug,
+  checkoutHref,
+  dropInSublabel,
+  metaLabel,
+  selectedId: controlledSelectedId,
+  onSelectedIdChange,
+}: BookingRailLiteProps) {
+  const { tiles, courseFull, soldOut, closed, spotsLeft, lowStock } = getBookingTiles(
+    course,
+    tiers,
+    dropInSublabel ?? null,
+  );
 
-  const tiles = buildTiles(course, tiers, dropInSublabel ?? null, courseFull);
-  // Course-wide capacity only gates the package: a drop-in occupies a single
-  // class, so the RPC keeps offering it while the NEXT session has room even
-  // when the course-wide count is maxed (past drop-ins inflate that count).
-  const soldOut = courseFull && tiles.length === 0;
-  const closed = !courseFull && tiles.length === 0;
-  const [selectedId, setSelectedId] = useState<TicketId>(tiles[0]?.id ?? 'main');
-
-  const selectedTile = tiles.find((t) => t.id === selectedId) ?? tiles[0] ?? null;
-  const ticketPrice = selectedTile?.amount ?? 0;
-  const serviceFee = calculateServiceFee(ticketPrice);
-  const total = calculateTotalPrice(ticketPrice);
+  const [uncontrolledId, setUncontrolledId] = useState<TicketId>(tiles[0]?.id ?? 'main');
+  const selectedId = controlledSelectedId ?? uncontrolledId;
+  const setSelectedId = onSelectedIdChange ?? setUncontrolledId;
 
   const baseHref = checkoutHref ?? `/${studioSlug}/${course.slug}/pamelding`;
-  // Always pass the ticket selection — when the series has started, the only
-  // remaining tile may be drop-in, and the checkout page needs to know that
-  // rather than defaulting to the (no-longer-offered) main tier.
-  const href = selectedTile ? `${baseHref}?billett=${selectedTile.id}` : baseHref;
+  const { selectedTile, ticketPrice, serviceFee, total, href } = computeSelection(
+    tiles,
+    selectedId,
+    baseHref,
+  );
 
   return (
     <div className="overflow-hidden rounded-2xl border border-card bg-surface shadow-soft">
@@ -132,7 +138,12 @@ export function BookingRailLite({ course, tiers, studioSlug, checkoutHref, dropI
             {/* Choice — only when there's a real one. A single ticket type is
                 conveyed by the price breakdown below, no selector needed. */}
             {tiles.length > 1 && (
-              <div className="space-y-2" role="radiogroup" aria-label="Velg billett">
+              <div
+                className="space-y-2"
+                role="radiogroup"
+                aria-label="Velg billett"
+                onKeyDown={handleTileKeyDown}
+              >
                 {tiles.map((tile) => (
                   <TicketTileButton
                     key={tile.id}
@@ -199,6 +210,39 @@ export function BookingRailLite({ course, tiers, studioSlug, checkoutHref, dropI
   );
 }
 
+/**
+ * Roving-tabindex arrow-key navigation for the tier radiogroup — mirrors
+ * SegmentedTabs' radiogroup handler (Up/Down + Left/Right move focus AND
+ * select; Home/End jump to the ends). One tab stop for the whole group.
+ */
+function handleTileKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+  const { key } = event;
+  const isPrev = key === 'ArrowLeft' || key === 'ArrowUp';
+  const isNext = key === 'ArrowRight' || key === 'ArrowDown';
+  if (!isPrev && !isNext && key !== 'Home' && key !== 'End') return;
+
+  const items = Array.from(
+    event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]:not(:disabled)'),
+  );
+  if (items.length === 0) return;
+
+  const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
+  let nextIndex: number;
+  if (key === 'Home') {
+    nextIndex = 0;
+  } else if (key === 'End') {
+    nextIndex = items.length - 1;
+  } else {
+    const delta = isNext ? 1 : -1;
+    nextIndex = ((currentIndex === -1 ? 0 : currentIndex) + delta + items.length) % items.length;
+  }
+
+  event.preventDefault();
+  const next = items[nextIndex];
+  next.focus();
+  next.click();
+}
+
 function TicketTileButton({
   tile,
   selected,
@@ -213,6 +257,7 @@ function TicketTileButton({
       type="button"
       role="radio"
       aria-checked={selected}
+      tabIndex={selected ? 0 : -1}
       onClick={onSelect}
       className={cn(
         'ios-ease w-full rounded-xl border px-4 py-3 text-left',
@@ -227,7 +272,7 @@ function TicketTileButton({
         <span
           className={cn(
             'flex size-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors',
-            selected ? 'border-primary' : 'border-input',
+            selected ? 'border-primary' : 'border-border-strong',
           )}
           aria-hidden
         >
@@ -250,6 +295,69 @@ function TicketTileButton({
       </div>
     </button>
   );
+}
+
+/**
+ * Derive the rail's tiles + course-state booleans from the course/tiers RPC
+ * data. Pure and side-effect-free so a sibling (e.g. `MobilePriceBar`, from
+ * the course detail page) can compute the exact same sold-out/closed state
+ * the rail shows, without forking the logic.
+ */
+export function getBookingTiles(
+  course: PublicCourseWithDetails,
+  tiers: AvailableTicketType[],
+  dropInSublabel: string | null,
+): {
+  tiles: TicketTile[];
+  courseFull: boolean;
+  soldOut: boolean;
+  closed: boolean;
+  spotsLeft: number;
+  lowStock: boolean;
+} {
+  const spotsLeft = course.spots_available;
+  const lowStock = spotsLeft > 0 && spotsLeft <= 3;
+  // No cap (max_participants null) means unlimited spots — upstream
+  // spots_available bottoms out at 0 for uncapped courses, so guard on the
+  // cap itself. Mirrors courseBookability in studioFacts.
+  const courseFull = course.max_participants !== null && spotsLeft === 0;
+
+  const tiles = buildTiles(course, tiers, dropInSublabel, courseFull);
+  // Course-wide capacity only gates the package: a drop-in occupies a single
+  // class, so the RPC keeps offering it while the NEXT session has room even
+  // when the course-wide count is maxed (past drop-ins inflate that count).
+  const soldOut = courseFull && tiles.length === 0;
+  const closed = !courseFull && tiles.length === 0;
+
+  return { tiles, courseFull, soldOut, closed, spotsLeft, lowStock };
+}
+
+/**
+ * Resolve the selected tile + its price breakdown + the checkout href for a
+ * given selection. Pure, so `BookingRailLite` and `MobilePriceBar` derive
+ * identical values off the same `selectedId` state — one source of truth for
+ * the CTA's label target and disabled/state text.
+ */
+export function computeSelection(
+  tiles: TicketTile[],
+  selectedId: TicketId,
+  baseHref: string,
+): {
+  selectedTile: TicketTile | null;
+  ticketPrice: number;
+  serviceFee: number;
+  total: number;
+  href: string;
+} {
+  const selectedTile = tiles.find((t) => t.id === selectedId) ?? tiles[0] ?? null;
+  const ticketPrice = selectedTile?.amount ?? 0;
+  const serviceFee = calculateServiceFee(ticketPrice);
+  const total = calculateTotalPrice(ticketPrice);
+  // Always pass the ticket selection — when the series has started, the only
+  // remaining tile may be drop-in, and the checkout page needs to know that
+  // rather than defaulting to the (no-longer-offered) main tier.
+  const href = selectedTile ? `${baseHref}?billett=${selectedTile.id}` : baseHref;
+  return { selectedTile, ticketPrice, serviceFee, total, href };
 }
 
 /**
