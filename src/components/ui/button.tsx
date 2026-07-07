@@ -19,7 +19,6 @@ import { Spinner } from "./spinner"
  *   outline    — special-case emphasis: a bordered action for surfaces where a
  *                filled button would clash (e.g. on a colored/photographic or
  *                already-filled panel). Use sparingly; default to secondary.
- *   outline-soft — deprecated legacy.
  *   ghost      — low-emphasis row actions, sidebar nav, inline icon actions in
  *                dense lists. Transparent at rest, lifts to bg-muted on hover.
  *   soft       — dedicated icon controls (close × in dialog/sheet/drawer
@@ -50,9 +49,7 @@ const buttonVariants = cva(
         // hover lift; focus ring stays visible via the ring-offset.
         default: "bg-foreground text-background hover:bg-foreground/90",
         outline:
-          "border-border bg-background shadow-xs hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-border dark:bg-surface-on-dark dark:hover:bg-surface-on-dark",
-        "outline-soft":
-          "border-border bg-background text-foreground-muted hover:border-ring hover:bg-muted hover:text-foreground dark:border-border dark:bg-surface-on-dark dark:hover:bg-surface-on-dark",
+          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-border dark:bg-surface-on-dark dark:hover:bg-surface-on-dark",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-active aria-expanded:bg-active aria-expanded:text-secondary-foreground",
         ghost:
@@ -75,7 +72,8 @@ const buttonVariants = cva(
     },
     compoundVariants: [
       // Icon-only buttons stay circular regardless of variant — the base
-      // rounded-xl is for rectangular text buttons that sit beside inputs.
+      // is already rounded-full; this compound variant just makes that
+      // explicit for icon sizes so it can't drift.
       { size: "icon", className: "rounded-full" },
       { size: "icon-lg", className: "rounded-full" },
       // Plain variant strips chrome (height + padding) at every size.

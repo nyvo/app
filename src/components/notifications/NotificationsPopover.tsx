@@ -77,7 +77,7 @@ export function NotificationsPopover() {
       aria-label={hasUnseen ? 'Varsler, uleste' : 'Varsler'}
       aria-haspopup="dialog"
       className={cn(
-        'relative inline-flex size-9 shrink-0 items-center justify-center rounded-full outline-none transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 data-[state=open]:bg-muted data-[state=open]:text-foreground',
+        'relative inline-flex size-9 shrink-0 items-center justify-center rounded-full outline-none transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle data-[state=open]:bg-muted data-[state=open]:text-foreground',
         hasUnseen ? 'text-foreground' : 'text-foreground-muted',
       )}
     >

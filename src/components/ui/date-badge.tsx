@@ -61,21 +61,23 @@ export function DateBadge({
 
   const month = MONTHS[date.getMonth()];
   const day = date.getDate();
+  const fullDateLabel = date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' });
 
   return (
     <div
+      aria-label={fullDateLabel}
       className={cn(
         'flex shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background',
         sizes.container,
         className,
       )}
     >
-      <div className={cn('flex items-center justify-center bg-muted', sizes.strip)}>
-        <span className={cn('font-medium leading-none text-foreground-muted', sizes.monthText)}>
+      <div aria-hidden="true" className={cn('flex items-center justify-center bg-muted', sizes.strip)}>
+        <span className={cn('font-medium leading-none text-foreground', sizes.monthText)}>
           {month}
         </span>
       </div>
-      <div className="flex flex-1 items-center justify-center">
+      <div aria-hidden="true" className="flex flex-1 items-center justify-center">
         <span className={cn('font-medium leading-none text-foreground', sizes.dayText)}>
           {day}
         </span>

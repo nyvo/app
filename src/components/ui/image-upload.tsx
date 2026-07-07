@@ -185,7 +185,7 @@ export function ImageField({
       aria-invalid={displayError ? true : undefined}
       aria-describedby={describedBy}
       className={cn(
-        'group relative shrink-0 cursor-pointer overflow-hidden transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed',
+        'group relative shrink-0 cursor-pointer overflow-hidden transition-colors duration-150 outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:cursor-not-allowed',
         isAvatar ? 'size-24 rounded-full' : 'aspect-[16/10] w-full rounded-xl',
         displayUrl
           ? 'border border-border bg-muted'
@@ -241,7 +241,7 @@ export function ImageField({
             aria-label={ariaLabel ?? (displayUrl ? changeLabel : uploadLabel)}
             aria-invalid={displayError ? true : undefined}
             className={cn(
-              'relative size-16 shrink-0 overflow-hidden rounded-full bg-muted outline-none transition-colors focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed',
+              'relative size-16 shrink-0 overflow-hidden rounded-full bg-muted outline-none transition-colors focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:cursor-not-allowed',
               !displayUrl && 'hover:bg-active',
               displayError && 'ring-2 ring-danger/20',
               isDisabled && !loading && 'opacity-50',

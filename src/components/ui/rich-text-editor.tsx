@@ -36,9 +36,9 @@ function ToolbarButton({ onClick, isActive, disabled, label, children }: Toolbar
       aria-label={label}
       title={label}
       className={cn(
-        'inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground-muted transition-colors duration-150 ease-out',
+        'relative inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground-muted transition-colors duration-150 ease-out after:absolute after:-inset-1.5',
         'hover:bg-muted hover:text-foreground',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
+        'focus-visible:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle',
         'disabled:pointer-events-none disabled:opacity-40',
         'aria-pressed:bg-muted aria-pressed:text-foreground',
         '[&_svg]:size-4',
@@ -164,7 +164,7 @@ export function RichTextEditor({
     <div
       className={cn(
         'overflow-hidden rounded-xl border border-border bg-surface transition-[color,border-color,box-shadow] duration-150 ease-out',
-        'focus-within:border-foreground focus-within:ring-2 focus-within:ring-foreground/15',
+        'focus-within:border-foreground focus-within:ring-2 focus-within:ring-ring-subtle',
         className,
       )}
       data-slot="rich-text-editor"

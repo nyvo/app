@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils"
  * for a payment status — use PaymentBadge so copy + silence rules stay centralized.
  */
 const badgeVariants = cva(
-  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap border font-medium transition-colors duration-150 ease-out focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 [&>svg]:pointer-events-none",
+  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap border font-medium transition-colors duration-150 ease-out focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 [&>svg]:pointer-events-none",
   {
     variants: {
       variant: {
@@ -59,7 +59,7 @@ const badgeVariants = cva(
         rect: "rounded-md",
       },
       size: {
-        xs: "h-4 px-1.5 text-[10px] leading-none [&>svg]:size-2.5",
+        xs: "h-4 px-1.5 text-[11px] leading-none [&>svg]:size-2.5",
         sm: "h-6 px-2.5 text-xs [&>svg]:size-3.5",
         md: "h-7 px-3 text-sm [&>svg]:size-4",
       },

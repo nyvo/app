@@ -316,9 +316,9 @@
   --input: var(--neutral-8);                          /* no longer edges text fields (fields are filled/borderless now) — kept for the booking-rail tier border (was neutral-7 @ ~1.6:1; neutral-8 ≈ 1.9:1 — still below the 3:1 of 1.4.11, kept lighter than -strong as a deliberate design call) */
   --ring: var(--foreground);                          /* neutral focus ring — matches button.tsx focus style; never brand-colored */
   --ring-subtle: color-mix(in oklab, var(--foreground) 15%, transparent);
-                                                      /* soft focus halo — replaces the raw `ring-foreground/15` idiom.
-                                                         Never the only focus cue: pair with a second change
-                                                         (border-foreground on fields, bg-muted on rows). */
+                                                      /* soft focus halo — replaces the old raw `ring-foreground`
+                                                         at 15% opacity idiom. Never the only focus cue: pair with
+                                                         a second change (border-foreground on fields, bg-muted on rows). */
 
   /* Dark chrome — Slate-dark surface scale for chrome that stays dark in BOTH
      app themes (sidebar, toast, future overlays). Single source of truth so
