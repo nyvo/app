@@ -40,7 +40,7 @@ function BackLink({ onClick, disabled }: { onClick: () => void; disabled?: boole
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="mb-7 -ml-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm text-foreground-muted transition-colors duration-150 ease-out cursor-pointer hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+      className="mb-8 -ml-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm text-foreground-muted transition-colors duration-150 ease-out cursor-pointer hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
     >
       <ChevronLeft className="size-4" strokeWidth={1.75} />
       Tilbake
@@ -106,7 +106,7 @@ export default function OnboardingPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="flex justify-center px-4 sm:px-6 pt-8">
+      <header className="flex justify-center px-4 sm:px-6 py-8">
         <Link to="/" className="flex select-none items-center">
           <span className="text-base font-medium text-foreground">Openspot</span>
         </Link>
@@ -181,7 +181,7 @@ function RoleChooser() {
           Hva vil du gjøre?
         </h1>
 
-        <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <legend className="sr-only">Velg rolle</legend>
           {([
             {
@@ -341,7 +341,7 @@ function BuyerSetupForm({
           Litt om deg
         </h1>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div className="grid gap-2">
             <label htmlFor="buyer-name" className="text-sm font-medium text-foreground">
               Navn
@@ -372,7 +372,7 @@ function BuyerSetupForm({
           </div>
         </div>
 
-        <Button type="submit" size="cta" loading={saving} className="mt-6 w-full">
+        <Button type="submit" size="cta" loading={saving} className="mt-8 w-full">
           Fullfør
         </Button>
       </form>
@@ -480,7 +480,7 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
           )}
         </div>
 
-        <Button type="submit" size="cta" loading={saving} className="mt-6 w-full">
+        <Button type="submit" size="cta" loading={saving} className="mt-8 w-full">
           Fullfør
         </Button>
       </form>

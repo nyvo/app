@@ -19,7 +19,8 @@ function SelectGroup({
   return (
     <SelectPrimitive.Group
       data-slot="select-group"
-      className={cn("scroll-my-1 p-1", className)}
+      // no padding — the viewport's p-1 already insets items; p-1 here doubled it
+      className={cn("scroll-my-1", className)}
       {...props}
     />
   )

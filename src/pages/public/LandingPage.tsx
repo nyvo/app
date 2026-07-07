@@ -78,7 +78,7 @@ const LandingPage = () => {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  className="mb-4 text-xs font-medium text-foreground-muted"
+                  className="mb-3 text-xs font-medium text-foreground-muted"
                 >
                   Bygget i Norge
                 </motion.p>
@@ -116,7 +116,7 @@ const LandingPage = () => {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="mb-4 text-xs font-medium text-foreground-muted"
+                className="mb-3 text-xs font-medium text-foreground-muted"
               >
                 Bygget i Norge
               </motion.p>
@@ -243,7 +243,7 @@ const LandingPage = () => {
       {/* ============================================================ */}
       {/* 7. PRICING — transparent, Stripe mentioned */}
       {/* ============================================================ */}
-      <section id="pricing" className="bg-background py-24 md:py-32">
+      <section id="pricing" className="bg-background py-20 md:py-28">
         <div className="mx-auto max-w-6xl px-6">
           <motion.div
             initial="hidden"
@@ -251,13 +251,13 @@ const LandingPage = () => {
             viewport={{ once: true, margin: '-100px' }}
             variants={scrollVariants}
             transition={scrollTransition}
-            className="mx-auto mb-16 max-w-2xl text-center"
+            className="mx-auto mb-12 max-w-2xl text-center"
           >
             <p className="mb-3 text-xs font-medium text-foreground-muted">Pris</p>
             <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
               Enkel og forutsigbar pris.
             </h2>
-            <p className="mt-3 text-base text-foreground-muted">
+            <p className="mt-4 text-base text-foreground-muted">
               Start gratis. Bytt til Pro når du trenger mer.
             </p>
           </motion.div>
@@ -463,7 +463,7 @@ function FeatureSplit({
             <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
               {title}
             </h2>
-            <p className="mt-3 text-base text-foreground-muted">{description}</p>
+            <p className="mt-4 text-base text-foreground-muted">{description}</p>
             {bullets && bullets.length > 0 && (
               <ul className="mt-6 space-y-2.5">
                 {bullets.map((bullet) => (
@@ -524,7 +524,7 @@ function FeatureWide({
           <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
             {title}
           </h2>
-          <p className="mt-2 text-base text-foreground-muted">{body}</p>
+          <p className="mt-4 text-base text-foreground-muted">{body}</p>
         </motion.div>
         <motion.div
           initial="hidden"

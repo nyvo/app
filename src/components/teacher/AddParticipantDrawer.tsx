@@ -197,7 +197,7 @@ export function AddParticipantDrawer({
           <div className="flex-1" aria-hidden="true" />
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
             {/* Mental-model note — manual signups bypass the integrated
                 payment flow. Shown as an info callout so the teacher clearly
                 registers that they handle payment themselves. */}
@@ -224,7 +224,7 @@ export function AddParticipantDrawer({
               <label
                 htmlFor="name"
                 data-error={(errors.name && touched.name) || undefined}
-                className="text-sm font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
+                className="text-sm font-medium mb-2 block text-foreground data-[error=true]:text-danger"
               >
                 Navn
               </label>
@@ -256,7 +256,7 @@ export function AddParticipantDrawer({
               <label
                 htmlFor="email"
                 data-error={(errors.email && touched.email) || undefined}
-                className="text-sm font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
+                className="text-sm font-medium mb-2 block text-foreground data-[error=true]:text-danger"
               >
                 E-post
               </label>
@@ -284,7 +284,7 @@ export function AddParticipantDrawer({
 
             {/* Phone */}
             <div>
-              <label htmlFor="phone" className="text-sm font-medium mb-1.5 block text-foreground">
+              <label htmlFor="phone" className="text-sm font-medium mb-2 block text-foreground">
                 Telefonnummer <span className="text-foreground-muted">(valgfritt)</span>
               </label>
               <Input
@@ -299,7 +299,7 @@ export function AddParticipantDrawer({
 
             {/* Note */}
             <div>
-              <label htmlFor="note" className="text-sm font-medium mb-1.5 block text-foreground">
+              <label htmlFor="note" className="text-sm font-medium mb-2 block text-foreground">
                 Notat <span className="text-foreground-muted">(valgfritt)</span>
               </label>
               <Textarea

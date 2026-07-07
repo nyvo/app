@@ -102,7 +102,7 @@ export function PageState({
           {resolvedDescription}
         </p>
       ) : null}
-      {resolvedAction ? <div className="mt-7">{resolvedAction}</div> : null}
+      {resolvedAction ? <div className="mt-6">{resolvedAction}</div> : null}
     </main>
   );
 }

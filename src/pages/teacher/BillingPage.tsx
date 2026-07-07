@@ -236,7 +236,7 @@ export function BillingPlanSections({
   )
 
   const cards = (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-6 md:grid-cols-2">
       {isPro ? (
         <>
           {startOption}
@@ -410,7 +410,7 @@ function PlanOption({
           ))}
         </ul>
 
-        {action && <div className="mt-auto pt-1">{action}</div>}
+        {action && <div className="mt-auto">{action}</div>}
       </CardContent>
     </Card>
   )

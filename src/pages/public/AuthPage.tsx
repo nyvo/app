@@ -371,7 +371,7 @@ const AuthPage = () => {
         </InputOTP>
 
         {verifyError && (
-          <FieldError className="mt-4 text-center">{verifyError}</FieldError>
+          <FieldError className="text-center">{verifyError}</FieldError>
         )}
 
         {isVerifying ? (
@@ -487,7 +487,7 @@ const AuthPage = () => {
         </form>
 
         {!isSignup && (
-          <div className="mt-5 text-center">
+          <div className="mt-6 text-center">
             {/* Also the recovery path — code login, then a new password in
                 innstillinger — so it carries the label users scan for. */}
             <button
@@ -545,7 +545,7 @@ const AuthPage = () => {
         </Button>
       </form>
 
-      <p className="mt-14 max-w-xs text-center text-sm text-foreground-muted">
+      <p className="mt-12 max-w-xs text-center text-sm text-foreground-muted">
         Ved å fortsette godtar du{' '}
         <Link to="/terms" className="font-medium text-foreground-muted hover:text-foreground">
           vilkårene

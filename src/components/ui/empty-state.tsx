@@ -39,7 +39,8 @@ export const EmptyState = React.memo(function EmptyState({
     <Empty
       className={cn(
         'mx-auto max-w-sm border-0 bg-transparent p-0 px-4 text-center',
-        isCompact ? 'py-8' : 'py-12',
+        // gap owns the header→action spacing (one mechanism, no mt-* on content)
+        isCompact ? 'gap-4 py-8' : 'gap-6 py-12',
         className,
       )}
     >
@@ -54,7 +55,7 @@ export const EmptyState = React.memo(function EmptyState({
         )}
       </EmptyHeader>
       {(action || inlineLink) && (
-        <EmptyContent className={cn('gap-3', isCompact ? 'mt-0' : 'mt-2')}>
+        <EmptyContent className="gap-3">
           {action}
           {inlineLink && <div className="text-sm">{inlineLink}</div>}
         </EmptyContent>

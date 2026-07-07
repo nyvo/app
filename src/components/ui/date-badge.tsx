@@ -27,7 +27,7 @@ const SIZE_CLASSES: Record<DateBadgeSize, {
   },
   sm: {
     container: 'size-10',
-    strip: 'h-4',
+    strip: 'h-3.5',
     monthText: 'text-xs',
     dayText: 'text-sm',
   },

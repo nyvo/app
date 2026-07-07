@@ -86,9 +86,9 @@ export function SessionRescheduleForm({
   const [newEnd, setNewEnd] = useState(shortTime(session.end_time));
 
   return (
-    <div className="flex flex-1 flex-col gap-5">
+    <div className="flex flex-1 flex-col gap-4">
       {/* Labeled fields — same Dato | Tidspunkt layout as the course builder. */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Label htmlFor="reschedule-date">Dato</Label>
           <div className="mt-2">
@@ -145,7 +145,7 @@ export function SessionRescheduleForm({
       </div>
 
       {/* Notice as a quiet info card (not a floating line). */}
-      <div className="flex items-center gap-2.5 rounded-lg bg-muted px-3.5 py-2.5">
+      <div className="flex items-center gap-2.5 rounded-lg bg-muted px-4 py-2.5">
         <Info className="size-4 shrink-0 text-foreground-muted" />
         <span className="text-sm text-foreground-muted">
           Påmeldte varsles på e-post om endringen.

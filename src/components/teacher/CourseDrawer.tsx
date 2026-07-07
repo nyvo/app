@@ -69,7 +69,7 @@ function DrawerHeader({
   const showBadge = hideHealthyBadge ? badgeIsInformative : true;
 
   return (
-    <SheetHeader className="px-6 py-5 border-b border-border">
+    <SheetHeader>
       {/* Title owns its row (Cron/Notion Calendar event-panel model); state
           moves to its own row below the meta so nothing competes with it.
           StatusBadge centralizes all status treatments incl. Avlyst. */}
@@ -198,7 +198,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
   if (isLoading) {
     return (
       <>
-        <SheetHeader className="px-6 py-4 border-b border-border">
+        <SheetHeader>
           <Skeleton className="h-6 w-48" />
           <Skeleton className="mt-2 h-4 w-32" />
         </SheetHeader>
@@ -215,7 +215,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
           </section>
           {/* Påmeldte — heading + 3 participant rows */}
           <section className="px-6 py-6 border-b border-border">
-            <Skeleton className="h-5 w-32 mb-4" />
+            <Skeleton className="h-5 w-32 mb-3" />
             <div className="space-y-1">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 py-2">
@@ -236,7 +236,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
   if (error || !courseData) {
     return (
       <>
-        <SheetHeader className="px-6 py-4 border-b border-border">
+        <SheetHeader>
           <SheetTitle>Fant ikke kurset</SheetTitle>
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
@@ -357,7 +357,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
 
         {/* Påmeldte — the operational concern */}
         <section className="px-6 py-6 border-b border-border">
-          <div className="mb-4 flex items-baseline justify-between gap-3">
+          <div className="mb-3 flex items-baseline justify-between gap-3">
             <h3 className="text-base font-medium text-foreground">Påmeldte</h3>
             <span className="text-base tabular-nums text-foreground-muted">
               {confirmedCount}
@@ -397,7 +397,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
         {/* Sessions — only when multi-day. Read-only here; editing on /courses/:id. */}
         {isMultiDay && (
           <section className="px-6 py-6">
-            <h3 className="text-base font-medium text-foreground mb-4">
+            <h3 className="text-base font-medium text-foreground mb-3">
               Økter ({sessions.length})
             </h3>
             <div className="space-y-1">
@@ -476,7 +476,7 @@ function ScheduleQuickView({
   if (isLoading) {
     return (
       <>
-        <SheetHeader className="px-6 py-4 border-b border-border">
+        <SheetHeader>
           <Skeleton className="h-6 w-48" />
           <Skeleton className="mt-2 h-4 w-32" />
         </SheetHeader>
@@ -493,7 +493,7 @@ function ScheduleQuickView({
   if (error || !courseData) {
     return (
       <>
-        <SheetHeader className="px-6 py-4 border-b border-border">
+        <SheetHeader>
           <SheetTitle>Fant ikke kurset</SheetTitle>
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
@@ -572,7 +572,7 @@ function ScheduleQuickView({
         <section className="px-6 py-6">
           {/* Heading + count as an aligned pair (schedule-card grammar):
               the word carries hierarchy, the number reads as a datum. */}
-          <div className="mb-4 flex items-baseline justify-between gap-3">
+          <div className="mb-3 flex items-baseline justify-between gap-3">
             <h3 className="text-base font-medium text-foreground">Påmeldte</h3>
             <span className="text-base tabular-nums text-foreground-muted">
               {confirmedCount}
