@@ -14,8 +14,8 @@ import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { toLocalDate } from '@/utils/dateUtils';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { COMPANY } from '@/lib/company';
-import { readFreeReceipt } from '@/lib/free-receipt';
-import { downloadIcs, type IcsEvent } from '@/utils/ics';
+import { readFreeReceipt, clearFreeReceipt, type FreeReceipt } from '@/lib/free-receipt';
+import { downloadIcs, resolveEventEnd, type IcsEvent } from '@/utils/ics';
 import { directionsUrl } from '@/components/public/studio/studioFacts';
 
 const WEEKDAYS = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
@@ -75,6 +75,9 @@ interface DisplaySignup {
     title: string;
     startDate: string | null;
     timeSchedule: string | null;
+    // Free path only — the paid-path RPC doesn't return duration; the ICS
+    // end-time resolver treats null as "no duration signal".
+    durationMinutes: number | null;
     location: string | null;
     // Only ever populated on the free path — CheckoutPage already has the
     // course's coordinates in memory. The paid-path RPC only returns a plain
@@ -108,6 +111,20 @@ const CheckoutSuccessPage = () => {
   const [bookingFailed, setBookingFailed] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState(false);
   const [attemptCount, setAttemptCount] = useState(0);
+
+  // Free path: the checkout page stashed a client-side receipt in
+  // sessionStorage (keyed by ?sid=signup id) before redirecting — see
+  // src/lib/free-receipt.ts for why there's no server-side lookup here. Read
+  // once into state (lazy initializer), then clear the storage entry — the
+  // recap renders from this state, and the entry has served its purpose. If
+  // it's missing or malformed (storage cleared, fresh tab, tampered), the
+  // page falls back to the generic no-recap free confirmation.
+  const [freeReceipt] = useState<FreeReceipt | null>(() =>
+    isFreeSignup ? readFreeReceipt(searchParams.get('sid')) : null,
+  );
+  useEffect(() => {
+    if (freeReceipt) clearFreeReceipt(freeReceipt.signupId);
+  }, [freeReceipt]);
 
   useEffect(() => {
     let cancelled = false;
@@ -264,16 +281,8 @@ const CheckoutSuccessPage = () => {
     );
   }
 
-  // Free path: the checkout page stashed a client-side receipt in
-  // sessionStorage (keyed by signup id) before redirecting — see
-  // src/lib/free-receipt.ts for why there's no server-side lookup here. If
-  // the entry is missing (storage cleared, receipt opened in a fresh tab),
-  // freeReceipt is null and the page falls back to the generic
-  // no-recap free confirmation below.
-  const freeReceipt = isFreeSignup ? readFreeReceipt(searchParams.get('sid')) : null;
-
   // Single shape the recap pane renders from — paid (polled) or free
-  // (sessionStorage), whichever is present.
+  // (sessionStorage, read into state above), whichever is present.
   const displaySignup: DisplaySignup | null = signup
     ? {
         id: signup.id,
@@ -284,6 +293,7 @@ const CheckoutSuccessPage = () => {
           title: signup.course.title,
           startDate: signup.course.start_date,
           timeSchedule: signup.course.time_schedule,
+          durationMinutes: null,
           location: signup.course.location,
           locationLat: null,
           locationLon: null,
@@ -302,6 +312,7 @@ const CheckoutSuccessPage = () => {
             title: freeReceipt.courseTitle,
             startDate: freeReceipt.startDate,
             timeSchedule: freeReceipt.timeSchedule,
+            durationMinutes: freeReceipt.durationMinutes ?? null,
             location: freeReceipt.location,
             locationLat: freeReceipt.locationLat,
             locationLon: freeReceipt.locationLon,
@@ -433,10 +444,8 @@ const CheckoutSuccessPage = () => {
 
             // "Legg til i kalenderen" needs both a date AND a time to build a
             // meaningful event — a date-only VEVENT would default to midnight,
-            // which is worse than not offering the download. Duration isn't
-            // known here (neither receipt path carries session length), so a
-            // 60-minute default is used — the common class length, and easy
-            // for the buyer to adjust in their own calendar app if wrong.
+            // which is worse than not offering the download. The end comes from
+            // resolveEventEnd: schedule range → course duration → 60-min default.
             const icsEvent: IcsEvent | null =
               displaySignup?.course.startDate && time
                 ? (() => {
@@ -448,7 +457,11 @@ const CheckoutSuccessPage = () => {
                       uid: `openspot-signup-${displaySignup.id}`,
                       summary: displaySignup.course.title,
                       start,
-                      end: new Date(start.getTime() + 60 * 60 * 1000),
+                      end: resolveEventEnd(
+                        start,
+                        displaySignup.course.timeSchedule,
+                        displaySignup.course.durationMinutes,
+                      ),
                       location: displaySignup.course.location ?? undefined,
                     };
                   })()

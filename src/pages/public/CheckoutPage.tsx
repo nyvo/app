@@ -306,6 +306,7 @@ const CheckoutPage = () => {
       courseTitle: course.title,
       startDate: course.next_session?.session_date ?? course.start_date ?? null,
       timeSchedule: course.time_schedule ?? null,
+      durationMinutes: course.duration ?? null,
       location: course.location ?? null,
       locationLat: course.location_lat ?? null,
       locationLon: course.location_lon ?? null,

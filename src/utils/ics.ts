@@ -54,6 +54,34 @@ function formatUtcStamp(date: Date): string {
   );
 }
 
+/**
+ * Resolves the event's end time from the best data available, mirroring the
+ * priority of `resolveTimeRange` (PublicCourseDetailPage): (1) a real
+ * "HH:MM–HH:MM" range written into time_schedule by the repo's own course
+ * writers; (2) the course's duration in minutes; (3) a 60-minute default —
+ * the common class length, easy for the buyer to adjust in their calendar
+ * app when neither real signal exists.
+ */
+export function resolveEventEnd(
+  start: Date,
+  timeSchedule: string | null,
+  durationMinutes: number | null,
+): Date {
+  const rangeMatch = timeSchedule?.match(/\d{1,2}:\d{2}\s*[-–]\s*(\d{1,2}):(\d{2})/);
+  if (rangeMatch) {
+    const end = new Date(start);
+    end.setHours(Number(rangeMatch[1]), Number(rangeMatch[2]), 0, 0);
+    // An end at/before the start means the range crosses midnight — roll to
+    // the next day rather than emit a negative-length event.
+    if (end <= start) end.setDate(end.getDate() + 1);
+    return end;
+  }
+  if (durationMinutes && durationMinutes > 0) {
+    return new Date(start.getTime() + durationMinutes * 60_000);
+  }
+  return new Date(start.getTime() + 60 * 60_000);
+}
+
 /** Builds a minimal single-VEVENT .ics document as a string (CRLF line endings, per spec). */
 export function buildIcs(event: IcsEvent): string {
   const lines = [
