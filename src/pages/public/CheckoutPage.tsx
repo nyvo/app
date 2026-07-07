@@ -19,6 +19,7 @@ import { friendlyError } from '@/lib/error-messages';
 import { fetchPublicCourseBySlug, resolveCourseImage, singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { createStripeSession } from '@/services/checkout';
 import { createFreeSignup } from '@/services/signups';
+import { saveFreeReceipt, maskEmail } from '@/lib/free-receipt';
 import { supabase } from '@/lib/supabase';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { osloNowKey, toLocalDate } from '@/utils/dateUtils';
@@ -130,13 +131,20 @@ const CheckoutPage = () => {
     setSelectedTierId(initial?.id ?? null);
   }, [tiers, searchParams, selectedTierId]);
 
-  const isFree = !course?.price || course.price <= 0;
   const isCancelled = course?.status === 'cancelled';
+
+  const selectedTier = tiers.find((t) => t.id === selectedTierId) ?? null;
+  // Derived from the SELECTED tier's price, not course.price — a course's
+  // listed price is really just its default tier, and a buyer can pick a
+  // different tier (e.g. a free info session) with a different price. Falls
+  // back to course.price only in the single frame before a tier is resolved
+  // (selectedTierId starts null), so the page doesn't flash the free-signup
+  // form for a paid course while tiers are still loading.
+  const isFree = selectedTier ? selectedTier.price <= 0 : (!course?.price || course.price <= 0);
   // Free signups need no payment rails; paid needs Stripe onboarding complete.
   const paymentReady =
     isFree || (course?.seller?.stripe_onboarding_complete ?? false);
 
-  const selectedTier = tiers.find((t) => t.id === selectedTierId) ?? null;
   const isDropInSelected = selectedTier?.ticket_kind === 'drop_in';
   // Course-wide capacity gates the package tiers only. A drop-in occupies a
   // single class, so it stays purchasable while the NEXT session has room —
@@ -276,19 +284,40 @@ const CheckoutPage = () => {
     if (!course || !slug || submitting) return;
     setSubmitting(true);
     setEmailMessage(null);
-    const { error: signupErr } = await createFreeSignup({
+    const { data, error: signupErr } = await createFreeSignup({
       courseId: course.id,
       participantName: formatPersonName(form.name),
       participantEmail: form.email.trim(),
       participantPhone: form.phone.trim() || undefined,
       participantNote: form.note.trim() || undefined,
     });
-    if (signupErr) {
+    if (signupErr || !data) {
       toast.error(friendlyError(signupErr, 'Kunne ikke fullføre påmelding. Prøv igjen.'));
       setSubmitting(false);
       return;
     }
-    window.location.href = `/checkout/success?free=true&org=${slug}`;
+
+    // Thread the course context through to the success page so it can render
+    // the same recap pane as the paid path — see src/lib/free-receipt.ts for
+    // why this travels via sessionStorage instead of a server-side lookup.
+    saveFreeReceipt({
+      signupId: data.signupId,
+      courseId: course.id,
+      courseTitle: course.title,
+      startDate: course.next_session?.session_date ?? course.start_date ?? null,
+      timeSchedule: course.time_schedule ?? null,
+      location: course.location ?? null,
+      locationLat: course.location_lat ?? null,
+      locationLon: course.location_lon ?? null,
+      locationPlaceId: course.location_place_id ?? null,
+      imageUrl: resolveCourseImage(course),
+      sellerName: course.seller?.name ?? '',
+      sellerSlug: course.seller?.slug ?? slug,
+      participantEmailMasked: maskEmail(form.email.trim()),
+      createdAt: new Date().toISOString(),
+    });
+
+    navigate(`/checkout/success?free=true&org=${slug}&sid=${encodeURIComponent(data.signupId)}`);
   }
 
   // ── Contact-step submit — validate on attempt, focus the first invalid
@@ -342,7 +371,7 @@ const CheckoutPage = () => {
               navigate(backHref);
             }
           }}
-          className="mb-8 px-2 sm:px-6 inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+          className="focus-ring mb-8 rounded px-2 sm:px-6 inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
         >
           <ChevronLeft className="size-4" strokeWidth={1.75} />
           Tilbake
@@ -369,6 +398,18 @@ const CheckoutPage = () => {
             {step === 'contact' || isFree ? (
               <>
                 <CheckoutStepHeader step={1} showSteps={!isFree} />
+
+                {/* Mobile-only condensed summary — the full aside summary sits below
+                    the fold on <md, so the buyer needs the course + total in view
+                    before filling in the contact form. */}
+                <div className="px-2 sm:px-6 md:hidden">
+                  <div className="flex items-center justify-between gap-3 rounded-lg bg-panel px-4 py-3">
+                    <span className="truncate text-sm font-medium text-foreground">{course.title}</span>
+                    <span className="shrink-0 text-sm font-medium tabular-nums text-foreground">
+                      {formatKroner(total)}
+                    </span>
+                  </div>
+                </div>
 
                 <form onSubmit={handleContactSubmit} noValidate className="space-y-6">
                   <div className="px-2 sm:px-6">
@@ -430,7 +471,7 @@ const CheckoutPage = () => {
                         />
                       </Field>
                       <div>
-                        <label className="flex items-start gap-3 cursor-pointer text-sm text-foreground">
+                        <div className="flex items-start gap-3">
                           <Checkbox
                             id="terms"
                             checked={form.terms}
@@ -441,19 +482,21 @@ const CheckoutPage = () => {
                             aria-describedby={termsError ? 'terms-error' : undefined}
                             className="mt-0.5"
                           />
-                          <span>
-                            Jeg godtar{' '}
+                          {/* The link is a SIBLING of the label, not a descendant — clicking
+                              it must open /terms, not toggle the checkbox. */}
+                          <p className="text-sm text-foreground">
+                            <label htmlFor="terms" className="cursor-pointer">Jeg godtar</label>{' '}
                             <a
                               href="/terms"
                               target="_blank"
                               rel="noreferrer"
-                              className="underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+                              className="focus-ring rounded underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
                             >
                               vilkår og angrerett
                             </a>
                             .
-                          </span>
-                        </label>
+                          </p>
+                        </div>
                         {termsError && (
                           <FieldError id="terms-error" className="pl-7">{termsError}</FieldError>
                         )}
@@ -678,7 +721,24 @@ function StripeEmbed({
         clientSecret,
         appearance: {
           theme: 'stripe',
-          variables: { fontFamily: 'system-ui, sans-serif', borderRadius: '6px' },
+          variables: {
+            // Stripe loads its PaymentElement in a cross-origin iframe, so it
+            // can't inherit the page's @font-face — 'Geist Variable' is
+            // self-hosted with no public URL to pass via Stripe's `fonts`
+            // config, so this falls back to system-ui in every browser.
+            fontFamily: "'Geist Variable', system-ui, sans-serif",
+            // Stripe's appearance API validates color strings and rejects
+            // OKLCH in some versions — hardcoded to the resolved sRGB hex of
+            // the matching src/index.css tokens rather than risk a silent
+            // fallback to Stripe's default blue:
+            //   colorPrimary → --primary   oklch(0.540 0.150 245) → #0074BF
+            //   colorText    → --foreground (--neutral-12) oklch(0.185 0.004 250) → #111314
+            //   colorDanger  → --danger (--red-11) oklch(0.540 0.170 25) → #BD3838
+            colorPrimary: '#0074BF',
+            colorText: '#111314',
+            colorDanger: '#BD3838',
+            borderRadius: '6px',
+          },
         },
       }}
     >
