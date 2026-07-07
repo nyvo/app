@@ -44,19 +44,33 @@ export function SegmentedTabs<T extends string>({
   const isTablist = role === 'tablist';
   const itemRole = isTablist ? 'tab' : 'radio';
 
+  // Roving tabindex for both modes (WAI-ARIA tabs + radio-group patterns):
+  // one tab stop; arrows move focus AND select (auto-activation, matching
+  // page-tabs.tsx). Tablist takes Left/Right; radiogroup also takes Up/Down
+  // (radios rove on both axes). Home/End jump to first/last in both modes.
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!isTablist) return;
     const { key } = event;
-    if (key !== 'ArrowLeft' && key !== 'ArrowRight') return;
+    const isPrev = key === 'ArrowLeft' || (!isTablist && key === 'ArrowUp');
+    const isNext = key === 'ArrowRight' || (!isTablist && key === 'ArrowDown');
+    if (!isPrev && !isNext && key !== 'Home' && key !== 'End') return;
 
     const items = Array.from(
-      event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]:not(:disabled)'),
+      event.currentTarget.querySelectorAll<HTMLButtonElement>(
+        `[role="${itemRole}"]:not(:disabled)`,
+      ),
     );
     if (items.length === 0) return;
 
     const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
-    const delta = key === 'ArrowRight' ? 1 : -1;
-    const nextIndex = ((currentIndex === -1 ? 0 : currentIndex) + delta + items.length) % items.length;
+    let nextIndex: number;
+    if (key === 'Home') {
+      nextIndex = 0;
+    } else if (key === 'End') {
+      nextIndex = items.length - 1;
+    } else {
+      const delta = isNext ? 1 : -1;
+      nextIndex = ((currentIndex === -1 ? 0 : currentIndex) + delta + items.length) % items.length;
+    }
 
     event.preventDefault();
     const next = items[nextIndex];
@@ -85,7 +99,7 @@ export function SegmentedTabs<T extends string>({
             role={itemRole}
             aria-selected={isTablist ? active : undefined}
             aria-checked={isTablist ? undefined : active}
-            tabIndex={isTablist ? (active ? 0 : -1) : undefined}
+            tabIndex={active ? 0 : -1}
             onClick={() => onChange(t.key)}
             className={cn(
               'inline-flex items-center justify-center gap-2 rounded-full text-sm font-medium transition-colors',
