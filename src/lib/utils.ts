@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { toLocalDate } from "@/utils/dateUtils"
 
 export const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs))
@@ -7,6 +8,26 @@ export const cn = (...inputs: ClassValue[]) => {
 
 export function formatKroner(amount: number | null | undefined): string {
   return `${(amount ?? 0).toLocaleString('nb-NO')} kr`;
+}
+
+/**
+ * "man. 2. feb" (+ year when it isn't the current year) — the buyer-facing
+ * short course date (BuyerDashboard signup rows). nb-NO Intl formatting
+ * rather than hand-rolled abbreviation tables, so month grammar comes out
+ * right (e.g. "juli" after a day number, not a truncated "jul"). Null on
+ * missing/bad input so a row without a date just omits the line.
+ */
+export function formatCourseDate(dateString: string | null | undefined): string | null {
+  if (!dateString) return null;
+  const date = toLocalDate(dateString);
+  if (Number.isNaN(date.getTime())) return null;
+  const formatted = new Intl.DateTimeFormat('nb-NO', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  }).format(date);
+  const year = date.getFullYear() === new Date().getFullYear() ? '' : ` ${date.getFullYear()}`;
+  return `${formatted}${year}`;
 }
 
 /**

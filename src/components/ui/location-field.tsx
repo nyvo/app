@@ -21,6 +21,8 @@ interface LocationFieldProps {
   disabled?: boolean
   id?: string
   placeholder?: string
+  'aria-invalid'?: boolean
+  'aria-describedby'?: string
 }
 
 /**
@@ -36,6 +38,8 @@ export function LocationField({
   disabled,
   id,
   placeholder = 'Søk etter studio eller adresse',
+  'aria-invalid': ariaInvalid,
+  'aria-describedby': ariaDescribedBy,
 }: LocationFieldProps) {
   const showMap = coords?.placeId != null || (coords?.lat != null && coords?.lon != null)
   return (
@@ -45,6 +49,8 @@ export function LocationField({
         icon={MapPin}
         value={value}
         disabled={disabled}
+        aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedBy}
         onChange={(v) => onChange({ name: v, address: '', coords: null })}
         onSelect={(p: PlaceDetails) =>
           onChange({
