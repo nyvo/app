@@ -93,7 +93,7 @@ function SortableHeader({
 
 function TableHeader({ sortKey, sortDir, onSort }: TableHeaderProps) {
   return (
-    <div className={cn(COLS, 'px-4 py-3 border-b border-border-subtle')}>
+    <div className={cn(COLS, 'py-3 border-b border-border-subtle')}>
       <SortableHeader label="Navn" columnKey="name" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
       <span className="text-sm text-foreground-muted">Status</span>
       <SortableHeader label="Påmeldte" columnKey="signups" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:inline-flex" />
@@ -112,7 +112,7 @@ function TableRow({ course }: { course: SessionScheduleRow }) {
       to={routes.course(course.courseId)}
       className={cn(
         COLS,
-        'group relative px-4 py-3 no-underline outline-none transition-colors hover:bg-hover focus-visible:bg-hover',
+        'group relative py-3 no-underline outline-none transition-colors hover:bg-hover focus-visible:bg-hover',
       )}
     >
       <div className="min-w-0">
@@ -189,7 +189,7 @@ export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState }
 export function CourseListSkeleton() {
   return (
     <div className="overflow-hidden">
-      <div className={cn(COLS, 'px-4 py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
+      <div className={cn(COLS, 'py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
         <span>Navn</span>
         <span>Status</span>
         <span className="hidden md:inline">Påmeldte</span>
@@ -197,7 +197,7 @@ export function CourseListSkeleton() {
       </div>
       <div className="divide-y divide-border-subtle">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className={cn(COLS, 'px-4 py-3')}>
+          <div key={i} className={cn(COLS, 'py-3')}>
             <div className="min-w-0">
               <Skeleton className="h-4 w-48 max-w-full" />
               <Skeleton className="mt-1.5 h-3 w-24 max-w-full" />

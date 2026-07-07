@@ -291,12 +291,14 @@ export function UpcomingCoursesSection({
           />
         </FramedCardPanel>
       ) : (
-        items.map((course) => (
-          <UpcomingCourseRow
-            key={`${course.id}-${course.date}-${course.time}`}
-            course={course}
-          />
-        ))
+        <FramedCardPanel className="divide-y divide-border-subtle">
+          {items.map((course) => (
+            <UpcomingCourseRow
+              key={`${course.id}-${course.date}-${course.time}`}
+              course={course}
+            />
+          ))}
+        </FramedCardPanel>
       )}
     </FramedCard>
   );
@@ -311,7 +313,7 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="group flex items-center gap-3 rounded-xl bg-surface px-5 py-4 no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring-subtle"
+      className="group flex items-center gap-3 px-5 py-4 no-underline outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
@@ -359,9 +361,11 @@ export function RecentSignupsSection({
           />
         </FramedCardPanel>
       ) : (
-        items.map((signup) => (
-          <SignupRow key={signup.id} signup={signup} onSelect={onSelect} />
-        ))
+        <FramedCardPanel className="divide-y divide-border-subtle">
+          {items.map((signup) => (
+            <SignupRow key={signup.id} signup={signup} onSelect={onSelect} />
+          ))}
+        </FramedCardPanel>
       )}
     </FramedCard>
   );
@@ -388,7 +392,7 @@ function SignupRow({
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="group flex w-full items-center gap-3 rounded-xl bg-surface px-5 py-4 text-left outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-ring-subtle"
+      className="group flex w-full items-center gap-3 px-5 py-4 text-left outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
@@ -422,13 +426,13 @@ function SignupRow({
 function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
   // Mirrors the real row anatomy (leading 40px block + two 24px text lines +
   // trailing meta) so the list doesn't jump in height when data lands — and
-  // the real container recipe (white item cards inside the frame) so
+  // the real container recipe (divided rows inside the white inset) so
   // loading never flashes the wrong shape.
   if (variant === 'course') {
     return (
-      <>
+      <FramedCardPanel className="divide-y divide-border-subtle">
         {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-xl bg-surface px-5 py-4">
+          <div key={i} className="flex items-center gap-3 px-5 py-4">
             <Skeleton className="size-10 rounded-lg" />
             <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
               <Skeleton className="h-3.5 w-32" />
@@ -437,14 +441,14 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
             <Skeleton className="h-3.5 w-8 shrink-0" />
           </div>
         ))}
-      </>
+      </FramedCardPanel>
     );
   }
 
   return (
-    <>
+    <FramedCardPanel className="divide-y divide-border-subtle">
       {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 rounded-xl bg-surface px-5 py-4">
+        <div key={i} className="flex items-center gap-3 px-5 py-4">
           <Skeleton className="size-10 rounded-full" />
           <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
             <Skeleton className="h-3.5 w-32" />
@@ -453,7 +457,7 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
           <Skeleton className="h-3.5 w-8 shrink-0" />
         </div>
       ))}
-    </>
+    </FramedCardPanel>
   );
 }
 

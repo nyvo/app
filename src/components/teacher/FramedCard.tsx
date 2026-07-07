@@ -8,10 +8,11 @@ import { cn } from '@/lib/utils';
  *
  *  - Block content (chart, stat spine, copy + action, map): wrap it in ONE
  *    `<FramedCardPanel>` — the white inset.
- *  - List content (sessions, signups, toggle rows): each item is its OWN
- *    white card (`rounded-xl bg-surface` + padding), stacked with the
- *    column gap. Interactive items do NOT change fill on hover — affordance
- *    comes from cursor, chevron nudge, and the focus ring.
+ *  - List content (sessions, signups, toggle rows): rows live inside ONE
+ *    `<FramedCardPanel className="divide-y divide-border-subtle">`, each a
+ *    plain padded row. Interactive rows do NOT change fill on hover —
+ *    affordance comes from cursor, chevron nudge, and the focus ring
+ *    (`ring-inset`, since the panel clips).
  *
  * Used identically on the dashboard home and the course-detail overview.
  * Deliberately neutral: azure fills are reserved for genuine selected /

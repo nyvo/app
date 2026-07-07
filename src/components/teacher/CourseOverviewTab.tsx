@@ -349,25 +349,27 @@ function TimeplanCard({
   const nextId = sessions.find((s) => s.session_date >= today && s.status !== 'cancelled')?.id;
   return (
     <FramedCard title="Timeplan" action={statusLabel}>
-      {preview.map((s) => (
-        <SessionRow
-          key={s.id}
-          session={s}
-          today={today}
-          isNext={s.id === nextId}
-          onEdit={() => onEditSession(s.id)}
-        />
-      ))}
-      {sessions.length > preview.length && (
-        <button
-          type="button"
-          onClick={onOpenAll}
-          className="group flex w-full items-center justify-between rounded-xl bg-surface px-4 py-3 text-left text-sm font-medium text-foreground"
-        >
-          Se alle timer
-          <ChevronRight className="size-4 shrink-0 text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
-        </button>
-      )}
+      <FramedCardPanel className="divide-y divide-border-subtle">
+        {preview.map((s) => (
+          <SessionRow
+            key={s.id}
+            session={s}
+            today={today}
+            isNext={s.id === nextId}
+            onEdit={() => onEditSession(s.id)}
+          />
+        ))}
+        {sessions.length > preview.length && (
+          <button
+            type="button"
+            onClick={onOpenAll}
+            className="group flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+          >
+            Se alle timer
+            <ChevronRight className="size-4 shrink-0 text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
+          </button>
+        )}
+      </FramedCardPanel>
     </FramedCard>
   );
 }
@@ -409,9 +411,9 @@ function SessionRow({
     </div>
   );
 
-  // Each session is its own white card inside the frame. Hover never changes
+  // Sessions are divided rows inside the white inset. Hover never changes
   // the fill — affordance is the cursor, the chevron nudge and the focus ring.
-  const layout = 'flex w-full items-stretch gap-4 rounded-xl bg-surface px-4 py-3';
+  const layout = 'flex w-full items-stretch gap-4 px-4 py-3';
 
   // Editable (upcoming) rows are the tap target — chevron nudge, open the
   // reschedule modal.
@@ -528,29 +530,25 @@ function TogglesSection({
   onAcceptsLateSignupsChange,
 }: TogglesSectionProps) {
   return (
-    <>
-      <div className="rounded-xl bg-surface px-4">
-        <DropInToggleRow
-          checked={allowsDropIn}
-          onChange={onAllowsDropInChange}
-          price={dropInPrice}
-          onPriceChange={onDropInPriceChange}
-          onPriceBlur={onDropInPriceBlur}
-        />
-      </div>
-      <div className="rounded-xl bg-surface px-4">
-        <ToggleRow
-          label="Tillat påmelding etter oppstart"
-          help={
-            isFree
-              ? 'Lar deltakere melde seg på etter at kurset har startet.'
-              : 'Prisen blir justert automatisk etter antall uker igjen.'
-          }
-          checked={acceptsLateSignups}
-          onChange={onAcceptsLateSignupsChange}
-        />
-      </div>
-    </>
+    <FramedCardPanel className="divide-y divide-border-subtle px-4">
+      <DropInToggleRow
+        checked={allowsDropIn}
+        onChange={onAllowsDropInChange}
+        price={dropInPrice}
+        onPriceChange={onDropInPriceChange}
+        onPriceBlur={onDropInPriceBlur}
+      />
+      <ToggleRow
+        label="Tillat påmelding etter oppstart"
+        help={
+          isFree
+            ? 'Lar deltakere melde seg på etter at kurset har startet.'
+            : 'Prisen blir justert automatisk etter antall uker igjen.'
+        }
+        checked={acceptsLateSignups}
+        onChange={onAcceptsLateSignupsChange}
+      />
+    </FramedCardPanel>
   );
 }
 
