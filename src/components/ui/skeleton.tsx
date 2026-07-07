@@ -14,7 +14,7 @@ function SkeletonCard({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "rounded-lg border border-card bg-surface",
+        "rounded-xl bg-panel",
         className
       )}
       aria-hidden="true"

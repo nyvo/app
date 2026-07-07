@@ -37,7 +37,7 @@ export function EmbedCodeSection({ slug }: { slug: string }) {
       title="Kalender på eget nettsted"
       description="Lim inn koden på nettstedet ditt for å vise kurskalenderen med påmelding."
     >
-      <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-[13px] leading-relaxed text-foreground select-all">
+      <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-xs leading-relaxed text-foreground select-all">
         <code>{snippet}</code>
       </pre>
       <div className="flex items-center gap-2">

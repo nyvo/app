@@ -990,7 +990,7 @@ const CoursePage = () => {
                       </Button>
                     </div>
 
-                    <div className="rounded-lg border border-card bg-surface overflow-hidden">
+                    <div>
                       {participantsError && visible.length === 0 ? (
                       // Failed fetch ≠ empty roster — never tell the teacher
                       // "ingen påmeldte" when we simply couldn't load them.
@@ -1017,14 +1017,14 @@ const CoursePage = () => {
                       <div>
                         {/* Column header — anchored at the leading edge so the
                             "Navn" label sits above the avatar+name unit. */}
-                        <div className={cn(PARTICIPANT_COLS, 'hidden md:grid px-4 py-3 border-b border-border bg-surface text-sm text-foreground-muted')}>
+                        <div className={cn(PARTICIPANT_COLS, 'hidden md:grid px-4 py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
                           <span>Navn</span>
                           <span>Notat</span>
                           <span>Status</span>
                           <span aria-hidden />
                         </div>
 
-                        <div className="divide-y divide-border">
+                        <div className="divide-y divide-border-subtle">
                           {visible.map((p) => {
                             const name = p.participant_name || p.profile?.name || 'Ukjent';
                             const email = p.participant_email || p.profile?.email || '';
@@ -1040,7 +1040,7 @@ const CoursePage = () => {
                                 className={cn(
                                   PARTICIPANT_COLS,
                                   'w-full text-left px-4 py-3 transition-colors cursor-pointer',
-                                  'hover:bg-muted focus-visible:bg-muted outline-none',
+                                  'hover:bg-hover focus-visible:bg-hover outline-none',
                                   isCancelled && 'opacity-60',
                                 )}
                               >

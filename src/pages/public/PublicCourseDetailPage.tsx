@@ -347,7 +347,7 @@ function SchedulePeek({ sessions, duration }: { sessions: CourseSession[]; durat
                 <li
                   key={s.id}
                   className={cn(
-                    'rounded-xl border border-card bg-surface px-4 py-3.5',
+                    'rounded-xl bg-panel px-4 py-3.5',
                     isPast && !isCancelled && 'opacity-60',
                   )}
                 >

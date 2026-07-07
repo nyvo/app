@@ -21,9 +21,14 @@
      Slate / indigo). When in doubt, this file wins.
 
    Color format: OKLCH (perceptually uniform). Neutral ramp is a
-   pure-neutral grey (chroma 0), de-tinted from Radix Slate to kill
-   the cold blue cast. Status scales are Jade / Amber / Red / Blue.
-   Primary is periwinkle (oklch(0.540 0.150 274)).
+   cool-tinted grey (hue 250, chroma 0.001–0.013 scaled by step) —
+   re-tinted 2026-07 from the gen-3 pure-neutral ramp to match the
+   sharper Slate-like reference the product moved to. Lightness steps
+   are unchanged (accessibility-tuned) except neutral-2 (the `--panel`
+   utility fill — no longer darkens the canvas, which is white) and
+   neutral-12 (foreground, darkened for punch). Status scales are
+   Jade / Amber / Red / Blue.
+   Primary is azure blue (oklch(0.540 0.150 245)).
    ============================================================ */
 
 @theme inline {
@@ -37,6 +42,8 @@
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
   --color-surface-on-dark: var(--surface-on-dark);
+  --color-panel: var(--panel);
+  --color-selection: var(--selection);
 
   /* Chrome — the dark surface for toasts + marketing dark bands (the landing
      page previews the app's chrome). No longer the sidebar — that's a light rail now. */
@@ -190,21 +197,25 @@
      tokens below. Adding a new color = define here first.
      ──────────────────────────────────────────────────────────── */
 
-  /* Neutral — pure-neutral grey (chroma 0). De-tinted from Radix Slate to kill the
-     cold blue cast. Lightness ramp preserved, so every contrast ratio is
-     unchanged. */
-  --neutral-1:  oklch(0.991 0 0);
-  --neutral-2:  oklch(0.983 0 0);
-  --neutral-3:  oklch(0.956 0 0);
-  --neutral-4:  oklch(0.932 0 0);
-  --neutral-5:  oklch(0.910 0 0);
-  --neutral-6:  oklch(0.887 0 0);
-  --neutral-7:  oklch(0.853 0 0);
-  --neutral-8:  oklch(0.794 0 0);
-  --neutral-9:  oklch(0.645 0 0);
-  --neutral-10: oklch(0.611 0 0);
-  --neutral-11: oklch(0.550 0 0);   /* secondary-text grey — lifted from 0.502 for clearer primary/secondary hierarchy; 4.9:1 AA on white */
-  --neutral-12: oklch(0.241 0 0);
+  /* Neutral — cool-tinted grey (hue 250, chroma scaled 0.001→0.013 by step,
+     Slate-like). Lightness ramp preserved from the accessibility-tuned
+     pure-neutral gen except two deliberate moves: neutral-2 darkened
+     0.983→0.976 — it's the `--panel` utility fill, not a canvas tint
+     (canvas is white), neutral-12 darkened 0.241→0.185 (≈#111315) for
+     sharper text — both only INCREASE contrast. Keep the L values;
+     tune hue/chroma only. */
+  --neutral-1:  oklch(0.991 0.001 250);
+  --neutral-2:  oklch(0.976 0.002 250);
+  --neutral-3:  oklch(0.956 0.003 250);
+  --neutral-4:  oklch(0.932 0.004 250);
+  --neutral-5:  oklch(0.910 0.005 250);
+  --neutral-6:  oklch(0.887 0.006 250);
+  --neutral-7:  oklch(0.853 0.007 250);
+  --neutral-8:  oklch(0.794 0.009 250);
+  --neutral-9:  oklch(0.645 0.011 250);
+  --neutral-10: oklch(0.611 0.012 250);
+  --neutral-11: oklch(0.550 0.013 250);   /* secondary-text grey — lifted from 0.502 for clearer primary/secondary hierarchy; 4.86:1 AA on white, 4.53:1 on --panel */
+  --neutral-12: oklch(0.185 0.006 250);
 
   /* Status — jade (success) / amber (warning) / red (danger) / blue (info) */
   --jade-3:   oklch(0.953 0.034 158);
@@ -221,7 +232,15 @@
 
   /* Surfaces */
   --background: oklch(1 0 0);                      /* pure white, per spec */
-  --canvas: var(--neutral-2);                      /* dampened dashboard page canvas — white surfaces (--surface) float on it */
+  --canvas: var(--background);                     /* white page bg (2026-07 white-bg adoption) — separation now comes
+                                                      from fills/hairlines, not card borders on grey. Kept as a token so
+                                                      the role can diverge again without touching pages. */
+  --panel: var(--neutral-2);                        /* utility-panel fill (R3) — the ONLY grey fill muted text is AA on
+                                                      (4.53:1). bg-muted (neutral-3) stays for chips/hover/active where
+                                                      text is full foreground. */
+  --selection: color-mix(in oklab, var(--primary) 10%, var(--background));
+                                                    /* opaque hover step for tinted cards — one notch deeper than
+                                                       --primary-subtle (#F2F7FB), same family as --selection-light. */
   --surface: oklch(1 0 0);                         /* cards, popovers, panels */
   --surface-elevated: oklch(1 0 0 / 0.8);          /* translucent backdrop-blur header */
   --surface-on-dark: oklch(1 0 0 / 0.06);          /* faint elevated surface over bg-primary */
@@ -232,13 +251,14 @@
   --foreground-subtle: var(--neutral-9);             /* recessive grey: decorative glyphs/icons only (quieter than -muted, not a disabled state). Fails AA for text (~3.3:1) — real text and placeholders use -muted */
   --foreground-disabled: var(--neutral-8);
 
-  /* Brand / interaction — periwinkle (#5564c4). White text = 5.2:1 AA. */
-  --primary: oklch(0.540 0.150 274);
+  /* Brand / interaction — azure blue (#0074bf), hue-matched to the cool
+     neutral ramp (subtle #F2F7FB sets the family). White text = 4.94:1 AA. */
+  --primary: oklch(0.540 0.150 245);
   --primary-foreground: oklch(0.985 0 0);
-  /* Faint primary surface + border for framed cards — opaque tokens matched to
-     the composited bg-primary/5 + border-primary/15 (over canvas) they replace. */
-  --primary-subtle: oklch(0.962 0.005 275);
-  --primary-border: oklch(0.901 0.025 278);
+  /* Faint primary surface + border for framed cards. --primary-subtle renders
+     exactly #F2F7FB — the reference tint for interactive list cards. */
+  --primary-subtle: oklch(0.973 0.008 242);
+  --primary-border: oklch(0.900 0.030 245);
   --toast-surface: var(--chrome-surface);             /* shared dark-chrome surface */
   /* THE light neutral fill (hover/active, secondary buttons). --muted is the
      one knob; --secondary/--accent are shadcn-compat aliases of it so the
@@ -276,8 +296,8 @@
      identity, NOT status (status stays jade/amber/red). Blue family only so
      they read as identity on the neutral system. Small marker fills only —
      never text, never surfaces, never actions. */
-  --category-1: oklch(0.70 0.150 274);  /* periwinkle pastel, vivid */
-  --category-2: oklch(0.74 0.140 235);  /* baby blue, vivid */
+  --category-1: oklch(0.70 0.150 245);  /* azure pastel (primary family), vivid */
+  --category-2: oklch(0.74 0.140 274);  /* periwinkle, vivid */
   --category-3: oklch(0.78 0.130 205);  /* cyan-blue, vivid */
 
   /* Interaction overlays — --foreground ink at low alpha. Adapts to any surface
@@ -288,10 +308,11 @@
 
   /* Structure */
   --border: var(--neutral-7);                         /* visible divider (was neutral-6, too faint on white) */
-  --border-card: var(--neutral-4);                    /* card/panel EDGE on canvas — definition, not decoration; the fill contrast does the separating (--border stays for dividers/inputs, which need visibility on white) */
-  --border-subtle: var(--neutral-6);
+  --border-card: var(--neutral-4);                    /* floating-focal-card edge ONLY (booking rail, checkout, landing hero, embeds) — resting surfaces are borderless on the white page; --border stays for dividers/form-control boundaries */
+  --border-subtle: var(--neutral-4);                /* hairline — lightened from neutral-6 for the white-bg system
+                                                       (rows/dividers whisper; --border stays for visible dividers). */
   --border-strong: var(--neutral-9);                  /* form-control boundary (checkbox border, unchecked switch track) — ≥3:1 non-text contrast on white per WCAG 1.4.11; also hover/emphasis edge on interactive surfaces (was neutral-8, which fails 3:1) */
-  --input: var(--neutral-8);                          /* text-field edge (was neutral-7 @ ~1.6:1; neutral-8 ≈ 1.9:1 — still below the 3:1 of 1.4.11, kept lighter than -strong as a deliberate design call) */
+  --input: var(--neutral-8);                          /* no longer edges text fields (fields are filled/borderless now) — kept for the booking-rail tier border (was neutral-7 @ ~1.6:1; neutral-8 ≈ 1.9:1 — still below the 3:1 of 1.4.11, kept lighter than -strong as a deliberate design call) */
   --ring: var(--foreground);                          /* neutral focus ring — matches button.tsx focus style; never brand-colored */
   --ring-subtle: color-mix(in oklab, var(--foreground) 15%, transparent);
                                                       /* soft focus halo — replaces the raw `ring-foreground/15` idiom.
@@ -331,19 +352,20 @@
      the status pairs, borders, --ring, --hover/--pressed, sidebar, toast, …)
      inherit from :root and track the redefined primitives automatically. */
 
-  /* Neutral — pure-neutral grey (dark, chroma 0). */
-  --neutral-1:  oklch(0.179 0 0);
-  --neutral-2:  oklch(0.213 0 0);
-  --neutral-3:  oklch(0.252 0 0);
-  --neutral-4:  oklch(0.283 0 0);
-  --neutral-5:  oklch(0.312 0 0);
-  --neutral-6:  oklch(0.347 0 0);
-  --neutral-7:  oklch(0.399 0 0);
-  --neutral-8:  oklch(0.489 0 0);
-  --neutral-9:  oklch(0.537 0 0);
-  --neutral-10: oklch(0.583 0 0);
-  --neutral-11: oklch(0.640 0 0);   /* secondary-text grey (dark) — lowered from 0.769 to match the light primary/secondary separation; 5.6:1 AA on dark canvas */
-  --neutral-12: oklch(0.949 0 0);
+  /* Neutral — cool-tinted grey (dark, hue 250), mirrors the light ramp's
+     tint. L values unchanged. */
+  --neutral-1:  oklch(0.179 0.005 250);
+  --neutral-2:  oklch(0.213 0.005 250);
+  --neutral-3:  oklch(0.252 0.006 250);
+  --neutral-4:  oklch(0.283 0.006 250);
+  --neutral-5:  oklch(0.312 0.007 250);
+  --neutral-6:  oklch(0.347 0.007 250);
+  --neutral-7:  oklch(0.399 0.008 250);
+  --neutral-8:  oklch(0.489 0.009 250);
+  --neutral-9:  oklch(0.537 0.010 250);
+  --neutral-10: oklch(0.583 0.011 250);
+  --neutral-11: oklch(0.640 0.012 250);   /* secondary-text grey (dark) — lowered from 0.769 to match the light primary/secondary separation; 5.6:1 AA on dark canvas */
+  --neutral-12: oklch(0.949 0.003 250);
 
   /* Status — dark mode */
   --jade-3:   oklch(0.270 0.040 165);
@@ -358,21 +380,23 @@
   /* Surfaces */
   --background: var(--neutral-1);                  /* page canvas */
   --canvas: var(--neutral-1);                      /* dark mode unused — keep canvas == background */
+  --panel: var(--neutral-2);
+  --selection: color-mix(in oklab, var(--primary) 14%, var(--background));
   --surface: var(--neutral-1);                     /* same value as bg, per spec */
   --surface-elevated: oklch(0.205 0 0 / 0.8);
 
-  /* Brand — periwinkle, slightly brighter on dark (~4.9:1 white text AA). */
-  --primary: oklch(0.555 0.150 274);
-  --primary-subtle: oklch(0.198 0.010 285);
-  --primary-border: oklch(0.252 0.038 279);
+  /* Brand — azure blue, slightly brighter on dark (4.68:1 white text AA). */
+  --primary: oklch(0.555 0.150 245);
+  --primary-subtle: oklch(0.198 0.010 245);
+  --primary-border: oklch(0.252 0.038 245);
 
   /* Selected-state tint — stronger mix than light mode (12% vs 8%) */
   --selection-light: color-mix(in oklab, var(--primary) 12%, transparent);
 
   /* Categorical markers (dark) — same pastel-bright family; high L pops on
      dark surfaces without any glow effect. */
-  --category-1: oklch(0.72 0.155 274);
-  --category-2: oklch(0.76 0.145 235);
+  --category-1: oklch(0.72 0.155 245);
+  --category-2: oklch(0.76 0.145 274);
   --category-3: oklch(0.80 0.135 205);
 }
 

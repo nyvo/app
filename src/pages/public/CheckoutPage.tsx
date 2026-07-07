@@ -663,7 +663,7 @@ function StripeEmbed({
 
   if (!clientSecret) {
     return (
-      <div className="rounded-xl border border-card bg-surface p-5">
+      <div className="rounded-xl bg-panel p-5">
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full mt-3" />
         <Skeleton className="h-11 w-full mt-4 rounded-full" />

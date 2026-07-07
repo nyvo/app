@@ -147,7 +147,7 @@ export default function HelpPage() {
                 Hva gjelder det?
               </label>
               <Select value={subject} onValueChange={setSubject}>
-                <SelectTrigger id="help-subject" className="w-full">
+                <SelectTrigger id="help-subject" className="w-full bg-background dark:bg-muted">
                   <SelectValue placeholder="Velg emne" />
                 </SelectTrigger>
                 <SelectContent>
@@ -169,7 +169,7 @@ export default function HelpPage() {
                     Gjelder kurs
                   </label>
                   <Select value={courseId} onValueChange={setCourseId} disabled={loadingCourses}>
-                    <SelectTrigger id="help-course" className="w-full">
+                    <SelectTrigger id="help-course" className="w-full bg-background dark:bg-muted">
                       <SelectValue placeholder={loadingCourses ? 'Henter kurs…' : 'Velg kurs'} />
                     </SelectTrigger>
                     <SelectContent>
@@ -190,7 +190,7 @@ export default function HelpPage() {
                       Gjelder påmelding
                     </label>
                     <Select value={signupId} onValueChange={setSignupId} disabled={loadingSignups}>
-                      <SelectTrigger id="help-signup" className="w-full">
+                      <SelectTrigger id="help-signup" className="w-full bg-background dark:bg-muted">
                         <SelectValue placeholder={loadingSignups ? 'Henter påmeldinger…' : 'Valgfritt'} />
                       </SelectTrigger>
                       <SelectContent>
@@ -214,6 +214,7 @@ export default function HelpPage() {
               </label>
               <Textarea
                 id="help-message"
+                className="bg-background dark:bg-muted"
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 rows={8}

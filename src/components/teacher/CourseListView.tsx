@@ -93,7 +93,7 @@ function SortableHeader({
 
 function TableHeader({ sortKey, sortDir, onSort }: TableHeaderProps) {
   return (
-    <div className={cn(COLS, 'px-4 py-3 border-b border-border bg-surface')}>
+    <div className={cn(COLS, 'px-4 py-3 border-b border-border-subtle')}>
       <SortableHeader label="Navn" columnKey="name" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
       <span className="text-sm text-foreground-muted">Status</span>
       <SortableHeader label="Påmeldte" columnKey="signups" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:inline-flex" />
@@ -112,7 +112,7 @@ function TableRow({ course }: { course: SessionScheduleRow }) {
       to={routes.course(course.courseId)}
       className={cn(
         COLS,
-        'group relative px-4 py-3 no-underline outline-none transition-colors hover:bg-muted focus-visible:bg-muted',
+        'group relative px-4 py-3 no-underline outline-none transition-colors hover:bg-hover focus-visible:bg-hover',
       )}
     >
       <div className="min-w-0">
@@ -146,7 +146,7 @@ function TableRow({ course }: { course: SessionScheduleRow }) {
 
 function TableBody({ courses }: { courses: SessionScheduleRow[] }) {
   return (
-    <div className="divide-y divide-border">
+    <div className="divide-y divide-border-subtle">
       {courses.map((c) => (
         <motion.div
           key={c.sessionId}
@@ -175,7 +175,7 @@ interface CourseListViewProps {
 
 export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState }: CourseListViewProps) {
   return (
-    <div className="rounded-lg border border-card bg-surface overflow-hidden">
+    <div className="overflow-hidden">
       <TableHeader sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
       {courses.length === 0 && emptyState ? (
         <div>{emptyState}</div>
@@ -188,14 +188,14 @@ export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState }
 
 export function CourseListSkeleton() {
   return (
-    <div className="rounded-lg border border-card bg-surface overflow-hidden">
-      <div className={cn(COLS, 'px-4 py-3 border-b border-border bg-surface text-sm text-foreground-muted')}>
+    <div className="overflow-hidden">
+      <div className={cn(COLS, 'px-4 py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
         <span>Navn</span>
         <span>Status</span>
         <span className="hidden md:inline">Påmeldte</span>
         <span>Pris</span>
       </div>
-      <div className="divide-y divide-border">
+      <div className="divide-y divide-border-subtle">
         {[...Array(5)].map((_, i) => (
           <div key={i} className={cn(COLS, 'px-4 py-3')}>
             <div className="min-w-0">

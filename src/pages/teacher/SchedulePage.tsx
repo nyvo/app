@@ -277,7 +277,7 @@ const SchedulePage = () => {
                 </div>
                 <div className="space-y-2.5 pb-6">
                   {[1, 2].map((j) => (
-                    <div key={j} className="rounded-xl border border-card bg-surface px-5 py-4">
+                    <div key={j} className="rounded-xl bg-primary-subtle px-5 py-4">
                       <Skeleton className="h-4 w-48" />
                       <Skeleton className="mt-2.5 h-3.5 w-72 max-w-full" />
                     </div>
@@ -381,8 +381,7 @@ export function SessionCard({ session }: { session: SessionRow }) {
     <Link
       to={{ search: `?kurs=${session.courseId}&sess=${session.id}&from=schedule` }}
       className={cn(
-        'block rounded-xl border border-card bg-surface px-5 py-4 outline-none transition-colors',
-        'hover:bg-hover',
+        'block rounded-xl bg-primary-subtle px-5 py-4 outline-none transition-colors duration-150 hover:bg-selection',
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
       )}
     >
@@ -390,7 +389,7 @@ export function SessionCard({ session }: { session: SessionRow }) {
         {session.courseTitle}
       </p>
 
-      <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground-muted">
+      <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground">
         <span className="inline-flex items-center gap-1.5">
           <Clock className="size-3.5 shrink-0" aria-hidden="true" />
           <span className="tabular-nums">
