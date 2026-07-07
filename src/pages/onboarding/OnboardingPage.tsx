@@ -166,7 +166,7 @@ function RoleChooser() {
     const { error } = await setRole(pick)
     if (error) {
       logger.error('Onboarding: setRole failed', error)
-      toast.error('Kunne ikke lagre valget. Prøv igjen.')
+      toast.error('Kunne ikke lagre valget')
       setSaving(false)
       return
     }

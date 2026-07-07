@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Check, Copy, Send } from '@/lib/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { useCopyToClipboard } from '@/components/ui/copy-button';
 
 interface ShareCoursePopoverProps {
   courseUrl: string;
@@ -27,20 +27,12 @@ export function ShareCoursePopover({
   children,
 }: ShareCoursePopoverProps) {
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
 
   const canNativeShare =
     typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(courseUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error('Kunne ikke kopiere lenken');
-    }
-  };
+  const handleCopy = () => void copy(courseUrl);
 
   const handleNativeShare = async () => {
     try {
