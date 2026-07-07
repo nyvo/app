@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/button';
 import { SettingsRow } from '@/components/teacher/SettingsRows';
 
 /**
- * EmbedCodeSection — the seller-facing "copy embed code" panel on the Studio
- * Profil tab. Hands the teacher the iframe snippet for the public /embed/:slug
- * calendar so they can drop it into their own website.
+ * EmbedCodeSection — the seller-facing "copy embed code" row on the Studio
+ * Nettsted tab. Hands the teacher the iframe snippet for the public
+ * /embed/:slug calendar so they can drop it into their own website.
  *
- * Renders as a SettingsRow so it sits inline with the other Profil rows (shared
- * horizontal settings layout). `slug` is the SAVED slug (from the seller row),
- * not a dirty unsaved edit — the embed only works once the slug is live.
+ * Lives on its own tab, never inline in the profile form — raw HTML mid-form
+ * reads as a dev tool. On a dedicated integration surface the snippet is shown
+ * (Circle's Embed settings page on Mobbin). `slug` is the SAVED slug (from the
+ * seller row), not a dirty unsaved edit — the embed only works once the slug
+ * is live.
  */
 export function EmbedCodeSection({ slug }: { slug: string }) {
   const [copied, setCopied] = useState(false);

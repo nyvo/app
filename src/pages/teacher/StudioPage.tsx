@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Check, ExternalLink } from '@/lib/icons';
+import { ExternalLink } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { UnsavedChangesDialog, useUnsavedChanges } from '@/components/ui/unsaved-changes';
 import { PageTab, PageTabs } from '@/components/ui/page-tabs';
@@ -19,6 +20,7 @@ import type { PlaceDetails } from '@/services/places';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
+import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
 import { EmbedCodeSection } from '@/components/teacher/studio/EmbedCodeSection';
@@ -27,7 +29,6 @@ import { useLocations } from '@/hooks/use-locations';
 import { friendlyError } from '@/lib/error-messages';
 import { extractEdgeError } from '@/lib/edge-errors';
 import { supabase } from '@/lib/supabase';
-import { cn } from '@/lib/utils';
 import { createLocation, updateLocation } from '@/services/locations';
 import { fetchGuestHost, type GuestHost } from '@/services/affiliations';
 import { renameSellerSlug, updateSeller } from '@/services/sellers';
@@ -96,7 +97,7 @@ function StudioPublicSettings({
   const showSamarbeid = isStudio || host != null;
 
   const { hash } = useLocation();
-  const [tab, setTab] = useState<'profil' | 'sted' | 'samarbeid'>('profil');
+  const [tab, setTab] = useState<'profil' | 'sted' | 'samarbeid' | 'nettsted'>('profil');
   // Joining a studio lands at /studio#samarbeid — open that tab once it renders.
   useEffect(() => {
     if (hash === '#samarbeid' && showSamarbeid) setTab('samarbeid');
@@ -369,6 +370,16 @@ function StudioPublicSettings({
             Samarbeid
           </PageTab>
         )}
+        {!!seller.slug && (
+          <PageTab
+            active={tab === 'nettsted'}
+            onClick={() => setTab('nettsted')}
+            id="studio-tab-nettsted"
+            ariaControls="studio-panel-nettsted"
+          >
+            Nettsted
+          </PageTab>
+        )}
       </PageTabs>
 
       {locationsError ? (
@@ -451,8 +462,6 @@ function StudioPublicSettings({
               </div>
             </SettingsRow>
 
-            {seller.slug && <EmbedCodeSection slug={seller.slug} />}
-
             <AccountTypeSection
               seller={seller}
               onChanged={onSaved}
@@ -533,11 +542,23 @@ function StudioPublicSettings({
           />
         </div>
       )}
+
+      {tab === 'nettsted' && !!seller.slug && (
+        <div
+          role="tabpanel"
+          id="studio-panel-nettsted"
+          aria-labelledby="studio-tab-nettsted"
+        >
+          <SettingsRows>
+            <EmbedCodeSection slug={seller.slug} />
+          </SettingsRows>
+        </div>
+      )}
         </>
       )}
 
       <DirtyFormBar
-        visible={(isDirty || !!saveError) && tab !== 'samarbeid'}
+        visible={(isDirty || !!saveError) && (tab === 'profil' || tab === 'sted')}
         error={saveError}
         isSaving={isSaving}
         onSave={handleSave}
@@ -573,8 +594,9 @@ function StudioRowsSkeleton() {
 
 // ---------------------------------------------------------------------------
 // Kontotype — self-declared identity that gates which tools the seller sees.
-// Picking the other option applies immediately (no save button); the selection
-// is derived from the seller row, so an error leaves it on the original value.
+// Picking the other option asks for confirmation, then applies (no save
+// button); the selection is derived from the seller row, so an error leaves
+// it on the original value.
 // ---------------------------------------------------------------------------
 
 function AccountTypeSection({
@@ -587,10 +609,15 @@ function AccountTypeSection({
   onBecameSolo: () => void;
 }) {
   const [pending, setPending] = useState(false);
-  const current = seller.operating_model;
+  // The option waiting on the confirm dialog; null = dialog closed.
+  const [confirmTarget, setConfirmTarget] = useState<'solo' | 'studio' | null>(null);
+  // DB column is plain text — same narrowing as the page's isStudio check.
+  const current: 'solo' | 'studio' =
+    seller.operating_model === 'studio' ? 'studio' : 'solo';
 
-  const handlePick = async (picked: 'solo' | 'studio') => {
-    if (pending || picked === current) return;
+  const handleConfirm = async () => {
+    const picked = confirmTarget;
+    if (!picked || pending || picked === current) return;
     setPending(true);
     const { error } = await supabase.functions.invoke('set-operating-model', {
       body: { sellerId: seller.id, operatingModel: picked },
@@ -605,12 +632,14 @@ function AccountTypeSection({
           : 'Kunne ikke endre kontotypen.',
       );
       setPending(false);
+      setConfirmTarget(null);
       return;
     }
     await onChanged();
     toast.success('Kontotypen er oppdatert.');
     if (picked === 'solo') onBecameSolo();
     setPending(false);
+    setConfirmTarget(null);
   };
 
   return (
@@ -618,48 +647,46 @@ function AccountTypeSection({
       title="Kontotype"
       description="Styrer hva du ser i verktøyet. Du kan endre når som helst."
     >
-      <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-4" disabled={pending}>
-        <legend className="sr-only">Velg kontotype</legend>
-        {([
-              {
-                value: 'solo' as const,
-                title: 'Jeg underviser selv',
-                body: 'Egen side med kursene dine.',
-              },
-              {
-                value: 'studio' as const,
-                title: 'Jeg driver et studio',
-                body: 'Studioside med egne og tilknyttede instruktører.',
-              },
-            ]).map((opt) => {
-              const isSelected = current === opt.value;
-              return (
-                <label
-                  key={opt.value}
-                  className={cn(
-                    'flex items-start gap-3 min-h-[7.5rem] rounded-xl bg-muted p-6 cursor-pointer transition-shadow duration-150 hover:bg-muted/70 focus-within:ring-2 focus-within:ring-foreground',
-                    isSelected && 'ring-2 ring-foreground',
-                    pending && 'cursor-not-allowed opacity-70',
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="operatingModel"
-                    value={opt.value}
-                    checked={isSelected}
-                    onChange={() => { void handlePick(opt.value); }}
-                    disabled={pending}
-                    className="sr-only"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">{opt.title}</p>
-                    <p className="mt-1 text-sm text-foreground-muted leading-relaxed">{opt.body}</p>
-                  </div>
-                  {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
-                </label>
-              );
-            })}
-      </fieldset>
+      {/* Same segmented switch as the course builder's Enkelttime/Kursrekke
+          choice — the shared two-option control, not cards or radios. */}
+      <div className={pending ? 'pointer-events-none opacity-60' : undefined}>
+        <SegmentedTabs<'solo' | 'studio'>
+          value={current}
+          onChange={(picked) => {
+            if (picked !== current && !pending) setConfirmTarget(picked);
+          }}
+          tabs={[
+            { key: 'solo', label: 'Jeg underviser selv' },
+            { key: 'studio', label: 'Jeg driver et studio' },
+          ]}
+          ariaLabel="Kontotype"
+        />
+        <p className="mt-3 text-sm text-foreground-muted">
+          {current === 'solo'
+            ? 'Egen side med kursene dine.'
+            : 'Studioside med egne og tilknyttede instruktører.'}
+        </p>
+      </div>
+
+      <ConfirmDialog
+        open={confirmTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !pending) setConfirmTarget(null);
+        }}
+        ariaLabel="Bytt kontotype"
+        title="Bytt kontotype"
+        body={
+          confirmTarget === 'studio' ? (
+            <>Du bytter til <strong>Jeg driver et studio</strong> og får en studioside med egne og tilknyttede instruktører.</>
+          ) : (
+            <>Du bytter til <strong>Jeg underviser selv</strong> og får en egen side med kursene dine.</>
+          )
+        }
+        actionLabel="Bytt kontotype"
+        onConfirm={() => void handleConfirm()}
+        loading={pending}
+        loadingText="Bytter"
+      />
     </SettingsRow>
   );
 }

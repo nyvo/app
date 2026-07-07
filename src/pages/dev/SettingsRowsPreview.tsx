@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -54,6 +55,7 @@ const SettingsRowsPreview = () => {
 
   const [avatarName, setAvatarName] = useState('Studio Sentrum');
   const [slug, setSlug] = useState('studio-sentrum');
+  const [kontotype, setKontotype] = useState<'solo' | 'studio'>('studio');
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -214,6 +216,30 @@ const SettingsRowsPreview = () => {
                     }
                   />
                 </InputGroup>
+              </div>
+            </SettingsRow>
+
+            {/* Choice rows use the shared SegmentedTabs switch (same control as
+                the course builder's Enkelttime/Kursrekke) — never cards. */}
+            <SettingsRow
+              title="Kontotype"
+              description="Styrer hva du ser i verktøyet."
+            >
+              <div>
+                <SegmentedTabs<'solo' | 'studio'>
+                  value={kontotype}
+                  onChange={setKontotype}
+                  tabs={[
+                    { key: 'solo', label: 'Jeg underviser selv' },
+                    { key: 'studio', label: 'Jeg driver et studio' },
+                  ]}
+                  ariaLabel="Kontotype"
+                />
+                <p className="mt-3 text-sm text-foreground-muted">
+                  {kontotype === 'solo'
+                    ? 'Egen side med kursene dine.'
+                    : 'Studioside med egne og tilknyttede instruktører.'}
+                </p>
               </div>
             </SettingsRow>
           </SettingsRows>
