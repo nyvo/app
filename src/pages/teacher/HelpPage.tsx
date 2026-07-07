@@ -142,7 +142,7 @@ export default function HelpPage() {
         <Card>
           <CardContent>
           <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <label htmlFor="help-subject" className="text-sm font-medium text-foreground">
                 Hva gjelder det?
               </label>
@@ -164,7 +164,7 @@ export default function HelpPage() {
 
             {showCourseFields && (
               <>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   <label htmlFor="help-course" className="text-sm font-medium text-foreground">
                     Gjelder kurs
                   </label>
@@ -185,7 +185,7 @@ export default function HelpPage() {
                 </div>
 
                 {showSignupField && (
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-2">
                     <label htmlFor="help-signup" className="text-sm font-medium text-foreground">
                       Gjelder påmelding
                     </label>
@@ -208,7 +208,7 @@ export default function HelpPage() {
               </>
             )}
 
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <label htmlFor="help-message" className="text-sm font-medium text-foreground">
                 Melding
               </label>

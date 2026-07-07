@@ -339,13 +339,11 @@ const CoursesPage = () => {
                             Tøm søk
                           </Button>
                         }
-                        className="py-16"
                       />
                     ) : (
                       <EmptyState
                         title={emptyTitle}
                         description={emptyDescription}
-                        className="py-16"
                       />
                     )
                   }

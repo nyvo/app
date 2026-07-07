@@ -112,7 +112,7 @@ function TableRow({ course }: { course: SessionScheduleRow }) {
       to={routes.course(course.courseId)}
       className={cn(
         COLS,
-        'group relative py-3 no-underline outline-none transition-colors hover:bg-hover focus-visible:bg-hover',
+        'group relative py-4 no-underline outline-none transition-colors hover:bg-hover focus-visible:bg-hover',
       )}
     >
       <div className="min-w-0">
@@ -197,7 +197,7 @@ export function CourseListSkeleton() {
       </div>
       <div className="divide-y divide-border-subtle">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className={cn(COLS, 'py-3')}>
+          <div key={i} className={cn(COLS, 'py-4')}>
             <div className="min-w-0">
               <Skeleton className="h-4 w-48 max-w-full" />
               <Skeleton className="mt-1.5 h-3 w-24 max-w-full" />

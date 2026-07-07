@@ -618,7 +618,7 @@ function AccountTypeSection({
       title="Kontotype"
       description="Styrer hva du ser i verktøyet. Du kan endre når som helst."
     >
-      <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3" disabled={pending}>
+      <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-4" disabled={pending}>
         <legend className="sr-only">Velg kontotype</legend>
         {([
               {

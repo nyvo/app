@@ -275,7 +275,7 @@ const SchedulePage = () => {
                   <Skeleton className="h-4 w-16" />
                   <Skeleton className="h-4 w-12" />
                 </div>
-                <div className="space-y-2.5 pb-6">
+                <div className="space-y-3 pb-6">
                   {[1, 2].map((j) => (
                     <div key={j} className="rounded-xl bg-muted px-5 py-4">
                       <Skeleton className="h-4 w-48" />
@@ -302,7 +302,6 @@ const SchedulePage = () => {
                   ? 'Opprett et kurs for å fylle timeplanen.'
                   : 'Tidligere timer dukker opp her når de er ferdige.'
             }
-            className="py-16"
           />
         ) : (
           <div>
@@ -358,7 +357,9 @@ export function TimelineDay({
           <p className="text-base text-foreground-muted">{secondary}</p>
         </div>
       </div>
-      <div className="space-y-2.5 pb-6">{children}</div>
+      {/* Day-group separation is deliberately split: pb-6 here keeps the dotted
+          spine running through the gap; the next group's mt-2 tops it up to 32px. */}
+      <div className="space-y-3 pb-6">{children}</div>
     </div>
   );
 }

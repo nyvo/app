@@ -152,7 +152,7 @@ export default function PublicCourseDetailPage() {
               </Link>
             )}
 
-            <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-6 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-8 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
               <div className="space-y-8 max-w-[640px] min-w-0">
                 <div className="space-y-6">
                   <CourseImage course={course} />
@@ -164,7 +164,7 @@ export default function PublicCourseDetailPage() {
                 </div>
                 {course.description && (
                   <section className="border-t border-border pt-8">
-                    <p className="mb-2 text-sm font-medium text-foreground">
+                    <p className="mb-3 text-sm font-medium text-foreground">
                       Om kurset
                     </p>
                     <RichTextContent
@@ -174,7 +174,7 @@ export default function PublicCourseDetailPage() {
                   </section>
                 )}
                 {course.location && (
-                  <section>
+                  <section className="border-t border-border pt-8">
                     <LocationCard
                       location={course.location}
                       lat={course.location_lat}
@@ -347,7 +347,7 @@ function SchedulePeek({ sessions, duration }: { sessions: CourseSession[]; durat
                 <li
                   key={s.id}
                   className={cn(
-                    'rounded-xl bg-panel px-4 py-3.5',
+                    'rounded-xl bg-panel px-4 py-3',
                     isPast && !isCancelled && 'opacity-60',
                   )}
                 >
@@ -424,14 +424,14 @@ function CourseDetailSkeleton() {
     >
       <span className="sr-only">Laster…</span>
       <Skeleton className="h-4 w-32 mb-8" />
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
         <div className="space-y-8 max-w-[640px] min-w-0">
           <Skeleton className="aspect-[4/3] w-full rounded-xl" />
           <Skeleton className="h-10 w-3/4" />
           <Skeleton className="h-4 w-2/3" />
           <Skeleton className="h-32 w-full" />
         </div>
-        <Skeleton className="hidden md:block h-72 w-full rounded-xl" />
+        <Skeleton className="hidden md:block h-72 w-full rounded-2xl" />
       </div>
     </div>
   );

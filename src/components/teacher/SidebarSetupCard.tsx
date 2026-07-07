@@ -94,7 +94,7 @@ export function SidebarSetupCard() {
         to={routes.getStarted}
         aria-label={`Kom i gang — ${completedCount} av ${totalCount} fullført`}
         className={cn(
-          'block rounded-md px-3 py-2 transition-colors duration-150',
+          'block rounded-md px-3 py-2.5 transition-colors duration-150',
           'hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
           isActive && 'bg-sidebar-accent',
         )}

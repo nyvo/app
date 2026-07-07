@@ -69,7 +69,7 @@ export function AffiliationsSection({
   }, [hash]);
 
   return (
-    <div ref={anchorRef} id="samarbeid" className="scroll-mt-10">
+    <div ref={anchorRef} id="samarbeid" className="scroll-mt-24">
       <SettingsRows>
         {isStudio ? (
           <BusinessView
@@ -320,7 +320,7 @@ function AffiliatesList({
       {affiliates.map((affiliate) => (
         <li
           key={affiliate.guest_seller_id}
-          className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3"
+          className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-4"
         >
           <div className="flex min-w-0 items-center gap-3">
             <InstructorAvatar name={affiliate.guest.name} url={affiliate.guest.logo_url} />
@@ -491,7 +491,7 @@ function AffiliatesListSkeleton() {
       {Array.from({ length: 3 }).map((_, i) => (
         <li
           key={i}
-          className="grid items-center gap-4 px-4 py-3 grid-cols-[1fr_auto]"
+          className="grid items-center gap-3 px-4 py-4 grid-cols-[1fr_auto]"
           aria-hidden="true"
         >
           <div className="flex min-w-0 items-center gap-3">

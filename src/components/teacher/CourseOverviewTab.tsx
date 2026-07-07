@@ -476,10 +476,7 @@ function StedCard({ course }: { course: MappedCourse }) {
           <p className="text-base text-foreground-muted">Ikke lagt til ennå</p>
         )}
       </div>
-      <div
-        className="relative flex flex-1 items-center justify-center border-t border-border-subtle bg-muted"
-        style={{ minHeight: '9rem' }}
-      >
+      <div className="relative flex min-h-36 flex-1 items-center justify-center border-t border-border-subtle bg-muted">
         {hasCoords ? (
           <MapEmbed
             placeId={course.locationPlaceId}

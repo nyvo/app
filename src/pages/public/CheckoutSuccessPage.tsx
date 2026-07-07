@@ -344,7 +344,7 @@ const CheckoutSuccessPage = () => {
         </Link>
       </header>
 
-      <main className="flex flex-1 items-start justify-center px-4 pb-16 sm:px-6 md:items-center">
+      <main className="flex flex-1 items-start justify-center px-4 pb-16 sm:px-6 lg:px-8 md:items-center">
         <div className="w-full max-w-md">
           {(() => {
             const dateLong = formatDate(signup?.course.start_date ?? null);
@@ -375,7 +375,7 @@ const CheckoutSuccessPage = () => {
                   {signup && (
                     <>
                       {/* Course pane — image + title + date/time. */}
-                      <div className="mt-8 flex items-center gap-4 rounded-2xl border border-card bg-surface shadow-soft p-4">
+                      <div className="mt-8 flex items-center gap-4 rounded-2xl border border-card bg-surface shadow-soft p-5">
                         <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
                           {courseImage ? (
                             <img

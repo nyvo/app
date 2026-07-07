@@ -203,7 +203,7 @@ const TeacherDashboard = () => {
               onRetry={() => window.location.reload()}
             />
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-12">
               <div className="space-y-3">
                 <Suspense fallback={<Skeleton className="h-[280px] w-full rounded-lg" />}>
                   <IncomeChart
