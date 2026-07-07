@@ -162,7 +162,7 @@ const TeacherDashboard = () => {
   const handleCancelEnrollment = async (signupId: string, refund: boolean) => {
     const { error } = await teacherCancelSignup(signupId, { refund });
     if (error) {
-      toast.error(friendlyError(error, 'Kunne ikke avbestille påmeldingen.'));
+      toast.error(friendlyError(error, 'Kunne ikke avbestille påmeldingen'));
       return;
     }
     toast.success(refund ? 'Påmelding avbestilt og refusjon behandlet' : 'Påmelding avbestilt');

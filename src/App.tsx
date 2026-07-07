@@ -8,6 +8,7 @@ import {
   RouterProvider,
   useParams,
 } from 'react-router-dom';
+import { MotionConfig } from 'framer-motion';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/query-client';
 import { Toaster } from '@/components/ui/sonner';
@@ -246,11 +247,16 @@ const router = createBrowserRouter(
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RouterProvider router={router} />
-      </AuthProvider>
-    </QueryClientProvider>
+    // reducedMotion="user" defers to the OS-level prefers-reduced-motion
+    // setting for every inline motion.* usage (LandingPage, CourseListView) —
+    // lib/motion.ts's exported variants are already zeroed, this covers the rest.
+    <MotionConfig reducedMotion="user">
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </QueryClientProvider>
+    </MotionConfig>
   );
 };
 

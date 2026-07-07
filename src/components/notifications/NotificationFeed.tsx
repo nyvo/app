@@ -1,6 +1,7 @@
 import { AnimatePresence } from 'framer-motion'
 import { NotificationRow } from './NotificationRow'
 import { Skeleton } from '@/components/ui/skeleton'
+import { DelayedFallback } from '@/components/ui/delayed-fallback'
 import type { Notification } from '@/types/database'
 
 interface NotificationFeedProps {
@@ -31,23 +32,25 @@ export function NotificationFeed({
 }: NotificationFeedProps) {
   if (isLoading) {
     return (
-      <div role="status" aria-live="polite">
-        <span className="sr-only">Laster…</span>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div
-            key={i}
-            className="grid grid-cols-[32px_1fr_auto] items-start gap-3 px-4 py-2.5 border-t border-border-subtle first:border-t-0"
-            aria-hidden="true"
-          >
-            <Skeleton className="size-8 rounded-full" />
-            <div className="min-w-0 space-y-1.5">
-              <Skeleton className="h-3.5 w-40" />
-              <Skeleton className="h-3.5 w-56 max-w-full" />
+      <DelayedFallback>
+        <div role="status" aria-live="polite">
+          <span className="sr-only">Laster…</span>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="grid grid-cols-[32px_1fr_auto] items-start gap-3 px-4 py-2.5 border-t border-border-subtle first:border-t-0"
+              aria-hidden="true"
+            >
+              <Skeleton className="size-8 rounded-full" />
+              <div className="min-w-0 space-y-1.5">
+                <Skeleton className="h-3.5 w-40" />
+                <Skeleton className="h-3.5 w-56 max-w-full" />
+              </div>
+              <Skeleton className="h-3 w-10" />
             </div>
-            <Skeleton className="h-3 w-10" />
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </DelayedFallback>
     )
   }
 

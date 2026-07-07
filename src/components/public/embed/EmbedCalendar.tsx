@@ -149,7 +149,6 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
 
   return (
     <div
-      aria-label={sellerName ? `Kalender – ${sellerName}` : 'Kalender'}
       className="@container overflow-hidden rounded-2xl border border-card bg-background text-foreground"
     >
       <h1 className="sr-only">{sellerName ? `Kalender – ${sellerName}` : 'Kalender'}</h1>

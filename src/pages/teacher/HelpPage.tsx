@@ -118,7 +118,7 @@ export default function HelpPage() {
     setSubmitting(false);
 
     if (error) {
-      toast.error(error.message || 'Kunne ikke sende meldingen.');
+      toast.error(error.message || 'Kunne ikke sende meldingen');
       return;
     }
 

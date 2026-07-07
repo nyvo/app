@@ -6,6 +6,7 @@ import { ImageIcon } from '@/lib/icons';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { useAuth } from '@/contexts/AuthContext';
 import { authPageVariants, authPageTransition } from '@/lib/motion';
 import { supabase } from '@/lib/supabase';
@@ -170,7 +171,7 @@ export default function JoinPage() {
     setPhase({ kind: 'redeeming' });
     const { data, error } = await redeemInviteLink(code, forceLeave);
     if (error || !data) {
-      toast.error(friendlyError(error, 'Noe gikk galt. Prøv igjen.'));
+      toast.error(friendlyError(error, 'Noe gikk galt – prøv igjen'));
       setPhase({ kind: 'idle' });
       return;
     }
@@ -216,7 +217,7 @@ export default function JoinPage() {
         setPhase({ kind: 'idle' });
         return;
       default:
-        toast.error('Noe gikk galt. Prøv igjen.');
+        toast.error('Noe gikk galt – prøv igjen');
         setPhase({ kind: 'idle' });
     }
   };
@@ -226,15 +227,17 @@ export default function JoinPage() {
   if (lookup.status === 'loading' || !isInitialized) {
     return (
       <Shell>
-        <div role="status" aria-live="polite" className="space-y-6">
-          <span className="sr-only">Laster…</span>
-          <Skeleton className="aspect-[3/1] w-full rounded-md" />
-          <div className="space-y-3">
-            <Skeleton className="mx-auto h-8 w-56" />
-            <Skeleton className="mx-auto h-4 w-72 max-w-full" />
+        <DelayedFallback>
+          <div role="status" aria-live="polite" className="space-y-6">
+            <span className="sr-only">Laster…</span>
+            <Skeleton className="aspect-[3/1] w-full rounded-md" />
+            <div className="space-y-3">
+              <Skeleton className="mx-auto h-8 w-56" />
+              <Skeleton className="mx-auto h-4 w-72 max-w-full" />
+            </div>
+            <Skeleton className="h-11 w-full rounded-full" />
           </div>
-          <Skeleton className="h-11 w-full rounded-full" />
-        </div>
+        </DelayedFallback>
       </Shell>
     );
   }

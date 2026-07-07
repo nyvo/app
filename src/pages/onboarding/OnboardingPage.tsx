@@ -308,7 +308,7 @@ function BuyerSetupForm({
     const { error } = await setRole(null)
     if (error) {
       logger.error('Onboarding: setRole(null) failed', error)
-      toast.error('Kunne ikke gå tilbake. Prøv igjen.')
+      toast.error('Kunne ikke gå tilbake – prøv igjen')
     }
   }
 
@@ -327,7 +327,7 @@ function BuyerSetupForm({
     })
     if (error) {
       logger.error('Onboarding: buyer completion failed', error)
-      toast.error('Kunne ikke lagre. Prøv igjen.')
+      toast.error('Kunne ikke lagre – prøv igjen')
       setSaving(false)
       return
     }
@@ -400,7 +400,7 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
     const { error } = await setRole(null)
     if (error) {
       logger.error('Onboarding: setRole(null) failed', error)
-      toast.error('Kunne ikke gå tilbake. Prøv igjen.')
+      toast.error('Kunne ikke gå tilbake – prøv igjen')
     }
   }
 
@@ -428,7 +428,7 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
       } else if (msg.includes('Slug')) {
         setErrors({ name: 'Velg et gyldig navn' })
       } else {
-        toast.error('Kunne ikke fullføre oppsettet. Prøv igjen.')
+        toast.error('Kunne ikke fullføre oppsettet – prøv igjen')
       }
       setSaving(false)
       return
@@ -440,7 +440,7 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
       // navigation right back here — so surface it and let the user resubmit
       // (ensureSeller is idempotent, the retry only re-stamps).
       logger.error('Onboarding: markOnboardingComplete failed', stampError)
-      toast.error('Kunne ikke fullføre oppsettet. Prøv igjen.')
+      toast.error('Kunne ikke fullføre oppsettet – prøv igjen')
       setSaving(false)
       return
     }

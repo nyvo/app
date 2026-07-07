@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FieldError } from '@/components/ui/field-error';
 import { PageState } from '@/components/page-state/page-state';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { Elements, PaymentElement, useStripe as useStripeHook, useElements } from '@stripe/react-stripe-js';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { ChevronLeft, Check } from '@/lib/icons';
@@ -292,7 +293,7 @@ const CheckoutPage = () => {
       participantNote: form.note.trim() || undefined,
     });
     if (signupErr || !data) {
-      toast.error(friendlyError(signupErr, 'Kunne ikke fullføre påmelding. Prøv igjen.'));
+      toast.error(friendlyError(signupErr, 'Kunne ikke fullføre påmelding – prøv igjen'));
       setSubmitting(false);
       return;
     }
@@ -342,7 +343,11 @@ const CheckoutPage = () => {
 
   // ── States ──────────────────────────────────────────────────────────────
   if (loading) {
-    return <CheckoutSkeleton />;
+    return (
+      <DelayedFallback>
+        <CheckoutSkeleton />
+      </DelayedFallback>
+    );
   }
   if (error === 'load-failed') {
     return <PageState variant="server-error" />;

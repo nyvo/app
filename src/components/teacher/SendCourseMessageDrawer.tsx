@@ -88,8 +88,8 @@ export function SendCourseMessageDrawer({
     }
     toast.success(
       failed > 0
-        ? `Meldingen er sendt til ${notified}. ${failed} feilet.`
-        : `Meldingen er sendt til ${notified} ${notified === 1 ? 'deltaker' : 'deltakere'}.`,
+        ? `Meldingen er sendt til ${notified}, ${failed} feilet`
+        : `Meldingen er sendt til ${notified} ${notified === 1 ? 'deltaker' : 'deltakere'}`,
     );
     onOpenChange(false);
   }

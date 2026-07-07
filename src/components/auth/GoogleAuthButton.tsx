@@ -42,7 +42,7 @@ export function GoogleAuthButton({
       if (errorDesc) {
         // The provider's error_description is English-only, so we show our own
         // localized message instead of leaking it into a Norwegian toast.
-        toast.error('Kunne ikke logge inn med Google. Prøv igjen.')
+        toast.error('Kunne ikke logge inn med Google – prøv igjen')
         // Clean up the hash
         window.history.replaceState(null, '', window.location.pathname + window.location.search)
       }

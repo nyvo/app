@@ -59,7 +59,7 @@ const MESSAGE_PATTERNS: [RegExp, string][] = [
     'Betalingsmetoden er ikke tilgjengelig. Prøv en annen.'],
 ]
 
-const GENERIC_FALLBACK = 'Noe gikk galt. Prøv igjen.'
+const GENERIC_FALLBACK = 'Noe gikk galt – prøv igjen'
 
 /**
  * Convert a raw error into a user-friendly Norwegian message.

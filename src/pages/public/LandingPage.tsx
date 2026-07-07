@@ -564,7 +564,7 @@ function PricingTier({ tier }: { tier: Tier }) {
       className="flex flex-col rounded-xl bg-panel p-8"
     >
       <div className="mb-6">
-        <h3 className="inline-flex items-center rounded-full bg-muted px-3 py-0.5 text-base font-medium text-foreground">
+        <h3 className="text-base font-medium text-foreground">
           {tier.name}
         </h3>
         <p className="mt-3 text-base text-foreground-muted">{tier.description}</p>
@@ -601,7 +601,7 @@ function PricingTier({ tier }: { tier: Tier }) {
         size="cta"
         className="mt-auto w-full"
       >
-        <a href={tier.cta.to}>{tier.cta.label}</a>
+        <Link to={tier.cta.to}>{tier.cta.label}</Link>
       </Button>
       {tier.caption && (
         <p className="mt-4 text-center text-base text-foreground-muted">

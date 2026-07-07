@@ -144,8 +144,8 @@ export function SessionsModal({
     const notified = data?.notified ?? 0;
     toast.success(
       notified > 0
-        ? `Ny tid lagret. Vi varslet ${notified} ${notified === 1 ? 'deltaker' : 'deltakere'}.`
-        : 'Ny tid lagret.',
+        ? `Ny tid lagret, varslet ${notified} ${notified === 1 ? 'deltaker' : 'deltakere'}`
+        : 'Ny tid lagret',
     );
     onSessionUpdated();
     backToList();

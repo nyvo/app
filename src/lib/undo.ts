@@ -121,7 +121,7 @@ export function runWithUndo<T>({
   restore,
   commit,
   errorOf,
-  errorMessage = 'Noe gikk galt. Prøv igjen.',
+  errorMessage = 'Noe gikk galt – prøv igjen',
   durationMs = DEFAULT_UNDO_MS,
 }: RunWithUndoOptions<T>): void {
   const duration = Math.min(10_000, Math.max(3_000, durationMs))

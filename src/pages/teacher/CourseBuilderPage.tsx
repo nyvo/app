@@ -338,7 +338,7 @@ export default function CourseBuilderPage() {
       );
 
       if (error || !created) {
-        toast.error(friendlyError(error, 'Kunne ikke opprette kurset.'));
+        toast.error(friendlyError(error, 'Kunne ikke opprette kurset'));
         setSubmitting(null);
         return null;
       }
@@ -355,16 +355,16 @@ export default function CourseBuilderPage() {
           const { error: updErr } = await updateCourse(created.id, { image_url: url });
           if (updErr) {
             if (currentSeller?.id) void deleteCourseImage(created.id, url, currentSeller.id);
-            toast.error('Bildet ble ikke lastet opp — legg det til fra kurssiden.');
+            toast.error('Bildet ble ikke lastet opp — legg det til fra kurssiden');
           }
         } else {
-          toast.error('Bildet ble ikke lastet opp — legg det til fra kurssiden.');
+          toast.error('Bildet ble ikke lastet opp — legg det til fra kurssiden');
         }
       }
 
       return created.id;
     } catch {
-      toast.error('Noe gikk galt. Prøv igjen.');
+      toast.error('Noe gikk galt – prøv igjen');
       setSubmitting(null);
       return null;
     }
@@ -390,7 +390,7 @@ export default function CourseBuilderPage() {
     }
     const { error } = await publishCourse(id);
     if (error) {
-      toast.error(friendlyError(error, 'Kurset er lagret, men kunne ikke publiseres.'));
+      toast.error(friendlyError(error, 'Kurset er lagret, men kunne ikke publiseres'));
       navigate(routes.course(id));
       return;
     }

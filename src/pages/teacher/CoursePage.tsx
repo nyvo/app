@@ -438,7 +438,7 @@ const CoursePage = () => {
           }
         }
         if (notifyFailed) {
-          toast.error('Lagret, men deltakerne ble ikke varslet om ny tid.');
+          toast.error('Lagret, men deltakerne ble ikke varslet om ny tid');
         }
       }
 
@@ -505,7 +505,7 @@ const CoursePage = () => {
 
       toast.success('Bilde oppdatert');
     } catch (err) {
-      toast.error(friendlyError(err, 'Kunne ikke oppdatere bildet.'));
+      toast.error(friendlyError(err, 'Kunne ikke oppdatere bildet'));
     } finally {
       setIsSavingImage(false);
     }
@@ -531,7 +531,7 @@ const CoursePage = () => {
 
       toast.success('Bilde fjernet');
     } catch (err) {
-      toast.error(friendlyError(err, 'Kunne ikke fjerne bildet.'));
+      toast.error(friendlyError(err, 'Kunne ikke fjerne bildet'));
     } finally {
       setIsSavingImage(false);
     }
@@ -545,7 +545,7 @@ const CoursePage = () => {
     const alreadyCancelled = targetStatus === 'cancelled' || targetStatus === 'course_cancelled';
     const { error: cancelError } = await teacherCancelSignup(signupId, { refund });
     if (cancelError) {
-      toast.error(friendlyError(cancelError, 'Kunne ikke avbestille påmeldingen.'));
+      toast.error(friendlyError(cancelError, 'Kunne ikke avbestille påmeldingen'));
       return;
     }
     if (alreadyCancelled && refund) {
@@ -575,7 +575,7 @@ const CoursePage = () => {
       setCourseData((prev) =>
         prev ? { ...prev, allowsDropIn: previousAllows, dropInPrice: previousPrice } : prev,
       );
-      toast.error(friendlyError(error, 'Kunne ikke oppdatere drop-in.'));
+      toast.error(friendlyError(error, 'Kunne ikke oppdatere drop-in'));
       return;
     }
     toast.success(next ? 'Drop-in slått på' : 'Drop-in slått av');
@@ -602,7 +602,7 @@ const CoursePage = () => {
     if (error) {
       setSettingsDropInPrice(previousPrice);
       setCourseData((prev) => (prev ? { ...prev, dropInPrice: previousPrice } : prev));
-      toast.error(friendlyError(error, 'Kunne ikke oppdatere drop-in-prisen.'));
+      toast.error(friendlyError(error, 'Kunne ikke oppdatere drop-in-prisen'));
       return;
     }
     toast.success('Drop-in-pris oppdatert');
@@ -619,7 +619,7 @@ const CoursePage = () => {
     if (error) {
       setSettingsAcceptsLateSignups(previous);
       setCourseData((prev) => (prev ? { ...prev, acceptsLateSignups: previous } : prev));
-      toast.error(friendlyError(error, 'Kunne ikke oppdatere innstillingen.'));
+      toast.error(friendlyError(error, 'Kunne ikke oppdatere innstillingen'));
       return;
     }
     toast.success(next ? 'Påmelding etter oppstart slått på' : 'Påmelding etter oppstart slått av');
@@ -631,7 +631,7 @@ const CoursePage = () => {
     const { error: deleteError } = await deleteCourse(courseId);
     setIsDeletingCourse(false);
     if (deleteError) {
-      toast.error(friendlyError(deleteError, 'Kunne ikke slette kurset.'));
+      toast.error(friendlyError(deleteError, 'Kunne ikke slette kurset'));
       return;
     }
     setShowDeleteConfirm(false);

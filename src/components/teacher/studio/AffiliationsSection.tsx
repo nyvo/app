@@ -398,7 +398,7 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
     const { data, error } = await createInviteLink(hostSellerId);
     setCreating(false);
     if (error || !data) {
-      toast.error(friendlyError(error, 'Kunne ikke lage lenke.'));
+      toast.error(friendlyError(error, 'Kunne ikke lage lenke'));
       return;
     }
     setLink(data);

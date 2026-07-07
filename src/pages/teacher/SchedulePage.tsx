@@ -5,6 +5,7 @@ import { PageShell } from '@/components/teacher/PageShell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { PageTabs, PageTab } from '@/components/ui/page-tabs';
 import {
   Select,
@@ -262,26 +263,28 @@ const SchedulePage = () => {
       >
         {/* Body */}
         {loading ? (
-          <div role="status" aria-label="Laster">
-            {/* Mirrors the timeline anatomy: rail (day + date lines) left,
-                cards (title + one meta line) right. */}
-            {[1, 2].map((i) => (
-              <div key={i} className={cn('grid grid-cols-[132px_1fr] gap-x-2', i > 1 && 'mt-2')}>
-                <div className="space-y-1.5 pl-5 pt-1">
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-12" />
+          <DelayedFallback>
+            <div role="status" aria-label="Laster">
+              {/* Mirrors the timeline anatomy: rail (day + date lines) left,
+                  cards (title + one meta line) right. */}
+              {[1, 2].map((i) => (
+                <div key={i} className={cn('grid grid-cols-[132px_1fr] gap-x-2', i > 1 && 'mt-2')}>
+                  <div className="space-y-1.5 pl-5 pt-1">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                  <div className="space-y-3 pb-6">
+                    {[1, 2].map((j) => (
+                      <div key={j} className="rounded-xl bg-muted px-5 py-4">
+                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="mt-2.5 h-3.5 w-72 max-w-full" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-3 pb-6">
-                  {[1, 2].map((j) => (
-                    <div key={j} className="rounded-xl bg-muted px-5 py-4">
-                      <Skeleton className="h-4 w-48" />
-                      <Skeleton className="mt-2.5 h-3.5 w-72 max-w-full" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </DelayedFallback>
         ) : error ? (
           <ErrorState
             title="Noe gikk galt"

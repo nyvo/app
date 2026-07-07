@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { PageShell } from '@/components/teacher/PageShell';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { CourseListView, CourseListSkeleton, type SortKey, type SortDir } from '@/components/teacher/CourseListView';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { SearchInput } from '@/components/ui/search-input';
 import { Button } from '@/components/ui/button';
 import { PageTabs, PageTab } from '@/components/ui/page-tabs';
@@ -308,10 +309,12 @@ const CoursesPage = () => {
             <>
               {/* List — each card is its own bordered surface; no outer frame */}
               {isLoading ? (
-                <div role="status" aria-live="polite" aria-label="Laster kurs">
-                  <span className="sr-only">Henter kurs</span>
-                  <CourseListSkeleton />
-                </div>
+                <DelayedFallback>
+                  <div role="status" aria-live="polite" aria-label="Laster kurs">
+                    <span className="sr-only">Henter kurs</span>
+                    <CourseListSkeleton />
+                  </div>
+                </DelayedFallback>
               ) : error ? (
                 <ErrorState
                   title="Kunne ikke hente kurs"

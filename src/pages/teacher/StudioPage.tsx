@@ -317,7 +317,7 @@ function StudioPublicSettings({
       const isLocalValidation =
         err instanceof Error &&
         (err.message.startsWith('Ugyldig filtype') || err.message.startsWith('Bildet er for stort'));
-      toast.error(isLocalValidation ? err.message : friendlyError(err, 'Kunne ikke laste opp bildet.'));
+      toast.error(isLocalValidation ? err.message : friendlyError(err, 'Kunne ikke laste opp bildet'));
     } finally {
       setSavingPhoto(false);
     }
@@ -329,7 +329,7 @@ function StudioPublicSettings({
     const { error } = await updateSeller(seller.id, { logo_url: null });
     setSavingPhoto(false);
     if (error) {
-      toast.error('Kunne ikke fjerne bildet.');
+      toast.error('Kunne ikke fjerne bildet');
       return;
     }
     setLogoUrl(null);
@@ -650,8 +650,8 @@ function AccountTypeSection({
       const { message } = await extractEdgeError(error);
       toast.error(
         message === 'has_active_affiliates'
-          ? 'Fjern tilknyttede instruktører først.'
-          : 'Kunne ikke endre kontotypen.',
+          ? 'Fjern tilknyttede instruktører først'
+          : 'Kunne ikke endre kontotypen',
       );
       setPending(false);
       setConfirmTarget(null);
