@@ -206,7 +206,7 @@ const PublicCoursesPage = () => {
                 <div className="py-16">
                   <EmptyState
                     title="Ingen planlagte kurs"
-                    description="Det er ingen planlagte kurs akkurat nå. Kom tilbake snart."
+                    description="Kom tilbake snart."
                   />
                 </div>
               ) : (

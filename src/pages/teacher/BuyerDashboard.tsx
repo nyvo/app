@@ -181,7 +181,16 @@ export default function BuyerDashboard() {
       setLoadFailed(true)
       return
     }
-    setSignups(data ?? [])
+    const rows = data ?? []
+    // The claim failed AND there's nothing to show — can't tell "genuinely no
+    // bookings" from "claim couldn't attach the buyer's existing signups", so
+    // surface a retry instead of the false empty state. Rows present means the
+    // claim didn't matter (or wasn't needed) — proceed silently as usual.
+    if (claimError && rows.length === 0) {
+      setLoadFailed(true)
+      return
+    }
+    setSignups(rows)
   }, [user])
 
   useEffect(() => {

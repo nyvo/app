@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { calculateServiceFee, calculateTotalPrice } from '@/lib/pricing';
-import { formatKroner, cn } from '@/lib/utils';
+import { formatKroner, formatCoursePrice, cn } from '@/lib/utils';
 import { singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
 import type { AvailableTicketType } from '@/types/database';
 
@@ -76,10 +76,11 @@ export function BookingRailLite({
   const setSelectedId = onSelectedIdChange ?? setUncontrolledId;
 
   const baseHref = checkoutHref ?? `/${studioSlug}/${course.slug}/pamelding`;
-  const { selectedTile, ticketPrice, serviceFee, total, href } = computeSelection(
+  const { selectedTile, ticketPrice, serviceFee, total, href, paymentNotReady } = computeSelection(
     tiles,
     selectedId,
     baseHref,
+    course,
   );
 
   return (
@@ -194,14 +195,22 @@ export function BookingRailLite({
               )
             )}
 
-            <Button asChild size="cta" className="w-full">
-              <Link to={href}>Reserver</Link>
-            </Button>
-
-            {ticketPrice > 0 && (
-              <div className="border-t border-border pt-4">
-                <p className="text-center text-xs text-foreground-muted">Sikker betaling med Stripe</p>
+            {paymentNotReady ? (
+              <div className="rounded-xl bg-muted px-4 py-6 text-center">
+                <p className="text-base font-medium text-foreground">Påmelding åpner snart.</p>
               </div>
+            ) : (
+              <>
+                <Button asChild size="cta" className="w-full">
+                  <Link to={href}>Reserver</Link>
+                </Button>
+
+                {ticketPrice > 0 && (
+                  <div className="border-t border-border pt-4">
+                    <p className="text-center text-xs text-foreground-muted">Sikker betaling med Stripe</p>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
@@ -290,7 +299,7 @@ function TicketTileButton({
           )}
         </div>
         <span className="shrink-0 text-base font-medium text-foreground tabular-nums whitespace-nowrap">
-          {formatKroner(tile.amount)}
+          {formatCoursePrice(tile.amount)}
         </span>
       </div>
     </button>
@@ -342,12 +351,14 @@ export function computeSelection(
   tiles: TicketTile[],
   selectedId: TicketId,
   baseHref: string,
+  course: PublicCourseWithDetails | null,
 ): {
   selectedTile: TicketTile | null;
   ticketPrice: number;
   serviceFee: number;
   total: number;
   href: string;
+  paymentNotReady: boolean;
 } {
   const selectedTile = tiles.find((t) => t.id === selectedId) ?? tiles[0] ?? null;
   const ticketPrice = selectedTile?.amount ?? 0;
@@ -357,7 +368,12 @@ export function computeSelection(
   // remaining tile may be drop-in, and the checkout page needs to know that
   // rather than defaulting to the (no-longer-offered) main tier.
   const href = selectedTile ? `${baseHref}?billett=${selectedTile.id}` : baseHref;
-  return { selectedTile, ticketPrice, serviceFee, total, href };
+  // A paid course whose seller hasn't finished Stripe onboarding can't take
+  // payment yet — don't route buyers into a checkout that can't complete.
+  // Derived here so the rail and MobilePriceBar suppress the CTA in lockstep.
+  const paymentNotReady =
+    ticketPrice > 0 && course != null && !course.seller?.stripe_onboarding_complete;
+  return { selectedTile, ticketPrice, serviceFee, total, href, paymentNotReady };
 }
 
 /**

@@ -26,7 +26,7 @@ const polishDismissKey = (sellerId: string) => `setup-polish-dismissed:${sellerI
 export function SidebarSetupCard() {
   const location = useLocation()
   const { currentSeller } = useAuth()
-  const { completedCount, totalCount, isSetupComplete, optionalSteps, isLoading } =
+  const { completedCount, totalCount, isSetupComplete, optionalSteps, isLoading, loadFailed } =
     useSellerSetupStatus()
 
   const sellerId = currentSeller?.id
@@ -47,7 +47,9 @@ export function SidebarSetupCard() {
 
   // Hold until the first fetch resolves — otherwise the card paints its
   // required-progress phase before flipping to the quiet "polish" phase.
-  if (isLoading) return null
+  // A failed fetch stays hidden too — this is a nag, not a surface that
+  // should show an error card; /get-started carries the retry.
+  if (isLoading || loadFailed) return null
 
   // Everything done — required and polish alike. Nothing left to nudge.
   if (isSetupComplete && remainingOptional === 0) return null

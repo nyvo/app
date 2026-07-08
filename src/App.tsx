@@ -6,6 +6,7 @@ import {
   Outlet,
   Route,
   RouterProvider,
+  useLocation,
   useParams,
 } from 'react-router-dom';
 import { MotionConfig } from 'framer-motion';
@@ -97,10 +98,10 @@ function FlatTeamRoute({ children }: { children: React.ReactNode }) {
  */
 function RootRoute() {
   const { isInitialized, user } = useAuth();
-  // Auth init is cached and usually <200ms — render nothing rather than flash
-  // a loader (Studio § 10). On the rare slow init the user briefly sees blank;
-  // far calmer than a full-screen spinner that flickers in and out.
-  if (!isInitialized) return null;
+  // Auth init is cached and usually <200ms. A delayed skeleton renders nothing
+  // for fast loads (Studio § 10) but keeps a slow init distinguishable from a
+  // crash rather than an indefinite blank.
+  if (!isInitialized) return <DelayedFallback><PageSkeleton /></DelayedFallback>;
   if (user) return <Navigate to="/overview" replace />;
   return <LandingPage />;
 }
@@ -135,11 +136,14 @@ function SkipLink() {
  * components can use useBlocker for unsaved-changes guards.
  */
 function RootChrome() {
+  const location = useLocation();
   return (
     <>
       <SkipLink />
       <Toaster />
-      <ErrorBoundary>
+      {/* resetKeys by pathname: after a crash, navigating (incl. browser-back)
+          clears the error state so the user isn't stuck on the error page. */}
+      <ErrorBoundary resetKeys={[location.pathname]}>
         <Suspense fallback={<DelayedFallback><PageSkeleton /></DelayedFallback>}>
           <Outlet />
         </Suspense>

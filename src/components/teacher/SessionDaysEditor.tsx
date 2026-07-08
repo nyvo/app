@@ -21,7 +21,11 @@ export interface SessionDay {
 }
 
 export function newSessionDay(): SessionDay {
-  return { id: crypto.randomUUID(), date: undefined, startTime: '', endTime: '' }
+  // Prefixed so the save path (computeDesiredSessions in CoursePage.tsx) can
+  // tell a not-yet-persisted editor row from an existing session id — an
+  // unprefixed uuid gets sent to save_course_schedule as an "existing" row,
+  // which the RPC rejects with unknown_session.
+  return { id: `new-${crypto.randomUUID()}`, date: undefined, startTime: '', endTime: '' }
 }
 
 // ── Time helpers ─────────────────────────────────────────────────────────────

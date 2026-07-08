@@ -15,6 +15,7 @@ import { SessionRescheduleForm } from '@/components/teacher/SessionRescheduleFor
 import { cn } from '@/lib/utils';
 import { friendlyError } from '@/lib/error-messages';
 import { rescheduleCourseSession } from '@/services/courses';
+import { osloTodayKey } from '@/utils/dateUtils';
 import type { CourseSession } from '@/types/database';
 
 interface SessionsModalProps {
@@ -105,7 +106,7 @@ export function SessionsModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialEditSessionId]);
 
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  const today = useMemo(() => osloTodayKey(), [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ordered = useMemo(
     () => sessions.slice().sort((a, b) => a.session_date.localeCompare(b.session_date)),

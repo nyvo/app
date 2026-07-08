@@ -110,10 +110,13 @@ function TableHeader({ sortKey, sortDir, onSort }: TableHeaderProps) {
   );
 }
 
-function TableRow({ course }: { course: SessionScheduleRow }) {
-  const roster = course.maxParticipants
-    ? `${course.signupsCount} / ${course.maxParticipants}`
-    : `${course.signupsCount}`;
+function TableRow({ course, countsUnavailable }: { course: SessionScheduleRow; countsUnavailable?: boolean }) {
+  // Counts RPC failed — render `–` rather than a fabricated 0 / N.
+  const roster = countsUnavailable
+    ? '–'
+    : course.maxParticipants
+      ? `${course.signupsCount} / ${course.maxParticipants}`
+      : `${course.signupsCount}`;
 
   return (
     <Link
@@ -153,7 +156,7 @@ function TableRow({ course }: { course: SessionScheduleRow }) {
   );
 }
 
-function TableBody({ courses }: { courses: SessionScheduleRow[] }) {
+function TableBody({ courses, countsUnavailable }: { courses: SessionScheduleRow[]; countsUnavailable?: boolean }) {
   return (
     <div className="divide-y divide-border-subtle">
       {courses.map((c) => (
@@ -163,7 +166,7 @@ function TableBody({ courses }: { courses: SessionScheduleRow[] }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.18 }}
         >
-          <TableRow course={c} />
+          <TableRow course={c} countsUnavailable={countsUnavailable} />
         </motion.div>
       ))}
     </div>
@@ -180,16 +183,18 @@ interface CourseListViewProps {
   /** Rendered in place of the body when `courses` is empty. The header stays
    * visible so the table structure doesn't disappear between tab switches. */
   emptyState?: ReactNode;
+  /** When the signup-counts RPC failed, the Påmeldte column reads `–`. */
+  countsUnavailable?: boolean;
 }
 
-export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState }: CourseListViewProps) {
+export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState, countsUnavailable }: CourseListViewProps) {
   return (
     <div role="table" className="overflow-hidden">
       <TableHeader sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
       {courses.length === 0 && emptyState ? (
         <div>{emptyState}</div>
       ) : (
-        <TableBody courses={courses} />
+        <TableBody courses={courses} countsUnavailable={countsUnavailable} />
       )}
     </div>
   );

@@ -37,7 +37,7 @@ import type { Seller } from '@/types/database';
 type HostStudio = GuestHost['host'];
 
 const StudioPage = () => {
-  const { currentSeller, refreshSellers } = useAuth();
+  const { currentSeller, refreshSellers, currentSellerHydrateFailed } = useAuth();
 
   return (
     <PageShell
@@ -55,6 +55,7 @@ const StudioPage = () => {
           <StudioPublicSettings
             seller={currentSeller}
             onSaved={refreshSellers}
+            hydrateFailed={currentSellerHydrateFailed}
           />
         ) : (
           <p className="text-base text-foreground-muted">
@@ -68,30 +69,40 @@ const StudioPage = () => {
 function StudioPublicSettings({
   seller,
   onSaved,
+  hydrateFailed,
 }: {
   seller: Seller;
   onSaved: () => Promise<void> | void;
+  hydrateFailed: boolean;
 }) {
   const { locations, isLoading: loadingLocations, error: locationsError, refetch } = useLocations(seller.id);
   const primaryLocation = locations[0] ?? null;
 
   const isStudio = seller.operating_model === 'studio';
 
+  const { hash } = useLocation();
+
   // The host storefront this seller's courses show on, if any. Loaded once here
   // because it gates the Samarbeid tab's visibility (a solo seller only sees the
   // tab while an affiliation is active). `undefined` while the fetch is in
-  // flight — the tab simply appears when it lands.
-  const [host, setHost] = useState<HostStudio | null | undefined>(undefined);
+  // flight; `'error'` when it failed — distinct from `null` (no host) so a
+  // fetch failure surfaces a retry instead of silently hiding the tab.
+  const [host, setHost] = useState<HostStudio | null | undefined | 'error'>(undefined);
   const loadHost = useCallback(async () => {
     const { data, error } = await fetchGuestHost(seller.id);
-    setHost(error ? null : (data?.host ?? null));
+    setHost(error ? 'error' : (data?.host ?? null));
   }, [seller.id]);
   useEffect(() => { void loadHost(); }, [loadHost]);
 
   // Studios keep the tab always; solo sellers only while an affiliation exists.
-  const showSamarbeid = isStudio || host != null;
+  // On a host-fetch error keep it reachable when the seller is a studio or
+  // deep-linked to #samarbeid, so the failure shows a retry rather than vanishing.
+  // A stale-default hydrate can't be trusted to tell studio from solo, so the
+  // tab is withheld until a refresh succeeds.
+  const hasHost = host != null && host !== 'error';
+  const showSamarbeid =
+    !hydrateFailed && (isStudio || hasHost || (host === 'error' && hash === '#samarbeid'));
 
-  const { hash } = useLocation();
   const [tab, setTab] = useState<'profil' | 'sted' | 'samarbeid' | 'nettsted'>('profil');
   // Joining a studio lands at /studio#samarbeid — open that tab once it renders.
   useEffect(() => {
@@ -150,10 +161,15 @@ function StudioPublicSettings({
   // keep the bar visible while dirty (rather than hiding it on tab switch),
   // and need to know which tab to point the user back to.
   const profileDirty = name.trim() !== seller.name || slug.trim() !== seller.slug;
+  // Compare the picked place identity too — re-picking a same-name address to
+  // add a map pin (legacy pin-less place) changes only the place id, which
+  // must still surface the save bar.
+  const pickedPlaceId = placeCoords?.placeId ?? null;
   const locationDirty = primaryLocation
     ? placeName.trim() !== primaryLocation.name ||
-      address.trim() !== (primaryLocation.address ?? '')
-    : placeName.trim() !== '' || address.trim() !== '';
+      address.trim() !== (primaryLocation.address ?? '') ||
+      pickedPlaceId !== (primaryLocation.google_place_id ?? null)
+    : placeName.trim() !== '' || address.trim() !== '' || pickedPlaceId != null;
   const isDirty = profileDirty || locationDirty;
 
   const { blocker } = useUnsavedChanges(isDirty);
@@ -473,6 +489,7 @@ function StudioPublicSettings({
               seller={seller}
               onChanged={onSaved}
               onBecameSolo={() => setTab('profil')}
+              hydrateFailed={hydrateFailed}
             />
           </SettingsRows>
         </div>
@@ -542,11 +559,24 @@ function StudioPublicSettings({
           id="studio-panel-samarbeid"
           aria-labelledby="studio-tab-samarbeid"
         >
-          <AffiliationsSection
-            seller={seller}
-            host={host}
-            onHostChange={setHost}
-          />
+          {!isStudio && host === 'error' ? (
+            // Solo seller: the whole panel is the guest-host card, so a failed
+            // fetch replaces it with a retry.
+            <ErrorState
+              title="Kunne ikke hente samarbeidet ditt"
+              message="Prøv igjen."
+              onRetry={() => void loadHost()}
+            />
+          ) : (
+            // Studio: the invite link + instructor list don't depend on the
+            // guest-host fetch, so a failure only drops the optional "Vises hos"
+            // sub-card (host coerced to null) — the rest stays usable.
+            <AffiliationsSection
+              seller={seller}
+              host={host === 'error' ? null : host}
+              onHostChange={setHost}
+            />
+          )}
         </div>
       )}
 
@@ -623,10 +653,12 @@ function AccountTypeSection({
   seller,
   onChanged,
   onBecameSolo,
+  hydrateFailed,
 }: {
   seller: Seller;
   onChanged: () => Promise<void> | void;
   onBecameSolo: () => void;
+  hydrateFailed: boolean;
 }) {
   const [pending, setPending] = useState(false);
   // The option waiting on the confirm dialog; null = dialog closed.
@@ -662,6 +694,23 @@ function AccountTypeSection({
     setConfirmTarget(null);
   };
 
+  if (hydrateFailed) {
+    // operating_model is a stale safe-default here — showing the switch could
+    // render a studio as "Jeg underviser selv". Offer a retry instead.
+    return (
+      <SettingsRow
+        title="Kontotype"
+        description="Styrer hva du ser i verktøyet. Du kan endre når som helst."
+      >
+        <ErrorState
+          title="Kunne ikke hente kontoinformasjon"
+          message="Prøv igjen om litt."
+          onRetry={() => void onChanged()}
+        />
+      </SettingsRow>
+    );
+  }
+
   return (
     <SettingsRow
       title="Kontotype"
@@ -669,9 +718,10 @@ function AccountTypeSection({
     >
       {/* Same segmented switch as the course builder's Enkelttime/Kursrekke
           choice — the shared two-option control, not cards or radios. */}
-      <div className={pending ? 'pointer-events-none opacity-60' : undefined}>
+      <div>
         <SegmentedTabs<'solo' | 'studio'>
           value={current}
+          disabled={pending}
           onChange={(picked) => {
             if (picked !== current && !pending) setConfirmTarget(picked);
           }}

@@ -45,6 +45,9 @@ export function PlacesAutocomplete({
   const [results, setResults] = useState<PlaceSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  // Set when a search or details lookup fails (Places/edge outage) — surfaces
+  // a fallback message instead of reading as "no results" or doing nothing.
+  const [searchError, setSearchError] = useState(false);
 
   // Combobox wiring (WAI-ARIA combobox-with-listbox pattern): the listbox +
   // its options need stable, unique ids so the input's aria-activedescendant
@@ -75,6 +78,7 @@ export function PlacesAutocomplete({
       setResults([]);
       setLoading(false);
       setOpen(false);
+      setSearchError(false);
       return;
     }
     const cached = cache.current.get(q);
@@ -83,25 +87,34 @@ export function PlacesAutocomplete({
       setActiveIndex(cached.length > 0 ? 0 : -1);
       setLoading(false);
       setOpen(cached.length > 0);
+      setSearchError(false);
       return;
     }
     const id = ++reqId.current;
     setLoading(true);
-    searchPlaces(q, sessionToken.current).then(({ data }) => {
+    searchPlaces(q, sessionToken.current).then(({ data, error }) => {
       if (id !== reqId.current) return;
+      setLoading(false);
+      if (error) {
+        setResults([]);
+        setActiveIndex(-1);
+        setSearchError(true);
+        setOpen(true);
+        return;
+      }
       cache.current.set(q, data);
       setResults(data);
       // Pre-highlight the top hit so a bare Enter picks it — the fastest path
       // to a resolved place, and one less way to end up with free text.
       setActiveIndex(data.length > 0 ? 0 : -1);
-      setLoading(false);
+      setSearchError(false);
       setOpen(data.length > 0);
     });
   }, [debounced]);
 
   const handleSelect = async (placeId: string) => {
     setOpen(false);
-    const { data } = await getPlaceDetails(placeId, sessionToken.current);
+    const { data, error } = await getPlaceDetails(placeId, sessionToken.current);
     sessionToken.current = newToken();
     cache.current.clear();
     setResults([]);
@@ -109,7 +122,13 @@ export function PlacesAutocomplete({
     // and re-open the dropdown.
     lastTyped.current = null;
     if (data) {
+      setSearchError(false);
       onSelect(data);
+    } else if (error) {
+      // Keep the typed text (we never call onChange here) and surface the
+      // fallback message instead of silently doing nothing.
+      setSearchError(true);
+      setOpen(true);
     }
   };
 
@@ -168,7 +187,17 @@ export function PlacesAutocomplete({
       {loading && (
         <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-foreground-muted" />
       )}
-      {open && results.length > 0 && (
+      {open && searchError && (
+        <div
+          role="status"
+          className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-surface shadow-md"
+        >
+          <p className="px-3 py-2 text-sm text-foreground-muted">
+            Stedsøket er utilgjengelig. Skriv inn adressen manuelt.
+          </p>
+        </div>
+      )}
+      {open && !searchError && results.length > 0 && (
         <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-surface shadow-md">
           <ul id={listboxId} role="listbox" className="max-h-60 overflow-y-auto p-1">
             {results.map((r, i) => (

@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { ErrorState } from '@/components/ui/error-state';
 import { PageShell } from '@/components/teacher/PageShell';
 import {
   PayoutSetupCard,
@@ -14,7 +16,6 @@ import {
   refreshStripeConnectStatus,
   getStripeSettlements,
 } from '@/services/stripe-connect';
-import { friendlyError } from '@/lib/error-messages';
 import { COMPANY } from '@/lib/company';
 import { toast } from 'sonner';
 
@@ -42,12 +43,18 @@ const STEP_3_TITLE = 'Motta utbetalinger';
  * is no manual "check status" control.
  */
 const PaymentsPage = () => {
-  const { currentSeller, refreshSellers } = useAuth();
+  const { currentSeller, refreshSellers, currentSellerHydrateFailed } = useAuth();
 
   const stripeConnected = !!currentSeller?.stripe_onboarding_complete;
   const stripeStarted = !!currentSeller?.stripe_account_id;
   const stripeStatus = currentSeller?.stripe_account_status ?? null;
   const [stripeLoading, setStripeLoading] = useState(false);
+  // True while the ?stripe=return status re-sync runs — the current step's
+  // action shows a "Sjekker status" indicator instead of looking idle.
+  const [checkingReturn, setCheckingReturn] = useState(false);
+  // Set once the return check has synced + refreshed; a toast then fires from
+  // the refreshed seller row so it can't contradict the card.
+  const returnToastPending = useRef(false);
 
   const handleStartStripe = useCallback(async () => {
     if (!currentSeller?.id) return;
@@ -55,7 +62,8 @@ const PaymentsPage = () => {
     const { data, error } = await startStripeConnectOnboarding(currentSeller.id);
     setStripeLoading(false);
     if (error || !data?.url) {
-      toast.error(friendlyError(error, 'Kunne ikke starte oppsettet.'));
+      // The service resolved a display-ready message (server body or fallback).
+      toast.error(error?.message || 'Kunne ikke starte oppsettet.');
       return;
     }
     // Full-page redirect into Stripe's hosted Express onboarding; it returns to
@@ -63,22 +71,34 @@ const PaymentsPage = () => {
     window.location.href = data.url;
   }, [currentSeller?.id]);
 
-  const handleCheckStripe = useCallback(async () => {
+  // Return from Stripe: force a server-side status sync, pull the persisted row,
+  // then let the effect below toast from that row (not the check response).
+  const handleReturnFromStripe = useCallback(async () => {
     if (!currentSeller?.id) return;
-    const { data, error } = await refreshStripeConnectStatus(currentSeller.id);
+    setCheckingReturn(true);
+    const { error } = await refreshStripeConnectStatus(currentSeller.id);
+    await refreshSellers();
+    setCheckingReturn(false);
     if (error) {
       toast.error('Kunne ikke sjekke status. Prøv igjen.');
       return;
     }
-    await refreshSellers();
-    if (data?.onboarding_complete) {
+    returnToastPending.current = true;
+  }, [currentSeller?.id, refreshSellers]);
+
+  // Fire the return toast only once the refreshed seller row is in state, so the
+  // message matches what the timeline shows.
+  useEffect(() => {
+    if (!returnToastPending.current || checkingReturn) return;
+    returnToastPending.current = false;
+    if (stripeConnected) {
       toast.success('Utbetalinger er klare');
-    } else if (data?.status === 'rejected') {
+    } else if (stripeStatus === 'rejected') {
       toast.error(`Søknaden ble avslått. Ta gjerne kontakt på ${COMPANY.email}.`);
     } else {
       toast('Oppsettet er ikke fullført ennå.');
     }
-  }, [currentSeller?.id, refreshSellers]);
+  }, [checkingReturn, stripeConnected, stripeStatus]);
 
   const handleOpenStripeDashboard = useCallback(async () => {
     if (!currentSeller?.id) return;
@@ -102,14 +122,24 @@ const PaymentsPage = () => {
   }, [currentSeller?.id]);
 
   // Re-check status when returning from Stripe (?stripe=return); re-mint an
-  // expired onboarding link when Stripe sends ?stripe=refresh.
+  // expired onboarding link when Stripe sends ?stripe=refresh. Consume the param
+  // once and strip it — otherwise ?stripe=refresh re-redirects to Stripe on every
+  // mount (Back button unusable) and ?stripe=return re-fires toasts on reload.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const stripeParamHandled = useRef(false);
   useEffect(() => {
     if (!currentSeller?.id) return;
-    const stripeParam = new URLSearchParams(window.location.search).get('stripe');
-    if (stripeParam === 'return') void handleCheckStripe();
+    const stripeParam = searchParams.get('stripe');
+    if (!stripeParam || stripeParamHandled.current) return;
+    stripeParamHandled.current = true;
+
+    if (stripeParam === 'return') void handleReturnFromStripe();
     else if (stripeParam === 'refresh') void handleStartStripe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSeller?.id]);
+
+    const next = new URLSearchParams(searchParams);
+    next.delete('stripe');
+    setSearchParams(next, { replace: true });
+  }, [currentSeller?.id, searchParams, setSearchParams, handleReturnFromStripe, handleStartStripe]);
 
   // ─── One view-model per onboarding state, rendered by PayoutSetupCard ───
   let h2: string;
@@ -130,7 +160,11 @@ const PaymentsPage = () => {
         description:
           'Du blir sendt til Stripe – betalingspartneren vår – for å bekrefte virksomheten og legge inn kontonummeret pengene skal gå til.',
         action: (
-          <Button onClick={handleStartStripe} loading={stripeLoading} loadingText="Starter">
+          <Button
+            onClick={handleStartStripe}
+            loading={stripeLoading || checkingReturn}
+            loadingText={checkingReturn ? 'Sjekker status' : 'Starter'}
+          >
             Kom i gang
           </Button>
         ),
@@ -161,7 +195,11 @@ const PaymentsPage = () => {
           'Vi aktiverer utbetalinger automatisk så snart alt er godkjent. Mangler det noe, kan du fortsette der du slapp.';
       }
       step2Action = (
-        <Button onClick={handleStartStripe} loading={stripeLoading} loadingText="Åpner">
+        <Button
+          onClick={handleStartStripe}
+          loading={stripeLoading || checkingReturn}
+          loadingText={checkingReturn ? 'Sjekker status' : 'Åpner'}
+        >
           Fortsett oppsettet
         </Button>
       );
@@ -192,7 +230,18 @@ const PaymentsPage = () => {
 
   return (
     <PageShell narrow="centered" title="Utbetalingskonto" description="Slik får du betalt for kursene dine.">
-      <PayoutSetupCard viewModel={viewModel} />
+      {currentSellerHydrateFailed ? (
+        // stripe_account_id is a stale safe-default (null) — the timeline would
+        // show step 1 to a seller who already started onboarding. Bail to a
+        // bounded retry instead. The FAQ below is static, so it stays.
+        <ErrorState
+          title="Kunne ikke hente kontoinformasjon"
+          message="Prøv igjen om litt."
+          onRetry={refreshSellers}
+        />
+      ) : (
+        <PayoutSetupCard viewModel={viewModel} />
+      )}
       <PayoutFaqSection />
     </PageShell>
   );

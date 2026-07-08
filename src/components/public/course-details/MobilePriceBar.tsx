@@ -14,6 +14,9 @@ interface MobilePriceBarProps {
   href: string;
   soldOut: boolean;
   closed: boolean;
+  /** Seller can't take payment yet (Stripe onboarding incomplete) — same gate
+   * that hides the rail's CTA, so the bar never offers a dead checkout. */
+  paymentNotReady: boolean;
 }
 
 /**
@@ -29,8 +32,21 @@ interface MobilePriceBarProps {
  * same `selectedId` state. This bar never re-derives tier/price/CTA logic, so
  * it can't drift from the rail.
  */
-export function MobilePriceBar({ selectedTile, total, href, soldOut, closed }: MobilePriceBarProps) {
-  const stateText = soldOut ? 'Kurset er fullt' : closed ? 'Påmelding stengt' : null;
+export function MobilePriceBar({
+  selectedTile,
+  total,
+  href,
+  soldOut,
+  closed,
+  paymentNotReady,
+}: MobilePriceBarProps) {
+  const stateText = soldOut
+    ? 'Kurset er fullt'
+    : closed
+      ? 'Påmelding stengt'
+      : paymentNotReady
+        ? 'Påmelding åpner snart.'
+        : null;
 
   return (
     <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-border-subtle safe-area-bottom px-4 py-3 flex items-center justify-between gap-3">

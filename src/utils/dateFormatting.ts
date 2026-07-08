@@ -12,6 +12,7 @@ import { toLocalDate } from './dateUtils'
 export function formatDateLong(dateStr: string | null | undefined): string {
   if (!dateStr) return ''
   const date = toLocalDate(dateStr)
+  if (isNaN(date.getTime())) return ''
   return date.toLocaleDateString('nb-NO', {
     weekday: 'long',
     day: 'numeric',
@@ -28,6 +29,7 @@ export function formatMessageTimestamp(dateStr: string | null | undefined): stri
   if (!dateStr) return ''
 
   const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return ''
   const now = new Date()
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
 
@@ -50,6 +52,7 @@ export function formatRelativeTimePast(dateStr: string | null | undefined): stri
   if (!dateStr) return ''
 
   const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return ''
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
   const diffMins = Math.floor(diffMs / 60000)

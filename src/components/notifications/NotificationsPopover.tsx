@@ -38,11 +38,13 @@ export function NotificationsPopover() {
   const {
     notifications,
     isLoading,
+    error,
     unseenCount,
     markSeenAll,
     markRead,
     archive,
     archiveAll,
+    refetch,
   } = useNotifications()
 
   // Capture the open timestamp synchronously, before the effect below stamps
@@ -111,6 +113,8 @@ export function NotificationsPopover() {
       <NotificationFeed
         notifications={notifications}
         isLoading={isLoading}
+        error={error}
+        onRetry={refetch}
         openedAt={openedAt}
         onActivate={handleActivate}
         onArchive={handleArchive}

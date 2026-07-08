@@ -33,7 +33,8 @@ type LookupState =
   | { status: 'loading' }
   | { status: 'valid'; team: LookupInviteLinkResult }
   | { status: 'expired' }
-  | { status: 'not_found' };
+  | { status: 'not_found' }
+  | { status: 'error' };
 
 type JoinPhase =
   | { kind: 'idle' }
@@ -68,10 +69,17 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 function Cover({ url }: { url: string | null }) {
-  if (url) {
+  // A broken cover URL falls back to the same placeholder as no cover at all.
+  const [failed, setFailed] = useState(false);
+  if (url && !failed) {
     return (
       <div className="aspect-[3/1] w-full overflow-hidden rounded-md bg-muted mb-6">
-        <img src={url} alt="" className="size-full object-cover" />
+        <img
+          src={url}
+          alt=""
+          className="size-full object-cover"
+          onError={() => setFailed(true)}
+        />
       </div>
     );
   }
@@ -99,9 +107,13 @@ export default function JoinPage() {
     }
     let cancelled = false;
     void (async () => {
-      const { data } = await lookupInviteLink(code);
+      const { data, error } = await lookupInviteLink(code);
       if (cancelled) return;
-      if (!data || data.status === 'not_found') {
+      // A network/query failure is retryable — keep it distinct from a genuine
+      // not_found so the buyer doesn't see the terminal "Lenken finnes ikke".
+      if (error) {
+        setLookup({ status: 'error' });
+      } else if (!data || data.status === 'not_found') {
         setLookup({ status: 'not_found' });
       } else if (data.status === 'expired') {
         setLookup({ status: 'expired' });
@@ -255,6 +267,22 @@ export default function JoinPage() {
     );
   }
 
+  if (lookup.status === 'error') {
+    return (
+      <Shell>
+        <h1 className="text-3xl font-medium text-foreground mb-3">
+          Noe gikk galt
+        </h1>
+        <p className="text-base text-foreground-muted mb-8">
+          Prøv igjen.
+        </p>
+        <Button size="cta" className="w-full" onClick={() => window.location.reload()}>
+          Prøv igjen
+        </Button>
+      </Shell>
+    );
+  }
+
   if (lookup.status === 'expired') {
     return (
       <Shell>
@@ -389,6 +417,14 @@ export default function JoinPage() {
           onClick={() => void handleJoin(true)}
         >
           Forlat og bli med
+        </Button>
+        <Button
+          size="cta"
+          variant="secondary"
+          className="mt-3 w-full"
+          onClick={() => navigate(routes.studio)}
+        >
+          Avbryt
         </Button>
       </Shell>
     );

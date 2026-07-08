@@ -78,11 +78,17 @@ function isPathActive(pathname: string, href: string): boolean {
 export const TeacherSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, currentSeller } = useAuth();
+  const { signOut, profile, currentSeller, sellers, sellersLoadFailed } = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
-  const isSeller = profile?.role === 'seller';
+  // Seller authority = presence of a seller_members row (same test as
+  // RoleRoute), not the profiles.role UX hint — a seller whose role hint lags
+  // still gets the seller nav, setup card and upsell. When the memberships
+  // fetch fails, sellers is [] but that's "unknown", not "no memberships" —
+  // fall back to the role hint so a real seller keeps seller chrome during
+  // an outage instead of being demoted to the buyer nav.
+  const isSeller = sellers.length > 0 || (sellersLoadFailed && profile?.role === 'seller');
   const isPro = isProSeller(currentSeller);
-  const navItems = profile?.role === 'buyer' ? BUYER_NAV_ITEMS : SELLER_NAV_ITEMS;
+  const navItems = isSeller ? SELLER_NAV_ITEMS : BUYER_NAV_ITEMS;
   const displayName = accountDisplayName({
     profileName: profile?.name,
     sellerName: currentSeller?.name,
@@ -130,7 +136,7 @@ export const TeacherSidebar = () => {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
-            {profile?.role === 'seller' && <SidebarSetupCard />}
+            {isSeller && <SidebarSetupCard />}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

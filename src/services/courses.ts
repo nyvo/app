@@ -62,7 +62,6 @@ export async function fetchCourses(
       *
     `, { count: options?.limit || options?.offset ? 'exact' : undefined })
     .eq('seller_id', sellerId)
-    .neq('status', 'cancelled')
     .order('created_at', { ascending: false })
 
   // Apply pagination if provided — use range() only (not limit + range)
@@ -86,16 +85,23 @@ export async function fetchCourseById(courseId: string): Promise<{
   data: Course & { signups_count: number } | null
   error: Error | null
 }> {
+  // maybeSingle() so a genuine "row not found" comes back as data:null with no
+  // error — the caller treats that as not-found (renders the course PageState),
+  // and a real fetch failure (network, RLS) surfaces as a retryable error.
   const { data: course, error: courseError } = await supabase
     .from('courses')
     .select(`
       *
     `)
     .eq('id', courseId)
-    .single()
+    .maybeSingle()
 
   if (courseError) {
     return { data: null, error: courseError as Error }
+  }
+
+  if (!course) {
+    return { data: null, error: null }
   }
 
   // Fetch signups count
@@ -465,15 +471,24 @@ export async function syncCourseDropInTier(
  * Returns the active drop-in tier row for the course.
  * This is the canonical "is drop-in offered?" check the teacher UI reads.
  */
-export async function fetchDropInTier(courseId: string): Promise<{ active: boolean; price: number }> {
-  const { data } = await supabase
+export async function fetchDropInTier(
+  courseId: string,
+): Promise<{ active: boolean; price: number; error: Error | null }> {
+  const { data, error } = await supabase
     .from('course_signup_packages')
     .select('id, price')
     .eq('course_id', courseId)
     .eq('ticket_kind', 'drop_in')
     .eq('is_active', true)
     .maybeSingle()
-  return { active: !!data, price: data ? Number((data as { price: number }).price) : 0 }
+  // A fetch blip must not read as "drop-in off" — the caller throws on this so a
+  // subsequent save can't persist the phantom off-state.
+  if (error) return { active: false, price: 0, error: error as Error }
+  return {
+    active: !!data,
+    price: data ? Number((data as { price: number }).price) : 0,
+    error: null,
+  }
 }
 
 // Publish a draft course (sets status to 'upcoming')
@@ -746,7 +761,9 @@ export async function fetchNextSessions(sellerId: string, limit = 3): Promise<{
   data: Array<{
     session: CourseSession
     course: Course
-    signupCount: number
+    // Optional: `undefined` means the counts RPC was unavailable — the
+    // dashboard hides the number rather than showing a fabricated 0.
+    signupCount?: number
   }> | null
   error: Error | null
 }> {
@@ -793,16 +810,23 @@ export async function fetchNextSessions(sellerId: string, limit = 3): Promise<{
   // Fetch confirmed signup counts for the courses in the result
   const courseIds = [...new Set(sliced.map(s => s.course_id))]
   const signupCountMap: Record<string, number> = {}
+  // When the counts RPC fails, every row's count is left `undefined` — never a
+  // fabricated 0. The dashboard consumes this and hides the number instead.
+  let countsAvailable = true
 
   if (courseIds.length > 0) {
     // Aggregate server-side — fetching signup rows to count in JS silently
     // truncates at PostgREST's 1000-row cap and undercounts busy studios.
-    const { data: countRows } = await supabase.rpc('public_signup_counts', {
+    const { data: countRows, error: countsError } = await supabase.rpc('public_signup_counts', {
       p_course_ids: courseIds,
     })
 
-    for (const row of countRows ?? []) {
-      signupCountMap[row.course_id] = row.confirmed_count
+    if (countsError) {
+      countsAvailable = false
+    } else {
+      for (const row of countRows ?? []) {
+        signupCountMap[row.course_id] = row.confirmed_count
+      }
     }
   }
 
@@ -821,7 +845,7 @@ export async function fetchNextSessions(sellerId: string, limit = 3): Promise<{
         updated_at: session.updated_at,
       } as CourseSession,
       course: session.course as Course,
-      signupCount: signupCountMap[session.course_id] || 0,
+      signupCount: countsAvailable ? (signupCountMap[session.course_id] ?? 0) : undefined,
     })),
     error: null,
   }

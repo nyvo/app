@@ -4,6 +4,7 @@ import { PageShell } from '@/components/teacher/PageShell'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/ui/error-state'
 import { routes } from '@/lib/routes'
 import { useSellerSetupStatus } from '@/hooks/use-seller-setup-status'
 import type { SetupStep } from '@/hooks/use-setup-progress'
@@ -18,7 +19,7 @@ import { cn } from '@/lib/utils'
 //      seen — that's why they got skipped).
 //   3. Everything done → route back to the dashboard; nothing left to show.
 export default function GetStartedPage() {
-  const { steps, optionalSteps, completedCount, totalCount, isSetupComplete, isLoading } =
+  const { steps, optionalSteps, completedCount, totalCount, isSetupComplete, isLoading, loadFailed, refresh } =
     useSellerSetupStatus()
 
   const remainingOptional = optionalSteps.filter((step) => !step.isComplete)
@@ -33,6 +34,20 @@ export default function GetStartedPage() {
           <Skeleton className="h-40 w-full rounded-xl" />
           <Skeleton className="h-32 w-full rounded-xl" />
         </div>
+      </PageShell>
+    )
+  }
+
+  // The fetch that drives the checklist failed — show a retry instead of
+  // committing a false-incomplete checklist from empty defaults.
+  if (loadFailed) {
+    return (
+      <PageShell narrow="centered" title="Kom i gang">
+        <ErrorState
+          title="Kunne ikke laste oppsettstatus"
+          message="Prøv igjen om litt."
+          onRetry={refresh}
+        />
       </PageShell>
     )
   }

@@ -499,15 +499,21 @@ export async function fetchPublicCourseBySlug(
       seller:sellers(id, name, logo_url, slug, default_course_image_url, stripe_onboarding_complete)
     `)
     .eq('slug', courseSlug)
+    // Cancelled courses are excluded here, so a cancelled deep link resolves to
+    // a null row (not-found) and lands in PageState variant="public-course".
     .neq('status', 'cancelled')
     .maybeSingle()
 
+  // Return contract: `error !== null` is a retryable query/network failure
+  // (callers show a server-error/retry state); `data === null && error === null`
+  // is a genuine not-found (row absent or not on this storefront → terminal
+  // "finnes ikke" copy). The two must never be conflated.
   if (courseError) {
     return { data: null, error: courseError as Error }
   }
 
   if (!course) {
-    return { data: null, error: new Error('Fant ikke kurset') }
+    return { data: null, error: null }
   }
 
   const typedCourse = course as unknown as CourseQueryResult
@@ -516,11 +522,11 @@ export async function fetchPublicCourseBySlug(
   // owner storefront and any active collaborator storefront, while unrelated
   // storefront URLs still 404.
   const { data: scope, error: scopeError } = await fetchStorefrontSellerScope(teamSlug)
-  if (scopeError || !scope) {
-    return { data: null, error: new Error('Fant ikke kurset') }
+  if (scopeError) {
+    return { data: null, error: scopeError as Error }
   }
-  if (!scope.sellerIds.includes(typedCourse.seller_id)) {
-    return { data: null, error: new Error('Fant ikke kurset') }
+  if (!scope || !scope.sellerIds.includes(typedCourse.seller_id)) {
+    return { data: null, error: null }
   }
 
   // Get signup count and drop-in tier in parallel.

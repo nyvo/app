@@ -66,8 +66,17 @@ export interface UseCourseDetailReturn {
   sessions: CourseSession[];
   participants: SignupWithProfile[];
   loading: boolean;
+  /** Sessions query still resolving — the editor is not yet authoritative. */
+  sessionsLoading: boolean;
+  /** Sessions query failed — the schedule is unknown, so a save must not treat
+   *  an empty editor as "delete everything". */
+  sessionsError: boolean;
   participantsLoading: boolean;
   participantsError: boolean;
+  /** The course was fetched and genuinely does not exist (row not found). */
+  notFound: boolean;
+  /** The course fetch failed (network/RLS) — distinct from not-found; retryable. */
+  courseLoadError: boolean;
   error: string | null;
   maxParticipants: number;
   setCourse: React.Dispatch<React.SetStateAction<MappedCourse | null>>;
@@ -117,6 +126,9 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
         fetchDropInTier(courseId!),
       ]);
       if (courseResult.error) throw courseResult.error;
+      // A drop-in fetch blip must fail the whole query, not silently render
+      // drop-in as "off" (which a subsequent save would persist).
+      if (dropInTier.error) throw dropInTier.error;
       if (!courseResult.data) return null; // not found
       return mapCourseToComponentFormat(courseResult.data, dropInTier.active, dropInTier.price);
     },
@@ -203,6 +215,10 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
     void queryClient.invalidateQueries({ queryKey: ['course-sessions', courseId] });
   }, [queryClient, courseId]);
 
+  const notFound =
+    !!courseId && !courseQuery.isPending && !courseQuery.isError && courseQuery.data === null;
+  const courseLoadError = courseQuery.isError;
+
   const error = !courseId
     ? 'Fant ikke kurset.'
     : courseQuery.isError
@@ -216,8 +232,12 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
     sessions: sessionsQuery.data ?? [],
     participants: participantsQuery.data ?? [],
     loading: !!courseId && courseQuery.isPending,
+    sessionsLoading: !!courseId && sessionsQuery.isPending,
+    sessionsError: sessionsQuery.isError,
     participantsLoading: !!courseId && participantsQuery.isPending,
     participantsError: participantsQuery.isError,
+    notFound,
+    courseLoadError,
     error,
     maxParticipants,
     setCourse,

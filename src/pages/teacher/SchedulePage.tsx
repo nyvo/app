@@ -37,7 +37,8 @@ export interface SessionRow {
   courseLocation: string | null;
   courseFormat: CourseFormat;
   deliveryMode: DeliveryMode;
-  signupCount: number;
+  // null = counts RPC failed; render `–`, never a fabricated 0.
+  signupCount: number | null;
   maxParticipants: number | null;
 }
 
@@ -99,7 +100,7 @@ function formatTimeRange(start: string, end: string | null): string {
 }
 
 const SchedulePage = () => {
-  const { currentSeller } = useAuth();
+  const { currentSeller, isInitialized } = useAuth();
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -145,12 +146,19 @@ const SchedulePage = () => {
       // course-level count here for display). Aggregated server-side — fetching
       // rows to count in JS silently truncates at PostgREST's 1000-row cap.
       const counts: Record<string, number> = {};
+      let countsFailed = false;
       if (courseIds.length > 0) {
-        const { data: countRows } = await supabase.rpc('public_signup_counts', {
+        const { data: countRows, error: countsError } = await supabase.rpc('public_signup_counts', {
           p_course_ids: courseIds,
         });
-        for (const r of countRows ?? []) {
-          counts[r.course_id] = r.confirmed_count;
+        // Guard against a stale write after the effect re-ran (tab/seller change).
+        if (cancelled) return;
+        if (countsError) {
+          countsFailed = true;
+        } else {
+          for (const r of countRows ?? []) {
+            counts[r.course_id] = r.confirmed_count;
+          }
         }
       }
 
@@ -166,7 +174,8 @@ const SchedulePage = () => {
           courseLocation: r.course!.location,
           courseFormat: r.course!.format,
           deliveryMode: r.course!.delivery_mode,
-          signupCount: counts[r.course_id] ?? 0,
+          // `null` when counts couldn't load — SessionCard renders `–`.
+          signupCount: countsFailed ? null : (counts[r.course_id] ?? 0),
           maxParticipants: r.course!.max_participants,
         }));
 
@@ -227,6 +236,16 @@ const SchedulePage = () => {
     }
     return Array.from(map.entries());
   }, [filtered]);
+
+  // Auth settled but no active seller — a bounded account error instead of an
+  // eternal skeleton (the effect returns early when there's no seller id).
+  if (isInitialized && !currentSeller) {
+    return (
+      <PageShell title="Timeplan">
+        <ErrorState title="Kunne ikke laste kontoen din" message="Last siden på nytt." />
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell
@@ -372,9 +391,11 @@ export function SessionCard({ session }: { session: SessionRow }) {
   const isOnline = session.deliveryMode === 'online';
   const placeLabel = isOnline ? 'Nettkurs' : session.courseLocation;
   const countLabel =
-    session.maxParticipants != null
-      ? `${session.signupCount} / ${session.maxParticipants}`
-      : `${session.signupCount}`;
+    session.signupCount == null
+      ? '–'
+      : session.maxParticipants != null
+        ? `${session.signupCount} / ${session.maxParticipants}`
+        : `${session.signupCount}`;
 
   return (
     <Link

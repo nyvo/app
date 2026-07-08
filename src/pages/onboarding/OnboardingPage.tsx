@@ -5,6 +5,9 @@ import { Check, ChevronLeft, LogOut } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
+import { DelayedFallback } from '@/components/ui/delayed-fallback'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
+import { PageState } from '@/components/page-state/page-state'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/contexts/AuthContext'
 import { logger } from '@/lib/logger'
@@ -90,15 +93,30 @@ export default function OnboardingPage() {
   }, [intent, profile, setRole])
 
   // Auth gate. ProtectedRoute can't wrap this route because it lives outside
-  // TeacherLayout; do the redirect inline.
+  // TeacherLayout; do the redirect inline. Forward the current search params so
+  // `?intent`/`?next` survive the bounce — AuthPage reads them back, closing
+  // the seller-intent-loss item.
   if (!isLoading && isInitialized && !user) {
-    return <Navigate to={AUTH_ROUTES.auth} replace />
+    const authQuery = searchParams.toString()
+    return <Navigate to={authQuery ? `${AUTH_ROUTES.auth}?${authQuery}` : AUTH_ROUTES.auth} replace />
   }
 
-  // Auth init is cached and typically <200ms. Render nothing during the gap
-  // rather than flashing a full-screen loader (Studio § 10).
-  if (isLoading || !isInitialized || !profile) {
-    return null
+  // Auth init is cached and typically <200ms. Hold with a delayed skeleton
+  // (nothing for fast loads, Studio § 10) rather than a bare blank that's
+  // indistinguishable from a crash on a slow init.
+  if (isLoading || !isInitialized) {
+    return (
+      <DelayedFallback>
+        <PageSkeleton />
+      </DelayedFallback>
+    )
+  }
+
+  // Authenticated and initialized, but the profile never loaded (e.g. a
+  // transient boot failure kept the session alive — see AuthContext). Surface
+  // a retry instead of a permanent white screen.
+  if (!profile) {
+    return <PageState variant="server-error" />
   }
 
   if (profile.onboarding_completed_at) {
@@ -385,10 +403,16 @@ function BuyerSetupForm({
 // ---------------------------------------------------------------------------
 
 function SellerFlow({ nextPath }: { nextPath: string }) {
-  const { profile, ensureSeller, markOnboardingComplete, setRole } = useAuth()
+  const { profile, sellers, ensureSeller, markOnboardingComplete, setRole } = useAuth()
   const navigate = useNavigate()
 
-  const [name, setName] = useState(() => resolveDisplayName(profile?.name, profile?.email))
+  // If a membership already exists (interrupted onboarding created the studio
+  // before the completion stamp), prefill from the existing studio name so the
+  // idempotent retry re-stamps THAT studio rather than negotiating a new,
+  // mismatched name. Fall back to the display name for a fresh setup.
+  const [name, setName] = useState(
+    () => sellers[0]?.name ?? resolveDisplayName(profile?.name, profile?.email),
+  )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
 

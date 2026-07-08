@@ -5,6 +5,10 @@ import { captureError } from '@/lib/monitoring'
 interface Props {
   children: ReactNode
   fallback?: ReactNode
+  // When any value in this list changes while an error is showing, the
+  // boundary resets. Pass e.g. `[location.pathname]` so navigating away from a
+  // crashed route clears the error instead of trapping the user on it.
+  resetKeys?: ReadonlyArray<unknown>
   /**
    * When this value changes while the boundary holds an error, the boundary
    * resets and re-renders children — lets a fallback's retry button actually
@@ -35,7 +39,17 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+    if (!this.state.hasError) return
+    if (prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false, error: null })
+      return
+    }
+    const prev = prevProps.resetKeys
+    const next = this.props.resetKeys
+    if (!next) return
+    const changed =
+      !prev || prev.length !== next.length || next.some((key, i) => !Object.is(key, prev[i]))
+    if (changed) {
       this.setState({ hasError: false, error: null })
     }
   }

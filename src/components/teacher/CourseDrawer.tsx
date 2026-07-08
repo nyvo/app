@@ -31,6 +31,87 @@ import { runWithRevert } from '@/lib/undo';
 import { publishNeedsPaymentSetup } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 
+/**
+ * Count shown next to the "Påmeldte" heading. `–` while the roster is loading
+ * or after a failed fetch, so a fabricated 0 never appears.
+ */
+function ParticipantCount({
+  loading,
+  error,
+  count,
+  capacity,
+}: {
+  loading: boolean;
+  error: boolean;
+  count: number;
+  capacity: number;
+}) {
+  const value = loading || error ? '–' : String(count);
+  return (
+    <span className="text-base tabular-nums text-foreground-muted">
+      {value}
+      {capacity > 0 ? ` / ${capacity}` : ''}
+    </span>
+  );
+}
+
+/**
+ * Body of the "Påmeldte" section shared by both drawer views: skeleton rows
+ * while loading, a one-line error on failure, the true-empty sentence only
+ * when the roster is genuinely empty, otherwise the confirmed list.
+ */
+function ParticipantsBody({
+  loading,
+  error,
+  participants,
+}: {
+  loading: boolean;
+  error: boolean;
+  participants: { id: string; participant_name?: string | null; participant_email?: string | null; profile?: { name?: string | null; email?: string | null } | null }[];
+}) {
+  if (loading) {
+    return (
+      <div className="space-y-1" role="status" aria-label="Laster deltakere">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3 py-2">
+            <Skeleton className="size-8 rounded-full" />
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-3 w-48 max-w-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return <p className="text-base text-foreground-muted">Kunne ikke laste deltakerne.</p>;
+  }
+
+  if (participants.length === 0) {
+    return <p className="text-base text-foreground-muted">Ingen påmeldinger ennå.</p>;
+  }
+
+  return (
+    <div className="space-y-1">
+      {participants.map((p) => {
+        const name = p.participant_name || p.profile?.name || 'Ukjent';
+        const email = p.participant_email || p.profile?.email || '';
+        return (
+          <div key={p.id} className="flex items-center gap-3 py-2">
+            <UserAvatar name={name} email={email} size="sm" />
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-medium truncate text-foreground">{name}</p>
+              <p className="text-sm truncate text-foreground-muted">{email}</p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function DrawerHeader({
   title,
   status,
@@ -122,6 +203,8 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
     course: courseData,
     sessions,
     participants,
+    participantsLoading,
+    participantsError,
     loading: isLoading,
     error,
     setCourse,
@@ -340,39 +423,18 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
         <section className="px-6 py-6 border-b border-border">
           <div className="mb-3 flex items-baseline justify-between gap-3">
             <h3 className="text-base font-medium text-foreground">Påmeldte</h3>
-            <span className="text-base tabular-nums text-foreground-muted">
-              {confirmedCount}
-              {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''}
-            </span>
+            <ParticipantCount
+              loading={participantsLoading}
+              error={participantsError}
+              count={confirmedCount}
+              capacity={courseData.capacity}
+            />
           </div>
-          {confirmedCount === 0 ? (
-            <p className="text-base text-foreground-muted">
-              Ingen påmeldinger ennå.
-            </p>
-          ) : (
-            <div className="space-y-1">
-              {confirmedParticipants.map((p) => {
-                const name = p.participant_name || p.profile?.name || 'Ukjent';
-                const email = p.participant_email || p.profile?.email || '';
-                return (
-                  <div
-                    key={p.id}
-                    className="flex items-center gap-3 py-2"
-                  >
-                    <UserAvatar name={name} email={email} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-base font-medium truncate text-foreground">
-                        {name}
-                      </p>
-                      <p className="text-sm truncate text-foreground-muted">
-                        {email}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <ParticipantsBody
+            loading={participantsLoading}
+            error={participantsError}
+            participants={confirmedParticipants}
+          />
         </section>
 
         {/* Sessions — only when multi-day. Read-only here; editing on /courses/:id. */}
@@ -450,6 +512,8 @@ function ScheduleQuickView({
     course: courseData,
     sessions,
     participants,
+    participantsLoading,
+    participantsError,
     loading: isLoading,
     error,
   } = useCourseDetail(courseId);
@@ -543,32 +607,20 @@ function ScheduleQuickView({
               the word carries hierarchy, the number reads as a datum. */}
           <div className="mb-3 flex items-baseline justify-between gap-3">
             <h3 className="text-base font-medium text-foreground">Påmeldte</h3>
-            <span className="text-base tabular-nums text-foreground-muted">
-              {confirmedCount}
-              {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''}
-            </span>
+            <ParticipantCount
+              loading={participantsLoading}
+              error={participantsError}
+              count={confirmedCount}
+              capacity={courseData.capacity}
+            />
           </div>
-          {confirmedCount === 0 ? (
-            <p className="text-base text-foreground-muted">Ingen påmeldinger ennå.</p>
-          ) : (
-            <div className="space-y-1">
-              {/* Every confirmed signup — the body scrolls, so there is no
-                  reason to cap the list behind a "+x flere". */}
-              {confirmedParticipants.map((p) => {
-                const name = p.participant_name || p.profile?.name || 'Ukjent';
-                const email = p.participant_email || p.profile?.email || '';
-                return (
-                  <div key={p.id} className="flex items-center gap-3 py-2">
-                    <UserAvatar name={name} email={email} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-base font-medium truncate text-foreground">{name}</p>
-                      <p className="text-sm truncate text-foreground-muted">{email}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {/* Every confirmed signup — the body scrolls, so there is no reason to
+              cap the list behind a "+x flere". */}
+          <ParticipantsBody
+            loading={participantsLoading}
+            error={participantsError}
+            participants={confirmedParticipants}
+          />
         </section>
       </div>
 

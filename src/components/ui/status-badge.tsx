@@ -31,7 +31,7 @@ interface StatusBadgeProps {
  * For signup state use SignupStatusBadge; for payment state alone, PaymentBadge.
  */
 export function StatusBadge({ status, size = 'sm', customLabel, className }: StatusBadgeProps) {
-  const { variant, label, className: statusClassName } = config[status];
+  const { variant, label, className: statusClassName } = config[status] ?? { variant: 'neutral', label: status };
   return (
     <Badge
       variant={variant}
