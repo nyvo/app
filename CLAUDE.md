@@ -9,6 +9,10 @@
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
+## Design references (Mobbin)
+
+Before building or restyling any UI from external references, follow `docs/mobbin-reference-rule.md` exactly — query with intent, write the Reference Extraction block before any code, borrow structure only, re-skin in our system, and run the counterfactual self-check. Where that rule says `STYLE.md` and `PATTERNS.md`, this repo's files are `docs/design-language.md` and `docs/ui-patterns.md`.
+
 ## Design tokens
 
 Source of truth is `src/index.css` — a 3-layer OKLCH system: primitives (`--neutral-*`, `--jade/amber/red/blue-*`) → semantic tokens (`--foreground`, `--primary`, `--success`…) → Tailwind `@theme` utilities. Consume semantic tokens in components, never primitives directly; build hierarchy through spacing + the tier gaps (surface → border → muted-text → foreground), not bold weights.
