@@ -56,8 +56,10 @@ function RadioGroupCardItem({
       className={cn(
         "group/radio-card relative flex w-full items-start gap-3 rounded-lg border border-border bg-surface p-4 text-left outline-none transition-colors",
         "not-data-checked:hover:bg-hover focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle",
-        // Selection = fill change (design-language §5: never a colored border alone)
-        "data-checked:border-foreground data-checked:bg-selection-light",
+        // Selection = fill change (design-language §5: never a colored border alone).
+        // NEUTRAL fill by user decision 2026-07-08 — no azure tint on teacher-side
+        // radio rows; --selection-light stays reserved for the buyer booking tier.
+        "data-checked:border-foreground data-checked:bg-muted",
         "disabled:pointer-events-none disabled:opacity-50",
         className
       )}

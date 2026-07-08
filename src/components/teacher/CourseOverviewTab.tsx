@@ -394,7 +394,7 @@ function SessionRow({
   // (cancelled only) stays full-opacity so it reads clearly.
   const left = (
     <div className={cn('flex min-w-0 flex-1 items-stretch gap-4', !editable && 'opacity-50')}>
-      <span className="w-1 self-stretch rounded-full bg-border-strong" />
+      {/* No accent bar — user decision 2026-07-08: plain rows, the "Neste" badge carries emphasis */}
       <div className="min-w-0">
         <p className="flex items-center gap-2 text-base font-medium text-foreground">
           <span>{label}</span>
