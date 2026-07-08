@@ -8,10 +8,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { PageShell } from '@/components/teacher/PageShell'
+import { ErrorState } from '@/components/ui/error-state'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn, formatKroner } from '@/lib/utils'
 import { createStripeCheckoutSession, createStripePortalSession } from '@/services/billing'
-import { friendlyError } from '@/lib/error-messages'
 import { toast } from 'sonner'
 
 type SubscriptionPlan = string | null | undefined
@@ -65,7 +65,7 @@ const PRO_YEARLY = {
 } as const
 
 const BillingPage = () => {
-  const { currentSeller, refreshSellers } = useAuth()
+  const { currentSeller, refreshSellers, currentSellerHydrateFailed } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
@@ -84,8 +84,49 @@ const BillingPage = () => {
   // StrictMode (dev) double-invokes effects; the toast + refresh must run once
   // per checkout return, so dedupe with a ref.
   const stripeResultHandled = useRef(false)
-  const refreshTimers = useRef<number[]>([])
-  useEffect(() => () => refreshTimers.current.forEach(clearTimeout), [])
+  const pollTimer = useRef<number | null>(null)
+  const pollDeadline = useRef(0)
+  // success seen but the plan is still free — the webhook hasn't landed yet.
+  const [awaitingActivation, setAwaitingActivation] = useState(false)
+
+  const clearPoll = useCallback(() => {
+    if (pollTimer.current !== null) {
+      clearTimeout(pollTimer.current)
+      pollTimer.current = null
+    }
+  }, [])
+
+  // The webhook that flips free→pro can land seconds after the redirect. Poll
+  // the seller on a widening backoff, capped at ~60s so it can't run forever;
+  // the isPro effect below cancels it the moment Pro lands.
+  const startActivationPoll = useCallback(() => {
+    clearPoll()
+    pollDeadline.current = Date.now() + 60000
+    let delay = 2000
+    const tick = () => {
+      void refreshSellers()
+      if (Date.now() >= pollDeadline.current) {
+        pollTimer.current = null
+        setAwaitingActivation(false)
+        return
+      }
+      delay = Math.min(Math.round(delay * 1.5), 10000)
+      pollTimer.current = window.setTimeout(tick, delay)
+    }
+    pollTimer.current = window.setTimeout(tick, delay)
+  }, [clearPoll, refreshSellers])
+
+  // Stop the poll on unmount.
+  useEffect(() => clearPoll, [clearPoll])
+
+  // Pro landed — drop the interim line and stop polling.
+  useEffect(() => {
+    if (isPro) {
+      setAwaitingActivation(false)
+      clearPoll()
+    }
+  }, [isPro, clearPoll])
+
   useEffect(() => {
     const stripeResult = searchParams.get('stripe')
     if (!stripeResult || stripeResultHandled.current) return
@@ -93,13 +134,11 @@ const BillingPage = () => {
 
     if (stripeResult === 'success') {
       toast.success('Abonnementet er aktivert')
-      // The webhook that flips the seller to Pro can land after the redirect —
-      // refresh a couple more times so the page doesn't keep showing the
-      // upgrade cards on a completed checkout.
       void refreshSellers()
-      refreshTimers.current = [2500, 6000].map((ms) =>
-        window.setTimeout(() => void refreshSellers(), ms),
-      )
+      if (!isPro) {
+        setAwaitingActivation(true)
+        startActivationPoll()
+      }
     } else if (stripeResult === 'cancelled') {
       toast('Abonnementet ble ikke fullført')
     }
@@ -107,7 +146,7 @@ const BillingPage = () => {
     const next = new URLSearchParams(searchParams)
     next.delete('stripe')
     setSearchParams(next, { replace: true })
-  }, [refreshSellers, searchParams, setSearchParams])
+  }, [isPro, refreshSellers, searchParams, setSearchParams, startActivationPoll])
 
   const handleUpgrade = useCallback(async (interval: 'month' | 'year') => {
     if (!currentSeller?.id) return
@@ -115,7 +154,10 @@ const BillingPage = () => {
     const { url, error } = await createStripeCheckoutSession(currentSeller.id, interval)
     setCheckoutLoading(false)
     if (error || !url) {
-      toast.error(friendlyError(error, 'Kunne ikke starte abonnement.'))
+      // The service already resolved a display-ready message (server body or a
+      // friendlyError fallback) — surface it so reasons like "Studioet har
+      // allerede Pro." aren't flattened to a generic line.
+      toast.error(error?.message || 'Kunne ikke starte abonnement.')
       return
     }
     window.location.assign(url)
@@ -127,7 +169,7 @@ const BillingPage = () => {
     const { url, error } = await createStripePortalSession(currentSeller.id)
     setPortalLoading(false)
     if (error || !url) {
-      toast.error(friendlyError(error, 'Kunne ikke åpne fakturering.'))
+      toast.error(error?.message || 'Kunne ikke åpne fakturering.')
       return
     }
     window.location.assign(url)
@@ -140,11 +182,19 @@ const BillingPage = () => {
       <PageShell
         narrow="centered"
         title="Abonnement"
-        description={isPro && !isPastDue ? statusLine : undefined}
+        description={
+          currentSellerHydrateFailed
+            ? undefined
+            : isPro && !isPastDue
+              ? statusLine
+              : awaitingActivation
+                ? 'Betalingen er mottatt. Abonnementet aktiveres om et øyeblikk.'
+                : undefined
+        }
         action={
           // past_due drops this header action — the "Oppdater" CTA in the alert
           // is the single primary action (both open the same Stripe portal).
-          isPro && !isPastDue ? (
+          !currentSellerHydrateFailed && isPro && !isPastDue ? (
             <Button
               type="button"
               variant="secondary"
@@ -158,15 +208,26 @@ const BillingPage = () => {
           ) : undefined
         }
       >
-        <BillingPlanSections
-          plan={currentSeller?.subscription_plan}
-          status={currentSeller?.subscription_status}
-          yearly={PRO_YEARLY}
-          onUpgrade={handleUpgrade}
-          onManage={handleManage}
-          checkoutLoading={checkoutLoading}
-          portalLoading={portalLoading}
-        />
+        {currentSellerHydrateFailed ? (
+          // The plan fields are stale safe-defaults (free) — showing the upgrade
+          // cards could tell a Pro subscriber they're on the free tier. Bail to a
+          // bounded retry instead of a confidently-wrong view.
+          <ErrorState
+            title="Kunne ikke hente kontoinformasjon"
+            message="Prøv igjen om litt."
+            onRetry={refreshSellers}
+          />
+        ) : (
+          <BillingPlanSections
+            plan={currentSeller?.subscription_plan}
+            status={currentSeller?.subscription_status}
+            yearly={PRO_YEARLY}
+            onUpgrade={handleUpgrade}
+            onManage={handleManage}
+            checkoutLoading={checkoutLoading}
+            portalLoading={portalLoading}
+          />
+        )}
       </PageShell>
     </main>
   )
@@ -216,7 +277,7 @@ export function BillingPlanSections({
       name="Pro"
       price={proPrice}
       priceSub={proPriceSub}
-      description="Lønner seg fra rundt 10 000 kr i påmeldinger i måneden."
+      description={`Lønner seg fra rundt ${formatKroner(10000)} i påmeldinger i måneden.`}
       features={PRO_FEATURES}
       active={isPro}
       action={

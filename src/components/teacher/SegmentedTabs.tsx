@@ -18,6 +18,9 @@ interface SegmentedTabsProps<T extends string> {
   /** Control height. 'md' (default) = 36px track; 'lg' = 44px track for
    *  generous, form-first surfaces (e.g. the course builder). */
   size?: 'md' | 'lg';
+  /** Freeze the control while a selection is being applied — buttons stop
+   *  firing onChange and are dimmed + marked aria-disabled. */
+  disabled?: boolean;
 }
 
 /**
@@ -33,6 +36,7 @@ export function SegmentedTabs<T extends string>({
   className,
   stretch = false,
   size = 'lg',
+  disabled = false,
 }: SegmentedTabsProps<T>) {
   return (
     <div
@@ -42,6 +46,7 @@ export function SegmentedTabs<T extends string>({
         'items-center rounded-full bg-muted p-1 gap-1',
         size === 'lg' ? 'h-11' : 'h-9',
         stretch ? 'flex w-full' : 'inline-flex w-fit',
+        disabled && 'opacity-60',
         className,
       )}
     >
@@ -53,11 +58,14 @@ export function SegmentedTabs<T extends string>({
             type="button"
             role="tab"
             aria-selected={active}
-            onClick={() => onChange(t.key)}
+            aria-disabled={disabled || undefined}
+            disabled={disabled}
+            onClick={() => { if (!disabled) onChange(t.key); }}
             className={cn(
               'inline-flex items-center justify-center gap-2 rounded-full text-sm font-medium transition-colors',
               size === 'lg' ? 'h-9 px-4' : 'h-7 px-3',
               'outline-none focus-visible:ring-2 focus-visible:ring-ring-subtle',
+              disabled && 'cursor-not-allowed',
               stretch && 'flex-1',
               active
                 ? 'bg-surface text-foreground shadow-xs'

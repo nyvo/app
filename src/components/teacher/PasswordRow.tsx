@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Eye, EyeOff } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +28,7 @@ export function PasswordRow() {
   const email = profile?.email ?? ''
 
   const [hasPassword, setHasPassword] = useState<boolean | null>(null)
+  const [checkFailed, setCheckFailed] = useState(false)
   const [open, setOpen] = useState(false)
   const [verifyMode, setVerifyMode] = useState<'password' | 'code'>('password')
 
@@ -45,22 +46,22 @@ export function PasswordRow() {
   const newPasswordRef = useRef<HTMLInputElement>(null)
 
   // Self-scoped password-presence check (keyed on auth.uid() server-side).
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      const { data, error } = await supabase.rpc('has_own_password')
-      if (cancelled) return
-      if (error) {
-        // Keep the button disabled rather than assuming no password.
-        logger.error('has_own_password RPC failed:', error)
-        return
-      }
-      setHasPassword(!!data)
-    })()
-    return () => {
-      cancelled = true
+  const checkHasPassword = useCallback(async () => {
+    setCheckFailed(false)
+    const { data, error } = await supabase.rpc('has_own_password')
+    if (error) {
+      // Keep the button disabled rather than assuming no password, and surface
+      // a retry so the row isn't stuck disabled forever.
+      logger.error('has_own_password RPC failed:', error)
+      setCheckFailed(true)
+      return
     }
+    setHasPassword(!!data)
   }, [])
+
+  useEffect(() => {
+    void checkHasPassword()
+  }, [checkHasPassword])
 
   const isRate = (error: Error) =>
     error.message.includes('rate') || (error as { status?: number }).status === 429
@@ -154,9 +155,22 @@ export function PasswordRow() {
           disabled={hasPassword === null}
           onClick={toggleOpen}
         >
-          {hasPassword ? 'Bytt passord' : 'Lag passord'}
+          {hasPassword === null ? 'Passord' : hasPassword ? 'Bytt passord' : 'Lag passord'}
         </Button>
       </div>
+
+      {checkFailed && (
+        <p className="mt-2 text-sm text-foreground-muted">
+          Kunne ikke hente passordstatus.{' '}
+          <button
+            type="button"
+            onClick={() => void checkHasPassword()}
+            className="font-medium underline-offset-4 transition-colors hover:text-foreground hover:underline"
+          >
+            Prøv igjen
+          </button>
+        </p>
+      )}
 
       {open && (
         <div className="mt-4 space-y-4 border-t border-border-subtle pt-4">

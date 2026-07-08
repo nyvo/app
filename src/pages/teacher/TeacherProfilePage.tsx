@@ -65,6 +65,11 @@ const TeacherProfilePage = () => {
         setIsSaving(false);
         return;
       }
+
+      // Match the local field to what was actually persisted so the baseline
+      // (and thus isDirty) is correct even if refreshSellers doesn't refresh
+      // the profile — an empty input falls back to the resolved display name.
+      setName(trimmed || resolveDisplayName(null, profile.email));
     }
 
     await refreshSellers();
