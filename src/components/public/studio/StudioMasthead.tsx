@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ArrowUpRight, Building, MapPin } from '@/lib/icons';
 import type { PublicSeller } from '@/services/sellers';
 import { directionsUrl, type StudioLocation } from './studioFacts';
@@ -16,16 +17,19 @@ interface StudioMastheadProps {
  */
 export function StudioMasthead({ organization, location }: StudioMastheadProps) {
   const logoUrl = organization.logo_url;
+  // A broken logo URL falls back to the same Building placeholder as no logo.
+  const [logoFailed, setLogoFailed] = useState(false);
 
   return (
     <header className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14">
       <div className="flex items-start gap-5 sm:gap-6">
-        {logoUrl ? (
+        {logoUrl && !logoFailed ? (
           <div className="size-20 sm:size-24 shrink-0 overflow-hidden rounded-2xl ring-1 ring-border bg-surface flex items-center justify-center">
             <img
               src={logoUrl}
               alt={`${organization.name} logo`}
               className="size-full object-cover"
+              onError={() => setLogoFailed(true)}
             />
           </div>
         ) : (

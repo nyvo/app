@@ -78,6 +78,12 @@ const CheckoutSuccessPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [bookingFailed, setBookingFailed] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState(false);
+  // A voided attempt (capacity-reject after authorize) is not a decline — the
+  // buyer was never charged. Tracked separately for its own copy.
+  const [paymentVoided, setPaymentVoided] = useState(false);
+  // ?ref points at no payment_attempt row (stale/garbage link) — stop the long
+  // poll early and show the neutral "Sjekk e-posten din" state.
+  const [refUnknown, setRefUnknown] = useState(false);
   const [attemptCount, setAttemptCount] = useState(0);
 
   useEffect(() => {
@@ -95,6 +101,10 @@ const CheckoutSuccessPage = () => {
       // optimistic fallback) from "every request failed" (buyer offline →
       // telling them 'vi behandler påmeldingen' would be a guess).
       let anyResponseReceived = false;
+      // Counts consecutive null results from the attempt-status RPC. status is
+      // NOT NULL for any real attempt, so a null (with no error) means the ?ref
+      // points to no attempt at all — a stale/garbage link.
+      let consecutiveRefNull = 0;
 
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         if (cancelled) return;
@@ -136,14 +146,34 @@ const CheckoutSuccessPage = () => {
         // cancelled the PI and never minted a signup), the buyer is NOT enrolled and was NOT
         // charged. Surface that instead of the optimistic "we're processing" fallback below.
         if (attemptRef) {
-          const { data: attemptStatus } = await supabase.rpc('get_payment_attempt_status', {
+          const { data: attemptStatus, error: attemptErr } = await supabase.rpc('get_payment_attempt_status', {
             p_attempt_id: attemptRef,
           });
           if (cancelled) return;
-          if (attemptStatus === 'voided' || attemptStatus === 'failed') {
+          // Voided = the course filled between authorize and capture; the buyer
+          // was never charged. Distinct copy from a genuine decline (failed).
+          if (attemptStatus === 'voided') {
+            setPaymentVoided(true);
+            setLoading(false);
+            return;
+          }
+          if (attemptStatus === 'failed') {
             setPaymentFailed(true);
             setLoading(false);
             return;
+          }
+          // A null status (no error) means no such attempt — the ?ref is stale.
+          // After ~3 consecutive nulls, stop the long hold + false "vi
+          // behandler" and show the neutral "Sjekk e-posten din" state.
+          if (!attemptErr && attemptStatus == null) {
+            consecutiveRefNull += 1;
+            if (consecutiveRefNull >= 3) {
+              setRefUnknown(true);
+              setLoading(false);
+              return;
+            }
+          } else {
+            consecutiveRefNull = 0;
           }
         }
 
@@ -271,6 +301,34 @@ const CheckoutSuccessPage = () => {
     );
   }
 
+  // Attempt was voided (course filled before capture) — not a decline, and
+  // nothing was charged. Same title as a decline, reassuring body.
+  if (paymentVoided) {
+    const failedStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
+
+    return (
+      <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
+        <div className="flex flex-col items-center text-center max-w-md">
+          <div
+            aria-hidden="true"
+            className="mb-4 flex size-12 items-center justify-center rounded-full bg-danger text-danger-foreground"
+          >
+            <X className="size-6" strokeWidth={2.5} />
+          </div>
+          <h1 className="mb-3 text-3xl font-medium text-foreground">
+            Betalingen gikk ikke gjennom
+          </h1>
+          <p className="mb-8 text-base text-foreground-muted">
+            Kurset ble fullt før betalingen ble fullført. Beløpet er ikke trukket.
+          </p>
+          <Button asChild variant="default">
+            <Link to={failedStudioUrl}>Tilbake</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // Payment didn't capture — don't tell the buyer they're enrolled.
   if (paymentFailed) {
     const failedStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
@@ -303,7 +361,9 @@ const CheckoutSuccessPage = () => {
   // The Stripe poll always resolves to signup / paymentFailed / bookingFailed,
   // so this branch is the *only* way to arrive here with nothing confirmed.
   // Never imply enrolment: point at the receipt email + support.
-  if (!isFreeSignup && !isStripe) {
+  // `refUnknown` routes a stale/garbage ?ref here early (see the poll above)
+  // instead of the long hold + false "vi behandler".
+  if ((!isFreeSignup && !isStripe) || refUnknown) {
     const fallbackStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
@@ -376,19 +436,7 @@ const CheckoutSuccessPage = () => {
                     <>
                       {/* Course pane — image + title + date/time. */}
                       <div className="mt-8 flex items-center gap-4 rounded-2xl border border-card bg-surface shadow-soft p-5">
-                        <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-                          {courseImage ? (
-                            <img
-                              src={courseImage}
-                              alt=""
-                              className="absolute inset-0 size-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex size-full items-center justify-center text-foreground-muted">
-                              <ImageIcon className="size-5" />
-                            </div>
-                          )}
-                        </div>
+                        <CourseThumb src={courseImage} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-base font-medium text-foreground">{signup.course.title}</p>
                           {whenLine && (
@@ -451,5 +499,27 @@ const CheckoutSuccessPage = () => {
     </div>
   );
 };
+
+/** Receipt course thumbnail — falls back to the ImageIcon placeholder both
+ * when there's no image and when the image URL fails to load. */
+function CourseThumb({ src }: { src: string | null }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+      {src && !failed ? (
+        <img
+          src={src}
+          alt=""
+          className="absolute inset-0 size-full object-cover"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div className="flex size-full items-center justify-center text-foreground-muted">
+          <ImageIcon className="size-5" />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default CheckoutSuccessPage;

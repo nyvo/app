@@ -61,7 +61,11 @@ export default function PublicCourseDetailPage() {
       }
 
       const courseRes = await fetchPublicCourseBySlug(slug!, courseSlug!);
-      if (courseRes.error || !courseRes.data) {
+      // A query/network failure is retryable — throw so the error boundary
+      // renders server-error. Only a null row (error === null) is a genuine
+      // not-found that gets the terminal "finnes ikke" state.
+      if (courseRes.error) throw courseRes.error;
+      if (!courseRes.data) {
         return { kind: 'not-found' };
       }
 
@@ -78,7 +82,7 @@ export default function PublicCourseDetailPage() {
       // Sessions (schedule dialog + "next class" labels) and sellable tiers.
       // Tiers come from the same `available_ticket_types` RPC checkout prices
       // from — single source of truth for availability and (prorated) price.
-      const [{ data: sessionRows }, tiersRes] = await Promise.all([
+      const [sessionsRes, tiersRes] = await Promise.all([
         supabase
           .from('course_sessions')
           .select('*')
@@ -86,11 +90,14 @@ export default function PublicCourseDetailPage() {
           .order('session_date', { ascending: true }),
         supabase.rpc('available_ticket_types', { p_course_id: courseRes.data.id }),
       ]);
+      // A failed sessions/tiers fetch is transient — throw both so the page
+      // shows the retryable server-error instead of an empty schedule.
+      if (sessionsRes.error) throw sessionsRes.error;
       if (tiersRes.error) throw tiersRes.error;
       return {
         kind: 'ok',
         course: courseRes.data,
-        sessions: (sessionRows ?? []) as CourseSession[],
+        sessions: (sessionsRes.data ?? []) as CourseSession[],
         tiers: ((tiersRes.data ?? []) as AvailableTicketType[]).filter(
           (t) => t.audience === 'standard',
         ),
@@ -108,10 +115,10 @@ export default function PublicCourseDetailPage() {
   const sessions = detailQuery.data?.kind === 'ok' ? detailQuery.data.sessions : [];
   const tiers = detailQuery.data?.kind === 'ok' ? detailQuery.data.tiers : [];
   const loading = detailQuery.isPending || detailQuery.data?.kind === 'redirect';
-  const error =
-    detailQuery.isError || detailQuery.data?.kind === 'not-found'
-      ? 'Kurset finnes ikke eller er ikke tilgjengelig.'
-      : null;
+  // Transient query failures get the retryable server-error; only a resolved
+  // null row is the terminal "finnes ikke".
+  const loadFailed = detailQuery.isError;
+  const notFound = detailQuery.data?.kind === 'not-found';
 
   useDocumentTitle(course?.title);
 
@@ -138,9 +145,10 @@ export default function PublicCourseDetailPage() {
       <main className="flex-1">
         {loading && <CourseDetailSkeleton />}
 
-        {error && !loading && <PageState variant="public-course" />}
+        {loadFailed && !loading && <PageState variant="server-error" />}
+        {notFound && !loading && <PageState variant="public-course" />}
 
-        {!loading && !error && course && (
+        {!loading && !loadFailed && !notFound && course && (
           <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16 animate-in fade-in duration-150">
             {backLabel && (
               <Link
@@ -242,10 +250,18 @@ function ArrangorSection({ seller }: { seller: NonNullable<PublicCourseWithDetai
 
 function CourseImage({ course }: { course: PublicCourseWithDetails }) {
   const img = resolveCourseImage(course);
-  if (!img) return null;
+  // A broken image URL falls back to the same no-image branch (render nothing)
+  // rather than leaving a broken-image glyph in the hero.
+  const [failed, setFailed] = useState(false);
+  if (!img || failed) return null;
   return (
     <div className="aspect-[4/3] w-full overflow-hidden rounded-xl bg-muted">
-      <img src={img} alt="" className="size-full object-cover" />
+      <img
+        src={img}
+        alt=""
+        className="size-full object-cover"
+        onError={() => setFailed(true)}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { calculateServiceFee, calculateTotalPrice } from '@/lib/pricing';
-import { formatKroner, cn } from '@/lib/utils';
+import { formatKroner, formatCoursePrice, cn } from '@/lib/utils';
 import { singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
 import type { AvailableTicketType } from '@/types/database';
 
@@ -69,6 +69,9 @@ export function BookingRailLite({ course, tiers, studioSlug, checkoutHref, dropI
   const ticketPrice = selectedTile?.amount ?? 0;
   const serviceFee = calculateServiceFee(ticketPrice);
   const total = calculateTotalPrice(ticketPrice);
+  // A paid course whose seller hasn't finished Stripe onboarding can't take
+  // payment yet — don't route buyers into a checkout that can't complete.
+  const paymentNotReady = ticketPrice > 0 && !course.seller?.stripe_onboarding_complete;
 
   const baseHref = checkoutHref ?? `/${studioSlug}/${course.slug}/pamelding`;
   // Always pass the ticket selection — when the series has started, the only
@@ -183,14 +186,22 @@ export function BookingRailLite({ course, tiers, studioSlug, checkoutHref, dropI
               )
             )}
 
-            <Button asChild size="cta" className="w-full">
-              <Link to={href}>Reserver</Link>
-            </Button>
-
-            {ticketPrice > 0 && (
-              <div className="border-t border-border pt-4">
-                <p className="text-center text-xs text-foreground-muted">Sikker betaling med Stripe</p>
+            {paymentNotReady ? (
+              <div className="rounded-xl bg-muted px-4 py-6 text-center">
+                <p className="text-base font-medium text-foreground">Påmelding åpner snart.</p>
               </div>
+            ) : (
+              <>
+                <Button asChild size="cta" className="w-full">
+                  <Link to={href}>Reserver</Link>
+                </Button>
+
+                {ticketPrice > 0 && (
+                  <div className="border-t border-border pt-4">
+                    <p className="text-center text-xs text-foreground-muted">Sikker betaling med Stripe</p>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
@@ -245,7 +256,7 @@ function TicketTileButton({
           )}
         </div>
         <span className="shrink-0 text-base font-medium text-foreground tabular-nums whitespace-nowrap">
-          {formatKroner(tile.amount)}
+          {formatCoursePrice(tile.amount)}
         </span>
       </div>
     </button>
