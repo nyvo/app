@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
 import { ChevronRight } from '@/lib/icons';
@@ -28,6 +27,8 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchNextSessions } from '@/services/courses';
 import type { Course as CourseDB, CourseSession } from '@/types/database';
@@ -94,6 +95,9 @@ const TeacherDashboard = () => {
   const queryClient = useQueryClient();
   const [incomeRange, setIncomeRange] = useState<IncomeRange>('month');
   const [selectedSignupId, setSelectedSignupId] = useState<string | null>(null);
+  // Bumped by the chart error-fallback's retry and passed as the boundary's
+  // resetKey, so retry actually remounts the crashed chart subtree.
+  const [chartRetryCount, setChartRetryCount] = useState(0);
 
   // Server state on TanStack Query. What the old hand-rolled version needed
   // bespoke code for comes free here: background refetch errors keep
@@ -158,7 +162,7 @@ const TeacherDashboard = () => {
   const handleCancelEnrollment = async (signupId: string, refund: boolean) => {
     const { error } = await teacherCancelSignup(signupId, { refund });
     if (error) {
-      toast.error(friendlyError(error, 'Kunne ikke avbestille påmeldingen.'));
+      toast.error(friendlyError(error, 'Kunne ikke avbestille påmeldingen'));
       return;
     }
     toast.success(refund ? 'Påmelding avbestilt og refusjon behandlet' : 'Påmelding avbestilt');
@@ -189,9 +193,7 @@ const TeacherDashboard = () => {
       : null;
 
   return (
-    <div className="flex-1 overflow-y-auto bg-canvas h-full">
-      <MobileTeacherHeader />
-
+    <>
       <PageShell
         title="Oversikt"
         action={<NotificationsPopover />}
@@ -200,21 +202,38 @@ const TeacherDashboard = () => {
             <ErrorState
               title="Kunne ikke laste oversikten"
               message={loadError}
-              onRetry={() => window.location.reload()}
+              onRetry={refetchDashboardData}
             />
           ) : (
             <div className="space-y-12">
               {/* Chart-first is deliberate here (kept 2026-07-07 after an
                   audit proposed list-first per ui-patterns §2.5). */}
               <div className="space-y-3">
-                <Suspense fallback={<Skeleton className="h-[280px] w-full rounded-lg" />}>
-                  <IncomeChart
-                    series={incomeSeries}
-                    isLoading={incomeSeries === null}
-                    range={incomeRange}
-                    onRangeChange={setIncomeRange}
-                  />
-                </Suspense>
+                <ErrorBoundary
+                  resetKey={chartRetryCount}
+                  fallback={
+                    <FramedCard title="Inntekt">
+                      <FramedCardPanel className="items-center justify-center p-6">
+                        <ErrorState
+                          variant="inline"
+                          onRetry={() => {
+                            refetchDashboardData();
+                            setChartRetryCount((count) => count + 1);
+                          }}
+                        />
+                      </FramedCardPanel>
+                    </FramedCard>
+                  }
+                >
+                  <Suspense fallback={<IncomeChartFallback />}>
+                    <IncomeChart
+                      series={incomeSeries}
+                      isLoading={incomeSeries === null}
+                      range={incomeRange}
+                      onRangeChange={setIncomeRange}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
                 {!isPro && monthPlatformFee > 0 && (
                   <PlatformFeeHint feeNok={monthPlatformFee} />
                 )}
@@ -238,9 +257,30 @@ const TeacherDashboard = () => {
         signup={recentSignupsRaw?.find((s) => s.id === selectedSignupId) ?? null}
         onCancelEnrollment={handleCancelEnrollment}
       />
-    </div>
+    </>
   );
 };
+
+/**
+ * Suspense fallback while the IncomeChart chunk (recharts) loads — mirrors the
+ * real FramedCard shell and the chart's actual height so the chunk-load swap
+ * doesn't jump the layout. The action skeleton stands in for the h-9 (md)
+ * SegmentedTabs range control (~180px wide) so the header row keeps its
+ * real height too.
+ */
+function IncomeChartFallback() {
+  return (
+    <FramedCard
+      title="Inntekt"
+      action={<Skeleton className="h-9 w-44 rounded-full" />}
+    >
+      <FramedCardPanel className="p-5 sm:p-6">
+        <Skeleton className="h-9 w-40" />
+        <Skeleton className="mt-6 h-[220px] w-full rounded-lg sm:h-[260px]" />
+      </FramedCardPanel>
+    </FramedCard>
+  );
+}
 
 /**
  * The free tier's upgrade surface: this month's platform take next to the Pro
@@ -278,7 +318,9 @@ export function UpcomingCoursesSection({
   return (
     <FramedCard title="Neste kurs" className="min-h-56 flex-1">
       {showSkeleton ? (
-        <RowsSkeleton variant="course" />
+        <DelayedFallback>
+          <RowsSkeleton variant="course" />
+        </DelayedFallback>
       ) : items.length === 0 ? (
         <FramedCardPanel className="items-center justify-center">
           <EmptyState
@@ -315,22 +357,24 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="group flex items-center gap-3 px-5 py-4 no-underline outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      className="group flex items-center gap-3 px-5 py-4 no-underline outline-none focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-foreground">{course.title}</p>
         <p className="truncate text-base text-foreground-muted">{when || '—'}</p>
       </div>
-      {/* Trailing slot: meta at rest, chevron on hover (150ms ease-out swap —
-          transform+opacity only; hover: is hover-capable-device gated). */}
-      <span className="relative flex min-w-4 shrink-0 items-center justify-end">
+      {/* Trailing slot: meta stays put, chevron fades in beside it on hover
+          (150ms ease-out, transform+opacity only). Chevron is always laid
+          out (just invisible at rest) so its space is reserved and nothing
+          shifts when it appears. */}
+      <span className="flex shrink-0 items-center gap-1">
         {hasCapacity && (
-          <span className="inline-block text-sm tabular-nums text-foreground-muted transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-1 group-hover:opacity-0">
+          <span className="text-sm tabular-nums text-foreground-muted">
             {course.signups} / {course.capacity}
           </span>
         )}
-        <ChevronRight className="absolute right-0 size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
+        <ChevronRight className="size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
       </span>
     </Link>
   );
@@ -353,7 +397,9 @@ export function RecentSignupsSection({
   return (
     <FramedCard title="Siste påmeldinger" className="min-h-56 flex-1">
       {showSkeleton ? (
-        <RowsSkeleton variant="signup" />
+        <DelayedFallback>
+          <RowsSkeleton variant="signup" />
+        </DelayedFallback>
       ) : items.length === 0 ? (
         <FramedCardPanel className="items-center justify-center">
           <EmptyState
@@ -394,7 +440,7 @@ function SignupRow({
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="group flex w-full items-center gap-3 px-5 py-4 text-left outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      className="group flex w-full items-center gap-3 px-5 py-4 text-left outline-none cursor-pointer focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
@@ -406,18 +452,19 @@ function SignupRow({
       {hasExceptionBadge && signup.payment_status && (
         <PaymentBadge status={signup.payment_status} className="shrink-0" />
       )}
-      {/* Trailing slot: timestamp at rest, chevron on hover (150ms ease-out
-          swap — transform+opacity only). The badge never yields to hover. */}
+      {/* Trailing slot: timestamp stays put, chevron fades in beside it on
+          hover (150ms ease-out, transform+opacity only) — reserved space so
+          nothing shifts. The badge never yields to hover. */}
       <span
         className={cn(
-          'relative flex min-w-4 shrink-0 items-center justify-end',
+          'flex shrink-0 items-center gap-1',
           hasExceptionBadge && 'hidden sm:flex',
         )}
       >
-        <span className="inline-block text-sm tabular-nums text-foreground-muted transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-1 group-hover:opacity-0">
+        <span className="text-sm tabular-nums text-foreground-muted">
           {when}
         </span>
-        <ChevronRight className="absolute right-0 size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
+        <ChevronRight className="size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
       </span>
     </button>
   );

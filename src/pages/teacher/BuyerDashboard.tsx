@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ImageIcon } from '@/lib/icons'
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { PageShell } from '@/components/teacher/PageShell'
+import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -10,7 +10,7 @@ import { DelayedFallback } from '@/components/ui/delayed-fallback'
 import { useAuth } from '@/contexts/AuthContext'
 import { claimMySignups, fetchMySignups, type BuyerSignup } from '@/services/signups'
 import { routes } from '@/lib/routes'
-import { formatKroner, resolveDisplayName } from '@/lib/utils'
+import { formatCourseDate, formatKroner, resolveDisplayName } from '@/lib/utils'
 import { toLocalDate } from '@/utils/dateUtils'
 import { extractTimeFromSchedule } from '@/utils/timeExtraction'
 import { logger } from '@/lib/logger'
@@ -23,19 +23,6 @@ import { logger } from '@/lib/logger'
  * was dropped in 20260606100000 — a future cancel must be a column-scoped
  * RPC, not a button here).
  */
-
-const WEEKDAYS_SHORT = ['søn.', 'man.', 'tir.', 'ons.', 'tor.', 'fre.', 'lør.'] as const
-const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const
-
-// "man. 2. feb" (+ year when it isn't the current one). Null on bad input so
-// rows without a date just omit the line.
-function formatCourseDate(dateString: string | null): string | null {
-  if (!dateString) return null
-  const d = toLocalDate(dateString)
-  if (isNaN(d.getTime())) return null
-  const year = d.getFullYear() === new Date().getFullYear() ? '' : ` ${d.getFullYear()}`
-  return `${WEEKDAYS_SHORT[d.getDay()]} ${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}${year}`
-}
 
 // A signup is "past" when the course's last relevant date is before today.
 // Undated courses stay in Kommende — better to over-show than bury an
@@ -90,9 +77,9 @@ function SignupRow({ signup }: { signup: BuyerSignup }) {
             </p>
           )}
           {(isCancelled || isCourseCancelled) && (
-            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
+            <Badge variant="neutral" size="sm">
               {isCourseCancelled ? 'Avlyst' : 'Avmeldt'}
-            </span>
+            </Badge>
           )}
         </div>
         {whenLine && (
@@ -210,10 +197,7 @@ export default function BuyerDashboard() {
   const past = (signups ?? []).filter((s) => isPastSignup(s, today))
 
   return (
-    <div className="flex-1 overflow-y-auto bg-canvas h-full">
-      <MobileTeacherHeader />
-
-      <PageShell title={firstName ? `Hei, ${firstName}` : 'Oversikt'}>
+    <PageShell title={firstName ? `Hei, ${firstName}` : 'Oversikt'}>
         {loadFailed ? (
           <ErrorState
             title="Kunne ikke hente påmeldingene dine"
@@ -238,6 +222,5 @@ export default function BuyerDashboard() {
           </div>
         )}
       </PageShell>
-    </div>
   )
 }

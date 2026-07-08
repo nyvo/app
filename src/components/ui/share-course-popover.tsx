@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Check, Copy, Send } from '@/lib/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { useCopyToClipboard } from '@/components/ui/copy-button';
 
 interface ShareCoursePopoverProps {
   courseUrl: string;
@@ -27,20 +27,12 @@ export function ShareCoursePopover({
   children,
 }: ShareCoursePopoverProps) {
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
 
   const canNativeShare =
     typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(courseUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error('Kunne ikke kopiere lenken');
-    }
-  };
+  const handleCopy = () => void copy(courseUrl);
 
   const handleNativeShare = async () => {
     try {
@@ -71,7 +63,7 @@ export function ShareCoursePopover({
         <button
           type="button"
           onClick={handleCopy}
-          className="w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors cursor-pointer"
+          className="w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm outline-none hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring ring-inset transition-colors cursor-pointer"
         >
           <div className="size-8 rounded-md bg-muted flex items-center justify-center shrink-0">
             {copied ? (
@@ -92,7 +84,7 @@ export function ShareCoursePopover({
           <button
             type="button"
             onClick={handleNativeShare}
-            className="w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors cursor-pointer"
+            className="w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm outline-none hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring ring-inset transition-colors cursor-pointer"
           >
             <div className="size-8 rounded-md bg-muted flex items-center justify-center shrink-0">
               <Send className="size-4 text-foreground-muted" strokeWidth={1.75} />

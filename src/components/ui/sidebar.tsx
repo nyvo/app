@@ -50,8 +50,35 @@ function useSidebar() {
   return context
 }
 
+// True when the event target is a form control or rich-text editor that
+// should keep ⌘/Ctrl+B's normal meaning (bold) instead of toggling the
+// sidebar.
+function isEditableEventTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  const tag = target.tagName
+  return (
+    tag === "INPUT" ||
+    tag === "TEXTAREA" ||
+    tag === "SELECT" ||
+    target.isContentEditable
+  )
+}
+
+// Reads the persisted `sidebar_state` cookie written by SidebarProvider's
+// setOpen. Parses defensively — an absent or malformed cookie (missing,
+// truncated, some other value) falls back to `null` so the caller can apply
+// its own default instead of guessing.
+function readSidebarCookieState(): boolean | null {
+  if (typeof document === "undefined") return null
+  const match = document.cookie.match(
+    new RegExp(`(?:^|;\\s*)${SIDEBAR_COOKIE_NAME}=(true|false)(?:;|$)`)
+  )
+  if (!match) return null
+  return match[1] === "true"
+}
+
 function SidebarProvider({
-  defaultOpen = true,
+  defaultOpen,
   open: openProp,
   onOpenChange: setOpenProp,
   className,
@@ -68,7 +95,12 @@ function SidebarProvider({
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen)
+  // A consumer-supplied `defaultOpen` always wins (it's explicit control);
+  // only when it's omitted do we fall back to the persisted cookie, then to
+  // `true`.
+  const [_open, _setOpen] = React.useState(
+    () => defaultOpen ?? readSidebarCookieState() ?? true
+  )
   const open = openProp ?? _open
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
@@ -97,6 +129,10 @@ function SidebarProvider({
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
         (event.metaKey || event.ctrlKey)
       ) {
+        // Don't hijack ⌘/Ctrl+B while it's being used for its usual job —
+        // bolding text in an input, textarea, or the rich-text editor.
+        if (isEditableEventTarget(event.target)) return
+
         event.preventDefault()
         toggleSidebar()
       }
@@ -466,7 +502,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button group/menu-button flex w-full items-center gap-2.5 overflow-hidden rounded-xl px-3 py-2 text-left text-sm font-medium text-sidebar-foreground-muted outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring active:bg-sidebar-accent active:text-sidebar-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-foreground data-active:bg-sidebar-active data-active:text-sidebar-active-foreground [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate",
+  "peer/menu-button group/menu-button flex w-full items-center gap-2.5 overflow-hidden rounded-lg px-3 py-2 text-left text-sm font-medium text-sidebar-foreground-muted outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring active:bg-sidebar-accent active:text-sidebar-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-foreground data-active:bg-sidebar-active data-active:text-sidebar-active-foreground [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate",
   {
     variants: {
       variant: {
@@ -475,8 +511,12 @@ const sidebarMenuButtonVariants = cva(
           "bg-background ring-1 ring-border hover:bg-muted hover:text-foreground hover:ring-border",
       },
       size: {
-        default: "h-9 text-sm",
-        sm: "h-8 text-xs",
+        // in-data-[mobile=true] targets rows rendered inside the mobile
+        // sheet (SheetContent sets data-mobile="true") so touch rows get a
+        // 44px floor without changing the desktop rail's density. min-height
+        // (not height) so it never clips taller custom content.
+        default: "h-9 text-sm in-data-[mobile=true]:min-h-11!",
+        sm: "h-8 text-xs in-data-[mobile=true]:min-h-11!",
         lg: "h-12 text-sm group-data-[collapsible=icon]:p-0!",
       },
     },

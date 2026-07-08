@@ -62,7 +62,6 @@ export function UnsavedChangesDialog({
       onOpenChange={(open) => {
         if (!open && blocker.state === 'blocked') blocker.reset();
       }}
-      ariaLabel="Ulagrede endringer"
       title="Forlat siden?"
       body="Endringene dine er ikke lagret og går tapt hvis du forlater siden."
       actionLabel="Forlat siden"

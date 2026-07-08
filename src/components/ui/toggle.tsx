@@ -11,11 +11,6 @@ const toggleVariants = cva(
       variant: {
         default: "bg-transparent",
         outline: "border border-border bg-transparent hover:bg-muted",
-        // Pressed/on states are near-black chrome (bg-foreground) — azure is
-        // reserved for links + selected tints, never active control fills.
-        pill: "rounded-md text-sm px-3 py-1.5 bg-transparent border border-transparent text-foreground-muted transition-colors duration-150 ease-out hover:text-foreground hover:bg-surface hover:border-border aria-pressed:bg-foreground aria-pressed:text-background aria-pressed:border-transparent aria-pressed:hover:bg-foreground aria-pressed:hover:border-transparent data-[state=on]:bg-foreground data-[state=on]:text-background data-[state=on]:border-transparent",
-        segmented:
-          "h-8 min-w-0 rounded-md px-3 text-xs font-medium bg-transparent text-foreground-muted transition-colors duration-150 ease-out hover:text-foreground aria-pressed:bg-foreground aria-pressed:text-background aria-pressed:hover:bg-foreground data-[state=on]:bg-foreground data-[state=on]:text-background data-[state=on]:hover:bg-foreground",
       },
       size: {
         default:

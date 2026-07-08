@@ -29,7 +29,7 @@ export function RoleRoute({ allow }: RoleRouteProps) {
   // Failed fetch is "unknown", not "buyer" — never demote a seller because
   // the memberships query timed out. Reload re-runs the whole auth init.
   if (sellersLoadFailed) {
-    return <PageState variant="server-error" />
+    return <PageState variant="server-error" as="div" />
   }
 
   const isSeller = sellers.length > 0

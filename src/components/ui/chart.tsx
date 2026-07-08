@@ -253,7 +253,7 @@ function ChartTooltipContent({
                       {item.value != null && (
                         <span className="font-medium text-foreground tabular-nums">
                           {typeof item.value === "number"
-                            ? item.value.toLocaleString()
+                            ? item.value.toLocaleString('nb-NO')
                             : String(item.value)}
                         </span>
                       )}

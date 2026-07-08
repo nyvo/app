@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { Check, Copy, ExternalLink } from '@/lib/icons';
+import { ExternalLink } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
 import { SettingsRow } from '@/components/teacher/SettingsRows';
 
 /**
@@ -16,23 +15,11 @@ import { SettingsRow } from '@/components/teacher/SettingsRows';
  * is live.
  */
 export function EmbedCodeSection({ slug }: { slug: string }) {
-  const [copied, setCopied] = useState(false);
-
   const origin = window.location.origin;
   const previewUrl = `${origin}/embed/${slug}`;
   const snippet = `<iframe src="${origin}/embed/${slug}"
   style="width:100%;height:640px;border:0"
   loading="lazy" title="Kurskalender"></iframe>`;
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(snippet);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      toast.error('Kunne ikke kopiere koden');
-    }
-  };
 
   return (
     <SettingsRow
@@ -42,17 +29,17 @@ export function EmbedCodeSection({ slug }: { slug: string }) {
       <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-xs leading-relaxed text-foreground select-all">
         <code>{snippet}</code>
       </pre>
-      <div className="flex items-center gap-2">
-        <Button type="button" variant="secondary" onClick={() => void handleCopy()}>
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-          {copied ? 'Kopiert' : 'Kopier kode'}
-        </Button>
+      <p className="mt-2 text-sm text-foreground-muted">
+        Juster height-verdien etter behov.
+      </p>
+      <div className="mt-3 flex items-center gap-2">
+        <CopyButton value={snippet} label="Kopier kode" />
         <Button
           type="button"
           variant="ghost"
           onClick={() => window.open(previewUrl, '_blank')}
         >
-          <ExternalLink className="size-4" />
+          <ExternalLink data-icon="inline-start" />
           Forhåndsvis
         </Button>
       </div>

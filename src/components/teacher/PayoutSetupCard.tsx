@@ -68,6 +68,15 @@ const toneTextClass: Record<MarkerTone, string> = {
   success: 'text-success',
 };
 
+// Mirrors the done marker's "Fullført" label — the toned current-step glyph
+// is the only cue for warning/danger/success states, so it needs the same
+// role="img" + aria-label treatment or screen readers only get a bare circle.
+const toneAriaLabel: Record<'warning' | 'danger' | 'success', string> = {
+  warning: 'Krever handling',
+  danger: 'Avslått',
+  success: 'Fullført',
+};
+
 function StepMarker({ index, status, tone }: { index: number; status: StepStatus; tone?: MarkerTone }) {
   if (status === 'done') {
     return (
@@ -85,7 +94,11 @@ function StepMarker({ index, status, tone }: { index: number; status: StepStatus
     const glyph =
       tone === 'warning' ? <ExclamationGlyph /> : tone === 'danger' ? <CrossGlyph /> : <CheckGlyph />;
     return (
-      <span className="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium tabular-nums">
+      <span
+        role="img"
+        aria-label={toneAriaLabel[tone]}
+        className="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium tabular-nums"
+      >
         <span className={toneTextClass[tone]}>{glyph}</span>
       </span>
     );

@@ -45,7 +45,7 @@ const Toaster = ({ toastOptions, ...props }: ToasterProps) => {
             toastOptions?.classNames?.title,
           ),
           description: cn(
-            "mt-0.5 text-xs leading-5 text-chrome-foreground/70",
+            "mt-0.5 text-xs leading-5 text-chrome-foreground-muted",
             toastOptions?.classNames?.description,
           ),
           icon: cn(toastIconClassName, toastOptions?.classNames?.icon),

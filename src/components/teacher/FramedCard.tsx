@@ -33,7 +33,7 @@ export function FramedCard({
     <div className={cn('flex flex-col rounded-2xl bg-muted p-2', className)}>
       <div className="flex items-center justify-between gap-3 px-3 py-2">
         <h2 className="text-sm font-medium text-foreground">{title}</h2>
-        {action && <span className="text-sm text-foreground">{action}</span>}
+        {action && <div className="text-sm text-foreground">{action}</div>}
       </div>
       <div className="flex flex-1 flex-col gap-1.5">{children}</div>
     </div>

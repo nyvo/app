@@ -36,8 +36,6 @@ function StatusBadgeRow({ courseStatus }: { courseStatus: string }) {
   return <StatusBadge status={courseStatus as CourseStatus} />;
 }
 
-export const COURSES_PER_PAGE = 6;
-
 // ─── Table primitives ───────────────────────────────────────────────────
 // Borderless flat-table pattern: column headers + hairline-divided rows,
 // no card chrome. Each metric column has a fixed width so values align left
@@ -74,30 +72,40 @@ function SortableHeader({
   const isActive = sortKey === columnKey;
   const Arrow = sortDir === 'asc' ? ChevronUp : ChevronDown;
   return (
-    <button
-      type="button"
-      onClick={() => onSort(columnKey)}
-      aria-label={`Sorter etter ${label}`}
+    <div
+      role="columnheader"
       aria-sort={isActive ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
-      className={cn(
-        'inline-flex items-center gap-1 text-left text-sm text-foreground-muted outline-none transition-colors',
-        'hover:text-foreground focus-visible:text-foreground',
-        className,
-      )}
+      className={className}
     >
-      {label}
-      {isActive && <Arrow className="size-3.5 shrink-0" aria-hidden="true" />}
-    </button>
+      <button
+        type="button"
+        onClick={() => onSort(columnKey)}
+        aria-label={`Sorter etter ${label}`}
+        className="group inline-flex items-center gap-1 rounded text-left text-sm text-foreground-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {label}
+        {isActive ? (
+          <Arrow className="size-3.5 shrink-0" aria-hidden="true" />
+        ) : (
+          // Hover-ghost cue — distinguishes the sortable columns from the
+          // plain (non-sortable) Status header.
+          <ChevronDown
+            className="size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+            aria-hidden="true"
+          />
+        )}
+      </button>
+    </div>
   );
 }
 
 function TableHeader({ sortKey, sortDir, onSort }: TableHeaderProps) {
   return (
-    <div className={cn(COLS, 'py-3 border-b border-border-subtle')}>
+    <div role="row" className={cn(COLS, 'py-3 border-b border-border-subtle')}>
       <SortableHeader label="Navn" columnKey="name" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
-      <span className="text-sm text-foreground-muted">Status</span>
-      <SortableHeader label="Påmeldte" columnKey="signups" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:inline-flex" />
-      <SortableHeader label="Pris" columnKey="price" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
+      <div role="columnheader" className="text-sm text-foreground-muted">Status</div>
+      <SortableHeader label="Påmeldte" columnKey="signups" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
+      <SortableHeader label="Pris" columnKey="price" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:block" />
     </div>
   );
 }
@@ -110,12 +118,13 @@ function TableRow({ course }: { course: SessionScheduleRow }) {
   return (
     <Link
       to={routes.course(course.courseId)}
+      role="row"
       className={cn(
         COLS,
-        'group relative py-4 no-underline outline-none transition-colors hover:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+        'group relative py-4 no-underline outline-none transition-colors hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle',
       )}
     >
-      <div className="min-w-0">
+      <div role="cell" className="min-w-0">
         <h3 className="truncate text-base font-medium text-foreground">{course.courseTitle}</h3>
         {(() => {
           const { label, dot } = typeMarker(course.courseFormat, course.deliveryMode);
@@ -127,13 +136,13 @@ function TableRow({ course }: { course: SessionScheduleRow }) {
           );
         })()}
       </div>
-      <div>
+      <div role="cell">
         <StatusBadgeRow courseStatus={course.courseStatus} />
       </div>
-      <span className="hidden whitespace-nowrap text-base text-foreground tabular-nums md:inline">
+      <span role="cell" className="whitespace-nowrap text-base text-foreground tabular-nums">
         {roster}
       </span>
-      <span className="whitespace-nowrap text-base text-foreground tabular-nums">
+      <span role="cell" className="hidden whitespace-nowrap text-base text-foreground tabular-nums md:inline">
         {formatKroner(course.price)}
       </span>
       <ChevronRight
@@ -175,7 +184,7 @@ interface CourseListViewProps {
 
 export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState }: CourseListViewProps) {
   return (
-    <div className="overflow-hidden">
+    <div role="table" className="overflow-hidden">
       <TableHeader sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
       {courses.length === 0 && emptyState ? (
         <div>{emptyState}</div>
@@ -192,8 +201,8 @@ export function CourseListSkeleton() {
       <div className={cn(COLS, 'py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
         <span>Navn</span>
         <span>Status</span>
-        <span className="hidden md:inline">Påmeldte</span>
-        <span>Pris</span>
+        <span>Påmeldte</span>
+        <span className="hidden md:inline">Pris</span>
       </div>
       <div className="divide-y divide-border-subtle">
         {[...Array(5)].map((_, i) => (
@@ -203,8 +212,8 @@ export function CourseListSkeleton() {
               <Skeleton className="mt-1 h-3 w-24 max-w-full" />
             </div>
             <Skeleton className="h-5 w-20 rounded-full" />
-            <Skeleton className="hidden h-4 w-16 md:inline-block" />
             <Skeleton className="h-4 w-16" />
+            <Skeleton className="hidden h-4 w-16 md:inline-block" />
           </div>
         ))}
       </div>

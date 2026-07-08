@@ -1,6 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
 import { Check, ChevronRight } from '@/lib/icons'
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { PageShell } from '@/components/teacher/PageShell'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -29,15 +28,12 @@ export default function GetStartedPage() {
   // live state — the flash this page used to show on refresh.
   if (isLoading) {
     return (
-      <div className="flex-1 overflow-y-auto bg-canvas h-full">
-        <MobileTeacherHeader />
-        <PageShell narrow="centered" title="Kom i gang">
-          <div className="space-y-3" aria-hidden="true">
-            <Skeleton className="h-40 w-full rounded-xl" />
-            <Skeleton className="h-32 w-full rounded-xl" />
-          </div>
-        </PageShell>
-      </div>
+      <PageShell narrow="centered" title="Kom i gang">
+        <div className="space-y-3" aria-hidden="true">
+          <Skeleton className="h-40 w-full rounded-xl" />
+          <Skeleton className="h-32 w-full rounded-xl" />
+        </div>
+      </PageShell>
     )
   }
 
@@ -49,11 +45,9 @@ export default function GetStartedPage() {
   const isLive = isSetupComplete
 
   return (
-    <div className="flex-1 overflow-y-auto bg-canvas h-full">
-      <MobileTeacherHeader />
-      <PageShell
-        narrow="centered"
-        title="Kom i gang"
+    <PageShell
+      narrow="centered"
+      title="Kom i gang"
         action={
           isLive ? null : (
             <p className="text-base text-foreground-muted tabular-nums">
@@ -126,7 +120,6 @@ export default function GetStartedPage() {
           </>
         )}
       </PageShell>
-    </div>
   )
 }
 

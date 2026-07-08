@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { UnsavedChangesDialog, useUnsavedChanges } from '@/components/ui/unsaved-changes';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PasswordRow } from '@/components/teacher/PasswordRow';
 import { PageShell } from '@/components/teacher/PageShell';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
@@ -101,7 +100,7 @@ const TeacherProfilePage = () => {
     const { error } = await supabase.functions.invoke('delete-account');
     if (error) {
       const { message } = await extractEdgeError(error);
-      toast.error(message || 'Kunne ikke slette kontoen. Prøv igjen.');
+      toast.error(message || 'Kunne ikke slette kontoen – prøv igjen');
       setIsDeletingAccount(false);
       return;
     }
@@ -111,10 +110,7 @@ const TeacherProfilePage = () => {
   };
 
   return (
-    <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
-        <MobileTeacherHeader />
-
-        <PageShell title="Innstillinger">
+    <PageShell title="Innstillinger">
           <SettingsRows>
             <SettingsRow
               title="Personlig informasjon"
@@ -181,7 +177,6 @@ const TeacherProfilePage = () => {
               <ConfirmDialog
                 open={logoutAllOpen}
                 onOpenChange={setLogoutAllOpen}
-                ariaLabel="Logg ut alle enheter"
                 title="Logg ut alle enheter"
                 body="Du blir logget ut fra alle nettlesere og enheter, inkludert denne."
                 actionLabel="Logg ut alle"
@@ -195,7 +190,6 @@ const TeacherProfilePage = () => {
                   setDeleteOpen(open);
                   if (!open) setDeleteConfirmText('');
                 }}
-                ariaLabel="Slett kontoen din"
                 title="Slett konto"
                 body={<>Kontoen <strong>{profile?.email}</strong> slettes permanent. Dette kan ikke angres.</>}
                 actionLabel="Slett konto"
@@ -219,7 +213,6 @@ const TeacherProfilePage = () => {
           />
           <UnsavedChangesDialog blocker={blocker} />
         </PageShell>
-    </main>
   );
 };
 

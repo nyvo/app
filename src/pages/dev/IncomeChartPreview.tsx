@@ -224,7 +224,7 @@ function QuietRangeToggle({
             onClick={() => onChange(opt.key)}
             className={cn(
               'rounded-md px-2 py-1 text-xs font-medium outline-none transition-colors duration-150',
-              'focus-visible:ring-2 focus-visible:ring-foreground/15',
+              'focus-visible:ring-2 focus-visible:ring-ring-subtle',
               isActive
                 ? 'bg-muted text-foreground'
                 : 'text-foreground-muted hover:text-foreground',
@@ -250,7 +250,7 @@ function RangeDropdown({
       <DropdownMenuTrigger
         className={cn(
           'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium outline-none transition-colors',
-          'text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/15',
+          'text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle',
         )}
       >
         {RANGE_LABEL[value]}

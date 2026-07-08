@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ExternalLink } from '@/lib/icons';
@@ -18,7 +18,6 @@ import { PlacesAutocomplete } from '@/components/ui/places-autocomplete';
 import { MapEmbed } from '@/components/ui/map-embed';
 import type { PlaceDetails } from '@/services/places';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
@@ -41,15 +40,12 @@ const StudioPage = () => {
   const { currentSeller, refreshSellers } = useAuth();
 
   return (
-    <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
-      <MobileTeacherHeader />
-
-      <PageShell
+    <PageShell
         title="Studio"
         action={
           currentSeller?.slug ? (
             <Button onClick={() => window.open(`/${currentSeller.slug}`, '_blank')}>
-              <ExternalLink className="size-4" />
+              <ExternalLink data-icon="inline-start" />
               Se siden din
             </Button>
           ) : null
@@ -66,7 +62,6 @@ const StudioPage = () => {
           </p>
         )}
       </PageShell>
-    </main>
   );
 };
 
@@ -151,14 +146,15 @@ function StudioPublicSettings({
   // inline FieldErrors instead; this feeds the DirtyFormBar's error slot.
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const isDirty = useMemo(() => {
-    const locationDirty = primaryLocation
-      ? placeName.trim() !== primaryLocation.name ||
-        address.trim() !== (primaryLocation.address ?? '')
-      : placeName.trim() !== '' || address.trim() !== '';
-
-    return name.trim() !== seller.name || slug.trim() !== seller.slug || locationDirty;
-  }, [address, name, placeName, primaryLocation, seller.name, slug, seller.slug]);
+  // Split by which tab the dirty field lives on — the Samarbeid/Nettsted tabs
+  // keep the bar visible while dirty (rather than hiding it on tab switch),
+  // and need to know which tab to point the user back to.
+  const profileDirty = name.trim() !== seller.name || slug.trim() !== seller.slug;
+  const locationDirty = primaryLocation
+    ? placeName.trim() !== primaryLocation.name ||
+      address.trim() !== (primaryLocation.address ?? '')
+    : placeName.trim() !== '' || address.trim() !== '';
+  const isDirty = profileDirty || locationDirty;
 
   const { blocker } = useUnsavedChanges(isDirty);
 
@@ -184,14 +180,16 @@ function StudioPublicSettings({
     const trimmedAddress = address.trim();
 
     let blocked = false;
-    if (!trimmedName) {
+    const nameInvalid = !trimmedName;
+    if (nameInvalid) {
       setNameError('Skriv inn et navn.');
       blocked = true;
     } else {
       setNameError(null);
     }
 
-    if (!trimmedSlug) {
+    const slugInvalid = !trimmedSlug;
+    if (slugInvalid) {
       setSlugError('Skriv inn en nettadresse.');
       blocked = true;
     } else {
@@ -202,19 +200,30 @@ function StudioPublicSettings({
     // buyers would get a location line with no map or directions. Only enforced
     // when the name changed, so legacy pin-less places can still save untouched.
     const placeChanged = trimmedPlaceName !== (primaryLocation?.name ?? '');
+    let placeInvalid = false;
     if ((primaryLocation || trimmedAddress) && !trimmedPlaceName) {
       setPlaceError('Skriv inn et navn på stedet.');
       blocked = true;
+      placeInvalid = true;
     } else if (trimmedPlaceName && placeChanged && !placeCoords?.placeId) {
       setPlaceError('Velg et sted fra listen.');
       blocked = true;
+      placeInvalid = true;
     } else {
       setPlaceError(null);
     }
 
     if (blocked) {
-      // Surface the offending field by jumping to its tab.
-      setTab(!trimmedName || !trimmedSlug ? 'profil' : 'sted');
+      // Surface the offending field by jumping to its tab, then focus it once
+      // the panel has rendered — a tab switch alone leaves keyboard/AT users
+      // without a cue for which field needs attention.
+      setTab(nameInvalid || slugInvalid ? 'profil' : 'sted');
+      const focusId = nameInvalid ? 'studio-name' : slugInvalid ? 'studio-slug' : placeInvalid ? 'studio-place-name' : null;
+      if (focusId) {
+        requestAnimationFrame(() => {
+          document.getElementById(focusId)?.focus();
+        });
+      }
       return;
     }
 
@@ -308,7 +317,7 @@ function StudioPublicSettings({
       const isLocalValidation =
         err instanceof Error &&
         (err.message.startsWith('Ugyldig filtype') || err.message.startsWith('Bildet er for stort'));
-      toast.error(isLocalValidation ? err.message : friendlyError(err, 'Kunne ikke laste opp bildet.'));
+      toast.error(isLocalValidation ? err.message : friendlyError(err, 'Kunne ikke laste opp bildet'));
     } finally {
       setSavingPhoto(false);
     }
@@ -320,7 +329,7 @@ function StudioPublicSettings({
     const { error } = await updateSeller(seller.id, { logo_url: null });
     setSavingPhoto(false);
     if (error) {
-      toast.error('Kunne ikke fjerne bildet.');
+      toast.error('Kunne ikke fjerne bildet');
       return;
     }
     setLogoUrl(null);
@@ -556,11 +565,24 @@ function StudioPublicSettings({
       )}
 
       <DirtyFormBar
-        visible={(isDirty || !!saveError) && (tab === 'profil' || tab === 'sted')}
+        // Stays visible on Samarbeid/Nettsted too — hiding it on tab switch
+        // would silently strand unsaved Profil/Sted changes. Save still works
+        // from any tab (it operates on this page's state, not the visible
+        // panel); the hint just points back to where the changed field lives.
+        visible={isDirty || !!saveError}
         error={saveError}
         isSaving={isSaving}
         onSave={handleSave}
         onCancel={handleCancel}
+        dirtyLabel={
+          tab === 'samarbeid' || tab === 'nettsted'
+            ? profileDirty && locationDirty
+              ? 'Endringene ligger på Profil- og Sted-fanen'
+              : locationDirty
+                ? 'Endringene ligger på Sted-fanen'
+                : 'Endringene ligger på Profil-fanen'
+            : undefined
+        }
       />
       <UnsavedChangesDialog blocker={blocker} />
     </div>
@@ -626,15 +648,15 @@ function AccountTypeSection({
       const { message } = await extractEdgeError(error);
       toast.error(
         message === 'has_active_affiliates'
-          ? 'Fjern tilknyttede instruktører først.'
-          : 'Kunne ikke endre kontotypen.',
+          ? 'Fjern tilknyttede instruktører først'
+          : 'Kunne ikke endre kontotypen',
       );
       setPending(false);
       setConfirmTarget(null);
       return;
     }
     await onChanged();
-    toast.success('Kontotypen er oppdatert.');
+    toast.success('Kontotypen er oppdatert');
     if (picked === 'solo') onBecameSolo();
     setPending(false);
     setConfirmTarget(null);
@@ -658,6 +680,7 @@ function AccountTypeSection({
             { key: 'studio', label: 'Jeg driver et studio' },
           ]}
           ariaLabel="Kontotype"
+          role="radiogroup"
         />
         <p className="mt-3 text-sm text-foreground-muted">
           {current === 'solo'
@@ -671,7 +694,6 @@ function AccountTypeSection({
         onOpenChange={(open) => {
           if (!open && !pending) setConfirmTarget(null);
         }}
-        ariaLabel="Bytt kontotype"
         title="Bytt kontotype"
         body={
           confirmTarget === 'studio' ? (
