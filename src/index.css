@@ -123,7 +123,9 @@
      of the previous rendered sizes, so no visual jump. Buttons/pills stay
      `rounded-full` — these are surface radii. */
   --radius-sm: 4px;    /* tight chips, mini thumbs */
-  --radius-md: 6px;    /* inputs */
+  --radius-md: 6px;    /* compact controls (not form fields — those render
+                          `rounded-xl`, see button.tsx doc: pill = action
+                          affordance, soft rectangle = field affordance) */
   --radius-lg: 8px;    /* list rows, badges, image thumbs */
   --radius-xl: 10px;   /* cards, panels, dialogs (THE surface radius) */
   --radius-2xl: 12px;  /* large marketing surfaces, product frames — plus the
@@ -147,7 +149,9 @@
 
      Display caps at 48px — 6xl+ are unset below and won't compile.
      Per-size letter-spacing is part of the token — do NOT add
-     `tracking-*` utilities on top of these.
+     `tracking-*` utilities on top of these. Functional exceptions are fine
+     (e.g. OTP input letter-spacing, which encodes digit-grouping, not type
+     hierarchy) — the ban is on decorative tracking, not tabular/legibility fixes.
      For sub-12px, prefer `text-[11px]` arbitrary.
      ──────────────────────────────────────────────────────────── */
 
@@ -316,9 +320,9 @@
   --input: var(--neutral-8);                          /* no longer edges text fields (fields are filled/borderless now) — kept for the booking-rail tier border (was neutral-7 @ ~1.6:1; neutral-8 ≈ 1.9:1 — still below the 3:1 of 1.4.11, kept lighter than -strong as a deliberate design call) */
   --ring: var(--foreground);                          /* neutral focus ring — matches button.tsx focus style; never brand-colored */
   --ring-subtle: color-mix(in oklab, var(--foreground) 15%, transparent);
-                                                      /* soft focus halo — replaces the raw `ring-foreground/15` idiom.
-                                                         Never the only focus cue: pair with a second change
-                                                         (border-foreground on fields, bg-muted on rows). */
+                                                      /* soft focus halo — replaces the old raw `ring-foreground`
+                                                         at 15% opacity idiom. Never the only focus cue: pair with
+                                                         a second change (border-foreground on fields, bg-muted on rows). */
 
   /* Dark chrome — Slate-dark surface scale for chrome that stays dark in BOTH
      app themes (sidebar, toast, future overlays). Single source of truth so

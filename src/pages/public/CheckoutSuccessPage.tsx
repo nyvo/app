@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ImageIcon, Check, X, Clock, Mail } from '@/lib/icons';
+import { ImageIcon, Check, X, Clock, Mail, CalendarPlus, ArrowUpRight } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { PageState } from '@/components/page-state/page-state';
@@ -14,6 +14,9 @@ import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { toLocalDate } from '@/utils/dateUtils';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { COMPANY } from '@/lib/company';
+import { readFreeReceipt, type FreeReceipt } from '@/lib/free-receipt';
+import { downloadIcs, resolveEventEnd, type IcsEvent } from '@/utils/ics';
+import { directionsUrl } from '@/components/public/studio/studioFacts';
 
 const WEEKDAYS = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
 const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
@@ -59,6 +62,35 @@ interface SignupDetails {
   };
 }
 
+// Unified shape the recap pane renders from, regardless of whether the buyer
+// paid (server-polled SignupDetails) or signed up free (client-side
+// sessionStorage receipt — see src/lib/free-receipt.ts). Keeps a single JSX
+// block instead of two near-duplicate render paths.
+interface DisplaySignup {
+  id: string;
+  participantEmailMasked: string;
+  amountPaid: number;
+  createdAt: string | null;
+  course: {
+    title: string;
+    startDate: string | null;
+    timeSchedule: string | null;
+    // Free path only — the paid-path RPC doesn't return duration; the ICS
+    // end-time resolver treats null as "no duration signal".
+    durationMinutes: number | null;
+    location: string | null;
+    // Only ever populated on the free path — CheckoutPage already has the
+    // course's coordinates in memory. The paid-path RPC only returns a plain
+    // location string, so this stays null there and directionsUrl falls back
+    // to its text-search branch.
+    locationLat: number | null;
+    locationLon: number | null;
+    locationPlaceId: string | null;
+    imageUrl: string | null;
+    sellerSlug: string;
+  };
+}
+
 const CheckoutSuccessPage = () => {
   useDocumentTitle('Kvittering');
   const [searchParams] = useSearchParams();
@@ -85,6 +117,18 @@ const CheckoutSuccessPage = () => {
   // poll early and show the neutral "Sjekk e-posten din" state.
   const [refUnknown, setRefUnknown] = useState(false);
   const [attemptCount, setAttemptCount] = useState(0);
+
+  // Free path: the checkout page stashed a client-side receipt in
+  // sessionStorage (keyed by ?sid=signup id) before redirecting — see
+  // src/lib/free-receipt.ts for why there's no server-side lookup here. Read
+  // once into state (lazy initializer) and left in storage — it's
+  // session-scoped and masked, so keeping it costs nothing and lets an F5 on
+  // the receipt page keep working. If it's missing or malformed (storage
+  // cleared, fresh tab, tampered), the page falls back to the generic
+  // no-recap free confirmation.
+  const [freeReceipt] = useState<FreeReceipt | null>(() =>
+    isFreeSignup ? readFreeReceipt(searchParams.get('sid')) : null,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -265,9 +309,51 @@ const CheckoutSuccessPage = () => {
     );
   }
 
-  // Determine studio URL from signup data or URL parameter
-  const studioUrl = signup?.course?.seller?.slug
-    ? `/${signup.course.seller.slug}`
+  // Single shape the recap pane renders from — paid (polled) or free
+  // (sessionStorage, read into state above), whichever is present.
+  const displaySignup: DisplaySignup | null = signup
+    ? {
+        id: signup.id,
+        participantEmailMasked: signup.participant_email_masked,
+        amountPaid: signup.amount_paid,
+        createdAt: signup.created_at ?? null,
+        course: {
+          title: signup.course.title,
+          startDate: signup.course.start_date,
+          timeSchedule: signup.course.time_schedule,
+          durationMinutes: null,
+          location: signup.course.location,
+          locationLat: null,
+          locationLon: null,
+          locationPlaceId: null,
+          imageUrl: signup.course.image_url ?? null,
+          sellerSlug: signup.course.seller.slug,
+        },
+      }
+    : freeReceipt
+      ? {
+          id: freeReceipt.signupId,
+          participantEmailMasked: freeReceipt.participantEmailMasked,
+          amountPaid: 0,
+          createdAt: freeReceipt.createdAt,
+          course: {
+            title: freeReceipt.courseTitle,
+            startDate: freeReceipt.startDate,
+            timeSchedule: freeReceipt.timeSchedule,
+            durationMinutes: freeReceipt.durationMinutes ?? null,
+            location: freeReceipt.location,
+            locationLat: freeReceipt.locationLat,
+            locationLon: freeReceipt.locationLon,
+            locationPlaceId: freeReceipt.locationPlaceId,
+            imageUrl: freeReceipt.imageUrl,
+            sellerSlug: freeReceipt.sellerSlug,
+          },
+        }
+      : null;
+
+  // Determine studio URL from signup/receipt data or URL parameter
+  const studioUrl = displaySignup?.course.sellerSlug
+    ? `/${displaySignup.course.sellerSlug}`
     : orgSlugFromUrl
       ? `/${orgSlugFromUrl}`
       : '/';
@@ -407,12 +493,63 @@ const CheckoutSuccessPage = () => {
       <main className="flex flex-1 items-start justify-center px-4 pb-16 sm:px-6 lg:px-8 md:items-center">
         <div className="w-full max-w-md">
           {(() => {
-            const dateLong = formatDate(signup?.course.start_date ?? null);
-            const time = extractTimeFromSchedule(signup?.course.time_schedule)?.time ?? null;
-            const courseImage = signup?.course.image_url ?? null;
-            const isFree = isFreeSignup || (signup?.amount_paid ?? 0) === 0;
-            const bookedAt = signup?.created_at ? new Date(signup.created_at) : new Date();
+            const dateLong = formatDate(displaySignup?.course.startDate ?? null);
+            const time = extractTimeFromSchedule(displaySignup?.course.timeSchedule)?.time ?? null;
+            const courseImage = displaySignup?.course.imageUrl ?? null;
+            const isFree = displaySignup ? displaySignup.amountPaid === 0 : isFreeSignup;
+            const bookedAt = displaySignup?.createdAt ? new Date(displaySignup.createdAt) : new Date();
             const whenLine = [dateLong, time ? `kl. ${time}` : null].filter(Boolean).join(' · ');
+
+            // Paid-path startDate is the course's first session, not the
+            // buyer's own next one — a drop-in bought mid-series would offer
+            // an ICS event for a class that's already over. The free path
+            // stashes next_session as its startDate (see free-receipt.ts), so
+            // it never needs this guard. Date-only, local time: a same-day
+            // class that already started should still get the calendar link.
+            const isPaidPastDate =
+              Boolean(signup) && displaySignup?.course.startDate
+                ? (() => {
+                    const d = toLocalDate(displaySignup.course.startDate!);
+                    d.setHours(0, 0, 0, 0);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return d.getTime() < today.getTime();
+                  })()
+                : false;
+
+            // "Legg til i kalenderen" needs both a date AND a time to build a
+            // meaningful event — a date-only VEVENT would default to midnight,
+            // which is worse than not offering the download. The end comes from
+            // resolveEventEnd: schedule range → course duration → 60-min default.
+            const icsEvent: IcsEvent | null =
+              displaySignup?.course.startDate && time && !isPaidPastDate
+                ? (() => {
+                    const start = toLocalDate(displaySignup.course.startDate!);
+                    const [h, m] = time.split(':').map(Number);
+                    start.setHours(h, m, 0, 0);
+                    if (isNaN(start.getTime())) return null;
+                    return {
+                      uid: `openspot-signup-${displaySignup.id}`,
+                      summary: displaySignup.course.title,
+                      start,
+                      end: resolveEventEnd(
+                        start,
+                        displaySignup.course.timeSchedule,
+                        displaySignup.course.durationMinutes,
+                      ),
+                      location: displaySignup.course.location ?? undefined,
+                    };
+                  })()
+                : null;
+            const directionsHref = displaySignup?.course.location
+              ? directionsUrl({
+                  label: displaySignup.course.location,
+                  address: displaySignup.course.location,
+                  lat: displaySignup.course.locationLat,
+                  lon: displaySignup.course.locationLon,
+                  placeId: displaySignup.course.locationPlaceId,
+                })
+              : null;
 
             return (
               <>
@@ -426,27 +563,57 @@ const CheckoutSuccessPage = () => {
                     </div>
                     <h1 className="mt-4 text-3xl font-medium text-foreground">Du er påmeldt</h1>
                     <p className="mt-2 text-base text-foreground-muted">
-                      {signup
-                        ? `Vi har sendt en bekreftelse til ${signup.participant_email_masked}.`
+                      {displaySignup
+                        ? `Vi har sendt en bekreftelse til ${displaySignup.participantEmailMasked}.`
                         : 'Vi har sendt en bekreftelse til e-posten din.'}
                     </p>
                   </div>
 
-                  {signup && (
+                  {displaySignup && (
                     <>
                       {/* Course pane — image + title + date/time. */}
                       <div className="mt-8 flex items-center gap-4 rounded-2xl border border-card bg-surface shadow-soft p-5">
                         <CourseThumb src={courseImage} />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-base font-medium text-foreground">{signup.course.title}</p>
+                          <p className="truncate text-base font-medium text-foreground">{displaySignup.course.title}</p>
                           {whenLine && (
                             <p className="mt-0.5 text-sm text-foreground-muted tabular-nums">{whenLine}</p>
                           )}
-                          {signup.course.location && (
-                            <p className="mt-0.5 text-sm text-foreground-muted truncate">{signup.course.location}</p>
+                          {displaySignup.course.location && (
+                            <p className="mt-0.5 text-sm text-foreground-muted truncate">{displaySignup.course.location}</p>
                           )}
                         </div>
                       </div>
+
+                      {/* Receipt utilities — add the class to a calendar app and/or get
+                          directions. Shown whenever the underlying data is known, on
+                          both the paid and free receipt. */}
+                      {(icsEvent || directionsHref) && (
+                        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+                          {icsEvent && (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="lg"
+                              onClick={() => downloadIcs(displaySignup.course.title, icsEvent)}
+                            >
+                              <CalendarPlus className="size-4" strokeWidth={1.75} />
+                              Legg til i kalenderen
+                            </Button>
+                          )}
+                          {directionsHref && (
+                            <a
+                              href={directionsHref}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="focus-ring inline-flex items-center gap-1 rounded text-sm font-medium text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+                            >
+                              Få veibeskrivelse
+                              <ArrowUpRight className="size-3.5" strokeWidth={1.75} />
+                            </a>
+                          )}
+                        </div>
+                      )}
 
                       {/* Discreet meta row — booking date + paid amount */}
                       <div className="mt-6 border-t border-border pt-6 space-y-2.5 text-base">
@@ -457,7 +624,7 @@ const CheckoutSuccessPage = () => {
                         <div className="flex items-center justify-between">
                           <span className="text-foreground-muted">{isFree ? 'Pris' : 'Betalt'}</span>
                           <span className="font-medium text-foreground tabular-nums">
-                            {isFree ? 'Gratis' : formatKroner(signup.amount_paid)}
+                            {isFree ? 'Gratis' : formatKroner(displaySignup.amountPaid)}
                           </span>
                         </div>
                         {!isFree && (
@@ -465,12 +632,14 @@ const CheckoutSuccessPage = () => {
                         )}
                         <div className="flex items-center justify-between">
                           <span className="text-foreground-muted">Referanse</span>
-                          <span className="font-medium text-foreground tabular-nums">{shortRef(signup.id)}</span>
+                          <span className="font-medium text-foreground tabular-nums">{shortRef(displaySignup.id)}</span>
                         </div>
                       </div>
                       {/* Account offer — logged-in users go straight to the
-                          (auto-claimed) overview. */}
-                      {user && (
+                          (auto-claimed) overview. Paid-signup only: claimMySignups
+                          (below) only ever claims the polled Stripe signup, so a free
+                          signup isn't on /overview yet and this would 404-ish otherwise. */}
+                      {user && signup && (
                         <div className="mt-8">
                           <Button asChild variant="default" className="w-full">
                             <Link to={AUTH_ROUTES.dashboard}>Se påmeldingene dine</Link>

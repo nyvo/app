@@ -23,8 +23,7 @@ import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
 import { SessionsModal } from '@/components/teacher/SessionsModal';
 import { PageTabs, PageTab } from '@/components/ui/page-tabs';
 import { SendCourseMessageDrawer } from '@/components/teacher/SendCourseMessageDrawer';
-import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { ParticipantDetailDrawer, isPartiallyRefunded } from '@/components/teacher/ParticipantDetailDrawer';
 import { PageShell } from '@/components/teacher/PageShell';
 import { PageState } from '@/components/page-state/page-state';
 import { AddParticipantDrawer } from '@/components/teacher/AddParticipantDrawer';
@@ -180,26 +179,21 @@ export function computeDesiredSessions(args: {
 }
 
 /**
- * Course not-found shell — wraps the canonical NotFoundState in the
- * teacher-layout scroll container + mobile header so chrome stays consistent
- * with the rest of the dashboard.
+ * Course not-found state — TeacherLayout owns the scroll container and
+ * mobile header now, so this renders just the canonical PageState (as a
+ * div: SidebarInset already provides the page's <main> landmark).
  */
 function CourseNotFound({ description }: { description?: string }) {
-  return (
-    <div className="flex-1 overflow-y-auto bg-canvas h-full">
-      <MobileTeacherHeader />
-      <PageState variant="course" description={description} />
-    </div>
-  );
+  return <PageState variant="course" description={description} as="div" />;
 }
 
 /**
  * CoursePage — full course detail / configuration page.
  *
  * The drawer's "Åpne kursside →" escape target. Three underline tabs slice
- * the course into its three concerns: Oversikt (at-a-glance + ops), Rediger (editable form),
- * Priser (ticket tiers), and Påmeldte (the participants list). Page shell
- * follows the dashboard convention (max-w-6xl centered, lg:px-8 padding).
+ * the course into its three concerns: Oversikt (at-a-glance + ops), Rediger
+ * (editable form), and Påmeldte (the participants list). Page shell follows
+ * the dashboard convention (max-w-6xl centered, lg:px-8 padding).
  */
 const CoursePage = () => {
   const navigate = useNavigate();
@@ -263,6 +257,7 @@ const CoursePage = () => {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showCancelPreview, setShowCancelPreview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeletingCourse, setIsDeletingCourse] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -318,7 +313,6 @@ const CoursePage = () => {
     if (settingsLocationAddress !== (courseData.locationAddress || '')) return true;
     if (maxParticipants !== courseData.capacity) return true;
     if (settingsPrice !== courseData.price) return true;
-    if (settingsDropInPrice !== courseData.dropInPrice) return true;
     if (settingsDuration !== courseData.durationMinutes) return true;
 
     if (courseData.format === 'single') {
@@ -343,13 +337,14 @@ const CoursePage = () => {
       // the default form value can't read as a phantom edit.
       if (sessionsStartTime && settingsTime !== sessionsStartTime) return true;
     }
-    // settingsAllowsDropIn intentionally excluded — drop-in toggle is
-    // instant-commit, not part of the batched save flow.
+    // settingsAllowsDropIn and settingsDropInPrice intentionally excluded —
+    // drop-in is instant-commit (toggle + price both persist on their own),
+    // not part of the batched save flow.
     return false;
   }, [
     courseData, settingsTitle, settingsDescription, settingsLocation, settingsLocationAddress,
     maxParticipants, settingsDuration, settingsDate, settingsTime,
-    settingsPrice, settingsDropInPrice, sessionDays, sessions, sessionsStartTime,
+    settingsPrice, sessionDays, sessions, sessionsStartTime,
   ]);
 
   const { blocker, bypass } = useUnsavedChanges(isSettingsDirty);
@@ -488,6 +483,13 @@ const CoursePage = () => {
         settingsDuration,
       });
 
+      // Defense in depth: settingsDropInPrice updates per keystroke, so an
+      // abandoned invalid edit (0/empty) on Oversikt could still be sitting in
+      // state when Lagre fires from Rediger. Never send ≤0 while the toggle is
+      // on — fall back to the committed price instead of zeroing the tier.
+      const effectiveDropInPrice =
+        settingsDropInPrice > 0 ? settingsDropInPrice : courseData.dropInPrice;
+
       // One transactional RPC: course fields + drop-in tier + session diff
       // all commit or none do. The old browser-side write loop (and its
       // committedSessions re-baselining apparatus) is gone — a failed save
@@ -495,7 +497,7 @@ const CoursePage = () => {
       const { data: result, error: saveErr } = await saveCourseSchedule({
         courseId,
         course: updateData,
-        dropIn: settingsAllowsDropIn ? { price: settingsDropInPrice } : null,
+        dropIn: settingsAllowsDropIn ? { price: effectiveDropInPrice } : null,
         sessions: desiredSessions,
       });
       if (saveErr || !result?.success) {
@@ -523,7 +525,7 @@ const CoursePage = () => {
           }
         }
         if (notifyFailed) {
-          toast.error('Lagret, men deltakerne ble ikke varslet om ny tid.');
+          toast.error('Lagret, men deltakerne ble ikke varslet om ny tid');
         }
       }
 
@@ -547,7 +549,7 @@ const CoursePage = () => {
               timeSchedule: timeSchedule || prev.timeSchedule,
               durationMinutes: settingsDuration || prev.durationMinutes,
               allowsDropIn: settingsAllowsDropIn,
-              dropInPrice: settingsDropInPrice,
+              dropInPrice: effectiveDropInPrice,
             }
           : null,
       );
@@ -596,7 +598,7 @@ const CoursePage = () => {
 
       toast.success('Bilde oppdatert');
     } catch (err) {
-      toast.error(friendlyError(err, 'Kunne ikke oppdatere bildet.'));
+      toast.error(friendlyError(err, 'Kunne ikke oppdatere bildet'));
     } finally {
       setIsSavingImage(false);
     }
@@ -622,19 +624,28 @@ const CoursePage = () => {
 
       toast.success('Bilde fjernet');
     } catch (err) {
-      toast.error(friendlyError(err, 'Kunne ikke fjerne bildet.'));
+      toast.error(friendlyError(err, 'Kunne ikke fjerne bildet'));
     } finally {
       setIsSavingImage(false);
     }
   };
 
   const handleCancelEnrollment = async (signupId: string, refund: boolean): Promise<boolean> => {
+    // The drawer's "Refunder beløp" action reuses this path against a signup
+    // that's already cancelled — nothing is being avbestilt there, so the
+    // toast must only speak to the refund.
+    const targetStatus = participants.find((p) => p.id === signupId)?.status;
+    const alreadyCancelled = targetStatus === 'cancelled' || targetStatus === 'course_cancelled';
     const { error: cancelError } = await teacherCancelSignup(signupId, { refund });
     if (cancelError) {
-      toast.error(friendlyError(cancelError, 'Kunne ikke avbestille påmeldingen.'));
+      toast.error(friendlyError(cancelError, 'Kunne ikke avbestille påmeldingen'));
       return false;
     }
-    toast.success(refund ? 'Påmelding avbestilt og refusjon behandlet' : 'Påmelding avbestilt');
+    if (alreadyCancelled && refund) {
+      toast.success('Refusjon behandlet');
+    } else {
+      toast.success(refund ? 'Påmelding avbestilt og refusjon behandlet' : 'Påmelding avbestilt');
+    }
     refetchParticipants();
     return true;
   };
@@ -658,7 +669,7 @@ const CoursePage = () => {
       setCourseData((prev) =>
         prev ? { ...prev, allowsDropIn: previousAllows, dropInPrice: previousPrice } : prev,
       );
-      toast.error(friendlyError(error, 'Kunne ikke oppdatere drop-in.'));
+      toast.error(friendlyError(error, 'Kunne ikke oppdatere drop-in'));
       return;
     }
     toast.success(next ? 'Drop-in slått på' : 'Drop-in slått av');
@@ -671,9 +682,10 @@ const CoursePage = () => {
   const handleDropInPriceBlur = async () => {
     if (!courseId || !courseData) return;
     if (!settingsAllowsDropIn) return;
-    // Invalid blur (empty/0/NaN): reset to the persisted price instead of
-    // leaving an unsynced phantom value that a later action could commit.
     if (!Number.isFinite(settingsDropInPrice) || settingsDropInPrice <= 0) {
+      // Invalid edit (empty/0/NaN) while drop-in is on: snap the state back to
+      // the committed price so it can't outlive the tab and leak into a
+      // later "Lagre" from Rediger. The row's inline error explains the snap.
       setSettingsDropInPrice(courseData.dropInPrice);
       return;
     }
@@ -684,7 +696,7 @@ const CoursePage = () => {
     if (error) {
       setSettingsDropInPrice(previousPrice);
       setCourseData((prev) => (prev ? { ...prev, dropInPrice: previousPrice } : prev));
-      toast.error(friendlyError(error, 'Kunne ikke oppdatere drop-in-prisen.'));
+      toast.error(friendlyError(error, 'Kunne ikke oppdatere drop-in-prisen'));
       return;
     }
     toast.success('Drop-in-pris oppdatert');
@@ -701,7 +713,7 @@ const CoursePage = () => {
     if (error) {
       setSettingsAcceptsLateSignups(previous);
       setCourseData((prev) => (prev ? { ...prev, acceptsLateSignups: previous } : prev));
-      toast.error(friendlyError(error, 'Kunne ikke oppdatere innstillingen.'));
+      toast.error(friendlyError(error, 'Kunne ikke oppdatere innstillingen'));
       return;
     }
     toast.success(next ? 'Påmelding etter oppstart slått på' : 'Påmelding etter oppstart slått av');
@@ -713,7 +725,7 @@ const CoursePage = () => {
     const { error: deleteError } = await deleteCourse(courseId);
     setIsDeletingCourse(false);
     if (deleteError) {
-      toast.error(friendlyError(deleteError, 'Kunne ikke slette kurset.'));
+      toast.error(friendlyError(deleteError, 'Kunne ikke slette kurset'));
       return;
     }
     setShowDeleteConfirm(false);
@@ -827,29 +839,21 @@ const CoursePage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-1 overflow-y-auto bg-canvas h-full">
-        <MobileTeacherHeader />
-        <PageShell
-          title={<Skeleton className="h-7 w-64" />}
-          badgePlacement="below"
-          badge={<Skeleton className="h-4 w-32" />}
-          tabs={<Skeleton className="h-10 w-full max-w-md" />}
-        >
-          <Skeleton className="h-72 w-full" />
-        </PageShell>
-      </div>
+      <PageShell
+        title={<Skeleton className="h-7 w-64" />}
+        badgePlacement="below"
+        badge={<Skeleton className="h-4 w-32" />}
+        tabs={<Skeleton className="h-10 w-full max-w-md" />}
+      >
+        <Skeleton className="h-72 w-full" />
+      </PageShell>
     );
   }
 
   // Fetch failure (network/RLS) is a retryable server error — distinct from a
   // genuine not-found, which must not read as "the course was deleted".
   if (courseLoadError) {
-    return (
-      <div className="flex-1 overflow-y-auto bg-canvas h-full">
-        <MobileTeacherHeader />
-        <PageState variant="server-error" />
-      </div>
-    );
+    return <PageState variant="server-error" as="div" />;
   }
 
   if (notFound || !courseData) {
@@ -893,9 +897,7 @@ const CoursePage = () => {
   // here.
 
   return (
-    <div className="flex-1 overflow-y-auto bg-canvas h-full">
-      <MobileTeacherHeader />
-
+    <>
       <PageShell
         title={courseData.title}
         badgePlacement="below"
@@ -1074,11 +1076,6 @@ const CoursePage = () => {
                 const isFull =
                   courseData.capacity > 0 && participantKpis.confirmed >= courseData.capacity;
 
-                // Filter chips — derive counts from participants. 'attention'
-                // groups everything that needs a teacher action (failed/pending
-                // payments, waitlist). 'cancelled' is its own bucket.
-                const visible = sortedParticipants;
-
                 const PARTICIPANT_COLS =
                   'grid grid-cols-[minmax(0,1fr)_24px] items-center gap-4 ' +
                   'md:grid-cols-[minmax(0,1fr)_80px_160px_20px] md:gap-8';
@@ -1111,14 +1108,20 @@ const CoursePage = () => {
                         variant="secondary"
                         onClick={() => setIsAddParticipantOpen(true)}
                         disabled={isFull}
-                        title={isFull ? 'Kurset er fullt. Øk antall plasser i fanen Rediger for å legge til flere.' : undefined}
                       >
                         Legg til deltaker
                       </Button>
+                      {/* A disabled button's title is unreachable — the hint
+                          needs to be visible text to actually communicate. */}
+                      {isFull && (
+                        <span className="text-sm text-foreground-muted">
+                          Kurset er fullt — øk antall plasser for å legge til flere
+                        </span>
+                      )}
                     </div>
 
                     <div>
-                      {participantsLoading && visible.length === 0 ? (
+                      {participantsLoading && sortedParticipants.length === 0 ? (
                       // Roster still loading — skeleton rows, never a false empty.
                       <div className="divide-y divide-border-subtle" role="status" aria-label="Laster deltakere">
                         {Array.from({ length: 3 }).map((_, i) => (
@@ -1131,7 +1134,7 @@ const CoursePage = () => {
                           </div>
                         ))}
                       </div>
-                    ) : participantsError && visible.length === 0 ? (
+                    ) : participantsError && sortedParticipants.length === 0 ? (
                       // Failed fetch ≠ empty roster — offer a retry, never tell
                       // the teacher "ingen påmeldte" when we couldn't load them.
                       <ErrorState
@@ -1140,44 +1143,60 @@ const CoursePage = () => {
                         onRetry={refetchParticipants}
                         variant="inline"
                       />
-                    ) : visible.length === 0 ? (
+                    ) : sortedParticipants.length === 0 ? (
                       <EmptyState
                         title="Ingen påmeldte ennå"
                         description="Deltakere som melder seg på, dukker opp her."
                       />
                     ) : (
-                      <div>
+                      <div role="table">
                         {/* Column header — anchored at the leading edge so the
                             "Navn" label sits above the avatar+name unit. */}
-                        <div className={cn(PARTICIPANT_COLS, 'hidden md:grid py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
-                          <span>Navn</span>
-                          <span>Notat</span>
-                          <span>Status</span>
-                          <span aria-hidden />
+                        <div role="row" className={cn(PARTICIPANT_COLS, 'hidden md:grid py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
+                          <span role="columnheader">Navn</span>
+                          <span role="columnheader">Notat</span>
+                          <span role="columnheader">Status</span>
+                          <span role="columnheader" aria-hidden />
                         </div>
 
                         <div className="divide-y divide-border-subtle">
-                          {visible.map((p) => {
+                          {sortedParticipants.map((p) => {
                             const name = p.participant_name || p.profile?.name || 'Ukjent';
                             const email = p.participant_email || p.profile?.email || '';
                             const status = p.status as SignupStatus;
                             const paymentStatus = p.payment_status as PaymentStatus;
                             const isCancelled = status === 'cancelled' || status === 'course_cancelled';
                             const isHappyPath = paymentStatus === 'paid' && status === 'confirmed';
+                            const refundIsPartial = paymentStatus === 'refunded' && isPartiallyRefunded(p);
+                            const statusBadge = !isHappyPath && (
+                              <SignupStatusBadge
+                                status={status}
+                                paymentStatus={paymentStatus}
+                                refundIsPartial={refundIsPartial}
+                              />
+                            );
+                            const noteFlag = p.note && (
+                              <FileText className="size-4 shrink-0" aria-label="Har notat" />
+                            );
                             return (
                               <button
                                 key={p.id}
                                 type="button"
+                                role="row"
                                 onClick={() => setSelectedParticipantId(p.id)}
                                 className={cn(
                                   PARTICIPANT_COLS,
                                   'w-full text-left py-4 transition-colors cursor-pointer',
-                                  'hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                                  'hover:bg-hover focus-visible:bg-hover outline-none',
+                                  'focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle',
                                   isCancelled && 'opacity-60',
                                 )}
                               >
-                                {/* Identity — avatar + name + email as one unit */}
-                                <div className="flex items-center gap-3 min-w-0">
+                                {/* Identity — avatar + name + email as one unit.
+                                    Below md the Notat/Status columns are
+                                    hidden, so their flags fold under the email
+                                    line here instead of vanishing. */}
+                                <div role="cell" className="flex items-center gap-3 min-w-0">
                                   <UserAvatar name={name} email={email} size="sm" />
                                   <div className="min-w-0">
                                     <p
@@ -1189,20 +1208,25 @@ const CoursePage = () => {
                                       {name}
                                     </p>
                                     <p className="text-sm text-foreground-muted truncate mt-0.5">{email}</p>
+                                    {(statusBadge || noteFlag) && (
+                                      <div className="mt-1.5 flex items-center gap-2 md:hidden">
+                                        {statusBadge}
+                                        {noteFlag}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                                 {/* Notat — icon only when a note exists, aligned to start to sit under the header. */}
-                                <div className="hidden md:flex items-center justify-start text-foreground">
-                                  {p.note && <FileText className="size-4" aria-label="Har notat" />}
+                                <div role="cell" className="hidden md:flex items-center justify-start text-foreground">
+                                  {noteFlag}
                                 </div>
                                 {/* Status — empty when healthy, badge otherwise */}
-                                <div className="hidden md:flex min-w-0">
-                                  {!isHappyPath && (
-                                    <SignupStatusBadge status={status} paymentStatus={paymentStatus} />
-                                  )}
+                                <div role="cell" className="hidden md:flex min-w-0">
+                                  {statusBadge}
                                 </div>
                                 {/* Chevron — indicates the row opens a drawer */}
                                 <ChevronRight
+                                  role="cell"
                                   className="size-4 text-foreground-muted shrink-0"
                                   aria-hidden="true"
                                 />
@@ -1269,7 +1293,6 @@ const CoursePage = () => {
       <ConfirmDialog
         open={showCancelPreview}
         onOpenChange={setShowCancelPreview}
-        ariaLabel="Avlyse kurset"
         title="Avlys kurs"
         body={
           refundPreview.count > 0 ? (
@@ -1308,18 +1331,26 @@ const CoursePage = () => {
 
       <ConfirmDialog
         open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-        ariaLabel="Slette kurset"
+        onOpenChange={(open) => {
+          setShowDeleteConfirm(open);
+          if (!open) setDeleteConfirmText('');
+        }}
         title="Slett kurs"
         body={<><strong>{courseData.title}</strong> og all tilhørende data slettes permanent.</>}
         actionLabel="Slett kurs"
+        destructive
+        // Extra typed gate once the course has real signups — mirrors the
+        // account-deletion convention (Tier 3: typing IS the friction).
+        typeToConfirm={participantKpis.confirmed > 0 ? 'SLETT' : undefined}
+        typeToConfirmValue={deleteConfirmText}
+        onTypeToConfirmChange={setDeleteConfirmText}
         loading={isDeletingCourse}
         loadingText="Sletter"
         onConfirm={handleDeleteCourse}
       />
 
       <UnsavedChangesDialog blocker={blocker} />
-    </div>
+    </>
   );
 };
 

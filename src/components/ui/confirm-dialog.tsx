@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { VisuallyHidden as VisuallyHiddenPrimitive } from "radix-ui"
 
 import {
   AlertDialog,
@@ -14,6 +13,8 @@ import {
   Drawer,
   DrawerClose,
   DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
@@ -31,8 +32,10 @@ export interface ConfirmScopeListItem {
 export interface ConfirmDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** Screen-reader announcement. */
-  ariaLabel: string
+  /** Optional override of the accessible name. By default the visible title
+   *  is the accessible name (Radix wires aria-labelledby to it) — only pass
+   *  this if the announced name must differ from the visible title. */
+  ariaLabel?: string
   /** Short verb-noun title, e.g. "Avlys kurs". */
   title: React.ReactNode
   /** One sentence. Use inline <strong> for the affected entity / amount. */
@@ -72,10 +75,11 @@ function ConfirmAlertDialog(props: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {trigger}
-      <AlertDialogContent aria-label={ariaLabel}>
-        <VisuallyHiddenPrimitive.Root>
-          <AlertDialogTitle>{ariaLabel}</AlertDialogTitle>
-        </VisuallyHiddenPrimitive.Root>
+      {/* By default Radix names the dialog via aria-labelledby → the visible
+          AlertDialogTitle, which is exactly right. Only an explicit ariaLabel
+          override clears aria-labelledby so the aria-label can win
+          (aria-labelledby beats aria-label otherwise). */}
+      <AlertDialogContent {...ariaNameOverride(ariaLabel)}>
         <ConfirmContent {...props} />
       </AlertDialogContent>
     </AlertDialog>
@@ -87,18 +91,19 @@ function ConfirmDrawer(props: ConfirmDialogProps) {
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} dismissible={!loading}>
-      <DrawerContent aria-label={ariaLabel}>
-        <VisuallyHiddenPrimitive.Root>
-          <DrawerTitle>{ariaLabel}</DrawerTitle>
-        </VisuallyHiddenPrimitive.Root>
-        {/* grid gap-6 mirrors AlertDialogContent so ConfirmContent's blocks
-            space identically on both devices (blocks carry no own margins) */}
-        <div className="grid gap-6 px-4 pt-5 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <ConfirmContent {...props} mobile />
-        </div>
+      <DrawerContent {...ariaNameOverride(ariaLabel)}>
+        <ConfirmContent {...props} mobile />
       </DrawerContent>
     </Drawer>
   )
+}
+
+/** Props replacing the default title-derived accessible name — only applied
+ *  when an explicit ariaLabel override is provided. */
+function ariaNameOverride(ariaLabel?: string) {
+  return ariaLabel
+    ? { "aria-label": ariaLabel, "aria-labelledby": undefined }
+    : {}
 }
 
 function ConfirmContent({
@@ -121,98 +126,118 @@ function ConfirmContent({
     !typeToConfirm || typeToConfirmValue.trim() === typeToConfirm
   const actionDisabled = disabled || !typeGateOpen
 
-  return (
-    <>
-      <div>
-        <h2 className="mb-2 text-lg font-medium text-foreground">
-          {title}
-        </h2>
-        <p className="text-sm text-foreground-muted [&_strong]:font-medium [&_strong]:text-foreground">
-          {body}
-        </p>
-      </div>
+  const bodyText = (
+    <p className="text-sm leading-relaxed text-foreground-muted [&_strong]:font-medium [&_strong]:text-foreground">
+      {body}
+    </p>
+  )
 
-      {scopeList && scopeList.length > 0 ? (
-        <div className="max-h-72 overflow-y-auto rounded-lg bg-panel p-3">
-          <div className="divide-y divide-border-subtle">
-            {scopeList.map((item, index) => (
-              <div
-                key={item.id ?? index}
-                className={cn(
-                  "flex items-center justify-between gap-3 py-2",
-                  index === 0 && "pt-0",
-                  index === scopeList.length - 1 && "pb-0",
-                )}
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {item.name}
-                  </p>
-                  {item.meta ? (
-                    <p className="mt-0.5 truncate text-sm text-foreground-muted">
-                      {item.meta}
+  const middleContent =
+    (scopeList && scopeList.length > 0) || typeToConfirm ? (
+      <>
+        {scopeList && scopeList.length > 0 ? (
+          <div className="max-h-72 overflow-y-auto rounded-lg bg-panel p-3">
+            <div className="divide-y divide-border-subtle">
+              {scopeList.map((item, index) => (
+                <div
+                  key={item.id ?? index}
+                  className={cn(
+                    "flex items-center justify-between gap-3 py-2",
+                    index === 0 && "pt-0",
+                    index === scopeList.length - 1 && "pb-0",
+                  )}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {item.name}
                     </p>
+                    {item.meta ? (
+                      <p className="mt-0.5 truncate text-sm text-foreground-muted">
+                        {item.meta}
+                      </p>
+                    ) : null}
+                  </div>
+                  {item.trailing ? (
+                    <span className="shrink-0 text-sm tabular-nums text-foreground">
+                      {item.trailing}
+                    </span>
                   ) : null}
                 </div>
-                {item.trailing ? (
-                  <span className="shrink-0 text-sm tabular-nums text-foreground">
-                    {item.trailing}
-                  </span>
-                ) : null}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      {typeToConfirm ? (
-        <label className="grid gap-2 text-sm text-foreground-muted">
-          <span>
-            Skriv{" "}
-            <strong className="font-medium text-foreground">
-              {typeToConfirm}
-            </strong>{" "}
-            for å bekrefte
-          </span>
-          <Input
-            value={typeToConfirmValue}
-            onChange={(event) => onTypeToConfirmChange?.(event.target.value)}
-            autoComplete="off"
-          />
-        </label>
-      ) : null}
+        {typeToConfirm ? (
+          <label className="grid gap-2 text-sm text-foreground-muted">
+            <span>
+              Skriv{" "}
+              <strong className="font-medium text-foreground">
+                {typeToConfirm}
+              </strong>{" "}
+              for å bekrefte
+            </span>
+            <Input
+              value={typeToConfirmValue}
+              onChange={(event) => onTypeToConfirmChange?.(event.target.value)}
+              autoComplete="off"
+            />
+          </label>
+        ) : null}
+      </>
+    ) : null
 
-      {mobile ? (
-        <div className="flex gap-2">
+  const actionButton = (
+    <ActionButton
+      onConfirm={onConfirm}
+      disabled={actionDisabled}
+      loading={loading}
+      loadingText={loadingText}
+      destructive={destructive}
+    >
+      {actionLabel}
+    </ActionButton>
+  )
+
+  if (mobile) {
+    return (
+      <>
+        {/* Without middle content the header would abut the footer — drop the
+            header's border so the seam is a single hairline, not two. */}
+        <DrawerHeader className={cn(!middleContent && "border-b-0")}>
+          <DrawerTitle className="text-lg font-medium text-foreground">
+            {title}
+          </DrawerTitle>
+          {bodyText}
+        </DrawerHeader>
+        {middleContent && <div className="grid gap-6 px-6 py-4">{middleContent}</div>}
+        <DrawerFooter className="flex-row pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <DrawerClose asChild>
             <Button variant="secondary" size="lg" className="flex-1" disabled={loading}>
               {cancelLabel}
             </Button>
           </DrawerClose>
-          <ActionButton
-            onConfirm={onConfirm}
-            disabled={actionDisabled}
-            loading={loading}
-            loadingText={loadingText}
-            destructive={destructive}
-          >
-            {actionLabel}
-          </ActionButton>
-        </div>
-      ) : (
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>{cancelLabel}</AlertDialogCancel>
-          <ActionButton
-            onConfirm={onConfirm}
-            disabled={actionDisabled}
-            loading={loading}
-            loadingText={loadingText}
-            destructive={destructive}
-          >
-            {actionLabel}
-          </ActionButton>
-        </AlertDialogFooter>
-      )}
+          {actionButton}
+        </DrawerFooter>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <div>
+        <AlertDialogTitle className="mb-2 text-lg font-medium text-foreground">
+          {title}
+        </AlertDialogTitle>
+        {bodyText}
+      </div>
+
+      {middleContent}
+
+      <AlertDialogFooter>
+        <AlertDialogCancel disabled={loading}>{cancelLabel}</AlertDialogCancel>
+        {actionButton}
+      </AlertDialogFooter>
     </>
   )
 }

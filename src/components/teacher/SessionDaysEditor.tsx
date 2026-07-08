@@ -92,14 +92,16 @@ export function SessionDaysEditor({ value, onChange, readOnly = false }: Session
               <div className="flex items-center justify-between">
                 <p className="text-sm text-foreground-muted">Dag {idx + 1}</p>
                 {!readOnly && (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => removeDay(day.id)}
                     aria-label={`Fjern dag ${idx + 1}`}
-                    className="inline-flex size-7 items-center justify-center rounded-full text-danger transition-colors hover:bg-danger-subtle"
+                    className="text-danger hover:bg-danger-subtle"
                   >
                     <Trash2 className="size-4" />
-                  </button>
+                  </Button>
                 )}
               </div>
             )}

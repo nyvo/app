@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { PageShell } from '@/components/teacher/PageShell'
 import { ErrorState } from '@/components/ui/error-state'
 import { useAuth } from '@/contexts/AuthContext'
@@ -176,10 +175,7 @@ const BillingPage = () => {
   }, [currentSeller?.id])
 
   return (
-    <main className="min-h-full flex-1 overflow-y-auto bg-canvas">
-      <MobileTeacherHeader />
-
-      <PageShell
+    <PageShell
         narrow="centered"
         title="Abonnement"
         description={
@@ -229,7 +225,6 @@ const BillingPage = () => {
           />
         )}
       </PageShell>
-    </main>
   )
 }
 

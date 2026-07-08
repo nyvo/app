@@ -38,14 +38,14 @@ export const EmptyState = React.memo(function EmptyState({
   return (
     <Empty
       className={cn(
-        'mx-auto max-w-sm border-0 bg-transparent p-0 px-4 text-center',
+        'mx-auto max-w-sm bg-transparent p-0 px-4 text-center',
         // gap owns the header→action spacing (one mechanism, no mt-* on content)
         isCompact ? 'gap-4 py-8' : 'gap-6 py-12',
         className,
       )}
     >
       <EmptyHeader className="gap-1">
-        <EmptyTitle className="text-sm font-medium text-foreground">
+        <EmptyTitle className="text-foreground">
           {title}
         </EmptyTitle>
         {description && (

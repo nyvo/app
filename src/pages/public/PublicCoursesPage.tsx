@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageState } from '@/components/page-state/page-state';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug, fetchStudioLocation, type PublicSeller, type StudioLocationRow } from '@/services/sellers';
 import { toLocalDate } from '@/utils/dateUtils';
@@ -155,7 +156,7 @@ const PublicCoursesPage = () => {
   const filteredCourses = useMemo(
     () => sorted.filter((course) =>
       matchesTypeFilter(course, typeFilter)
-      && (instructorFilter === 'all' || course.instructor_name === instructorFilter),
+      && (instructorFilter === 'all' || course.instructors.some((i) => i.name === instructorFilter)),
     ),
     [sorted, typeFilter, instructorFilter],
   );
@@ -186,14 +187,14 @@ const PublicCoursesPage = () => {
   return (
     <div className="min-h-screen w-full bg-background text-foreground overflow-x-hidden flex flex-col">
       <main className="flex-1">
-        {loading && <StudioPageSkeleton />}
+        {loading && <DelayedFallback><StudioPageSkeleton /></DelayedFallback>}
 
         {errorKind === 'not-found' && !loading && (
-          <PageState variant="public-team" />
+          <PageState variant="public-team" as="div" />
         )}
 
         {errorKind === 'load-failed' && !loading && (
-          <PageState variant="server-error" />
+          <PageState variant="server-error" as="div" />
         )}
 
         {organization && !loading && !errorKind && (

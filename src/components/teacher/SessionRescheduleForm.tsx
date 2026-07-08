@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Info } from '@/lib/icons';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Label } from '@/components/ui/label';
@@ -145,13 +145,9 @@ export function SessionRescheduleForm({
         </div>
       </div>
 
-      {/* Notice as a quiet info card (not a floating line). */}
-      <div className="flex items-center gap-2.5 rounded-lg bg-muted px-4 py-2.5">
-        <Info className="size-4 shrink-0 text-foreground-muted" />
-        <span className="text-sm text-foreground-muted">
-          Påmeldte varsles på e-post om endringen.
-        </span>
-      </div>
+      <Alert variant="info" size="sm">
+        Påmeldte varsles på e-post om endringen.
+      </Alert>
 
       <div className="mt-auto flex justify-end gap-2">
         <Button variant="secondary" size="lg" onClick={onCancel} disabled={submitting}>
@@ -168,7 +164,7 @@ export function SessionRescheduleForm({
           }
           loading={submitting}
           loadingText="Lagrer"
-          disabled={!newDate || !newStart || !newEnd}
+          disabled={!newDate || !newStart}
         >
           Lagre
         </Button>

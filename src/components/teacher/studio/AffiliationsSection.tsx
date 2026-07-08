@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { MoreVertical } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { CopyButton } from '@/components/ui/copy-button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -263,7 +264,6 @@ function IndividualView({
         <ConfirmDialog
           open={confirmLeave}
           onOpenChange={setConfirmLeave}
-          ariaLabel="Stopp visning"
           title="Stopp visning"
           body={<>Kursene dine fjernes fra siden til <strong>{host.name}</strong>.</>}
           actionLabel="Stopp visning"
@@ -369,7 +369,7 @@ function InstructorActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onRevoke}>
+        <DropdownMenuItem variant="destructive" onClick={onRevoke}>
           Fjern fra studiosiden
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -384,7 +384,6 @@ function InstructorActionsMenu({
 function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
   const [link, setLink] = useState<SellerInviteLink | null | undefined>(undefined);
   const [creating, setCreating] = useState(false);
-  const [copied, setCopied] = useState(false);
   // A failed READ must not fall through to auto-generate — that would revoke
   // the (possibly still live) existing link. Track the read failure separately
   // so the panel offers a re-read, not a regenerate.
@@ -427,25 +426,14 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
     const { data, error } = await createInviteLink(hostSellerId);
     setCreating(false);
     if (error || !data) {
-      toast.error(friendlyError(error, 'Kunne ikke lage lenke.'));
+      toast.error(friendlyError(error, 'Kunne ikke lage lenke'));
       return;
     }
     setLink(data);
-    toast.success('Ny lenke laget — den gamle virker ikke lenger');
+    toast.success('Ny lenke laget');
   };
 
   const fullUrl = link ? `${window.location.host}/join/${link.code}` : '';
-
-  const handleCopy = async () => {
-    if (!link) return;
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/join/${link.code}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      toast.error('Kunne ikke kopiere – kopier manuelt.');
-    }
-  };
 
   if (link === undefined) {
     return (
@@ -485,21 +473,24 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
           onFocus={(e) => e.currentTarget.select()}
           aria-label="Invitasjonslenke"
         />
-        <Button type="button" variant="secondary" onClick={() => void handleCopy()}>
-          {copied ? 'Kopiert' : 'Kopier lenke'}
-        </Button>
+        <CopyButton
+          value={`${window.location.origin}/join/${link.code}`}
+          label="Kopier lenke"
+        />
       </div>
       <p className="mt-3 text-sm text-foreground-muted">
         Lenken er gyldig i 30 dager. Lager du en ny, slutter den gamle å virke.
       </p>
-      <button
+      <Button
         type="button"
-        className="mt-2 text-base text-foreground-muted underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
-        disabled={creating}
+        variant="plain"
+        loading={creating}
+        loadingText="Lager…"
         onClick={() => void handleRegenerate()}
+        className="mt-2"
       >
-        {creating ? 'Lager…' : 'Lag ny lenke'}
-      </button>
+        Lag ny lenke
+      </Button>
     </div>
   );
 }
@@ -524,12 +515,9 @@ function AffiliatesListSkeleton() {
         >
           <div className="flex min-w-0 items-center gap-3">
             <Skeleton className="size-10 rounded-full" />
-            <div className="min-w-0 space-y-1.5">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-3 w-56 max-w-full" />
-            </div>
+            <Skeleton className="h-4 w-40" />
           </div>
-          <Skeleton className="h-5 w-14 rounded-full" />
+          <Skeleton className="size-11 rounded-full" />
         </li>
       ))}
     </ul>

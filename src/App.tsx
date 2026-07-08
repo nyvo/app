@@ -9,8 +9,8 @@ import {
   useLocation,
   useParams,
 } from 'react-router-dom';
-import { QueryClientProvider } from '@tanstack/react-query';
 import { MotionConfig } from 'framer-motion';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/query-client';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from './contexts/AuthContext';
@@ -191,7 +191,7 @@ const router = createBrowserRouter(
             <Route path="get-started" element={<GetStartedPage />} />
             <Route path="schedule" element={<SchedulePage />} />
             <Route path="courses" element={<CoursesPage />} />
-            <Route path="courses/new" element={<CourseBuilderPage />} />
+            <Route path="courses/new" element={<CourseBuilderPage />} handle={{ fullBleed: true }} />
             <Route path="courses/:id" element={<CoursePage />} />
             <Route path="studio" element={<StudioPage />} />
             {/* Samarbeid moved into the Studio page (2026-06). Old links and

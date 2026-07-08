@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Clock, MapPin, Monitor, Users } from '@/lib/icons';
 import { PageShell } from '@/components/teacher/PageShell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { PageTabs, PageTab } from '@/components/ui/page-tabs';
 import {
   Select,
@@ -241,20 +241,14 @@ const SchedulePage = () => {
   // eternal skeleton (the effect returns early when there's no seller id).
   if (isInitialized && !currentSeller) {
     return (
-      <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
-        <MobileTeacherHeader />
-        <PageShell title="Timeplan">
-          <ErrorState title="Kunne ikke laste kontoen din" message="Last siden på nytt." />
-        </PageShell>
-      </main>
+      <PageShell title="Timeplan">
+        <ErrorState title="Kunne ikke laste kontoen din" message="Last siden på nytt." />
+      </PageShell>
     );
   }
 
   return (
-    <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
-      <MobileTeacherHeader />
-
-      <PageShell
+    <PageShell
         title="Timeplan"
         tabs={
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
@@ -288,26 +282,28 @@ const SchedulePage = () => {
       >
         {/* Body */}
         {loading ? (
-          <div role="status" aria-label="Laster">
-            {/* Mirrors the timeline anatomy: rail (day + date lines) left,
-                cards (title + one meta line) right. */}
-            {[1, 2].map((i) => (
-              <div key={i} className={cn('grid grid-cols-[132px_1fr] gap-x-2', i > 1 && 'mt-2')}>
-                <div className="space-y-1.5 pl-5 pt-1">
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-12" />
+          <DelayedFallback>
+            <div role="status" aria-label="Laster">
+              {/* Mirrors the timeline anatomy: rail (day + date lines) left,
+                  cards (title + one meta line) right. */}
+              {[1, 2].map((i) => (
+                <div key={i} className={cn('grid grid-cols-[132px_1fr] gap-x-2', i > 1 && 'mt-2')}>
+                  <div className="space-y-1.5 pl-5 pt-1">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                  <div className="space-y-3 pb-6">
+                    {[1, 2].map((j) => (
+                      <div key={j} className="rounded-xl bg-muted px-5 py-4">
+                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="mt-1.5 h-3.5 w-72 max-w-full" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-3 pb-6">
-                  {[1, 2].map((j) => (
-                    <div key={j} className="rounded-xl bg-muted px-5 py-4">
-                      <Skeleton className="h-4 w-48" />
-                      <Skeleton className="mt-1.5 h-3.5 w-72 max-w-full" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </DelayedFallback>
         ) : error ? (
           <ErrorState
             title="Noe gikk galt"
@@ -345,7 +341,6 @@ const SchedulePage = () => {
           </div>
         )}
       </PageShell>
-    </main>
   );
 };
 
@@ -406,7 +401,7 @@ export function SessionCard({ session }: { session: SessionRow }) {
     <Link
       to={{ search: `?kurs=${session.courseId}&sess=${session.id}&from=schedule` }}
       className={cn(
-        'block rounded-xl bg-muted px-5 py-4 outline-none transition-colors duration-150 hover:bg-pressed',
+        'block rounded-xl bg-muted px-5 py-4 outline-none transition-colors duration-150 hover:bg-hover',
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
       )}
     >

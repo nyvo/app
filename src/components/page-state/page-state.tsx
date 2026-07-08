@@ -29,6 +29,13 @@ interface PageStateProps {
   description?: string | null;
   action?: ReactNode | null;
   illustration?: ReactNode;
+  /**
+   * Root element. Defaults to `main` for public/standalone routes where this
+   * is the page's landmark. Pass `div` when rendering inside the teacher
+   * shell — SidebarInset already owns the `<main>` landmark there, and
+   * nesting a second one is invalid.
+   */
+  as?: 'main' | 'div';
 }
 
 const VARIANTS: Record<
@@ -85,6 +92,7 @@ export function PageState({
   description,
   action,
   illustration,
+  as: Root = 'main',
 }: PageStateProps) {
   const cfg = VARIANTS[variant];
   const resolvedTitle = title ?? cfg.title;
@@ -92,7 +100,7 @@ export function PageState({
   const resolvedAction = action === undefined ? cfg.action : action;
 
   return (
-    <main className="min-h-[60vh] flex flex-col items-center justify-center text-center px-6 py-12">
+    <Root className="min-h-[60vh] flex flex-col items-center justify-center text-center px-6 py-12">
       {illustration ? <div className="mb-8">{illustration}</div> : null}
       <h1 className="text-2xl font-medium text-foreground max-w-md">
         {resolvedTitle}
@@ -103,6 +111,6 @@ export function PageState({
         </p>
       ) : null}
       {resolvedAction ? <div className="mt-6">{resolvedAction}</div> : null}
-    </main>
+    </Root>
   );
 }

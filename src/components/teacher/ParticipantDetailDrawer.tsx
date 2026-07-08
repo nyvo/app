@@ -4,6 +4,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -100,8 +101,10 @@ const ACTIVITY_TONE: Record<ActivityTone, string> = {
 /**
  * Partial refund (price adjustment): money went back but the booking stays
  * confirmed and keeps its spot — must not be presented as a full refund.
+ * Exported so the Påmeldte roster (CoursePage) can derive the same signal
+ * for SignupStatusBadge — this drawer is the source of truth for "partial".
  */
-function isPartiallyRefunded(signup: SignupWithProfile): boolean {
+export function isPartiallyRefunded(signup: SignupWithProfile): boolean {
   return (
     signup.refund_amount != null &&
     signup.amount_paid != null &&
@@ -263,6 +266,9 @@ export function ParticipantDetailDrawer({
           {/* Header — identity + status at a glance. Close X is provided by SheetContent. */}
           <SheetHeader className="gap-0 border-b border-border-subtle px-6 py-5">
             <SheetTitle className="sr-only">Deltakerdetaljer</SheetTitle>
+            <SheetDescription className="sr-only">
+              Betaling, kontaktinfo og aktivitet for {name}.
+            </SheetDescription>
             {/* Identity only — current state is carried by the Betaling section
                 and the activity timeline, not a redundant header badge. */}
             <div className="flex items-center gap-3 pr-10">
@@ -427,7 +433,6 @@ export function ParticipantDetailDrawer({
       <ConfirmDialog
         open={confirmKind === 'cancel-no-refund'}
         onOpenChange={(o) => !o && !loading && setConfirmKind(null)}
-        ariaLabel="Avbestill påmelding"
         title="Avbestill påmelding"
         body={
           isPaid
@@ -445,7 +450,6 @@ export function ParticipantDetailDrawer({
       <ConfirmDialog
         open={confirmKind === 'cancel-with-refund'}
         onOpenChange={(o) => !o && !loading && setConfirmKind(null)}
-        ariaLabel="Avbestill og refunder"
         title="Avbestill og refunder"
         body={<><strong>{name}</strong> avbestilles og refunderes <strong>{formatKroner(signup.amount_paid ?? 0)}</strong>.</>}
         actionLabel="Avbestill og refunder"
@@ -459,7 +463,6 @@ export function ParticipantDetailDrawer({
       <ConfirmDialog
         open={confirmKind === 'refund-only'}
         onOpenChange={(o) => !o && !loading && setConfirmKind(null)}
-        ariaLabel="Refunder beløp"
         title="Refunder beløp"
         body={<><strong>{name}</strong> refunderes <strong>{formatKroner(signup.amount_paid ?? 0)}</strong>.</>}
         actionLabel="Refunder"

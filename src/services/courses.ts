@@ -736,7 +736,12 @@ export async function rescheduleCourseSession(input: {
       session_id: input.sessionId,
       new_date: input.newDate,
       new_start_time: input.newStartTime,
-      new_end_time: input.newEndTime,
+      // The edge function treats undefined as "leave end_time as-is" and
+      // explicit null as "clear it". This form always submits a deliberate
+      // end value (or an intentional blank), so an omitted end here means
+      // "clear" — never "don't touch" — otherwise a moved start can strand
+      // the old end_time behind it (e.g. 18:00–11:00).
+      new_end_time: input.newEndTime ?? null,
     },
   })
 

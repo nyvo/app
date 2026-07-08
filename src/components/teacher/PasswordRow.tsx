@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Eye, EyeOff } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { FieldError } from '@/components/ui/field-error'
 import { PasswordRules, isPasswordValid } from '@/components/auth/PasswordRules'
 import { useAuth } from '@/contexts/AuthContext'
@@ -176,9 +177,9 @@ export function PasswordRow() {
         <div className="mt-4 space-y-4 border-t border-border-subtle pt-4">
           {hasPassword && verifyMode === 'password' && (
             <div className="grid gap-2">
-              <label htmlFor="current-password" className="text-sm font-medium text-foreground">
+              <Label htmlFor="current-password">
                 Nåværende passord
-              </label>
+              </Label>
               <Input
                 id="current-password"
                 ref={currentPasswordRef}
@@ -194,22 +195,24 @@ export function PasswordRow() {
                   {errors.currentPassword}
                 </FieldError>
               )}
-              <button
+              <Button
                 type="button"
+                variant="plain"
+                loading={isSendingCode}
+                loadingText="Sender"
                 onClick={handleSendCode}
-                disabled={isSendingCode}
-                className="justify-self-start text-sm font-medium text-foreground-muted transition-colors hover:text-foreground hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                className="justify-self-start"
               >
                 Vet du ikke passordet? Få en kode på e-post
-              </button>
+              </Button>
             </div>
           )}
 
           {hasPassword && verifyMode === 'code' && (
             <div className="grid gap-2">
-              <label htmlFor="otp-code" className="text-sm font-medium text-foreground">
+              <Label htmlFor="otp-code">
                 Engangskode
-              </label>
+              </Label>
               <Input
                 id="otp-code"
                 ref={codeRef}
@@ -218,6 +221,9 @@ export function PasswordRow() {
                 maxLength={6}
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
+                // tracking-[0.25em] is functional here, not decorative: it's
+                // code-entry spacing that separates the 6 digits so they read
+                // as discrete characters rather than a run-on number.
                 className="tracking-[0.25em] tabular-nums"
                 aria-invalid={!!errors.code || undefined}
                 aria-describedby={errors.code ? 'otp-code-error' : 'otp-code-hint'}
@@ -235,9 +241,9 @@ export function PasswordRow() {
           )}
 
           <div className="grid gap-2">
-            <label htmlFor="new-password" className="text-sm font-medium text-foreground">
+            <Label htmlFor="new-password">
               Nytt passord
-            </label>
+            </Label>
             <div className="relative">
               <Input
                 id="new-password"
@@ -250,14 +256,18 @@ export function PasswordRow() {
                 aria-invalid={!!errors.newPassword || undefined}
                 aria-describedby={errors.newPassword ? 'new-password-error' : undefined}
               />
-              <button
-                type="button"
-                onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-foreground-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle"
-                aria-label={showNewPassword ? 'Skjul passord' : 'Vis passord'}
-              >
-                {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-              </button>
+              <span className="absolute right-2 top-1/2 -translate-y-1/2">
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  // relative + after:-inset-2 pads the hit area out to ~44px
+                  // without inflating the visible glyph.
+                  className="relative rounded p-1 text-foreground-muted outline-none transition-colors after:absolute after:-inset-2 hover:text-foreground focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle"
+                  aria-label={showNewPassword ? 'Skjul passord' : 'Vis passord'}
+                >
+                  {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </span>
             </div>
             <PasswordRules password={newPassword} />
             {errors.newPassword && (

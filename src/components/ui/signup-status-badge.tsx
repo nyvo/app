@@ -7,12 +7,25 @@ type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
 interface SignupStatusBadgeProps {
   status: SignupStatus;
   paymentStatus: PaymentStatus;
+  /** True when the refund was partial (price adjustment) — the booking stays
+   *  confirmed and keeps its spot, so it must not read as a departed
+   *  "Refundert" signup. Matches ParticipantDetailDrawer's isPartiallyRefunded. */
+  refundIsPartial?: boolean;
   size?: 'sm' | 'md';
   className?: string;
 }
 
-function derive(status: SignupStatus, payment: PaymentStatus): { variant: BadgeVariant; label: string } {
-  if (payment === 'refunded')           return { variant: 'neutral',     label: 'Refundert' };
+function derive(
+  status: SignupStatus,
+  payment: PaymentStatus,
+  refundIsPartial?: boolean,
+): { variant: BadgeVariant; label: string } {
+  if (payment === 'refunded') {
+    // A partial refund keeps the booking confirmed — the neutral "Refundert"
+    // reads as departed, so it gets its own quiet, non-competing label.
+    if (refundIsPartial) return { variant: 'subtle', label: 'Delvis refundert' };
+    return { variant: 'neutral', label: 'Refundert' };
+  }
   // Defensive: signups are minted directly as confirmed+paid by
   // create_signup_if_available, so a live signup normally never carries
   // 'pending'/'failed' payment — but a bad row (or a future flow) shouldn't
@@ -36,8 +49,8 @@ function derive(status: SignupStatus, payment: PaymentStatus): { variant: BadgeV
  * Payment state takes precedence over signup state when there's a conflict
  * (a refunded cancellation reads as "Refundert", not "Avbestilt").
  */
-export function SignupStatusBadge({ status, paymentStatus, size = 'sm', className }: SignupStatusBadgeProps) {
-  const { variant, label } = derive(status, paymentStatus);
+export function SignupStatusBadge({ status, paymentStatus, refundIsPartial, size = 'sm', className }: SignupStatusBadgeProps) {
+  const { variant, label } = derive(status, paymentStatus, refundIsPartial);
   return (
     <Badge
       variant={variant}

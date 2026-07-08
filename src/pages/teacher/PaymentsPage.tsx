@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ErrorState } from '@/components/ui/error-state';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import {
   PayoutSetupCard,
@@ -230,25 +229,21 @@ const PaymentsPage = () => {
   const viewModel: PayoutSetupViewModel = { h2, counter, steps };
 
   return (
-    <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
-      <MobileTeacherHeader />
-
-      <PageShell narrow="centered" title="Utbetalingskonto" description="Slik får du betalt for kursene dine.">
-        {currentSellerHydrateFailed ? (
-          // stripe_account_id is a stale safe-default (null) — the timeline would
-          // show step 1 to a seller who already started onboarding. Bail to a
-          // bounded retry instead. The FAQ below is static, so it stays.
-          <ErrorState
-            title="Kunne ikke hente kontoinformasjon"
-            message="Prøv igjen om litt."
-            onRetry={refreshSellers}
-          />
-        ) : (
-          <PayoutSetupCard viewModel={viewModel} />
-        )}
-        <PayoutFaqSection />
-      </PageShell>
-    </main>
+    <PageShell narrow="centered" title="Utbetalingskonto" description="Slik får du betalt for kursene dine.">
+      {currentSellerHydrateFailed ? (
+        // stripe_account_id is a stale safe-default (null) — the timeline would
+        // show step 1 to a seller who already started onboarding. Bail to a
+        // bounded retry instead. The FAQ below is static, so it stays.
+        <ErrorState
+          title="Kunne ikke hente kontoinformasjon"
+          message="Prøv igjen om litt."
+          onRetry={refreshSellers}
+        />
+      ) : (
+        <PayoutSetupCard viewModel={viewModel} />
+      )}
+      <PayoutFaqSection />
+    </PageShell>
   );
 };
 

@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils"
  * - Header cells use label styling (text-xs font-medium text-foreground-muted).
  * - Body rows get the ink hover overlay (bg-hover) and hairline divide-y via the body wrapper.
  * - Cell padding: body cells px-4 py-4 (sm:px-6); header cells px-4 py-3 (sm:px-6).
+ * - Numeric cells: `text-right tabular-nums` (amounts, counts, dates-as-numbers).
  *
  * Column-width rule: the first/identity column (avatar + name + meta) should get
  * `className="min-w-[220px] max-w-[360px] w-[40%]"` on its <TableHead> to prevent

@@ -5,6 +5,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
@@ -104,31 +105,33 @@ export function AddParticipantDrawer({
     return trimmed.replace(/\D/g, '').length >= 8;
   };
 
-  // Inline validation on blur (ui-patterns §2.3) — marking a field touched
-  // without validating it would leave errors invisible until submit.
-  const validateField = (field: 'name' | 'email' | 'phone') => {
-    let message = '';
-    if (field === 'name' && !formData.name.trim()) {
-      message = 'Skriv inn navnet på deltakeren';
+  /** Shared per-field rule so blur validation and submit validation can't drift. */
+  const getFieldError = (
+    field: 'name' | 'email' | 'phone',
+    value: string,
+  ): string | undefined => {
+    if (field === 'name') {
+      return value.trim() ? undefined : 'Skriv inn navnet på deltakeren';
     }
-    if (field === 'email') {
-      if (!formData.email.trim()) message = AUTH_VALIDATION.emailRequired;
-      else if (!isValidEmail(formData.email)) message = AUTH_VALIDATION.emailInvalid;
+    if (field === 'phone') {
+      return isValidPhone(value) ? undefined : 'Skriv inn et gyldig telefonnummer.';
     }
-    if (field === 'phone' && !isValidPhone(formData.phone)) {
-      message = 'Skriv inn et gyldig telefonnummer.';
-    }
-    setErrors((prev) => {
-      const next = { ...prev };
-      if (message) next[field] = message;
-      else delete next[field];
-      return next;
-    });
+    if (!value.trim()) return AUTH_VALIDATION.emailRequired;
+    if (!isValidEmail(value)) return AUTH_VALIDATION.emailInvalid;
+    return undefined;
   };
 
-  const handleBlur = (field: string) => {
+  const handleBlur = (field: 'name' | 'email' | 'phone') => {
     setTouched((prev) => ({ ...prev, [field]: true }));
-    if (field === 'name' || field === 'email' || field === 'phone') validateField(field);
+    const message = getFieldError(field, formData[field]);
+    setErrors((prev) => {
+      if (!message) {
+        if (!(field in prev)) return prev;
+        const { [field]: _removed, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [field]: message };
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -147,16 +150,10 @@ export function AddParticipantDrawer({
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Skriv inn navnet på deltakeren';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = AUTH_VALIDATION.emailRequired;
-    } else if (!isValidEmail(formData.email)) {
-      newErrors.email = AUTH_VALIDATION.emailInvalid;
-    }
+    const nameError = getFieldError('name', formData.name);
+    if (nameError) newErrors.name = nameError;
+    const emailError = getFieldError('email', formData.email);
+    if (emailError) newErrors.email = emailError;
 
     if (!isValidPhone(formData.phone)) {
       newErrors.phone = 'Skriv inn et gyldig telefonnummer.';
@@ -238,6 +235,9 @@ export function AddParticipantDrawer({
       <SheetContent side="right" className="sm:max-w-[480px] p-0 gap-0">
         <SheetHeader>
           <SheetTitle>Legg til deltaker</SheetTitle>
+          <SheetDescription className="sr-only">
+            Registrer en deltaker manuelt på kurset.
+          </SheetDescription>
         </SheetHeader>
 
         {isCheckingCapacity ? (
@@ -290,7 +290,7 @@ export function AddParticipantDrawer({
             <div>
               <Label
                 htmlFor="name"
-                data-error={(errors.name && touched.name) || undefined}
+                data-error={(errors.name && touched.name) ? true : undefined}
                 className="mb-2"
               >
                 Navn
@@ -317,7 +317,7 @@ export function AddParticipantDrawer({
             <div>
               <Label
                 htmlFor="email"
-                data-error={(errors.email && touched.email) || undefined}
+                data-error={(errors.email && touched.email) ? true : undefined}
                 className="mb-2"
               >
                 E-post

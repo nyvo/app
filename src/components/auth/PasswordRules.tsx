@@ -32,6 +32,7 @@ function Rule({ met, children }: { met: boolean; children: React.ReactNode }) {
         {met && <Check className="size-2.5 text-background" strokeWidth={3} />}
       </span>
       {children}
+      <span className="sr-only">{met ? '(oppfylt)' : '(mangler)'}</span>
     </li>
   )
 }
@@ -39,7 +40,11 @@ function Rule({ met, children }: { met: boolean; children: React.ReactNode }) {
 /** The 3-rule live checklist shown under a new-password input. */
 export function PasswordRules({ password }: { password: string }) {
   return (
-    <ul className="mt-3 space-y-2">
+    // aria-live: focus stays in the password input while rules flip state, so
+    // without a live region the sr-only "(oppfylt)/(mangler)" changes would
+    // never be announced. Polite is safe — the list is 3 rows and a keystroke
+    // flips at most one rule.
+    <ul className="mt-3 space-y-2" aria-live="polite">
       {RULES.map((rule) => (
         <Rule key={rule.key} met={rule.test(password)}>
           {rule.label}

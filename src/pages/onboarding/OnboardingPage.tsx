@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { DelayedFallback } from '@/components/ui/delayed-fallback'
 import { PageSkeleton } from '@/components/ui/page-skeleton'
 import { PageState } from '@/components/page-state/page-state'
+import { Label } from '@/components/ui/label'
 import { useAuth } from '@/contexts/AuthContext'
 import { logger } from '@/lib/logger'
 import { cn, formatPersonName, resolveDisplayName } from '@/lib/utils'
@@ -183,7 +184,7 @@ function RoleChooser() {
     const { error } = await setRole(pick)
     if (error) {
       logger.error('Onboarding: setRole failed', error)
-      toast.error('Kunne ikke lagre valget. Prøv igjen.')
+      toast.error('Kunne ikke lagre valget')
       setSaving(false)
       return
     }
@@ -218,8 +219,8 @@ function RoleChooser() {
               <label
                 key={opt.value}
                 className={cn(
-                  'flex items-start gap-3 min-h-[7.5rem] rounded-xl bg-muted p-6 cursor-pointer transition-shadow duration-150 hover:bg-muted/70 focus-within:ring-2 focus-within:ring-foreground',
-                  isSelected && 'ring-2 ring-foreground',
+                  'flex items-start gap-3 min-h-[7.5rem] rounded-xl bg-muted p-6 cursor-pointer transition-colors duration-150 hover:bg-hover focus-within:ring-2 focus-within:ring-foreground',
+                  isSelected && 'bg-selection-light ring-2 ring-foreground',
                 )}
               >
                 <input
@@ -325,7 +326,7 @@ function BuyerSetupForm({
     const { error } = await setRole(null)
     if (error) {
       logger.error('Onboarding: setRole(null) failed', error)
-      toast.error('Kunne ikke gå tilbake. Prøv igjen.')
+      toast.error('Kunne ikke gå tilbake – prøv igjen')
     }
   }
 
@@ -344,7 +345,7 @@ function BuyerSetupForm({
     })
     if (error) {
       logger.error('Onboarding: buyer completion failed', error)
-      toast.error('Kunne ikke lagre. Prøv igjen.')
+      toast.error('Kunne ikke lagre – prøv igjen')
       setSaving(false)
       return
     }
@@ -361,9 +362,7 @@ function BuyerSetupForm({
 
         <div className="space-y-5">
           <div className="grid gap-2">
-            <label htmlFor="buyer-name" className="text-sm font-medium text-foreground">
-              Navn
-            </label>
+            <Label htmlFor="buyer-name">Navn</Label>
             <Input
               id="buyer-name"
               autoComplete="name"
@@ -371,14 +370,15 @@ function BuyerSetupForm({
               onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((p) => ({ ...p, name: '' })) }}
               autoFocus
               aria-invalid={!!errors.name || undefined}
+              aria-describedby={errors.name ? 'buyer-name-error' : undefined}
             />
-            {errors.name && <FieldError className="mt-0">{errors.name}</FieldError>}
+            {errors.name && <FieldError id="buyer-name-error" className="mt-0">{errors.name}</FieldError>}
           </div>
 
           <div className="grid gap-2">
-            <label htmlFor="buyer-phone" className="text-sm font-medium text-foreground">
+            <Label htmlFor="buyer-phone">
               Telefonnummer <span className="font-normal text-foreground-muted">(valgfritt)</span>
-            </label>
+            </Label>
             <Input
               id="buyer-phone"
               type="tel"
@@ -424,7 +424,7 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
     const { error } = await setRole(null)
     if (error) {
       logger.error('Onboarding: setRole(null) failed', error)
-      toast.error('Kunne ikke gå tilbake. Prøv igjen.')
+      toast.error('Kunne ikke gå tilbake – prøv igjen')
     }
   }
 
@@ -452,7 +452,7 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
       } else if (msg.includes('Slug')) {
         setErrors({ name: 'Velg et gyldig navn' })
       } else {
-        toast.error('Kunne ikke fullføre oppsettet. Prøv igjen.')
+        toast.error('Kunne ikke fullføre oppsettet – prøv igjen')
       }
       setSaving(false)
       return
@@ -464,7 +464,7 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
       // navigation right back here — so surface it and let the user resubmit
       // (ensureSeller is idempotent, the retry only re-stamps).
       logger.error('Onboarding: markOnboardingComplete failed', stampError)
-      toast.error('Kunne ikke fullføre oppsettet. Prøv igjen.')
+      toast.error('Kunne ikke fullføre oppsettet – prøv igjen')
       setSaving(false)
       return
     }
@@ -480,9 +480,7 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
         </h1>
 
         <div className="grid gap-2">
-          <label htmlFor="seller-name" className="text-sm font-medium text-foreground">
-            Navn
-          </label>
+          <Label htmlFor="seller-name">Navn</Label>
           <Input
             id="seller-name"
             value={name}

@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
-import { formatCourseDate } from '@/components/teacher/CourseMetaRow';
+import { formatCourseDate, formatSessionDate, buildTimeRange } from '@/components/teacher/CourseMetaRow';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCourseDetail } from '@/hooks/use-course-detail';
@@ -29,29 +29,7 @@ import { publishCourse, unpublishCourse } from '@/services/courses';
 import { friendlyError } from '@/lib/error-messages';
 import { runWithRevert } from '@/lib/undo';
 import { publishNeedsPaymentSetup } from '@/lib/payments';
-import { toLocalDate } from '@/utils/dateUtils';
 import { routes } from '@/lib/routes';
-
-const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
-
-function formatSessionDate(dateStr: string): string {
-  // Local-safe parse — `new Date('YYYY-MM-DD')` is UTC and lands a day early
-  // west of UTC.
-  const d = toLocalDate(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
-  return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
-}
-
-function buildTimeRange(startTime: string, durationMinutes: number): string {
-  const start = startTime.slice(0, 5);
-  if (!durationMinutes || durationMinutes <= 0) return start;
-  const [h, m] = start.split(':').map(Number);
-  const total = h * 60 + m + durationMinutes;
-  const endH = Math.floor(total / 60) % 24;
-  const endM = total % 60;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${start}–${pad(endH)}:${pad(endM)}`;
-}
 
 /**
  * Count shown next to the "Påmeldte" heading. `–` while the roster is loading
@@ -285,6 +263,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
     return (
       <>
         <SheetHeader>
+          <SheetTitle className="sr-only">Laster kurs</SheetTitle>
           <Skeleton className="h-6 w-48" />
           <Skeleton className="mt-2 h-4 w-32" />
         </SheetHeader>
@@ -418,7 +397,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
                 />
                 <Button
                   variant="secondary"
-                  onClick={() => courseUrl && window.open(courseUrl, '_blank')}
+                  onClick={() => courseUrl && window.open(courseUrl, '_blank', 'noopener')}
                   disabled={!courseUrl}
                 >
                   Vis side
@@ -471,7 +450,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
                   className="flex items-center justify-between gap-3 py-2 text-base"
                 >
                   <span className="text-foreground-muted tabular-nums">
-                    Uke {String(i + 1).padStart(2, '0')}
+                    Uke {i + 1}
                   </span>
                   <span className="text-foreground tabular-nums">
                     {formatSessionDate(s.session_date)}
@@ -543,6 +522,7 @@ function ScheduleQuickView({
     return (
       <>
         <SheetHeader>
+          <SheetTitle className="sr-only">Laster kurs</SheetTitle>
           <Skeleton className="h-6 w-48" />
           <Skeleton className="mt-2 h-4 w-32" />
         </SheetHeader>

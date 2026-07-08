@@ -292,7 +292,7 @@ function ReadinessCard({
     onClick = onSetupPaymentsClick;
   } else {
     heading = 'Klar til å publisere';
-    sub = 'Alt er på plass — publiser for å åpne for påmelding.';
+    sub = 'Alt er på plass — publiser for å åpne for påmelding. Kurset blir synlig for alle.';
     label = 'Publiser kurs';
     onClick = onPublish;
     loading = publishing;
@@ -420,7 +420,7 @@ function TimeplanCard({
           <button
             type="button"
             onClick={onOpenAll}
-            className="group flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            className="group flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground outline-none focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
           >
             Se alle timer
             <ChevronRight className="size-4 shrink-0 text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
@@ -451,6 +451,7 @@ function SessionRow({
   // (cancelled only) stays full-opacity so it reads clearly.
   const left = (
     <div className={cn('flex min-w-0 flex-1 items-stretch gap-4', !editable && 'opacity-50')}>
+      {/* No accent bar — user decision 2026-07-08: plain rows, the "Neste" badge carries emphasis */}
       <div className="min-w-0">
         <p className="flex items-center gap-2 text-base font-medium text-foreground">
           <span>{label}</span>
@@ -654,6 +655,18 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
     onPriceChange(next);
   }
 
+  // This tab has no save bar — blur is the only commit point. While drop-in
+  // is ON, an invalid value (≤0 or cleared) must never commit silently OR
+  // outlive the tab as lingering state a later "Lagre" could pick up. Flag it
+  // inline and still hand off to the parent, which reverts the state to the
+  // committed price (same snap-back grammar as the Plasser clamp — this error
+  // line is what explains the snap). When drop-in is OFF, 0/empty is just the
+  // unconfigured state — no error to show.
+  function handleBlur() {
+    setPriceError(checked && price <= 0);
+    onPriceBlur?.();
+  }
+
   return (
     <div className="flex items-start justify-between gap-6 py-5 first:pt-0 last:pb-0">
       <div className="min-w-0 flex-1">
@@ -674,7 +687,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
                 const next = Number(e.target.value);
                 handlePriceChange(Number.isFinite(next) ? next : 0);
               }}
-              onBlur={onPriceBlur}
+              onBlur={handleBlur}
               aria-invalid={priceError || undefined}
               className="h-8 w-[120px] pr-9 tabular-nums"
             />
@@ -684,7 +697,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
           </div>
         </div>
         {priceError && (
-          <p className="mt-2 text-sm text-danger">Sett en pris før du slår på drop-in.</p>
+          <p className="mt-2 text-sm text-danger">Drop-in krever en pris høyere enn 0 kr.</p>
         )}
       </div>
       <Switch checked={checked} onCheckedChange={handleToggle} className="mt-1 shrink-0" />

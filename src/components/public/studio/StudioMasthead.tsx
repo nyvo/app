@@ -56,7 +56,7 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
                 href={directionsUrl(location)}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 font-medium text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
+                className="inline-flex items-center gap-1 font-medium text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground transition-colors"
               >
                 Få veibeskrivelse
                 <ArrowUpRight className="size-3.5" strokeWidth={1.75} />

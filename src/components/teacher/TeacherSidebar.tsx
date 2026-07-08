@@ -129,7 +129,7 @@ export const TeacherSidebar = () => {
                     tooltip={item.label}
                   >
                     <Link to={item.href}>
-                      <HugeiconsIcon icon={item.icon} size={18} strokeWidth={1.75} />
+                      <HugeiconsIcon icon={item.icon} strokeWidth={1.75} />
                       <span>{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -147,7 +147,7 @@ export const TeacherSidebar = () => {
         {isSeller && !isPro && (
           <div className="rounded-lg bg-muted px-3 py-2.5">
             <div className="text-sm font-medium text-sidebar-foreground">Start</div>
-            <p className="mt-1 text-sm text-sidebar-foreground-muted">
+            <p className="mt-1 text-sm text-sidebar-foreground">
               Med Pro betaler du {formatKroner(0)} i plattformgebyr.
             </p>
             <Button asChild className="mt-2.5 w-full">

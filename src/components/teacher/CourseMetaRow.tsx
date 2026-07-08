@@ -52,6 +52,19 @@ export function CourseMetaRow({
   );
 }
 
+const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
+
+// "2026-07-04" → "4. jul" — compact day+month for session-list rows (no
+// weekday, no year). Distinct from `formatCourseDate` below (long form, for
+// headers).
+export function formatSessionDate(dateStr: string): string {
+  // Local-safe parse — `new Date('YYYY-MM-DD')` is UTC and lands a day early
+  // west of UTC.
+  const d = toLocalDate(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
+}
+
 // "06:00" + 60 → "06:00–07:00". Falls back to the raw start if unparseable.
 export function buildTimeRange(startTime: string, durationMinutes: number): string {
   const start = startTime.slice(0, 5);
