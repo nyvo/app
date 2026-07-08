@@ -68,8 +68,8 @@ const inputGroupButtonVariants = cva(
   {
     variants: {
       size: {
-        default: "h-9 rounded-md px-3",
-        icon: "size-9 rounded-md p-0 has-[>svg]:p-0",
+        default: "h-9 rounded-full px-3",
+        icon: "size-9 rounded-full p-0 has-[>svg]:p-0",
       },
     },
     defaultVariants: {

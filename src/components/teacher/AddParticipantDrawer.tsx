@@ -9,10 +9,10 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
-import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/ui/field-error';
 import { checkCourseAvailability, createSignup } from '@/services/signups';
 import { friendlyError } from '@/lib/error-messages';
@@ -239,7 +239,11 @@ export function AddParticipantDrawer({
 
             {/* Full name */}
             <div>
-              <Label htmlFor="name" data-error={(errors.name && touched.name) ? true : undefined}>
+              <Label
+                htmlFor="name"
+                data-error={(errors.name && touched.name) ? true : undefined}
+                className="mb-2"
+              >
                 Navn
               </Label>
               <Input
@@ -250,7 +254,7 @@ export function AddParticipantDrawer({
                 value={formData.name}
                 onChange={handleInputChange}
                 onBlur={() => handleBlur('name')}
-                aria-invalid={!!errors.name}
+                aria-invalid={!!(errors.name && touched.name)}
                 aria-describedby={errors.name && touched.name ? 'name-error' : undefined}
                 aria-required="true"
                 disabled={isSubmitting}
@@ -262,7 +266,11 @@ export function AddParticipantDrawer({
 
             {/* Email */}
             <div>
-              <Label htmlFor="email" data-error={(errors.email && touched.email) ? true : undefined}>
+              <Label
+                htmlFor="email"
+                data-error={(errors.email && touched.email) ? true : undefined}
+                className="mb-2"
+              >
                 E-post
               </Label>
               <Input
@@ -272,7 +280,7 @@ export function AddParticipantDrawer({
                 value={formData.email}
                 onChange={handleInputChange}
                 onBlur={() => handleBlur('email')}
-                aria-invalid={!!errors.email}
+                aria-invalid={!!(errors.email && touched.email)}
                 aria-describedby={errors.email && touched.email ? 'email-error' : undefined}
                 aria-required="true"
                 disabled={isSubmitting}
@@ -284,9 +292,9 @@ export function AddParticipantDrawer({
 
             {/* Phone */}
             <div>
-              <label htmlFor="phone" className="text-sm font-medium mb-2 block text-foreground">
+              <Label htmlFor="phone" className="mb-2">
                 Telefonnummer <span className="text-foreground-muted">(valgfritt)</span>
-              </label>
+              </Label>
               <Input
                 id="phone"
                 type="tel"
@@ -299,9 +307,9 @@ export function AddParticipantDrawer({
 
             {/* Note */}
             <div>
-              <label htmlFor="note" className="text-sm font-medium mb-2 block text-foreground">
+              <Label htmlFor="note" className="mb-2">
                 Notat <span className="text-foreground-muted">(valgfritt)</span>
-              </label>
+              </Label>
               <Textarea
                 id="note"
                 name="note"

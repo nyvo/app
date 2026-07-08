@@ -28,7 +28,9 @@ export function LocationCard({ location, lat, lon, placeId }: LocationCardProps)
   const directionsUrl = `https://www.google.com/maps/dir/?${params.toString()}`;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-card bg-surface">
+    // Plain visible border — border-card is reserved for the focal floating
+    // card (booking rail) so the rail stays the page's one carded surface.
+    <div className="overflow-hidden rounded-xl border border-border bg-surface">
       {hasCoords && (
         <MapEmbed
           placeId={placeId}

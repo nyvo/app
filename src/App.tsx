@@ -106,6 +106,30 @@ function RootRoute() {
 }
 
 /**
+ * Skip link (WCAG 2.4.1) — first tabbable element; visually hidden until
+ * focused. Focuses the page's <main> landmark directly since routes render
+ * their own <main> without a shared id.
+ */
+function SkipLink() {
+  return (
+    <a
+      href="#main"
+      onClick={(e) => {
+        e.preventDefault();
+        const main = document.querySelector('main');
+        if (main) {
+          main.setAttribute('tabindex', '-1');
+          main.focus({ preventScroll: false });
+        }
+      }}
+      className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-full focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-float focus:outline-none focus:ring-2 focus:ring-ring"
+    >
+      Hopp til hovedinnholdet
+    </a>
+  );
+}
+
+/**
  * Root chrome — toaster + error boundary + suspense wrap every route via a
  * pathless layout route. Lives *inside* the router (data mode) so route
  * components can use useBlocker for unsaved-changes guards.
@@ -113,6 +137,7 @@ function RootRoute() {
 function RootChrome() {
   return (
     <>
+      <SkipLink />
       <Toaster />
       <ErrorBoundary>
         <Suspense fallback={<DelayedFallback><PageSkeleton /></DelayedFallback>}>
@@ -247,16 +272,15 @@ const router = createBrowserRouter(
 
 const App = () => {
   return (
-    // reducedMotion="user" defers to the OS-level prefers-reduced-motion
-    // setting for every inline motion.* usage (LandingPage, CourseListView) —
-    // lib/motion.ts's exported variants are already zeroed, this covers the rest.
-    <MotionConfig reducedMotion="user">
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        {/* reducedMotion="user": framer-motion transforms are JS-driven, so the
+            CSS prefers-reduced-motion guard in index.css can't reach them. */}
+        <MotionConfig reducedMotion="user">
           <RouterProvider router={router} />
-        </AuthProvider>
-      </QueryClientProvider>
-    </MotionConfig>
+        </MotionConfig>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
 

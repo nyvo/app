@@ -390,7 +390,7 @@ function SessionRow({
   const editable = !cancelled && !past;
   const label = `${cap(weekdayLong(session.session_date))} ${dayMonth(session.session_date)}`;
 
-  // Accent line + date/time. Finished/cancelled rows dim; the "Avlyst" badge
+  // Date/time. Finished/cancelled rows dim; the "Avlyst" badge
   // (cancelled only) stays full-opacity so it reads clearly.
   const left = (
     <div className={cn('flex min-w-0 flex-1 items-stretch gap-4', !editable && 'opacity-50')}>

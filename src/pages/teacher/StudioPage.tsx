@@ -392,13 +392,11 @@ function StudioPublicSettings({
       </PageTabs>
 
       {locationsError ? (
-        <div className="rounded-xl bg-panel p-6 sm:p-10">
-          <ErrorState
-            title="Kunne ikke hente studioet ditt"
-            message="Sjekk forbindelsen og prøv igjen."
-            onRetry={() => void refetch()}
-          />
-        </div>
+        <ErrorState
+          title="Kunne ikke hente studioet ditt"
+          message="Sjekk forbindelsen og prøv igjen."
+          onRetry={() => void refetch()}
+        />
       ) : loadingLocations ? (
         // Skeleton held back 200ms (Studio § 10 — no flash-loader for
         // sub-second loads); tabs above stay visible, only the panel is replaced.

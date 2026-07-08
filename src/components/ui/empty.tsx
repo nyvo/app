@@ -7,7 +7,9 @@ function Empty({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="empty"
       className={cn(
-        "flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-4 rounded-lg p-12 text-center text-balance",
+        // No box/border — empty states are one muted sentence + one action on
+        // the open page (ui-patterns §2.6). Prefer the EmptyState wrapper.
+        "flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-4 px-4 py-12 text-center text-balance",
         className
       )}
       {...props}
@@ -60,7 +62,7 @@ function EmptyTitle({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="empty-title"
       className={cn(
-        "text-sm font-medium",
+        "text-base font-medium",
         className
       )}
       {...props}

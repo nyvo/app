@@ -55,8 +55,9 @@ function RadioGroupCardItem({
       data-slot="radio-group-card-item"
       className={cn(
         "group/radio-card relative flex w-full items-start gap-3 rounded-lg border border-border bg-surface p-4 text-left outline-none transition-colors",
-        "hover:bg-muted focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle",
-        "data-checked:border-foreground data-checked:ring-1 data-checked:ring-foreground",
+        "not-data-checked:hover:bg-hover focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle",
+        // Selection = fill change (design-language §5: never a colored border alone)
+        "data-checked:border-foreground data-checked:bg-selection-light",
         "disabled:pointer-events-none disabled:opacity-50",
         className
       )}
@@ -69,9 +70,11 @@ function RadioGroupCardItem({
         />
       )}
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-foreground">{title}</h3>
+        {/* Not a heading — a reusable primitive must not inject heading levels
+            into the consumer's document outline. */}
+        <span className="block text-sm font-medium text-foreground">{title}</span>
         {description && (
-          <p className="mt-0.5 text-sm text-foreground-muted leading-relaxed">{description}</p>
+          <p className="mt-0.5 text-sm text-foreground-muted">{description}</p>
         )}
       </div>
       <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm border-2 border-border text-transparent transition-colors group-data-checked/radio-card:border-foreground group-data-checked/radio-card:bg-foreground group-data-checked/radio-card:text-background">

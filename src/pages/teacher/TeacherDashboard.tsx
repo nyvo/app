@@ -206,6 +206,8 @@ const TeacherDashboard = () => {
             />
           ) : (
             <div className="space-y-12">
+              {/* Chart-first is deliberate here (kept 2026-07-07 after an
+                  audit proposed list-first per ui-patterns §2.5). */}
               <div className="space-y-3">
                 <ErrorBoundary
                   resetKey={chartRetryCount}
@@ -292,7 +294,7 @@ export function PlatformFeeHint({ feeNok }: { feeNok: number }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-panel px-5 py-4 sm:flex-row sm:items-center">
       <p className="min-w-0 flex-1 text-sm text-foreground-muted">
-        Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: 0 kr.
+        Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: {formatKroner(0)}.
       </p>
       <Button asChild variant="secondary" className="w-full shrink-0 sm:w-auto">
         <Link to={routes.settingsBilling}>Se Pro</Link>

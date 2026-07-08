@@ -23,16 +23,19 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
+        // default = neutral: badges are muted-fill chips per the design
+        // language; azure fills are banned on chrome, so there is no
+        // azure badge variant to fall back to.
         default:
-          "bg-primary text-primary-foreground border-transparent [a]:hover:bg-primary/80",
+          "bg-muted text-foreground border-transparent",
         secondary:
-          "bg-secondary text-secondary-foreground border-transparent [a]:hover:bg-secondary/80",
+          "bg-secondary text-secondary-foreground border-transparent [a]:hover:bg-active",
         outline:
           "bg-transparent border-border text-foreground [a]:hover:bg-muted",
         ghost:
           "bg-transparent border-transparent hover:bg-muted",
         destructive:
-          "bg-danger-subtle text-danger border-transparent focus-visible:ring-danger/20 [a]:hover:bg-danger/20",
+          "bg-danger-subtle text-danger border-transparent focus-visible:ring-danger/20",
         success:
           "bg-success-subtle text-success border-transparent",
         warning:
@@ -55,8 +58,8 @@ const badgeVariants = cva(
       shape: {
         // Card meta / counts / decorative chips — fully rounded pill
         pill: "rounded-full",
-        // Status in tables / rows — slightly rounded rectangle
-        rect: "rounded-md",
+        // Status in tables / rows — slightly rounded rectangle (badge radius per scale)
+        rect: "rounded-lg",
       },
       size: {
         xs: "h-4 px-1.5 text-[11px] leading-none [&>svg]:size-2.5",

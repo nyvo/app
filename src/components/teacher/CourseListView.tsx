@@ -209,7 +209,7 @@ export function CourseListSkeleton() {
           <div key={i} className={cn(COLS, 'py-4')}>
             <div className="min-w-0">
               <Skeleton className="h-4 w-48 max-w-full" />
-              <Skeleton className="mt-1.5 h-3 w-24 max-w-full" />
+              <Skeleton className="mt-1 h-3 w-24 max-w-full" />
             </div>
             <Skeleton className="h-5 w-20 rounded-full" />
             <Skeleton className="h-4 w-16" />

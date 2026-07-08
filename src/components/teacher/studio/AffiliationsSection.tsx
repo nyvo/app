@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import {
@@ -304,12 +305,11 @@ function AffiliatesList({
 
   if (affiliates.length === 0) {
     return (
-      <div className="rounded-xl bg-panel p-6">
-        <p className="text-base font-medium text-foreground">Ingen instruktører tilknyttet ennå</p>
-        <p className="mt-1 max-w-md text-base text-foreground-muted">
-          Send invitasjonslenken til en instruktør for å vise kursene deres her.
-        </p>
-      </div>
+      <EmptyState
+        variant="compact"
+        title="Ingen instruktører tilknyttet ennå"
+        description="Send invitasjonslenken til en instruktør for å vise kursene deres her."
+      />
     );
   }
 

@@ -12,8 +12,10 @@ interface PageTabsProps {
  *
  * Visual pattern: each tab is a small "chip" (rounded muted fill on the
  * active one) sitting on a bottom border. The active tab gets both the
- * underline and the badge — double signal, gentle hierarchy. Used as the
- * top-level section switcher on teacher pages.
+ * underline and the badge — double signal, gentle hierarchy; a deliberate,
+ * sanctioned exception to the "no boxed tabs" rule (kept 2026-07-07 after
+ * an audit proposed removing it). Used as the top-level section switcher
+ * on teacher pages.
  *
  * Container handles role + gap + bottom border + tablist keyboard support
  * (arrow keys move focus and activate — auto-activation pattern, required
@@ -90,7 +92,7 @@ export function PageTab({
       tabIndex={active ? 0 : -1}
       onClick={onClick}
       className={cn(
-        'inline-flex items-center py-1.5 -mb-px text-sm border-b-2 transition-colors outline-none focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
+        'group/tab inline-flex items-center py-1.5 -mb-px text-sm border-b-2 transition-colors outline-none focus-visible:text-foreground',
         active
           ? 'font-medium text-foreground border-foreground'
           : 'font-normal text-foreground-muted hover:text-foreground border-transparent',
@@ -98,7 +100,7 @@ export function PageTab({
     >
       <span
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1',
+          'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 group-focus-visible/tab:ring-2 group-focus-visible/tab:ring-ring',
           active && 'bg-muted',
         )}
       >

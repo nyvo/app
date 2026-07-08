@@ -95,7 +95,7 @@ export function DirtyFormBar({
             // ring convention; matches toast's radius + shadow convention for
             // floating bottom chrome (see studio-design components.md § Toast).
             "flex items-center gap-4 rounded-2xl bg-surface py-2 pr-2 pl-5",
-            "text-foreground ring-1 ring-foreground/10",
+            "text-foreground",
             "shadow-float",
             // Slide-up entry. Matches toast motion (200ms slide-up + fade).
             "animate-in fade-in-0 slide-in-from-bottom-2 duration-200 ease-out",

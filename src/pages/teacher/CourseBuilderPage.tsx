@@ -403,7 +403,8 @@ export default function CourseBuilderPage() {
       <MobileTeacherHeader />
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 pb-12 pt-6 sm:px-6 lg:px-8 lg:pt-12">
+        {/* Form column capped near the §2.3 480–560px band (xl = 576px) */}
+        <div className="mx-auto max-w-xl px-4 pb-12 pt-6 sm:px-6 lg:px-8 lg:pt-12">
           <h1 className="mb-8 text-2xl font-medium text-foreground">Nytt kurs</h1>
 
           <div className="flex flex-col">
@@ -705,7 +706,7 @@ export default function CourseBuilderPage() {
 
       {/* Pinned footer */}
       <div className="border-t border-border bg-background">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-xl items-center justify-between gap-2 px-4 py-3 sm:px-6 lg:px-8">
           <Button
             variant="ghost"
             size="lg"

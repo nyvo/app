@@ -193,7 +193,8 @@ export default function HelpPage() {
                         <SelectGroup>
                           {signups.map((signup) => (
                             <SelectItem key={signup.id} value={signup.id}>
-                              {signup.participantName} · {signup.participantEmail}
+                              {signup.participantName}{' '}
+                              <span className="text-foreground-muted">{signup.participantEmail}</span>
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -218,8 +219,8 @@ export default function HelpPage() {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={!canSubmit || submitting}>
-                {submitting ? 'Sender…' : 'Send'}
+              <Button type="submit" disabled={!canSubmit} loading={submitting} loadingText="Sender">
+                Send
               </Button>
             </div>
           </form>

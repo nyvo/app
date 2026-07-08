@@ -45,10 +45,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary — monochrome near-black (neutral-12 via --foreground); indigo
-        // is reserved as a sprinkle accent (links, selected states). Subtle
-        // hover lift; focus ring stays visible via the ring-offset.
-        default: "bg-foreground text-background hover:bg-foreground/90",
+        // Primary — monochrome near-black (neutral-12 via --foreground); azure
+        // is reserved as a sprinkle accent (links, selected states). No hover
+        // shift by design; focus ring stays visible via the ring-offset.
+        default: "bg-foreground text-background",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-border dark:bg-surface-on-dark dark:hover:bg-surface-on-dark",
         secondary:

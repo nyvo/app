@@ -240,7 +240,10 @@ and marketing bands only — not the sidebar.
 ### Tabs
 
 Text labels: muted inactive, `font-medium text-foreground` active with a 2px
-foreground underline. No pill tabs, no boxed tabs.
+foreground underline. No pill tabs, no boxed tabs. Sanctioned exception:
+`PageTabs`' active tab pairs the underline with a `bg-muted` chip (deliberate
+double signal, kept 2026-07-07) — don't remove it, and don't copy the chip
+into new tab components.
 
 ### Inputs
 
@@ -265,6 +268,9 @@ fill change (`--selection-light` or `bg-muted`), never a colored border alone.
 No vertical rules ever. Row separation: `border-subtle` hairline or spacing.
 Header row: `text-xs`/`text-sm`, muted, no fill. Tall rows; one weighted cell
 per row; metadata as small muted stroke-icon+text pairs. Row hover: `bg-hover`.
+No "·" interpuncts between metadata fields (separation via spacing/layout);
+the one sanctioned "·" is INSIDE a single composed when-string
+("fredag 28. nov · kl. 18:00") — date and time form one value, not two fields.
 
 ### Progress bars
 
@@ -278,7 +284,10 @@ No axis lines, no gridlines, no boxed legends where labels can sit inline.
 Monochrome by default: inactive series in light neutral, active/current in
 `--foreground`. Series identity via `--category-1/2/3` (blue family) markers.
 Green/red only when the data itself is positive/negative. Rounded bar caps;
-small muted labels under the data.
+small muted labels under the data. Sanctioned exception: the dashboard
+`IncomeChart` keeps its faint dashed horizontal gridlines and azure
+(`--primary`) active series (deliberate, kept 2026-07-07) — the rule above
+still applies to every new chart.
 
 ### Overlays
 
@@ -287,9 +296,11 @@ Dialogs, popovers, dropdowns, toasts: `bg-surface`, `rounded-xl`,
 
 ### Icons
 
-One stroke set (Lucide), 1.5–2px stroke, 16–20px in UI. Decorative icons
-`text-foreground-subtle`; informative icons `text-foreground-muted`. Never mix
-in filled/solid sets.
+One stroke set (Lucide), 1.5–2px stroke, 16–20px in UI. Sanctioned exception:
+inline meta-row icons (clock/map-pin/users beside `text-xs`/`text-sm` metadata)
+are 14px (`size-3.5`) — the app-wide convention pairs the icon to the small
+text's cap height. Decorative icons `text-foreground-subtle`; informative
+icons `text-foreground-muted`. Never mix in filled/solid sets.
 
 ---
 

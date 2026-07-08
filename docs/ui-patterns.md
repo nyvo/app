@@ -115,7 +115,10 @@ Label
 
 ### 2.5 Dashboard / overview
 - **Lead with the most actionable thing** — usually a short list ("I dag",
-  "Trenger oppmerksomhet", "Kommende"), not numbers.
+  "Trenger oppmerksomhet", "Kommende"), not numbers. Sanctioned exception:
+  the seller dashboard deliberately leads with the Inntekt chart (kept
+  2026-07-07 after an audit proposed list-first) — don't reorder it, and
+  don't cite it as precedent for new dashboards.
 - Stats are earned: max one row of 3–4, and only figures that drive a decision.
   Figure large + `text-foreground`, label muted below, `tabular-nums`. No
   sparkline-in-every-card, no delta-badge-per-stat unless the delta is acted on.

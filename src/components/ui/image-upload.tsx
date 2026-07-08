@@ -189,16 +189,16 @@ export function ImageField({
         isAvatar ? 'size-24 rounded-full' : 'aspect-[16/10] w-full rounded-xl',
         displayUrl
           ? 'border border-border bg-muted'
-          : 'border border-border bg-surface hover:border-foreground/30 hover:bg-muted/40',
+          : 'border border-border bg-surface hover:border-border-strong hover:bg-hover',
         displayError && 'ring-2 ring-danger/20',
-        dragActive && !displayUrl && 'border-foreground/40 bg-muted',
+        dragActive && !displayUrl && 'border-foreground bg-muted',
         isDisabled && !loading && 'opacity-50',
       )}
     >
       {displayUrl ? (
         <>
           <img src={displayUrl} alt="" className="size-full object-cover" />
-          <span className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
+          <span className="absolute inset-0 bg-transparent transition-colors group-hover:bg-hover" />
         </>
       ) : (
         <span className="flex size-full flex-col items-center justify-center gap-2 px-4 text-center">
@@ -261,7 +261,7 @@ export function ImageField({
             )}
           </button>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" onClick={openPicker} disabled={isDisabled}>
+            <Button type="button" variant="secondary" onClick={openPicker} disabled={isDisabled}>
               {displayUrl ? changeLabel : uploadLabel}
             </Button>
             {displayUrl && onRemove && (

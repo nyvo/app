@@ -377,7 +377,7 @@ const CheckoutPage = () => {
               navigate(backHref);
             }
           }}
-          className="focus-ring mb-8 rounded px-2 sm:px-6 inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+          className="focus-ring mb-8 rounded inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
         >
           <ChevronLeft className="size-4" strokeWidth={1.75} />
           Tilbake
@@ -408,7 +408,7 @@ const CheckoutPage = () => {
                 {/* Mobile-only condensed summary — the full aside summary sits below
                     the fold on <md, so the buyer needs the course + total in view
                     before filling in the contact form. */}
-                <div className="px-2 sm:px-6 md:hidden">
+                <div className="md:hidden">
                   <div className="flex items-center justify-between gap-3 rounded-lg bg-panel px-4 py-3">
                     <span className="truncate text-sm font-medium text-foreground">{course.title}</span>
                     <span className="shrink-0 text-sm font-medium tabular-nums text-foreground">
@@ -418,7 +418,7 @@ const CheckoutPage = () => {
                 </div>
 
                 <form onSubmit={handleContactSubmit} noValidate className="space-y-6">
-                  <div className="px-2 sm:px-6">
+                  <div>
                     <div className="space-y-4">
                       <Field label="Navn" htmlFor="name">
                         <Input
@@ -429,7 +429,6 @@ const CheckoutPage = () => {
                           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                           aria-invalid={!!nameError}
                           aria-describedby={nameError ? 'name-error' : undefined}
-                          className={nameError ? 'border-danger bg-danger-subtle' : undefined}
                         />
                         {nameError && <FieldError id="name-error">{nameError}</FieldError>}
                       </Field>
@@ -449,7 +448,6 @@ const CheckoutPage = () => {
                           onBlur={() => setEmailTouched(true)}
                           aria-invalid={!!emailError}
                           aria-describedby={emailError ? 'email-error' : undefined}
-                          className={emailError ? 'border-danger bg-danger-subtle' : undefined}
                         />
                         {emailError && <FieldError id="email-error">{emailError}</FieldError>}
                       </Field>
@@ -463,7 +461,6 @@ const CheckoutPage = () => {
                           onBlur={() => setPhoneTouched(true)}
                           aria-invalid={!!phoneError}
                           aria-describedby={phoneError ? 'phone-error' : undefined}
-                          className={phoneError ? 'border-danger bg-danger-subtle' : undefined}
                         />
                         {phoneError && <FieldError id="phone-error">{phoneError}</FieldError>}
                       </Field>
@@ -506,14 +503,14 @@ const CheckoutPage = () => {
                         {termsError && (
                           <FieldError id="terms-error" className="pl-7">{termsError}</FieldError>
                         )}
-                        <p className="mt-1.5 pl-7 text-xs text-foreground-muted">
+                        <p className="mt-2 pl-7 text-xs text-foreground-muted">
                           Kurs med fastsatt dato er unntatt angrerett. Se vilkårene.
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="px-2 sm:px-6 space-y-2">
+                  <div className="space-y-2">
                     {isFree ? (
                       <Button
                         type="submit"
@@ -601,13 +598,13 @@ function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps
   const currentIndex = step - 1;
   if (!showSteps) {
     return (
-      <div className="px-2 sm:px-6">
+      <div>
         <h1 className="text-base font-medium text-foreground">Påmelding</h1>
       </div>
     );
   }
   return (
-    <div className="px-2 sm:px-6">
+    <div>
       <h1 className="text-base font-medium text-foreground">Påmelding</h1>
       <ol className="mt-4 flex items-center">
         {CHECKOUT_STEPS.map((label, i) => {
@@ -619,9 +616,12 @@ function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
+                    // Progress is chrome → near-black fills; azure stays on
+                    // links/selected tints (the current-step halo keeps the
+                    // selection-light ring as its semantic accent).
                     'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums transition-colors',
-                    done && 'bg-primary text-primary-foreground',
-                    current && 'bg-primary text-primary-foreground ring-4 ring-selection-light',
+                    done && 'bg-foreground text-background',
+                    current && 'bg-foreground text-background ring-4 ring-selection-light',
                     !done && !current && 'border border-border text-foreground-muted',
                   )}
                 >
@@ -643,7 +643,7 @@ function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps
               {!isLast && (
                 <span
                   aria-hidden
-                  className={cn('mx-2 h-px flex-1 sm:mx-3', done ? 'bg-primary' : 'bg-border')}
+                  className={cn('mx-2 h-px flex-1 sm:mx-3', done ? 'bg-foreground' : 'bg-border')}
                 />
               )}
             </li>
