@@ -16,6 +16,8 @@ interface RichTextEditorProps {
   id?: string;
   className?: string;
   'aria-labelledby'?: string;
+  'aria-invalid'?: boolean | 'true';
+  'aria-describedby'?: string;
 }
 
 interface ToolbarButtonProps {
@@ -38,7 +40,7 @@ function ToolbarButton({ onClick, isActive, disabled, label, children }: Toolbar
       className={cn(
         'inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground-muted transition-colors duration-150 ease-out',
         'hover:bg-muted hover:text-foreground',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
+        'focus-visible:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle',
         'disabled:pointer-events-none disabled:opacity-40',
         'aria-pressed:bg-muted aria-pressed:text-foreground',
         '[&_svg]:size-4',
@@ -97,6 +99,8 @@ export function RichTextEditor({
   id,
   className,
   'aria-labelledby': ariaLabelledBy,
+  'aria-invalid': ariaInvalid,
+  'aria-describedby': ariaDescribedBy,
 }: RichTextEditorProps) {
   const editor = useEditor({
     // Avoid TipTap's StrictMode double-mount crash ("reading 'cached'") — let
@@ -160,11 +164,24 @@ export function RichTextEditor({
     editor.commands.setContent(next, { emitUpdate: false });
   }, [value, editor]);
 
+  // aria-invalid/aria-describedby are set once via editorProps.attributes at
+  // creation, so a later change (e.g. a submit attempt flips the field to
+  // errored) wouldn't reach the DOM — update the contenteditable node
+  // directly instead.
+  React.useEffect(() => {
+    if (!editor) return;
+    const dom = editor.view.dom;
+    if (ariaInvalid) dom.setAttribute('aria-invalid', String(ariaInvalid));
+    else dom.removeAttribute('aria-invalid');
+    if (ariaDescribedBy) dom.setAttribute('aria-describedby', ariaDescribedBy);
+    else dom.removeAttribute('aria-describedby');
+  }, [editor, ariaInvalid, ariaDescribedBy]);
+
   return (
     <div
       className={cn(
         'overflow-hidden rounded-xl border border-border bg-surface transition-[color,border-color,box-shadow] duration-150 ease-out',
-        'focus-within:border-foreground focus-within:ring-2 focus-within:ring-foreground/15',
+        'focus-within:border-foreground focus-within:ring-2 focus-within:ring-ring-subtle',
         className,
       )}
       data-slot="rich-text-editor"

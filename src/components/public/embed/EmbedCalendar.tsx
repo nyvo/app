@@ -56,9 +56,9 @@ function mondayIndex(d: Date): number {
  * stacks vertically when narrow (container query, so it tracks the iframe
  * width). Course rows are plain out-links that open the detail page on our
  * app in a new tab (booking happens there). Styled with the app's semantic
- * tokens, so it adapts to theme automatically; periwinkle marks
- * availability/selection on the calendar while CTAs stay monochrome per the
- * storefront convention.
+ * tokens, so it adapts to theme automatically; azure (`--primary`) marks
+ * availability on the calendar — has bookable classes — while selection is
+ * solid primary; CTAs stay monochrome per the storefront convention.
  */
 export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps) {
   const today = useMemo(() => {
@@ -149,9 +149,9 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
 
   return (
     <div
-      aria-label={sellerName ? `Kalender – ${sellerName}` : 'Kalender'}
-      className="@container overflow-hidden rounded-2xl border border-card bg-background text-foreground"
+      className="@container overflow-hidden rounded-2xl border border-border bg-background text-foreground"
     >
+      <h1 className="sr-only">{sellerName ? `Kalender – ${sellerName}` : 'Kalender'}</h1>
       <div className="flex flex-col @2xl:flex-row">
         {/* ── Calendar pane ─────────────────────────────────────────── */}
         {/* Width = 7×36px cells + 6×6px gaps (288px grid) + 2×20px p-5 = 328px. */}
@@ -165,7 +165,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
                 <button
                   type="button"
                   onClick={() => goMonth(-1)}
-                  className="flex size-7 items-center justify-center rounded-full border border-border text-foreground-muted transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="flex size-9 items-center justify-center rounded-full border border-border text-foreground-muted transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   aria-label="Forrige måned"
                 >
                   <ChevronLeft className="size-4" />
@@ -173,7 +173,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
                 <button
                   type="button"
                   onClick={() => goMonth(1)}
-                  className="flex size-7 items-center justify-center rounded-full border border-border text-foreground-muted transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="flex size-9 items-center justify-center rounded-full border border-border text-foreground-muted transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   aria-label="Neste måned"
                 >
                   <ChevronRight className="size-4" />
@@ -185,7 +185,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
               {WEEKDAY_INITIALS.map((d, i) => (
                 <div
                   key={i}
-                  className="flex h-7 items-center justify-center text-[0.6875rem] font-medium uppercase tracking-wide text-foreground-muted"
+                  className="flex h-7 items-center justify-center text-[0.6875rem] font-medium uppercase text-foreground-muted"
                   aria-hidden
                 >
                   {d}
@@ -277,7 +277,8 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
 
       {/* ── Footer ──────────────────────────────────────────────────── */}
       <footer className="border-t border-border-subtle px-5 py-3">
-        <p className="text-[0.6875rem] text-foreground-subtle">
+        {/* -muted, not -subtle: this is real text and must stay AA (subtle is decorative-glyphs-only) */}
+        <p className="text-[0.6875rem] text-foreground-muted">
           Levert av{' '}
           <a
             href={window.location.origin}
@@ -369,7 +370,6 @@ function EmbedClassRow({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          aria-disabled={isDisabled || undefined}
           className="group flex items-start gap-4 rounded-xl bg-hover p-4 transition-colors hover:bg-pressed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {body}

@@ -6,7 +6,9 @@ import { Tooltip as TooltipPrimitive } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 function TooltipProvider({
-  delayDuration = 0,
+  // A short open delay keeps tooltips from flickering as the pointer sweeps
+  // across dense toolbars (instant-open reads as noise).
+  delayDuration = 300,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
   return (

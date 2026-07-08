@@ -21,7 +21,11 @@ export interface SessionDay {
 }
 
 export function newSessionDay(): SessionDay {
-  return { id: crypto.randomUUID(), date: undefined, startTime: '', endTime: '' }
+  // Prefixed so the save path (computeDesiredSessions in CoursePage.tsx) can
+  // tell a not-yet-persisted editor row from an existing session id — an
+  // unprefixed uuid gets sent to save_course_schedule as an "existing" row,
+  // which the RPC rejects with unknown_session.
+  return { id: `new-${crypto.randomUUID()}`, date: undefined, startTime: '', endTime: '' }
 }
 
 // ── Time helpers ─────────────────────────────────────────────────────────────
@@ -88,14 +92,16 @@ export function SessionDaysEditor({ value, onChange, readOnly = false }: Session
               <div className="flex items-center justify-between">
                 <p className="text-sm text-foreground-muted">Dag {idx + 1}</p>
                 {!readOnly && (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => removeDay(day.id)}
                     aria-label={`Fjern dag ${idx + 1}`}
-                    className="inline-flex size-7 items-center justify-center rounded-md bg-danger/10 text-danger transition-colors hover:bg-danger/20"
+                    className="text-danger hover:bg-danger-subtle"
                   >
                     <Trash2 className="size-4" />
-                  </button>
+                  </Button>
                 )}
               </div>
             )}

@@ -81,6 +81,7 @@ export function UserAvatar({
         ringClassName,
         className,
       )}
+      role="img"
       aria-label={ariaLabel}
     >
       <UserIcon className={config.icon} />

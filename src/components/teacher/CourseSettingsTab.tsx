@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { FieldError } from '@/components/ui/field-error';
+import { Label } from '@/components/ui/label';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { ImageField } from '@/components/ui/image-upload';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -76,6 +76,10 @@ interface CourseSettingsTabProps {
   /** True when the course is published (upcoming/active). Disables add/remove
    *  of days to prevent destructive changes without refund/notification flows. */
   isPublished: boolean;
+  /** Sessions query failed — the editor would otherwise render as a false
+   *  "no days yet" empty state. Saving is already neutralized elsewhere
+   *  (computeDesiredSessions), this just keeps the UI honest. */
+  sessionsError?: boolean;
 
   // Capacity
   maxParticipants: number;
@@ -138,6 +142,7 @@ export const CourseSettingsTab = ({
   sessionDays,
   onSessionDaysChange,
   isPublished,
+  sessionsError = false,
   maxParticipants,
   onMaxParticipantsChange,
   currentEnrolled,
@@ -155,6 +160,10 @@ export const CourseSettingsTab = ({
 }: CourseSettingsTabProps) => {
   const minParticipants = Math.max(currentEnrolled || 1, 1);
   const [participantsInput, setParticipantsInput] = useState(String(maxParticipants));
+  // Flashes the clamp explanation after a blur that snapped the typed value
+  // back up to minParticipants — otherwise the reset reads as silent, as if
+  // the keystroke never happened.
+  const [showClampHint, setShowClampHint] = useState(false);
 
   const [priceInput, setPriceInput] = useState(String(price));
 
@@ -219,6 +228,13 @@ export const CourseSettingsTab = ({
     }
 
     const normalized = Math.max(minParticipants, Math.floor(parsed));
+    // Flag when the typed value got clamped up by the ENROLLMENT floor —
+    // otherwise the silent reset reads as a bug rather than the floor doing
+    // its job. Gated on currentEnrolled > 0 (same guard as isBelowEnrolled):
+    // with zero enrolled the floor is just "minst 1 plass", where the hint's
+    // "{0} er allerede påmeldt" copy would be untrue — that case keeps the
+    // existing silent reset to a valid value.
+    setShowClampHint(currentEnrolled > 0 && parsed < minParticipants);
     if (normalized !== maxParticipants) {
       onMaxParticipantsChange(normalized);
     }
@@ -248,6 +264,7 @@ export const CourseSettingsTab = ({
     !isNaN(participantsTypedValue) &&
     currentEnrolled > 0 &&
     participantsTypedValue < currentEnrolled;
+  const showParticipantsError = isBelowEnrolled || showClampHint;
 
   return (
     <div className="w-full">
@@ -275,7 +292,7 @@ export const CourseSettingsTab = ({
 
         <SettingsRow title="Detaljer" description="Tittel og beskrivelse slik de vises på kurssiden.">
           <div>
-            <FieldLabel htmlFor="settings-title" error={!!titleError}>Tittel</FieldLabel>
+            <Label htmlFor="settings-title" data-error={titleError ? true : undefined} className="mb-2">Tittel</Label>
             <Input
               id="settings-title"
               type="text"
@@ -293,7 +310,7 @@ export const CourseSettingsTab = ({
           </div>
 
           <div id="course-edit-description" className="scroll-mt-24">
-            <FieldLabel id="settings-description-label">Beskrivelse</FieldLabel>
+            <Label id="settings-description-label" className="mb-2">Beskrivelse</Label>
             <RichTextEditor
               id="settings-description"
               aria-labelledby="settings-description-label"
@@ -309,7 +326,7 @@ export const CourseSettingsTab = ({
           description="Hvor og når kurset holdes."
         >
           <div>
-            <FieldLabel error={!!locationError}>Sted</FieldLabel>
+            <Label data-error={locationError ? true : undefined} className="mb-2">Sted</Label>
             <LocationField
               id="settings-location"
               value={settingsLocation}
@@ -327,15 +344,26 @@ export const CourseSettingsTab = ({
           {courseFormat === 'single' ? (
               /* Per-day editor for single/enkeltkurs courses */
               <div>
-                <SessionDaysEditor
-                  value={sessionDays}
-                  onChange={onSessionDaysChange}
-                  readOnly={isPublished}
-                />
-                {isPublished && sessionDays.length > 1 && (
-                  <p className="mt-2 text-sm text-foreground-muted">
-                    Du kan ikke legge til eller fjerne dager på publiserte kurs. Kontakt deltakerne ved endringer i antall dager.
+                {sessionsError ? (
+                  // Sessions failed to load — an inline notice, not a false
+                  // "no days yet" empty editor (saving is already neutralized
+                  // in computeDesiredSessions).
+                  <p className="text-sm text-foreground-muted" role="alert">
+                    Kunne ikke laste timene. Last siden på nytt.
                   </p>
+                ) : (
+                  <>
+                    <SessionDaysEditor
+                      value={sessionDays}
+                      onChange={onSessionDaysChange}
+                      readOnly={isPublished}
+                    />
+                    {isPublished && sessionDays.length > 1 && (
+                      <p className="mt-2 text-sm text-foreground-muted">
+                        Du kan ikke legge til eller fjerne dager på publiserte kurs. Kontakt deltakerne ved endringer i antall dager.
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             ) : (
@@ -343,9 +371,9 @@ export const CourseSettingsTab = ({
                  in the past and per-session time changes happen on Oversikt
                  (notifies påmeldte) — so the fields stay visible but locked,
                  with a tooltip explaining why. */
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <FieldLabel id="settings-date-label">Startdato</FieldLabel>
+                  <Label id="settings-date-label" className="mb-2">Startdato</Label>
                   <ScheduleLockTooltip locked={isPublished}>
                     <DatePicker
                       aria-labelledby="settings-date-label"
@@ -357,7 +385,7 @@ export const CourseSettingsTab = ({
                   </ScheduleLockTooltip>
                 </div>
                 <div>
-                  <FieldLabel id="settings-time-label">Tidspunkt</FieldLabel>
+                  <Label id="settings-time-label" className="mb-2">Tidspunkt</Label>
                   <ScheduleLockTooltip locked={isPublished}>
                     <div className="flex items-center gap-2">
                       <Select
@@ -410,11 +438,11 @@ export const CourseSettingsTab = ({
           title="Påmelding"
           description="Plasser og pris for nye påmeldinger."
         >
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <FieldLabel htmlFor="settings-capacity" error={isBelowEnrolled}>
+              <Label htmlFor="settings-capacity" data-error={showParticipantsError ? true : undefined} className="mb-2">
                 Plasser
-              </FieldLabel>
+              </Label>
               <Input
                 id="settings-capacity"
                 type="text"
@@ -424,6 +452,7 @@ export const CourseSettingsTab = ({
                 onChange={(e) => {
                   const nextValue = e.target.value.replace(/[^\d]/g, '');
                   setParticipantsInput(nextValue);
+                  if (showClampHint) setShowClampHint(false);
                 }}
                 onBlur={commitParticipantsInput}
                 onKeyDown={(e) => {
@@ -432,19 +461,19 @@ export const CourseSettingsTab = ({
                     commitParticipantsInput();
                   }
                 }}
-                aria-invalid={isBelowEnrolled ? 'true' : undefined}
+                aria-invalid={showParticipantsError ? 'true' : undefined}
                 className="text-left"
               />
-              {isBelowEnrolled && (
+              {showParticipantsError && (
                 <FieldError className="tabular-nums">
                   {currentEnrolled} er allerede påmeldt — kan ikke være lavere.
                 </FieldError>
               )}
             </div>
             <div>
-              <FieldLabel htmlFor="settings-price">
+              <Label htmlFor="settings-price" className="mb-2">
                 {courseFormat === 'series' ? 'Pris for hele kurset' : 'Pris'}
-              </FieldLabel>
+              </Label>
               <InputGroup>
                 <InputGroupInput
                   id="settings-price"
@@ -489,8 +518,10 @@ export const CourseSettingsTab = ({
         const showDelete = isDraft || isCancelled || (isFinished && !hasSignupRecords);
         if (!showCancel && !showDelete) return null;
         return (
-          <section className="mt-12 rounded-lg border border-danger/20 bg-danger-subtle/40 p-6">
-            <div className="divide-y divide-danger/15">
+          // Destructive zone: plain hairline rows, no red-tinted panel
+          // (ui-patterns §2.4) — matches TeacherProfilePage.
+          <section className="mt-12">
+            <div className="divide-y divide-border-subtle">
               {showCancel && (
                 <ActionRow
                   title="Avlys kurset"
@@ -550,37 +581,12 @@ function ScheduleLockTooltip({ locked, children }: { locked: boolean; children: 
   );
 }
 
-function FieldLabel({
-  htmlFor,
-  id,
-  error,
-  children,
-}: {
-  htmlFor?: string;
-  id?: string;
-  error?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <label
-      htmlFor={htmlFor}
-      id={id}
-      className={cn(
-        'mb-2 block text-sm font-medium',
-        error ? 'text-danger' : 'text-foreground',
-      )}
-    >
-      {children}
-    </label>
-  );
-}
-
 function ActionRow({ title, sub, buttonLabel, onClick, tone = 'default' }: ActionRowProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 py-5 first:pt-0 last:pb-0">
       <div className="min-w-0">
         <p className="text-base font-medium text-foreground">{title}</p>
-        <p className="text-sm text-foreground-muted mt-0.5">{sub}</p>
+        <p className="text-sm text-foreground-muted">{sub}</p>
       </div>
       <Button
         variant={tone === 'danger' ? 'destructive' : 'secondary'}

@@ -4,8 +4,11 @@ import { toast } from 'sonner';
 import { MoreVertical } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { CopyButton } from '@/components/ui/copy-button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorState } from '@/components/ui/error-state';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import {
@@ -106,12 +109,16 @@ function BusinessView({
 }) {
   const [affiliates, setAffiliates] = useState<HostAffiliate[] | null>(null);
   const [loadingAffiliates, setLoadingAffiliates] = useState(true);
+  const [affiliatesError, setAffiliatesError] = useState(false);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
 
   const refresh = useCallback(async () => {
     setLoadingAffiliates(true);
-    const { data } = await fetchHostAffiliates(hostSellerId);
-    setAffiliates(data);
+    const { data, error } = await fetchHostAffiliates(hostSellerId);
+    // A failed fetch must not read as "no instructors yet" — null out the list
+    // and flag the error so the panel shows a retry instead of the empty state.
+    setAffiliatesError(!!error);
+    setAffiliates(error ? null : data);
     setLoadingAffiliates(false);
   }, [hostSellerId]);
 
@@ -156,6 +163,8 @@ function BusinessView({
         <AffiliatesList
           affiliates={visibleAffiliates}
           loading={loadingAffiliates}
+          error={affiliatesError}
+          onRetry={refresh}
           onRevoke={handleRevoke}
         />
       </SettingsRow>
@@ -222,14 +231,10 @@ function IndividualView({
       {host === undefined ? (
         <ConnectionSkeleton />
       ) : host === null ? (
-        <Card>
-          <CardContent>
-            <p className="text-base font-medium text-foreground">Ingen aktive samarbeid</p>
-            <p className="mt-1 max-w-md text-base text-foreground-muted">
-              Be studioet sende deg en invitasjonslenke.
-            </p>
-          </CardContent>
-        </Card>
+        // No host: this view is only mounted once a real affiliation exists (the
+        // Samarbeid tab hides otherwise), so there is no reachable empty state
+        // to render here.
+        null
       ) : (
         <Card>
           <CardContent>
@@ -259,7 +264,6 @@ function IndividualView({
         <ConfirmDialog
           open={confirmLeave}
           onOpenChange={setConfirmLeave}
-          ariaLabel="Stopp visning"
           title="Stopp visning"
           body={<>Kursene dine fjernes fra siden til <strong>{host.name}</strong>.</>}
           actionLabel="Stopp visning"
@@ -294,24 +298,37 @@ function ConnectionSkeleton() {
 function AffiliatesList({
   affiliates,
   loading,
+  error,
+  onRetry,
   onRevoke,
 }: {
   affiliates: HostAffiliate[] | null;
   loading: boolean;
+  error?: boolean;
+  onRetry?: () => void;
   onRevoke: (affiliate: HostAffiliate) => void;
 }) {
+  if (error) {
+    return (
+      <ErrorState
+        title="Kunne ikke hente instruktørene"
+        message="Sjekk forbindelsen og prøv igjen."
+        onRetry={onRetry}
+      />
+    );
+  }
+
   if (loading || affiliates === null) {
     return <AffiliatesListSkeleton />;
   }
 
   if (affiliates.length === 0) {
     return (
-      <div className="rounded-xl bg-panel p-6">
-        <p className="text-base font-medium text-foreground">Ingen instruktører tilknyttet ennå</p>
-        <p className="mt-1 max-w-md text-base text-foreground-muted">
-          Send invitasjonslenken til en instruktør for å vise kursene deres her.
-        </p>
-      </div>
+      <EmptyState
+        variant="compact"
+        title="Ingen instruktører tilknyttet ennå"
+        description="Send invitasjonslenken til en instruktør for å vise kursene deres her."
+      />
     );
   }
 
@@ -352,7 +369,7 @@ function InstructorActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onRevoke}>
+        <DropdownMenuItem variant="destructive" onClick={onRevoke}>
           Fjern fra studiosiden
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -367,59 +384,56 @@ function InstructorActionsMenu({
 function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
   const [link, setLink] = useState<SellerInviteLink | null | undefined>(undefined);
   const [creating, setCreating] = useState(false);
-  const [copied, setCopied] = useState(false);
+  // A failed READ must not fall through to auto-generate — that would revoke
+  // the (possibly still live) existing link. Track the read failure separately
+  // so the panel offers a re-read, not a regenerate.
+  const [fetchFailed, setFetchFailed] = useState(false);
   const autoGenAttempted = useRef(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const { data } = await fetchActiveInviteLink(hostSellerId);
-      if (cancelled) return;
-      if (data) {
-        setLink(data);
-        return;
-      }
-      // No active link — lazily generate one so the panel is useful immediately.
-      if (autoGenAttempted.current) {
-        setLink(null);
-        return;
-      }
-      autoGenAttempted.current = true;
-      const { data: created, error } = await createInviteLink(hostSellerId);
-      if (cancelled) return;
-      if (error || !created) {
-        setLink(null);
-        return;
-      }
-      setLink(created);
-    })();
-    return () => { cancelled = true; };
+  const loadLink = useCallback(async () => {
+    setFetchFailed(false);
+    setLink(undefined);
+    const { data, error } = await fetchActiveInviteLink(hostSellerId);
+    if (error) {
+      setFetchFailed(true);
+      setLink(null);
+      return;
+    }
+    if (data) {
+      setLink(data);
+      return;
+    }
+    // Genuinely no active link — lazily generate one so the panel is useful.
+    if (autoGenAttempted.current) {
+      setLink(null);
+      return;
+    }
+    autoGenAttempted.current = true;
+    const { data: created, error: createError } = await createInviteLink(hostSellerId);
+    if (createError || !created) {
+      setLink(null);
+      return;
+    }
+    setLink(created);
   }, [hostSellerId]);
+
+  useEffect(() => {
+    void loadLink();
+  }, [loadLink]);
 
   const handleRegenerate = async () => {
     setCreating(true);
     const { data, error } = await createInviteLink(hostSellerId);
     setCreating(false);
     if (error || !data) {
-      toast.error(friendlyError(error, 'Kunne ikke lage lenke.'));
+      toast.error(friendlyError(error, 'Kunne ikke lage lenke'));
       return;
     }
     setLink(data);
-    toast.success('Ny lenke laget — den gamle virker ikke lenger');
+    toast.success('Ny lenke laget');
   };
 
   const fullUrl = link ? `${window.location.host}/join/${link.code}` : '';
-
-  const handleCopy = async () => {
-    if (!link) return;
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/join/${link.code}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      toast.error('Kunne ikke kopiere – kopier manuelt.');
-    }
-  };
 
   if (link === undefined) {
     return (
@@ -434,13 +448,15 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
     return (
       <div>
         <p className="mb-3 text-base text-foreground-muted">
-          Kunne ikke lage invitasjonslenke.
+          {fetchFailed
+            ? 'Kunne ikke hente invitasjonslenken.'
+            : 'Kunne ikke lage invitasjonslenke.'}
         </p>
         <Button
           type="button"
           variant="default"
           disabled={creating}
-          onClick={() => void handleRegenerate()}
+          onClick={() => (fetchFailed ? void loadLink() : void handleRegenerate())}
         >
           {creating ? 'Prøver igjen…' : 'Prøv igjen'}
         </Button>
@@ -457,21 +473,24 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
           onFocus={(e) => e.currentTarget.select()}
           aria-label="Invitasjonslenke"
         />
-        <Button type="button" variant="secondary" onClick={() => void handleCopy()}>
-          {copied ? 'Kopiert' : 'Kopier lenke'}
-        </Button>
+        <CopyButton
+          value={`${window.location.origin}/join/${link.code}`}
+          label="Kopier lenke"
+        />
       </div>
       <p className="mt-3 text-sm text-foreground-muted">
         Lenken er gyldig i 30 dager. Lager du en ny, slutter den gamle å virke.
       </p>
-      <button
+      <Button
         type="button"
-        className="mt-2 text-base text-foreground-muted underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
-        disabled={creating}
+        variant="plain"
+        loading={creating}
+        loadingText="Lager…"
         onClick={() => void handleRegenerate()}
+        className="mt-2"
       >
-        {creating ? 'Lager…' : 'Lag ny lenke'}
-      </button>
+        Lag ny lenke
+      </Button>
     </div>
   );
 }
@@ -496,12 +515,9 @@ function AffiliatesListSkeleton() {
         >
           <div className="flex min-w-0 items-center gap-3">
             <Skeleton className="size-10 rounded-full" />
-            <div className="min-w-0 space-y-1.5">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-3 w-56 max-w-full" />
-            </div>
+            <Skeleton className="h-4 w-40" />
           </div>
-          <Skeleton className="h-5 w-14 rounded-full" />
+          <Skeleton className="size-11 rounded-full" />
         </li>
       ))}
     </ul>

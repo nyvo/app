@@ -6,6 +6,7 @@ import { ImageIcon } from '@/lib/icons';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { useAuth } from '@/contexts/AuthContext';
 import { authPageVariants, authPageTransition } from '@/lib/motion';
 import { supabase } from '@/lib/supabase';
@@ -32,7 +33,8 @@ type LookupState =
   | { status: 'loading' }
   | { status: 'valid'; team: LookupInviteLinkResult }
   | { status: 'expired' }
-  | { status: 'not_found' };
+  | { status: 'not_found' }
+  | { status: 'error' };
 
 type JoinPhase =
   | { kind: 'idle' }
@@ -67,10 +69,17 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 function Cover({ url }: { url: string | null }) {
-  if (url) {
+  // A broken cover URL falls back to the same placeholder as no cover at all.
+  const [failed, setFailed] = useState(false);
+  if (url && !failed) {
     return (
       <div className="aspect-[3/1] w-full overflow-hidden rounded-md bg-muted mb-6">
-        <img src={url} alt="" className="size-full object-cover" />
+        <img
+          src={url}
+          alt=""
+          className="size-full object-cover"
+          onError={() => setFailed(true)}
+        />
       </div>
     );
   }
@@ -98,9 +107,13 @@ export default function JoinPage() {
     }
     let cancelled = false;
     void (async () => {
-      const { data } = await lookupInviteLink(code);
+      const { data, error } = await lookupInviteLink(code);
       if (cancelled) return;
-      if (!data || data.status === 'not_found') {
+      // A network/query failure is retryable — keep it distinct from a genuine
+      // not_found so the buyer doesn't see the terminal "Lenken finnes ikke".
+      if (error) {
+        setLookup({ status: 'error' });
+      } else if (!data || data.status === 'not_found') {
         setLookup({ status: 'not_found' });
       } else if (data.status === 'expired') {
         setLookup({ status: 'expired' });
@@ -170,7 +183,7 @@ export default function JoinPage() {
     setPhase({ kind: 'redeeming' });
     const { data, error } = await redeemInviteLink(code, forceLeave);
     if (error || !data) {
-      toast.error(friendlyError(error, 'Noe gikk galt. Prøv igjen.'));
+      toast.error(friendlyError(error, 'Noe gikk galt – prøv igjen'));
       setPhase({ kind: 'idle' });
       return;
     }
@@ -216,7 +229,7 @@ export default function JoinPage() {
         setPhase({ kind: 'idle' });
         return;
       default:
-        toast.error('Noe gikk galt. Prøv igjen.');
+        toast.error('Noe gikk galt – prøv igjen');
         setPhase({ kind: 'idle' });
     }
   };
@@ -226,15 +239,17 @@ export default function JoinPage() {
   if (lookup.status === 'loading' || !isInitialized) {
     return (
       <Shell>
-        <div role="status" aria-live="polite" className="space-y-6">
-          <span className="sr-only">Laster…</span>
-          <Skeleton className="aspect-[3/1] w-full rounded-md" />
-          <div className="space-y-3">
-            <Skeleton className="mx-auto h-8 w-56" />
-            <Skeleton className="mx-auto h-4 w-72 max-w-full" />
+        <DelayedFallback>
+          <div role="status" aria-live="polite" className="space-y-6">
+            <span className="sr-only">Laster…</span>
+            <Skeleton className="aspect-[3/1] w-full rounded-md" />
+            <div className="space-y-3">
+              <Skeleton className="mx-auto h-8 w-56" />
+              <Skeleton className="mx-auto h-4 w-72 max-w-full" />
+            </div>
+            <Skeleton className="h-11 w-full rounded-full" />
           </div>
-          <Skeleton className="h-11 w-full rounded-full" />
-        </div>
+        </DelayedFallback>
       </Shell>
     );
   }
@@ -248,6 +263,22 @@ export default function JoinPage() {
         <p className="text-base text-foreground-muted">
           Sjekk at du har riktig lenke, eller be studioet om en ny.
         </p>
+      </Shell>
+    );
+  }
+
+  if (lookup.status === 'error') {
+    return (
+      <Shell>
+        <h1 className="text-3xl font-medium text-foreground mb-3">
+          Noe gikk galt
+        </h1>
+        <p className="text-base text-foreground-muted mb-8">
+          Prøv igjen.
+        </p>
+        <Button size="cta" className="w-full" onClick={() => window.location.reload()}>
+          Prøv igjen
+        </Button>
       </Shell>
     );
   }
@@ -386,6 +417,14 @@ export default function JoinPage() {
           onClick={() => void handleJoin(true)}
         >
           Forlat og bli med
+        </Button>
+        <Button
+          size="cta"
+          variant="secondary"
+          className="mt-3 w-full"
+          onClick={() => navigate(routes.studio)}
+        >
+          Avbryt
         </Button>
       </Shell>
     );

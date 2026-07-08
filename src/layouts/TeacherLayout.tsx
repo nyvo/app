@@ -1,9 +1,20 @@
 import { useCallback } from 'react';
-import { Outlet, useSearchParams } from 'react-router-dom';
+import { Outlet, useMatches, useSearchParams } from 'react-router-dom';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CourseDrawer } from '@/components/teacher/CourseDrawer';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+
+/**
+ * Route `handle` opt-out for full-bleed pages (currently just the course
+ * builder's h-dvh chrome) — they manage their own scroll container and
+ * mobile header instead of the shared one below, so `useMatches` here skips
+ * both.
+ */
+interface TeacherRouteHandle {
+  fullBleed?: boolean;
+}
 
 /**
  * `?kurs=:id` is a layout-wide overlay — opens the quick-glance drawer on
@@ -40,12 +51,24 @@ function GlobalCourseDrawer() {
 }
 
 export default function TeacherLayout() {
+  const matches = useMatches();
+  const fullBleed = matches.some((match) => (match.handle as TeacherRouteHandle | undefined)?.fullBleed);
+
   return (
     <ProtectedRoute>
       <SidebarProvider>
         <TeacherSidebar />
         <SidebarInset>
-          <Outlet />
+          {fullBleed ? (
+            <Outlet />
+          ) : (
+            <>
+              <MobileTeacherHeader />
+              <div className="flex-1 min-h-full overflow-y-auto bg-canvas">
+                <Outlet />
+              </div>
+            </>
+          )}
         </SidebarInset>
         <GlobalCourseDrawer />
       </SidebarProvider>

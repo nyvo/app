@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { CourseListView, CourseListSkeleton, type SortKey, type SortDir } from '@/components/teacher/CourseListView';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { SearchInput } from '@/components/ui/search-input';
 import { Button } from '@/components/ui/button';
 import { PageTabs, PageTab } from '@/components/ui/page-tabs';
@@ -77,7 +77,7 @@ const DEFAULT_SORT_FOR_TAB: Record<ViewTab, { key: SortKey; dir: SortDir }> = {
 };
 
 const CoursesPage = () => {
-  const { currentSeller } = useAuth();
+  const { currentSeller, isInitialized } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewTab, setViewTab] = useState<ViewTab>('active');
@@ -85,6 +85,9 @@ const CoursesPage = () => {
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [courses, setCourses] = useState<Course[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
+  // The signup-counts RPC failed — the Påmeldte column shows `–`, never a
+  // fabricated 0.
+  const [countsFailed, setCountsFailed] = useState(false);
   const [nextSessionDates, setNextSessionDates] = useState<Record<string, string>>({});
   // Course IDs that have at least one ACTIVE drop-in ticket type. Replaces
   // the dropped courses.allows_drop_in column.
@@ -100,6 +103,7 @@ const CoursesPage = () => {
 
     setIsLoading(true);
     setError(null);
+    setCountsFailed(false);
 
     try {
       const coursesResult = await fetchCourses(currentSeller.id);
@@ -123,6 +127,7 @@ const CoursesPage = () => {
 
         if (signupsError) {
           logger.error('Failed to fetch signup counts:', signupsError);
+          setCountsFailed(true);
         }
 
         const counts: Record<string, number> = {};
@@ -265,11 +270,18 @@ const CoursesPage = () => {
     ? 'Ingen fullførte kurs ennå.'
     : 'Ingen aktive eller kommende kurs akkurat nå.';
 
+  // Auth settled but no active seller — a bounded account error, never the
+  // first-use onboarding empty state (which would misread a load failure as
+  // "you have no studio yet").
+  if (isInitialized && !currentSeller) {
+    return (
+      <PageShell title="Mine kurs">
+        <ErrorState title="Kunne ikke laste kontoen din" message="Last siden på nytt." />
+      </PageShell>
+    );
+  }
+
   return (
-      <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-canvas">
-
-        <MobileTeacherHeader />
-
         <PageShell
           title="Mine kurs"
           action={
@@ -313,10 +325,12 @@ const CoursesPage = () => {
             <>
               {/* List — each card is its own bordered surface; no outer frame */}
               {isLoading ? (
-                <div role="status" aria-live="polite" aria-label="Laster kurs">
-                  <span className="sr-only">Henter kurs</span>
-                  <CourseListSkeleton />
-                </div>
+                <DelayedFallback>
+                  <div role="status" aria-live="polite" aria-label="Laster kurs">
+                    <span className="sr-only">Henter kurs</span>
+                    <CourseListSkeleton />
+                  </div>
+                </DelayedFallback>
               ) : error ? (
                 <ErrorState
                   title="Kunne ikke hente kurs"
@@ -329,6 +343,7 @@ const CoursesPage = () => {
                   sortKey={sortKey}
                   sortDir={sortDir}
                   onSort={handleSort}
+                  countsUnavailable={countsFailed}
                   emptyState={
                     searchQuery ? (
                       <EmptyState
@@ -353,7 +368,6 @@ const CoursesPage = () => {
             </>
           )}
         </PageShell>
-      </div>
   );
 };
 

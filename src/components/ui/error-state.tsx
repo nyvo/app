@@ -38,8 +38,7 @@ export const ErrorState = React.memo(function ErrorState({
   return (
     <div
       className={cn(variantClasses[variant], className)}
-      role="alert"
-      aria-live="polite"
+      role="status"
     >
       <p className="text-sm font-medium text-foreground">{title}</p>
       <p className="mt-1 text-sm text-foreground-muted max-w-sm">{message}</p>

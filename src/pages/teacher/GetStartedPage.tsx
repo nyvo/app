@@ -1,12 +1,10 @@
 import { Link, Navigate } from 'react-router-dom'
-import { Check } from '@/lib/icons'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
+import { Check, ChevronRight } from '@/lib/icons'
 import { PageShell } from '@/components/teacher/PageShell'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/ui/error-state'
 import { routes } from '@/lib/routes'
 import { useSellerSetupStatus } from '@/hooks/use-seller-setup-status'
 import type { SetupStep } from '@/hooks/use-setup-progress'
@@ -21,7 +19,7 @@ import { cn } from '@/lib/utils'
 //      seen — that's why they got skipped).
 //   3. Everything done → route back to the dashboard; nothing left to show.
 export default function GetStartedPage() {
-  const { steps, optionalSteps, completedCount, totalCount, isSetupComplete, isLoading } =
+  const { steps, optionalSteps, completedCount, totalCount, isSetupComplete, isLoading, loadFailed, refresh } =
     useSellerSetupStatus()
 
   const remainingOptional = optionalSteps.filter((step) => !step.isComplete)
@@ -31,15 +29,26 @@ export default function GetStartedPage() {
   // live state — the flash this page used to show on refresh.
   if (isLoading) {
     return (
-      <div className="flex-1 overflow-y-auto bg-canvas h-full">
-        <MobileTeacherHeader />
-        <PageShell narrow="centered" title="Kom i gang">
-          <div className="space-y-3" aria-hidden="true">
-            <Skeleton className="h-40 w-full rounded-xl" />
-            <Skeleton className="h-32 w-full rounded-xl" />
-          </div>
-        </PageShell>
-      </div>
+      <PageShell narrow="centered" title="Kom i gang">
+        <div className="space-y-3" aria-hidden="true">
+          <Skeleton className="h-40 w-full rounded-xl" />
+          <Skeleton className="h-32 w-full rounded-xl" />
+        </div>
+      </PageShell>
+    )
+  }
+
+  // The fetch that drives the checklist failed — show a retry instead of
+  // committing a false-incomplete checklist from empty defaults.
+  if (loadFailed) {
+    return (
+      <PageShell narrow="centered" title="Kom i gang">
+        <ErrorState
+          title="Kunne ikke laste oppsettstatus"
+          message="Prøv igjen om litt."
+          onRetry={refresh}
+        />
+      </PageShell>
     )
   }
 
@@ -51,11 +60,9 @@ export default function GetStartedPage() {
   const isLive = isSetupComplete
 
   return (
-    <div className="flex-1 overflow-y-auto bg-canvas h-full">
-      <MobileTeacherHeader />
-      <PageShell
-        narrow="centered"
-        title="Kom i gang"
+    <PageShell
+      narrow="centered"
+      title="Kom i gang"
         action={
           isLive ? null : (
             <p className="text-base text-foreground-muted tabular-nums">
@@ -68,9 +75,10 @@ export default function GetStartedPage() {
           <>
             {/* Go-live banner — celebratory green panel + emoji, per the
                 approved /get-started preview. Uses the success-subtle (jade-3)
-                tint with a soft jade border. The dashboard button is the
-                deliberate exit that replaces the old auto-redirect. */}
-            <div className="flex flex-col gap-4 rounded-xl border border-success/20 bg-success-subtle px-5 py-4 sm:flex-row sm:items-center">
+                tint alone (no border — the opaque tint separates by itself).
+                The dashboard button is the deliberate exit that replaces the
+                old auto-redirect. */}
+            <div className="flex flex-col gap-4 rounded-xl bg-success-subtle px-5 py-4 sm:flex-row sm:items-center">
               <span aria-hidden="true" className="shrink-0 text-2xl leading-none">
                 🎉
               </span>
@@ -127,7 +135,6 @@ export default function GetStartedPage() {
           </>
         )}
       </PageShell>
-    </div>
   )
 }
 
@@ -136,7 +143,7 @@ function StepRow({ step, isLast }: { step: SetupStep; isLast: boolean }) {
   const rowClass = cn(
     'group flex w-full items-center gap-4 px-5 py-4 text-left no-underline',
     hasAction &&
-      'transition-colors hover:bg-muted focus-visible:outline-none focus-visible:bg-muted',
+      'transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
     !isLast && 'border-b border-border',
   )
 
@@ -167,12 +174,7 @@ function StepRow({ step, isLast }: { step: SetupStep; isLast: boolean }) {
         <span className="shrink-0 text-sm text-foreground-muted">{step.timeEstimate}</span>
       )}
       {hasAction && (
-        <HugeiconsIcon
-          icon={ArrowRight01Icon}
-          size={16}
-          strokeWidth={1.75}
-          className="text-foreground-muted shrink-0"
-        />
+        <ChevronRight className="size-4 shrink-0 text-foreground-muted" strokeWidth={1.75} />
       )}
     </>
   )

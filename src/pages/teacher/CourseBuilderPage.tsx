@@ -34,7 +34,6 @@ import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
-import { cn } from '@/lib/utils';
 import { formatLocalDateKey } from '@/utils/dateUtils';
 import { singleScheduleLabel, seriesScheduleLabel } from '@/utils/timeSchedule';
 import type { CourseFormat } from '@/types/database';
@@ -60,6 +59,16 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="text-base font-medium text-foreground">{children}</h2>;
 }
 
+interface FieldRenderProps {
+  /** Set only when the field currently has an error — pass straight to the
+   * control's `aria-describedby` (mirrors OnboardingPage's seller-field
+   * pattern: FieldError renders with this same id). */
+  errorId?: string;
+  /** The label's own id — for controls that can't use native `<label for>`
+   * (e.g. a contenteditable/role=textbox), wire this to `aria-labelledby`. */
+  labelId?: string;
+}
+
 function Field({
   label,
   htmlFor,
@@ -68,14 +77,20 @@ function Field({
 }: {
   label: string;
   htmlFor?: string;
-  children: React.ReactNode;
-  error?: React.ReactNode;
+  children: React.ReactNode | ((field: FieldRenderProps) => React.ReactNode);
+  /** Error message — when present, FieldError renders with an id and
+   * `children` (as a render function) receives that id for aria-describedby. */
+  error?: string;
 }) {
+  const errorId = error && htmlFor ? `${htmlFor}-error` : undefined;
+  const labelId = htmlFor ? `${htmlFor}-label` : undefined;
   return (
     <div>
-      <Label htmlFor={htmlFor}>{label}</Label>
-      <div className="mt-2">{children}</div>
-      {error}
+      <Label htmlFor={htmlFor} id={labelId}>{label}</Label>
+      <div className="mt-2">
+        {typeof children === 'function' ? children({ errorId, labelId }) : children}
+      </div>
+      {error && <FieldError id={errorId}>{error}</FieldError>}
     </div>
   );
 }
@@ -323,7 +338,7 @@ export default function CourseBuilderPage() {
       );
 
       if (error || !created) {
-        toast.error(friendlyError(error, 'Kunne ikke opprette kurset.'));
+        toast.error(friendlyError(error, 'Kunne ikke opprette kurset'));
         setSubmitting(null);
         return null;
       }
@@ -340,16 +355,16 @@ export default function CourseBuilderPage() {
           const { error: updErr } = await updateCourse(created.id, { image_url: url });
           if (updErr) {
             if (currentSeller?.id) void deleteCourseImage(created.id, url, currentSeller.id);
-            toast.error('Bildet ble ikke lastet opp — legg det til fra kurssiden.');
+            toast.error('Bildet ble ikke lastet opp — legg det til fra kurssiden');
           }
         } else {
-          toast.error('Bildet ble ikke lastet opp — legg det til fra kurssiden.');
+          toast.error('Bildet ble ikke lastet opp — legg det til fra kurssiden');
         }
       }
 
       return created.id;
     } catch {
-      toast.error('Noe gikk galt. Prøv igjen.');
+      toast.error('Noe gikk galt – prøv igjen');
       setSubmitting(null);
       return null;
     }
@@ -375,7 +390,7 @@ export default function CourseBuilderPage() {
     }
     const { error } = await publishCourse(id);
     if (error) {
-      toast.error(friendlyError(error, 'Kurset er lagret, men kunne ikke publiseres.'));
+      toast.error(friendlyError(error, 'Kurset er lagret, men kunne ikke publiseres'));
       navigate(routes.course(id));
       return;
     }
@@ -384,11 +399,12 @@ export default function CourseBuilderPage() {
   };
 
   return (
-    <main className="flex h-dvh flex-col bg-canvas">
+    <div className="flex h-dvh flex-col bg-canvas">
       <MobileTeacherHeader />
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 pb-12 pt-6 sm:px-6 lg:px-8 lg:pt-12">
+        {/* Form column capped near the §2.3 480–560px band (xl = 576px) */}
+        <div className="mx-auto max-w-xl px-4 pb-12 pt-6 sm:px-6 lg:px-8 lg:pt-12">
           <h1 className="mb-8 text-2xl font-medium text-foreground">Nytt kurs</h1>
 
           <div className="flex flex-col">
@@ -403,7 +419,7 @@ export default function CourseBuilderPage() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="relative flex h-44 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl overflow-hidden border-b border-border bg-muted text-foreground-muted transition-colors hover:bg-active"
+              className="relative flex h-44 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl overflow-hidden border-b border-border bg-muted text-foreground-muted outline-none transition-colors hover:border-border-strong focus-visible:ring-2 focus-visible:ring-ring"
             >
               {imagePreview ? (
                 <img src={imagePreview} alt="" className="absolute inset-0 size-full object-cover" />
@@ -423,26 +439,37 @@ export default function CourseBuilderPage() {
                 <Field
                   label="Tittel"
                   htmlFor="cb-title"
-                  error={showError('title') && <FieldError>{errors.title}</FieldError>}
+                  error={showError('title') ? errors.title : undefined}
                 >
-                  <Input
-                    id="cb-title"
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    aria-invalid={showError('title') ? 'true' : undefined}
-                    aria-required="true"
-                    className={cn(showError('title') && 'border-danger focus-visible:ring-danger')}
-                  />
+                  {({ errorId }) => (
+                    <Input
+                      id="cb-title"
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      aria-invalid={showError('title') ? 'true' : undefined}
+                      aria-describedby={errorId}
+                      aria-required="true"
+                    />
+                  )}
                 </Field>
 
                 <Field
                   label="Beskrivelse"
-                  error={showError('description') && <FieldError>{errors.description}</FieldError>}
+                  htmlFor="cb-description"
+                  error={showError('description') ? errors.description : undefined}
                 >
-                  <div id="cb-description">
-                    <RichTextEditor value={description} onChange={setDescription} />
-                  </div>
+                  {({ errorId, labelId }) => (
+                    <div id="cb-description">
+                      <RichTextEditor
+                        value={description}
+                        onChange={setDescription}
+                        aria-labelledby={labelId}
+                        aria-invalid={showError('description') ? 'true' : undefined}
+                        aria-describedby={errorId}
+                      />
+                    </div>
+                  )}
                 </Field>
               </section>
 
@@ -463,6 +490,7 @@ export default function CourseBuilderPage() {
                       { key: 'series', label: 'Kursrekke' },
                     ]}
                     ariaLabel="Type"
+                    role="radiogroup"
                     stretch
                   />
                 </Field>
@@ -484,107 +512,112 @@ export default function CourseBuilderPage() {
                       <Field
                         label="Startdato"
                         htmlFor="cb-date"
-                        error={showError('startDate') && <FieldError>{errors.startDate}</FieldError>}
+                        error={showError('startDate') ? errors.startDate : undefined}
                       >
-                        <DatePicker
-                          id="cb-date"
-                          value={startDate}
-                          onChange={setStartDate}
-                          error={showError('startDate')}
-                          placeholder="Velg dato"
-                          fromDate={new Date()}
-                          icon={Calendar}
-                          aria-invalid={showError('startDate') ? 'true' : undefined}
-                        />
+                        {({ errorId }) => (
+                          <DatePicker
+                            id="cb-date"
+                            value={startDate}
+                            onChange={setStartDate}
+                            error={showError('startDate')}
+                            placeholder="Velg dato"
+                            fromDate={new Date()}
+                            icon={Calendar}
+                            aria-invalid={showError('startDate') ? 'true' : undefined}
+                            aria-describedby={errorId}
+                          />
+                        )}
                       </Field>
 
-                      <Field
-                        label="Tidspunkt"
-                        error={
-                          <>
-                            {showError('startTime') && <FieldError>{errors.startTime}</FieldError>}
-                            {!showError('startTime') && showError('endTime') && (
-                              <FieldError>{errors.endTime}</FieldError>
-                            )}
-                          </>
-                        }
-                      >
-                        <div className="flex items-center gap-2">
-                          <Select
-                            value={startTime}
-                            onValueChange={(v) => {
-                              setStartTime(v);
-                              if (endTime && timeToMin(endTime) <= timeToMin(v)) setEndTime('');
-                            }}
-                          >
-                            <SelectTrigger
-                              id="cb-start-time"
-                              className={cn(
-                                'w-full gap-2.5 rounded-xl',
-                                showError('startTime') && 'border-danger focus-visible:ring-danger',
-                              )}
-                              aria-label="Starttid"
-                              aria-invalid={showError('startTime') ? 'true' : undefined}
-                            >
-                              <Clock className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
-                              <SelectValue placeholder="Start" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-60">
-                              {ALL_TIME_SLOTS.map((slot) => (
-                                <SelectItem key={slot} value={slot}>
-                                  {slot}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <span
-                            aria-hidden="true"
-                            className="shrink-0 text-base font-medium text-foreground-muted"
-                          >
-                            –
-                          </span>
-                          <Select value={endTime} onValueChange={setEndTime}>
-                            <SelectTrigger
-                              id="cb-end-time"
-                              className={cn(
-                                'w-full gap-2.5 rounded-xl',
-                                showError('endTime') && 'border-danger focus-visible:ring-danger',
-                              )}
-                              aria-label="Sluttid"
-                              aria-invalid={showError('endTime') ? 'true' : undefined}
-                            >
-                              <Clock className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
-                              <SelectValue placeholder="Slutt" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-60">
-                              {endTimeSlotsFor(startTime).map((slot) => (
-                                <SelectItem key={slot} value={slot}>
-                                  {slot}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </Field>
+                      {(() => {
+                        const timeErrorId = 'cb-time-error';
+                        const timeError = showError('startTime')
+                          ? errors.startTime
+                          : showError('endTime')
+                            ? errors.endTime
+                            : undefined;
+                        return (
+                          <fieldset>
+                            <legend className="mb-2 block text-sm font-medium text-foreground">
+                              Tidspunkt
+                            </legend>
+                            <div className="flex items-center gap-2">
+                              <Select
+                                value={startTime}
+                                onValueChange={(v) => {
+                                  setStartTime(v);
+                                  if (endTime && timeToMin(endTime) <= timeToMin(v)) setEndTime('');
+                                }}
+                              >
+                                <SelectTrigger
+                                  id="cb-start-time"
+                                  className="w-full gap-2.5 rounded-xl"
+                                  aria-label="Starttid"
+                                  aria-invalid={showError('startTime') ? 'true' : undefined}
+                                  aria-describedby={timeError ? timeErrorId : undefined}
+                                >
+                                  <Clock className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
+                                  <SelectValue placeholder="Start" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-60">
+                                  {ALL_TIME_SLOTS.map((slot) => (
+                                    <SelectItem key={slot} value={slot}>
+                                      {slot}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <span
+                                aria-hidden="true"
+                                className="shrink-0 text-base font-medium text-foreground-muted"
+                              >
+                                –
+                              </span>
+                              <Select value={endTime} onValueChange={setEndTime}>
+                                <SelectTrigger
+                                  id="cb-end-time"
+                                  className="w-full gap-2.5 rounded-xl"
+                                  aria-label="Sluttid"
+                                  aria-invalid={showError('endTime') ? 'true' : undefined}
+                                  aria-describedby={timeError ? timeErrorId : undefined}
+                                >
+                                  <Clock className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
+                                  <SelectValue placeholder="Slutt" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-60">
+                                  {endTimeSlotsFor(startTime).map((slot) => (
+                                    <SelectItem key={slot} value={slot}>
+                                      {slot}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {timeError && <FieldError id={timeErrorId}>{timeError}</FieldError>}
+                          </fieldset>
+                        );
+                      })()}
                     </div>
 
                     <Field
                       label="Antall uker"
                       htmlFor="cb-weeks"
-                      error={showError('weeks') && <FieldError>{errors.weeks}</FieldError>}
+                      error={showError('weeks') ? errors.weeks : undefined}
                     >
-                      <Input
-                        id="cb-weeks"
-                        type="number"
-                        inputMode="numeric"
-                        min="2"
-                        max="50"
-                        value={weeks}
-                        onChange={(e) => setWeeks(e.target.value)}
-                        aria-invalid={showError('weeks') ? 'true' : undefined}
-                        aria-required="true"
-                        className={cn(showError('weeks') && 'border-danger focus-visible:ring-danger')}
-                      />
+                      {({ errorId }) => (
+                        <Input
+                          id="cb-weeks"
+                          type="number"
+                          inputMode="numeric"
+                          min="2"
+                          max="50"
+                          value={weeks}
+                          onChange={(e) => setWeeks(e.target.value)}
+                          aria-invalid={showError('weeks') ? 'true' : undefined}
+                          aria-describedby={errorId}
+                          aria-required="true"
+                        />
+                      )}
                     </Field>
                   </>
                 )}
@@ -599,66 +632,70 @@ export default function CourseBuilderPage() {
                 <Field
                   label="Sted"
                   htmlFor="cb-location"
-                  error={showError('location') && <FieldError>{errors.location}</FieldError>}
+                  error={showError('location') ? errors.location : undefined}
                 >
-                  <LocationField
-                    id="cb-location"
-                    value={location}
-                    coords={locationCoords}
-                    address={locationAddress}
-                    onChange={({ name, address, coords }) => {
-                      setLocation(name);
-                      setLocationAddress(address);
-                      setLocationCoords(coords);
-                    }}
-                  />
+                  {({ errorId }) => (
+                    <LocationField
+                      id="cb-location"
+                      value={location}
+                      coords={locationCoords}
+                      address={locationAddress}
+                      aria-invalid={showError('location')}
+                      aria-describedby={errorId}
+                      onChange={({ name, address, coords }) => {
+                        setLocation(name);
+                        setLocationAddress(address);
+                        setLocationCoords(coords);
+                      }}
+                    />
+                  )}
                 </Field>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field
                     label="Antall plasser"
                     htmlFor="cb-capacity"
-                    error={showError('capacity') && <FieldError>{errors.capacity}</FieldError>}
+                    error={showError('capacity') ? errors.capacity : undefined}
                   >
-                    <Input
-                      id="cb-capacity"
-                      type="number"
-                      inputMode="numeric"
-                      min="1"
-                      value={capacity}
-                      onChange={(e) => setCapacity(e.target.value)}
-                      aria-invalid={showError('capacity') ? 'true' : undefined}
-                      aria-required="true"
-                      className={cn(
-                        showError('capacity') && 'border-danger focus-visible:ring-danger',
-                      )}
-                    />
+                    {({ errorId }) => (
+                      <Input
+                        id="cb-capacity"
+                        type="number"
+                        inputMode="numeric"
+                        min="1"
+                        value={capacity}
+                        onChange={(e) => setCapacity(e.target.value)}
+                        aria-invalid={showError('capacity') ? 'true' : undefined}
+                        aria-describedby={errorId}
+                        aria-required="true"
+                      />
+                    )}
                   </Field>
 
                   <Field
                     label={format === 'series' ? 'Pris for hele kurset' : 'Pris'}
                     htmlFor="cb-price"
-                    error={showError('price') && <FieldError>{errors.price}</FieldError>}
+                    error={showError('price') ? errors.price : undefined}
                   >
-                    <div className="relative">
-                      <Input
-                        id="cb-price"
-                        type="number"
-                        inputMode="numeric"
-                        min="0"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                        aria-invalid={showError('price') ? 'true' : undefined}
-                        aria-required="true"
-                        className={cn(
-                          'pr-10 tabular-nums',
-                          showError('price') && 'border-danger focus-visible:ring-danger',
-                        )}
-                      />
-                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-base text-foreground-muted">
-                        kr
-                      </span>
-                    </div>
+                    {({ errorId }) => (
+                      <div className="relative">
+                        <Input
+                          id="cb-price"
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                          aria-invalid={showError('price') ? 'true' : undefined}
+                          aria-describedby={errorId}
+                          aria-required="true"
+                          className="pr-10 tabular-nums"
+                        />
+                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-base text-foreground-muted">
+                          kr
+                        </span>
+                      </div>
+                    )}
                   </Field>
                 </div>
               </section>
@@ -669,7 +706,7 @@ export default function CourseBuilderPage() {
 
       {/* Pinned footer */}
       <div className="border-t border-border bg-background">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-xl items-center justify-between gap-2 px-4 py-3 sm:px-6 lg:px-8">
           <Button
             variant="ghost"
             size="lg"
@@ -713,6 +750,6 @@ export default function CourseBuilderPage() {
       />
 
       <UnsavedChangesDialog blocker={blocker} />
-    </main>
+    </div>
   );
 }

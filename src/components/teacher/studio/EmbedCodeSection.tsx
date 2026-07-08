@@ -1,36 +1,25 @@
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { Check, Copy, ExternalLink } from '@/lib/icons';
+import { ExternalLink } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
 import { SettingsRow } from '@/components/teacher/SettingsRows';
 
 /**
- * EmbedCodeSection — the seller-facing "copy embed code" panel on the Studio
- * Profil tab. Hands the teacher the iframe snippet for the public /embed/:slug
- * calendar so they can drop it into their own website.
+ * EmbedCodeSection — the seller-facing "copy embed code" row on the Studio
+ * Nettsted tab. Hands the teacher the iframe snippet for the public
+ * /embed/:slug calendar so they can drop it into their own website.
  *
- * Renders as a SettingsRow so it sits inline with the other Profil rows (shared
- * horizontal settings layout). `slug` is the SAVED slug (from the seller row),
- * not a dirty unsaved edit — the embed only works once the slug is live.
+ * Lives on its own tab, never inline in the profile form — raw HTML mid-form
+ * reads as a dev tool. On a dedicated integration surface the snippet is shown
+ * (Circle's Embed settings page on Mobbin). `slug` is the SAVED slug (from the
+ * seller row), not a dirty unsaved edit — the embed only works once the slug
+ * is live.
  */
 export function EmbedCodeSection({ slug }: { slug: string }) {
-  const [copied, setCopied] = useState(false);
-
   const origin = window.location.origin;
   const previewUrl = `${origin}/embed/${slug}`;
   const snippet = `<iframe src="${origin}/embed/${slug}"
   style="width:100%;height:640px;border:0"
   loading="lazy" title="Kurskalender"></iframe>`;
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(snippet);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      toast.error('Kunne ikke kopiere koden');
-    }
-  };
 
   return (
     <SettingsRow
@@ -40,17 +29,17 @@ export function EmbedCodeSection({ slug }: { slug: string }) {
       <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-xs leading-relaxed text-foreground select-all">
         <code>{snippet}</code>
       </pre>
-      <div className="flex items-center gap-2">
-        <Button type="button" variant="outline" onClick={() => void handleCopy()}>
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-          {copied ? 'Kopiert' : 'Kopier kode'}
-        </Button>
+      <p className="mt-2 text-sm text-foreground-muted">
+        Juster height-verdien etter behov.
+      </p>
+      <div className="mt-3 flex items-center gap-2">
+        <CopyButton value={snippet} label="Kopier kode" />
         <Button
           type="button"
           variant="ghost"
           onClick={() => window.open(previewUrl, '_blank')}
         >
-          <ExternalLink className="size-4" />
+          <ExternalLink data-icon="inline-start" />
           Forhåndsvis
         </Button>
       </div>

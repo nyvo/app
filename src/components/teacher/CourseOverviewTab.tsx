@@ -3,9 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 import { MapEmbed } from '@/components/ui/map-embed';
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
 import { cn, formatKroner } from '@/lib/utils';
+import { osloTodayKey } from '@/utils/dateUtils';
 import { MapPin, ChevronRight } from '@/lib/icons';
 import type { MappedCourse } from '@/hooks/use-course-detail';
 import type { CourseSession } from '@/types/database';
@@ -47,6 +50,14 @@ interface CourseOverviewTabProps {
   /** All session rows (date + time per occurrence). Renders the Timeplan card
    *  for every format: single one-day, multi-day single, and weekly series. */
   sessions: CourseSession[];
+  /** Sessions query still loading — the Timeplan card shows a skeleton. */
+  sessionsLoading?: boolean;
+  /** Sessions query failed — the Timeplan card shows an inline error, never a
+   *  false "no dates yet". */
+  sessionsError?: boolean;
+  /** Participant-derived stats (Påmeldte/Inntekt) couldn't load — render `–`
+   *  instead of a fabricated 0. */
+  statsUnavailable?: boolean;
 }
 
 const WAITING_STATUSES = new Set(['pending', 'restricted']);
@@ -128,6 +139,9 @@ export function CourseOverviewTab({
   onPublish,
   publishing,
   sessions,
+  sessionsLoading = false,
+  sessionsError = false,
+  statsUnavailable = false,
 }: CourseOverviewTabProps) {
   const isSeries = course.format === 'series';
   const isFree = course.price <= 0;
@@ -145,11 +159,17 @@ export function CourseOverviewTab({
   const stats: [string, string][] = [
     [
       'Påmeldte',
-      course.capacity > 0 ? `${enrolledCount} / ${course.capacity}` : String(enrolledCount),
+      statsUnavailable
+        ? '–'
+        : course.capacity > 0
+          ? `${enrolledCount} / ${course.capacity}`
+          : String(enrolledCount),
     ],
     // Inntekt is omitted on 0 kr courses — no money flow, the zero would be
-    // a dead metric.
-    ...(hasPaidTier ? ([['Inntekt', formatKroner(revenue)]] as [string, string][]) : []),
+    // a dead metric. On a participant-fetch failure it reads `–`, not a fake 0.
+    ...(hasPaidTier
+      ? ([['Inntekt', statsUnavailable ? '–' : formatKroner(revenue)]] as [string, string][])
+      : []),
     ['Pris', course.price > 0 ? formatKroner(course.price) : 'Gratis'],
   ];
 
@@ -177,6 +197,8 @@ export function CourseOverviewTab({
       <div className="grid gap-4 lg:grid-cols-2">
         <TimeplanCard
           sessions={ordered}
+          loading={sessionsLoading}
+          error={sessionsError}
           progressUnit={isSeries ? 'Uke' : 'Dag'}
           onEditSession={onEditSession}
           onOpenAll={onOpenKursplan}
@@ -270,7 +292,7 @@ function ReadinessCard({
     onClick = onSetupPaymentsClick;
   } else {
     heading = 'Klar til å publisere';
-    sub = 'Alt er på plass — publiser for å åpne for påmelding.';
+    sub = 'Alt er på plass — publiser for å åpne for påmelding. Kurset blir synlig for alle.';
     label = 'Publiser kurs';
     onClick = onPublish;
     loading = publishing;
@@ -304,16 +326,51 @@ function ReadinessCard({
 
 function TimeplanCard({
   sessions,
+  loading = false,
+  error = false,
   progressUnit,
   onEditSession,
   onOpenAll,
 }: {
   sessions: CourseSession[];
+  loading?: boolean;
+  error?: boolean;
   progressUnit: 'Uke' | 'Dag';
   onEditSession: (id: string) => void;
   onOpenAll: () => void;
 }) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = osloTodayKey();
+
+  // Sessions failed to load — an inline error (not a false "no dates yet"), so
+  // the editor state is never mistaken for the authoritative schedule.
+  if (error) {
+    return (
+      <FramedCard title="Timeplan">
+        <FramedCardPanel className="items-center justify-center p-5">
+          <ErrorState
+            variant="inline"
+            title="Kunne ikke laste timene."
+            message="Last siden på nytt."
+          />
+        </FramedCardPanel>
+      </FramedCard>
+    );
+  }
+
+  if (loading) {
+    return (
+      <FramedCard title="Timeplan">
+        <FramedCardPanel className="gap-3 p-5">
+          <div className="space-y-3" role="status" aria-label="Laster timer">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-5 w-36" />
+          </div>
+        </FramedCardPanel>
+      </FramedCard>
+    );
+  }
+
   const statusLabel = timeplanHeaderStatus(sessions, today, progressUnit);
 
   if (sessions.length <= 1) {
@@ -363,7 +420,7 @@ function TimeplanCard({
           <button
             type="button"
             onClick={onOpenAll}
-            className="group flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+            className="group flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground outline-none focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
           >
             Se alle timer
             <ChevronRight className="size-4 shrink-0 text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
@@ -390,11 +447,11 @@ function SessionRow({
   const editable = !cancelled && !past;
   const label = `${cap(weekdayLong(session.session_date))} ${dayMonth(session.session_date)}`;
 
-  // Accent line + date/time. Finished/cancelled rows dim; the "Avlyst" badge
+  // Date/time. Finished/cancelled rows dim; the "Avlyst" badge
   // (cancelled only) stays full-opacity so it reads clearly.
   const left = (
     <div className={cn('flex min-w-0 flex-1 items-stretch gap-4', !editable && 'opacity-50')}>
-      <span className="w-1 self-stretch rounded-full bg-primary/40" />
+      {/* No accent bar — user decision 2026-07-08: plain rows, the "Neste" badge carries emphasis */}
       <div className="min-w-0">
         <p className="flex items-center gap-2 text-base font-medium text-foreground">
           <span>{label}</span>
@@ -598,6 +655,18 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
     onPriceChange(next);
   }
 
+  // This tab has no save bar — blur is the only commit point. While drop-in
+  // is ON, an invalid value (≤0 or cleared) must never commit silently OR
+  // outlive the tab as lingering state a later "Lagre" could pick up. Flag it
+  // inline and still hand off to the parent, which reverts the state to the
+  // committed price (same snap-back grammar as the Plasser clamp — this error
+  // line is what explains the snap). When drop-in is OFF, 0/empty is just the
+  // unconfigured state — no error to show.
+  function handleBlur() {
+    setPriceError(checked && price <= 0);
+    onPriceBlur?.();
+  }
+
   return (
     <div className="flex items-start justify-between gap-6 py-5 first:pt-0 last:pb-0">
       <div className="min-w-0 flex-1">
@@ -618,7 +687,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
                 const next = Number(e.target.value);
                 handlePriceChange(Number.isFinite(next) ? next : 0);
               }}
-              onBlur={onPriceBlur}
+              onBlur={handleBlur}
               aria-invalid={priceError || undefined}
               className="h-8 w-[120px] pr-9 tabular-nums"
             />
@@ -628,7 +697,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
           </div>
         </div>
         {priceError && (
-          <p className="mt-2 text-sm text-danger">Sett en pris før du slår på drop-in.</p>
+          <p className="mt-2 text-sm text-danger">Drop-in krever en pris høyere enn 0 kr.</p>
         )}
       </div>
       <Switch checked={checked} onCheckedChange={handleToggle} className="mt-1 shrink-0" />

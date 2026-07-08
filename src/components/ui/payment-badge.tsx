@@ -47,7 +47,7 @@ export function PaymentBadge({
 }: PaymentBadgeProps) {
   if (visibility === 'exceptions' && status === 'paid') return null;
 
-  const { variant, label } = config[status];
+  const { variant, label } = config[status] ?? { variant: 'subtle', label: status };
   return (
     <Badge
       variant={variant}

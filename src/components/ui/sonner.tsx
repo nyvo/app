@@ -29,7 +29,8 @@ const Toaster = ({ toastOptions, ...props }: ToasterProps) => {
       className="toaster group"
       position="bottom-center"
       expand={false}
-      visibleToasts={3}
+      // ui-patterns §2.10: never stack more than 2 toasts
+      visibleToasts={2}
       duration={4000}
       gap={8}
       offset={16}
@@ -44,7 +45,7 @@ const Toaster = ({ toastOptions, ...props }: ToasterProps) => {
             toastOptions?.classNames?.title,
           ),
           description: cn(
-            "mt-0.5 text-xs leading-5 text-chrome-foreground/70",
+            "mt-0.5 text-xs leading-5 text-chrome-foreground-muted",
             toastOptions?.classNames?.description,
           ),
           icon: cn(toastIconClassName, toastOptions?.classNames?.icon),

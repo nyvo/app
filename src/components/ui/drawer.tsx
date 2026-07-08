@@ -62,6 +62,26 @@ function DrawerContent({
   )
 }
 
+function DrawerHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="drawer-header"
+      className={cn("flex flex-col gap-1.5 border-b border-border px-6 py-5", className)}
+      {...props}
+    />
+  )
+}
+
+function DrawerFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="drawer-footer"
+      className={cn("mt-auto flex flex-col gap-2 border-t border-border bg-background px-6 py-4", className)}
+      {...props}
+    />
+  )
+}
+
 function DrawerTitle({
   className,
   ...props
@@ -93,6 +113,8 @@ export {
   DrawerClose,
   DrawerContent,
   DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
   DrawerOverlay,
   DrawerPortal,
   DrawerTitle,

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription'
@@ -42,6 +43,15 @@ export function useNotifications(): UseNotificationsReturn {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Mirrors `notifications` without being a dependency of the mutation
+  // callbacks below — lets markSeenAll read the latest list (to know which
+  // ids it's optimistically flipping/reverting) without its identity
+  // changing on every notification update, which would re-fire the
+  // "mark seen on open" effect in NotificationsPopover.
+  const notificationsRef = useRef<Notification[]>(notifications)
+  useEffect(() => {
+    notificationsRef.current = notifications
+  }, [notifications])
 
   const fetchInitial = useCallback(async () => {
     if (!userId) {
@@ -132,8 +142,13 @@ export function useNotifications(): UseNotificationsReturn {
     if (unseenCount === 0) return
 
     const now = new Date().toISOString()
+    const idsToMark = notificationsRef.current
+      .filter((n) => n.seen_at === null)
+      .map((n) => n.id)
+    if (idsToMark.length === 0) return
+
     setNotifications((prev) =>
-      prev.map((n) => (n.seen_at === null ? { ...n, seen_at: now } : n)),
+      prev.map((n) => (idsToMark.includes(n.id) ? { ...n, seen_at: now } : n)),
     )
 
     const { error: updateError } = await supabase
@@ -144,6 +159,9 @@ export function useNotifications(): UseNotificationsReturn {
 
     if (updateError) {
       logger.error('[notifications] markSeenAll failed', updateError)
+      setNotifications((prev) =>
+        prev.map((n) => (idsToMark.includes(n.id) ? { ...n, seen_at: null } : n)),
+      )
     }
   }, [userId, unseenCount])
 
@@ -166,6 +184,9 @@ export function useNotifications(): UseNotificationsReturn {
 
       if (updateError) {
         logger.error('[notifications] markRead failed', updateError)
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, read_at: null } : n)),
+        )
       }
     },
     [userId, notifications],
@@ -190,6 +211,10 @@ export function useNotifications(): UseNotificationsReturn {
 
       if (updateError) {
         logger.error('[notifications] markResolved failed', updateError)
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, resolved_at: null } : n)),
+        )
+        toast.error('Kunne ikke oppdatere varselet.')
       }
     },
     [userId, notifications],

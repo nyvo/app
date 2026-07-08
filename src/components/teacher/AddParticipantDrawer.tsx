@@ -5,13 +5,17 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { FieldError } from '@/components/ui/field-error';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { checkCourseAvailability, createSignup } from '@/services/signups';
 import { friendlyError } from '@/lib/error-messages';
 import { AUTH_VALIDATION } from '@/lib/auth-messages';
@@ -48,6 +52,8 @@ export function AddParticipantDrawer({
   // Capacity check
   const [availableSpots, setAvailableSpots] = useState<number | null>(null);
   const [isCheckingCapacity, setIsCheckingCapacity] = useState(true);
+  // The capacity lookup itself failed (network/RLS) — distinct from "full".
+  const [capacityCheckFailed, setCapacityCheckFailed] = useState(false);
 
   // Submission
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,22 +75,63 @@ export function AddParticipantDrawer({
       setErrors({});
       setTouched({});
       setSubmitError(null);
+      setCapacityCheckFailed(false);
     }
   }, [open]);
 
   const checkCapacity = async () => {
     setIsCheckingCapacity(true);
+    setCapacityCheckFailed(false);
     const { available, error } = await checkCourseAvailability(courseId);
 
-    if (!error) {
+    if (error) {
+      // A failed lookup must not read as "full" — leave the count unknown and
+      // let the teacher submit (the createSignup RPC is the real guard).
+      setCapacityCheckFailed(true);
+    } else {
       setAvailableSpots(available);
     }
 
     setIsCheckingCapacity(false);
   };
 
-  const handleBlur = (field: string) => {
+  // Loose phone check for the optional field: only when non-empty. Digits/`+`/
+  // spaces, at least 8 digits — enough to catch typos without rejecting valid
+  // international formats.
+  const isValidPhone = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return true;
+    if (!/^[\d+\s]+$/.test(trimmed)) return false;
+    return trimmed.replace(/\D/g, '').length >= 8;
+  };
+
+  /** Shared per-field rule so blur validation and submit validation can't drift. */
+  const getFieldError = (
+    field: 'name' | 'email' | 'phone',
+    value: string,
+  ): string | undefined => {
+    if (field === 'name') {
+      return value.trim() ? undefined : 'Skriv inn navnet på deltakeren';
+    }
+    if (field === 'phone') {
+      return isValidPhone(value) ? undefined : 'Skriv inn et gyldig telefonnummer.';
+    }
+    if (!value.trim()) return AUTH_VALIDATION.emailRequired;
+    if (!isValidEmail(value)) return AUTH_VALIDATION.emailInvalid;
+    return undefined;
+  };
+
+  const handleBlur = (field: 'name' | 'email' | 'phone') => {
     setTouched((prev) => ({ ...prev, [field]: true }));
+    const message = getFieldError(field, formData[field]);
+    setErrors((prev) => {
+      if (!message) {
+        if (!(field in prev)) return prev;
+        const { [field]: _removed, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [field]: message };
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -103,15 +150,13 @@ export function AddParticipantDrawer({
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
+    const nameError = getFieldError('name', formData.name);
+    if (nameError) newErrors.name = nameError;
+    const emailError = getFieldError('email', formData.email);
+    if (emailError) newErrors.email = emailError;
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Skriv inn navnet på deltakeren';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = AUTH_VALIDATION.emailRequired;
-    } else if (!isValidEmail(formData.email)) {
-      newErrors.email = AUTH_VALIDATION.emailInvalid;
+    if (!isValidPhone(formData.phone)) {
+      newErrors.phone = 'Skriv inn et gyldig telefonnummer.';
     }
 
     setErrors(newErrors);
@@ -125,6 +170,7 @@ export function AddParticipantDrawer({
     setTouched({
       name: true,
       email: true,
+      phone: true,
     });
 
     if (!validateForm()) {
@@ -141,9 +187,10 @@ export function AddParticipantDrawer({
     setSubmitError(null);
 
     try {
-      // Re-check capacity to handle race condition
-      const { available } = await checkCourseAvailability(courseId);
-      if (available <= 0) {
+      // Re-check capacity to handle race condition. A failed check must not
+      // block the add — proceed and let the createSignup RPC be the real guard.
+      const { available, error: capacityError } = await checkCourseAvailability(courseId);
+      if (!capacityError && available <= 0) {
         setSubmitError('Kurset er fullt.');
         setIsSubmitting(false);
         return;
@@ -188,13 +235,26 @@ export function AddParticipantDrawer({
       <SheetContent side="right" className="sm:max-w-[480px] p-0 gap-0">
         <SheetHeader>
           <SheetTitle>Legg til deltaker</SheetTitle>
+          <SheetDescription className="sr-only">
+            Registrer en deltaker manuelt på kurset.
+          </SheetDescription>
         </SheetHeader>
 
         {isCheckingCapacity ? (
-          // Capacity check resolves in <200ms — render nothing in the body
-          // rather than flash a spinner (Studio § 10). The SheetHeader above
-          // keeps the drawer feeling anchored during the brief wait.
-          <div className="flex-1" aria-hidden="true" />
+          // Capacity check resolves in <200ms — hold back any fallback until the
+          // wait crosses the DelayedFallback threshold, then show a form-shaped
+          // skeleton rather than an empty panel (Studio § 10).
+          <DelayedFallback>
+            <div className="flex-1 px-6 py-6 space-y-4" role="status" aria-label="Laster">
+              <Skeleton className="h-16 w-full" />
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-11 w-full" />
+                </div>
+              ))}
+            </div>
+          </DelayedFallback>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
@@ -212,6 +272,13 @@ export function AddParticipantDrawer({
               </Alert>
             )}
 
+            {/* Capacity lookup failed — inform without blocking (server guards). */}
+            {capacityCheckFailed && (
+              <Alert variant="info" size="sm">
+                Fikk ikke sjekket ledige plasser.
+              </Alert>
+            )}
+
             {/* Error banner */}
             {submitError && (
               <Alert variant="error" size="sm">
@@ -221,13 +288,13 @@ export function AddParticipantDrawer({
 
             {/* Full name */}
             <div>
-              <label
+              <Label
                 htmlFor="name"
-                data-error={(errors.name && touched.name) || undefined}
-                className="text-sm font-medium mb-2 block text-foreground data-[error=true]:text-danger"
+                data-error={(errors.name && touched.name) ? true : undefined}
+                className="mb-2"
               >
                 Navn
-              </label>
+              </Label>
               <Input
                 id="name"
                 type="text"
@@ -236,15 +303,10 @@ export function AddParticipantDrawer({
                 value={formData.name}
                 onChange={handleInputChange}
                 onBlur={() => handleBlur('name')}
-                aria-invalid={!!errors.name}
+                aria-invalid={!!(errors.name && touched.name)}
                 aria-describedby={errors.name && touched.name ? 'name-error' : undefined}
                 aria-required="true"
                 disabled={isSubmitting}
-                className={
-                  errors.name && touched.name
-                    ? 'border-danger bg-danger-subtle animate-shake'
-                    : ''
-                }
               />
               {errors.name && touched.name && (
                 <FieldError id="name-error">{errors.name}</FieldError>
@@ -253,13 +315,13 @@ export function AddParticipantDrawer({
 
             {/* Email */}
             <div>
-              <label
+              <Label
                 htmlFor="email"
-                data-error={(errors.email && touched.email) || undefined}
-                className="text-sm font-medium mb-2 block text-foreground data-[error=true]:text-danger"
+                data-error={(errors.email && touched.email) ? true : undefined}
+                className="mb-2"
               >
                 E-post
-              </label>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -267,15 +329,10 @@ export function AddParticipantDrawer({
                 value={formData.email}
                 onChange={handleInputChange}
                 onBlur={() => handleBlur('email')}
-                aria-invalid={!!errors.email}
+                aria-invalid={!!(errors.email && touched.email)}
                 aria-describedby={errors.email && touched.email ? 'email-error' : undefined}
                 aria-required="true"
                 disabled={isSubmitting}
-                className={
-                  errors.email && touched.email
-                    ? 'border-danger bg-danger-subtle animate-shake'
-                    : ''
-                }
               />
               {errors.email && touched.email && (
                 <FieldError id="email-error">{errors.email}</FieldError>
@@ -284,24 +341,30 @@ export function AddParticipantDrawer({
 
             {/* Phone */}
             <div>
-              <label htmlFor="phone" className="text-sm font-medium mb-2 block text-foreground">
+              <Label htmlFor="phone" className="mb-2">
                 Telefonnummer <span className="text-foreground-muted">(valgfritt)</span>
-              </label>
+              </Label>
               <Input
                 id="phone"
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
+                onBlur={() => handleBlur('phone')}
+                aria-invalid={!!(errors.phone && touched.phone)}
+                aria-describedby={errors.phone && touched.phone ? 'phone-error' : undefined}
                 disabled={isSubmitting}
               />
+              {errors.phone && touched.phone && (
+                <FieldError id="phone-error">{errors.phone}</FieldError>
+              )}
             </div>
 
             {/* Note */}
             <div>
-              <label htmlFor="note" className="text-sm font-medium mb-2 block text-foreground">
+              <Label htmlFor="note" className="mb-2">
                 Notat <span className="text-foreground-muted">(valgfritt)</span>
-              </label>
+              </Label>
               <Textarea
                 id="note"
                 name="note"

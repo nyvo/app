@@ -6,12 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { PageShell } from '@/components/teacher/PageShell'
+import { ErrorState } from '@/components/ui/error-state'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn, formatKroner } from '@/lib/utils'
 import { createStripeCheckoutSession, createStripePortalSession } from '@/services/billing'
-import { friendlyError } from '@/lib/error-messages'
 import { toast } from 'sonner'
 
 type SubscriptionPlan = string | null | undefined
@@ -65,7 +64,7 @@ const PRO_YEARLY = {
 } as const
 
 const BillingPage = () => {
-  const { currentSeller, refreshSellers } = useAuth()
+  const { currentSeller, refreshSellers, currentSellerHydrateFailed } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
@@ -84,8 +83,49 @@ const BillingPage = () => {
   // StrictMode (dev) double-invokes effects; the toast + refresh must run once
   // per checkout return, so dedupe with a ref.
   const stripeResultHandled = useRef(false)
-  const refreshTimers = useRef<number[]>([])
-  useEffect(() => () => refreshTimers.current.forEach(clearTimeout), [])
+  const pollTimer = useRef<number | null>(null)
+  const pollDeadline = useRef(0)
+  // success seen but the plan is still free — the webhook hasn't landed yet.
+  const [awaitingActivation, setAwaitingActivation] = useState(false)
+
+  const clearPoll = useCallback(() => {
+    if (pollTimer.current !== null) {
+      clearTimeout(pollTimer.current)
+      pollTimer.current = null
+    }
+  }, [])
+
+  // The webhook that flips free→pro can land seconds after the redirect. Poll
+  // the seller on a widening backoff, capped at ~60s so it can't run forever;
+  // the isPro effect below cancels it the moment Pro lands.
+  const startActivationPoll = useCallback(() => {
+    clearPoll()
+    pollDeadline.current = Date.now() + 60000
+    let delay = 2000
+    const tick = () => {
+      void refreshSellers()
+      if (Date.now() >= pollDeadline.current) {
+        pollTimer.current = null
+        setAwaitingActivation(false)
+        return
+      }
+      delay = Math.min(Math.round(delay * 1.5), 10000)
+      pollTimer.current = window.setTimeout(tick, delay)
+    }
+    pollTimer.current = window.setTimeout(tick, delay)
+  }, [clearPoll, refreshSellers])
+
+  // Stop the poll on unmount.
+  useEffect(() => clearPoll, [clearPoll])
+
+  // Pro landed — drop the interim line and stop polling.
+  useEffect(() => {
+    if (isPro) {
+      setAwaitingActivation(false)
+      clearPoll()
+    }
+  }, [isPro, clearPoll])
+
   useEffect(() => {
     const stripeResult = searchParams.get('stripe')
     if (!stripeResult || stripeResultHandled.current) return
@@ -93,13 +133,11 @@ const BillingPage = () => {
 
     if (stripeResult === 'success') {
       toast.success('Abonnementet er aktivert')
-      // The webhook that flips the seller to Pro can land after the redirect —
-      // refresh a couple more times so the page doesn't keep showing the
-      // upgrade cards on a completed checkout.
       void refreshSellers()
-      refreshTimers.current = [2500, 6000].map((ms) =>
-        window.setTimeout(() => void refreshSellers(), ms),
-      )
+      if (!isPro) {
+        setAwaitingActivation(true)
+        startActivationPoll()
+      }
     } else if (stripeResult === 'cancelled') {
       toast('Abonnementet ble ikke fullført')
     }
@@ -107,7 +145,7 @@ const BillingPage = () => {
     const next = new URLSearchParams(searchParams)
     next.delete('stripe')
     setSearchParams(next, { replace: true })
-  }, [refreshSellers, searchParams, setSearchParams])
+  }, [isPro, refreshSellers, searchParams, setSearchParams, startActivationPoll])
 
   const handleUpgrade = useCallback(async (interval: 'month' | 'year') => {
     if (!currentSeller?.id) return
@@ -115,7 +153,10 @@ const BillingPage = () => {
     const { url, error } = await createStripeCheckoutSession(currentSeller.id, interval)
     setCheckoutLoading(false)
     if (error || !url) {
-      toast.error(friendlyError(error, 'Kunne ikke starte abonnement.'))
+      // The service already resolved a display-ready message (server body or a
+      // friendlyError fallback) — surface it so reasons like "Studioet har
+      // allerede Pro." aren't flattened to a generic line.
+      toast.error(error?.message || 'Kunne ikke starte abonnement.')
       return
     }
     window.location.assign(url)
@@ -127,24 +168,29 @@ const BillingPage = () => {
     const { url, error } = await createStripePortalSession(currentSeller.id)
     setPortalLoading(false)
     if (error || !url) {
-      toast.error(friendlyError(error, 'Kunne ikke åpne fakturering.'))
+      toast.error(error?.message || 'Kunne ikke åpne fakturering.')
       return
     }
     window.location.assign(url)
   }, [currentSeller?.id])
 
   return (
-    <main className="min-h-full flex-1 overflow-y-auto bg-canvas">
-      <MobileTeacherHeader />
-
-      <PageShell
+    <PageShell
         narrow="centered"
         title="Abonnement"
-        description={isPro && !isPastDue ? statusLine : undefined}
+        description={
+          currentSellerHydrateFailed
+            ? undefined
+            : isPro && !isPastDue
+              ? statusLine
+              : awaitingActivation
+                ? 'Betalingen er mottatt. Abonnementet aktiveres om et øyeblikk.'
+                : undefined
+        }
         action={
           // past_due drops this header action — the "Oppdater" CTA in the alert
           // is the single primary action (both open the same Stripe portal).
-          isPro && !isPastDue ? (
+          !currentSellerHydrateFailed && isPro && !isPastDue ? (
             <Button
               type="button"
               variant="secondary"
@@ -158,17 +204,27 @@ const BillingPage = () => {
           ) : undefined
         }
       >
-        <BillingPlanSections
-          plan={currentSeller?.subscription_plan}
-          status={currentSeller?.subscription_status}
-          yearly={PRO_YEARLY}
-          onUpgrade={handleUpgrade}
-          onManage={handleManage}
-          checkoutLoading={checkoutLoading}
-          portalLoading={portalLoading}
-        />
+        {currentSellerHydrateFailed ? (
+          // The plan fields are stale safe-defaults (free) — showing the upgrade
+          // cards could tell a Pro subscriber they're on the free tier. Bail to a
+          // bounded retry instead of a confidently-wrong view.
+          <ErrorState
+            title="Kunne ikke hente kontoinformasjon"
+            message="Prøv igjen om litt."
+            onRetry={refreshSellers}
+          />
+        ) : (
+          <BillingPlanSections
+            plan={currentSeller?.subscription_plan}
+            status={currentSeller?.subscription_status}
+            yearly={PRO_YEARLY}
+            onUpgrade={handleUpgrade}
+            onManage={handleManage}
+            checkoutLoading={checkoutLoading}
+            portalLoading={portalLoading}
+          />
+        )}
       </PageShell>
-    </main>
   )
 }
 
@@ -216,7 +272,7 @@ export function BillingPlanSections({
       name="Pro"
       price={proPrice}
       priceSub={proPriceSub}
-      description="Lønner seg fra rundt 10 000 kr i påmeldinger i måneden."
+      description={`Lønner seg fra rundt ${formatKroner(10000)} i påmeldinger i måneden.`}
       features={PRO_FEATURES}
       active={isPro}
       action={
@@ -256,7 +312,7 @@ export function BillingPlanSections({
   return (
     <div className="space-y-8">
       {isPastDue && onManage && (
-        <Alert variant="warning" icon={false} className="border-transparent bg-muted">
+        <Alert variant="warning">
           <AlertTitle className="text-base">Betalingen gikk ikke gjennom</AlertTitle>
           <AlertDescription className="text-base text-foreground">
             Oppdater betalingsmåten for å beholde Pro-abonnementet.
@@ -298,8 +354,10 @@ export function BillingPlanSections({
   )
 }
 
-/** Segmented Månedlig/Årlig switch — active segment is a white pill. The yearly
- *  segment carries the savings nudge so the cheaper option sells itself. */
+/** Segmented Månedlig/Årlig switch — mirrors SegmentedTabs construction
+ *  (muted track, bg-surface + shadow-xs active pill, ring-subtle focus) but
+ *  stays bespoke because the yearly segment carries the savings nudge, which
+ *  SegmentedTabs' string labels can't render. */
 function IntervalToggle({
   interval,
   onChange,
@@ -310,7 +368,7 @@ function IntervalToggle({
   savings?: string
 }) {
   return (
-    <div className="inline-flex items-center rounded-full bg-muted p-0.5 text-sm">
+    <div className="inline-flex h-9 items-center gap-1 rounded-full bg-muted p-1 text-sm">
       {(['month', 'year'] as const).map((value) => (
         <button
           key={value}
@@ -318,9 +376,10 @@ function IntervalToggle({
           onClick={() => onChange(value)}
           aria-pressed={interval === value}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-medium transition-colors',
+            'inline-flex h-7 items-center gap-1.5 rounded-full px-3 font-medium transition-colors',
+            'outline-none focus-visible:ring-2 focus-visible:ring-ring-subtle',
             interval === value
-              ? 'bg-background text-foreground shadow-sm'
+              ? 'bg-surface text-foreground shadow-xs'
               : 'text-foreground-muted hover:text-foreground',
           )}
         >
@@ -350,7 +409,7 @@ function PlanColumn({
     <div className="flex flex-col">
       {featured ? (
         <div className="flex h-10 items-center justify-center gap-1.5 rounded-t-2xl bg-muted text-sm font-medium text-foreground">
-          <Sparkles className="size-3.5 fill-current" aria-hidden />
+          <Sparkles className="size-3.5" aria-hidden />
           {label}
         </div>
       ) : (

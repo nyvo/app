@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -119,7 +118,7 @@ export default function HelpPage() {
     setSubmitting(false);
 
     if (error) {
-      toast.error(error.message || 'Kunne ikke sende meldingen.');
+      toast.error(error.message || 'Kunne ikke sende meldingen');
       return;
     }
 
@@ -131,10 +130,7 @@ export default function HelpPage() {
   }
 
   return (
-    <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
-      <MobileTeacherHeader />
-
-      <PageShell
+    <PageShell
         narrow="centered"
         title="Hjelp"
         description="Send oss en melding, så hjelper vi deg videre."
@@ -197,7 +193,8 @@ export default function HelpPage() {
                         <SelectGroup>
                           {signups.map((signup) => (
                             <SelectItem key={signup.id} value={signup.id}>
-                              {signup.participantName} · {signup.participantEmail}
+                              {signup.participantName}{' '}
+                              <span className="text-foreground-muted">{signup.participantEmail}</span>
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -222,14 +219,13 @@ export default function HelpPage() {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={!canSubmit || submitting}>
-                {submitting ? 'Sender…' : 'Send'}
+              <Button type="submit" disabled={!canSubmit} loading={submitting} loadingText="Sender">
+                Send
               </Button>
             </div>
           </form>
           </CardContent>
         </Card>
       </PageShell>
-    </main>
   );
 }

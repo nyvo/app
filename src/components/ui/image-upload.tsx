@@ -34,7 +34,7 @@ interface ImageFieldProps {
 
 function validateFile(file: File): string | null {
   if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-    return 'Dette bildet kan ikke lastes opp. Prøv et annet bilde.'
+    return 'Bildet kan ikke brukes. Bruk JPG, PNG eller WebP.'
   }
   if (file.size > MAX_IMAGE_SIZE) {
     return `Bildet er for stort. Maks ${MAX_IMAGE_SIZE_MB} MB.`
@@ -185,20 +185,20 @@ export function ImageField({
       aria-invalid={displayError ? true : undefined}
       aria-describedby={describedBy}
       className={cn(
-        'group relative shrink-0 cursor-pointer overflow-hidden transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed',
+        'group relative shrink-0 cursor-pointer overflow-hidden transition-colors duration-150 outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:cursor-not-allowed',
         isAvatar ? 'size-24 rounded-full' : 'aspect-[16/10] w-full rounded-xl',
         displayUrl
           ? 'border border-border bg-muted'
-          : 'border border-border bg-surface hover:border-foreground/30 hover:bg-muted/40',
+          : 'border border-border bg-surface hover:border-border-strong hover:bg-hover',
         displayError && 'ring-2 ring-danger/20',
-        dragActive && !displayUrl && 'border-foreground/40 bg-muted',
+        dragActive && !displayUrl && 'border-foreground bg-muted',
         isDisabled && !loading && 'opacity-50',
       )}
     >
       {displayUrl ? (
         <>
           <img src={displayUrl} alt="" className="size-full object-cover" />
-          <span className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
+          <span className="absolute inset-0 bg-transparent transition-colors group-hover:bg-hover" />
         </>
       ) : (
         <span className="flex size-full flex-col items-center justify-center gap-2 px-4 text-center">
@@ -241,7 +241,7 @@ export function ImageField({
             aria-label={ariaLabel ?? (displayUrl ? changeLabel : uploadLabel)}
             aria-invalid={displayError ? true : undefined}
             className={cn(
-              'relative size-16 shrink-0 overflow-hidden rounded-full bg-muted outline-none transition-colors focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed',
+              'relative size-16 shrink-0 overflow-hidden rounded-full bg-muted outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed',
               !displayUrl && 'hover:bg-active',
               displayError && 'ring-2 ring-danger/20',
               isDisabled && !loading && 'opacity-50',
@@ -261,7 +261,7 @@ export function ImageField({
             )}
           </button>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" onClick={openPicker} disabled={isDisabled}>
+            <Button type="button" variant="secondary" onClick={openPicker} disabled={isDisabled}>
               {displayUrl ? changeLabel : uploadLabel}
             </Button>
             {displayUrl && onRemove && (

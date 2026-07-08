@@ -1,10 +1,9 @@
-import { useState, useCallback, lazy, Suspense } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
 import { ChevronRight } from '@/lib/icons';
@@ -28,6 +27,8 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchNextSessions } from '@/services/courses';
 import type { Course as CourseDB, CourseSession } from '@/types/database';
@@ -94,6 +95,16 @@ const TeacherDashboard = () => {
   const queryClient = useQueryClient();
   const [incomeRange, setIncomeRange] = useState<IncomeRange>('month');
   const [selectedSignupId, setSelectedSignupId] = useState<string | null>(null);
+  // Snapshot of the drawer's signup, taken at click time and refreshed only
+  // while the row is still present in the top-3 cache. A realtime refetch can
+  // drop the row out of that top-3 window while the drawer is open — without
+  // this snapshot the drawer would blank mid-read instead of just going stale.
+  const [selectedSignupSnapshot, setSelectedSignupSnapshot] = useState<SignupWithDetails | null>(
+    null,
+  );
+  // Bumped by the chart error-fallback's retry and passed as the boundary's
+  // resetKey, so retry actually remounts the crashed chart subtree.
+  const [chartRetryCount, setChartRetryCount] = useState(0);
 
   // Server state on TanStack Query. What the old hand-rolled version needed
   // bespoke code for comes free here: background refetch errors keep
@@ -122,9 +133,9 @@ const TeacherDashboard = () => {
     },
   });
 
-  // Income chart — keyed on the range so toggling Uke/Måned/År is cached per
-  // range; keepPreviousData shows the old series while the next one loads
-  // instead of flashing a skeleton.
+  // Income chart — keyed on the range so toggling 7/30 dager/12 mnd is
+  // cached per range; keepPreviousData shows the old series while the next
+  // one loads instead of flashing a skeleton.
   const incomeQuery = useQuery({
     queryKey: ['income-series', sellerId, incomeRange],
     enabled: !!sellerId,
@@ -155,14 +166,15 @@ const TeacherDashboard = () => {
   }, [queryClient, sellerId]);
 
   // Drawer actions mirror the course page; invalidation refreshes the lists.
-  const handleCancelEnrollment = async (signupId: string, refund: boolean) => {
+  const handleCancelEnrollment = async (signupId: string, refund: boolean): Promise<boolean> => {
     const { error } = await teacherCancelSignup(signupId, { refund });
     if (error) {
-      toast.error(friendlyError(error, 'Kunne ikke avbestille påmeldingen.'));
-      return;
+      toast.error(friendlyError(error, 'Kunne ikke avbestille påmeldingen'));
+      return false;
     }
     toast.success(refund ? 'Påmelding avbestilt og refusjon behandlet' : 'Påmelding avbestilt');
     refetchDashboardData();
+    return true;
   };
 
   useMultiTableSubscription(
@@ -174,6 +186,24 @@ const TeacherDashboard = () => {
     !!currentSeller?.id,
     currentSeller?.id,
   );
+
+  const handleSelectSignup = useCallback(
+    (signupId: string) => {
+      setSelectedSignupId(signupId);
+      setSelectedSignupSnapshot(
+        recentSignupsQuery.data?.find((s) => s.id === signupId) ?? null,
+      );
+    },
+    [recentSignupsQuery.data],
+  );
+
+  // Keep the snapshot current while the row is still present; otherwise keep
+  // the last-known value rather than blanking the open drawer.
+  useEffect(() => {
+    if (selectedSignupId === null) return;
+    const fresh = recentSignupsQuery.data?.find((s) => s.id === selectedSignupId);
+    if (fresh) setSelectedSignupSnapshot(fresh);
+  }, [recentSignupsQuery.data, selectedSignupId]);
 
   const dashboardCourses = nextSessionsQuery.data ?? null;
   const recentSignupsRaw = recentSignupsQuery.data ?? null;
@@ -187,11 +217,14 @@ const TeacherDashboard = () => {
     (recentSignupsQuery.isError && recentSignupsQuery.data === undefined)
       ? 'Kunne ikke laste oversikten.'
       : null;
+  const incomeLoadFailed = incomeQuery.isError && incomeQuery.data === undefined;
+  const retryDashboardLists = useCallback(() => {
+    void nextSessionsQuery.refetch();
+    void recentSignupsQuery.refetch();
+  }, [nextSessionsQuery, recentSignupsQuery]);
 
   return (
-    <div className="flex-1 overflow-y-auto bg-canvas h-full">
-      <MobileTeacherHeader />
-
+    <>
       <PageShell
         title="Oversikt"
         action={<NotificationsPopover />}
@@ -200,19 +233,54 @@ const TeacherDashboard = () => {
             <ErrorState
               title="Kunne ikke laste oversikten"
               message={loadError}
-              onRetry={() => window.location.reload()}
+              onRetry={retryDashboardLists}
             />
           ) : (
             <div className="space-y-12">
+              {/* Chart-first is deliberate here (kept 2026-07-07 after an
+                  audit proposed list-first per ui-patterns §2.5). */}
               <div className="space-y-3">
-                <Suspense fallback={<Skeleton className="h-[280px] w-full rounded-lg" />}>
-                  <IncomeChart
-                    series={incomeSeries}
-                    isLoading={incomeSeries === null}
-                    range={incomeRange}
-                    onRangeChange={setIncomeRange}
-                  />
-                </Suspense>
+                <ErrorBoundary
+                  resetKey={chartRetryCount}
+                  fallback={
+                    <FramedCard title="Inntekt">
+                      <FramedCardPanel className="items-center justify-center p-6">
+                        <ErrorState
+                          variant="inline"
+                          onRetry={() => {
+                            refetchDashboardData();
+                            setChartRetryCount((count) => count + 1);
+                          }}
+                        />
+                      </FramedCardPanel>
+                    </FramedCard>
+                  }
+                >
+                  {incomeLoadFailed ? (
+                    // Query-level failure (not a render crash): the boundary
+                    // never trips, so surface the retryable error card here.
+                    <FramedCard title="Inntekt">
+                      <FramedCardPanel className="items-center justify-center">
+                        <ErrorState
+                          variant="inline"
+                          title="Kunne ikke laste inntekten"
+                          message="Prøv igjen om litt."
+                          onRetry={() => incomeQuery.refetch()}
+                        />
+                      </FramedCardPanel>
+                    </FramedCard>
+                  ) : (
+                    <Suspense fallback={<IncomeChartFallback />}>
+                      <IncomeChart
+                        series={incomeSeries}
+                        isLoading={incomeSeries === null}
+                        isFetching={incomeQuery.isFetching && !incomeQuery.isPending}
+                        range={incomeRange}
+                        onRangeChange={setIncomeRange}
+                      />
+                    </Suspense>
+                  )}
+                </ErrorBoundary>
                 {!isPro && monthPlatformFee > 0 && (
                   <PlatformFeeHint feeNok={monthPlatformFee} />
                 )}
@@ -223,7 +291,7 @@ const TeacherDashboard = () => {
                 <RecentSignupsSection
                   signups={recentSignupsRaw}
                   isLoading={isLoading}
-                  onSelect={setSelectedSignupId}
+                  onSelect={handleSelectSignup}
                 />
               </div>
             </div>
@@ -232,13 +300,39 @@ const TeacherDashboard = () => {
 
       <ParticipantDetailDrawer
         open={selectedSignupId !== null}
-        onOpenChange={(open) => !open && setSelectedSignupId(null)}
-        signup={recentSignupsRaw?.find((s) => s.id === selectedSignupId) ?? null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedSignupId(null);
+            setSelectedSignupSnapshot(null);
+          }
+        }}
+        signup={selectedSignupSnapshot}
         onCancelEnrollment={handleCancelEnrollment}
       />
-    </div>
+    </>
   );
 };
+
+/**
+ * Suspense fallback while the IncomeChart chunk (recharts) loads — mirrors the
+ * real FramedCard shell and the chart's actual height so the chunk-load swap
+ * doesn't jump the layout. The action skeleton stands in for the h-9 (md)
+ * SegmentedTabs range control (~180px wide) so the header row keeps its
+ * real height too.
+ */
+function IncomeChartFallback() {
+  return (
+    <FramedCard
+      title="Inntekt"
+      action={<Skeleton className="h-9 w-44 rounded-full" />}
+    >
+      <FramedCardPanel className="p-5 sm:p-6">
+        <Skeleton className="h-9 w-40" />
+        <Skeleton className="mt-6 h-[220px] w-full rounded-lg sm:h-[260px]" />
+      </FramedCardPanel>
+    </FramedCard>
+  );
+}
 
 /**
  * The free tier's upgrade surface: this month's platform take next to the Pro
@@ -252,7 +346,7 @@ export function PlatformFeeHint({ feeNok }: { feeNok: number }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-panel px-5 py-4 sm:flex-row sm:items-center">
       <p className="min-w-0 flex-1 text-sm text-foreground-muted">
-        Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: 0 kr.
+        Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: {formatKroner(0)}.
       </p>
       <Button asChild variant="secondary" className="w-full shrink-0 sm:w-auto">
         <Link to={routes.settingsBilling}>Se Pro</Link>
@@ -276,17 +370,22 @@ export function UpcomingCoursesSection({
   return (
     <FramedCard title="Neste kurs" className="min-h-56 flex-1">
       {showSkeleton ? (
-        <RowsSkeleton variant="course" />
+        <DelayedFallback>
+          <RowsSkeleton variant="course" />
+        </DelayedFallback>
       ) : items.length === 0 ? (
         <FramedCardPanel className="items-center justify-center">
           <EmptyState
             variant="compact"
             title="Ingen kommende kurs"
             description="Opprett et kurs for å fylle timeplanen."
-            action={
-              <Button asChild variant="default">
-                <Link to={routes.coursesNew}>Opprett kurs</Link>
-              </Button>
+            inlineLink={
+              <Link
+                to={routes.coursesNew}
+                className="font-medium text-primary hover:underline"
+              >
+                Opprett kurs →
+              </Link>
             }
           />
         </FramedCardPanel>
@@ -313,22 +412,24 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="group flex items-center gap-3 px-5 py-4 no-underline outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="group flex items-center gap-3 px-5 py-4 no-underline outline-none focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-foreground">{course.title}</p>
         <p className="truncate text-base text-foreground-muted">{when || '—'}</p>
       </div>
-      {/* Trailing slot: meta at rest, chevron on hover (150ms ease-out swap —
-          transform+opacity only; hover: is hover-capable-device gated). */}
-      <span className="relative flex min-w-4 shrink-0 items-center justify-end">
+      {/* Trailing slot: meta stays put, chevron fades in beside it on hover
+          (150ms ease-out, transform+opacity only). Chevron is always laid
+          out (just invisible at rest) so its space is reserved and nothing
+          shifts when it appears. */}
+      <span className="flex shrink-0 items-center gap-1">
         {hasCapacity && (
-          <span className="inline-block text-sm tabular-nums text-foreground-muted transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-1 group-hover:opacity-0">
+          <span className="text-sm tabular-nums text-foreground-muted">
             {course.signups} / {course.capacity}
           </span>
         )}
-        <ChevronRight className="absolute right-0 size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
+        <ChevronRight className="size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
       </span>
     </Link>
   );
@@ -351,7 +452,9 @@ export function RecentSignupsSection({
   return (
     <FramedCard title="Siste påmeldinger" className="min-h-56 flex-1">
       {showSkeleton ? (
-        <RowsSkeleton variant="signup" />
+        <DelayedFallback>
+          <RowsSkeleton variant="signup" />
+        </DelayedFallback>
       ) : items.length === 0 ? (
         <FramedCardPanel className="items-center justify-center">
           <EmptyState
@@ -392,7 +495,7 @@ function SignupRow({
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="group flex w-full items-center gap-3 px-5 py-4 text-left outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="group flex w-full items-center gap-3 px-5 py-4 text-left outline-none cursor-pointer focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
@@ -404,18 +507,19 @@ function SignupRow({
       {hasExceptionBadge && signup.payment_status && (
         <PaymentBadge status={signup.payment_status} className="shrink-0" />
       )}
-      {/* Trailing slot: timestamp at rest, chevron on hover (150ms ease-out
-          swap — transform+opacity only). The badge never yields to hover. */}
+      {/* Trailing slot: timestamp stays put, chevron fades in beside it on
+          hover (150ms ease-out, transform+opacity only) — reserved space so
+          nothing shifts. The badge never yields to hover. */}
       <span
         className={cn(
-          'relative flex min-w-4 shrink-0 items-center justify-end',
+          'flex shrink-0 items-center gap-1',
           hasExceptionBadge && 'hidden sm:flex',
         )}
       >
-        <span className="inline-block text-sm tabular-nums text-foreground-muted transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-1 group-hover:opacity-0">
+        <span className="text-sm tabular-nums text-foreground-muted">
           {when}
         </span>
-        <ChevronRight className="absolute right-0 size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
+        <ChevronRight className="size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
       </span>
     </button>
   );

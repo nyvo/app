@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation, useSearchParams, type Location } from 'react-router-dom'
+import { Link, Navigate, useLocation, useSearchParams, type Location } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import { Eye, EyeOff, ChevronLeft } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { FieldError } from '@/components/ui/field-error'
 import { Spinner } from '@/components/ui/spinner'
+import { DelayedFallback } from '@/components/ui/delayed-fallback'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFormValidation } from '@/hooks/use-form-validation'
@@ -25,6 +27,20 @@ import { useDocumentTitle } from '@/hooks/use-document-title'
 
 const ROUTES = AUTH_ROUTES
 
+// Shown when a request fails to reach the server (offline / retryable fetch)
+// rather than because the credential or code was wrong.
+const NETWORK_ERROR = 'Får ikke kontakt. Sjekk nettet og prøv igjen.'
+// Shown when a hang timer fires but a session already exists — the login
+// succeeded and only the follow-up profile load is slow. Reassure, don't fail.
+const SLOW_LOGIN_MESSAGE = 'Dette tar lengre tid enn vanlig. Vent litt.'
+
+// A request never reached the server (offline / retryable fetch), as opposed
+// to a definitive "wrong password / bad code" answer. Mirrors the classifier
+// in AuthContext but scoped to the two surfaces this page owns.
+const isNetworkAuthError = (error: { name?: string; status?: number; code?: string }): boolean =>
+  error.name === 'AuthRetryableFetchError' ||
+  ((error.status === 0 || error.status === undefined) && !error.code)
+
 /**
  * Combined auth surface — EMAIL-FIRST (§ auth rework).
  *
@@ -40,7 +56,6 @@ const ROUTES = AUTH_ROUTES
  */
 const AuthPage = () => {
   useDocumentTitle('Logg inn')
-  const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const {
@@ -94,6 +109,9 @@ const AuthPage = () => {
   const [isVerifying, setIsVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState<string | null>(null)
   const [isResending, setIsResending] = useState(false)
+  // Set once the user has resent a confirmation code — a signup-race signal
+  // that they likely already have an account, surfacing a quiet way back.
+  const [hasResent, setHasResent] = useState(false)
   // Seconds until "Send på nytt" re-enables — mirrors Supabase's 60 s
   // per-address OTP rate limit so resending can't run into a 429.
   const [resendCooldown, setResendCooldown] = useState(0)
@@ -104,11 +122,14 @@ const AuthPage = () => {
 
   const email = formData.email.trim().toLowerCase()
 
+  // Track the live session without re-arming the verify effect on auth change —
+  // the hang timers below read it to tell "login succeeded, load is slow" from
+  // "login failed". Synced in an effect (not during render) so the timers see
+  // the latest value; they fire 12s out, long after this settles.
+  const userRef = useRef(user)
   useEffect(() => {
-    if (user && !authLoading && profile) {
-      navigate(resolvePostAuthDestination(profile, redirectAfterLogin, intent), { replace: true })
-    }
-  }, [user, profile, authLoading, navigate, redirectAfterLogin, intent])
+    userRef.current = user
+  }, [user])
 
   // Auto-verify once all 6 digits are entered.
   useEffect(() => {
@@ -122,17 +143,30 @@ const AuthPage = () => {
       const { error } = await supabase.auth.verifyOtp({ email, token: code, type: otpType })
       if (cancelled) return
       if (error) {
+        // A network failure isn't a bad code — say so, and keep the digits so
+        // the user can just retry once they're back online.
+        if (isNetworkAuthError(error)) {
+          setVerifyError(NETWORK_ERROR)
+          setIsVerifying(false)
+          return
+        }
         setVerifyError(AUTH_ERRORS.invalidOrExpiredCode)
         setCode('')
         setIsVerifying(false)
         return
       }
       // Success — stay in the loading state (spinner shown). AuthContext now loads
-      // the profile; the navigate effect fires once it's ready and unmounts us.
+      // the profile; the redirect below fires once it's ready and unmounts us.
       // Safety net: if that never happens (e.g. a transient profile-load failure),
-      // surface an error rather than hanging silently on the code screen.
+      // surface something rather than hanging silently on the code screen.
       hangTimer = setTimeout(() => {
         if (cancelled) return
+        // A session already exists — the login worked, only the profile load is
+        // slow. Reassure and keep the code instead of flashing a false failure.
+        if (userRef.current) {
+          setVerifyError(SLOW_LOGIN_MESSAGE)
+          return
+        }
         setVerifyError(AUTH_ERRORS.generic)
         setCode('')
         setIsVerifying(false)
@@ -163,6 +197,12 @@ const AuthPage = () => {
   )
   const armPasswordHangTimer = () => {
     passwordHangTimerRef.current = setTimeout(() => {
+      // Session already established — the sign-in worked, only the profile load
+      // is slow. Reassure instead of flashing a false failure.
+      if (userRef.current) {
+        setPasswordError(SLOW_LOGIN_MESSAGE)
+        return
+      }
       setPasswordError(AUTH_ERRORS.generic)
       setIsSubmitting(false)
     }, 12000)
@@ -176,6 +216,7 @@ const AuthPage = () => {
   const goToCode = (ctx: { reason: 'confirm' | 'login'; hasPasswordFallback: boolean }) => {
     setCode('')
     setVerifyError(null)
+    setHasResent(false)
     setCodeCtx(ctx)
     setResendCooldown(60) // a code was just sent
     setStep('code')
@@ -280,6 +321,13 @@ const AuthPage = () => {
           setIsSubmitting(false)
           return
         }
+        // Offline / retryable fetch — the password may well be right; don't
+        // accuse the user of a wrong password when the request never landed.
+        if (isNetworkAuthError(error)) {
+          setPasswordError(NETWORK_ERROR)
+          setIsSubmitting(false)
+          return
+        }
         setPasswordError('Passordet stemmer ikke')
         setIsSubmitting(false)
         return
@@ -326,6 +374,7 @@ const AuthPage = () => {
     }
     setCode('')
     setVerifyError(null)
+    setHasResent(true)
     setResendCooldown(60)
   }
 
@@ -334,6 +383,28 @@ const AuthPage = () => {
     setPasswordValue('')
     setPasswordError(null)
     setErrors({})
+  }
+
+  // Already authenticated — redirect immediately rather than via a post-paint
+  // effect, so the login form never flashes before the bounce.
+  if (user && profile) {
+    return (
+      <Navigate
+        to={resolvePostAuthDestination(profile, redirectAfterLogin, intent)}
+        replace
+      />
+    )
+  }
+
+  // A session exists but the profile is still loading — a redirect is imminent.
+  // Hold with a delayed skeleton (nothing for fast loads) instead of flashing
+  // the form.
+  if (authLoading && user) {
+    return (
+      <DelayedFallback>
+        <PageSkeleton />
+      </DelayedFallback>
+    )
   }
 
   // ── Code-entry screen ──────────────────────────────────────────────────────
@@ -396,13 +467,29 @@ const AuthPage = () => {
                     type="button"
                     onClick={handleResend}
                     disabled={isResending}
-                    className="font-medium text-foreground hover:underline disabled:cursor-not-allowed disabled:text-foreground-muted"
+                    className="focus-ring rounded font-medium text-foreground hover:underline disabled:cursor-not-allowed disabled:text-foreground-muted"
                   >
                     Send på nytt
                   </button>
                 </>
               )}
             </p>
+
+            {/* Signup-race escape hatch: once they've resent a confirmation
+                code, they may already have an account — offer a quiet way back
+                to sign in instead of looping on a code that never confirms. */}
+            {isConfirm && hasResent && (
+              <p className="mt-4 text-center text-sm text-foreground-muted">
+                Har du allerede en konto?{' '}
+                <button
+                  type="button"
+                  onClick={backToIdentify}
+                  className="font-medium text-foreground hover:underline"
+                >
+                  Gå tilbake og logg inn.
+                </button>
+              </p>
+            )}
 
             <button
               type="button"
@@ -412,7 +499,7 @@ const AuthPage = () => {
                 if (codeCtx.hasPasswordFallback) setStep('password')
                 else backToIdentify()
               }}
-              className="mt-8 text-sm font-medium text-primary hover:underline"
+              className="focus-ring mt-8 rounded text-sm font-medium text-primary hover:underline"
             >
               {codeCtx.hasPasswordFallback ? 'Bruk passord i stedet' : 'Bruk en annen e-post'}
             </button>
@@ -462,14 +549,18 @@ const AuthPage = () => {
                 aria-invalid={!!passwordError || undefined}
                 aria-describedby={passwordError ? 'password-error' : undefined}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-foreground-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
-                aria-label={showPassword ? 'Skjul passord' : 'Vis passord'}
-              >
-                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-              </button>
+              <span className="absolute right-2 top-1/2 -translate-y-1/2">
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  // relative + after:-inset-2 pads the hit area out to ~44px
+                  // without inflating the visible glyph.
+                  className="relative rounded p-1 text-foreground-muted outline-none transition-colors after:absolute after:-inset-2 hover:text-foreground focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle"
+                  aria-label={showPassword ? 'Skjul passord' : 'Vis passord'}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </span>
             </div>
 
             {isSignup && <PasswordRules password={password} />}
@@ -481,7 +572,7 @@ const AuthPage = () => {
             )}
           </div>
 
-          <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
+          <Button type="submit" loading={isSubmitting} size="lg" className="w-full">
             {isSignup ? 'Opprett konto' : 'Logg inn'}
           </Button>
         </form>
@@ -494,7 +585,7 @@ const AuthPage = () => {
               type="button"
               onClick={handleUseCode}
               disabled={isSubmitting}
-              className="text-sm font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+              className="focus-ring rounded text-sm font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
             >
               Glemt passordet? Logg inn med kode
             </button>
@@ -511,7 +602,7 @@ const AuthPage = () => {
         <h1 className="text-2xl font-medium text-foreground">Logg inn eller opprett konto</h1>
       </div>
 
-      <GoogleAuthButton redirectTo={callbackUrl} variant="secondary" className="rounded-xl" />
+      <GoogleAuthButton redirectTo={callbackUrl} variant="secondary" />
 
       <div className="my-4 flex w-full justify-center">
         <span className="text-sm text-foreground-muted">eller</span>
@@ -540,7 +631,7 @@ const AuthPage = () => {
           )}
         </div>
 
-        <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
+        <Button type="submit" loading={isSubmitting} size="lg" className="w-full">
           Fortsett
         </Button>
       </form>

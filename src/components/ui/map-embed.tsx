@@ -64,7 +64,7 @@ export function MapEmbed({ placeId, lat, lon, className, title = 'Kart' }: MapEm
         >
           Vis kart
         </Button>
-        <p className="text-sm text-foreground-muted">Kartet lastes fra Google Maps.</p>
+        <p className="text-sm text-foreground">Kartet lastes fra Google Maps.</p>
       </div>
     );
   }

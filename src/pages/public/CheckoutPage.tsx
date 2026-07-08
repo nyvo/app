@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,15 +9,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FieldError } from '@/components/ui/field-error';
 import { PageState } from '@/components/page-state/page-state';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { Elements, PaymentElement, useStripe as useStripeHook, useElements } from '@stripe/react-stripe-js';
+import type { Stripe } from '@stripe/stripe-js';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
+import { withTimeout } from '@/lib/with-timeout';
 import { ChevronLeft, Check } from '@/lib/icons';
-import { formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
+import { formatCoursePrice, formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
 import { calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
 import { fetchPublicCourseBySlug, resolveCourseImage, singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { createStripeSession } from '@/services/checkout';
 import { createFreeSignup } from '@/services/signups';
+import { saveFreeReceipt, maskEmail } from '@/lib/free-receipt';
 import { supabase } from '@/lib/supabase';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { osloNowKey, toLocalDate } from '@/utils/dateUtils';
@@ -30,6 +33,21 @@ interface FormState {
   phone: string;
   note: string;
   terms: boolean;
+}
+
+/**
+ * The free-signup edge function (create-free-signup) rejects any course with
+ * price > 0 and only ever enrolls the course's default tier — a paid course
+ * can't be "freed" by picking a zero-price add-on tier. So both the resolved
+ * tier price AND the course price itself must be zero before this page can
+ * route to the no-payment flow. Exported so the free/paid branch decision is
+ * unit-testable independently of the page. The server keeps its own guard.
+ */
+export function deriveIsFree(
+  tierPrice: number | null | undefined,
+  coursePrice: number | null | undefined,
+): boolean {
+  return (tierPrice ?? coursePrice ?? 0) === 0 && coursePrice === 0;
 }
 
 /**
@@ -70,7 +88,10 @@ const CheckoutPage = () => {
     enabled: !!slug && !!courseSlug,
     queryFn: async (): Promise<CheckoutData> => {
       const { data: courseData, error: courseErr } = await fetchPublicCourseBySlug(slug!, courseSlug!);
-      if (courseErr || !courseData) return { kind: 'not-found' };
+      // A query/network failure is retryable — throw so the load-failed branch
+      // renders server-error. Only a null row (error === null) is not-found.
+      if (courseErr) throw courseErr;
+      if (!courseData) return { kind: 'not-found' };
 
       const ownerSlug = courseData.seller?.slug;
       if (ownerSlug && ownerSlug !== slug) {
@@ -130,13 +151,22 @@ const CheckoutPage = () => {
     setSelectedTierId(initial?.id ?? null);
   }, [tiers, searchParams, selectedTierId]);
 
-  const isFree = !course?.price || course.price <= 0;
   const isCancelled = course?.status === 'cancelled';
+
+  const selectedTier = tiers.find((t) => t.id === selectedTierId) ?? null;
+
+  // ── Pricing ─────────────────────────────────────────────────────────────
+  const tierPrice = selectedTier?.price ?? course?.price ?? 0;
+  const fee = calculateServiceFee(tierPrice);
+  const total = tierPrice + fee;
+
+  // Strict semantics (see deriveIsFree): both the selected tier AND the course
+  // itself must be free before this page can route to the no-payment flow.
+  const isFree = deriveIsFree(selectedTier?.price, course?.price);
   // Free signups need no payment rails; paid needs Stripe onboarding complete.
   const paymentReady =
     isFree || (course?.seller?.stripe_onboarding_complete ?? false);
 
-  const selectedTier = tiers.find((t) => t.id === selectedTierId) ?? null;
   const isDropInSelected = selectedTier?.ticket_kind === 'drop_in';
   // Course-wide capacity gates the package tiers only. A drop-in occupies a
   // single class, so it stays purchasable while the NEXT session has room —
@@ -146,6 +176,12 @@ const CheckoutPage = () => {
     course?.max_participants != null
     && course.spots_available <= 0
     && !isDropInSelected;
+
+  // No sellable tiers on a paid course (started, no late signups, no drop-in) —
+  // mirror the rail's "Påmelding stengt": show a warning instead of a working-
+  // looking form whose pay button silently no-ops on the missing tier. Free
+  // courses use the tier-less free path; full courses get their own alert.
+  const closed = !isFree && !isFull && tiers.length === 0;
 
   // Drop-in flow: pick the next class automatically — the first session that
   // hasn't started yet. Same model as BookingPanel; no session picker.
@@ -189,10 +225,9 @@ const CheckoutPage = () => {
     };
   }, [isDropInSelected, course?.id]);
 
-  // ── Pricing ─────────────────────────────────────────────────────────────
-  const tierPrice = selectedTier?.price ?? course?.price ?? 0;
-  const fee = calculateServiceFee(tierPrice);
-  const total = tierPrice + fee;
+  // Drop-in's next-class lookup is still in flight — the buyer can't continue
+  // until it resolves, so show a loading button rather than a dead click.
+  const dropInResolving = isDropInSelected && dropInSessionId === undefined;
 
   // ── Form validation ─────────────────────────────────────────────────────
   // Blur shows format errors on non-empty fields; a failed submit attempt
@@ -225,7 +260,13 @@ const CheckoutPage = () => {
   // ── Advance to payment step — validates against the server BEFORE advancing
   //    so a 409 or "fullt" stays on the form with the right error visible.
   async function handleAdvanceToPayment() {
-    if (isFree || !course || !slug || !selectedTier || submitting) return;
+    if (isFree || !course || !slug || submitting) return;
+    // No tier resolved to sell — should be unreachable (the closed state hides
+    // the form) but never let the pay action be a silent no-op.
+    if (!selectedTier) {
+      setSessionError('Påmeldingen er stengt.');
+      return;
+    }
     // Drop-in needs a resolved next class before the buyer can continue.
     if (isDropInSelected && typeof dropInSessionId !== 'string') return;
     setSubmitting(true);
@@ -276,19 +317,44 @@ const CheckoutPage = () => {
     if (!course || !slug || submitting) return;
     setSubmitting(true);
     setEmailMessage(null);
-    const { error: signupErr } = await createFreeSignup({
+    const { data, error: signupErr } = await createFreeSignup({
       courseId: course.id,
       participantName: formatPersonName(form.name),
       participantEmail: form.email.trim(),
       participantPhone: form.phone.trim() || undefined,
       participantNote: form.note.trim() || undefined,
     });
-    if (signupErr) {
-      toast.error(friendlyError(signupErr, 'Kunne ikke fullføre påmelding. Prøv igjen.'));
+    if (signupErr || !data) {
+      // Surface inline under the email field (like the paid path's 409) rather
+      // than a toast — the dominant free-signup failure is "already signed up",
+      // which belongs next to the email that caused it.
+      setEmailMessage(friendlyError(signupErr, 'Kunne ikke fullføre påmelding. Prøv igjen.'));
       setSubmitting(false);
       return;
     }
-    window.location.href = `/checkout/success?free=true&org=${slug}`;
+
+    // Thread the course context through to the success page so it can render
+    // the same recap pane as the paid path — see src/lib/free-receipt.ts for
+    // why this travels via sessionStorage instead of a server-side lookup.
+    saveFreeReceipt({
+      signupId: data.signupId,
+      courseId: course.id,
+      courseTitle: course.title,
+      startDate: course.next_session?.session_date ?? course.start_date ?? null,
+      timeSchedule: course.time_schedule ?? null,
+      durationMinutes: course.duration ?? null,
+      location: course.location ?? null,
+      locationLat: course.location_lat ?? null,
+      locationLon: course.location_lon ?? null,
+      locationPlaceId: course.location_place_id ?? null,
+      imageUrl: resolveCourseImage(course),
+      sellerName: course.seller?.name ?? '',
+      sellerSlug: course.seller?.slug ?? slug,
+      participantEmailMasked: maskEmail(form.email.trim()),
+      createdAt: new Date().toISOString(),
+    });
+
+    navigate(`/checkout/success?free=true&org=${slug}&sid=${encodeURIComponent(data.signupId)}`);
   }
 
   // ── Contact-step submit — validate on attempt, focus the first invalid
@@ -312,7 +378,11 @@ const CheckoutPage = () => {
 
   // ── States ──────────────────────────────────────────────────────────────
   if (loading) {
-    return <CheckoutSkeleton />;
+    return (
+      <DelayedFallback>
+        <CheckoutSkeleton />
+      </DelayedFallback>
+    );
   }
   if (error === 'load-failed') {
     return <PageState variant="server-error" />;
@@ -342,7 +412,7 @@ const CheckoutPage = () => {
               navigate(backHref);
             }
           }}
-          className="mb-8 px-2 sm:px-6 inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+          className="focus-ring mb-8 rounded inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
         >
           <ChevronLeft className="size-4" strokeWidth={1.75} />
           Tilbake
@@ -353,12 +423,17 @@ const CheckoutPage = () => {
             <AlertDescription>Kurset er avlyst.</AlertDescription>
           </Alert>
         )}
-        {!isCancelled && isFull && (
+        {!isCancelled && closed && (
+          <Alert variant="warning" className="mb-8">
+            <AlertDescription>Påmeldingen er stengt. Kurset har startet.</AlertDescription>
+          </Alert>
+        )}
+        {!isCancelled && !closed && isFull && (
           <Alert variant="warning" className="mb-8">
             <AlertDescription>Kurset er fullt.</AlertDescription>
           </Alert>
         )}
-        {!isCancelled && !isFull && !paymentReady && (
+        {!isCancelled && !closed && !isFull && !paymentReady && (
           <Alert variant="warning" className="mb-8">
             <AlertDescription>Påmelding åpner snart. Studioet fullfører oppsettet.</AlertDescription>
           </Alert>
@@ -366,12 +441,24 @@ const CheckoutPage = () => {
 
         <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-8 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
           <div className="space-y-6 max-w-[552px] min-w-0">
-            {step === 'contact' || isFree ? (
+            {closed ? null : step === 'contact' || isFree ? (
               <>
                 <CheckoutStepHeader step={1} showSteps={!isFree} />
 
+                {/* Mobile-only condensed summary — the full aside summary sits below
+                    the fold on <md, so the buyer needs the course + total in view
+                    before filling in the contact form. */}
+                <div className="md:hidden">
+                  <div className="flex items-center justify-between gap-3 rounded-lg bg-panel px-4 py-3">
+                    <span className="truncate text-sm font-medium text-foreground">{course.title}</span>
+                    <span className="shrink-0 text-sm font-medium tabular-nums text-foreground">
+                      {formatCoursePrice(total)}
+                    </span>
+                  </div>
+                </div>
+
                 <form onSubmit={handleContactSubmit} noValidate className="space-y-6">
-                  <div className="px-2 sm:px-6">
+                  <div>
                     <div className="space-y-4">
                       <Field label="Navn" htmlFor="name">
                         <Input
@@ -382,7 +469,6 @@ const CheckoutPage = () => {
                           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                           aria-invalid={!!nameError}
                           aria-describedby={nameError ? 'name-error' : undefined}
-                          className={nameError ? 'border-danger bg-danger-subtle' : undefined}
                         />
                         {nameError && <FieldError id="name-error">{nameError}</FieldError>}
                       </Field>
@@ -402,7 +488,6 @@ const CheckoutPage = () => {
                           onBlur={() => setEmailTouched(true)}
                           aria-invalid={!!emailError}
                           aria-describedby={emailError ? 'email-error' : undefined}
-                          className={emailError ? 'border-danger bg-danger-subtle' : undefined}
                         />
                         {emailError && <FieldError id="email-error">{emailError}</FieldError>}
                       </Field>
@@ -416,7 +501,6 @@ const CheckoutPage = () => {
                           onBlur={() => setPhoneTouched(true)}
                           aria-invalid={!!phoneError}
                           aria-describedby={phoneError ? 'phone-error' : undefined}
-                          className={phoneError ? 'border-danger bg-danger-subtle' : undefined}
                         />
                         {phoneError && <FieldError id="phone-error">{phoneError}</FieldError>}
                       </Field>
@@ -430,7 +514,7 @@ const CheckoutPage = () => {
                         />
                       </Field>
                       <div>
-                        <label className="flex items-start gap-3 cursor-pointer text-sm text-foreground">
+                        <div className="flex items-start gap-3">
                           <Checkbox
                             id="terms"
                             checked={form.terms}
@@ -441,30 +525,32 @@ const CheckoutPage = () => {
                             aria-describedby={termsError ? 'terms-error' : undefined}
                             className="mt-0.5"
                           />
-                          <span>
-                            Jeg godtar{' '}
+                          {/* The link is a SIBLING of the label, not a descendant — clicking
+                              it must open /terms, not toggle the checkbox. */}
+                          <p className="text-sm text-foreground">
+                            <label htmlFor="terms" className="cursor-pointer">Jeg godtar</label>{' '}
                             <a
                               href="/terms"
                               target="_blank"
                               rel="noreferrer"
-                              className="underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+                              className="focus-ring rounded underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
                             >
                               vilkår og angrerett
                             </a>
                             .
-                          </span>
-                        </label>
+                          </p>
+                        </div>
                         {termsError && (
                           <FieldError id="terms-error" className="pl-7">{termsError}</FieldError>
                         )}
-                        <p className="mt-1.5 pl-7 text-xs text-foreground-muted">
+                        <p className="mt-2 pl-7 text-xs text-foreground-muted">
                           Kurs med fastsatt dato er unntatt angrerett. Se vilkårene.
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="px-2 sm:px-6 space-y-2">
+                  <div className="space-y-2">
                     {isFree ? (
                       <Button
                         type="submit"
@@ -479,7 +565,7 @@ const CheckoutPage = () => {
                         <Button
                           type="submit"
                           className="w-full"
-                          loading={submitting}
+                          loading={submitting || dropInResolving}
                           loadingText="Et øyeblikk…"
                           disabled={!paymentReady || isFull || isCancelled}
                         >
@@ -552,13 +638,13 @@ function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps
   const currentIndex = step - 1;
   if (!showSteps) {
     return (
-      <div className="px-2 sm:px-6">
+      <div>
         <h1 className="text-base font-medium text-foreground">Påmelding</h1>
       </div>
     );
   }
   return (
-    <div className="px-2 sm:px-6">
+    <div>
       <h1 className="text-base font-medium text-foreground">Påmelding</h1>
       <ol className="mt-4 flex items-center">
         {CHECKOUT_STEPS.map((label, i) => {
@@ -570,9 +656,12 @@ function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
+                    // Progress is chrome → near-black fills; azure stays on
+                    // links/selected tints (the current-step halo keeps the
+                    // selection-light ring as its semantic accent).
                     'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums transition-colors',
-                    done && 'bg-primary text-primary-foreground',
-                    current && 'bg-primary text-primary-foreground ring-4 ring-selection-light',
+                    done && 'bg-foreground text-background',
+                    current && 'bg-foreground text-background ring-4 ring-selection-light',
                     !done && !current && 'border border-border text-foreground-muted',
                   )}
                 >
@@ -594,7 +683,7 @@ function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps
               {!isLast && (
                 <span
                   aria-hidden
-                  className={cn('mx-2 h-px flex-1 sm:mx-3', done ? 'bg-primary' : 'bg-border')}
+                  className={cn('mx-2 h-px flex-1 sm:mx-3', done ? 'bg-foreground' : 'bg-border')}
                 />
               )}
             </li>
@@ -641,6 +730,29 @@ function StripeEmbed({
   returnUrl: string;
   errorMessage: string | null;
 }) {
+  // Resolve the Stripe.js instance ourselves (with a timeout) rather than
+  // handing the raw promise to <Elements>: a blocked/slow script (ad blocker,
+  // offline) would otherwise leave the provider in a forever-loading state.
+  // getStripe() memoizes loadStripe app-wide, so this is cheap on remount.
+  const [stripe, setStripe] = useState<Stripe | null>(null);
+  const [stripeFailed, setStripeFailed] = useState(false);
+  useEffect(() => {
+    if (!isStripeConfigured) return;
+    let cancelled = false;
+    withTimeout(getStripe(), 10000, 'Stripe.js lastet ikke i tide')
+      .then((s) => {
+        if (cancelled) return;
+        if (s) setStripe(s);
+        else setStripeFailed(true);
+      })
+      .catch(() => {
+        if (!cancelled) setStripeFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Missing publishable key — surface a clear error instead of an Elements
   // provider that never mounts (buyer would otherwise stare at a forever-skeleton).
   if (!isStripeConfigured) {
@@ -661,7 +773,19 @@ function StripeEmbed({
     );
   }
 
-  if (!clientSecret) {
+  // Stripe.js failed to load (blocked or timed out) — the payment form can
+  // never mount, so stop the skeleton and tell the buyer how to recover.
+  if (stripeFailed) {
+    return (
+      <Alert variant="error">
+        <AlertDescription>
+          Betalingen kunne ikke lastes. Slå av eventuelle annonseblokkere og last siden på nytt.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!clientSecret || !stripe) {
     return (
       <div className="rounded-xl bg-panel p-5">
         <Skeleton className="h-10 w-full" />
@@ -673,12 +797,29 @@ function StripeEmbed({
 
   return (
     <Elements
-      stripe={getStripe()}
+      stripe={stripe}
       options={{
         clientSecret,
         appearance: {
           theme: 'stripe',
-          variables: { fontFamily: 'system-ui, sans-serif', borderRadius: '6px' },
+          variables: {
+            // Stripe loads its PaymentElement in a cross-origin iframe, so it
+            // can't inherit the page's @font-face — 'Geist Variable' is
+            // self-hosted with no public URL to pass via Stripe's `fonts`
+            // config, so this falls back to system-ui in every browser.
+            fontFamily: "'Geist Variable', system-ui, sans-serif",
+            // Stripe's appearance API validates color strings and rejects
+            // OKLCH in some versions — hardcoded to the resolved sRGB hex of
+            // the matching src/index.css tokens rather than risk a silent
+            // fallback to Stripe's default blue:
+            //   colorPrimary → --primary   oklch(0.540 0.150 245) → #0074BF
+            //   colorText    → --foreground (--neutral-12) oklch(0.185 0.004 250) → #111314
+            //   colorDanger  → --danger (--red-11) oklch(0.540 0.170 25) → #BD3838
+            colorPrimary: '#0074BF',
+            colorText: '#111314',
+            colorDanger: '#BD3838',
+            borderRadius: '6px',
+          },
         },
       }}
     >
@@ -752,9 +893,9 @@ function CheckoutSummary({
           )}
           <div className="min-w-0">
             <p className="truncate text-sm text-foreground-muted">{course.seller?.name}</p>
-            <h3 className="mt-0.5 text-base font-medium text-foreground">
+            <h2 className="mt-0.5 text-base font-medium text-foreground">
               {course.title}
-            </h3>
+            </h2>
             {meta && (
               <p className="mt-1 text-sm text-foreground-muted">{meta}</p>
             )}
@@ -787,7 +928,7 @@ function CheckoutSummary({
               <div className="flex items-baseline justify-between gap-3">
                 <span className="text-base font-medium text-foreground">Totalt</span>
                 <span className="text-xl font-medium tabular-nums text-foreground">
-                  {formatKroner(total)}
+                  {formatCoursePrice(total)}
                 </span>
               </div>
               {!isFree && (

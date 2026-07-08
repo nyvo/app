@@ -1,11 +1,18 @@
 import { AnimatePresence } from 'framer-motion'
 import { NotificationRow } from './NotificationRow'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
+import { DelayedFallback } from '@/components/ui/delayed-fallback'
 import type { Notification } from '@/types/database'
 
 interface NotificationFeedProps {
   notifications: Notification[]
   isLoading: boolean
+  /** Fetch error message — only rendered when there's nothing to fall back
+   *  on; a failed background refetch keeps showing the last-known list. */
+  error: string | null
+  onRetry: () => void
   /** Panel-open timestamp; rows seen before it render dimmed. */
   openedAt: string | null
   onActivate: (id: number) => void
@@ -25,34 +32,53 @@ interface NotificationFeedProps {
 export function NotificationFeed({
   notifications,
   isLoading,
+  error,
+  onRetry,
   openedAt,
   onActivate,
   onArchive,
 }: NotificationFeedProps) {
   if (isLoading) {
     return (
-      <div role="status" aria-live="polite">
-        <span className="sr-only">Laster…</span>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div
-            key={i}
-            className="grid grid-cols-[32px_1fr_auto] items-start gap-3 px-4 py-2.5 border-t border-border-subtle first:border-t-0"
-            aria-hidden="true"
-          >
-            <Skeleton className="size-8 rounded-full" />
-            <div className="min-w-0 space-y-1.5">
-              <Skeleton className="h-3.5 w-40" />
-              <Skeleton className="h-3.5 w-56 max-w-full" />
+      <DelayedFallback>
+        <div role="status" aria-live="polite">
+          <span className="sr-only">Laster…</span>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="grid grid-cols-[32px_1fr_auto] items-start gap-3 px-4 py-2.5 border-t border-border-subtle first:border-t-0"
+              aria-hidden="true"
+            >
+              <Skeleton className="size-8 rounded-full" />
+              <div className="min-w-0 space-y-1.5">
+                <Skeleton className="h-3.5 w-40" />
+                <Skeleton className="h-3.5 w-56 max-w-full" />
+              </div>
+              <Skeleton className="h-3 w-10" />
             </div>
-            <Skeleton className="h-3 w-10" />
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </DelayedFallback>
+    )
+  }
+
+  // Error with nothing to fall back on — a background refetch failure with
+  // an existing list keeps showing that list instead of masking it here.
+  if (error && notifications.length === 0) {
+    return (
+      <ErrorState
+        variant="inline"
+        title="Kunne ikke laste varsler"
+        message="Prøv igjen om litt."
+        onRetry={onRetry}
+      />
     )
   }
 
   if (notifications.length === 0) {
-    return <EmptyState />
+    return (
+      <EmptyState variant="compact" title="Ingen nye varsler" />
+    )
   }
 
   // Unresolved action-required items first, then chronological. Stable sort
@@ -76,14 +102,6 @@ export function NotificationFeed({
           />
         ))}
       </AnimatePresence>
-    </div>
-  )
-}
-
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center px-6 py-12 text-center">
-      <p className="text-sm text-foreground">Ingen nye varsler</p>
     </div>
   )
 }

@@ -12,8 +12,8 @@ export const AUTH_VALIDATION = {
 
 export const AUTH_ERRORS = {
   invalidOrExpiredCode: 'Koden er ugyldig eller utløpt',
-  generic: 'Noe gikk galt. Prøv igjen.',
-  rateLimited: 'For mange forsøk. Vent litt før du prøver igjen.',
+  generic: 'Noe gikk galt – prøv igjen',
+  rateLimited: 'For mange forsøk – vent litt før du prøver igjen',
 } as const
 
 // Placeholder rule (CLAUDE.md): default to no placeholder; only allow format

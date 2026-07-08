@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 import OnboardingPage from './OnboardingPage'
 
 // useAuth drives every branch of the onboarding page.
@@ -32,6 +32,11 @@ function authState(overrides: Record<string, unknown>) {
   }
 }
 
+function AuthProbe() {
+  const location = useLocation()
+  return <div>auth page: {location.search}</div>
+}
+
 function renderOnboarding(url: string, state: ReturnType<typeof authState>) {
   mockUseAuth.mockReturnValue(state)
   return render(
@@ -40,6 +45,7 @@ function renderOnboarding(url: string, state: ReturnType<typeof authState>) {
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route path="/overview" element={<div>overview page</div>} />
         <Route path="/join/abc" element={<div>join page</div>} />
+        <Route path="/auth" element={<AuthProbe />} />
       </Routes>
     </MemoryRouter>,
   )
@@ -99,5 +105,24 @@ describe('OnboardingPage intent handling', () => {
       }),
     )
     expect(screen.getByText('join page')).toBeInTheDocument()
+  })
+
+  // Logged-out visitors bounce to /auth with intent/next preserved so the
+  // context survives the round trip (closes the seller-intent-loss item).
+  it('forwards intent/next to /auth when logged out', () => {
+    renderOnboarding(
+      '/onboarding?intent=seller&next=%2Fjoin%2Fabc',
+      authState({ user: null, profile: null }),
+    )
+    expect(
+      screen.getByText(`auth page: ?intent=seller&next=${encodeURIComponent('/join/abc')}`),
+    ).toBeInTheDocument()
+  })
+
+  // Authenticated + initialized but the profile never loaded (transient boot
+  // failure) → a retry surface, not a permanent white screen.
+  it('shows the server-error state when authenticated but profile is missing', () => {
+    renderOnboarding('/onboarding', authState({ profile: null }))
+    expect(screen.getByText('Noe gikk galt')).toBeInTheDocument()
   })
 })

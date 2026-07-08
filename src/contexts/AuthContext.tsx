@@ -27,6 +27,12 @@ interface AuthContextType {
   // "loaded, zero memberships". Role guards must not demote a seller to buyer
   // on a failed fetch.
   sellersLoadFailed: boolean
+  // True when get_seller_operational FAILED while hydrating the current seller,
+  // leaving it on the safe public-column defaults (subscription_plan 'free',
+  // operating_model 'solo', stripe_account_id null). Consumers that gate on
+  // those fields can distinguish "known free/solo" from "unknown, hydrate
+  // failed". Cleared once a later hydrate/refresh succeeds.
+  currentSellerHydrateFailed: boolean
 
   // Auth methods
   signInWithGoogle: (redirectTo?: string) => Promise<{ error: Error | null }>
@@ -167,26 +173,45 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
 // Hydrate operational fields (operating_model, subscription plan/status, updated_at)
 // for a single seller via the member-gated RPC. Returns the seller unchanged on
 // RPC failure or non-member access — UI degrades to the public columns only.
-async function hydrateSellerOperational(seller: Seller): Promise<Seller> {
+// `failed` is true ONLY on a genuine RPC error (network/5xx); a null result
+// (non-member) is a valid empty answer, not a failure.
+async function hydrateSellerOperational(
+  seller: Seller,
+): Promise<{ seller: Seller; failed: boolean }> {
   const { data, error } = await fetchSellerOperational(seller.id)
   if (error) {
     logger.error('Error hydrating seller operational fields:', error)
-    return seller
+    return { seller, failed: true }
   }
-  if (!data) return seller
+  if (!data) return { seller, failed: false }
   return {
-    ...seller,
-    stripe_account_id: data.stripe_account_id,
-    stripe_account_status: data.stripe_account_status,
-    stripe_onboarding_complete: data.stripe_onboarding_complete,
-    operating_model: data.operating_model,
-    subscription_plan: data.subscription_plan,
-    subscription_status: data.subscription_status,
-    subscription_current_period_end: data.subscription_current_period_end,
-    subscription_customer_id: data.subscription_customer_id ?? seller.subscription_customer_id,
-    uses_integrated_payments: data.uses_integrated_payments,
-    updated_at: data.updated_at,
+    seller: {
+      ...seller,
+      stripe_account_id: data.stripe_account_id,
+      stripe_account_status: data.stripe_account_status,
+      stripe_onboarding_complete: data.stripe_onboarding_complete,
+      operating_model: data.operating_model,
+      subscription_plan: data.subscription_plan,
+      subscription_status: data.subscription_status,
+      subscription_current_period_end: data.subscription_current_period_end,
+      subscription_customer_id: data.subscription_customer_id ?? seller.subscription_customer_id,
+      uses_integrated_payments: data.uses_integrated_payments,
+      updated_at: data.updated_at,
+    },
+    failed: false,
   }
+}
+
+// Classify an auth error from getUser(). Only clearly transient transport
+// failures (offline fetch, 5xx, no-status/no-code) keep the session alive; a
+// definitive verdict (401/403, deleted user → auth code + 4xx) signs out. Kept
+// conservative on purpose: a genuinely deleted user must never stay signed in.
+function isTransientAuthError(error: { name?: string; status?: number; code?: string }): boolean {
+  if (error.name === 'AuthRetryableFetchError') return true
+  const { status, code } = error
+  if (typeof status === 'number' && status >= 500) return true
+  if (status === 0) return true
+  return status === undefined && !code
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -200,6 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [sellers, setSellers] = useState<Seller[]>([])
   const [userRole, setUserRole] = useState<SellerMemberRole | null>(null)
   const [sellersLoadFailed, setSellersLoadFailed] = useState(false)
+  const [currentSellerHydrateFailed, setCurrentSellerHydrateFailed] = useState(false)
 
   // Refs to track values without causing re-renders in callbacks
   const currentSellerRef = useRef<Seller | null>(null)
@@ -214,9 +240,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Load user data (profile + sellers)
   // Returns false if the user no longer exists server-side (stale session)
   const loadUserData = useCallback(async (userId: string): Promise<boolean> => {
-    // Verify user still exists server-side (getSession only reads cached JWT)
+    // Verify user still exists server-side (getSession only reads cached JWT).
+    // A transient network/5xx failure here must NOT destroy a valid session —
+    // only a definitive verdict (deleted user, revoked/absent session) signs
+    // out. On a transient error we keep the session and proceed with the cached
+    // user; a downstream profile-fetch failure is surfaced by the route guards.
     const { data: { user: verifiedUser }, error: userError } = await supabase.auth.getUser()
-    if (userError || !verifiedUser) {
+    if (userError) {
+      if (!isTransientAuthError(userError)) {
+        logger.error('User no longer exists server-side, signing out')
+        await supabase.auth.signOut()
+        return false
+      }
+      logger.warn('getUser failed transiently; keeping session and using cached user', userError)
+    } else if (!verifiedUser) {
+      // Succeeded with no user — the session is genuinely invalid.
       logger.error('User no longer exists server-side, signing out')
       await supabase.auth.signOut()
       return false
@@ -267,8 +305,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const savedSeller = loadedSellers.find((s) => s.id === savedSellerId)
       const sellerToSet = savedSeller || loadedSellers[0]
 
-      const hydrated = await hydrateSellerOperational(sellerToSet)
+      const { seller: hydrated, failed: hydrateFailed } = await hydrateSellerOperational(sellerToSet)
       setCurrentSeller(hydrated)
+      setCurrentSellerHydrateFailed(hydrateFailed)
       setSellers((prev) => prev.map((s) => (s.id === hydrated.id ? hydrated : s)))
       setStoredCurrentSellerId(userId, hydrated.id)
 
@@ -344,6 +383,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setCurrentSeller(null)
           setUserRole(null)
           setSellersLoadFailed(false)
+          setCurrentSellerHydrateFailed(false)
           clearStoredCurrentSellerId(signedOutUserId)
           return
         }
@@ -408,8 +448,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // (PaymentsPage, AffiliationsSection) see fresh operating_model.
       const freshSeller = loadedSellers.find((s) => s.id === currentSellerRef.current?.id)
       if (freshSeller) {
-        const hydrated = await hydrateSellerOperational(freshSeller)
+        const { seller: hydrated, failed: hydrateFailed } = await hydrateSellerOperational(freshSeller)
         setCurrentSeller(hydrated)
+        setCurrentSellerHydrateFailed(hydrateFailed)
         setSellers((prev) => prev.map((s) => (s.id === hydrated.id ? hydrated : s)))
       }
       const membership = memberships.find((m) => m.seller?.id === currentSellerRef.current?.id)
@@ -568,6 +609,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return [...prev, seller]
     })
     setCurrentSeller(seller)
+    // Freshly created from the RPC response — the safe defaults are correct
+    // here, not a stale-hydrate fallback, so clear any prior failure flag.
+    setCurrentSellerHydrateFailed(false)
     // The creator is the seller's owner (the RPC no longer echoes the role).
     setUserRole('owner')
     if (userRef.current?.id) setStoredCurrentSellerId(userRef.current.id, seller.id)
@@ -629,8 +673,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Hydrate operational fields for the newly active seller. Fire-and-forget;
       // UI consumers fall back to the public columns until this resolves.
-      void hydrateSellerOperational(seller).then((hydrated) => {
+      void hydrateSellerOperational(seller).then(({ seller: hydrated, failed }) => {
         setCurrentSeller((prev) => (prev?.id === hydrated.id ? hydrated : prev))
+        setCurrentSellerHydrateFailed(failed)
         setSellers((prev) => prev.map((s) => (s.id === hydrated.id ? hydrated : s)))
       })
 
@@ -668,6 +713,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sellers,
     userRole,
     sellersLoadFailed,
+    currentSellerHydrateFailed,
     signInWithGoogle,
     signOut,
     sendMagicLink,
@@ -691,6 +737,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sellersKey,
     userRole,
     sellersLoadFailed,
+    currentSellerHydrateFailed,
     signInWithGoogle,
     signOut,
     sendMagicLink,

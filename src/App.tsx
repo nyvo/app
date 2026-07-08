@@ -6,8 +6,10 @@ import {
   Outlet,
   Route,
   RouterProvider,
+  useLocation,
   useParams,
 } from 'react-router-dom';
+import { MotionConfig } from 'framer-motion';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/query-client';
 import { Toaster } from '@/components/ui/sonner';
@@ -96,12 +98,36 @@ function FlatTeamRoute({ children }: { children: React.ReactNode }) {
  */
 function RootRoute() {
   const { isInitialized, user } = useAuth();
-  // Auth init is cached and usually <200ms — render nothing rather than flash
-  // a loader (Studio § 10). On the rare slow init the user briefly sees blank;
-  // far calmer than a full-screen spinner that flickers in and out.
-  if (!isInitialized) return null;
+  // Auth init is cached and usually <200ms. A delayed skeleton renders nothing
+  // for fast loads (Studio § 10) but keeps a slow init distinguishable from a
+  // crash rather than an indefinite blank.
+  if (!isInitialized) return <DelayedFallback><PageSkeleton /></DelayedFallback>;
   if (user) return <Navigate to="/overview" replace />;
   return <LandingPage />;
+}
+
+/**
+ * Skip link (WCAG 2.4.1) — first tabbable element; visually hidden until
+ * focused. Focuses the page's <main> landmark directly since routes render
+ * their own <main> without a shared id.
+ */
+function SkipLink() {
+  return (
+    <a
+      href="#main"
+      onClick={(e) => {
+        e.preventDefault();
+        const main = document.querySelector('main');
+        if (main) {
+          main.setAttribute('tabindex', '-1');
+          main.focus({ preventScroll: false });
+        }
+      }}
+      className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-full focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-float focus:outline-none focus:ring-2 focus:ring-ring"
+    >
+      Hopp til hovedinnholdet
+    </a>
+  );
 }
 
 /**
@@ -110,10 +136,14 @@ function RootRoute() {
  * components can use useBlocker for unsaved-changes guards.
  */
 function RootChrome() {
+  const location = useLocation();
   return (
     <>
+      <SkipLink />
       <Toaster />
-      <ErrorBoundary>
+      {/* resetKeys by pathname: after a crash, navigating (incl. browser-back)
+          clears the error state so the user isn't stuck on the error page. */}
+      <ErrorBoundary resetKeys={[location.pathname]}>
         <Suspense fallback={<DelayedFallback><PageSkeleton /></DelayedFallback>}>
           <Outlet />
         </Suspense>
@@ -161,7 +191,7 @@ const router = createBrowserRouter(
             <Route path="get-started" element={<GetStartedPage />} />
             <Route path="schedule" element={<SchedulePage />} />
             <Route path="courses" element={<CoursesPage />} />
-            <Route path="courses/new" element={<CourseBuilderPage />} />
+            <Route path="courses/new" element={<CourseBuilderPage />} handle={{ fullBleed: true }} />
             <Route path="courses/:id" element={<CoursePage />} />
             <Route path="studio" element={<StudioPage />} />
             {/* Samarbeid moved into the Studio page (2026-06). Old links and
@@ -248,7 +278,11 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <RouterProvider router={router} />
+        {/* reducedMotion="user": framer-motion transforms are JS-driven, so the
+            CSS prefers-reduced-motion guard in index.css can't reach them. */}
+        <MotionConfig reducedMotion="user">
+          <RouterProvider router={router} />
+        </MotionConfig>
       </AuthProvider>
     </QueryClientProvider>
   );

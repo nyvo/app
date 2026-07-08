@@ -4,24 +4,35 @@ import { ChartContainer } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard'
+import { SegmentedTabs } from '@/components/teacher/SegmentedTabs'
 import { cn, formatKroner } from '@/lib/utils'
 import type { IncomePoint, IncomeRange, IncomeSeries } from '@/services/income'
 
 interface IncomeChartProps {
   series: IncomeSeries | null
   isLoading: boolean
+  /** A background refetch (range switch, revalidation) is in flight — dims
+   *  the plot so stale data under a freshly-selected tab reads as refreshing,
+   *  not final. Distinct from `isLoading`, which is the very first fetch. */
+  isFetching?: boolean
   range: IncomeRange
   onRangeChange: (range: IncomeRange) => void
   /** Override the default custom tooltip — used by dev preview to A/B variants. */
   tooltipContent?: ReactElement
 }
 
+// Labels disclose the actual rolling window (services/income.ts) — no
+// ratified design reference mandates "Uke/Måned/År", and that phrasing read
+// as calendar-aligned periods the rolling windows don't match.
 const RANGE_TABS: { key: IncomeRange; label: string }[] = [
-  { key: 'week', label: 'Uke' },
-  { key: 'month', label: 'Måned' },
-  { key: 'year', label: 'År' },
+  { key: 'week', label: '7 dager' },
+  { key: 'month', label: '30 dager' },
+  { key: 'year', label: '12 mnd' },
 ]
 
+/* Series ink stays azure (--primary) — ratified exception to the
+   --category-* chart-hue rule (design-language.md §Charts); user-reverted
+   2026-07-07, applies only to this chart. Do not "fix" to category-1. */
 const CHART_CONFIG = {
   amount: { label: 'Inntekt', color: 'var(--color-primary)' },
 } as const
@@ -94,7 +105,14 @@ function EdgeTick({ x, y, payload, points }: EdgeTickProps) {
   )
 }
 
-export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipContent }: IncomeChartProps) {
+export function IncomeChart({
+  series,
+  isLoading,
+  isFetching = false,
+  range,
+  onRangeChange,
+  tooltipContent,
+}: IncomeChartProps) {
   const gradientId = useId().replace(/:/g, '')
 
   const total = series?.total ?? 0
@@ -127,7 +145,15 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
   return (
     <FramedCard
       title="Inntekt"
-      action={<QuietRangeToggle value={range} onChange={onRangeChange} />}
+      action={
+        <SegmentedTabs
+          value={range}
+          onChange={onRangeChange}
+          tabs={RANGE_TABS}
+          ariaLabel="Velg tidsrom"
+          size="md"
+        />
+      }
     >
       <FramedCardPanel className="p-5 sm:p-6">
         <div className="flex items-baseline gap-3">
@@ -139,13 +165,19 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
             </span>
           )}
           {hasDelta && (
-            <Badge variant={deltaVariant} size="sm" className="tabular-nums">
+            <Badge
+              variant={deltaVariant}
+              size="sm"
+              className="tabular-nums"
+              title="mot forrige periode"
+              aria-label={`${formatPercent(delta)} mot forrige periode`}
+            >
               {formatPercent(delta)}
             </Badge>
           )}
         </div>
 
-        <div className="relative mt-6">
+        <div className={cn('relative mt-6 transition-opacity', isFetching && 'opacity-60')}>
         {showEmptyMessage && (
           <p
             className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center text-sm text-foreground-muted"
@@ -161,6 +193,7 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
           <AreaChart
             data={points}
             margin={{ top: 8, right: 8, left: 8, bottom: 18 }}
+            accessibilityLayer
           >
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -230,47 +263,6 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
         </div>
       </FramedCardPanel>
     </FramedCard>
-  )
-}
-
-/**
- * Range toggle in the FramedCard header. The active period is a WHITE chip
- * (`bg-surface`) at the system surface radius (`rounded-xl`, 10px — NOT a
- * pill; pills are action buttons). White-on-muted is the container system's
- * own figure/ground (same as the insets), so the selection anchors without
- * shouting — azure was tried here and read as off. Inactive labels are
- * muted text.
- */
-function QuietRangeToggle({
-  value,
-  onChange,
-}: {
-  value: IncomeRange
-  onChange: (range: IncomeRange) => void
-}) {
-  return (
-    <div aria-label="Velg tidsrom" className="inline-flex items-center gap-1">
-      {RANGE_TABS.map((opt) => {
-        const isActive = opt.key === value
-        return (
-          <button
-            key={opt.key}
-            type="button"
-            aria-pressed={isActive}
-            onClick={() => onChange(opt.key)}
-            className={cn(
-              'rounded-xl px-2.5 py-1 text-sm font-medium outline-none transition-colors duration-150',
-              'focus-visible:ring-2 focus-visible:ring-ring-subtle',
-              isActive
-                ? 'bg-surface text-foreground'
-                : 'text-foreground-muted hover:text-foreground focus-visible:text-foreground',
-            )}
-          >
-            {opt.label}
-          </button>
-        )
-      })}
-    </div>
   )
 }
 

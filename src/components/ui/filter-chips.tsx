@@ -44,7 +44,7 @@ export function FilterChips<T extends string>({
             className={cn(
               'inline-flex h-10 items-center gap-2 rounded-full border px-4 text-base font-medium',
               'transition-colors duration-150 outline-none',
-              'focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15',
+              'focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle',
               active
                 ? 'bg-foreground text-background border-foreground'
                 : 'bg-background text-foreground border-border hover:bg-muted',

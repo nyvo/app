@@ -22,7 +22,7 @@ export default function DashboardRouter() {
   // Failed fetch is "unknown", not "buyer" — show a retryable error instead
   // of confidently rendering the wrong dashboard.
   if (sellersLoadFailed) {
-    return <PageState variant="server-error" />
+    return <PageState variant="server-error" as="div" />
   }
 
   const Dashboard = sellers.length > 0 ? TeacherDashboard : BuyerDashboard

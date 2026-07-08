@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug, type PublicSeller } from '@/services/sellers';
 import { toLocalDate } from '@/utils/dateUtils';
@@ -82,7 +83,11 @@ const EmbedCalendarPage = () => {
       {/* Wide enough that the widget's @2xl container breakpoint (672px) is
           reachable in a wide iframe; narrow iframes just get the stacked layout. */}
       <div className="mx-auto w-full max-w-4xl p-4 sm:p-6">
-        {loading && <EmbedSkeleton />}
+        {loading && (
+          <DelayedFallback>
+            <EmbedSkeleton />
+          </DelayedFallback>
+        )}
 
         {!loading && errorKind === 'not-found' && (
           <p className="py-20 text-center text-base text-foreground-muted">

@@ -18,6 +18,7 @@ import { nb } from 'date-fns/locale'
  */
 export function formatRelativeTime(value: string | Date): string {
   const date = typeof value === 'string' ? new Date(value) : value
+  if (Number.isNaN(date.getTime())) return ''
   const now = new Date()
   const seconds = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 1000))
 

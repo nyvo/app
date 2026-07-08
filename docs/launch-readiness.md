@@ -37,26 +37,42 @@ are founder-side config actions and follow-up builds. Split into "flip on at lau
 
 ### Flip on at / around launch (config, secrets, DNS)
 
-- [ ] **`VITE_PRELAUNCH` cutover** — when it flips to `false`, confirm `/auth` is
-      reachable and the landing CTAs (`Kom i gang` → `/auth`) work. Must be set
-      explicitly in the Vercel production env.
-- [ ] **Leaked-password protection** — enable in Supabase → Auth → Settings →
-      Password security (checks HaveIBeenPwned). **Now relevant:** the auth rework
-      reintroduced email + password sign-in, so accounts have passwords again.
-- [ ] **DMARC** — add a DMARC record for `mail.openspot.no`. SPF + DKIM are already
-      effective (Resend sends land); DMARC is the remaining deliverability hardening.
+- [ ] **`VITE_STRIPE_PUBLISHABLE_KEY` in Vercel (LAUNCH BLOCKER)** — verified
+      2026-07-07: no `pk_` key in any deployed JS chunk, so the paid checkout
+      card form cannot mount. Add the sandbox key in Vercel env + redeploy now;
+      switch to `pk_live_` together with `STRIPE_SECRET_KEY` at real-money
+      cutover. Details in `PRELAUNCH.md`.
+- [ ] **`VITE_PRELAUNCH` cutover** — verified 2026-07-07: prod is built with
+      `VITE_PRELAUNCH=true` (prelaunch CTAs statically compiled into the
+      deployed LandingPage chunk), so the flip requires changing the Vercel env
+      **and redeploying** — the value is baked in at build time. After the flip,
+      confirm `/auth` is reachable and the landing CTAs (`Kom i gang` → `/auth`)
+      work.
+- [ ] **Schedule the class-reminder cron** — `send-class-reminders` is deployed
+      but has no `cron.job` row (verified 2026-07-07; the `20260705170000`
+      migration shows as applied, so the schedule was lost after apply). Re-run
+      it before the first course hits T-24h.
+- [ ] **Leaked-password protection** — still disabled (advisor WARN re-confirmed
+      2026-07-07). Enable in Supabase → Auth → Settings → Password security
+      (checks HaveIBeenPwned). **Now relevant:** the auth rework reintroduced
+      email + password sign-in, so accounts have passwords again.
+- [x] **DMARC** — record exists at `_dmarc.openspot.no` (`p=none`, monitor-only;
+      verified via live DNS 2026-07-07), covering the `mail.openspot.no` sender
+      via org-domain fallback. *Remaining (post-launch): consider tightening to
+      `p=quarantine`.*
 - [ ] **Supabase PITR / backups** — confirm point-in-time recovery is enabled on the
       current plan. Migrations are forward-only, so rollback = forward migration +
       redeploy of the prior function version.
-- [ ] **Sentry error monitoring** — code is wired but dormant. Set `VITE_SENTRY_DSN`
-      in the prod env to start capturing production errors (uncaught + ErrorBoundary
-      crashes + `logger.error`). Optionally add sourcemap upload for readable stack
+- [ ] **Sentry error monitoring** — code is wired but dormant (no DSN in the prod
+      bundle, re-confirmed 2026-07-07). Set `VITE_SENTRY_DSN` in the prod env to
+      start capturing production errors (uncaught + ErrorBoundary crashes +
+      `logger.error`). Optionally add sourcemap upload for readable stack
       traces. No DSN = silent no-op.
-- [ ] **Payment-anomaly alerting** — the check + cron are written but not live.
-      `supabase functions deploy ops-health-alert`, set the `OPS_ALERT_EMAIL` secret,
-      then apply the `..._schedule_ops_health_alert_cron` migration. Emails you daily
-      **only if** a money-state anomaly appears. (`ops_health_check()` RPC is already
-      applied and currently reports healthy.)
+- [x] **Payment-anomaly alerting** — live: `ops-health-alert` deployed,
+      `OPS_ALERT_EMAIL=hei@framio.no` set (2026-07-06), cron active in
+      `cron.job` (daily 06:00, verified 2026-07-07). Emails you daily **only
+      if** a money-state anomaly appears; `ops_health_check()` currently
+      reports all zeros.
 
 ### Build (before or shortly after launch)
 
@@ -77,8 +93,14 @@ are founder-side config actions and follow-up builds. Split into "flip on at lau
       `CRON_SECRET` with a fallback to the legacy env name. *Final cleanup (optional):
       set a `CRON_SECRET` function secret, then drop the fallback + old
       `dintero_cron_secret` vault secret + old `DINTERO_CRON_SECRET` function secret.*
-- [ ] **Manual payment smoke test** — the money path has zero e2e coverage. Run the
-      runbook in `PRELAUNCH.md` against Stripe test/live before opening signups.
+- [x] **Manual payment smoke test** — runbook executed 2026-07-06 against the
+      live backend (prod Supabase + Stripe sandbox): Connect KYC onboarding,
+      paid checkout + webhook mint, refund, cancel-course, free signup, course
+      builder, Pro upgrade, rate limiting and crons all verified. Findings and
+      fixes recorded in `PRELAUNCH.md` ("2026-07-06 launch smoke run").
+      *Remaining: drop-in tier purchase untested live (no upcoming course has a
+      drop-in tier); a human 4242 card click-through in the prod UI still needs
+      the publishable key above.*
 
 ## Accepted risks (no action planned)
 

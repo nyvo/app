@@ -65,12 +65,22 @@ describe('ProtectedRoute', () => {
     expect(screen.queryByText('onboarding page')).not.toBeInTheDocument()
   })
 
-  // Authenticated but profile not yet loaded (mid background refresh):
-  // hold rather than route on a missing onboarding flag.
-  it('holds when authenticated but profile has not loaded yet', () => {
-    renderGuarded({ isInitialized: true, isLoading: false, user, profile: null })
+  // Authenticated, mid background refresh (isLoading): profile null is
+  // transient — hold rather than route on a missing onboarding flag.
+  it('holds when authenticated but profile is loading (background refresh)', () => {
+    renderGuarded({ isInitialized: true, isLoading: true, user, profile: null })
     expect(screen.queryByText('protected content')).not.toBeInTheDocument()
     expect(screen.queryByText('onboarding page')).not.toBeInTheDocument()
+    expect(screen.queryByText('auth page')).not.toBeInTheDocument()
+    expect(screen.queryByText('Noe gikk galt')).not.toBeInTheDocument()
+  })
+
+  // Settled (not loading) with a still-missing profile means the profile fetch
+  // genuinely failed — surface a retry instead of a permanent white screen.
+  it('shows the server-error state when settled with no profile', () => {
+    renderGuarded({ isInitialized: true, isLoading: false, user, profile: null })
+    expect(screen.getByText('Noe gikk galt')).toBeInTheDocument()
+    expect(screen.queryByText('protected content')).not.toBeInTheDocument()
     expect(screen.queryByText('auth page')).not.toBeInTheDocument()
   })
 

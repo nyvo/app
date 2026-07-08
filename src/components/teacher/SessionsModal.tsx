@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronRight } from '@/lib/icons';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -14,6 +15,7 @@ import { SessionRescheduleForm } from '@/components/teacher/SessionRescheduleFor
 import { cn } from '@/lib/utils';
 import { friendlyError } from '@/lib/error-messages';
 import { rescheduleCourseSession } from '@/services/courses';
+import { osloTodayKey } from '@/utils/dateUtils';
 import type { CourseSession } from '@/types/database';
 
 interface SessionsModalProps {
@@ -104,7 +106,7 @@ export function SessionsModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialEditSessionId]);
 
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  const today = useMemo(() => osloTodayKey(), [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ordered = useMemo(
     () => sessions.slice().sort((a, b) => a.session_date.localeCompare(b.session_date)),
@@ -143,8 +145,8 @@ export function SessionsModal({
     const notified = data?.notified ?? 0;
     toast.success(
       notified > 0
-        ? `Ny tid lagret. Vi varslet ${notified} ${notified === 1 ? 'deltaker' : 'deltakere'}.`
-        : 'Ny tid lagret.',
+        ? `Ny tid lagret, varslet ${notified} ${notified === 1 ? 'deltaker' : 'deltakere'}`
+        : 'Ny tid lagret',
     );
     onSessionUpdated();
     backToList();
@@ -178,6 +180,11 @@ export function SessionsModal({
           ) : (
             <DialogTitle>Alle timer</DialogTitle>
           )}
+          <DialogDescription className="sr-only">
+            {view === 'reschedule'
+              ? 'Endre dato og tid for denne timen.'
+              : 'Oversikt over kursets timer. Velg en time for å endre dato eller tid.'}
+          </DialogDescription>
         </DialogHeader>
 
         {view === 'list' && (
@@ -188,31 +195,36 @@ export function SessionsModal({
               const dim = isPast || isCancelled;
               const editDisabled = isPast || isCancelled;
               const label = `${cap(weekdayLabel(s.session_date))} ${dayMonth(s.session_date)}`;
+              // Title/time dim together (row-level opacity), but the "Avlyst"
+              // badge sits outside that wrapper so it stays full-opacity and
+              // reads clearly (the pattern SessionRow gets right on Oversikt).
               const cell = (
                 <>
-                  <div className="min-w-0">
+                  <div className={cn('min-w-0', dim && 'opacity-60')}>
                     <p
                       className={cn(
                         'truncate text-base font-medium text-foreground',
-                        isCancelled && 'text-foreground-muted line-through',
+                        isCancelled && 'line-through',
                       )}
                     >
                       {label}
                     </p>
-                    <div
-                      className={cn(
-                        'mt-0.5 flex items-center gap-2 text-sm text-foreground tabular-nums',
-                        isCancelled && 'line-through',
-                      )}
-                    >
-                      {s.start_time && <span>{timeRange(s)}</span>}
-                      {isCancelled && (
-                        <Badge variant="warning" shape="pill" size="sm">
-                          Avlyst
-                        </Badge>
-                      )}
-                    </div>
+                    {s.start_time && (
+                      <p
+                        className={cn(
+                          'mt-0.5 text-sm text-foreground tabular-nums',
+                          isCancelled && 'line-through',
+                        )}
+                      >
+                        {timeRange(s)}
+                      </p>
+                    )}
                   </div>
+                  {isCancelled && (
+                    <Badge variant="warning" shape="pill" size="sm" className="shrink-0">
+                      Avlyst
+                    </Badge>
+                  )}
                   {!editDisabled && (
                     <ChevronRight className="size-5 shrink-0 self-center text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
                   )}
@@ -221,12 +233,7 @@ export function SessionsModal({
               return (
                 <li key={s.id}>
                   {editDisabled ? (
-                    <div
-                      className={cn(
-                        'flex items-center justify-between gap-3 rounded-xl bg-muted px-4 py-3',
-                        dim && 'opacity-60',
-                      )}
-                    >
+                    <div className="flex items-center justify-between gap-3 rounded-lg bg-muted px-4 py-3">
                       {cell}
                     </div>
                   ) : (
@@ -234,7 +241,7 @@ export function SessionsModal({
                       type="button"
                       onClick={() => startReschedule(s)}
                       aria-label={`Endre ${label}`}
-                      className="group flex w-full items-center justify-between gap-3 rounded-xl bg-muted px-4 py-3 text-left transition-colors hover:bg-pressed"
+                      className="group flex w-full items-center justify-between gap-3 rounded-lg bg-muted px-4 py-3 text-left transition-colors hover:bg-hover"
                     >
                       {cell}
                     </button>

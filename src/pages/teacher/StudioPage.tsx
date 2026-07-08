@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Check, ExternalLink } from '@/lib/icons';
+import { ExternalLink } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { UnsavedChangesDialog, useUnsavedChanges } from '@/components/ui/unsaved-changes';
 import { PageTab, PageTabs } from '@/components/ui/page-tabs';
@@ -17,8 +18,8 @@ import { PlacesAutocomplete } from '@/components/ui/places-autocomplete';
 import { MapEmbed } from '@/components/ui/map-embed';
 import type { PlaceDetails } from '@/services/places';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageShell } from '@/components/teacher/PageShell';
+import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
 import { EmbedCodeSection } from '@/components/teacher/studio/EmbedCodeSection';
@@ -27,7 +28,6 @@ import { useLocations } from '@/hooks/use-locations';
 import { friendlyError } from '@/lib/error-messages';
 import { extractEdgeError } from '@/lib/edge-errors';
 import { supabase } from '@/lib/supabase';
-import { cn } from '@/lib/utils';
 import { createLocation, updateLocation } from '@/services/locations';
 import { fetchGuestHost, type GuestHost } from '@/services/affiliations';
 import { renameSellerSlug, updateSeller } from '@/services/sellers';
@@ -37,18 +37,15 @@ import type { Seller } from '@/types/database';
 type HostStudio = GuestHost['host'];
 
 const StudioPage = () => {
-  const { currentSeller, refreshSellers } = useAuth();
+  const { currentSeller, refreshSellers, currentSellerHydrateFailed } = useAuth();
 
   return (
-    <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
-      <MobileTeacherHeader />
-
-      <PageShell
+    <PageShell
         title="Studio"
         action={
           currentSeller?.slug ? (
             <Button onClick={() => window.open(`/${currentSeller.slug}`, '_blank')}>
-              <ExternalLink className="size-4" />
+              <ExternalLink data-icon="inline-start" />
               Se siden din
             </Button>
           ) : null
@@ -58,6 +55,7 @@ const StudioPage = () => {
           <StudioPublicSettings
             seller={currentSeller}
             onSaved={refreshSellers}
+            hydrateFailed={currentSellerHydrateFailed}
           />
         ) : (
           <p className="text-base text-foreground-muted">
@@ -65,38 +63,47 @@ const StudioPage = () => {
           </p>
         )}
       </PageShell>
-    </main>
   );
 };
 
 function StudioPublicSettings({
   seller,
   onSaved,
+  hydrateFailed,
 }: {
   seller: Seller;
   onSaved: () => Promise<void> | void;
+  hydrateFailed: boolean;
 }) {
   const { locations, isLoading: loadingLocations, error: locationsError, refetch } = useLocations(seller.id);
   const primaryLocation = locations[0] ?? null;
 
   const isStudio = seller.operating_model === 'studio';
 
+  const { hash } = useLocation();
+
   // The host storefront this seller's courses show on, if any. Loaded once here
   // because it gates the Samarbeid tab's visibility (a solo seller only sees the
   // tab while an affiliation is active). `undefined` while the fetch is in
-  // flight — the tab simply appears when it lands.
-  const [host, setHost] = useState<HostStudio | null | undefined>(undefined);
+  // flight; `'error'` when it failed — distinct from `null` (no host) so a
+  // fetch failure surfaces a retry instead of silently hiding the tab.
+  const [host, setHost] = useState<HostStudio | null | undefined | 'error'>(undefined);
   const loadHost = useCallback(async () => {
     const { data, error } = await fetchGuestHost(seller.id);
-    setHost(error ? null : (data?.host ?? null));
+    setHost(error ? 'error' : (data?.host ?? null));
   }, [seller.id]);
   useEffect(() => { void loadHost(); }, [loadHost]);
 
   // Studios keep the tab always; solo sellers only while an affiliation exists.
-  const showSamarbeid = isStudio || host != null;
+  // On a host-fetch error keep it reachable when the seller is a studio or
+  // deep-linked to #samarbeid, so the failure shows a retry rather than vanishing.
+  // A stale-default hydrate can't be trusted to tell studio from solo, so the
+  // tab is withheld until a refresh succeeds.
+  const hasHost = host != null && host !== 'error';
+  const showSamarbeid =
+    !hydrateFailed && (isStudio || hasHost || (host === 'error' && hash === '#samarbeid'));
 
-  const { hash } = useLocation();
-  const [tab, setTab] = useState<'profil' | 'sted' | 'samarbeid'>('profil');
+  const [tab, setTab] = useState<'profil' | 'sted' | 'samarbeid' | 'nettsted'>('profil');
   // Joining a studio lands at /studio#samarbeid — open that tab once it renders.
   useEffect(() => {
     if (hash === '#samarbeid' && showSamarbeid) setTab('samarbeid');
@@ -150,14 +157,20 @@ function StudioPublicSettings({
   // inline FieldErrors instead; this feeds the DirtyFormBar's error slot.
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const isDirty = useMemo(() => {
-    const locationDirty = primaryLocation
-      ? placeName.trim() !== primaryLocation.name ||
-        address.trim() !== (primaryLocation.address ?? '')
-      : placeName.trim() !== '' || address.trim() !== '';
-
-    return name.trim() !== seller.name || slug.trim() !== seller.slug || locationDirty;
-  }, [address, name, placeName, primaryLocation, seller.name, slug, seller.slug]);
+  // Split by which tab the dirty field lives on — the Samarbeid/Nettsted tabs
+  // keep the bar visible while dirty (rather than hiding it on tab switch),
+  // and need to know which tab to point the user back to.
+  const profileDirty = name.trim() !== seller.name || slug.trim() !== seller.slug;
+  // Compare the picked place identity too — re-picking a same-name address to
+  // add a map pin (legacy pin-less place) changes only the place id, which
+  // must still surface the save bar.
+  const pickedPlaceId = placeCoords?.placeId ?? null;
+  const locationDirty = primaryLocation
+    ? placeName.trim() !== primaryLocation.name ||
+      address.trim() !== (primaryLocation.address ?? '') ||
+      pickedPlaceId !== (primaryLocation.google_place_id ?? null)
+    : placeName.trim() !== '' || address.trim() !== '' || pickedPlaceId != null;
+  const isDirty = profileDirty || locationDirty;
 
   const { blocker } = useUnsavedChanges(isDirty);
 
@@ -183,14 +196,16 @@ function StudioPublicSettings({
     const trimmedAddress = address.trim();
 
     let blocked = false;
-    if (!trimmedName) {
+    const nameInvalid = !trimmedName;
+    if (nameInvalid) {
       setNameError('Skriv inn et navn.');
       blocked = true;
     } else {
       setNameError(null);
     }
 
-    if (!trimmedSlug) {
+    const slugInvalid = !trimmedSlug;
+    if (slugInvalid) {
       setSlugError('Skriv inn en nettadresse.');
       blocked = true;
     } else {
@@ -201,19 +216,30 @@ function StudioPublicSettings({
     // buyers would get a location line with no map or directions. Only enforced
     // when the name changed, so legacy pin-less places can still save untouched.
     const placeChanged = trimmedPlaceName !== (primaryLocation?.name ?? '');
+    let placeInvalid = false;
     if ((primaryLocation || trimmedAddress) && !trimmedPlaceName) {
       setPlaceError('Skriv inn et navn på stedet.');
       blocked = true;
+      placeInvalid = true;
     } else if (trimmedPlaceName && placeChanged && !placeCoords?.placeId) {
       setPlaceError('Velg et sted fra listen.');
       blocked = true;
+      placeInvalid = true;
     } else {
       setPlaceError(null);
     }
 
     if (blocked) {
-      // Surface the offending field by jumping to its tab.
-      setTab(!trimmedName || !trimmedSlug ? 'profil' : 'sted');
+      // Surface the offending field by jumping to its tab, then focus it once
+      // the panel has rendered — a tab switch alone leaves keyboard/AT users
+      // without a cue for which field needs attention.
+      setTab(nameInvalid || slugInvalid ? 'profil' : 'sted');
+      const focusId = nameInvalid ? 'studio-name' : slugInvalid ? 'studio-slug' : placeInvalid ? 'studio-place-name' : null;
+      if (focusId) {
+        requestAnimationFrame(() => {
+          document.getElementById(focusId)?.focus();
+        });
+      }
       return;
     }
 
@@ -307,7 +333,7 @@ function StudioPublicSettings({
       const isLocalValidation =
         err instanceof Error &&
         (err.message.startsWith('Ugyldig filtype') || err.message.startsWith('Bildet er for stort'));
-      toast.error(isLocalValidation ? err.message : friendlyError(err, 'Kunne ikke laste opp bildet.'));
+      toast.error(isLocalValidation ? err.message : friendlyError(err, 'Kunne ikke laste opp bildet'));
     } finally {
       setSavingPhoto(false);
     }
@@ -319,7 +345,7 @@ function StudioPublicSettings({
     const { error } = await updateSeller(seller.id, { logo_url: null });
     setSavingPhoto(false);
     if (error) {
-      toast.error('Kunne ikke fjerne bildet.');
+      toast.error('Kunne ikke fjerne bildet');
       return;
     }
     setLogoUrl(null);
@@ -369,16 +395,24 @@ function StudioPublicSettings({
             Samarbeid
           </PageTab>
         )}
+        {!!seller.slug && (
+          <PageTab
+            active={tab === 'nettsted'}
+            onClick={() => setTab('nettsted')}
+            id="studio-tab-nettsted"
+            ariaControls="studio-panel-nettsted"
+          >
+            Nettsted
+          </PageTab>
+        )}
       </PageTabs>
 
       {locationsError ? (
-        <div className="rounded-xl bg-panel p-6 sm:p-10">
-          <ErrorState
-            title="Kunne ikke hente studioet ditt"
-            message="Sjekk forbindelsen og prøv igjen."
-            onRetry={() => void refetch()}
-          />
-        </div>
+        <ErrorState
+          title="Kunne ikke hente studioet ditt"
+          message="Sjekk forbindelsen og prøv igjen."
+          onRetry={() => void refetch()}
+        />
       ) : loadingLocations ? (
         // Skeleton held back 200ms (Studio § 10 — no flash-loader for
         // sub-second loads); tabs above stay visible, only the panel is replaced.
@@ -451,12 +485,11 @@ function StudioPublicSettings({
               </div>
             </SettingsRow>
 
-            {seller.slug && <EmbedCodeSection slug={seller.slug} />}
-
             <AccountTypeSection
               seller={seller}
               onChanged={onSaved}
               onBecameSolo={() => setTab('profil')}
+              hydrateFailed={hydrateFailed}
             />
           </SettingsRows>
         </div>
@@ -526,22 +559,60 @@ function StudioPublicSettings({
           id="studio-panel-samarbeid"
           aria-labelledby="studio-tab-samarbeid"
         >
-          <AffiliationsSection
-            seller={seller}
-            host={host}
-            onHostChange={setHost}
-          />
+          {!isStudio && host === 'error' ? (
+            // Solo seller: the whole panel is the guest-host card, so a failed
+            // fetch replaces it with a retry.
+            <ErrorState
+              title="Kunne ikke hente samarbeidet ditt"
+              message="Prøv igjen."
+              onRetry={() => void loadHost()}
+            />
+          ) : (
+            // Studio: the invite link + instructor list don't depend on the
+            // guest-host fetch, so a failure only drops the optional "Vises hos"
+            // sub-card (host coerced to null) — the rest stays usable.
+            <AffiliationsSection
+              seller={seller}
+              host={host === 'error' ? null : host}
+              onHostChange={setHost}
+            />
+          )}
+        </div>
+      )}
+
+      {tab === 'nettsted' && !!seller.slug && (
+        <div
+          role="tabpanel"
+          id="studio-panel-nettsted"
+          aria-labelledby="studio-tab-nettsted"
+        >
+          <SettingsRows>
+            <EmbedCodeSection slug={seller.slug} />
+          </SettingsRows>
         </div>
       )}
         </>
       )}
 
       <DirtyFormBar
-        visible={(isDirty || !!saveError) && tab !== 'samarbeid'}
+        // Stays visible on Samarbeid/Nettsted too — hiding it on tab switch
+        // would silently strand unsaved Profil/Sted changes. Save still works
+        // from any tab (it operates on this page's state, not the visible
+        // panel); the hint just points back to where the changed field lives.
+        visible={isDirty || !!saveError}
         error={saveError}
         isSaving={isSaving}
         onSave={handleSave}
         onCancel={handleCancel}
+        dirtyLabel={
+          tab === 'samarbeid' || tab === 'nettsted'
+            ? profileDirty && locationDirty
+              ? 'Endringene ligger på Profil- og Sted-fanen'
+              : locationDirty
+                ? 'Endringene ligger på Sted-fanen'
+                : 'Endringene ligger på Profil-fanen'
+            : undefined
+        }
       />
       <UnsavedChangesDialog blocker={blocker} />
     </div>
@@ -573,24 +644,32 @@ function StudioRowsSkeleton() {
 
 // ---------------------------------------------------------------------------
 // Kontotype — self-declared identity that gates which tools the seller sees.
-// Picking the other option applies immediately (no save button); the selection
-// is derived from the seller row, so an error leaves it on the original value.
+// Picking the other option asks for confirmation, then applies (no save
+// button); the selection is derived from the seller row, so an error leaves
+// it on the original value.
 // ---------------------------------------------------------------------------
 
 function AccountTypeSection({
   seller,
   onChanged,
   onBecameSolo,
+  hydrateFailed,
 }: {
   seller: Seller;
   onChanged: () => Promise<void> | void;
   onBecameSolo: () => void;
+  hydrateFailed: boolean;
 }) {
   const [pending, setPending] = useState(false);
-  const current = seller.operating_model;
+  // The option waiting on the confirm dialog; null = dialog closed.
+  const [confirmTarget, setConfirmTarget] = useState<'solo' | 'studio' | null>(null);
+  // DB column is plain text — same narrowing as the page's isStudio check.
+  const current: 'solo' | 'studio' =
+    seller.operating_model === 'studio' ? 'studio' : 'solo';
 
-  const handlePick = async (picked: 'solo' | 'studio') => {
-    if (pending || picked === current) return;
+  const handleConfirm = async () => {
+    const picked = confirmTarget;
+    if (!picked || pending || picked === current) return;
     setPending(true);
     const { error } = await supabase.functions.invoke('set-operating-model', {
       body: { sellerId: seller.id, operatingModel: picked },
@@ -601,65 +680,83 @@ function AccountTypeSection({
       const { message } = await extractEdgeError(error);
       toast.error(
         message === 'has_active_affiliates'
-          ? 'Fjern tilknyttede instruktører først.'
-          : 'Kunne ikke endre kontotypen.',
+          ? 'Fjern tilknyttede instruktører først'
+          : 'Kunne ikke endre kontotypen',
       );
       setPending(false);
+      setConfirmTarget(null);
       return;
     }
     await onChanged();
-    toast.success('Kontotypen er oppdatert.');
+    toast.success('Kontotypen er oppdatert');
     if (picked === 'solo') onBecameSolo();
     setPending(false);
+    setConfirmTarget(null);
   };
+
+  if (hydrateFailed) {
+    // operating_model is a stale safe-default here — showing the switch could
+    // render a studio as "Jeg underviser selv". Offer a retry instead.
+    return (
+      <SettingsRow
+        title="Kontotype"
+        description="Styrer hva du ser i verktøyet. Du kan endre når som helst."
+      >
+        <ErrorState
+          title="Kunne ikke hente kontoinformasjon"
+          message="Prøv igjen om litt."
+          onRetry={() => void onChanged()}
+        />
+      </SettingsRow>
+    );
+  }
 
   return (
     <SettingsRow
       title="Kontotype"
       description="Styrer hva du ser i verktøyet. Du kan endre når som helst."
     >
-      <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-4" disabled={pending}>
-        <legend className="sr-only">Velg kontotype</legend>
-        {([
-              {
-                value: 'solo' as const,
-                title: 'Jeg underviser selv',
-                body: 'Egen side med kursene dine.',
-              },
-              {
-                value: 'studio' as const,
-                title: 'Jeg driver et studio',
-                body: 'Studioside med egne og tilknyttede instruktører.',
-              },
-            ]).map((opt) => {
-              const isSelected = current === opt.value;
-              return (
-                <label
-                  key={opt.value}
-                  className={cn(
-                    'flex items-start gap-3 min-h-[7.5rem] rounded-xl bg-muted p-6 cursor-pointer transition-shadow duration-150 hover:bg-muted/70 focus-within:ring-2 focus-within:ring-foreground',
-                    isSelected && 'ring-2 ring-foreground',
-                    pending && 'cursor-not-allowed opacity-70',
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="operatingModel"
-                    value={opt.value}
-                    checked={isSelected}
-                    onChange={() => { void handlePick(opt.value); }}
-                    disabled={pending}
-                    className="sr-only"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">{opt.title}</p>
-                    <p className="mt-1 text-sm text-foreground-muted leading-relaxed">{opt.body}</p>
-                  </div>
-                  {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
-                </label>
-              );
-            })}
-      </fieldset>
+      {/* Same segmented switch as the course builder's Enkelttime/Kursrekke
+          choice — the shared two-option control, not cards or radios. */}
+      <div>
+        <SegmentedTabs<'solo' | 'studio'>
+          value={current}
+          disabled={pending}
+          onChange={(picked) => {
+            if (picked !== current && !pending) setConfirmTarget(picked);
+          }}
+          tabs={[
+            { key: 'solo', label: 'Jeg underviser selv' },
+            { key: 'studio', label: 'Jeg driver et studio' },
+          ]}
+          ariaLabel="Kontotype"
+          role="radiogroup"
+        />
+        <p className="mt-3 text-sm text-foreground-muted">
+          {current === 'solo'
+            ? 'Egen side med kursene dine.'
+            : 'Studioside med egne og tilknyttede instruktører.'}
+        </p>
+      </div>
+
+      <ConfirmDialog
+        open={confirmTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !pending) setConfirmTarget(null);
+        }}
+        title="Bytt kontotype"
+        body={
+          confirmTarget === 'studio' ? (
+            <>Du bytter til <strong>Jeg driver et studio</strong> og får en studioside med egne og tilknyttede instruktører.</>
+          ) : (
+            <>Du bytter til <strong>Jeg underviser selv</strong> og får en egen side med kursene dine.</>
+          )
+        }
+        actionLabel="Bytt kontotype"
+        onConfirm={() => void handleConfirm()}
+        loading={pending}
+        loadingText="Bytter"
+      />
     </SettingsRow>
   );
 }

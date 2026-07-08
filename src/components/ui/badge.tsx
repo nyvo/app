@@ -19,20 +19,23 @@ import { cn } from "@/lib/utils"
  * for a payment status — use PaymentBadge so copy + silence rules stay centralized.
  */
 const badgeVariants = cva(
-  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap border font-medium transition-colors duration-150 ease-out focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 [&>svg]:pointer-events-none",
+  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap border font-medium transition-colors duration-150 ease-out focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 [&>svg]:pointer-events-none",
   {
     variants: {
       variant: {
+        // default = neutral: badges are muted-fill chips per the design
+        // language; azure fills are banned on chrome, so there is no
+        // azure badge variant to fall back to.
         default:
-          "bg-primary text-primary-foreground border-transparent [a]:hover:bg-primary/80",
+          "bg-muted text-foreground border-transparent",
         secondary:
-          "bg-secondary text-secondary-foreground border-transparent [a]:hover:bg-secondary/80",
+          "bg-secondary text-secondary-foreground border-transparent [a]:hover:bg-active",
         outline:
           "bg-transparent border-border text-foreground [a]:hover:bg-muted",
         ghost:
           "bg-transparent border-transparent hover:bg-muted",
         destructive:
-          "bg-danger-subtle text-danger border-transparent focus-visible:ring-danger/20 [a]:hover:bg-danger/20",
+          "bg-danger-subtle text-danger border-transparent focus-visible:ring-danger/20",
         success:
           "bg-success-subtle text-success border-transparent",
         warning:
@@ -55,11 +58,11 @@ const badgeVariants = cva(
       shape: {
         // Card meta / counts / decorative chips — fully rounded pill
         pill: "rounded-full",
-        // Status in tables / rows — slightly rounded rectangle
-        rect: "rounded-md",
+        // Status in tables / rows — slightly rounded rectangle (badge radius per scale)
+        rect: "rounded-lg",
       },
       size: {
-        xs: "h-4 px-1.5 text-[10px] leading-none [&>svg]:size-2.5",
+        xs: "h-4 px-1.5 text-[11px] leading-none [&>svg]:size-2.5",
         sm: "h-6 px-2.5 text-xs [&>svg]:size-3.5",
         md: "h-7 px-3 text-sm [&>svg]:size-4",
       },

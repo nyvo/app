@@ -6,6 +6,40 @@ not strict dependency.
 
 ---
 
+## 2026-07-07 live cross-check (prod bundle + remote DB verified)
+
+Re-verified the open items below against what is actually live: downloaded the
+deployed openspot.no bundle (all 146 JS chunks), queried the remote `cron.job`
+table, Supabase migration history, security advisors, and DNS.
+
+- **`VITE_STRIPE_PUBLISHABLE_KEY` still missing** — no `pk_` string in any of
+  the 146 deployed chunks. Blocker stands.
+- **Prod is in PRELAUNCH mode** — the deployed LandingPage chunk has the
+  prelaunch variant statically compiled in ("Ta kontakt" / "Kommer snart."
+  CTAs are unconditional data), i.e. `VITE_PRELAUNCH=true` was set at build
+  time. The flip requires changing the Vercel env **and redeploying** — the
+  value is baked into the bundle, not read at runtime.
+- **Class-reminder cron still unscheduled** — `cron.job` has 9 active jobs;
+  `send-class-reminders` is not among them, even though migration
+  `20260705170000_class_reminder_cron` is recorded as applied on remote. The
+  schedule was lost after apply; re-run it.
+- **Sentry still dormant** — no DSN / `ingest.sentry.io` in the prod bundle.
+- **DMARC still `p=none`** — confirmed via live DNS.
+- **Leaked-password protection still disabled** — advisor WARN active.
+- **No migration drift** — remote has 194 applied migrations; repo has 194
+  files with the same head (`20260706120000`).
+- **Prod deploy is current** — the bundle contains the 2026-07-05/06
+  booking-rail strings, so openspot.no is running today's `main`.
+- **Ops crons healthy** — `sweep-pending-payments`, `send-pending-confirmations`,
+  `ops-health-alert` (daily 06:00), `cleanup-old-notifications-monthly` etc.
+  all active in `cron.job`.
+
+Not verifiable from here (needs dashboard access): Stripe live-mode settings
+(Link/Klarna, Apple Pay domain, billing emails, dunning, Stripe Tax), Supabase
+PITR/backups, function secrets.
+
+---
+
 ## 2026-07-06 launch smoke run (manual runbook executed)
 
 The manual smoke-test runbook below was run against the live backend (prod
@@ -133,10 +167,12 @@ propagate everywhere, incl. `teacher-cancel-signup`).
   If Stripe's dunning final action is "mark unpaid" (not cancel), a non-payer
   keeps Pro forever. Remap `unpaid`→`canceled` if so. (Not changed in code.)
 - **Schedule the class-reminder cron** — `send-class-reminders` is deployed but
-  has no `cron.job` row (confirmed 2026-07-06); re-run the schedule from
+  has no `cron.job` row (re-confirmed 2026-07-07; the migration shows as applied
+  on remote, so the schedule was lost after apply); re-run the schedule from
   `20260705170000` before the first course hits T-24h.
-- **Set ops-alert env** — `OPS_ALERT_EMAIL` + Resend vars, or `ops-health-alert`
-  stays a no-op.
+- ~~**Set ops-alert env**~~ — DONE 2026-07-06: `OPS_ALERT_EMAIL=hei@framio.no`
+  set and the `ops-health-alert` cron is live (daily 06:00, verified in
+  `cron.job` 2026-07-07).
 - **Deferred (low)** — backend test suite (sweep/capacity/refund/RLS/webhook);
   re-auth on `delete-account`; anon-RPC rate limits
   (`get_signup_by_stripe_id`, `lookup_seller_invite_link`); advisor unused-index
