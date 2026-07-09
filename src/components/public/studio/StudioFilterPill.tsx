@@ -22,10 +22,9 @@ interface StudioFilterPillProps<T extends string> {
 }
 
 /**
- * Quiet text-and-chevron filter trigger for the schedule's filter row. Kept
- * deliberately light — borderless, same weight as the tabs it sits beside —
- * so it reads as a sibling control, not an overpowering button. The selected
- * value is the signal; an applied filter darkens from muted to foreground.
+ * Muted-pill filter trigger for the agenda's one control row (mockup Q1):
+ * borderless rounded-full grey fill, the selected value is the label. An
+ * applied filter darkens from muted to foreground — the fill stays quiet.
  */
 export function StudioFilterPill<T extends string>({
   value,
@@ -41,8 +40,8 @@ export function StudioFilterPill<T extends string>({
       <SelectTrigger
         aria-label={ariaLabel}
         className={cn(
-          'h-8 gap-1 rounded-md border-transparent bg-transparent px-2 text-sm font-medium',
-          'hover:bg-muted [&_svg]:size-3.5',
+          'h-8 gap-1 rounded-full border-transparent bg-muted px-3.5 text-sm font-medium',
+          'hover:bg-border-subtle/60 [&_svg]:size-3.5',
           active ? 'text-foreground' : 'text-foreground-muted hover:text-foreground',
         )}
       >
