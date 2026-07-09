@@ -152,13 +152,6 @@ function AgendaRow({
   const duration = durationLabel(course);
   const sub = subLabel(course);
   const price = entryPrice(course);
-  const scarcity =
-    bookability === 'open'
-    && course.max_participants !== null
-    && course.spots_available > 0
-    && course.spots_available <= 3
-      ? `${course.spots_available} ${course.spots_available === 1 ? 'plass' : 'plasser'} igjen`
-      : null;
 
   const body = (
     <>
@@ -177,7 +170,9 @@ function AgendaRow({
       </div>
 
       {/* Fixed right column: price always renders (also on full/cancelled
-        * rows), the pill under it carries the bookable state. */}
+        * rows), the pill under it carries the bookable state. Scarcity is
+        * deliberately NOT shown here — urgency copy lives on the detail
+        * page only. */}
       <div className="shrink-0 flex flex-col items-end gap-1.5">
         <span className="text-[15px] font-medium tabular-nums whitespace-nowrap text-foreground">
           {price.from && price.amount ? (
@@ -189,7 +184,6 @@ function AgendaRow({
             formatCoursePrice(price.amount)
           )}
         </span>
-        {scarcity && <span className="text-sm text-warning whitespace-nowrap">{scarcity}</span>}
         <span
           className={cn(
             'inline-flex h-8 items-center rounded-full px-3.5 text-sm font-medium transition-colors duration-150',

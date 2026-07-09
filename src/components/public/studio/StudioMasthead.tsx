@@ -79,7 +79,7 @@ function LogoTile({ organization }: { organization: PublicSeller }) {
   const logoUrl = organization.logo_url;
 
   const frame =
-    'size-18 shrink-0 rounded-2xl overflow-hidden flex items-center justify-center border-[3px] border-background';
+    'size-18 shrink-0 rounded-full overflow-hidden flex items-center justify-center border-[3px] border-background';
 
   if (logoUrl && !logoFailed) {
     return (

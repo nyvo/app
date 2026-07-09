@@ -177,7 +177,6 @@ const PublicCoursesPage = () => {
           value={typeFilter}
           onChange={setTypeFilter}
           options={typeOptions}
-          allValue="all"
           ariaLabel="Filtrer på kurstype"
         />
       )}
@@ -186,7 +185,6 @@ const PublicCoursesPage = () => {
           value={instructorFilter}
           onChange={setInstructorFilter}
           options={instructorOptions}
-          allValue="all"
           ariaLabel="Filtrer på instruktør"
         />
       )}
@@ -267,7 +265,7 @@ function StudioPageSkeleton() {
       <div className="h-32 sm:h-44 w-full bg-muted" />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Profile lockup — overlapping logo, name + location stacked under */}
-        <Skeleton className="relative -mt-9 size-18 rounded-2xl border-[3px] border-background" />
+        <Skeleton className="relative -mt-9 size-18 rounded-full border-[3px] border-background" />
         <Skeleton className="mt-4 h-7 w-56 max-w-full" />
         <Skeleton className="mt-2.5 h-4 w-72 max-w-full" />
         {/* Filter pills + date-grouped agenda rows */}
