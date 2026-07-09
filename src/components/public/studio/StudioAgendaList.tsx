@@ -118,7 +118,7 @@ function GroupHeading({
   );
 }
 
-const STATE_LABELS = { full: 'Fullt', closed: 'Stengt', cancelled: 'Avlyst' } as const;
+const CTA_LABELS = { open: 'Reserver', full: 'Fullt', closed: 'Stengt', cancelled: 'Avlyst' } as const;
 
 function AgendaRow({
   course,
@@ -176,24 +176,30 @@ function AgendaRow({
         {sub && <p className="mt-0.5 text-sm text-foreground-muted truncate">{sub}</p>}
       </div>
 
-      <div className="shrink-0 flex flex-col items-end gap-1">
-        {bookability === 'open' ? (
-          <span className="text-[15px] font-medium tabular-nums whitespace-nowrap text-foreground">
-            {price.from && price.amount ? (
-              <>
-                <span className="font-normal text-foreground-muted">fra </span>
-                {formatKroner(price.amount)}
-              </>
-            ) : (
-              formatCoursePrice(price.amount)
-            )}
-          </span>
-        ) : (
-          <span className="text-[15px] text-foreground-muted whitespace-nowrap">
-            {STATE_LABELS[bookability]}
-          </span>
-        )}
+      {/* Fixed right column: price always renders (also on full/cancelled
+        * rows), the pill under it carries the bookable state. */}
+      <div className="shrink-0 flex flex-col items-end gap-1.5">
+        <span className="text-[15px] font-medium tabular-nums whitespace-nowrap text-foreground">
+          {price.from && price.amount ? (
+            <>
+              <span className="font-normal text-foreground-muted">fra </span>
+              {formatKroner(price.amount)}
+            </>
+          ) : (
+            formatCoursePrice(price.amount)
+          )}
+        </span>
         {scarcity && <span className="text-sm text-warning whitespace-nowrap">{scarcity}</span>}
+        <span
+          className={cn(
+            'inline-flex h-8 items-center rounded-full px-3.5 text-sm font-medium transition-colors duration-150',
+            bookability === 'open'
+              ? 'bg-muted text-foreground group-hover:bg-foreground group-hover:text-background'
+              : 'bg-muted text-foreground-muted',
+          )}
+        >
+          {CTA_LABELS[bookability]}
+        </span>
       </div>
     </>
   );
@@ -216,7 +222,7 @@ function AgendaRow({
           to={`/${linkSlug}/${course.slug}`}
           state={{ fromSlug, fromName }}
           className={cn(
-            'flex items-center gap-4 py-4 -mx-3 px-3 rounded-xl transition-colors hover:bg-hover',
+            'group flex items-center gap-4 py-4 -mx-3 px-3 rounded-xl transition-colors hover:bg-hover',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           )}
         >
@@ -227,11 +233,10 @@ function AgendaRow({
   );
 }
 
-/** Second line of the time stack: «Nettkurs» replaces the duration when
- * delivery is online; a multi-day workshop reads «2 dager»; otherwise the
- * per-session length in minutes. */
+/** Second line of the time stack — always a duration, so the slot reads
+ * the same on every row: a multi-day workshop reads «2 dager», otherwise
+ * the per-session length in minutes. */
 function durationLabel(course: PublicCourseWithDetails): string {
-  if (course.delivery_mode === 'online') return 'Nettkurs';
   if (
     course.format === 'single'
     && course.start_date
@@ -247,7 +252,8 @@ function durationLabel(course: PublicCourseWithDetails): string {
 }
 
 /** Second line of the title stack: «8 økter · Ingrid Larsen» for a series,
- * instructor alone for a workshop or drop-in class — no type chips. */
+ * instructor alone for a workshop or drop-in class — no type chips. Online
+ * delivery is a detail, so «Nettkurs» lives here, not in the time stack. */
 function subLabel(course: PublicCourseWithDetails): string {
   const parts: string[] = [];
   if (course.format === 'series') {
@@ -255,6 +261,7 @@ function subLabel(course: PublicCourseWithDetails): string {
     if (sessions && sessions > 1) parts.push(`${sessions} økter`);
   }
   if (course.instructor_name) parts.push(course.instructor_name);
+  if (course.delivery_mode === 'online') parts.push('Nettkurs');
   return parts.join(' · ');
 }
 
