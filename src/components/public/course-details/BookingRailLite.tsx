@@ -158,41 +158,43 @@ export function BookingRailLite({
 
             {/* Price — line items + one prominent total (the focal price). */}
             {selectedTile && (
-              ticketPrice > 0 ? (
-                <div className="space-y-2">
-                  <dl className="space-y-2.5">
-                    <div className="flex items-baseline justify-between gap-3 text-base">
-                      <dt className="text-foreground-muted">
-                        {selectedTile.label}
-                        {/* Prorated with no selector on screen: the weeks-left
-                            cue is the only thing explaining the reduced price. */}
-                        {tiles.length === 1 && selectedTile.prorated && selectedTile.sublabel && (
-                          <span className="block text-sm">{selectedTile.sublabel}</span>
-                        )}
-                      </dt>
-                      <dd className="tabular-nums text-foreground">{formatKroner(ticketPrice)}</dd>
-                    </div>
-                    {serviceFee > 0 && (
+              <div key={selectedTile?.id ?? 'none'} className="animate-in fade-in-0 duration-150">
+                {ticketPrice > 0 ? (
+                  <div className="space-y-2">
+                    <dl className="space-y-2.5">
                       <div className="flex items-baseline justify-between gap-3 text-base">
-                        <dt className="text-foreground-muted">Tjenestegebyr</dt>
-                        <dd className="tabular-nums text-foreground-muted">{formatKroner(serviceFee)}</dd>
+                        <dt className="text-foreground-muted">
+                          {selectedTile.label}
+                          {/* Prorated with no selector on screen: the weeks-left
+                              cue is the only thing explaining the reduced price. */}
+                          {tiles.length === 1 && selectedTile.prorated && selectedTile.sublabel && (
+                            <span className="block text-sm">{selectedTile.sublabel}</span>
+                          )}
+                        </dt>
+                        <dd className="tabular-nums text-foreground">{formatKroner(ticketPrice)}</dd>
                       </div>
-                    )}
-                    <div className="flex items-baseline justify-between gap-3 border-t border-border pt-3">
-                      <dt className="text-base font-medium text-foreground">Totalt</dt>
-                      <dd className="text-xl font-medium tabular-nums text-foreground">
-                        {formatKroner(total)}
-                      </dd>
-                    </div>
-                  </dl>
-                  <p className="text-sm text-foreground-muted">Ingen mva. kommer i tillegg.</p>
-                </div>
-              ) : (
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-base font-medium text-foreground">{selectedTile.label}</span>
-                  <span className="text-xl font-medium text-foreground">Gratis</span>
-                </div>
-              )
+                      {serviceFee > 0 && (
+                        <div className="flex items-baseline justify-between gap-3 text-base">
+                          <dt className="text-foreground-muted">Tjenestegebyr</dt>
+                          <dd className="tabular-nums text-foreground-muted">{formatKroner(serviceFee)}</dd>
+                        </div>
+                      )}
+                      <div className="flex items-baseline justify-between gap-3 border-t border-border pt-3">
+                        <dt className="text-base font-medium text-foreground">Totalt</dt>
+                        <dd className="text-xl font-medium tabular-nums text-foreground">
+                          {formatKroner(total)}
+                        </dd>
+                      </div>
+                    </dl>
+                    <p className="text-sm text-foreground-muted">Ingen mva. kommer i tillegg.</p>
+                  </div>
+                ) : (
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-base font-medium text-foreground">{selectedTile.label}</span>
+                    <span className="text-xl font-medium text-foreground">Gratis</span>
+                  </div>
+                )}
+              </div>
             )}
 
             {paymentNotReady ? (

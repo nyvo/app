@@ -149,13 +149,11 @@ const LandingPage = () => {
             </div>
           )}
 
-          {/* Hero — product on gradient frame */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.24, ease: [0.16, 1, 0.3, 1] }}
-            className="mx-auto mt-16 max-w-5xl md:mt-20"
-          >
+          {/* Hero — product on gradient frame. Plain div (not motion.div): this
+              image is the LCP element and fetchPriority="high" — holding it at
+              opacity:0 for a framer-motion fade delays LCP since Chrome won't
+              count an opacity:0 element as painted. */}
+          <div className="mx-auto mt-16 max-w-5xl md:mt-20">
             <ProductFrame>
               <img
                 src="/landing-dashboard.webp"
@@ -167,7 +165,7 @@ const LandingPage = () => {
                 style={{ imageRendering: '-webkit-optimize-contrast' }}
               />
             </ProductFrame>
-          </motion.div>
+          </div>
         </div>
       </section>
 

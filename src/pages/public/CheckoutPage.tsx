@@ -441,168 +441,172 @@ const CheckoutPage = () => {
 
         <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-8 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
           <div className="space-y-6 max-w-[552px] min-w-0">
-            {closed ? null : step === 'contact' || isFree ? (
-              <>
-                <CheckoutStepHeader step={1} showSteps={!isFree} />
+            {closed ? null : (
+              <div key={step} className="animate-in fade-in-0 duration-200 space-y-6">
+                {step === 'contact' || isFree ? (
+                  <>
+                    <CheckoutStepHeader step={1} showSteps={!isFree} />
 
-                {/* Mobile-only condensed summary — the full aside summary sits below
-                    the fold on <md, so the buyer needs the course + total in view
-                    before filling in the contact form. */}
-                <div className="md:hidden">
-                  <div className="flex items-center justify-between gap-3 rounded-lg bg-panel px-4 py-3">
-                    <span className="truncate text-sm font-medium text-foreground">{course.title}</span>
-                    <span className="shrink-0 text-sm font-medium tabular-nums text-foreground">
-                      {formatCoursePrice(total)}
-                    </span>
-                  </div>
-                </div>
-
-                <form onSubmit={handleContactSubmit} noValidate className="space-y-6">
-                  <div>
-                    <div className="space-y-4">
-                      <Field label="Navn" htmlFor="name">
-                        <Input
-                          id="name"
-                          type="text"
-                          autoComplete="name"
-                          value={form.name}
-                          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                          aria-invalid={!!nameError}
-                          aria-describedby={nameError ? 'name-error' : undefined}
-                        />
-                        {nameError && <FieldError id="name-error">{nameError}</FieldError>}
-                      </Field>
-                      <Field label="E-post" htmlFor="email">
-                        <Input
-                          id="email"
-                          type="email"
-                          autoComplete="email"
-                          value={form.email}
-                          onChange={(e) => {
-                            setForm((f) => ({ ...f, email: e.target.value }));
-                            if (emailMessage || sessionError) {
-                              setEmailMessage(null);
-                              setSessionError(null);
-                            }
-                          }}
-                          onBlur={() => setEmailTouched(true)}
-                          aria-invalid={!!emailError}
-                          aria-describedby={emailError ? 'email-error' : undefined}
-                        />
-                        {emailError && <FieldError id="email-error">{emailError}</FieldError>}
-                      </Field>
-                      <Field label="Telefon" htmlFor="phone">
-                        <Input
-                          id="phone"
-                          type="tel"
-                          autoComplete="tel"
-                          value={form.phone}
-                          onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                          onBlur={() => setPhoneTouched(true)}
-                          aria-invalid={!!phoneError}
-                          aria-describedby={phoneError ? 'phone-error' : undefined}
-                        />
-                        {phoneError && <FieldError id="phone-error">{phoneError}</FieldError>}
-                      </Field>
-                      <Field label="Melding (valgfritt)" htmlFor="note">
-                        <Textarea
-                          id="note"
-                          value={form.note}
-                          onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-                          placeholder="Allergier, skader eller annet vi bør vite."
-                          rows={4}
-                        />
-                      </Field>
-                      <div>
-                        <div className="flex items-start gap-3">
-                          <Checkbox
-                            id="terms"
-                            checked={form.terms}
-                            onCheckedChange={(v) =>
-                              setForm((f) => ({ ...f, terms: v === true }))
-                            }
-                            aria-invalid={!!termsError}
-                            aria-describedby={termsError ? 'terms-error' : undefined}
-                            className="mt-0.5"
-                          />
-                          {/* The link is a SIBLING of the label, not a descendant — clicking
-                              it must open /terms, not toggle the checkbox. */}
-                          <p className="text-sm text-foreground">
-                            <label htmlFor="terms" className="cursor-pointer">Jeg godtar</label>{' '}
-                            <a
-                              href="/terms"
-                              target="_blank"
-                              rel="noreferrer"
-                              className="focus-ring rounded underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
-                            >
-                              vilkår og angrerett
-                            </a>
-                            .
-                          </p>
-                        </div>
-                        {termsError && (
-                          <FieldError id="terms-error" className="pl-7">{termsError}</FieldError>
-                        )}
-                        <p className="mt-2 pl-7 text-xs text-foreground-muted">
-                          Kurs med fastsatt dato er unntatt angrerett. Se vilkårene.
-                        </p>
+                    {/* Mobile-only condensed summary — the full aside summary sits below
+                        the fold on <md, so the buyer needs the course + total in view
+                        before filling in the contact form. */}
+                    <div className="md:hidden">
+                      <div className="flex items-center justify-between gap-3 rounded-lg bg-panel px-4 py-3">
+                        <span className="truncate text-sm font-medium text-foreground">{course.title}</span>
+                        <span className="shrink-0 text-sm font-medium tabular-nums text-foreground">
+                          {formatCoursePrice(total)}
+                        </span>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    {isFree ? (
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        loading={submitting}
-                        disabled={!paymentReady || isFull || isCancelled}
-                      >
-                        Bekreft påmelding
-                      </Button>
-                    ) : (
-                      <>
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          loading={submitting || dropInResolving}
-                          loadingText="Et øyeblikk…"
-                          disabled={!paymentReady || isFull || isCancelled}
-                        >
-                          Fortsett til betaling
-                        </Button>
-                        {sessionError && (
-                          <p className="text-sm text-danger text-center">{sessionError}</p>
-                        )}
-                        {isDropInSelected && dropInLookupFailed && (
-                          <p className="text-sm text-danger text-center">Kunne ikke hente neste time. Prøv igjen.</p>
-                        )}
-                        {isDropInSelected && dropInSessionId === null && (
-                          <p className="text-sm text-danger text-center">Ingen kommende timer for drop-in.</p>
-                        )}
-                        {course.seller?.name && (
-                          <p className="text-sm text-foreground-muted text-center">
-                            Påmeldingen er hos {course.seller.name}.
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </form>
-              </>
-            ) : (
-              <>
-                <CheckoutStepHeader step={2} />
+                    <form onSubmit={handleContactSubmit} noValidate className="space-y-6">
+                      <div>
+                        <div className="space-y-4">
+                          <Field label="Navn" htmlFor="name">
+                            <Input
+                              id="name"
+                              type="text"
+                              autoComplete="name"
+                              value={form.name}
+                              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                              aria-invalid={!!nameError}
+                              aria-describedby={nameError ? 'name-error' : undefined}
+                            />
+                            {nameError && <FieldError id="name-error">{nameError}</FieldError>}
+                          </Field>
+                          <Field label="E-post" htmlFor="email">
+                            <Input
+                              id="email"
+                              type="email"
+                              autoComplete="email"
+                              value={form.email}
+                              onChange={(e) => {
+                                setForm((f) => ({ ...f, email: e.target.value }));
+                                if (emailMessage || sessionError) {
+                                  setEmailMessage(null);
+                                  setSessionError(null);
+                                }
+                              }}
+                              onBlur={() => setEmailTouched(true)}
+                              aria-invalid={!!emailError}
+                              aria-describedby={emailError ? 'email-error' : undefined}
+                            />
+                            {emailError && <FieldError id="email-error">{emailError}</FieldError>}
+                          </Field>
+                          <Field label="Telefon" htmlFor="phone">
+                            <Input
+                              id="phone"
+                              type="tel"
+                              autoComplete="tel"
+                              value={form.phone}
+                              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                              onBlur={() => setPhoneTouched(true)}
+                              aria-invalid={!!phoneError}
+                              aria-describedby={phoneError ? 'phone-error' : undefined}
+                            />
+                            {phoneError && <FieldError id="phone-error">{phoneError}</FieldError>}
+                          </Field>
+                          <Field label="Melding (valgfritt)" htmlFor="note">
+                            <Textarea
+                              id="note"
+                              value={form.note}
+                              onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+                              placeholder="Allergier, skader eller annet vi bør vite."
+                              rows={4}
+                            />
+                          </Field>
+                          <div>
+                            <div className="flex items-start gap-3">
+                              <Checkbox
+                                id="terms"
+                                checked={form.terms}
+                                onCheckedChange={(v) =>
+                                  setForm((f) => ({ ...f, terms: v === true }))
+                                }
+                                aria-invalid={!!termsError}
+                                aria-describedby={termsError ? 'terms-error' : undefined}
+                                className="mt-0.5"
+                              />
+                              {/* The link is a SIBLING of the label, not a descendant — clicking
+                                  it must open /terms, not toggle the checkbox. */}
+                              <p className="text-sm text-foreground">
+                                <label htmlFor="terms" className="cursor-pointer">Jeg godtar</label>{' '}
+                                <a
+                                  href="/terms"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="focus-ring rounded underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+                                >
+                                  vilkår og angrerett
+                                </a>
+                                .
+                              </p>
+                            </div>
+                            {termsError && (
+                              <FieldError id="terms-error" className="pl-7">{termsError}</FieldError>
+                            )}
+                            <p className="mt-2 pl-7 text-xs text-foreground-muted">
+                              Kurs med fastsatt dato er unntatt angrerett. Se vilkårene.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
 
-                <div id="payment" className="scroll-mt-6">
-                  <StripeEmbed
-                    clientSecret={stripeSession?.clientSecret ?? null}
-                    total={total}
-                    errorMessage={sessionError}
-                    returnUrl={`${window.location.origin}/checkout/success?ref=${encodeURIComponent(stripeSession?.attemptId ?? '')}&org=${slug}`}
-                  />
-                </div>
-              </>
+                      <div className="space-y-2">
+                        {isFree ? (
+                          <Button
+                            type="submit"
+                            className="w-full"
+                            loading={submitting}
+                            disabled={!paymentReady || isFull || isCancelled}
+                          >
+                            Bekreft påmelding
+                          </Button>
+                        ) : (
+                          <>
+                            <Button
+                              type="submit"
+                              className="w-full"
+                              loading={submitting || dropInResolving}
+                              loadingText="Et øyeblikk…"
+                              disabled={!paymentReady || isFull || isCancelled}
+                            >
+                              Fortsett til betaling
+                            </Button>
+                            {sessionError && (
+                              <p className="text-sm text-danger text-center">{sessionError}</p>
+                            )}
+                            {isDropInSelected && dropInLookupFailed && (
+                              <p className="text-sm text-danger text-center">Kunne ikke hente neste time. Prøv igjen.</p>
+                            )}
+                            {isDropInSelected && dropInSessionId === null && (
+                              <p className="text-sm text-danger text-center">Ingen kommende timer for drop-in.</p>
+                            )}
+                            {course.seller?.name && (
+                              <p className="text-sm text-foreground-muted text-center">
+                                Påmeldingen er hos {course.seller.name}.
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </form>
+                  </>
+                ) : (
+                  <>
+                    <CheckoutStepHeader step={2} />
+
+                    <div id="payment" className="scroll-mt-6">
+                      <StripeEmbed
+                        clientSecret={stripeSession?.clientSecret ?? null}
+                        total={total}
+                        errorMessage={sessionError}
+                        returnUrl={`${window.location.origin}/checkout/success?ref=${encodeURIComponent(stripeSession?.attemptId ?? '')}&org=${slug}`}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
 

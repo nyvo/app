@@ -9,6 +9,7 @@ import {
   Redo2,
   Undo2,
 } from '@/lib/icons';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface RichTextEditorProps {
   value: string;
@@ -30,24 +31,29 @@ interface ToolbarButtonProps {
 
 function ToolbarButton({ onClick, isActive, disabled, label, children }: ToolbarButtonProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-pressed={isActive}
-      aria-label={label}
-      title={label}
-      className={cn(
-        'inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground-muted transition-colors duration-150 ease-out',
-        'hover:bg-muted hover:text-foreground',
-        'focus-visible:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle',
-        'disabled:pointer-events-none disabled:opacity-40',
-        'aria-pressed:bg-muted aria-pressed:text-foreground',
-        '[&_svg]:size-4',
-      )}
-    >
-      {children}
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          aria-pressed={isActive}
+          aria-label={label}
+          className={cn(
+            'inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground-muted transition-[color,background-color,transform] duration-150 ease-out',
+            'hover:bg-muted hover:text-foreground',
+            'focus-visible:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle',
+            'active:translate-y-px',
+            'disabled:pointer-events-none disabled:opacity-40',
+            'aria-pressed:bg-muted aria-pressed:text-foreground',
+            '[&_svg]:size-4',
+          )}
+        >
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
 

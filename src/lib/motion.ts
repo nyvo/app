@@ -1,6 +1,8 @@
 import type { Variants, Transition } from 'framer-motion';
 
-const ease: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
+// Strong ease-out (Emil's UI curve) — decelerates hard into rest, reads as
+// intentional rather than CSS's default `ease`, which is too weak here.
+const ease: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
 const prefersReducedMotion =
   typeof window !== 'undefined'
@@ -18,16 +20,6 @@ export const pageVariants: Variants = {
 export const pageTransition: Transition = {
   duration: dur(180),
   ease,
-};
-
-export const authPageVariants: Variants = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-};
-
-export const authPageTransition: Transition = {
-  duration: dur(400),
-  ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
 };
 
 export const scrollVariants: Variants = {
