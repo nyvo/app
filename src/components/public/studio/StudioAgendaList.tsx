@@ -199,7 +199,16 @@ function AgendaRow({
   );
 
   return (
-    <li className="border-t border-border-subtle first:border-t-0">
+    <li
+      className={cn(
+        'border-t border-border-subtle first:border-t-0 transition-colors duration-150',
+        // The rounded hover fill overlaps the hairlines above and below the
+        // row — fade out the two that touch it: the row's own top border and
+        // the next row's. Keyed on a:hover so inert (cancelled) rows keep
+        // their dividers.
+        '[&:has(>a:hover)]:border-transparent [li:has(>a:hover)+&]:border-transparent',
+      )}
+    >
       {isCancelled ? (
         <div className="flex items-center gap-4 py-4 opacity-55">{body}</div>
       ) : (
