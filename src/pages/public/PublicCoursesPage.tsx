@@ -265,10 +265,10 @@ function StudioPageSkeleton() {
       <span className="sr-only">Laster…</span>
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14">
         {/* Identity lockup — squircle logo + name + location */}
-        <div className="flex items-start gap-5 sm:gap-6">
-          <Skeleton className="size-20 sm:size-24 shrink-0 rounded-2xl" />
-          <div className="flex-1 space-y-3 pt-1">
-            <Skeleton className="h-9 w-56 max-w-full" />
+        <div className="flex items-center gap-5">
+          <Skeleton className="size-18 shrink-0 rounded-2xl" />
+          <div className="flex-1 space-y-2.5">
+            <Skeleton className="h-7 w-56 max-w-full" />
             <Skeleton className="h-4 w-72 max-w-full" />
           </div>
         </div>

@@ -12,6 +12,7 @@ export interface PublicSeller {
   name: string
   slug: string
   logo_url: string | null
+  cover_image_url: string | null
   default_course_image_url: string | null
   stripe_onboarding_complete: boolean
 }
@@ -21,7 +22,7 @@ export async function fetchSellerBySlug(
 ): Promise<{ data: PublicSeller | null; error: Error | null }> {
   const lookupSlug = slug.trim().toLowerCase()
 
-  const publicColumns = 'id, name, logo_url, slug, default_course_image_url, stripe_onboarding_complete'
+  const publicColumns = 'id, name, logo_url, slug, cover_image_url, default_course_image_url, stripe_onboarding_complete'
 
   // Slug lives directly on the seller. On miss, fall back to
   // seller_slug_aliases so previously shared URLs keep resolving — callers
