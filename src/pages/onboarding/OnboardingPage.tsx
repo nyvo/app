@@ -65,6 +65,11 @@ function generateSlug(name: string): string {
 export default function OnboardingPage() {
   const { user, profile, isInitialized, isLoading, signOut, setRole } = useAuth()
   const [searchParams] = useSearchParams()
+  // Direction-aware step transitions: +1 on advance (role chooser → setup),
+  // -1 on Tilbake (setup → role chooser). Set BEFORE the role-changing async
+  // call resolves, so the exiting element's `custom` is already correct when
+  // profile.role flips and AnimatePresence reads it for the exit variant.
+  const [direction, setDirection] = useState(1)
 
   const intent = parseAuthIntent(searchParams.get('intent'))
   const nextPath = sanitizeNextPath(searchParams.get('next')) ?? AUTH_ROUTES.dashboard
@@ -131,10 +136,10 @@ export default function OnboardingPage() {
         </Link>
       </header>
       <div className="flex-1 relative overflow-hidden">
-        <AnimatePresence mode="wait" custom={1} initial={false}>
+        <AnimatePresence mode="wait" custom={direction} initial={false}>
           <motion.div
             key={profile.role ?? 'role'}
-            custom={1}
+            custom={direction}
             variants={stepVariants}
             initial="enter"
             animate="center"
@@ -143,11 +148,11 @@ export default function OnboardingPage() {
             className="absolute inset-0 flex"
           >
             {profile.role === null ? (
-              resolvingIntent ? null : <RoleChooser />
+              resolvingIntent ? null : <RoleChooser onAdvance={() => setDirection(1)} />
             ) : profile.role === 'buyer' ? (
-              <BuyerSetup nextPath={nextPath} />
+              <BuyerSetup nextPath={nextPath} onBack={() => setDirection(-1)} />
             ) : (
-              <SellerFlow nextPath={nextPath} />
+              <SellerFlow nextPath={nextPath} onBack={() => setDirection(-1)} />
             )}
           </motion.div>
         </AnimatePresence>
@@ -170,7 +175,7 @@ export default function OnboardingPage() {
 // Step 1 — universal role chooser
 // ---------------------------------------------------------------------------
 
-function RoleChooser() {
+function RoleChooser({ onAdvance }: { onAdvance: () => void }) {
   const { setRole } = useAuth()
   // No pre-selection — an explicit pick enables Fortsett, so a reflexive
   // first click can't submit the wrong account type.
@@ -181,6 +186,7 @@ function RoleChooser() {
     e.preventDefault()
     if (!pick) return
     setSaving(true)
+    onAdvance()
     const { error } = await setRole(pick)
     if (error) {
       logger.error('Onboarding: setRole failed', error)
@@ -263,7 +269,7 @@ function RoleChooser() {
 // signup can prefill name/phone (zero-typing for post-booking signups).
 // Renders nothing while resolving — same quiet gap as resolvingIntent above.
 // Claim/fetch failures degrade to the profile/email prefill silently.
-function BuyerSetup({ nextPath }: { nextPath: string }) {
+function BuyerSetup({ nextPath, onBack }: { nextPath: string; onBack: () => void }) {
   const { user } = useAuth()
   const [claimed, setClaimed] = useState<
     { name: string; phone: string | null } | null | undefined
@@ -292,6 +298,7 @@ function BuyerSetup({ nextPath }: { nextPath: string }) {
   return (
     <BuyerSetupForm
       nextPath={nextPath}
+      onBack={onBack}
       claimedName={claimed?.name ?? null}
       claimedPhone={claimed?.phone ?? null}
     />
@@ -300,10 +307,12 @@ function BuyerSetup({ nextPath }: { nextPath: string }) {
 
 function BuyerSetupForm({
   nextPath,
+  onBack,
   claimedName,
   claimedPhone,
 }: {
   nextPath: string
+  onBack: () => void
   claimedName: string | null
   claimedPhone: string | null
 }) {
@@ -323,6 +332,7 @@ function BuyerSetupForm({
   const [saving, setSaving] = useState(false)
 
   const handleBack = async () => {
+    onBack()
     const { error } = await setRole(null)
     if (error) {
       logger.error('Onboarding: setRole(null) failed', error)
@@ -402,7 +412,7 @@ function BuyerSetupForm({
 // Step 2b — Seller flow (single screen: name → slug)
 // ---------------------------------------------------------------------------
 
-function SellerFlow({ nextPath }: { nextPath: string }) {
+function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () => void }) {
   const { profile, sellers, ensureSeller, markOnboardingComplete, setRole } = useAuth()
   const navigate = useNavigate()
 
@@ -421,6 +431,7 @@ function SellerFlow({ nextPath }: { nextPath: string }) {
   const slugPreview = generateSlug(name.trim())
 
   const handleBack = async () => {
+    onBack()
     const { error } = await setRole(null)
     if (error) {
       logger.error('Onboarding: setRole(null) failed', error)

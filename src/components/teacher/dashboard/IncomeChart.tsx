@@ -1,4 +1,4 @@
-import { useId, type ReactElement } from 'react'
+import { useEffect, useId, useState, type ReactElement } from 'react'
 import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts'
 import { ChartContainer } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -114,6 +114,16 @@ export function IncomeChart({
   tooltipContent,
 }: IncomeChartProps) {
   const gradientId = useId().replace(/:/g, '')
+
+  // The area draw-in should only play on the chart's very first paint — not on
+  // every range-tab click or realtime refetch. Flipped in an effect (not read
+  // from a ref during render — trips react-hooks/refs) right after the first
+  // commit, before any tab click can fire, so every render after that reads
+  // `true` and recharts skips the animation.
+  const [hasAnimated, setHasAnimated] = useState(false)
+  useEffect(() => {
+    setHasAnimated(true)
+  }, [])
 
   const total = series?.total ?? 0
   const previousTotal = series?.previousTotal ?? 0
@@ -254,7 +264,7 @@ export function IncomeChart({
               fill={`url(#${gradientId})`}
               fillOpacity={1}
               activeDot={{ r: 4, strokeWidth: 2, stroke: STROKE, fill: 'var(--color-background)' }}
-              isAnimationActive={!hasIncome ? false : true}
+              isAnimationActive={hasIncome && !hasAnimated}
               animationDuration={400}
               animationEasing="ease-out"
             />

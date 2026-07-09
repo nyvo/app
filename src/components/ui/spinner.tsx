@@ -21,7 +21,7 @@ function Spinner({ className, size = "sm" }: SpinnerProps) {
     <Loader2
       role="status"
       aria-label="Laster"
-      className={cn(spinnerSizeClasses[size], "animate-spin", className)}
+      className={cn(spinnerSizeClasses[size], "animate-[spin_0.6s_linear_infinite]", className)}
     />
   )
 }

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -12,6 +13,12 @@ interface NotificationRowProps {
   openedAt: string | null
   onActivate: (id: number) => void
   onArchive: (notification: Notification) => void
+  /**
+   * True only for rows that arrived after the feed's initial mount (e.g. a
+   * realtime push while the panel is open) — gates the entrance animation so
+   * opening the panel doesn't animate the whole existing list.
+   */
+  isNew?: boolean
 }
 
 /**
@@ -41,15 +48,24 @@ interface NotificationRowProps {
  * On archive the row animates out (translate-x + fade + height collapse,
  * ~200ms ease-out via AnimatePresence in the feed) so the rows below glide up
  * rather than jump. Reduced-motion drops the movement to a plain fade.
+ *
+ * Rows present when the feed first mounts render instantly — no entrance.
+ * Only rows that arrive later (realtime, `isNew`) fade in, so opening the
+ * panel never animates the whole list.
  */
 export function NotificationRow({
   notification,
   openedAt,
   onActivate,
   onArchive,
+  isNew,
 }: NotificationRowProps) {
   const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
+  // Freeze at mount — `isNew` is only meaningful for the render that first
+  // introduces this row; a later re-render (e.g. a sibling arriving) must not
+  // flip this row's entrance mid-flight.
+  const [enteredAsNew] = useState(!!isNew)
   const Icon = getNotificationIcon(notification.type)
   const isRead = notification.read_at !== null
   const isResolvedAction =
@@ -78,9 +94,22 @@ export function NotificationRow({
         transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] as const },
       }
 
+  // Opacity-only entrance for realtime-arrived rows (see `enteredAsNew`).
+  const enter = enteredAsNew
+    ? {
+        opacity: 1,
+        transition: {
+          duration: shouldReduceMotion ? 0 : 0.15,
+          ease: [0.23, 1, 0.32, 1] as const,
+        },
+      }
+    : undefined
+
   return (
     <motion.div
       layout
+      initial={enteredAsNew ? { opacity: 0 } : undefined}
+      animate={enter}
       exit={exit}
       className="group relative overflow-hidden border-t border-border-subtle first:border-t-0"
     >
@@ -91,7 +120,7 @@ export function NotificationRow({
       >
         <div
           className={cn(
-            'flex size-8 shrink-0 items-center justify-center rounded-lg',
+            'flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors duration-150 ease-out',
             dimmed
               ? 'bg-muted text-foreground-muted'
               : 'bg-foreground text-background',
@@ -127,7 +156,7 @@ export function NotificationRow({
         onClick={() => onArchive(notification)}
         aria-label="Fjern varsel"
         // after:-inset-2.5 lifts the 24px visual button to a ~44px touch target
-        className="absolute right-2 top-2 inline-flex size-6 items-center justify-center rounded-full text-foreground-muted opacity-0 transition-opacity duration-150 after:absolute after:-inset-2.5 hover:bg-foreground/10 hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+        className="absolute right-2 top-2 inline-flex size-6 items-center justify-center rounded-full text-foreground-muted opacity-0 transition-opacity duration-150 after:absolute after:-inset-2.5 hover:bg-pressed hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none group-hover:opacity-100 [@media(hover:none)]:opacity-100"
       >
         <X className="size-3.5" />
       </button>

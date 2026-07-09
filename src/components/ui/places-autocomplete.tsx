@@ -198,7 +198,7 @@ export function PlacesAutocomplete({
         </div>
       )}
       {open && !searchError && results.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-surface shadow-md">
+        <div className="absolute z-50 mt-1 w-full origin-top animate-in overflow-hidden rounded-lg border border-border bg-surface shadow-md fade-in-0 zoom-in-95 duration-150">
           <ul id={listboxId} role="listbox" className="max-h-60 overflow-y-auto p-1">
             {results.map((r, i) => (
               <li key={r.placeId} role="presentation">

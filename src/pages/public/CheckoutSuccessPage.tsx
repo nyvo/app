@@ -553,16 +553,18 @@ const CheckoutSuccessPage = () => {
 
             return (
               <>
-                  {/* Title block — neutral circle + green check, centered heading. */}
+                  {/* Title block — neutral circle + green check, centered heading.
+                      One-time first-success moment: a restrained staggered
+                      entrance (circle → heading/subtext → course pane). */}
                   <div className="flex flex-col items-center text-center">
                     <div
                       aria-hidden="true"
-                      className="flex size-12 items-center justify-center rounded-full bg-success text-success-foreground"
+                      className="flex size-12 items-center justify-center rounded-full bg-success text-success-foreground animate-in fade-in-0 zoom-in-95 duration-300"
                     >
                       <Check className="size-6" strokeWidth={2.5} />
                     </div>
-                    <h1 className="mt-4 text-3xl font-medium text-foreground">Du er påmeldt</h1>
-                    <p className="mt-2 text-base text-foreground-muted">
+                    <h1 className="mt-4 text-3xl font-medium text-foreground animate-in fade-in-0 slide-in-from-bottom-1 duration-300 delay-80 fill-mode-backwards">Du er påmeldt</h1>
+                    <p className="mt-2 text-base text-foreground-muted animate-in fade-in-0 slide-in-from-bottom-1 duration-300 delay-80 fill-mode-backwards">
                       {displaySignup
                         ? `Vi har sendt en bekreftelse til ${displaySignup.participantEmailMasked}.`
                         : 'Vi har sendt en bekreftelse til e-posten din.'}
@@ -572,7 +574,7 @@ const CheckoutSuccessPage = () => {
                   {displaySignup && (
                     <>
                       {/* Course pane — image + title + date/time. */}
-                      <div className="mt-8 flex items-center gap-4 rounded-2xl border border-card bg-surface shadow-soft p-5">
+                      <div className="mt-8 flex items-center gap-4 rounded-2xl border border-card bg-surface shadow-soft p-5 animate-in fade-in-0 slide-in-from-bottom-1 duration-300 delay-160 fill-mode-backwards">
                         <CourseThumb src={courseImage} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-base font-medium text-foreground">{displaySignup.course.title}</p>

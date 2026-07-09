@@ -109,9 +109,9 @@ export function SegmentedTabs<T extends string>({
             tabIndex={active ? 0 : -1}
             onClick={() => { if (!disabled) onChange(t.key); }}
             className={cn(
-              'inline-flex items-center justify-center gap-2 rounded-full text-sm font-medium transition-colors',
+              'inline-flex items-center justify-center gap-2 rounded-full text-sm font-medium transition-[color,background-color,box-shadow,transform] duration-150 ease-out',
               size === 'lg' ? 'h-9 px-4' : 'h-7 px-3',
-              'outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              'outline-none focus-visible:ring-2 focus-visible:ring-ring active:translate-y-px',
               disabled && 'cursor-not-allowed',
               stretch && 'flex-1',
               active ? 'bg-surface text-foreground shadow-xs' : 'text-foreground',

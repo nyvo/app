@@ -270,7 +270,7 @@ const TeacherDashboard = () => {
                       </FramedCardPanel>
                     </FramedCard>
                   ) : (
-                    <Suspense fallback={<IncomeChartFallback />}>
+                    <Suspense fallback={<DelayedFallback><IncomeChartFallback /></DelayedFallback>}>
                       <IncomeChart
                         series={incomeSeries}
                         isLoading={incomeSeries === null}

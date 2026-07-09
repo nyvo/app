@@ -312,8 +312,7 @@ export function StudioDayList({ courses, viewingSlug, viewingName, headerAction 
         )}
       </div>
 
-      {/* Re-keyed so switching day cross-fades the list. */}
-      <div key={selectedKey} className="animate-in fade-in duration-200">
+      <div>
         {selectedCourses.length === 0 ? (
           <p className="py-12 text-center text-base text-foreground-muted">
             {selectedKey === dateKey(today)

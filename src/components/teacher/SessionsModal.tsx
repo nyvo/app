@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { ArrowLeft, ChevronRight } from '@/lib/icons';
 import {
@@ -13,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SessionRescheduleForm } from '@/components/teacher/SessionRescheduleForm';
 import { cn } from '@/lib/utils';
+import { stepVariants } from '@/lib/motion';
 import { friendlyError } from '@/lib/error-messages';
 import { rescheduleCourseSession } from '@/services/courses';
 import { osloTodayKey } from '@/utils/dateUtils';
@@ -83,6 +85,10 @@ export function SessionsModal({
   initialEditSessionId,
 }: SessionsModalProps) {
   const [view, setView] = useState<View>('list');
+  // Step direction for the list ↔ reschedule transition (stepVariants):
+  // +1 going list→reschedule, -1 coming back. Set right before the view
+  // state changes so AnimatePresence picks it up for that swap.
+  const [direction, setDirection] = useState(1);
   const [editing, setEditing] = useState<CourseSession | null>(null);
   const [submitting, setSubmitting] = useState(false);
   // Reschedule failure — shown inline in the dialog (like the drawers'
@@ -116,10 +122,12 @@ export function SessionsModal({
   function startReschedule(session: CourseSession) {
     setEditing(session);
     setSubmitError(null);
+    setDirection(1);
     setView('reschedule');
   }
 
   function backToList() {
+    setDirection(-1);
     setView('list');
     setEditing(null);
     setSubmitError(null);
@@ -187,88 +195,99 @@ export function SessionsModal({
           </DialogDescription>
         </DialogHeader>
 
-        {view === 'list' && (
-          <ul className="max-h-[60vh] space-y-2 overflow-y-auto p-1">
-            {ordered.map((s) => {
-              const isPast = s.session_date < today;
-              const isCancelled = s.status === 'cancelled';
-              const dim = isPast || isCancelled;
-              const editDisabled = isPast || isCancelled;
-              const label = `${cap(weekdayLabel(s.session_date))} ${dayMonth(s.session_date)}`;
-              // Title/time dim together (row-level opacity), but the "Avlyst"
-              // badge sits outside that wrapper so it stays full-opacity and
-              // reads clearly (the pattern SessionRow gets right on Oversikt).
-              const cell = (
-                <>
-                  <div className={cn('min-w-0', dim && 'opacity-60')}>
-                    <p
-                      className={cn(
-                        'truncate text-base font-medium text-foreground',
-                        isCancelled && 'line-through',
-                      )}
-                    >
-                      {label}
-                    </p>
-                    {s.start_time && (
-                      <p
-                        className={cn(
-                          'mt-0.5 text-sm text-foreground tabular-nums',
-                          isCancelled && 'line-through',
+        <AnimatePresence mode="wait" custom={direction} initial={false}>
+          <motion.div
+            key={view}
+            custom={direction}
+            variants={stepVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+          >
+            {view === 'list' && (
+              <ul className="max-h-[60vh] space-y-2 overflow-y-auto p-1">
+                {ordered.map((s) => {
+                  const isPast = s.session_date < today;
+                  const isCancelled = s.status === 'cancelled';
+                  const dim = isPast || isCancelled;
+                  const editDisabled = isPast || isCancelled;
+                  const label = `${cap(weekdayLabel(s.session_date))} ${dayMonth(s.session_date)}`;
+                  // Title/time dim together (row-level opacity), but the "Avlyst"
+                  // badge sits outside that wrapper so it stays full-opacity and
+                  // reads clearly (the pattern SessionRow gets right on Oversikt).
+                  const cell = (
+                    <>
+                      <div className={cn('min-w-0', dim && 'opacity-60')}>
+                        <p
+                          className={cn(
+                            'truncate text-base font-medium text-foreground',
+                            isCancelled && 'line-through',
+                          )}
+                        >
+                          {label}
+                        </p>
+                        {s.start_time && (
+                          <p
+                            className={cn(
+                              'mt-0.5 text-sm text-foreground tabular-nums',
+                              isCancelled && 'line-through',
+                            )}
+                          >
+                            {timeRange(s)}
+                          </p>
                         )}
-                      >
-                        {timeRange(s)}
-                      </p>
-                    )}
-                  </div>
-                  {isCancelled && (
-                    <Badge variant="warning" shape="pill" size="sm" className="shrink-0">
-                      Avlyst
-                    </Badge>
-                  )}
-                  {!editDisabled && (
-                    <ChevronRight className="size-5 shrink-0 self-center text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
-                  )}
-                </>
-              );
-              return (
-                <li key={s.id}>
-                  {editDisabled ? (
-                    <div className="flex items-center justify-between gap-3 rounded-lg bg-muted px-4 py-3">
-                      {cell}
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => startReschedule(s)}
-                      aria-label={`Endre ${label}`}
-                      className="group flex w-full items-center justify-between gap-3 rounded-lg bg-muted px-4 py-3 text-left transition-colors hover:bg-hover"
-                    >
-                      {cell}
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        {view === 'reschedule' && editing && (
-          <>
-            {submitError && (
-              <Alert variant="error" size="sm">
-                {submitError}
-              </Alert>
+                      </div>
+                      {isCancelled && (
+                        <Badge variant="warning" shape="pill" size="sm" className="shrink-0">
+                          Avlyst
+                        </Badge>
+                      )}
+                      {!editDisabled && (
+                        <ChevronRight className="size-5 shrink-0 self-center text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
+                      )}
+                    </>
+                  );
+                  return (
+                    <li key={s.id}>
+                      {editDisabled ? (
+                        <div className="flex items-center justify-between gap-3 rounded-lg bg-muted px-4 py-3">
+                          {cell}
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => startReschedule(s)}
+                          aria-label={`Endre ${label}`}
+                          className="group flex w-full items-center justify-between gap-3 rounded-lg bg-muted px-4 py-3 text-left transition-colors hover:bg-hover"
+                        >
+                          {cell}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             )}
-            <SessionRescheduleForm
-              key={editing.id}
-              session={editing}
-              defaultDurationMinutes={defaultDurationMinutes}
-              submitting={submitting}
-              onCancel={backToList}
-              onSave={submitReschedule}
-            />
-          </>
-        )}
+
+            {view === 'reschedule' && editing && (
+              <>
+                {submitError && (
+                  <Alert variant="error" size="sm">
+                    {submitError}
+                  </Alert>
+                )}
+                <SessionRescheduleForm
+                  key={editing.id}
+                  session={editing}
+                  defaultDurationMinutes={defaultDurationMinutes}
+                  submitting={submitting}
+                  onCancel={backToList}
+                  onSave={submitReschedule}
+                />
+              </>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </DialogContent>
     </Dialog>
   );

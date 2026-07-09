@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight, ChevronUp } from '@/lib/icons';
-import { motion } from 'framer-motion';
 import { cn, formatKroner } from '@/lib/utils';
 import { StatusBadge, type CourseStatus } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -160,14 +159,7 @@ function TableBody({ courses, countsUnavailable }: { courses: SessionScheduleRow
   return (
     <div className="divide-y divide-border-subtle">
       {courses.map((c) => (
-        <motion.div
-          key={c.sessionId}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.18 }}
-        >
-          <TableRow course={c} countsUnavailable={countsUnavailable} />
-        </motion.div>
+        <TableRow key={c.sessionId} course={c} countsUnavailable={countsUnavailable} />
       ))}
     </div>
   );
@@ -213,8 +205,8 @@ export function CourseListSkeleton() {
         {[...Array(5)].map((_, i) => (
           <div key={i} className={cn(COLS, 'py-4')}>
             <div className="min-w-0">
-              <Skeleton className="h-4 w-48 max-w-full" />
-              <Skeleton className="mt-1 h-3 w-24 max-w-full" />
+              <Skeleton className="h-6 w-48 max-w-full" />
+              <Skeleton className="mt-1 h-5 w-24 max-w-full" />
             </div>
             <Skeleton className="h-5 w-20 rounded-full" />
             <Skeleton className="h-4 w-16" />
