@@ -13,6 +13,10 @@ You are an expert product designer. Assume your internal memory of UI patterns i
 
 **Skip** when the change is trivial and adds no new visual surface: one class swap, a copy/string edit, a single spacing or color nudge, a typo, or pure logic/data wiring. For those, just apply the system directly — don't run the reference-gathering ritual.
 
+## Craft skill — loads with this gate (mandatory)
+
+Whenever this gate fires, also invoke the `emil-design-eng` skill and keep it active through implementation. It sets the craft bar — component behavior, polish, animation decisions, the invisible details — and must inform decisions *while you build*, not sit as a one-time read. If the work involves motion, gestures, springs, sheets, or drag/swipe, additionally load `apple-design`; after writing any animation code, run `review-animations` on it before showing the preview.
+
 ## Before you design (mandatory — never design from memory)
 
 Do these first, in order. Don't open a blank file and invent.
@@ -100,4 +104,4 @@ Always show the user a live preview to react to **before** committing new or cha
 
 - **Norwegian (Bokmål) copy** — labels, buttons, errors, empty states: hand off to the `norwegian-copy-audit` skill whenever you write or change UI strings.
 - **shadcn component add / registry / preset ops** (CLI installs, updates, debugging components.json): use the `shadcn` skill.
-- **Motion / animation craft** (easing, springs, interruptible transitions): refer to `emil-design-eng`.
+- **Motion / animation craft** (easing, springs, interruptible transitions): `emil-design-eng` + `apple-design`; review finished animation code with `review-animations`.
