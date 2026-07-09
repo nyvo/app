@@ -11,69 +11,53 @@ interface StudioMastheadProps {
 }
 
 /**
- * Identity-first masthead (mockup Q2A): when the seller has a cover image,
- * a full-bleed band carries it and the lockup sits under it, logo
- * overlapping the band's bottom edge; without one it falls back to the
- * plain lockup. Either way the identity line is quiet plain text —
- * «adresse · Veibeskrivelse» — no icons, no bold link.
+ * Profile masthead (Time2book profile pattern, mockup Q2A): the page opens
+ * with a cover header band — the seller's cover image when set, a quiet
+ * muted fill when not — with the logo overlapping the band's bottom edge on
+ * its own line, and the name + identity line stacked under it. The identity
+ * line is quiet plain text — «adresse · Veibeskrivelse» — no icons.
  */
 export function StudioMasthead({ organization, location }: StudioMastheadProps) {
   const [coverFailed, setCoverFailed] = useState(false);
-  const hasCover = !!organization.cover_image_url && !coverFailed;
+  const coverUrl = organization.cover_image_url;
+  const showCoverImage = !!coverUrl && !coverFailed;
 
   return (
     <header>
-      {hasCover && (
-        <div className="h-28 sm:h-31 w-full overflow-hidden bg-muted">
+      <div className="h-32 sm:h-44 w-full overflow-hidden bg-muted">
+        {showCoverImage && (
           <img
-            src={organization.cover_image_url!}
+            src={coverUrl}
             alt=""
             className="size-full object-cover"
             onError={() => setCoverFailed(true)}
           />
-        </div>
-      )}
-
-      <div
-        className={cn(
-          'mx-auto max-w-6xl px-4 sm:px-6 lg:px-8',
-          hasCover ? 'relative -mt-8' : 'pt-10 sm:pt-14',
         )}
-      >
-        <div className={cn('flex gap-5', hasCover ? 'items-end' : 'items-center')}>
-          <LogoTile organization={organization} size={hasCover ? 'cover' : 'plain'} />
+      </div>
 
-          <div className={cn('min-w-0 flex-1', hasCover && 'pb-0.5')}>
-            <h1
-              className={cn(
-                'font-medium text-foreground leading-tight tracking-[-0.012em]',
-                hasCover ? 'text-[21px]' : 'text-2xl sm:text-[26px]',
-              )}
-            >
-              {organization.name}
-            </h1>
-
-            {location && (
-              <p
-                className={cn(
-                  'text-foreground-muted truncate',
-                  hasCover ? 'mt-[3px] text-sm' : 'mt-[5px] text-[15px]',
-                )}
-              >
-                {location.address || location.label}
-                {' · '}
-                <a
-                  href={directionsUrl(location)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline decoration-foreground-disabled underline-offset-[3px] transition-colors hover:text-foreground hover:decoration-foreground"
-                >
-                  Veibeskrivelse
-                </a>
-              </p>
-            )}
-          </div>
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="relative -mt-9">
+          <LogoTile organization={organization} />
         </div>
+
+        <h1 className="mt-4 text-2xl sm:text-[26px] font-medium text-foreground leading-tight tracking-[-0.012em]">
+          {organization.name}
+        </h1>
+
+        {location && (
+          <p className="mt-[5px] text-[15px] text-foreground-muted truncate">
+            {location.address || location.label}
+            {' · '}
+            <a
+              href={directionsUrl(location)}
+              target="_blank"
+              rel="noreferrer"
+              className="underline decoration-foreground-disabled underline-offset-[3px] transition-colors hover:text-foreground hover:decoration-foreground"
+            >
+              Veibeskrivelse
+            </a>
+          </p>
+        )}
       </div>
     </header>
   );
@@ -89,27 +73,17 @@ function initials(name: string): string {
     .join('');
 }
 
-function LogoTile({
-  organization,
-  size,
-}: {
-  organization: PublicSeller;
-  size: 'cover' | 'plain';
-}) {
+function LogoTile({ organization }: { organization: PublicSeller }) {
   // A broken logo URL falls back to the same initials tile as no logo.
   const [logoFailed, setLogoFailed] = useState(false);
   const logoUrl = organization.logo_url;
 
-  const frame = cn(
-    'shrink-0 rounded-2xl overflow-hidden flex items-center justify-center',
-    size === 'cover'
-      ? 'size-16 relative border-[3px] border-background'
-      : 'size-18',
-  );
+  const frame =
+    'size-18 shrink-0 rounded-2xl overflow-hidden flex items-center justify-center border-[3px] border-background';
 
   if (logoUrl && !logoFailed) {
     return (
-      <div className={cn(frame, 'bg-surface', size === 'plain' && 'ring-1 ring-border')}>
+      <div className={cn(frame, 'bg-surface')}>
         <img
           src={logoUrl}
           alt={`${organization.name} logo`}
@@ -121,11 +95,8 @@ function LogoTile({
   }
 
   return (
-    <div
-      className={cn(frame, 'bg-muted text-foreground-muted', size === 'plain' && 'ring-1 ring-border')}
-      aria-label={organization.name}
-    >
-      <span className={cn('font-medium tracking-[0.02em]', size === 'cover' ? 'text-[17px]' : 'text-xl')}>
+    <div className={cn(frame, 'bg-muted')} aria-label={organization.name}>
+      <span className="text-xl font-medium tracking-[0.02em] text-foreground-muted">
         {initials(organization.name)}
       </span>
     </div>
