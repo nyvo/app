@@ -17,6 +17,9 @@ interface MobilePriceBarProps {
   /** Seller can't take payment yet (Stripe onboarding incomplete) — same gate
    * that hides the rail's CTA, so the bar never offers a dead checkout. */
   paymentNotReady: boolean;
+  /** CTA label. Defaults to "Reserver"; the T1 detail page passes "Meld deg
+   * på" to match its own booking-card CTA. */
+  ctaLabel?: string;
 }
 
 /**
@@ -39,6 +42,7 @@ export function MobilePriceBar({
   soldOut,
   closed,
   paymentNotReady,
+  ctaLabel = 'Reserver',
 }: MobilePriceBarProps) {
   const stateText = soldOut
     ? 'Kurset er fullt'
@@ -64,7 +68,7 @@ export function MobilePriceBar({
       )}
       {!stateText && selectedTile && (
         <Button asChild size="cta" className="shrink-0">
-          <Link to={href}>Reserver</Link>
+          <Link to={href}>{ctaLabel}</Link>
         </Button>
       )}
     </div>

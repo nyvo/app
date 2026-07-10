@@ -14,7 +14,7 @@ import { Elements, PaymentElement, useStripe as useStripeHook, useElements } fro
 import type { Stripe } from '@stripe/stripe-js';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { withTimeout } from '@/lib/with-timeout';
-import { ChevronLeft, Check } from '@/lib/icons';
+import { ChevronLeft, Check, Lock } from '@/lib/icons';
 import { formatCoursePrice, formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
 import { calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
@@ -25,6 +25,9 @@ import { saveFreeReceipt, maskEmail } from '@/lib/free-receipt';
 import { supabase } from '@/lib/supabase';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { osloNowKey, toLocalDate } from '@/utils/dateUtils';
+import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
+import type { TicketId } from '@/components/public/course-details/BookingRailLite';
+import { buildMainTierConstraintLabel, buildNextSessionLabel } from '@/components/public/course-details/schedule-format';
 import type { AvailableTicketType } from '@/types/database';
 
 interface FormState {
@@ -187,6 +190,12 @@ const CheckoutPage = () => {
   // hasn't started yet. Same model as BookingPanel; no session picker.
   // undefined = loading / not applicable, null = no upcoming session.
   const [dropInSessionId, setDropInSessionId] = useState<string | null | undefined>(undefined);
+  // Same lookup's date/time — feeds the Billett constraint line ("Neste økt:
+  // …"). Kept alongside dropInSessionId rather than re-fetched, since the
+  // query already selects session_date/start_time.
+  const [dropInNextSession, setDropInNextSession] = useState<
+    { session_date: string; start_time: string } | null | undefined
+  >(undefined);
   // Query failure is not "no sessions" — track it separately so the buyer
   // sees a retryable error instead of the false "ingen kommende timer".
   const [dropInLookupFailed, setDropInLookupFailed] = useState(false);
@@ -195,6 +204,7 @@ const CheckoutPage = () => {
     setDropInLookupFailed(false);
     if (!isDropInSelected || !course?.id) {
       setDropInSessionId(undefined);
+      setDropInNextSession(undefined);
       return;
     }
     void (async () => {
@@ -213,12 +223,14 @@ const CheckoutPage = () => {
       if (cancelled) return;
       if (sessionsErr) {
         setDropInSessionId(undefined);
+        setDropInNextSession(undefined);
         setDropInLookupFailed(true);
         return;
       }
       const next = (data as { id: string; session_date: string; start_time: string }[] | null)
         ?.find((s) => `${s.session_date} ${s.start_time}` > osloNow);
       setDropInSessionId(next?.id ?? null);
+      setDropInNextSession(next ? { session_date: next.session_date, start_time: next.start_time } : null);
     })();
     return () => {
       cancelled = true;
@@ -228,6 +240,21 @@ const CheckoutPage = () => {
   // Drop-in's next-class lookup is still in flight — the buyer can't continue
   // until it resolves, so show a loading button rather than a dead click.
   const dropInResolving = isDropInSelected && dropInSessionId === undefined;
+
+  // ── Billett toggle ───────────────────────────────────────────────────────
+  // Only rendered when there's a real choice — main + drop-in. A single-tier
+  // course skips this section entirely; the receipt already names what's
+  // being bought.
+  const mainTier = tiers.find((t) => t.ticket_kind !== 'drop_in') ?? null;
+  const dropInTier = tiers.find((t) => t.ticket_kind === 'drop_in') ?? null;
+  const showBillett = tiers.length === 2 && !!mainTier && !!dropInTier;
+  const billettSpotsLeft = course?.spots_available ?? 0;
+  const billettLowStock = billettSpotsLeft > 0 && billettSpotsLeft <= 3;
+  const billettConstraintLabel = isDropInSelected
+    ? (dropInResolving ? null : buildNextSessionLabel(dropInNextSession ?? null))
+    : course && mainTier
+      ? buildMainTierConstraintLabel(course, mainTier)
+      : null;
 
   // ── Form validation ─────────────────────────────────────────────────────
   // Blur shows format errors on non-empty fields; a failed submit attempt
@@ -415,7 +442,7 @@ const CheckoutPage = () => {
           className="focus-ring mb-8 rounded inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
         >
           <ChevronLeft className="size-4" strokeWidth={1.75} />
-          Tilbake
+          {step === 'payment' ? 'Tilbake' : 'Tilbake til kurset'}
         </button>
 
         {isCancelled && (
@@ -441,6 +468,21 @@ const CheckoutPage = () => {
 
         <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-8 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
           <div className="space-y-6 max-w-[552px] min-w-0">
+            {!closed && showBillett && mainTier && dropInTier && (
+              <BillettSection
+                mainTier={mainTier}
+                dropInTier={dropInTier}
+                selectedKind={isDropInSelected ? 'drop-in' : 'main'}
+                onSelect={(kind) => {
+                  const tier = kind === 'drop-in' ? dropInTier : mainTier;
+                  if (tier) setSelectedTierId(tier.id);
+                }}
+                constraintLabel={billettConstraintLabel}
+                lowStock={billettLowStock}
+                spotsLeft={billettSpotsLeft}
+                disabled={step === 'payment'}
+              />
+            )}
             {closed ? null : step === 'contact' || isFree ? (
               <>
                 <CheckoutStepHeader step={1} showSteps={!isFree} />
@@ -639,7 +681,7 @@ function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps
   if (!showSteps) {
     return (
       <div>
-        <h1 className="text-base font-medium text-foreground">Påmelding</h1>
+        <h1 className="text-base font-medium text-foreground">Fullfør påmeldingen</h1>
       </div>
     );
   }
@@ -858,6 +900,10 @@ function StripePaymentForm({ total, returnUrl }: { total: number; returnUrl: str
       <Button type="submit" className="w-full" loading={submitting} disabled={!stripe || !elements}>
         {`Betal ${formatKroner(total)}`}
       </Button>
+      <p className="flex items-center justify-center gap-1.5 text-[12.5px] text-foreground-muted">
+        <Lock className="size-[13px]" strokeWidth={2} aria-hidden="true" />
+        Sikker betaling
+      </p>
     </form>
   );
 }
@@ -879,6 +925,18 @@ function CheckoutSummary({
 }) {
   const meta = buildMeta(course);
   const img = resolveCourseImage(course);
+
+  // Started-course edge: the selected tier is the package, prorated down to
+  // the remaining weeks. The receipt (not the tier label) carries the story —
+  // ordinær pris, a named deduction, the result — so the buyer sees why the
+  // total isn't the course's list price.
+  const isProrated =
+    !!selectedTier &&
+    selectedTier.ticket_kind !== 'drop_in' &&
+    course.total_weeks != null &&
+    selectedTier.weeks < course.total_weeks;
+  const heldCount = isProrated ? course.total_weeks! - selectedTier!.weeks : 0;
+  const deduction = isProrated ? (course.price ?? 0) - subtotal : 0;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-card bg-surface shadow-soft">
@@ -908,12 +966,31 @@ function CheckoutSummary({
             {!isFree && (
               <>
                 <div className="space-y-2.5 text-base">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-foreground-muted">{selectedTier.label}</span>
-                    <span className="tabular-nums text-foreground-muted">
-                      {formatKroner(subtotal)}
-                    </span>
-                  </div>
+                  {isProrated ? (
+                    <>
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="text-foreground-muted">{selectedTier.label}, ordinær pris</span>
+                        <span className="tabular-nums text-foreground-muted">
+                          {formatKroner(course.price ?? 0)}
+                        </span>
+                      </div>
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="text-foreground-muted">
+                          Fratrekk for {heldCount} holdte {heldCount === 1 ? 'økt' : 'økter'}
+                        </span>
+                        <span className="tabular-nums text-success">
+                          −{formatKroner(deduction)}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-foreground-muted">{selectedTier.label}</span>
+                      <span className="tabular-nums text-foreground-muted">
+                        {formatKroner(subtotal)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="text-foreground-muted">Tjenestegebyr</span>
                     <span className="tabular-nums text-foreground-muted">
@@ -937,13 +1014,63 @@ function CheckoutSummary({
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
 
-        {!isFree && (
-          <div className="border-t border-border pt-4">
-            <p className="text-center text-xs text-foreground-muted">Sikker betaling med Stripe</p>
-          </div>
+/**
+ * Billett toggle — the prebuilt SegmentedTabs radiogroup, above the contact
+ * form. Only rendered when there's a real choice (main + drop-in); a
+ * single-tier course skips this section entirely. Locked (disabled) once
+ * the payment step has a live PaymentIntent, so the tier can't change under
+ * a Stripe session that was created for a different price.
+ */
+function BillettSection({
+  mainTier,
+  dropInTier,
+  selectedKind,
+  onSelect,
+  constraintLabel,
+  lowStock,
+  spotsLeft,
+  disabled,
+}: {
+  mainTier: AvailableTicketType;
+  dropInTier: AvailableTicketType;
+  selectedKind: TicketId;
+  onSelect: (kind: TicketId) => void;
+  constraintLabel: string | null;
+  lowStock: boolean;
+  spotsLeft: number;
+  disabled: boolean;
+}) {
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-medium text-foreground">Billett</span>
+        {lowStock && (
+          <span className="text-[13px] text-warning">
+            {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
+          </span>
         )}
       </div>
+      <SegmentedTabs<TicketId>
+        role="radiogroup"
+        ariaLabel="Billett"
+        stretch
+        size="lg"
+        disabled={disabled}
+        value={selectedKind}
+        onChange={onSelect}
+        tabs={[
+          { key: 'main', label: mainTier.label },
+          { key: 'drop-in', label: dropInTier.label },
+        ]}
+      />
+      {constraintLabel && (
+        <p className="text-[13.5px] text-foreground-muted">{constraintLabel}</p>
+      )}
     </div>
   );
 }
