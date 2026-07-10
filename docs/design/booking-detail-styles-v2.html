@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/geist@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/eb-garamond@5/index.css">
+<title>Kursside — three styles (v2)</title>
+<style>
+  /* ══ Tokens — lifted verbatim from src/index.css (light) ══ */
+  :root{
+    --bg:#fff;
+    --fg:oklch(0.185 0.004 250);
+    --fg-muted:oklch(0.550 0.010 250);
+    --fg-subtle:oklch(0.645 0.010 250);
+    --fg-disabled:oklch(0.794 0.008 250);
+    --muted:oklch(0.967 0.0015 250);
+    --panel:oklch(0.976 0.0015 250);
+    --border:oklch(0.853 0.006 250);
+    --border-subtle:oklch(0.932 0.003 250);
+    --input:oklch(0.794 0.008 250);
+    --primary:oklch(0.540 0.150 245);
+    --selection-light:color-mix(in oklab,oklch(0.540 0.150 245) 8%,transparent);
+    --hover:color-mix(in oklab,oklch(0.185 0.004 250) 6%,transparent);
+    --amber-text:oklch(0.557 0.131 65);
+    --canvas:oklch(0.952 0.002 250);
+    --sans:'Geist Variable',Geist,Inter,-apple-system,'Segoe UI',system-ui,sans-serif;
+    --serif:'EB Garamond Variable','EB Garamond',Georgia,serif; /* marketing display only, never below 24px */
+    --shadow-soft:0 1px 2px rgb(16 24 40/.04),0 6px 20px -6px rgb(16 24 40/.10);
+    --shadow-xs:0 1px 2px 0 rgb(0 0 0/.05);
+    --ease-out:cubic-bezier(.23,1,.32,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--canvas);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.55;font-feature-settings:"cv05"}
+  .wrap{max-width:1100px;margin:0 auto;padding:56px 24px 96px}
+  img{display:block}
+
+  /* ══ Document chrome ══ */
+  .doc-kicker{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--fg-muted);font-weight:600}
+  h1{font-size:28px;font-weight:600;letter-spacing:-.015em;margin-top:10px;text-wrap:balance}
+  .doc-lede{color:var(--fg-muted);max-width:64ch;margin-top:12px;font-size:15.5px}
+  .doc-lede strong{color:var(--fg);font-weight:600}
+  .doc-section{margin-top:72px}
+  .opt-head{display:flex;align-items:center;gap:10px;border-top:1px solid var(--border);padding-top:26px;margin-bottom:8px}
+  .opt-chip{font-size:12px;font-weight:600;background:var(--fg);color:var(--bg);border-radius:999px;padding:3px 10px}
+  .opt-title{font-weight:600;font-size:19px;letter-spacing:-.008em}
+  .opt-sub{color:var(--fg-muted);font-size:15px;max-width:70ch;margin:2px 0 16px}
+  .opt-sub a,.x-body a{color:var(--primary);text-decoration:underline;text-underline-offset:3px}
+  .verdict{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+  .verdict div{background:var(--bg);border:1px solid var(--border-subtle);border-radius:10px;padding:13px 15px;font-size:13.5px;color:var(--fg-muted);line-height:1.5}
+  .verdict b{display:block;color:var(--fg);font-size:11px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
+  @media(max-width:640px){.verdict{grid-template-columns:1fr}}
+  details.extract{margin:0 0 16px;border:1px solid var(--border-subtle);border-radius:10px;background:var(--bg)}
+  details.extract summary{cursor:pointer;padding:10px 14px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:500;color:var(--fg-muted)}
+  details.extract .x-body{padding:2px 16px 14px;font-size:13.5px;color:var(--fg-muted);line-height:1.55}
+  details.extract .x-body p{margin-top:6px}
+  details.extract .x-body b{color:var(--fg);font-weight:500}
+  .val-wrap{border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden;margin-top:16px;background:var(--bg)}
+  .val-wrap table{width:100%;border-collapse:collapse;font-size:14.5px}
+  .val-wrap th{text-align:left;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-muted);font-weight:600;padding:12px 18px;border-bottom:1px solid var(--border-subtle)}
+  .val-wrap td{padding:13px 18px;border-bottom:1px solid var(--border-subtle);vertical-align:top;line-height:1.5;color:var(--fg-muted)}
+  .val-wrap tr:last-child td{border-bottom:0}
+  .val-wrap td:first-child{font-weight:500;white-space:nowrap;color:var(--fg)}
+  .footer-cta{margin-top:80px;border-top:1px solid var(--border);padding-top:26px;color:var(--fg-muted);max-width:66ch;font-size:15px}
+  .footer-cta b{color:var(--fg)}
+
+  /* ══ Browser frame ══ */
+  .frame{background:var(--bg);border:1px solid var(--border-subtle);border-radius:12px;box-shadow:var(--shadow-soft);overflow:hidden}
+  .frame-bar{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--border-subtle);background:var(--panel)}
+  .frame-bar .dots{display:flex;gap:5px}
+  .frame-bar .dots span{width:8px;height:8px;border-radius:50%;background:var(--border-subtle)}
+  .frame-bar .url{font-size:12px;color:var(--fg-muted);background:var(--bg);border:1px solid var(--border-subtle);border-radius:999px;padding:2px 12px;margin-left:6px}
+  .frame-scroll{overflow-x:auto}
+  .mock{min-width:760px;padding:0 48px;background:var(--bg)}
+  .mock-fade{position:relative}
+  .mock-fade::after{content:"";position:absolute;left:0;right:0;bottom:0;height:64px;background:linear-gradient(to bottom,transparent,var(--bg))}
+
+  /* ══ Shared mock atoms ══ */
+  .m-muted{color:var(--fg-muted)}
+  .avatar{border-radius:50%;background:linear-gradient(135deg,#B9C7D6,#8FA5BC);display:inline-flex;align-items:center;justify-content:center;font-weight:500;color:#fff;flex-shrink:0}
+  .logo-sq{border-radius:8px;background:linear-gradient(150deg,#2E4B43,#5C7A6E);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#EAF1ED;font-weight:500}
+  .quiet-link{color:var(--fg-muted);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--fg-disabled);cursor:pointer;white-space:nowrap}
+  .scarce{font-size:13px;color:var(--amber-text);white-space:nowrap}
+  .art{position:relative;overflow:hidden;background:linear-gradient(140deg,#C9D3C6,#9FB4A8 60%,#7E9A8C)}
+  .art img{width:100%;height:100%;object-fit:cover}
+
+  /* seller header inside each mock (Q2 decision: seller-branded, platform invisible) */
+  .shead{display:flex;align-items:center;gap:10px;padding:15px 0;border-bottom:1px solid var(--border-subtle)}
+  .shead .logo-sq{width:28px;height:28px;font-size:11px}
+  .shead b{font-weight:500;font-size:15px}
+
+  /* ledger + radio dot — checkout's TicketTileButton grammar */
+  .ledger{list-style:none}
+  .ledger li{display:flex;align-items:center;gap:14px;padding:13px 18px;cursor:pointer;border-top:1px solid var(--border-subtle);transition:background .12s}
+  .ledger li:hover{background:var(--hover)}
+  .ledger li[aria-checked="true"]{background:var(--selection-light)}
+  .ledger .lab{flex:1;min-width:0}
+  .ledger .lab b{font-weight:500;font-size:15px;display:block}
+  .ledger .lab span{font-size:13.5px;color:var(--fg-muted)}
+  .ledger .pr{font-variant-numeric:tabular-nums;font-weight:500;font-size:15px;white-space:nowrap}
+  .ledger .ck{width:18px;height:18px;border-radius:50%;border:2px solid var(--input);flex-shrink:0;position:relative;font-size:0;color:transparent;transition:border-color .15s ease}
+  .ledger .ck::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--primary);transform:scale(0);transition:transform .15s var(--ease-out)}
+  .ledger li[aria-checked="true"] .ck{border-color:var(--primary)}
+  .ledger li[aria-checked="true"] .ck::after{transform:scale(1)}
+
+  /* summary + CTA — BookingRailLite grammar */
+  .book-head{padding:14px 18px 12px;font-size:14px;font-weight:500;display:flex;justify-content:space-between;align-items:center}
+  .book-foot{padding:14px 18px 18px;border-top:1px solid var(--border-subtle)}
+  .sum-row{display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-size:15px;color:var(--fg-muted)}
+  .sum-row .r{font-variant-numeric:tabular-nums;color:var(--fg)}
+  .sum-row .r.dim{color:var(--fg-muted)}
+  .total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--border-subtle);margin-top:9px;padding-top:11px}
+  .total .t{font-size:15px;font-weight:500}
+  .total .amt{font-size:20px;font-weight:500;font-variant-numeric:tabular-nums}
+  .cta{display:block;width:100%;margin-top:14px;border:0;border-radius:999px;background:var(--fg);color:var(--bg);font:inherit;font-weight:500;font-size:16px;height:44px;cursor:pointer}
+  .cta:hover{background:color-mix(in oklab,var(--fg) 90%,transparent)}
+  .fine{font-size:12.5px;color:var(--fg-muted);text-align:center;margin-top:11px}
+
+  /* velg pill (S2) + segmented toggle (S3) — both lifted from the app */
+  .velg{border:1px solid var(--input);background:var(--bg);border-radius:999px;font:inherit;font-size:13.5px;font-weight:500;padding:6px 16px;cursor:pointer;white-space:nowrap}
+  .velg:hover{border-color:var(--fg-subtle)}
+  .velg.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+  .seg{display:flex;width:100%;height:44px;align-items:center;gap:4px;padding:4px;border-radius:999px;background:var(--muted)}
+  .seg-btn{flex:1;height:36px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;background:transparent;color:var(--fg);font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+  .seg-btn[aria-checked="true"]{background:var(--bg);box-shadow:var(--shadow-xs)}
+  .seg-sub{font-size:13.5px;color:var(--fg-muted);margin-top:10px}
+
+  /* section labels inside mocks */
+  .sec-h{font-size:16px;font-weight:500;letter-spacing:-.005em}
+  .body-t{font-size:15.5px;line-height:1.65;margin-top:10px}
+  .tl{list-style:none;margin-top:8px}
+  .tl li{display:flex;gap:14px;padding:7px 0;font-size:15px;align-items:center}
+  .tl .n{width:24px;height:24px;border-radius:50%;background:var(--muted);color:var(--fg-muted);font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .tl .dt{flex:1}
+  .tl time{color:var(--fg-muted);font-variant-numeric:tabular-nums;font-size:14px}
+
+  /* ══ S1 — Rolig: calm single column, embedded booking ══ */
+  .s1{max-width:620px;margin:0 auto;padding-bottom:8px}
+  .s1-art{aspect-ratio:16/9;border-radius:16px;margin-top:28px}
+  .s1-date{font-size:14px;font-weight:500;color:var(--fg-muted);margin-top:26px}
+  .s1-title{font-size:32px;font-weight:500;letter-spacing:-.018em;line-height:1.12;margin-top:6px;text-wrap:balance}
+  .s1-org{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--panel);border-radius:12px;padding:12px 16px;margin-top:20px}
+  .s1-org .who{display:flex;align-items:center;gap:11px;min-width:0}
+  .s1-org .avatar{width:36px;height:36px;font-size:12px}
+  .s1-org p{font-size:14.5px;font-weight:500}
+  .s1-org p span{display:block;font-size:13px;color:var(--fg-muted);font-weight:400;margin-top:1px}
+  .s1-ww{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:30px}
+  .s1-ww p{font-size:15px;font-weight:500}
+  .s1-ww p span{display:block;font-size:13.5px;color:var(--fg-muted);font-weight:400;margin-top:2px}
+  .s1-book{margin-top:28px;background:var(--panel);border-radius:12px;overflow:hidden;padding:2px 0 4px}
+  .s1-sec{border-top:1px solid var(--border-subtle);margin-top:30px;padding-top:24px}
+
+  /* ══ S2 — Plakat: reading column + poster, serif display ══ */
+  .s2{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:56px;align-items:start;padding:36px 0 8px}
+  .s2-poster{aspect-ratio:4/5;border-radius:12px;background:linear-gradient(160deg,#8FA5BC 0%,#5F7A94 55%,#3E5468 100%)}
+  .s2-under{display:flex;align-items:center;gap:12px;margin-top:16px}
+  .s2-under .logo-sq{width:38px;height:38px;border-radius:10px;font-size:12px}
+  .s2-under p{font-size:14.5px;font-weight:500}
+  .s2-under p span{display:block;font-size:13px;color:var(--fg-muted);font-weight:400;margin-top:1px}
+  .s2-title{font-family:var(--serif);font-size:46px;font-weight:500;line-height:1.04;letter-spacing:-.005em;text-wrap:balance}
+  .s2-when{margin-top:16px;font-size:15px}
+  .s2-when p:first-child{font-weight:500}
+  .s2-when p+p{color:var(--fg-muted);font-size:14px;margin-top:2px}
+  .s2-lede{font-size:16px;line-height:1.6;color:var(--fg-muted);margin-top:14px;max-width:52ch}
+  .s2-sec{border-top:1px solid var(--border-subtle);margin-top:28px;padding-top:22px}
+  .s2-sec>.lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;color:var(--fg-muted);margin-bottom:10px}
+  .s2-tix{list-style:none}
+  .s2-tix li{display:flex;align-items:center;gap:16px;padding:13px 2px}
+  .s2-tix li+li{border-top:1px solid var(--border-subtle)}
+  .s2-tix .lab{flex:1;min-width:0}
+  .s2-tix .lab b{font-weight:500;font-size:15px;display:block}
+  .s2-tix .lab span{font-size:13.5px;color:var(--fg-muted)}
+  .s2-tix .pr{font-variant-numeric:tabular-nums;font-weight:500;font-size:15px;white-space:nowrap}
+  .s2-cta{display:inline-flex;align-items:center;gap:9px;margin-top:18px;border:0;border-radius:999px;background:var(--fg);color:var(--bg);font:inherit;font-weight:500;font-size:16px;height:44px;padding:0 26px;cursor:pointer}
+  .s2-cta:hover{background:color-mix(in oklab,var(--fg) 90%,transparent)}
+  .s2-cta small{font-weight:400;opacity:.8;font-size:15px;font-variant-numeric:tabular-nums}
+  .s2-feenote{font-size:13px;color:var(--fg-muted);margin-top:10px}
+  .s2-host{display:flex;align-items:center;gap:12px}
+  .s2-host .avatar{width:40px;height:40px;font-size:13px}
+  .s2-host p{font-size:14.5px;font-weight:500}
+  .s2-host p span{display:block;font-size:13px;color:var(--fg-muted);font-weight:400;margin-top:1px}
+
+  /* ══ S3 — To-spors: content column + sticky booking rail ══ */
+  .s3{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:48px;align-items:start;padding:36px 0 8px}
+  .s3-art{aspect-ratio:16/8;border-radius:16px}
+  .s3-title{font-size:30px;font-weight:500;letter-spacing:-.016em;line-height:1.14;margin-top:22px;text-wrap:balance}
+  .s3-host{display:flex;align-items:center;gap:9px;margin-top:10px;font-size:14px;color:var(--fg-muted)}
+  .s3-host .avatar{width:22px;height:22px;font-size:9px}
+  .s3-sec{border-top:1px solid var(--border-subtle);margin-top:28px;padding-top:22px}
+  .s3-rail{position:sticky;top:24px;background:var(--bg);border:1px solid var(--border-subtle);border-radius:12px;box-shadow:var(--shadow-soft);padding:16px 18px 18px}
+  .s3-rail .when{font-size:14px;font-weight:500;padding-bottom:14px}
+  .s3-rail .when span{display:block;font-size:13px;color:var(--fg-muted);font-weight:400;margin-top:1px}
+  .s3-rail .foot{border-top:1px solid var(--border-subtle);margin-top:14px;padding-top:12px}
+
+  /* ══ Press feedback + focus — Button grammar ══ */
+  .cta,.s2-cta,.velg,.seg-btn{transition:background-color .15s ease,color .15s ease,border-color .15s ease,box-shadow .15s ease,transform .16s var(--ease-out)}
+  .cta:active,.s2-cta:active,.velg:active,.seg-btn:active{transform:scale(.97)}
+  button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <p class="doc-kicker">Kursside — tre ferdige stiler — fresh pass (v2), bygger på structure-doc rev 11</p>
+  <h1>The booking detail page, three ways</h1>
+  <p class="doc-lede">Same course, same data, three complete pages. Everything the structure doc locked is held constant: tokens verbatim (Geist, hue-250 neutrals, hairlines, black pill CTA, azure only as selection), <strong>real fees</strong> from <code>pricing.ts</code> (2 200 kr → 110 kr, 250 kr → 13 kr), checkout's radio-dot grammar, seller-branded header (Q2), the policy field (Q4), and the edge-state rules (they render identically in all three, so they're not repeated here). What varies is <strong>style</strong>: where the booking lives, how loud the identity is, and how far the expression dial moves. All three booking zones are clickable. Artwork is live placeholder photography.</p>
+
+  <!-- ═══════════ S1 ═══════════ -->
+  <section class="doc-section">
+    <div class="opt-head"><span class="opt-chip">S1</span><span class="opt-title">Rolig — calm single column, booking embedded in the flow</span></div>
+    <p class="opt-sub">The quiet default. Eventbrite's event-page order (date over title, organizer bar, «when and where», policy at the end) rendered in our system, with the booking zone as Luma's flat embedded fill instead of a floating card. Nothing on the page is elevated; the grey fill alone marks the decision.</p>
+    <details class="extract">
+      <summary>Reference extraction — S1</summary>
+      <div class="x-body">
+        <p><b>Structural question:</b> how does a calm, trust-first event page order identity, facts, booking and reassurance in one column?</p>
+        <p><b>Sources:</b> <a href="https://mobbin.com/screens/f9a56b41-c403-4fd5-87eb-986498c1d8ff">Eventbrite event page</a> (date eyebrow over title, organizer bar, «When and where» two-up, refund policy as a section), <a href="https://mobbin.com/screens/fb172cac-fa93-407d-bb68-1dc4a27db64d">Luma event page</a> (registration as a soft embedded fill in the reading flow).</p>
+        <p><b>Adopted:</b> (1) date line over the title, quiet; (2) organizer bar as a panel-fill strip with the instructor and one link; (3) «Når og hvor» as a two-column text block, no icon sprinkle; (4) booking = flat fill, zero elevation; (5) «Greit å vite» closes the page (Q4's policy field, Eventbrite's refund-policy slot).</p>
+        <p><b>Rejected:</b> Eventbrite's floating right card (S3's job); follower counts and Follow buttons (no such data).</p>
+      </div>
+    </details>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/yoga-for-nybegynnere</span></div>
+      <div class="frame-scroll"><div class="mock mock-fade">
+        <div class="s1">
+          <div class="shead"><span class="logo-sq">FY</span><b>Fjell Yoga Oslo</b></div>
+          <div class="art s1-art"><img src="https://picsum.photos/id/1015/1200/675" alt="" onerror="this.remove()"></div>
+          <p class="s1-date">Tirsdager fra 12. august</p>
+          <h3 class="s1-title">Yoga for nybegynnere</h3>
+          <div class="s1-org">
+            <div class="who">
+              <span class="avatar">IL</span>
+              <p>Ingrid Larsen<span>Instruktør hos Fjell Yoga Oslo</span></p>
+            </div>
+            <span class="quiet-link" style="font-size:13.5px">Se alle kurs</span>
+          </div>
+          <div class="s1-ww">
+            <p>Tirsdager kl. 18:00–19:30<span>12. august – 30. september, 8 økter</span></p>
+            <p>Fjell Yoga Oslo<span>Thorvald Meyers gate 45, Oslo</span></p>
+          </div>
+          <div class="s1-book">
+            <div class="book-head"><span>Velg billett</span><span class="scarce">3 plasser igjen</span></div>
+            <ul class="ledger" id="s1Ledger">
+              <li aria-checked="true" data-p="2200" data-f="110" data-l="Hele kurset">
+                <span class="lab"><b>Hele kurset</b><span>8 økter, tirsdager</span></span>
+                <span class="pr">2 200 kr</span><span class="ck">✓</span>
+              </li>
+              <li aria-checked="false" data-p="250" data-f="13" data-l="Drop-in">
+                <span class="lab"><b>Drop-in</b><span>Neste økt: tir. 12. aug kl. 18:00</span></span>
+                <span class="pr">250 kr</span><span class="ck">✓</span>
+              </li>
+            </ul>
+            <div class="book-foot">
+              <div class="sum-row"><span id="s1Lab">Hele kurset</span><span class="r" id="s1Amt">2 200 kr</span></div>
+              <div class="sum-row"><span>Tjenestegebyr</span><span class="r dim" id="s1Fee">110 kr</span></div>
+              <div class="total"><span class="t">Totalt</span><span class="amt" id="s1Tot">2 310 kr</span></div>
+              <button class="cta">Reserver</button>
+              <p class="fine">Sikker betaling med Stripe</p>
+            </div>
+          </div>
+          <div class="s1-sec">
+            <p class="sec-h">Om kurset</p>
+            <p class="body-t">Et rolig og grundig introduksjonskurs for deg som aldri har stått på matten før. Vi går gjennom grunnstillingene, pust og enkle flyter i et tempo der ingen blir hengende etter.</p>
+          </div>
+          <div class="s1-sec" style="padding-bottom:44px">
+            <p class="sec-h">Greit å vite</p>
+            <p class="body-t m-muted">Gratis avbestilling frem til 5. august. Matter og blokker ligger i studio.</p>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="verdict">
+      <div><b>For</b>The safest read for a nervous first-time buyer: one column, one decision surface, reassurance exactly where Eventbrite puts it. Works with weak photography because nothing depends on the image. Mobile is the same page.</div>
+      <div><b>Mot</b>The least distinctive of the three: with the expression dial this low, every studio's page looks alike, and the studio's own brand carries only through logo, photo and name.</div>
+    </div>
+  </section>
+
+  <!-- ═══════════ S2 ═══════════ -->
+  <section class="doc-section">
+    <div class="opt-head"><span class="opt-chip">S2</span><span class="opt-title">Plakat — poster split with serif display (expression experiment)</span></div>
+    <p class="opt-sub">Posh's web grammar: a reading column against a poster, hairline sections, host block at the end, CTA carrying the amount. One deliberate rule-bend, clearly flagged: the title borrows the <strong>landing page's serif display</strong> (EB Garamond, 46px — well above the 24px serif floor). The design language currently reserves serif for marketing; this render exists to let you judge whether course pages may borrow it.</p>
+    <details class="extract">
+      <summary>Reference extraction — S2</summary>
+      <div class="x-body">
+        <p><b>Structural question:</b> how does a poster-led event page divide identity and information between two columns, and where does buying sit?</p>
+        <p><b>Sources:</b> <a href="https://mobbin.com/screens/441f86dd-896d-42b7-8898-182998c7db42">Posh event page</a> + <a href="https://mobbin.com/screens/b23b0472-1e6c-4f58-b6d0-d95478726ead">serif-display variant</a> (title + when-block left, square poster right, hairline sections, host block low on the page), <a href="https://mobbin.com/screens/80d1eaab-1208-4d9d-9e28-e33d9a5e6a2e">Posh header detail</a>.</p>
+        <p><b>Adopted:</b> (1) poster right, reading column left — the text leads; (2) serif display title (Posh's own move on the cookie event); (3) tickets as hairline rows with Velg-pills, CTA carries the selected amount; (4) host block closes the page with the «all courses» exit.</p>
+        <p><b>Rejected:</b> Posh's dark ambient backdrop (our public pages stay white; seller photos aren't art-directed for it); attendee avatar rows (no such data).</p>
+      </div>
+    </details>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/yoga-for-nybegynnere</span></div>
+      <div class="frame-scroll"><div class="mock mock-fade" style="min-width:900px">
+        <div class="s2">
+          <div>
+            <h3 class="s2-title">Yoga for nybegynnere</h3>
+            <div class="s2-when">
+              <p>Tirsdager kl. 18:00–19:30</p>
+              <p>12. august – 30. september, 8 økter</p>
+            </div>
+            <p class="s2-lede">Et rolig og grundig introduksjonskurs for deg som aldri har stått på matten før: grunnstillinger, pust og enkle flyter over åtte tirsdagskvelder på Grünerløkka.</p>
+            <div class="s2-sec">
+              <p class="lbl">Billetter</p>
+              <ul class="s2-tix" id="s2Tix">
+                <li data-p="2200">
+                  <span class="lab"><b>Hele kurset</b><span>8 økter, tirsdager</span></span>
+                  <span class="pr">2 200 kr</span><button class="velg on" type="button">Valgt</button>
+                </li>
+                <li data-p="250">
+                  <span class="lab"><b>Drop-in</b><span>Neste økt: tir. 12. aug kl. 18:00</span></span>
+                  <span class="pr">250 kr</span><button class="velg" type="button">Velg</button>
+                </li>
+              </ul>
+              <button class="s2-cta" type="button">Reserver <small id="s2Amt">2 200 kr</small></button>
+              <p class="s2-feenote" style="margin-top:12px"><span class="scarce" style="font-size:13.5px">3 plasser igjen</span></p>
+              <p class="s2-feenote" style="margin-top:3px">Tjenestegebyr kommer i tillegg og vises før betaling.</p>
+            </div>
+            <div class="s2-sec">
+              <p class="lbl">Timeplan</p>
+              <ul class="tl" style="margin-top:2px">
+                <li><span class="n">1</span><span class="dt">Tirsdag 12. august</span><time>18:00–19:30</time></li>
+                <li><span class="n">2</span><span class="dt">Tirsdag 19. august</span><time>18:00–19:30</time></li>
+                <li><span class="n">3</span><span class="dt">Tirsdag 26. august</span><time>18:00–19:30</time></li>
+              </ul>
+              <p style="margin-top:8px"><span class="quiet-link" style="font-size:14px">Vis alle 8 økter</span></p>
+            </div>
+            <div class="s2-sec" style="padding-bottom:36px">
+              <div class="s2-host">
+                <span class="avatar">IL</span>
+                <p>Ingrid Larsen<span>Instruktør hos Fjell Yoga Oslo</span></p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="art s2-poster"><img src="https://picsum.photos/id/1043/800/1000" alt="" onerror="this.remove()"></div>
+            <div class="s2-under">
+              <span class="logo-sq">FY</span>
+              <p>Fjell Yoga Oslo<span class="quiet-link" style="text-decoration:none;color:var(--fg-muted)">Se alle kurs</span></p>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="verdict">
+      <div><b>For</b>The most branded page per course: the poster and the serif display give a season-program feel no competitor storefront has. Strongest when the studio uploads real photography, and the CTA-carries-price pattern keeps the column short.</div>
+      <div><b>Mot</b>Bends the serif-is-marketing-only rule, so saying yes here means updating the design language. Weak or landscape-only images undercut the poster column, and there is no fee-inclusive total on the page (it appears at checkout).</div>
+    </div>
+  </section>
+
+  <!-- ═══════════ S3 ═══════════ -->
+  <section class="doc-section">
+    <div class="opt-head"><span class="opt-chip">S3</span><span class="opt-title">To-spors — content column + sticky booking rail with the toggle</span></div>
+    <p class="opt-sub">The desktop-product take, and the shortest path from what's shipped: content reads on the left while a sticky rail owns the transaction — <code>BookingRailLite</code> evolved, with Q3B's segmented toggle inside it. Care.com runs exactly this shape for kids' camps, down to a «Series | Drop-ins» toggle in the rail.</p>
+    <details class="extract">
+      <summary>Reference extraction — S3</summary>
+      <div class="x-body">
+        <p><b>Structural question:</b> when the transaction lives in a persistent rail, what does the rail carry and what stays in the reading column?</p>
+        <p><b>Sources:</b> <a href="https://mobbin.com/screens/2b1a0757-6359-483b-8c72-613b0bdc28f7">Care.com activity page</a> (photo + title left; rail right with a «Series | Drop-ins» segmented toggle and per-session prices), <a href="https://mobbin.com/screens/e9f3adb4-906f-4bbb-8154-b4fc3f7e713a">Airbnb availability rail</a> (sticky, self-sufficient, one action), app <code>BookingRailLite.tsx</code> (the shipped rail: «Når» context field, tier tiles, fee summary, black CTA).</p>
+        <p><b>Adopted:</b> (1) the rail is self-sufficient — when, offer, price, action; (2) the tier choice is the SegmentedTabs toggle (Care.com's own pattern at this exact cardinality); (3) scarcity sits in the rail above the CTA; (4) the column keeps only story content: title, host, about, schedule.</p>
+        <p><b>Rejected:</b> Care.com's per-session select buttons (drop-in auto-picks the next session today); review stars and tabs (no such data).</p>
+      </div>
+    </details>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/yoga-for-nybegynnere</span></div>
+      <div class="frame-scroll"><div class="mock mock-fade" style="min-width:900px">
+        <div class="s3">
+          <div>
+            <div class="art s3-art"><img src="https://picsum.photos/id/1018/1200/600" alt="" onerror="this.remove()"></div>
+            <h3 class="s3-title">Yoga for nybegynnere</h3>
+            <div class="s3-host"><span class="avatar">IL</span><span>Med Ingrid Larsen</span></div>
+            <div class="s3-sec">
+              <p class="sec-h">Om kurset</p>
+              <p class="body-t">Et rolig og grundig introduksjonskurs for deg som aldri har stått på matten før. Vi går gjennom grunnstillingene, pust og enkle flyter i et tempo der ingen blir hengende etter.</p>
+            </div>
+            <div class="s3-sec" style="padding-bottom:36px">
+              <p class="sec-h">Timeplan</p>
+              <ul class="tl">
+                <li><span class="n">1</span><span class="dt">Tirsdag 12. august</span><time>18:00–19:30</time></li>
+                <li><span class="n">2</span><span class="dt">Tirsdag 19. august</span><time>18:00–19:30</time></li>
+                <li><span class="n">3</span><span class="dt">Tirsdag 26. august</span><time>18:00–19:30</time></li>
+              </ul>
+              <p style="margin-top:8px"><span class="quiet-link" style="font-size:14px">Vis alle 8 økter</span></p>
+            </div>
+          </div>
+          <div class="s3-rail">
+            <p class="when">Tirsdager kl. 18:00–19:30<span>Fjell Yoga Oslo, Thorvald Meyers gate 45</span></p>
+            <div class="seg" role="radiogroup" aria-label="Velg billett" id="s3Seg">
+              <button type="button" class="seg-btn" role="radio" aria-checked="true" data-p="2200" data-f="110" data-l="Hele kurset" data-s="8 økter, tirsdager">Hele kurset</button>
+              <button type="button" class="seg-btn" role="radio" aria-checked="false" data-p="250" data-f="13" data-l="Drop-in" data-s="Neste økt: tir. 12. aug kl. 18:00">Drop-in</button>
+            </div>
+            <p class="seg-sub" id="s3Sub">8 økter, tirsdager</p>
+            <div class="foot">
+              <div class="sum-row"><span id="s3Lab">Hele kurset</span><span class="r" id="s3Amt">2 200 kr</span></div>
+              <div class="sum-row"><span>Tjenestegebyr</span><span class="r dim" id="s3Fee">110 kr</span></div>
+              <div class="total"><span class="t">Totalt</span><span class="amt" id="s3Tot">2 310 kr</span></div>
+              <p class="scarce" style="margin-top:12px">3 plasser igjen</p>
+              <button class="cta" style="margin-top:8px">Reserver</button>
+              <p class="fine">Sikker betaling med Stripe</p>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="verdict">
+      <div><b>For</b>Price and action are visible at every scroll depth with no bottom bar; the rail reuses the shipped component almost as-is, so this is the cheapest style to build. The toggle caps cleanly at our two-tier maximum.</div>
+      <div><b>Mot</b>Two-track layouts are desktop-only — mobile must collapse to S1's order anyway, so you maintain two arrangements. The rail also pulls weight away from the studio's content column.</div>
+    </div>
+  </section>
+
+  <!-- ═══════════ COMPARISON ═══════════ -->
+  <section class="doc-section">
+    <div class="opt-head"><span class="opt-chip">Valg</span><span class="opt-title">Side by side</span></div>
+    <div class="val-wrap"><table>
+      <thead><tr><th>Stil</th><th>Signature</th><th>Best when</th><th>Watch out</th></tr></thead>
+      <tbody>
+        <tr><td>S1 Rolig</td><td>One column, flat embedded booking, policy last</td><td>Trust matters most; photography is weak; one layout for all devices</td><td>Low brand distinction between studios</td></tr>
+        <tr><td>S2 Plakat</td><td>Poster split, serif display, CTA carries the price</td><td>Studios bring real imagery; courses sold like a season program</td><td>Requires changing the serif rule; no fee-inclusive total on page</td></tr>
+        <tr><td>S3 To-spors</td><td>Sticky rail with the segmented toggle</td><td>Fastest to ship from <code>BookingRailLite</code>; long descriptions</td><td>Desktop-only arrangement; rail competes with content</td></tr>
+      </tbody>
+    </table></div>
+    <p class="footer-cta" style="margin-top:24px"><b>To decide, reply with:</b> S1, S2 or S3 — mixing is fine (e.g. «S1 with S3's rail on desktop», which is how Eventbrite itself behaves). The serif display in S2 needs an explicit yes, since it changes the design-language rule for public pages. Edge states, single-tier collapse and mobile order all inherit from the structure doc (rev 11).</p>
+  </section>
+</div>
+
+<script>
+  const kr=n=>n.toLocaleString('nb-NO')+' kr';
+
+  // S1 — ledger
+  const s1Rows=document.querySelectorAll('#s1Ledger li');
+  s1Rows.forEach(r=>r.addEventListener('click',()=>{
+    s1Rows.forEach(x=>x.setAttribute('aria-checked','false'));
+    r.setAttribute('aria-checked','true');
+    const p=+r.dataset.p,f=+r.dataset.f;
+    document.getElementById('s1Lab').textContent=r.dataset.l;
+    document.getElementById('s1Amt').textContent=kr(p);
+    document.getElementById('s1Fee').textContent=kr(f);
+    document.getElementById('s1Tot').textContent=kr(p+f);
+  }));
+
+  // S2 — velg pills, CTA carries the amount
+  const s2Rows=document.querySelectorAll('#s2Tix li');
+  s2Rows.forEach(li=>li.querySelector('.velg').addEventListener('click',()=>{
+    s2Rows.forEach(x=>{const b=x.querySelector('.velg');b.classList.remove('on');b.textContent='Velg';});
+    const b=li.querySelector('.velg');b.classList.add('on');b.textContent='Valgt';
+    document.getElementById('s2Amt').textContent=kr(+li.dataset.p);
+  }));
+
+  // S3 — segmented toggle in the rail
+  const s3Segs=document.querySelectorAll('#s3Seg .seg-btn');
+  s3Segs.forEach(b=>b.addEventListener('click',()=>{
+    s3Segs.forEach(x=>x.setAttribute('aria-checked','false'));
+    b.setAttribute('aria-checked','true');
+    const p=+b.dataset.p,f=+b.dataset.f;
+    document.getElementById('s3Sub').textContent=b.dataset.s;
+    document.getElementById('s3Lab').textContent=b.dataset.l;
+    document.getElementById('s3Amt').textContent=kr(p);
+    document.getElementById('s3Fee').textContent=kr(f);
+    document.getElementById('s3Tot').textContent=kr(p+f);
+  }));
+</script>
+</html>
