@@ -15,7 +15,7 @@ import type { Stripe } from '@stripe/stripe-js';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { withTimeout } from '@/lib/with-timeout';
 import { ChevronLeft, Lock, Plus } from '@/lib/icons';
-import { formatCoursePrice, formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
+import { formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
 import { calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
 import { fetchPublicCourseBySlug, resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
@@ -29,7 +29,6 @@ import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import type { TicketId } from '@/components/public/course-details/BookingRailLite';
 import {
   buildCheckoutContextMeta,
-  buildMainTierConstraintLabel,
   buildNextSessionLabel,
 } from '@/components/public/course-details/schedule-format';
 import type { AvailableTicketType } from '@/types/database';
@@ -326,11 +325,16 @@ const CheckoutPage = () => {
   const showBillett = tiers.length === 2 && !!mainTier && !!dropInTier;
   const billettSpotsLeft = course?.spots_available ?? 0;
   const billettLowStock = billettSpotsLeft > 0 && billettSpotsLeft <= 3;
-  const billettConstraintLabel = isDropInSelected
-    ? (dropInResolving ? null : buildNextSessionLabel(dropInNextSession ?? null))
-    : course && mainTier
-      ? buildMainTierConstraintLabel(course, mainTier)
-      : null;
+  // Drop-in selected → the context row's meta line swaps to the concrete
+  // session being bought. The value updates in an existing slot; nothing
+  // floats under the toggle.
+  const contextMetaOverride = (() => {
+    if (!isDropInSelected || dropInResolving) return undefined;
+    const next = buildNextSessionLabel(dropInNextSession ?? null);
+    if (!next) return undefined;
+    const seller = course?.seller?.name;
+    return seller ? `${next}, ${seller}` : next;
+  })();
 
   // ── Form validation ─────────────────────────────────────────────────────
   // Blur shows format errors on non-empty fields; a failed submit attempt
@@ -481,6 +485,7 @@ const CheckoutPage = () => {
           <CheckoutTitle />
           <CheckoutCourseContext
             course={course}
+            metaOverride={contextMetaOverride}
             trailing={
               !closed && !showBillett && billettLowStock ? (
                 <span className="ml-auto whitespace-nowrap text-[13px] text-warning">
@@ -499,7 +504,6 @@ const CheckoutPage = () => {
                 const tier = kind === 'drop-in' ? dropInTier : mainTier;
                 if (tier) setSelectedTierId(tier.id);
               }}
-              constraintLabel={billettConstraintLabel}
               lowStock={billettLowStock}
               spotsLeft={billettSpotsLeft}
               disabled={submitting}
@@ -768,7 +772,7 @@ export function ContactFields({
 }
 
 /**
- * Terms checkbox + one-line angrerett note. Kept functionally identical to
+ * Terms checkbox. Kept functionally identical to
  * the previous inline block, just extracted so it can sit at the end of the
  * form (directly before the receipt + pay action) per the mock — the
  * "Ingen mva. kommer i tillegg." / "Påmeldingen er hos X." lines that used
@@ -810,9 +814,6 @@ export function TermsField({
         </p>
       </div>
       {error && <FieldError id="terms-error" className="pl-7">{error}</FieldError>}
-      <p className="mt-2 pl-7 text-xs text-foreground-muted">
-        Kurs med fastsatt dato er unntatt angrerett. Se vilkårene.
-      </p>
     </div>
   );
 }
@@ -1077,11 +1078,14 @@ function PaidCheckoutForm({
 export function CheckoutCourseContext({
   course,
   trailing,
+  metaOverride,
 }: {
   course: PublicCourseWithDetails;
   trailing?: React.ReactNode;
+  /** Replaces the default meta line, e.g. drop-in's «Neste økt: …». */
+  metaOverride?: string | null;
 }) {
-  const meta = buildCheckoutContextMeta(course, course.seller?.name ?? null);
+  const meta = metaOverride ?? buildCheckoutContextMeta(course, course.seller?.name ?? null);
   const img = resolveCourseImage(course);
 
   return (
@@ -1175,7 +1179,7 @@ export function CheckoutReceipt({
         )}
       >
         <span>Totalt</span>
-        <span className="text-xl tabular-nums">{formatCoursePrice(total)}</span>
+        <span className="text-xl tabular-nums">{formatKroner(total)}</span>
       </div>
     </div>
   );
@@ -1192,7 +1196,6 @@ export function BillettSection({
   dropInTier,
   selectedKind,
   onSelect,
-  constraintLabel,
   lowStock,
   spotsLeft,
   disabled,
@@ -1201,7 +1204,6 @@ export function BillettSection({
   dropInTier: AvailableTicketType;
   selectedKind: TicketId;
   onSelect: (kind: TicketId) => void;
-  constraintLabel: string | null;
   lowStock: boolean;
   spotsLeft: number;
   disabled: boolean;
@@ -1229,9 +1231,6 @@ export function BillettSection({
           { key: 'drop-in', label: dropInTier.label },
         ]}
       />
-      {constraintLabel && (
-        <p className="text-[13.5px] text-foreground-muted">{constraintLabel}</p>
-      )}
     </div>
   );
 }

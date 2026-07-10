@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { formatCoursePrice, formatKroner } from '@/lib/utils';
+import { formatKroner } from '@/lib/utils';
 import type { TicketTile } from './BookingRailLite';
 
 interface BookingBarProps {
@@ -94,14 +94,14 @@ export function BookingBar({
                         {formatKroner(coursePrice)}
                       </s>
                     )}
-                    {formatCoursePrice(mainTile.amount)}
+                    {formatKroner(mainTile.amount)}
                   </span>
                 </p>
               )
             )}
             {dropInTile && (
               <p className="truncate text-[13px] text-foreground-muted tabular-nums">
-                {dropInTile.label} {formatCoursePrice(dropInTile.amount)}
+                {dropInTile.label} {formatKroner(dropInTile.amount)}
               </p>
             )}
           </div>

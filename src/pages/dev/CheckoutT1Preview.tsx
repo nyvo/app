@@ -15,7 +15,6 @@ import {
   type FormState,
 } from '@/pages/public/CheckoutPage';
 import {
-  buildMainTierConstraintLabel,
   buildNextSessionLabel,
 } from '@/components/public/course-details/schedule-format';
 import type { TicketId } from '@/components/public/course-details/BookingRailLite';
@@ -84,15 +83,14 @@ function PreviewBody({ variant }: { variant: Variant }) {
   const fee = calculateServiceFee(subtotal);
   const total = subtotal + fee;
 
-  // Constraint line under the Billett toggle — same helpers the real page
-  // uses; the drop-in "next session" is a fixed mock date.
+  // Drop-in selected → the context row's meta swaps to the session being
+  // bought (same slot-update behavior as the real page).
   const nextDropInSession = mockNextDropInSession(variant);
-  const constraintLabel =
-    selectedKind === 'drop-in'
-      ? buildNextSessionLabel(nextDropInSession)
-      : mainTier
-        ? buildMainTierConstraintLabel(course, mainTier)
-        : null;
+  const nextLabel = buildNextSessionLabel(nextDropInSession);
+  const metaOverride =
+    selectedKind === 'drop-in' && nextLabel
+      ? [nextLabel, course.seller?.name].filter(Boolean).join(', ')
+      : undefined;
 
   const billettSpotsLeft = 3;
 
@@ -116,6 +114,7 @@ function PreviewBody({ variant }: { variant: Variant }) {
           <CheckoutTitle />
           <CheckoutCourseContext
             course={course}
+            metaOverride={metaOverride}
             trailing={
               !showBillett ? (
                 <span className="ml-auto whitespace-nowrap text-[13px] text-warning">
@@ -131,7 +130,6 @@ function PreviewBody({ variant }: { variant: Variant }) {
               dropInTier={dropInTier}
               selectedKind={selectedKind}
               onSelect={setSelectedKind}
-              constraintLabel={constraintLabel}
               lowStock
               spotsLeft={billettSpotsLeft}
               disabled={false}
