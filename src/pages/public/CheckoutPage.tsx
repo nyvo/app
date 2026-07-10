@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,24 +9,29 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FieldError } from '@/components/ui/field-error';
 import { PageState } from '@/components/page-state/page-state';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
+import { FloatingField } from '@/components/public/FloatingField';
 import { Elements, PaymentElement, useStripe as useStripeHook, useElements } from '@stripe/react-stripe-js';
 import type { Stripe } from '@stripe/stripe-js';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { withTimeout } from '@/lib/with-timeout';
-import { ChevronLeft, Check, Lock } from '@/lib/icons';
+import { ChevronLeft, Lock, Plus } from '@/lib/icons';
 import { formatCoursePrice, formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
 import { calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
-import { fetchPublicCourseBySlug, resolveCourseImage, singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
+import { fetchPublicCourseBySlug, resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { createStripeSession } from '@/services/checkout';
 import { createFreeSignup } from '@/services/signups';
 import { saveFreeReceipt, maskEmail } from '@/lib/free-receipt';
 import { supabase } from '@/lib/supabase';
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import { osloNowKey, toLocalDate } from '@/utils/dateUtils';
+import { osloNowKey } from '@/utils/dateUtils';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import type { TicketId } from '@/components/public/course-details/BookingRailLite';
-import { buildMainTierConstraintLabel, buildNextSessionLabel } from '@/components/public/course-details/schedule-format';
+import {
+  buildCheckoutContextMeta,
+  buildMainTierConstraintLabel,
+  buildNextSessionLabel,
+} from '@/components/public/course-details/schedule-format';
 import type { AvailableTicketType } from '@/types/database';
 
 export interface FormState {
@@ -53,11 +57,78 @@ export function deriveIsFree(
   return (tierPrice ?? coursePrice ?? 0) === 0 && coursePrice === 0;
 }
 
+/** First invalid contact field, focus-order — shared by the free and paid submit handlers. */
+function firstInvalidField(form: FormState): 'name' | 'email' | 'phone' | 'terms' | null {
+  if (form.name.trim().length === 0) return 'name';
+  if (!isValidEmail(form.email.trim())) return 'email';
+  if (!isValidPhone(form.phone)) return 'phone';
+  if (!form.terms) return 'terms';
+  return null;
+}
+
+// Stripe Elements appearance for the deferred-intent Payment Element.
+const STRIPE_APPEARANCE = {
+  theme: 'stripe' as const,
+  variables: {
+    // Stripe loads its PaymentElement in a cross-origin iframe, so it can't
+    // inherit the page's @font-face — 'Geist Variable' is self-hosted with
+    // no public URL to pass via Stripe's `fonts` config, so this falls back
+    // to system-ui in every browser.
+    fontFamily: "'Geist Variable', system-ui, sans-serif",
+    // Stripe's appearance API validates color strings and rejects OKLCH in
+    // some versions — hardcoded to the resolved sRGB hex of the matching
+    // src/index.css tokens rather than risk a silent fallback to Stripe's
+    // default blue:
+    //   colorPrimary → --primary   oklch(0.540 0.150 245) → #0074BF
+    //   colorText    → --foreground (--neutral-12) oklch(0.185 0.004 250) → #111314
+    //   colorDanger  → --danger (--red-11) oklch(0.540 0.170 25) → #BD3838
+    colorPrimary: '#0074BF',
+    colorText: '#111314',
+    colorDanger: '#BD3838',
+    borderRadius: '6px',
+  },
+};
+
 /**
- * Combined checkout page: kontaktinfo + betaling on one route. Replaces the
- * BookingPanel step-1 / step-2 split. The Stripe Elements block loads lazily
- * once the form is valid + a tier is selected; selecting a different tier via
- * "Endre" destroys the existing session and re-creates with the new one.
+ * Resolve Stripe.js once, gated on `enabled` (paid + payment-ready courses
+ * only — a free course never loads the script). Timeout-wrapped: a
+ * blocked/slow script (ad blocker, offline) surfaces as a failure instead of
+ * an Elements provider that never mounts. getStripe() memoizes loadStripe
+ * app-wide, so this is cheap across remounts.
+ */
+function useStripeInstance(enabled: boolean): { stripe: Stripe | null; stripeFailed: boolean } {
+  const [stripe, setStripe] = useState<Stripe | null>(null);
+  const [stripeFailed, setStripeFailed] = useState(false);
+  useEffect(() => {
+    if (!enabled || !isStripeConfigured) return;
+    let cancelled = false;
+    withTimeout(getStripe(), 10000, 'Stripe.js lastet ikke i tide')
+      .then((s) => {
+        if (cancelled) return;
+        if (s) setStripe(s);
+        else setStripeFailed(true);
+      })
+      .catch(() => {
+        if (!cancelled) setStripeFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled]);
+  return { stripe, stripeFailed };
+}
+
+/**
+ * Single-screen checkout: billett, kontaktopplysninger and betaling on one
+ * route (docs/design/booking-detail-cta-first.html, the "t1s2" frames — THE
+ * design source of truth). Paid courses use Stripe's deferred-intent
+ * pattern: the Payment Element mounts on page load against a
+ * `mode: 'payment'` Elements instance (no PaymentIntent yet); the "Betal"
+ * button validates, calls `elements.submit()`, THEN creates the
+ * destination-charge PaymentIntent via the unchanged create-stripe-connect-
+ * session edge function, and finally confirms with the returned client
+ * secret. Switching Billett tiers updates the live amount via
+ * `elements.update()` — see ElementsAmountSync below.
  */
 const CheckoutPage = () => {
   useDocumentTitle('Påmelding');
@@ -72,9 +143,7 @@ const CheckoutPage = () => {
   const [attempted, setAttempted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [emailMessage, setEmailMessage] = useState<string | null>(null);
-  // Two-step in-place flow: 'contact' shows the kontaktinfo form, 'payment'
-  // swaps that block for the live Stripe Elements block. No route change.
-  const [step, setStep] = useState<'contact' | 'payment'>('contact');
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   // ── Load course + tiers ────────────────────────────────────────────────
   // One query owns the load; redirect decisions come back as data and are
@@ -186,6 +255,13 @@ const CheckoutPage = () => {
   // courses use the tier-less free path; full courses get their own alert.
   const closed = !isFree && !isFull && tiers.length === 0;
 
+  // The interactive section (fields + billett + betaling) needs a resolvable
+  // path to completion — closed has none, and an unpaid-ready seller (mid
+  // onboarding) has no working payment rail, so Stripe.js is never even
+  // requested (useStripeInstance below) and this would otherwise hang on a
+  // permanent loading skeleton.
+  const formReady = !closed && (isFree || paymentReady);
+
   // Drop-in flow: pick the next class automatically — the first session that
   // hasn't started yet. Same model as BookingPanel; no session picker.
   // undefined = loading / not applicable, null = no upcoming session.
@@ -278,66 +354,16 @@ const CheckoutPage = () => {
 
   const termsError = attempted && !form.terms ? 'Du må godta vilkårene.' : null;
 
-  // ── Stripe session state ─────────────────────────────────────────────────
-  const [sessionError, setSessionError] = useState<string | null>(null);
-  const [stripeSession, setStripeSession] = useState<
-    { clientSecret: string; paymentIntentId: string; attemptId: string; tierId: string } | null
-  >(null);
-
-  // ── Advance to payment step — validates against the server BEFORE advancing
-  //    so a 409 or "fullt" stays on the form with the right error visible.
-  async function handleAdvanceToPayment() {
-    if (isFree || !course || !slug || submitting) return;
-    // No tier resolved to sell — should be unreachable (the closed state hides
-    // the form) but never let the pay action be a silent no-op.
-    if (!selectedTier) {
-      setSessionError('Påmeldingen er stengt.');
-      return;
+  const onEmailEdited = () => {
+    if (emailMessage || sessionError) {
+      setEmailMessage(null);
+      setSessionError(null);
     }
-    // Drop-in needs a resolved next class before the buyer can continue.
-    if (isDropInSelected && typeof dropInSessionId !== 'string') return;
-    setSubmitting(true);
-    setSessionError(null);
-    setEmailMessage(null);
+  };
+  const onEmailBlur = () => setEmailTouched(true);
+  const onPhoneBlur = () => setPhoneTouched(true);
 
-    // No client-side capacity pre-check: course-wide counts are wrong for
-    // per-session capacity (drop-ins from past classes inflate them). The edge
-    // function's soft check answers with the right inline error, and nothing is
-    // authorized until the buyer confirms in the payment step.
-    const sessionParams = {
-      courseId: course.id,
-      organizationSlug: slug,
-      ticketTypeId: selectedTier.id,
-      sessionId: isDropInSelected && typeof dropInSessionId === 'string' ? dropInSessionId : undefined,
-      customerEmail: form.email.trim(),
-      customerName: formatPersonName(form.name),
-      customerPhone: form.phone.trim() || undefined,
-      customerNote: form.note.trim() || undefined,
-    };
-
-    const { data, error: payErr, status } = await createStripeSession(sessionParams);
-    if (payErr || !data) {
-      // 4xx errors from the edge function are already user-friendly Norwegian.
-      // 5xx / network / unknown fall through friendlyError.
-      const isServerValidation = status >= 400 && status < 500;
-      const msg = isServerValidation && payErr?.message
-        ? payErr.message
-        : friendlyError(payErr, 'Kunne ikke starte betaling. Prøv igjen.');
-      if (status === 409) setEmailMessage(msg);
-      else setSessionError(msg);
-      setSubmitting(false);
-      return;
-    }
-
-    setStripeSession({
-      clientSecret: data.clientSecret,
-      paymentIntentId: data.paymentIntentId,
-      attemptId: data.attemptId,
-      tierId: selectedTier.id,
-    });
-    setStep('payment');
-    setSubmitting(false);
-  }
+  const { stripe, stripeFailed } = useStripeInstance(!isFree && paymentReady);
 
   // ── Free signup submit ──────────────────────────────────────────────────
   async function handleFreeSubmit() {
@@ -384,23 +410,15 @@ const CheckoutPage = () => {
     navigate(`/checkout/success?free=true&org=${slug}&sid=${encodeURIComponent(data.signupId)}`);
   }
 
-  // ── Contact-step submit — validate on attempt, focus the first invalid
-  //    field, otherwise hand off to the free/paid flow.
-  function handleContactSubmit(e: React.FormEvent) {
+  function handleFreeFormSubmit(e: React.FormEvent) {
     e.preventDefault();
     setAttempted(true);
-    const firstInvalid =
-      form.name.trim().length === 0 ? 'name'
-      : !isValidEmail(form.email.trim()) ? 'email'
-      : !isValidPhone(form.phone) ? 'phone'
-      : !form.terms ? 'terms'
-      : null;
-    if (firstInvalid) {
-      document.getElementById(firstInvalid)?.focus();
+    const invalid = firstInvalidField(form);
+    if (invalid) {
+      document.getElementById(invalid)?.focus();
       return;
     }
-    if (isFree) void handleFreeSubmit();
-    else void handleAdvanceToPayment();
+    void handleFreeSubmit();
   }
 
   // ── States ──────────────────────────────────────────────────────────────
@@ -419,6 +437,7 @@ const CheckoutPage = () => {
   }
 
   const backHref = `/${slug}/${courseSlug}`;
+  const amountOre = Math.round(total * 100);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -430,19 +449,11 @@ const CheckoutPage = () => {
       <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">
         <button
           type="button"
-          onClick={() => {
-            if (step === 'payment') {
-              setStep('contact');
-              setStripeSession(null);
-              setSessionError(null);
-            } else {
-              navigate(backHref);
-            }
-          }}
+          onClick={() => navigate(backHref)}
           className="focus-ring mb-8 rounded inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
         >
           <ChevronLeft className="size-4" strokeWidth={1.75} />
-          {step === 'payment' ? 'Tilbake' : 'Tilbake til kurset'}
+          Tilbake til kurset
         </button>
 
         {isCancelled && (
@@ -466,14 +477,18 @@ const CheckoutPage = () => {
           </Alert>
         )}
 
-        <div className="mx-auto max-w-[552px] space-y-6">
-          {/* Step header + course identity persist across the step swap (no
-              key), so only the form/payment content below fades. Course
-              context stays visible even when signup is closed. */}
-          {!closed && (
-            <CheckoutStepHeader step={step === 'payment' ? 2 : 1} showSteps={!isFree} />
-          )}
-          <CheckoutCourseContext course={course} />
+        <div className="mx-auto max-w-[520px] space-y-6">
+          <CheckoutTitle />
+          <CheckoutCourseContext
+            course={course}
+            trailing={
+              !closed && !showBillett && billettLowStock ? (
+                <span className="ml-auto whitespace-nowrap text-[13px] text-warning">
+                  {billettSpotsLeft} {billettSpotsLeft === 1 ? 'plass' : 'plasser'} igjen
+                </span>
+              ) : undefined
+            }
+          />
 
           {!closed && showBillett && mainTier && dropInTier && (
             <BillettSection
@@ -487,75 +502,98 @@ const CheckoutPage = () => {
               constraintLabel={billettConstraintLabel}
               lowStock={billettLowStock}
               spotsLeft={billettSpotsLeft}
-              disabled={step === 'payment'}
+              disabled={submitting}
             />
           )}
 
-          {!closed && (
-            /* Step swap fades in (from main's animation pass). The step
-               header, course context and Billett toggle above stay OUTSIDE
-               the keyed wrapper so they never remount when the step flips. */
-            <div key={step} className="animate-in fade-in-0 duration-200 space-y-6">
-              {step === 'contact' || isFree ? (
-                <form onSubmit={handleContactSubmit} noValidate className="space-y-6">
-                  <ContactFields
-                    form={form}
-                    setForm={setForm}
-                    nameError={nameError}
-                    emailError={emailError}
-                    phoneError={phoneError}
-                    termsError={termsError}
-                    onEmailEdited={() => {
-                      if (emailMessage || sessionError) {
-                        setEmailMessage(null);
-                        setSessionError(null);
-                      }
-                    }}
-                    onEmailBlur={() => setEmailTouched(true)}
-                    onPhoneBlur={() => setPhoneTouched(true)}
-                  />
-
-                  <CheckoutReceipt
-                    course={course}
-                    selectedTier={selectedTier}
-                    subtotal={tierPrice}
-                    fee={fee}
-                    total={total}
-                    isFree={isFree}
-                  />
-
-                  <ContactSubmitSection
-                    isFree={isFree}
-                    submitting={submitting}
-                    dropInResolving={dropInResolving}
-                    disabled={!paymentReady || isFull || isCancelled}
-                    sessionError={sessionError}
-                    showDropInLookupFailed={isDropInSelected && dropInLookupFailed}
-                    showNoUpcomingDropIn={isDropInSelected && dropInSessionId === null}
-                    sellerName={course.seller?.name ?? null}
-                  />
-                </form>
-              ) : (
-                <CheckoutPaymentSection>
-                  <StripeEmbed
-                    clientSecret={stripeSession?.clientSecret ?? null}
-                    total={total}
-                    errorMessage={sessionError}
-                    returnUrl={`${window.location.origin}/checkout/success?ref=${encodeURIComponent(stripeSession?.attemptId ?? '')}&org=${slug}`}
-                    receipt={
-                      <CheckoutReceipt
-                        course={course}
-                        selectedTier={selectedTier}
-                        subtotal={tierPrice}
-                        fee={fee}
-                        total={total}
-                        isFree={isFree}
-                      />
-                    }
-                  />
-                </CheckoutPaymentSection>
-              )}
-            </div>
+          {formReady && (
+            isFree ? (
+              <form onSubmit={handleFreeFormSubmit} noValidate className="space-y-6">
+                <ContactFields
+                  form={form}
+                  setForm={setForm}
+                  nameError={nameError}
+                  emailError={emailError}
+                  phoneError={phoneError}
+                  onEmailEdited={onEmailEdited}
+                  onEmailBlur={onEmailBlur}
+                  onPhoneBlur={onPhoneBlur}
+                />
+                <TermsField form={form} setForm={setForm} error={termsError} />
+                <CheckoutReceipt
+                  course={course}
+                  selectedTier={selectedTier}
+                  subtotal={tierPrice}
+                  fee={fee}
+                  total={total}
+                  isFree
+                />
+                <Button
+                  type="submit"
+                  className="w-full"
+                  loading={submitting}
+                  disabled={!paymentReady || isFull || isCancelled}
+                >
+                  Bekreft påmelding
+                </Button>
+              </form>
+            ) : !isStripeConfigured ? (
+              <Alert variant="error">
+                <AlertDescription>
+                  Betaling er ikke tilgjengelig akkurat nå. Prøv igjen senere eller kontakt studioet.
+                </AlertDescription>
+              </Alert>
+            ) : stripeFailed ? (
+              <Alert variant="error">
+                <AlertDescription>
+                  Betalingen kunne ikke lastes. Slå av eventuelle annonseblokkere og last siden på nytt.
+                </AlertDescription>
+              </Alert>
+            ) : !stripe || !selectedTier || total <= 0 ? (
+              <PaidCheckoutSkeleton />
+            ) : (
+              <Elements
+                stripe={stripe}
+                options={{
+                  mode: 'payment',
+                  amount: amountOre,
+                  currency: 'nok',
+                  captureMethod: 'manual',
+                  appearance: STRIPE_APPEARANCE,
+                }}
+              >
+                <ElementsAmountSync amountOre={amountOre} />
+                <PaidCheckoutForm
+                  course={course}
+                  slug={slug!}
+                  selectedTier={selectedTier}
+                  tierPrice={tierPrice}
+                  fee={fee}
+                  total={total}
+                  isDropInSelected={isDropInSelected}
+                  dropInSessionId={dropInSessionId}
+                  dropInResolving={dropInResolving}
+                  dropInLookupFailed={dropInLookupFailed}
+                  showNoUpcomingDropIn={isDropInSelected && dropInSessionId === null}
+                  form={form}
+                  setForm={setForm}
+                  nameError={nameError}
+                  emailError={emailError}
+                  phoneError={phoneError}
+                  termsError={termsError}
+                  onEmailEdited={onEmailEdited}
+                  onEmailBlur={onEmailBlur}
+                  onPhoneBlur={onPhoneBlur}
+                  setAttempted={setAttempted}
+                  submitting={submitting}
+                  setSubmitting={setSubmitting}
+                  sessionError={sessionError}
+                  setSessionError={setSessionError}
+                  setEmailMessage={setEmailMessage}
+                  payDisabled={!paymentReady || isFull || isCancelled}
+                />
+              </Elements>
+            )
           )}
         </div>
       </div>
@@ -565,71 +603,28 @@ const CheckoutPage = () => {
 
 // ── Sub-components ───────────────────────────────────────────────────────
 
-const CHECKOUT_STEPS = ['Kontakt', 'Betaling'] as const;
-
-/** Visual progress for the two in-checkout stages: the Kontakt form (1) and
- * the Betaling block (2). Ticket choice happened on the course page and isn't
- * counted — a single-class booking shouldn't read as a 3-step funnel.
- * Free signups have no Betaling stage at all → `showSteps=false`
- * renders just the title. */
-export function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps?: boolean }) {
-  const currentIndex = step - 1;
-  if (!showSteps) {
-    return (
-      <div>
-        <h1 className="text-base font-medium text-foreground">Fullfør påmeldingen</h1>
-      </div>
-    );
-  }
+/** "Fullfør påmeldingen" — no step indicator; billett/opplysninger/betaling
+ * render together on one screen, so there's nothing left to count. */
+export function CheckoutTitle() {
   return (
-    <div>
-      <h1 className="text-base font-medium text-foreground">Fullfør påmeldingen</h1>
-      <ol className="mt-4 flex items-center">
-        {CHECKOUT_STEPS.map((label, i) => {
-          const done = i < currentIndex;
-          const current = i === currentIndex;
-          const isLast = i === CHECKOUT_STEPS.length - 1;
-          return (
-            <li key={label} className={cn('flex items-center', !isLast && 'flex-1')}>
-              <div className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    // Progress is chrome → near-black fills; azure stays on
-                    // links/selected tints (the current-step halo keeps the
-                    // selection-light ring as its semantic accent).
-                    'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums transition-colors',
-                    done && 'bg-foreground text-background',
-                    current && 'bg-foreground text-background ring-4 ring-selection-light',
-                    !done && !current && 'border border-border text-foreground-muted',
-                  )}
-                >
-                  {done ? <Check className="size-3.5" strokeWidth={2.5} /> : i + 1}
-                </span>
-                <span
-                  className={cn(
-                    'whitespace-nowrap text-xs sm:text-sm',
-                    current
-                      ? 'font-medium text-foreground'
-                      : done
-                        ? 'text-foreground'
-                        : 'text-foreground-muted',
-                  )}
-                >
-                  {label}
-                </span>
-              </div>
-              {!isLast && (
-                <span
-                  aria-hidden
-                  className={cn('mx-2 h-px flex-1 sm:mx-3', done ? 'bg-foreground' : 'bg-border')}
-                />
-              )}
-            </li>
-          );
-        })}
-      </ol>
-    </div>
+    <h1 className="mt-3.5 text-[26px] font-medium tracking-[-0.014em] text-foreground">
+      Fullfør påmeldingen
+    </h1>
   );
+}
+
+/** Reacts to Billett tier switches by pushing the new amount into the
+ * already-mounted deferred Elements instance — `elements.update()` is the
+ * documented way to change a `mode: 'payment'` Elements' amount without
+ * remounting the Payment Element. Lives inside `<Elements>` so it can reach
+ * `useElements()`; `amountOre` itself is owned by the page (Billett state). */
+function ElementsAmountSync({ amountOre }: { amountOre: number }) {
+  const elements = useElements();
+  useEffect(() => {
+    if (!elements) return;
+    void elements.update({ amount: amountOre });
+  }, [elements, amountOre]);
+  return null;
 }
 
 function Field({
@@ -651,12 +646,15 @@ function Field({
   );
 }
 
+const FLAB_CLASS = 'text-[13.5px] font-medium text-foreground';
+
 /**
- * The contact-step fields (navn, e-post, telefon, melding, vilkår).
+ * The contact-step fields — Fullt navn / E-post / Telefon as floating-label
+ * fields (the public-page input grammar), then a collapsed "Legg til
+ * melding" affordance that expands to a labeled Textarea. Terms live in the
+ * separate `TermsField` (positioned at the end of the form, see CheckoutPage).
  * Extracted presentationally (markup unchanged) so the dev preview at
- * /dev/checkout-t1-preview renders the exact same fields the live page
- * shows — the page passes its own state/handlers, the preview passes local
- * state and no-op callbacks.
+ * /dev/checkout-t1-preview renders the exact same fields the live page shows.
  */
 export function ContactFields({
   form,
@@ -664,7 +662,6 @@ export function ContactFields({
   nameError,
   emailError,
   phoneError,
-  termsError,
   onEmailEdited,
   onEmailBlur,
   onPhoneBlur,
@@ -674,20 +671,32 @@ export function ContactFields({
   nameError: string | null;
   emailError: string | null;
   phoneError: string | null;
-  termsError: string | null;
   /** Fired on every email keystroke — the page clears stale server messages. */
   onEmailEdited?: () => void;
   onEmailBlur?: () => void;
   onPhoneBlur?: () => void;
 }) {
+  const [noteOpen, setNoteOpen] = useState(form.note.trim().length > 0);
+  // Only steal focus into the textarea when the buyer just clicked "Legg til
+  // melding" — not when noteOpen starts true because the field already has
+  // content. Read/written only in the handler + effect below, never during
+  // render.
+  const shouldFocusNoteRef = useRef(false);
+  useEffect(() => {
+    if (noteOpen && shouldFocusNoteRef.current) {
+      shouldFocusNoteRef.current = false;
+      document.getElementById('note')?.focus();
+    }
+  }, [noteOpen]);
+
   return (
     <div>
-      <p className="mb-3 text-sm font-medium text-foreground">Dine opplysninger</p>
-      <div className="space-y-4">
-        <Field label="Navn" htmlFor="name">
-          <Input
+      <p className={cn(FLAB_CLASS, 'mb-[9px]')}>Dine opplysninger</p>
+      <div className="space-y-2.5">
+        <div>
+          <FloatingField
             id="name"
-            type="text"
+            label="Fullt navn"
             autoComplete="name"
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -695,10 +704,11 @@ export function ContactFields({
             aria-describedby={nameError ? 'name-error' : undefined}
           />
           {nameError && <FieldError id="name-error">{nameError}</FieldError>}
-        </Field>
-        <Field label="E-post" htmlFor="email">
-          <Input
+        </div>
+        <div>
+          <FloatingField
             id="email"
+            label="E-post"
             type="email"
             autoComplete="email"
             value={form.email}
@@ -711,10 +721,11 @@ export function ContactFields({
             aria-describedby={emailError ? 'email-error' : undefined}
           />
           {emailError && <FieldError id="email-error">{emailError}</FieldError>}
-        </Field>
-        <Field label="Telefon" htmlFor="phone">
-          <Input
+        </div>
+        <div>
+          <FloatingField
             id="phone"
+            label="Telefon"
             type="tel"
             autoComplete="tel"
             value={form.phone}
@@ -724,278 +735,85 @@ export function ContactFields({
             aria-describedby={phoneError ? 'phone-error' : undefined}
           />
           {phoneError && <FieldError id="phone-error">{phoneError}</FieldError>}
-        </Field>
-        <Field label="Melding (valgfritt)" htmlFor="note">
-          <Textarea
-            id="note"
-            value={form.note}
-            onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-            placeholder="Allergier, skader eller annet vi bør vite."
-            rows={4}
-          />
-        </Field>
-        <div>
-          <div className="flex items-start gap-3">
-            <Checkbox
-              id="terms"
-              checked={form.terms}
-              onCheckedChange={(v) =>
-                setForm((f) => ({ ...f, terms: v === true }))
-              }
-              aria-invalid={!!termsError}
-              aria-describedby={termsError ? 'terms-error' : undefined}
-              className="mt-0.5"
-            />
-            {/* The link is a SIBLING of the label, not a descendant — clicking
-                it must open /terms, not toggle the checkbox. */}
-            <p className="text-sm text-foreground">
-              <label htmlFor="terms" className="cursor-pointer">Jeg godtar</label>{' '}
-              <a
-                href="/terms"
-                target="_blank"
-                rel="noreferrer"
-                className="focus-ring rounded underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
-              >
-                vilkår og angrerett
-              </a>
-              .
-            </p>
-          </div>
-          {termsError && (
-            <FieldError id="terms-error" className="pl-7">{termsError}</FieldError>
-          )}
-          <p className="mt-2 pl-7 text-xs text-foreground-muted">
-            Kurs med fastsatt dato er unntatt angrerett. Se vilkårene.
-          </p>
         </div>
       </div>
-    </div>
-  );
-}
 
-/**
- * The contact-step primary action row — "Bekreft påmelding" (free) or
- * "Fortsett til betaling" (paid) plus the inline error/context lines.
- * Extracted presentationally (markup unchanged) for the dev preview.
- */
-export function ContactSubmitSection({
-  isFree,
-  submitting,
-  dropInResolving,
-  disabled,
-  sessionError,
-  showDropInLookupFailed,
-  showNoUpcomingDropIn,
-  sellerName,
-}: {
-  isFree: boolean;
-  submitting: boolean;
-  dropInResolving: boolean;
-  disabled: boolean;
-  sessionError: string | null;
-  showDropInLookupFailed: boolean;
-  showNoUpcomingDropIn: boolean;
-  sellerName: string | null;
-}) {
-  return (
-    <div className="space-y-2">
-      {isFree ? (
-        <Button
-          type="submit"
-          className="w-full"
-          loading={submitting}
-          disabled={disabled}
-        >
-          Bekreft påmelding
-        </Button>
+      {noteOpen ? (
+        <div className="mt-2.5">
+          <Field label="Melding (valgfritt)" htmlFor="note">
+            <Textarea
+              id="note"
+              value={form.note}
+              onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+              placeholder="Allergier, skader eller annet vi bør vite."
+              rows={3}
+            />
+          </Field>
+        </div>
       ) : (
-        <>
-          <Button
-            type="submit"
-            className="w-full"
-            loading={submitting || dropInResolving}
-            loadingText="Et øyeblikk…"
-            disabled={disabled}
-          >
-            Fortsett til betaling
-          </Button>
-          {sessionError && (
-            <p className="text-sm text-danger text-center">{sessionError}</p>
-          )}
-          {showDropInLookupFailed && (
-            <p className="text-sm text-danger text-center">Kunne ikke hente neste time. Prøv igjen.</p>
-          )}
-          {showNoUpcomingDropIn && (
-            <p className="text-sm text-danger text-center">Ingen kommende timer for drop-in.</p>
-          )}
-          {sellerName && (
-            <p className="text-sm text-foreground-muted text-center">
-              Påmeldingen er hos {sellerName}.
-            </p>
-          )}
-        </>
+        <button
+          type="button"
+          onClick={() => {
+            shouldFocusNoteRef.current = true;
+            setNoteOpen(true);
+          }}
+          className="focus-ring mt-2.5 inline-flex items-center gap-1.5 rounded text-sm text-foreground-muted transition-colors hover:text-foreground cursor-pointer"
+        >
+          <Plus className="size-4" strokeWidth={1.75} />
+          Legg til melding
+        </button>
       )}
     </div>
   );
 }
 
 /**
- * Stripe Elements payment block. Mounts the PaymentElement once the PaymentIntent client secret
- * is available; the "Betal" button confirms and Stripe redirects to `returnUrl`. With manual
- * capture the authorization redirects as redirect_status=succeeded — capture happens server-side
- * in stripe-connect-webhook.
+ * Terms checkbox + one-line angrerett note. Kept functionally identical to
+ * the previous inline block, just extracted so it can sit at the end of the
+ * form (directly before the receipt + pay action) per the mock — the
+ * "Ingen mva. kommer i tillegg." / "Påmeldingen er hos X." lines that used
+ * to live near the total are dropped entirely.
  */
-function StripeEmbed({
-  clientSecret,
-  total,
-  returnUrl,
-  errorMessage,
-  receipt,
+export function TermsField({
+  form,
+  setForm,
+  error,
 }: {
-  clientSecret: string | null;
-  total: number;
-  returnUrl: string;
-  errorMessage: string | null;
-  /** The price receipt, rendered above the pay button once the Payment
-   * Element itself mounts — see StripePaymentForm. */
-  receipt: React.ReactNode;
+  form: FormState;
+  setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  error: string | null;
 }) {
-  // Resolve the Stripe.js instance ourselves (with a timeout) rather than
-  // handing the raw promise to <Elements>: a blocked/slow script (ad blocker,
-  // offline) would otherwise leave the provider in a forever-loading state.
-  // getStripe() memoizes loadStripe app-wide, so this is cheap on remount.
-  const [stripe, setStripe] = useState<Stripe | null>(null);
-  const [stripeFailed, setStripeFailed] = useState(false);
-  useEffect(() => {
-    if (!isStripeConfigured) return;
-    let cancelled = false;
-    withTimeout(getStripe(), 10000, 'Stripe.js lastet ikke i tide')
-      .then((s) => {
-        if (cancelled) return;
-        if (s) setStripe(s);
-        else setStripeFailed(true);
-      })
-      .catch(() => {
-        if (!cancelled) setStripeFailed(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Missing publishable key — surface a clear error instead of an Elements
-  // provider that never mounts (buyer would otherwise stare at a forever-skeleton).
-  if (!isStripeConfigured) {
-    return (
-      <Alert variant="error">
-        <AlertDescription>
-          Betaling er ikke tilgjengelig akkurat nå. Prøv igjen senere eller kontakt studioet.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (errorMessage) {
-    return (
-      <Alert variant="error">
-        <AlertDescription>{errorMessage}</AlertDescription>
-      </Alert>
-    );
-  }
-
-  // Stripe.js failed to load (blocked or timed out) — the payment form can
-  // never mount, so stop the skeleton and tell the buyer how to recover.
-  if (stripeFailed) {
-    return (
-      <Alert variant="error">
-        <AlertDescription>
-          Betalingen kunne ikke lastes. Slå av eventuelle annonseblokkere og last siden på nytt.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (!clientSecret || !stripe) {
-    return (
-      <div className="rounded-xl bg-panel p-5">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full mt-3" />
-        <Skeleton className="h-11 w-full mt-4 rounded-full" />
+  return (
+    <div>
+      <div className="flex items-start gap-3">
+        <Checkbox
+          id="terms"
+          checked={form.terms}
+          onCheckedChange={(v) => setForm((f) => ({ ...f, terms: v === true }))}
+          aria-invalid={!!error}
+          aria-describedby={error ? 'terms-error' : undefined}
+          className="mt-0.5"
+        />
+        {/* The link is a SIBLING of the label, not a descendant — clicking
+            it must open /terms, not toggle the checkbox. */}
+        <p className="text-sm text-foreground">
+          <label htmlFor="terms" className="cursor-pointer">Jeg godtar</label>{' '}
+          <a
+            href="/terms"
+            target="_blank"
+            rel="noreferrer"
+            className="focus-ring rounded underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+          >
+            vilkår og angrerett
+          </a>
+          .
+        </p>
       </div>
-    );
-  }
-
-  return (
-    <Elements
-      stripe={stripe}
-      options={{
-        clientSecret,
-        appearance: {
-          theme: 'stripe',
-          variables: {
-            // Stripe loads its PaymentElement in a cross-origin iframe, so it
-            // can't inherit the page's @font-face — 'Geist Variable' is
-            // self-hosted with no public URL to pass via Stripe's `fonts`
-            // config, so this falls back to system-ui in every browser.
-            fontFamily: "'Geist Variable', system-ui, sans-serif",
-            // Stripe's appearance API validates color strings and rejects
-            // OKLCH in some versions — hardcoded to the resolved sRGB hex of
-            // the matching src/index.css tokens rather than risk a silent
-            // fallback to Stripe's default blue:
-            //   colorPrimary → --primary   oklch(0.540 0.150 245) → #0074BF
-            //   colorText    → --foreground (--neutral-12) oklch(0.185 0.004 250) → #111314
-            //   colorDanger  → --danger (--red-11) oklch(0.540 0.170 25) → #BD3838
-            colorPrimary: '#0074BF',
-            colorText: '#111314',
-            colorDanger: '#BD3838',
-            borderRadius: '6px',
-          },
-        },
-      }}
-    >
-      <StripePaymentForm total={total} returnUrl={returnUrl} receipt={receipt} />
-    </Elements>
-  );
-}
-
-function StripePaymentForm({
-  total,
-  returnUrl,
-  receipt,
-}: {
-  total: number;
-  returnUrl: string;
-  receipt: React.ReactNode;
-}) {
-  const stripe = useStripeHook();
-  const elements = useElements();
-  const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-    setSubmitting(true);
-    setErrorMsg(null);
-    // On success Stripe redirects to returnUrl; we only reach past this on an immediate
-    // validation/decline error.
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: { return_url: returnUrl },
-    });
-    if (error) {
-      setErrorMsg(friendlyError(error, 'Betalingen kunne ikke fullføres. Prøv igjen.'));
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <PaymentElement />
-      {errorMsg && <p className="text-sm text-danger">{errorMsg}</p>}
-      {receipt}
-      <PayButtonRow total={total} submitting={submitting} disabled={!stripe || !elements} />
-    </form>
+      {error && <FieldError id="terms-error" className="pl-7">{error}</FieldError>}
+      <p className="mt-2 pl-7 text-xs text-foreground-muted">
+        Kurs med fastsatt dato er unntatt angrerett. Se vilkårene.
+      </p>
+    </div>
   );
 }
 
@@ -1027,42 +845,281 @@ export function PayButtonRow({
 }
 
 /**
- * Course identity row — thumbnail + seller/title + when. Sits directly under
- * the step header on every step. Unlike the price receipt it doesn't depend
- * on a resolved tier, so it stays visible even in the closed-signup state —
- * same content the sidebar's CheckoutSummary card used to lead with, now
- * in-flow at the top of the single column.
+ * Wraps the payment slot with its "Betaling" label — shared so the live
+ * Stripe Payment Element and the dev preview's placeholder render the
+ * payment section identically.
  */
-export function CheckoutCourseContext({ course }: { course: PublicCourseWithDetails }) {
-  const meta = buildMeta(course);
-  const img = resolveCourseImage(course);
-
+export function CheckoutPaymentSection({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex gap-3">
-      {img && (
-        <div className="size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-          <img src={img} alt="" className="size-full object-cover" />
-        </div>
-      )}
-      <div className="min-w-0">
-        <p className="truncate text-sm text-foreground-muted">{course.seller?.name}</p>
-        <h2 className="mt-0.5 text-base font-medium text-foreground">
-          {course.title}
-        </h2>
-        {meta && (
-          <p className="mt-1 text-sm text-foreground-muted">{meta}</p>
-        )}
+    <div>
+      <p className={cn(FLAB_CLASS, 'mb-[9px]')}>Betaling</p>
+      <div id="payment" className="scroll-mt-6">
+        {children}
       </div>
     </div>
   );
 }
 
+function PaidCheckoutSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2.5">
+        <Skeleton className="h-[52px] w-full rounded-xl" />
+        <Skeleton className="h-[52px] w-full rounded-xl" />
+        <Skeleton className="h-[52px] w-full rounded-xl" />
+      </div>
+      <div className="rounded-xl bg-panel p-5">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="mt-3 h-10 w-full" />
+      </div>
+      <Skeleton className="h-11 w-full rounded-full" />
+    </div>
+  );
+}
+
+interface PaidCheckoutFormProps {
+  course: PublicCourseWithDetails;
+  slug: string;
+  selectedTier: AvailableTicketType;
+  tierPrice: number;
+  fee: number;
+  total: number;
+  isDropInSelected: boolean;
+  dropInSessionId: string | null | undefined;
+  dropInResolving: boolean;
+  dropInLookupFailed: boolean;
+  showNoUpcomingDropIn: boolean;
+  form: FormState;
+  setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  nameError: string | null;
+  emailError: string | null;
+  phoneError: string | null;
+  termsError: string | null;
+  onEmailEdited: () => void;
+  onEmailBlur: () => void;
+  onPhoneBlur: () => void;
+  setAttempted: React.Dispatch<React.SetStateAction<boolean>>;
+  submitting: boolean;
+  setSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
+  sessionError: string | null;
+  setSessionError: React.Dispatch<React.SetStateAction<string | null>>;
+  setEmailMessage: React.Dispatch<React.SetStateAction<string | null>>;
+  payDisabled: boolean;
+}
+
 /**
- * Line-by-line price receipt — tier price (or the started-course proration
- * pair), Tjenestegebyr, a hairline, then the emphasized Totalt. Placed
- * in-flow directly above the primary action on both steps (was a sticky
- * aside card; the single-column layout puts the receipt where the buyer
- * reads it right before paying, like Airbnb/Expedia checkout).
+ * The paid checkout's single <form> — Dine opplysninger, Betaling (the real
+ * Payment Element, tabs layout), Terms, receipt and pay action. Lives inside
+ * `<Elements>` so it can call `elements.submit()` / `stripe.confirmPayment()`
+ * (Stripe's documented deferred-intent submit sequence): validate →
+ * elements.submit() → create the PaymentIntent via the existing edge
+ * function → confirmPayment with the returned client secret. On success
+ * Stripe redirects the browser to `return_url`; failures at any step render
+ * inline below the pay button (the same slot `sessionError` used before).
+ */
+function PaidCheckoutForm({
+  course,
+  slug,
+  selectedTier,
+  tierPrice,
+  fee,
+  total,
+  isDropInSelected,
+  dropInSessionId,
+  dropInResolving,
+  dropInLookupFailed,
+  showNoUpcomingDropIn,
+  form,
+  setForm,
+  nameError,
+  emailError,
+  phoneError,
+  termsError,
+  onEmailEdited,
+  onEmailBlur,
+  onPhoneBlur,
+  setAttempted,
+  submitting,
+  setSubmitting,
+  sessionError,
+  setSessionError,
+  setEmailMessage,
+  payDisabled,
+}: PaidCheckoutFormProps) {
+  const stripe = useStripeHook();
+  const elements = useElements();
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setAttempted(true);
+    const invalid = firstInvalidField(form);
+    if (invalid) {
+      document.getElementById(invalid)?.focus();
+      return;
+    }
+    // Drop-in needs a resolved next class before the buyer can continue.
+    if (isDropInSelected && typeof dropInSessionId !== 'string') return;
+    if (!stripe || !elements || submitting) return;
+
+    setSubmitting(true);
+    setSessionError(null);
+    setEmailMessage(null);
+
+    // Deferred-intent step 1: validate the Payment Element's own inputs
+    // before touching the network — an incomplete card never reaches
+    // create-stripe-connect-session.
+    const { error: submitError } = await elements.submit();
+    if (submitError) {
+      setSessionError(friendlyError(submitError, 'Betalingen kunne ikke fullføres. Prøv igjen.'));
+      setSubmitting(false);
+      return;
+    }
+
+    // Step 2: create the destination-charge PaymentIntent server-side
+    // (unchanged edge function) — no client-side capacity pre-check: course-
+    // wide counts are wrong for per-session capacity (drop-ins from past
+    // classes inflate them). The edge function's soft check answers with the
+    // right inline error, and nothing is authorized until confirmPayment.
+    const { data, error: payErr, status } = await createStripeSession({
+      courseId: course.id,
+      organizationSlug: slug,
+      ticketTypeId: selectedTier.id,
+      sessionId: isDropInSelected && typeof dropInSessionId === 'string' ? dropInSessionId : undefined,
+      customerEmail: form.email.trim(),
+      customerName: formatPersonName(form.name),
+      customerPhone: form.phone.trim() || undefined,
+      customerNote: form.note.trim() || undefined,
+    });
+    if (payErr || !data) {
+      // 4xx errors from the edge function are already user-friendly Norwegian.
+      // 5xx / network / unknown fall through friendlyError.
+      const isServerValidation = status >= 400 && status < 500;
+      const msg = isServerValidation && payErr?.message
+        ? payErr.message
+        : friendlyError(payErr, 'Kunne ikke starte betaling. Prøv igjen.');
+      if (status === 409) setEmailMessage(msg);
+      else setSessionError(msg);
+      setSubmitting(false);
+      return;
+    }
+
+    // Step 3: confirm against the just-created PaymentIntent. With manual
+    // capture the authorization redirects as redirect_status=succeeded —
+    // capture happens server-side in stripe-connect-webhook.
+    const { error: confirmError } = await stripe.confirmPayment({
+      elements,
+      clientSecret: data.clientSecret,
+      confirmParams: {
+        return_url: `${window.location.origin}/checkout/success?ref=${encodeURIComponent(data.attemptId)}&org=${slug}`,
+      },
+    });
+    if (confirmError) {
+      setSessionError(friendlyError(confirmError, 'Betalingen kunne ikke fullføres. Prøv igjen.'));
+      setSubmitting(false);
+    }
+    // On success Stripe redirects the browser to return_url — nothing more to do.
+  }
+
+  return (
+    <form onSubmit={handleSubmit} noValidate className="space-y-6">
+      <ContactFields
+        form={form}
+        setForm={setForm}
+        nameError={nameError}
+        emailError={emailError}
+        phoneError={phoneError}
+        onEmailEdited={onEmailEdited}
+        onEmailBlur={onEmailBlur}
+        onPhoneBlur={onPhoneBlur}
+      />
+
+      <CheckoutPaymentSection>
+        <PaymentElement options={{ layout: 'tabs' }} />
+      </CheckoutPaymentSection>
+
+      <TermsField form={form} setForm={setForm} error={termsError} />
+
+      <CheckoutReceipt
+        course={course}
+        selectedTier={selectedTier}
+        subtotal={tierPrice}
+        fee={fee}
+        total={total}
+        isFree={false}
+      />
+
+      <div className="space-y-2">
+        <PayButtonRow
+          total={total}
+          submitting={submitting || dropInResolving}
+          disabled={!stripe || !elements || payDisabled}
+        />
+        {sessionError && <p className="text-sm text-danger text-center">{sessionError}</p>}
+        {dropInLookupFailed && (
+          <p className="text-sm text-danger text-center">Kunne ikke hente neste time. Prøv igjen.</p>
+        )}
+        {showNoUpcomingDropIn && (
+          <p className="text-sm text-danger text-center">Ingen kommende timer for drop-in.</p>
+        )}
+      </div>
+    </form>
+  );
+}
+
+/**
+ * Course identity row — thumbnail + title + schedule/seller line. Sits
+ * directly under the title on every state. Unlike the price receipt it
+ * doesn't depend on a resolved tier, so it stays visible even in the
+ * closed-signup state. `trailing` renders the single-tier low-stock badge
+ * (only shown here when there's no Billett section to carry it — see mock's
+ * enkeltkurs variant).
+ */
+export function CheckoutCourseContext({
+  course,
+  trailing,
+}: {
+  course: PublicCourseWithDetails;
+  trailing?: React.ReactNode;
+}) {
+  const meta = buildCheckoutContextMeta(course, course.seller?.name ?? null);
+  const img = resolveCourseImage(course);
+
+  return (
+    <div className="mt-[18px] flex items-center gap-3">
+      <div className="size-11 shrink-0 overflow-hidden rounded-xl bg-muted">
+        {img && <img src={img} alt="" className="size-full object-cover" />}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[14.5px] font-medium text-foreground">{course.title}</p>
+        {meta && <p className="mt-px truncate text-[13px] text-foreground-muted">{meta}</p>}
+      </div>
+      {trailing}
+    </div>
+  );
+}
+
+function ReceiptRow({
+  label,
+  amount,
+  amountClassName,
+}: {
+  label: string;
+  amount: string;
+  amountClassName?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-[3px] text-[14.5px] text-foreground-muted">
+      <span>{label}</span>
+      <span className={cn('tabular-nums', amountClassName ?? 'text-foreground')}>{amount}</span>
+    </div>
+  );
+}
+
+/**
+ * Line-by-line price receipt — hairline rows (no card, no bg fill), the tier
+ * price (or the started-course proration pair) muted-label / foreground-
+ * amount, Tjenestegebyr fully muted, a top hairline, then the emphasized
+ * Totalt row. Matches the mock's `.rcpt` grammar exactly.
  */
 export function CheckoutReceipt({
   course,
@@ -1093,73 +1150,32 @@ export function CheckoutReceipt({
   const deduction = isProrated ? (course.price ?? 0) - subtotal : 0;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-card bg-surface shadow-soft">
-      <div className="p-6 space-y-5">
-        {!isFree && (
-          <>
-            <div className="space-y-2.5 text-base">
-              {isProrated ? (
-                <>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-foreground-muted">{selectedTier.label}, ordinær pris</span>
-                    <span className="tabular-nums text-foreground-muted">
-                      {formatKroner(course.price ?? 0)}
-                    </span>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-foreground-muted">
-                      Fratrekk for {heldCount} holdte {heldCount === 1 ? 'økt' : 'økter'}
-                    </span>
-                    <span className="tabular-nums text-success">
-                      −{formatKroner(deduction)}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-foreground-muted">{selectedTier.label}</span>
-                  <span className="tabular-nums text-foreground-muted">
-                    {formatKroner(subtotal)}
-                  </span>
-                </div>
-              )}
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-foreground-muted">Tjenestegebyr</span>
-                <span className="tabular-nums text-foreground-muted">
-                  {formatKroner(fee)}
-                </span>
-              </div>
-            </div>
-            <div className="border-t border-border" />
-          </>
-        )}
-        <div className="space-y-1">
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="text-base font-medium text-foreground">Totalt</span>
-            <span className="text-xl font-medium tabular-nums text-foreground">
-              {formatCoursePrice(total)}
-            </span>
-          </div>
-          {!isFree && (
-            <p className="text-xs text-foreground-muted">Ingen mva. kommer i tillegg.</p>
+    <div className="mt-[26px] border-t border-border-subtle pt-3">
+      {!isFree && (
+        <>
+          {isProrated ? (
+            <>
+              <ReceiptRow label={`${selectedTier.label}, ordinær pris`} amount={formatKroner(course.price ?? 0)} />
+              <ReceiptRow
+                label={`Fratrekk for ${heldCount} holdte ${heldCount === 1 ? 'økt' : 'økter'}`}
+                amount={`−${formatKroner(deduction)}`}
+                amountClassName="text-success"
+              />
+            </>
+          ) : (
+            <ReceiptRow label={selectedTier.label} amount={formatKroner(subtotal)} />
           )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Wraps the step-2 payment embed with its "Betaling" label and the #payment
- * scroll anchor — shared so the live Stripe form and the dev preview's
- * placeholder render the payment slot identically.
- */
-export function CheckoutPaymentSection({ children }: { children: React.ReactNode }) {
-  return (
-    <div>
-      <p className="mb-3 text-sm font-medium text-foreground">Betaling</p>
-      <div id="payment" className="scroll-mt-6">
-        {children}
+          <ReceiptRow label="Tjenestegebyr" amount={formatKroner(fee)} amountClassName="text-foreground-muted" />
+        </>
+      )}
+      <div
+        className={cn(
+          'flex items-baseline justify-between gap-3 text-[15px] font-medium text-foreground',
+          !isFree && 'mt-[9px] border-t border-border-subtle pt-[11px]',
+        )}
+      >
+        <span>Totalt</span>
+        <span className="text-xl tabular-nums">{formatCoursePrice(total)}</span>
       </div>
     </div>
   );
@@ -1168,9 +1184,8 @@ export function CheckoutPaymentSection({ children }: { children: React.ReactNode
 /**
  * Billett toggle — the prebuilt SegmentedTabs radiogroup, above the contact
  * form. Only rendered when there's a real choice (main + drop-in); a
- * single-tier course skips this section entirely. Locked (disabled) once
- * the payment step has a live PaymentIntent, so the tier can't change under
- * a Stripe session that was created for a different price.
+ * single-tier course skips this section entirely. Disabled while a payment
+ * is being submitted, so the tier can't change mid-confirmation.
  */
 export function BillettSection({
   mainTier,
@@ -1193,14 +1208,14 @@ export function BillettSection({
 }) {
   return (
     <div className="space-y-2.5">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-medium text-foreground">Billett</span>
+      <p className={FLAB_CLASS}>
+        Billett
         {lowStock && (
-          <span className="text-[13px] text-warning">
+          <span className="ml-2.5 font-normal text-warning">
             {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
           </span>
         )}
-      </div>
+      </p>
       <SegmentedTabs<TicketId>
         role="radiogroup"
         ariaLabel="Billett"
@@ -1229,8 +1244,9 @@ function CheckoutSkeleton() {
       </header>
       <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">
         <Skeleton className="mb-8 h-4 w-32" />
-        <div className="mx-auto max-w-[552px] space-y-6">
-          <Skeleton className="h-20 w-full rounded-lg" />
+        <div className="mx-auto max-w-[520px] space-y-6">
+          <Skeleton className="h-8 w-2/3" />
+          <Skeleton className="h-11 w-full rounded-lg" />
           <Skeleton className="h-9 w-full" />
           <Skeleton className="h-9 w-full" />
           <Skeleton className="h-9 w-full" />
@@ -1239,32 +1255,6 @@ function CheckoutSkeleton() {
       </div>
     </div>
   );
-}
-
-// ── Helpers ──────────────────────────────────────────────────────────────
-
-const SHORT_WEEKDAYS = ['søn.', 'man.', 'tir.', 'ons.', 'tor.', 'fre.', 'lør.'] as const;
-
-function buildMeta(course: PublicCourseWithDetails): string | null {
-  const isMultiDaySingle = course.format === 'single' && singleDayCount(course) > 1;
-  const typeLabel =
-    course.delivery_mode === 'online' ? 'Nettkurs'
-    : course.format === 'series' ? 'Kursrekke'
-    : isMultiDaySingle ? 'Kurs'
-    : 'Enkelttime';
-  const m = course.time_schedule?.match(/(\d{1,2}:\d{2})/);
-  const time = m ? m[1] : null;
-  const dateStr = course.next_session?.session_date ?? course.start_date;
-  if (course.format === 'series' && dateStr && time) {
-    // toLocalDate: `new Date('YYYY-MM-DD')` parses as UTC midnight, showing
-    // the wrong weekday for any buyer in a timezone west of UTC.
-    const d = toLocalDate(dateStr);
-    if (!isNaN(d.getTime())) {
-      return `${typeLabel}, ${SHORT_WEEKDAYS[d.getDay()]} kl. ${time}`;
-    }
-  }
-  if (time) return `${typeLabel}, kl. ${time}`;
-  return typeLabel;
 }
 
 export default CheckoutPage;

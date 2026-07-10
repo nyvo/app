@@ -8,10 +8,10 @@ import {
   CheckoutCourseContext,
   CheckoutPaymentSection,
   CheckoutReceipt,
-  CheckoutStepHeader,
+  CheckoutTitle,
   ContactFields,
-  ContactSubmitSection,
   PayButtonRow,
+  TermsField,
   type FormState,
 } from '@/pages/public/CheckoutPage';
 import {
@@ -23,20 +23,20 @@ import type { PublicCourseWithDetails } from '@/services/publicCourses';
 import type { AvailableTicketType } from '@/types/database';
 
 /**
- * Preview for the T1 checkout step ("Fullfør påmeldingen") — the real page
- * needs live Supabase data + a Stripe PaymentIntent, so this composes the
- * page's own exported pieces (BillettSection, CheckoutCourseContext,
- * ContactFields, ContactSubmitSection, CheckoutReceipt, CheckoutStepHeader,
- * CheckoutPaymentSection, PayButtonRow) with mock data. Only the page-level
- * wrappers (header, back link, single centered column) are copied; every
- * visible section renders through the shipped components, so the preview
- * can't drift from the live checkout.
+ * Preview for the single-screen T1 checkout ("Fullfør påmeldingen") — the
+ * real page needs live Supabase data + a Stripe PaymentIntent, so this
+ * composes the page's own exported pieces (CheckoutTitle,
+ * CheckoutCourseContext, BillettSection, ContactFields, TermsField,
+ * CheckoutReceipt, CheckoutPaymentSection, PayButtonRow) with mock data.
+ * Every visible section renders through the shipped components, so the
+ * preview can't drift from the live checkout.
  *
- * The Stripe Payment Element itself can't mount without a client secret —
- * the 'betaling' variant renders a labeled placeholder panel in its slot.
+ * The real Stripe Payment Element can't mount without a live publishable key
+ * + PaymentIntent — paid variants render a neutral placeholder in its slot
+ * (via CheckoutPaymentSection, the same wrapper the live page uses).
  */
 
-type Variant = 'to-billetter' | 'drop-in' | 'startet' | 'enkelt' | 'gratis' | 'betaling';
+type Variant = 'to-billetter' | 'drop-in' | 'startet' | 'enkelt' | 'gratis';
 
 const VARIANT_LABELS: Record<Variant, string> = {
   'to-billetter': 'To billetter (Hele kurset valgt)',
@@ -44,7 +44,6 @@ const VARIANT_LABELS: Record<Variant, string> = {
   startet: 'Startet (prorata-kvittering: 2200 − 550)',
   enkelt: 'Enkeltkurs (én billett, ingen billettvelger)',
   gratis: 'Gratis kurs (uten gebyr og betaling)',
-  betaling: 'Betalingssteg (billett låst, Stripe-plassholder)',
 };
 
 const CheckoutT1Preview = () => {
@@ -77,7 +76,6 @@ function PreviewBody({ variant }: { variant: Variant }) {
     terms: false,
   });
 
-  const step: 'contact' | 'payment' = variant === 'betaling' ? 'payment' : 'contact';
   const isFree = variant === 'gratis';
 
   const selectedTier =
@@ -96,6 +94,8 @@ function PreviewBody({ variant }: { variant: Variant }) {
         ? buildMainTierConstraintLabel(course, mainTier)
         : null;
 
+  const billettSpotsLeft = 3;
+
   return (
     <>
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
@@ -109,15 +109,21 @@ function PreviewBody({ variant }: { variant: Variant }) {
           className="focus-ring mb-8 rounded inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
         >
           <ChevronLeft className="size-4" strokeWidth={1.75} />
-          {step === 'payment' ? 'Tilbake' : 'Tilbake til kurset'}
+          Tilbake til kurset
         </button>
 
-        <div className="mx-auto max-w-[552px] space-y-6">
-          {/* Step header + course identity persist across the step swap (no
-              key), mirroring the live page — only the form/payment content
-              below fades. */}
-          <CheckoutStepHeader step={step === 'payment' ? 2 : 1} showSteps={!isFree} />
-          <CheckoutCourseContext course={course} />
+        <div className="mx-auto max-w-[520px] space-y-6">
+          <CheckoutTitle />
+          <CheckoutCourseContext
+            course={course}
+            trailing={
+              !showBillett ? (
+                <span className="ml-auto whitespace-nowrap text-[13px] text-warning">
+                  {billettSpotsLeft} plasser igjen
+                </span>
+              ) : undefined
+            }
+          />
 
           {showBillett && mainTier && dropInTier && (
             <BillettSection
@@ -127,62 +133,50 @@ function PreviewBody({ variant }: { variant: Variant }) {
               onSelect={setSelectedKind}
               constraintLabel={constraintLabel}
               lowStock
-              spotsLeft={3}
-              disabled={step === 'payment'}
+              spotsLeft={billettSpotsLeft}
+              disabled={false}
             />
           )}
 
-          <div key={step} className="animate-in fade-in-0 duration-200 space-y-6">
-            {step === 'contact' ? (
-              <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-6">
-                <ContactFields
-                  form={form}
-                  setForm={setForm}
-                  nameError={null}
-                  emailError={null}
-                  phoneError={null}
-                  termsError={null}
-                />
-                <CheckoutReceipt
-                  course={course}
-                  selectedTier={selectedTier}
-                  subtotal={subtotal}
-                  fee={fee}
-                  total={total}
-                  isFree={isFree}
-                />
-                <ContactSubmitSection
-                  isFree={isFree}
-                  submitting={false}
-                  dropInResolving={false}
-                  disabled={false}
-                  sessionError={null}
-                  showDropInLookupFailed={false}
-                  showNoUpcomingDropIn={false}
-                  sellerName={course.seller?.name ?? null}
-                />
-              </form>
-            ) : (
+          <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-6">
+            <ContactFields
+              form={form}
+              setForm={setForm}
+              nameError={null}
+              emailError={null}
+              phoneError={null}
+            />
+
+            {!isFree && (
               <CheckoutPaymentSection>
-                <form onSubmit={(e) => e.preventDefault()} className="space-y-5">
-                  {/* Placeholder in the Stripe Payment Element's slot — the
-                      real element needs a live PaymentIntent client secret. */}
-                  <div className="flex h-40 items-center justify-center rounded-xl bg-panel text-sm text-foreground-muted">
-                    Stripe Payment Element
-                  </div>
-                  <CheckoutReceipt
-                    course={course}
-                    selectedTier={selectedTier}
-                    subtotal={subtotal}
-                    fee={fee}
-                    total={total}
-                    isFree={isFree}
-                  />
-                  <PayButtonRow total={total} submitting={false} disabled={false} />
-                </form>
+                <div className="flex h-40 items-center justify-center rounded-xl bg-panel text-sm text-foreground-muted">
+                  Stripe Payment Element
+                </div>
               </CheckoutPaymentSection>
             )}
-          </div>
+
+            <TermsField form={form} setForm={setForm} error={null} />
+
+            <CheckoutReceipt
+              course={course}
+              selectedTier={selectedTier}
+              subtotal={subtotal}
+              fee={fee}
+              total={total}
+              isFree={isFree}
+            />
+
+            {isFree ? (
+              <button
+                type="submit"
+                className="flex h-11 w-full items-center justify-center rounded-full bg-foreground text-sm font-medium text-background"
+              >
+                Bekreft påmelding
+              </button>
+            ) : (
+              <PayButtonRow total={total} submitting={false} disabled={false} />
+            )}
+          </form>
         </div>
       </div>
     </>
@@ -274,8 +268,10 @@ function makeMockCourse(variant: Variant): PublicCourseWithDetails {
         format: 'single',
         title: 'Helgeworkshop: Yin og pust',
         total_weeks: null,
+        // Saturday → Sunday — buildCheckoutContextMeta lists both weekdays
+        // ("Lørdag og søndag"), matching the mock's enkeltkurs example.
         start_date: '2026-08-15',
-        end_date: null,
+        end_date: '2026-08-16',
         time_schedule: '10:00-13:00',
         duration: 180,
         price: 1400,

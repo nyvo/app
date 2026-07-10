@@ -22,7 +22,8 @@ export function capitalize(s: string): string {
   return s.length ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
-function extractTime(timeSchedule: string | null): string {
+/** First `HH:MM` found in a `time_schedule` string (e.g. "18:00-19:30" → "18:00"). */
+export function extractTime(timeSchedule: string | null): string {
   if (!timeSchedule) return '';
   const m = timeSchedule.match(/(\d{1,2}:\d{2})/);
   return m ? m[1] : '';
@@ -166,6 +167,63 @@ export function buildNextSessionLabel(
   const dateLabel = formatShortWeekdayDate(session.session_date);
   const time = session.start_time.slice(0, 5);
   return `Neste økt: ${dateLabel} kl. ${time}`;
+}
+
+/** Distinct weekday names (capitalized first entry only, per `capitalize`)
+ * spanned by a `single`-format course's consecutive start→end days — e.g. a
+ * Saturday+Sunday workshop returns `['lørdag', 'søndag']`. Capped at 7
+ * (every weekday) so a long multi-week "single" course can't loop forever. */
+function multiDayWeekdayNames(startDate: string | null, endDate: string | null): string[] {
+  if (!startDate) return [];
+  const start = new Date(`${startDate}T12:00:00`);
+  if (isNaN(start.getTime())) return [];
+  const end = endDate ? new Date(`${endDate}T12:00:00`) : start;
+  const dayCount = isNaN(end.getTime())
+    ? 1
+    : Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1);
+  const seen = new Set<number>();
+  const names: string[] = [];
+  for (let i = 0; i < dayCount && seen.size < 7; i++) {
+    const dow = new Date(start.getTime() + i * 86_400_000).getDay();
+    if (!seen.has(dow)) {
+      seen.add(dow);
+      names.push(WEEKDAYS[dow]);
+    }
+  }
+  return names;
+}
+
+/** Join Norwegian list items with "og" before the last — "lørdag og søndag",
+ * "mandag, onsdag og fredag". No interpunct. */
+function joinWithOg(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? '';
+  return `${items.slice(0, -1).join(', ')} og ${items[items.length - 1]}`;
+}
+
+/**
+ * The checkout context row's meta line — "Tirsdager kl. 18:00, Fjell Yoga
+ * Oslo": the course's recurring weekday(s) + start time, then the seller
+ * name. A series repeats one weekday; a `single`-format course spanning
+ * several consecutive days lists each ("Lørdag og søndag"). No type label
+ * ("Kursrekke" etc.) and no interpunct — a comma joins the schedule half to
+ * the seller half, matching the mock's ctx grammar.
+ */
+export function buildCheckoutContextMeta(
+  course: Pick<PublicCourseWithDetails, 'format' | 'start_date' | 'end_date' | 'time_schedule'>,
+  sellerName: string | null,
+): string | null {
+  const time = extractTime(course.time_schedule);
+  let dayPart: string | null = null;
+  if (course.format === 'series' && course.start_date) {
+    const d = toLocalDate(course.start_date);
+    if (!isNaN(d.getTime())) dayPart = capitalize(WEEKDAYS_PLURAL[d.getDay()]);
+  } else {
+    const names = multiDayWeekdayNames(course.start_date, course.end_date);
+    if (names.length > 0) dayPart = capitalize(joinWithOg(names));
+  }
+  const schedulePart = dayPart && time ? `${dayPart} kl. ${time}` : dayPart ?? (time ? `Kl. ${time}` : null);
+  if (schedulePart && sellerName) return `${schedulePart}, ${sellerName}`;
+  return schedulePart ?? sellerName ?? null;
 }
 
 /**
