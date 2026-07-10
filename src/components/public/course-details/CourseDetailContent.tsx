@@ -1,10 +1,7 @@
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { UserAvatar } from '@/components/ui/user-avatar';
-import { DateBadge } from '@/components/ui/date-badge';
 import {
   Dialog,
   DialogContent,
@@ -13,16 +10,15 @@ import {
 } from '@/components/ui/dialog';
 import { RichTextContent } from '@/components/ui/rich-text-content';
 import { LocationCard } from '@/components/public/course-details/LocationCard';
-import type { TicketTile } from '@/components/public/course-details/BookingRailLite';
 import {
-  buildFactBandWhen,
+  buildMetaCardRows,
   capitalize,
   formatFullDate,
   formatShortWeekdayDate,
   hasSessionFinished,
   sessionTimeRangeWithEndTime,
 } from '@/components/public/course-details/schedule-format';
-import { cn, formatCoursePrice, formatKroner } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 import type { CourseSession } from '@/types/database';
 
@@ -31,42 +27,23 @@ const MAX_VISIBLE_SESSIONS = 4;
 interface CourseDetailContentProps {
   course: PublicCourseWithDetails;
   sessions: CourseSession[];
-  /** Sellable tiles from `getBookingTiles` — main first, then drop-in. */
-  tiles: TicketTile[];
-  courseFull: boolean;
-  soldOut: boolean;
-  closed: boolean;
-  spotsLeft: number;
-  lowStock: boolean;
-  /** /:slug/:courseSlug/pamelding — no `?billett=`, tier choice now lives on checkout. */
-  checkoutHref: string;
   backHref: string;
 }
 
 /**
  * T1 "Magasin" course-detail presentation — a single centered column: hero,
- * title, fact band, one elevated booking card, Om kurset, Timeplan, Sted.
- * Pure/presentational (no data fetching) so both `PublicCourseDetailPage`
- * and `DetailT1Preview` render the exact same markup off supplied props —
- * one source of truth, no drift between the real page and its dev preview.
+ * title, metadata card, Om kurset, Timeplan, Sted. The booking surface lives
+ * outside this component, in the persistent `BookingBar` the page renders
+ * alongside it — pure/presentational (no data fetching) so both
+ * `PublicCourseDetailPage` and `DetailT1Preview` render the exact same
+ * markup off supplied props — one source of truth, no drift between the real
+ * page and its dev preview.
  */
-export function CourseDetailContent({
-  course,
-  sessions,
-  tiles,
-  courseFull,
-  soldOut,
-  closed,
-  spotsLeft,
-  lowStock,
-  checkoutHref,
-  backHref,
-}: CourseDetailContentProps) {
+export function CourseDetailContent({ course, sessions, backHref }: CourseDetailContentProps) {
   const [scheduleOpen, setScheduleOpen] = useState(false);
-  const paymentNotReady = tiles.some((t) => t.amount > 0) && !course.seller?.stripe_onboarding_complete;
 
   return (
-    <div className="mx-auto w-full max-w-[640px] px-4 pb-28 sm:px-6 md:pb-16 animate-in fade-in duration-150">
+    <div className="mx-auto w-full max-w-[640px] px-4 pb-28 sm:px-6 animate-in fade-in duration-150">
       <Link
         to={backHref}
         className="inline-flex items-center gap-1 text-sm text-foreground-muted hover:text-foreground transition-colors"
@@ -81,21 +58,7 @@ export function CourseDetailContent({
         {course.title}
       </h1>
 
-      <FactBand course={course} sessions={sessions} />
-
-      <div className="mt-[26px]">
-        <BookingCard
-          course={course}
-          tiles={tiles}
-          courseFull={courseFull}
-          soldOut={soldOut}
-          closed={closed}
-          paymentNotReady={paymentNotReady}
-          lowStock={lowStock}
-          spotsLeft={spotsLeft}
-          checkoutHref={checkoutHref}
-        />
-      </div>
+      <MetadataCard course={course} sessions={sessions} />
 
       {course.description && (
         <section className="mt-8">
@@ -163,143 +126,19 @@ function CourseImage({ course }: { course: PublicCourseWithDetails }) {
   );
 }
 
-// ── Fact band ───────────────────────────────────────────────────────────
+// ── Metadata card — Start / Tid / Omfang / Instruktør ────────────────────
 
-function FactBand({ course, sessions }: { course: PublicCourseWithDetails; sessions: CourseSession[] }) {
-  const when = buildFactBandWhen(course, sessions.length);
-  const instructorName = course.instructor_name;
+function MetadataCard({ course, sessions }: { course: PublicCourseWithDetails; sessions: CourseSession[] }) {
+  const rows = buildMetaCardRows(course, sessions.length);
+  if (rows.length === 0) return null;
 
   return (
-    <div className="@container mt-[22px]">
-      <div
-        className={cn(
-          'grid grid-cols-1 border-t border-b border-border-subtle',
-          instructorName && '@[480px]:grid-cols-2',
-        )}
-      >
-        <div className={cn('flex min-w-0 items-center gap-3 py-3.5', instructorName && '@[480px]:pr-6')}>
-          <DateBadge dateStr={course.start_date ?? undefined} size="sm" />
-          <p className="text-[14.5px] font-medium leading-snug text-foreground">
-            {when.bold}
-            {when.sub && (
-              <span className="mt-0.5 block text-[13px] font-normal text-foreground-muted">
-                {when.sub}
-              </span>
-            )}
-          </p>
+    <div className="mt-[22px] rounded-xl border border-border-subtle divide-y divide-border-subtle">
+      {rows.map((row) => (
+        <div key={row.label} className="flex items-baseline justify-between gap-4 px-4 py-3">
+          <span className="text-sm text-foreground-muted whitespace-nowrap">{row.label}</span>
+          <span className="text-sm font-medium text-foreground text-right">{row.value}</span>
         </div>
-        {instructorName && (
-          <div className="flex min-w-0 items-center gap-3 border-t border-border-subtle py-3.5 @[480px]:border-t-0 @[480px]:border-l @[480px]:pl-6">
-            <UserAvatar size="lg" name={instructorName} className="shrink-0" />
-            <p className="text-[14.5px] font-medium leading-snug text-foreground">
-              {instructorName}
-              <span className="mt-0.5 block text-[13px] font-normal text-foreground-muted">
-                Instruktør
-              </span>
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── Booking card — the page's one elevated surface ─────────────────────
-
-function BookingCard({
-  course,
-  tiles,
-  courseFull,
-  soldOut,
-  closed,
-  paymentNotReady,
-  lowStock,
-  spotsLeft,
-  checkoutHref,
-}: {
-  course: PublicCourseWithDetails;
-  tiles: TicketTile[];
-  courseFull: boolean;
-  soldOut: boolean;
-  closed: boolean;
-  paymentNotReady: boolean;
-  lowStock: boolean;
-  spotsLeft: number;
-  checkoutHref: string;
-}) {
-  const sellerName = course.seller?.name ?? null;
-  const sellerSlug = course.seller?.slug ?? null;
-  const showControls = !soldOut && !closed;
-
-  return (
-    <div>
-      <div className="relative rounded-xl border border-border-subtle bg-background p-5 shadow-soft">
-        {lowStock && (
-          <span className="absolute -top-3 right-5 rounded-xl border border-border-subtle bg-background px-3 py-0.5 text-[13px] text-warning">
-            {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
-          </span>
-        )}
-        <div className="flex items-center justify-between gap-5">
-          {soldOut ? (
-            <p className="text-base font-medium text-foreground-muted">Kurset er fullt</p>
-          ) : closed ? (
-            <div>
-              <p className="text-base font-medium text-foreground">Påmelding stengt</p>
-              <p className="text-sm text-foreground-muted">Kurset har startet.</p>
-            </div>
-          ) : (
-            <div className="min-w-0 space-y-1.5">
-              {/* The package tile was withheld because the course is full,
-                  but drop-in is still open — say why the package is
-                  missing (steady state of a running drop-in series). */}
-              {courseFull && (
-                <p className="text-sm text-foreground-muted">Kurspakken er full.</p>
-              )}
-              <PriceGrid tiles={tiles} course={course} />
-            </div>
-          )}
-
-          {showControls && (
-            paymentNotReady ? (
-              <span className="shrink-0 text-sm text-foreground-muted">Påmelding åpner snart.</span>
-            ) : (
-              <Button asChild size="cta" className="shrink-0">
-                <Link to={checkoutHref}>Meld deg på</Link>
-              </Button>
-            )
-          )}
-        </div>
-      </div>
-      {soldOut && sellerName && sellerSlug && (
-        <Link
-          to={`/${sellerSlug}`}
-          className="mt-3 block text-center text-sm text-foreground-muted underline decoration-foreground-disabled underline-offset-2 hover:text-foreground hover:decoration-foreground transition-colors"
-        >
-          Se andre kurs fra {sellerName}
-        </Link>
-      )}
-    </div>
-  );
-}
-
-/** One row per tile — muted label, right-aligned price. A prorated main
- * tile shows the original price struck through, to the left of the new
- * price ("was → now", the standard order). */
-function PriceGrid({ tiles, course }: { tiles: TicketTile[]; course: PublicCourseWithDetails }) {
-  return (
-    <div className="grid grid-cols-[auto_auto] items-baseline gap-x-7 gap-y-1.5">
-      {tiles.map((tile) => (
-        <Fragment key={tile.id}>
-          <span className="text-sm text-foreground-muted">{tile.label}</span>
-          <span className="text-right text-[15px] font-medium tabular-nums text-foreground">
-            {tile.id === 'main' && tile.prorated && (
-              <s className="mr-2 text-[13.5px] font-normal text-foreground/40">
-                {formatKroner(course.price)}
-              </s>
-            )}
-            {formatCoursePrice(tile.amount)}
-          </span>
-        </Fragment>
       ))}
     </div>
   );

@@ -6,8 +6,7 @@ import { PageState } from '@/components/page-state/page-state';
 import { CourseDetailContent } from '@/components/public/course-details/CourseDetailContent';
 import { getBookingTiles } from '@/components/public/course-details/BookingRailLite';
 import { buildDropInSublabel } from '@/components/public/course-details/schedule-format';
-import { MobilePriceBar } from '@/components/public/course-details/MobilePriceBar';
-import { calculateTotalPrice } from '@/lib/pricing';
+import { BookingBar } from '@/components/public/course-details/BookingBar';
 import { fetchPublicCourseBySlug, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug } from '@/services/sellers';
 import { supabase } from '@/lib/supabase';
@@ -125,15 +124,13 @@ export default function PublicCourseDetailPage() {
         ? `/${slug}`
         : '/';
 
-  // Same tile/state derivation the booking card and MobilePriceBar both
-  // render off — one source of truth, no drift between the two surfaces.
+  // Same tile/state derivation the checkout page's BookingRailLite and this
+  // page's BookingBar both render off — one source of truth, no drift.
   const { tiles, courseFull, soldOut, closed, spotsLeft, lowStock } = course
     ? getBookingTiles(course, tiers, buildDropInSublabel(sessions))
     : { tiles: [], courseFull: false, soldOut: false, closed: false, spotsLeft: 0, lowStock: false };
 
   const checkoutHref = course ? `/${slug}/${course.slug}/pamelding` : '';
-  const mainTile = tiles.find((t) => t.id === 'main') ?? tiles[0] ?? null;
-  const mobileTotal = calculateTotalPrice(mainTile?.amount ?? 0);
   const paymentNotReady = tiles.some((t) => t.amount > 0) && !course?.seller?.stripe_onboarding_complete;
 
   return (
@@ -152,26 +149,19 @@ export default function PublicCourseDetailPage() {
 
         {!loading && !loadFailed && !notFound && course && (
           <>
-            <CourseDetailContent
-              course={course}
-              sessions={sessions}
+            <CourseDetailContent course={course} sessions={sessions} backHref={backHref} />
+            <BookingBar
               tiles={tiles}
+              coursePrice={course.price}
               courseFull={courseFull}
               soldOut={soldOut}
               closed={closed}
               spotsLeft={spotsLeft}
               lowStock={lowStock}
-              checkoutHref={checkoutHref}
-              backHref={backHref}
-            />
-            <MobilePriceBar
-              selectedTile={mainTile}
-              total={mobileTotal}
-              href={checkoutHref}
-              soldOut={soldOut}
-              closed={closed}
               paymentNotReady={paymentNotReady}
-              ctaLabel="Meld deg på"
+              checkoutHref={checkoutHref}
+              sellerName={course.seller?.name ?? null}
+              sellerSlug={course.seller?.slug ?? null}
             />
           </>
         )}
@@ -191,8 +181,7 @@ function CourseDetailSkeleton() {
       <Skeleton className="h-4 w-40" />
       <Skeleton className="mt-7 aspect-[21/9] w-full rounded-2xl" />
       <Skeleton className="mt-7 h-10 w-3/4" />
-      <Skeleton className="mt-[22px] h-16 w-full" />
-      <Skeleton className="mt-[26px] h-24 w-full rounded-xl" />
+      <Skeleton className="mt-[22px] h-44 w-full rounded-xl" />
       <Skeleton className="mt-8 h-32 w-full" />
     </div>
   );

@@ -4,17 +4,16 @@ import { Badge } from '@/components/ui/badge';
 import { CourseDetailContent } from '@/components/public/course-details/CourseDetailContent';
 import { getBookingTiles } from '@/components/public/course-details/BookingRailLite';
 import { buildDropInSublabel } from '@/components/public/course-details/schedule-format';
-import { MobilePriceBar } from '@/components/public/course-details/MobilePriceBar';
-import { calculateTotalPrice } from '@/lib/pricing';
+import { BookingBar } from '@/components/public/course-details/BookingBar';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 import type { AvailableTicketType, CourseSession } from '@/types/database';
 
 /**
  * Preview for the T1 "Magasin" course-detail rework (CTA-first: no tier
- * selection on the page, single elevated booking card, tier choice moves to
- * checkout). Renders the SAME `CourseDetailContent` the real
- * `PublicCourseDetailPage` uses — no local re-implementation — so this
- * preview can never drift from what ships.
+ * selection on the page, price + CTA live in a persistent bottom `BookingBar`,
+ * tier choice moves to checkout). Renders the SAME `CourseDetailContent` +
+ * `BookingBar` the real `PublicCourseDetailPage` uses — no local
+ * re-implementation — so this preview can never drift from what ships.
  */
 
 type Variant =
@@ -53,9 +52,7 @@ const DetailT1Preview = () => {
     tiers,
     buildDropInSublabel(sessions),
   );
-  const checkoutHref = '/dev/checkout-form-rework';
-  const mainTile = tiles.find((t) => t.id === 'main') ?? tiles[0] ?? null;
-  const mobileTotal = calculateTotalPrice(mainTile?.amount ?? 0);
+  const checkoutHref = '/dev/checkout-t1-preview';
   const paymentNotReady = tiles.some((t) => t.amount > 0) && !course.seller?.stripe_onboarding_complete;
 
   return (
@@ -69,26 +66,19 @@ const DetailT1Preview = () => {
       </header>
 
       <main className="flex-1">
-        <CourseDetailContent
-          course={course}
-          sessions={sessions}
+        <CourseDetailContent course={course} sessions={sessions} backHref="/dev/detail-t1-preview" />
+        <BookingBar
           tiles={tiles}
+          coursePrice={course.price}
           courseFull={courseFull}
           soldOut={soldOut}
           closed={closed}
           spotsLeft={spotsLeft}
           lowStock={lowStock}
-          checkoutHref={checkoutHref}
-          backHref="/dev/detail-t1-preview"
-        />
-        <MobilePriceBar
-          selectedTile={mainTile}
-          total={mobileTotal}
-          href={checkoutHref}
-          soldOut={soldOut}
-          closed={closed}
           paymentNotReady={paymentNotReady}
-          ctaLabel="Meld deg på"
+          checkoutHref={checkoutHref}
+          sellerName={course.seller?.name ?? null}
+          sellerSlug={course.seller?.slug ?? null}
         />
       </main>
     </div>

@@ -3,7 +3,7 @@ import { singleDayCount, type PublicCourseWithDetails } from '@/services/publicC
 import type { AvailableTicketType, CourseSession } from '@/types/database';
 
 /**
- * Shared date/time formatting for the course-detail fact band, the T1
+ * Shared date/time formatting for the course-detail metadata card, the T1
  * "Timeplan" date-card strip, the schedule dialog, and the checkout page's
  * Billett constraint line. Consolidated here (rather than duplicated per
  * page, as before the CTA-first rework) so the detail page, its dev preview,
@@ -190,46 +190,58 @@ export function buildMainTierConstraintLabel(
   return days > 1 ? `${days} dager` : null;
 }
 
+export interface MetaCardRow {
+  label: string;
+  value: string;
+}
+
 /**
- * Bold "when" line + muted subline for the course-detail fact band —
- * "Tirsdager kl. 18:00–19:30" / "12. august – 30. september, 8 økter" for a
- * series, degrading gracefully for single/multi-day courses.
+ * Rows for the course-detail metadata card — Start / Tid / Omfang /
+ * Instruktør, skipping any row whose data is missing. Built from the same
+ * date/time primitives as `buildMainTierConstraintLabel` (weekday-plural
+ * pattern, `resolveTimeRange`, `singleDayCount`) so the metadata card and
+ * checkout's constraint line can't drift on grammar.
  */
-export function buildFactBandWhen(
-  course: Pick<PublicCourseWithDetails, 'format' | 'start_date' | 'end_date' | 'total_weeks' | 'time_schedule' | 'duration'>,
+export function buildMetaCardRows(
+  course: Pick<
+    PublicCourseWithDetails,
+    'format' | 'start_date' | 'end_date' | 'total_weeks' | 'time_schedule' | 'duration' | 'instructor_name'
+  >,
   sessionCount: number,
-): { bold: string; sub: string | null } {
+): MetaCardRow[] {
+  const rows: MetaCardRow[] = [];
+
+  if (course.start_date) {
+    rows.push({ label: 'Start', value: capitalize(formatFullDate(course.start_date)) });
+  }
+
   const timeRange = resolveTimeRange(course.time_schedule, course.duration);
+  const startDate = course.start_date ? toLocalDate(course.start_date) : null;
 
   if (course.format === 'series') {
-    const startDate = course.start_date ? toLocalDate(course.start_date) : null;
     const weekdayLabel = startDate ? capitalize(WEEKDAYS_PLURAL[startDate.getDay()]) : null;
-    const bold = weekdayLabel
+    const tid = weekdayLabel
       ? (timeRange ? `${weekdayLabel} kl. ${timeRange}` : weekdayLabel)
-      : (timeRange ? `Kl. ${timeRange}` : '');
-    const startLabel = formatShortDate(course.start_date);
-    const endLabel = formatShortDate(course.end_date);
-    const rangeLabel = startLabel && endLabel && startLabel !== endLabel ? `${startLabel} – ${endLabel}` : startLabel;
+      : (timeRange ? `Kl. ${timeRange}` : null);
+    if (tid) rows.push({ label: 'Tid', value: tid });
+
     const count = sessionCount || course.total_weeks || null;
-    const subParts = [rangeLabel, count ? `${count} ${count === 1 ? 'økt' : 'økter'}` : null].filter(
-      (p): p is string => !!p,
-    );
-    return { bold, sub: subParts.length ? subParts.join(', ') : null };
+    if (count) {
+      const noun = count === 1 ? 'økt' : 'økter';
+      const value = course.total_weeks
+        ? `${count} ${noun} over ${course.total_weeks} ${course.total_weeks === 1 ? 'uke' : 'uker'}`
+        : `${count} ${noun}`;
+      rows.push({ label: 'Omfang', value });
+    }
+  } else {
+    if (timeRange) rows.push({ label: 'Tid', value: `Kl. ${timeRange}` });
+    const days = singleDayCount(course);
+    rows.push({ label: 'Omfang', value: days > 1 ? `${days} dager` : '1 økt' });
   }
 
-  const days = singleDayCount(course);
-  if (days > 1) {
-    const bold = timeRange ? `Kl. ${timeRange}` : 'Flere dager';
-    const startLabel = formatShortDate(course.start_date);
-    const endLabel = formatShortDate(course.end_date);
-    return { bold, sub: startLabel && endLabel ? `${startLabel} – ${endLabel}` : null };
+  if (course.instructor_name) {
+    rows.push({ label: 'Instruktør', value: course.instructor_name });
   }
 
-  const dateLabel = formatShortDate(course.start_date);
-  const bold = dateLabel
-    ? (timeRange ? `${dateLabel} kl. ${timeRange}` : dateLabel)
-    : (timeRange ? `Kl. ${timeRange}` : '');
-  const startDate = course.start_date ? toLocalDate(course.start_date) : null;
-  const sub = startDate ? capitalize(WEEKDAYS[startDate.getDay()]) : null;
-  return { bold, sub };
+  return rows;
 }
