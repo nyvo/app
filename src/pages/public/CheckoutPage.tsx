@@ -30,7 +30,7 @@ import type { TicketId } from '@/components/public/course-details/BookingRailLit
 import { buildMainTierConstraintLabel, buildNextSessionLabel } from '@/components/public/course-details/schedule-format';
 import type { AvailableTicketType } from '@/types/database';
 
-interface FormState {
+export interface FormState {
   name: string;
   email: string;
   phone: string;
@@ -500,136 +500,33 @@ const CheckoutPage = () => {
                 </div>
 
                 <form onSubmit={handleContactSubmit} noValidate className="space-y-6">
-                  <div>
-                    <div className="space-y-4">
-                      <Field label="Navn" htmlFor="name">
-                        <Input
-                          id="name"
-                          type="text"
-                          autoComplete="name"
-                          value={form.name}
-                          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                          aria-invalid={!!nameError}
-                          aria-describedby={nameError ? 'name-error' : undefined}
-                        />
-                        {nameError && <FieldError id="name-error">{nameError}</FieldError>}
-                      </Field>
-                      <Field label="E-post" htmlFor="email">
-                        <Input
-                          id="email"
-                          type="email"
-                          autoComplete="email"
-                          value={form.email}
-                          onChange={(e) => {
-                            setForm((f) => ({ ...f, email: e.target.value }));
-                            if (emailMessage || sessionError) {
-                              setEmailMessage(null);
-                              setSessionError(null);
-                            }
-                          }}
-                          onBlur={() => setEmailTouched(true)}
-                          aria-invalid={!!emailError}
-                          aria-describedby={emailError ? 'email-error' : undefined}
-                        />
-                        {emailError && <FieldError id="email-error">{emailError}</FieldError>}
-                      </Field>
-                      <Field label="Telefon" htmlFor="phone">
-                        <Input
-                          id="phone"
-                          type="tel"
-                          autoComplete="tel"
-                          value={form.phone}
-                          onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                          onBlur={() => setPhoneTouched(true)}
-                          aria-invalid={!!phoneError}
-                          aria-describedby={phoneError ? 'phone-error' : undefined}
-                        />
-                        {phoneError && <FieldError id="phone-error">{phoneError}</FieldError>}
-                      </Field>
-                      <Field label="Melding (valgfritt)" htmlFor="note">
-                        <Textarea
-                          id="note"
-                          value={form.note}
-                          onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-                          placeholder="Allergier, skader eller annet vi bør vite."
-                          rows={4}
-                        />
-                      </Field>
-                      <div>
-                        <div className="flex items-start gap-3">
-                          <Checkbox
-                            id="terms"
-                            checked={form.terms}
-                            onCheckedChange={(v) =>
-                              setForm((f) => ({ ...f, terms: v === true }))
-                            }
-                            aria-invalid={!!termsError}
-                            aria-describedby={termsError ? 'terms-error' : undefined}
-                            className="mt-0.5"
-                          />
-                          {/* The link is a SIBLING of the label, not a descendant — clicking
-                              it must open /terms, not toggle the checkbox. */}
-                          <p className="text-sm text-foreground">
-                            <label htmlFor="terms" className="cursor-pointer">Jeg godtar</label>{' '}
-                            <a
-                              href="/terms"
-                              target="_blank"
-                              rel="noreferrer"
-                              className="focus-ring rounded underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
-                            >
-                              vilkår og angrerett
-                            </a>
-                            .
-                          </p>
-                        </div>
-                        {termsError && (
-                          <FieldError id="terms-error" className="pl-7">{termsError}</FieldError>
-                        )}
-                        <p className="mt-2 pl-7 text-xs text-foreground-muted">
-                          Kurs med fastsatt dato er unntatt angrerett. Se vilkårene.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <ContactFields
+                    form={form}
+                    setForm={setForm}
+                    nameError={nameError}
+                    emailError={emailError}
+                    phoneError={phoneError}
+                    termsError={termsError}
+                    onEmailEdited={() => {
+                      if (emailMessage || sessionError) {
+                        setEmailMessage(null);
+                        setSessionError(null);
+                      }
+                    }}
+                    onEmailBlur={() => setEmailTouched(true)}
+                    onPhoneBlur={() => setPhoneTouched(true)}
+                  />
 
-                  <div className="space-y-2">
-                    {isFree ? (
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        loading={submitting}
-                        disabled={!paymentReady || isFull || isCancelled}
-                      >
-                        Bekreft påmelding
-                      </Button>
-                    ) : (
-                      <>
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          loading={submitting || dropInResolving}
-                          loadingText="Et øyeblikk…"
-                          disabled={!paymentReady || isFull || isCancelled}
-                        >
-                          Fortsett til betaling
-                        </Button>
-                        {sessionError && (
-                          <p className="text-sm text-danger text-center">{sessionError}</p>
-                        )}
-                        {isDropInSelected && dropInLookupFailed && (
-                          <p className="text-sm text-danger text-center">Kunne ikke hente neste time. Prøv igjen.</p>
-                        )}
-                        {isDropInSelected && dropInSessionId === null && (
-                          <p className="text-sm text-danger text-center">Ingen kommende timer for drop-in.</p>
-                        )}
-                        {course.seller?.name && (
-                          <p className="text-sm text-foreground-muted text-center">
-                            Påmeldingen er hos {course.seller.name}.
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
+                  <ContactSubmitSection
+                    isFree={isFree}
+                    submitting={submitting}
+                    dropInResolving={dropInResolving}
+                    disabled={!paymentReady || isFull || isCancelled}
+                    sessionError={sessionError}
+                    showDropInLookupFailed={isDropInSelected && dropInLookupFailed}
+                    showNoUpcomingDropIn={isDropInSelected && dropInSessionId === null}
+                    sellerName={course.seller?.name ?? null}
+                  />
                 </form>
               </>
             ) : (
@@ -676,7 +573,7 @@ const CHECKOUT_STEPS = ['Kontakt', 'Betaling'] as const;
  * counted — a single-class booking shouldn't read as a 3-step funnel.
  * Free signups have no Betaling stage at all → `showSteps=false`
  * renders just the title. */
-function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps?: boolean }) {
+export function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps?: boolean }) {
   const currentIndex = step - 1;
   if (!showSteps) {
     return (
@@ -687,7 +584,7 @@ function CheckoutStepHeader({ step, showSteps = true }: { step: 1 | 2; showSteps
   }
   return (
     <div>
-      <h1 className="text-base font-medium text-foreground">Påmelding</h1>
+      <h1 className="text-base font-medium text-foreground">Fullfør påmeldingen</h1>
       <ol className="mt-4 flex items-center">
         {CHECKOUT_STEPS.map((label, i) => {
           const done = i < currentIndex;
@@ -751,6 +648,193 @@ function Field({
         {label}
       </label>
       {children}
+    </div>
+  );
+}
+
+/**
+ * The contact-step fields (navn, e-post, telefon, melding, vilkår).
+ * Extracted presentationally (markup unchanged) so the dev preview at
+ * /dev/checkout-t1-preview renders the exact same fields the live page
+ * shows — the page passes its own state/handlers, the preview passes local
+ * state and no-op callbacks.
+ */
+export function ContactFields({
+  form,
+  setForm,
+  nameError,
+  emailError,
+  phoneError,
+  termsError,
+  onEmailEdited,
+  onEmailBlur,
+  onPhoneBlur,
+}: {
+  form: FormState;
+  setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  nameError: string | null;
+  emailError: string | null;
+  phoneError: string | null;
+  termsError: string | null;
+  /** Fired on every email keystroke — the page clears stale server messages. */
+  onEmailEdited?: () => void;
+  onEmailBlur?: () => void;
+  onPhoneBlur?: () => void;
+}) {
+  return (
+    <div>
+      <div className="space-y-4">
+        <Field label="Navn" htmlFor="name">
+          <Input
+            id="name"
+            type="text"
+            autoComplete="name"
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            aria-invalid={!!nameError}
+            aria-describedby={nameError ? 'name-error' : undefined}
+          />
+          {nameError && <FieldError id="name-error">{nameError}</FieldError>}
+        </Field>
+        <Field label="E-post" htmlFor="email">
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            value={form.email}
+            onChange={(e) => {
+              setForm((f) => ({ ...f, email: e.target.value }));
+              onEmailEdited?.();
+            }}
+            onBlur={onEmailBlur}
+            aria-invalid={!!emailError}
+            aria-describedby={emailError ? 'email-error' : undefined}
+          />
+          {emailError && <FieldError id="email-error">{emailError}</FieldError>}
+        </Field>
+        <Field label="Telefon" htmlFor="phone">
+          <Input
+            id="phone"
+            type="tel"
+            autoComplete="tel"
+            value={form.phone}
+            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+            onBlur={onPhoneBlur}
+            aria-invalid={!!phoneError}
+            aria-describedby={phoneError ? 'phone-error' : undefined}
+          />
+          {phoneError && <FieldError id="phone-error">{phoneError}</FieldError>}
+        </Field>
+        <Field label="Melding (valgfritt)" htmlFor="note">
+          <Textarea
+            id="note"
+            value={form.note}
+            onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+            placeholder="Allergier, skader eller annet vi bør vite."
+            rows={4}
+          />
+        </Field>
+        <div>
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="terms"
+              checked={form.terms}
+              onCheckedChange={(v) =>
+                setForm((f) => ({ ...f, terms: v === true }))
+              }
+              aria-invalid={!!termsError}
+              aria-describedby={termsError ? 'terms-error' : undefined}
+              className="mt-0.5"
+            />
+            {/* The link is a SIBLING of the label, not a descendant — clicking
+                it must open /terms, not toggle the checkbox. */}
+            <p className="text-sm text-foreground">
+              <label htmlFor="terms" className="cursor-pointer">Jeg godtar</label>{' '}
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noreferrer"
+                className="focus-ring rounded underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+              >
+                vilkår og angrerett
+              </a>
+              .
+            </p>
+          </div>
+          {termsError && (
+            <FieldError id="terms-error" className="pl-7">{termsError}</FieldError>
+          )}
+          <p className="mt-2 pl-7 text-xs text-foreground-muted">
+            Kurs med fastsatt dato er unntatt angrerett. Se vilkårene.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The contact-step primary action row — "Bekreft påmelding" (free) or
+ * "Fortsett til betaling" (paid) plus the inline error/context lines.
+ * Extracted presentationally (markup unchanged) for the dev preview.
+ */
+export function ContactSubmitSection({
+  isFree,
+  submitting,
+  dropInResolving,
+  disabled,
+  sessionError,
+  showDropInLookupFailed,
+  showNoUpcomingDropIn,
+  sellerName,
+}: {
+  isFree: boolean;
+  submitting: boolean;
+  dropInResolving: boolean;
+  disabled: boolean;
+  sessionError: string | null;
+  showDropInLookupFailed: boolean;
+  showNoUpcomingDropIn: boolean;
+  sellerName: string | null;
+}) {
+  return (
+    <div className="space-y-2">
+      {isFree ? (
+        <Button
+          type="submit"
+          className="w-full"
+          loading={submitting}
+          disabled={disabled}
+        >
+          Bekreft påmelding
+        </Button>
+      ) : (
+        <>
+          <Button
+            type="submit"
+            className="w-full"
+            loading={submitting || dropInResolving}
+            loadingText="Et øyeblikk…"
+            disabled={disabled}
+          >
+            Fortsett til betaling
+          </Button>
+          {sessionError && (
+            <p className="text-sm text-danger text-center">{sessionError}</p>
+          )}
+          {showDropInLookupFailed && (
+            <p className="text-sm text-danger text-center">Kunne ikke hente neste time. Prøv igjen.</p>
+          )}
+          {showNoUpcomingDropIn && (
+            <p className="text-sm text-danger text-center">Ingen kommende timer for drop-in.</p>
+          )}
+          {sellerName && (
+            <p className="text-sm text-foreground-muted text-center">
+              Påmeldingen er hos {sellerName}.
+            </p>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -897,18 +981,39 @@ function StripePaymentForm({ total, returnUrl }: { total: number; returnUrl: str
     <form onSubmit={handleSubmit} className="space-y-5">
       <PaymentElement />
       {errorMsg && <p className="text-sm text-danger">{errorMsg}</p>}
-      <Button type="submit" className="w-full" loading={submitting} disabled={!stripe || !elements}>
+      <PayButtonRow total={total} submitting={submitting} disabled={!stripe || !elements} />
+    </form>
+  );
+}
+
+/**
+ * The pay button + "Sikker betaling" trust line under the Payment Element.
+ * Extracted presentationally (markup unchanged) so the dev preview can render
+ * the payment step's action row without a live Stripe intent.
+ */
+export function PayButtonRow({
+  total,
+  submitting,
+  disabled,
+}: {
+  total: number;
+  submitting: boolean;
+  disabled: boolean;
+}) {
+  return (
+    <>
+      <Button type="submit" className="w-full" loading={submitting} disabled={disabled}>
         {`Betal ${formatKroner(total)}`}
       </Button>
       <p className="flex items-center justify-center gap-1.5 text-[12.5px] text-foreground-muted">
         <Lock className="size-[13px]" strokeWidth={2} aria-hidden="true" />
         Sikker betaling
       </p>
-    </form>
+    </>
   );
 }
 
-function CheckoutSummary({
+export function CheckoutSummary({
   course,
   selectedTier,
   subtotal,
@@ -1026,7 +1131,7 @@ function CheckoutSummary({
  * the payment step has a live PaymentIntent, so the tier can't change under
  * a Stripe session that was created for a different price.
  */
-function BillettSection({
+export function BillettSection({
   mainTier,
   dropInTier,
   selectedKind,
