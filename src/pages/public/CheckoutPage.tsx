@@ -466,107 +466,99 @@ const CheckoutPage = () => {
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-8 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
-          <div className="space-y-6 max-w-[552px] min-w-0">
-            {!closed && showBillett && mainTier && dropInTier && (
-              <BillettSection
-                mainTier={mainTier}
-                dropInTier={dropInTier}
-                selectedKind={isDropInSelected ? 'drop-in' : 'main'}
-                onSelect={(kind) => {
-                  const tier = kind === 'drop-in' ? dropInTier : mainTier;
-                  if (tier) setSelectedTierId(tier.id);
-                }}
-                constraintLabel={billettConstraintLabel}
-                lowStock={billettLowStock}
-                spotsLeft={billettSpotsLeft}
-                disabled={step === 'payment'}
-              />
-            )}
-            {closed ? null : (
-              /* Step swap fades in (from main's animation pass). The Billett
-                 toggle above stays OUTSIDE the keyed wrapper so it never
-                 remounts when the step flips. */
-              <div key={step} className="animate-in fade-in-0 duration-200 space-y-6">
-                {step === 'contact' || isFree ? (
-                  <>
-                    <CheckoutStepHeader step={1} showSteps={!isFree} />
+        <div className="mx-auto max-w-[552px] space-y-6">
+          {/* Step header + course identity persist across the step swap (no
+              key), so only the form/payment content below fades. Course
+              context stays visible even when signup is closed. */}
+          {!closed && (
+            <CheckoutStepHeader step={step === 'payment' ? 2 : 1} showSteps={!isFree} />
+          )}
+          <CheckoutCourseContext course={course} />
 
-                    {/* Mobile-only condensed summary — the full aside summary sits below
-                        the fold on <md, so the buyer needs the course + total in view
-                        before filling in the contact form. */}
-                    <div className="md:hidden">
-                      <div className="flex items-center justify-between gap-3 rounded-lg bg-panel px-4 py-3">
-                        <span className="truncate text-sm font-medium text-foreground">{course.title}</span>
-                        <span className="shrink-0 text-sm font-medium tabular-nums text-foreground">
-                          {formatCoursePrice(total)}
-                        </span>
-                      </div>
-                    </div>
+          {!closed && showBillett && mainTier && dropInTier && (
+            <BillettSection
+              mainTier={mainTier}
+              dropInTier={dropInTier}
+              selectedKind={isDropInSelected ? 'drop-in' : 'main'}
+              onSelect={(kind) => {
+                const tier = kind === 'drop-in' ? dropInTier : mainTier;
+                if (tier) setSelectedTierId(tier.id);
+              }}
+              constraintLabel={billettConstraintLabel}
+              lowStock={billettLowStock}
+              spotsLeft={billettSpotsLeft}
+              disabled={step === 'payment'}
+            />
+          )}
 
-                    <form onSubmit={handleContactSubmit} noValidate className="space-y-6">
-                      <ContactFields
-                        form={form}
-                        setForm={setForm}
-                        nameError={nameError}
-                        emailError={emailError}
-                        phoneError={phoneError}
-                        termsError={termsError}
-                        onEmailEdited={() => {
-                          if (emailMessage || sessionError) {
-                            setEmailMessage(null);
-                            setSessionError(null);
-                          }
-                        }}
-                        onEmailBlur={() => setEmailTouched(true)}
-                        onPhoneBlur={() => setPhoneTouched(true)}
-                      />
+          {!closed && (
+            /* Step swap fades in (from main's animation pass). The step
+               header, course context and Billett toggle above stay OUTSIDE
+               the keyed wrapper so they never remount when the step flips. */
+            <div key={step} className="animate-in fade-in-0 duration-200 space-y-6">
+              {step === 'contact' || isFree ? (
+                <form onSubmit={handleContactSubmit} noValidate className="space-y-6">
+                  <ContactFields
+                    form={form}
+                    setForm={setForm}
+                    nameError={nameError}
+                    emailError={emailError}
+                    phoneError={phoneError}
+                    termsError={termsError}
+                    onEmailEdited={() => {
+                      if (emailMessage || sessionError) {
+                        setEmailMessage(null);
+                        setSessionError(null);
+                      }
+                    }}
+                    onEmailBlur={() => setEmailTouched(true)}
+                    onPhoneBlur={() => setPhoneTouched(true)}
+                  />
 
-                      <ContactSubmitSection
-                        isFree={isFree}
-                        submitting={submitting}
-                        dropInResolving={dropInResolving}
-                        disabled={!paymentReady || isFull || isCancelled}
-                        sessionError={sessionError}
-                        showDropInLookupFailed={isDropInSelected && dropInLookupFailed}
-                        showNoUpcomingDropIn={isDropInSelected && dropInSessionId === null}
-                        sellerName={course.seller?.name ?? null}
-                      />
-                    </form>
-                  </>
-                ) : (
-                  <>
-                    <CheckoutStepHeader step={2} />
+                  <CheckoutReceipt
+                    course={course}
+                    selectedTier={selectedTier}
+                    subtotal={tierPrice}
+                    fee={fee}
+                    total={total}
+                    isFree={isFree}
+                  />
 
-                    <div id="payment" className="scroll-mt-6">
-                      <StripeEmbed
-                        clientSecret={stripeSession?.clientSecret ?? null}
+                  <ContactSubmitSection
+                    isFree={isFree}
+                    submitting={submitting}
+                    dropInResolving={dropInResolving}
+                    disabled={!paymentReady || isFull || isCancelled}
+                    sessionError={sessionError}
+                    showDropInLookupFailed={isDropInSelected && dropInLookupFailed}
+                    showNoUpcomingDropIn={isDropInSelected && dropInSessionId === null}
+                    sellerName={course.seller?.name ?? null}
+                  />
+                </form>
+              ) : (
+                <CheckoutPaymentSection>
+                  <StripeEmbed
+                    clientSecret={stripeSession?.clientSecret ?? null}
+                    total={total}
+                    errorMessage={sessionError}
+                    returnUrl={`${window.location.origin}/checkout/success?ref=${encodeURIComponent(stripeSession?.attemptId ?? '')}&org=${slug}`}
+                    receipt={
+                      <CheckoutReceipt
+                        course={course}
+                        selectedTier={selectedTier}
+                        subtotal={tierPrice}
+                        fee={fee}
                         total={total}
-                        errorMessage={sessionError}
-                        returnUrl={`${window.location.origin}/checkout/success?ref=${encodeURIComponent(stripeSession?.attemptId ?? '')}&org=${slug}`}
+                        isFree={isFree}
                       />
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          <aside>
-            <div className="md:sticky md:top-10">
-              <CheckoutSummary
-                course={course}
-                selectedTier={selectedTier}
-                subtotal={tierPrice}
-                fee={fee}
-                total={total}
-                isFree={isFree}
-              />
+                    }
+                  />
+                </CheckoutPaymentSection>
+              )}
             </div>
-          </aside>
+          )}
         </div>
       </div>
-
     </div>
   );
 };
@@ -690,6 +682,7 @@ export function ContactFields({
 }) {
   return (
     <div>
+      <p className="mb-3 text-sm font-medium text-foreground">Dine opplysninger</p>
       <div className="space-y-4">
         <Field label="Navn" htmlFor="name">
           <Input
@@ -857,11 +850,15 @@ function StripeEmbed({
   total,
   returnUrl,
   errorMessage,
+  receipt,
 }: {
   clientSecret: string | null;
   total: number;
   returnUrl: string;
   errorMessage: string | null;
+  /** The price receipt, rendered above the pay button once the Payment
+   * Element itself mounts — see StripePaymentForm. */
+  receipt: React.ReactNode;
 }) {
   // Resolve the Stripe.js instance ourselves (with a timeout) rather than
   // handing the raw promise to <Elements>: a blocked/slow script (ad blocker,
@@ -956,12 +953,20 @@ function StripeEmbed({
         },
       }}
     >
-      <StripePaymentForm total={total} returnUrl={returnUrl} />
+      <StripePaymentForm total={total} returnUrl={returnUrl} receipt={receipt} />
     </Elements>
   );
 }
 
-function StripePaymentForm({ total, returnUrl }: { total: number; returnUrl: string }) {
+function StripePaymentForm({
+  total,
+  returnUrl,
+  receipt,
+}: {
+  total: number;
+  returnUrl: string;
+  receipt: React.ReactNode;
+}) {
   const stripe = useStripeHook();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
@@ -988,6 +993,7 @@ function StripePaymentForm({ total, returnUrl }: { total: number; returnUrl: str
     <form onSubmit={handleSubmit} className="space-y-5">
       <PaymentElement />
       {errorMsg && <p className="text-sm text-danger">{errorMsg}</p>}
+      {receipt}
       <PayButtonRow total={total} submitting={submitting} disabled={!stripe || !elements} />
     </form>
   );
@@ -1020,7 +1026,45 @@ export function PayButtonRow({
   );
 }
 
-export function CheckoutSummary({
+/**
+ * Course identity row — thumbnail + seller/title + when. Sits directly under
+ * the step header on every step. Unlike the price receipt it doesn't depend
+ * on a resolved tier, so it stays visible even in the closed-signup state —
+ * same content the sidebar's CheckoutSummary card used to lead with, now
+ * in-flow at the top of the single column.
+ */
+export function CheckoutCourseContext({ course }: { course: PublicCourseWithDetails }) {
+  const meta = buildMeta(course);
+  const img = resolveCourseImage(course);
+
+  return (
+    <div className="flex gap-3">
+      {img && (
+        <div className="size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+          <img src={img} alt="" className="size-full object-cover" />
+        </div>
+      )}
+      <div className="min-w-0">
+        <p className="truncate text-sm text-foreground-muted">{course.seller?.name}</p>
+        <h2 className="mt-0.5 text-base font-medium text-foreground">
+          {course.title}
+        </h2>
+        {meta && (
+          <p className="mt-1 text-sm text-foreground-muted">{meta}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Line-by-line price receipt — tier price (or the started-course proration
+ * pair), Tjenestegebyr, a hairline, then the emphasized Totalt. Placed
+ * in-flow directly above the primary action on both steps (was a sticky
+ * aside card; the single-column layout puts the receipt where the buyer
+ * reads it right before paying, like Airbnb/Expedia checkout).
+ */
+export function CheckoutReceipt({
   course,
   selectedTier,
   subtotal,
@@ -1035,97 +1079,87 @@ export function CheckoutSummary({
   total: number;
   isFree: boolean;
 }) {
-  const meta = buildMeta(course);
-  const img = resolveCourseImage(course);
+  if (!selectedTier) return null;
 
   // Started-course edge: the selected tier is the package, prorated down to
   // the remaining weeks. The receipt (not the tier label) carries the story —
   // ordinær pris, a named deduction, the result — so the buyer sees why the
   // total isn't the course's list price.
   const isProrated =
-    !!selectedTier &&
     selectedTier.ticket_kind !== 'drop_in' &&
     course.total_weeks != null &&
     selectedTier.weeks < course.total_weeks;
-  const heldCount = isProrated ? course.total_weeks! - selectedTier!.weeks : 0;
+  const heldCount = isProrated ? course.total_weeks! - selectedTier.weeks : 0;
   const deduction = isProrated ? (course.price ?? 0) - subtotal : 0;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-card bg-surface shadow-soft">
       <div className="p-6 space-y-5">
-        {/* Course header — thumbnail + identity, so the buyer can see what
-            they're paying for, like Airbnb/Expedia checkout summaries. */}
-        <div className="flex gap-3">
-          {img && (
-            <div className="size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-              <img src={img} alt="" className="size-full object-cover" />
-            </div>
-          )}
-          <div className="min-w-0">
-            <p className="truncate text-sm text-foreground-muted">{course.seller?.name}</p>
-            <h2 className="mt-0.5 text-base font-medium text-foreground">
-              {course.title}
-            </h2>
-            {meta && (
-              <p className="mt-1 text-sm text-foreground-muted">{meta}</p>
-            )}
-          </div>
-        </div>
-
-        {selectedTier && (
+        {!isFree && (
           <>
-            <div className="border-t border-border" />
-            {!isFree && (
-              <>
-                <div className="space-y-2.5 text-base">
-                  {isProrated ? (
-                    <>
-                      <div className="flex items-baseline justify-between gap-3">
-                        <span className="text-foreground-muted">{selectedTier.label}, ordinær pris</span>
-                        <span className="tabular-nums text-foreground-muted">
-                          {formatKroner(course.price ?? 0)}
-                        </span>
-                      </div>
-                      <div className="flex items-baseline justify-between gap-3">
-                        <span className="text-foreground-muted">
-                          Fratrekk for {heldCount} holdte {heldCount === 1 ? 'økt' : 'økter'}
-                        </span>
-                        <span className="tabular-nums text-success">
-                          −{formatKroner(deduction)}
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-foreground-muted">{selectedTier.label}</span>
-                      <span className="tabular-nums text-foreground-muted">
-                        {formatKroner(subtotal)}
-                      </span>
-                    </div>
-                  )}
+            <div className="space-y-2.5 text-base">
+              {isProrated ? (
+                <>
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-foreground-muted">Tjenestegebyr</span>
+                    <span className="text-foreground-muted">{selectedTier.label}, ordinær pris</span>
                     <span className="tabular-nums text-foreground-muted">
-                      {formatKroner(fee)}
+                      {formatKroner(course.price ?? 0)}
                     </span>
                   </div>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-foreground-muted">
+                      Fratrekk for {heldCount} holdte {heldCount === 1 ? 'økt' : 'økter'}
+                    </span>
+                    <span className="tabular-nums text-success">
+                      −{formatKroner(deduction)}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-foreground-muted">{selectedTier.label}</span>
+                  <span className="tabular-nums text-foreground-muted">
+                    {formatKroner(subtotal)}
+                  </span>
                 </div>
-                <div className="border-t border-border" />
-              </>
-            )}
-            <div className="space-y-1">
+              )}
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-base font-medium text-foreground">Totalt</span>
-                <span className="text-xl font-medium tabular-nums text-foreground">
-                  {formatCoursePrice(total)}
+                <span className="text-foreground-muted">Tjenestegebyr</span>
+                <span className="tabular-nums text-foreground-muted">
+                  {formatKroner(fee)}
                 </span>
               </div>
-              {!isFree && (
-                <p className="text-xs text-foreground-muted">Ingen mva. kommer i tillegg.</p>
-              )}
             </div>
+            <div className="border-t border-border" />
           </>
         )}
+        <div className="space-y-1">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-base font-medium text-foreground">Totalt</span>
+            <span className="text-xl font-medium tabular-nums text-foreground">
+              {formatCoursePrice(total)}
+            </span>
+          </div>
+          {!isFree && (
+            <p className="text-xs text-foreground-muted">Ingen mva. kommer i tillegg.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Wraps the step-2 payment embed with its "Betaling" label and the #payment
+ * scroll anchor — shared so the live Stripe form and the dev preview's
+ * placeholder render the payment slot identically.
+ */
+export function CheckoutPaymentSection({ children }: { children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="mb-3 text-sm font-medium text-foreground">Betaling</p>
+      <div id="payment" className="scroll-mt-6">
+        {children}
       </div>
     </div>
   );
@@ -1195,15 +1229,12 @@ function CheckoutSkeleton() {
       </header>
       <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">
         <Skeleton className="mb-8 h-4 w-32" />
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-8 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
-          <div className="space-y-6 max-w-[552px]">
-            <Skeleton className="h-20 w-full rounded-lg" />
-            <Skeleton className="h-9 w-full" />
-            <Skeleton className="h-9 w-full" />
-            <Skeleton className="h-9 w-full" />
-            <Skeleton className="h-44 w-full rounded-xl" />
-          </div>
-          <Skeleton className="hidden md:block h-72 w-full rounded-2xl" />
+        <div className="mx-auto max-w-[552px] space-y-6">
+          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-44 w-full rounded-2xl" />
         </div>
       </div>
     </div>
@@ -1229,10 +1260,10 @@ function buildMeta(course: PublicCourseWithDetails): string | null {
     // the wrong weekday for any buyer in a timezone west of UTC.
     const d = toLocalDate(dateStr);
     if (!isNaN(d.getTime())) {
-      return `${typeLabel} · ${SHORT_WEEKDAYS[d.getDay()]} kl. ${time}`;
+      return `${typeLabel}, ${SHORT_WEEKDAYS[d.getDay()]} kl. ${time}`;
     }
   }
-  if (time) return `${typeLabel} · kl. ${time}`;
+  if (time) return `${typeLabel}, kl. ${time}`;
   return typeLabel;
 }
 

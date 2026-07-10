@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft } from '@/lib/icons';
-import { formatCoursePrice } from '@/lib/utils';
 import { calculateServiceFee } from '@/lib/pricing';
 import {
   BillettSection,
+  CheckoutCourseContext,
+  CheckoutPaymentSection,
+  CheckoutReceipt,
   CheckoutStepHeader,
-  CheckoutSummary,
   ContactFields,
   ContactSubmitSection,
   PayButtonRow,
@@ -24,11 +25,12 @@ import type { AvailableTicketType } from '@/types/database';
 /**
  * Preview for the T1 checkout step ("Fullfør påmeldingen") — the real page
  * needs live Supabase data + a Stripe PaymentIntent, so this composes the
- * page's own exported pieces (BillettSection, ContactFields,
- * ContactSubmitSection, CheckoutSummary, CheckoutStepHeader, PayButtonRow)
- * with mock data. Only the page-level wrappers (header, back link, grid) are
- * copied; every visible section renders through the shipped components, so
- * the preview can't drift from the live checkout.
+ * page's own exported pieces (BillettSection, CheckoutCourseContext,
+ * ContactFields, ContactSubmitSection, CheckoutReceipt, CheckoutStepHeader,
+ * CheckoutPaymentSection, PayButtonRow) with mock data. Only the page-level
+ * wrappers (header, back link, single centered column) are copied; every
+ * visible section renders through the shipped components, so the preview
+ * can't drift from the live checkout.
  *
  * The Stripe Payment Element itself can't mount without a client secret —
  * the 'betaling' variant renders a labeled placeholder panel in its slot.
@@ -110,87 +112,77 @@ function PreviewBody({ variant }: { variant: Variant }) {
           {step === 'payment' ? 'Tilbake' : 'Tilbake til kurset'}
         </button>
 
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-8 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
-          <div className="space-y-6 max-w-[552px] min-w-0">
-            {showBillett && mainTier && dropInTier && (
-              <BillettSection
-                mainTier={mainTier}
-                dropInTier={dropInTier}
-                selectedKind={selectedKind}
-                onSelect={setSelectedKind}
-                constraintLabel={constraintLabel}
-                lowStock
-                spotsLeft={3}
-                disabled={step === 'payment'}
-              />
-            )}
+        <div className="mx-auto max-w-[552px] space-y-6">
+          {/* Step header + course identity persist across the step swap (no
+              key), mirroring the live page — only the form/payment content
+              below fades. */}
+          <CheckoutStepHeader step={step === 'payment' ? 2 : 1} showSteps={!isFree} />
+          <CheckoutCourseContext course={course} />
 
+          {showBillett && mainTier && dropInTier && (
+            <BillettSection
+              mainTier={mainTier}
+              dropInTier={dropInTier}
+              selectedKind={selectedKind}
+              onSelect={setSelectedKind}
+              constraintLabel={constraintLabel}
+              lowStock
+              spotsLeft={3}
+              disabled={step === 'payment'}
+            />
+          )}
+
+          <div key={step} className="animate-in fade-in-0 duration-200 space-y-6">
             {step === 'contact' ? (
-              <>
-                <CheckoutStepHeader step={1} showSteps={!isFree} />
-
-                {/* Mobile-only condensed summary — same block the live page
-                    renders above the form on <md. */}
-                <div className="md:hidden">
-                  <div className="flex items-center justify-between gap-3 rounded-lg bg-panel px-4 py-3">
-                    <span className="truncate text-sm font-medium text-foreground">{course.title}</span>
-                    <span className="shrink-0 text-sm font-medium tabular-nums text-foreground">
-                      {formatCoursePrice(total)}
-                    </span>
-                  </div>
-                </div>
-
-                <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-6">
-                  <ContactFields
-                    form={form}
-                    setForm={setForm}
-                    nameError={null}
-                    emailError={null}
-                    phoneError={null}
-                    termsError={null}
-                  />
-                  <ContactSubmitSection
-                    isFree={isFree}
-                    submitting={false}
-                    dropInResolving={false}
-                    disabled={false}
-                    sessionError={null}
-                    showDropInLookupFailed={false}
-                    showNoUpcomingDropIn={false}
-                    sellerName={course.seller?.name ?? null}
-                  />
-                </form>
-              </>
+              <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-6">
+                <ContactFields
+                  form={form}
+                  setForm={setForm}
+                  nameError={null}
+                  emailError={null}
+                  phoneError={null}
+                  termsError={null}
+                />
+                <CheckoutReceipt
+                  course={course}
+                  selectedTier={selectedTier}
+                  subtotal={subtotal}
+                  fee={fee}
+                  total={total}
+                  isFree={isFree}
+                />
+                <ContactSubmitSection
+                  isFree={isFree}
+                  submitting={false}
+                  dropInResolving={false}
+                  disabled={false}
+                  sessionError={null}
+                  showDropInLookupFailed={false}
+                  showNoUpcomingDropIn={false}
+                  sellerName={course.seller?.name ?? null}
+                />
+              </form>
             ) : (
-              <>
-                <CheckoutStepHeader step={2} />
-
-                <div id="payment" className="scroll-mt-6">
-                  <form onSubmit={(e) => e.preventDefault()} className="space-y-5">
-                    {/* Placeholder in the Stripe Payment Element's slot — the
-                        real element needs a live PaymentIntent client secret. */}
-                    <div className="flex h-40 items-center justify-center rounded-xl bg-panel text-sm text-foreground-muted">
-                      Stripe Payment Element
-                    </div>
-                    <PayButtonRow total={total} submitting={false} disabled={false} />
-                  </form>
-                </div>
-              </>
+              <CheckoutPaymentSection>
+                <form onSubmit={(e) => e.preventDefault()} className="space-y-5">
+                  {/* Placeholder in the Stripe Payment Element's slot — the
+                      real element needs a live PaymentIntent client secret. */}
+                  <div className="flex h-40 items-center justify-center rounded-xl bg-panel text-sm text-foreground-muted">
+                    Stripe Payment Element
+                  </div>
+                  <CheckoutReceipt
+                    course={course}
+                    selectedTier={selectedTier}
+                    subtotal={subtotal}
+                    fee={fee}
+                    total={total}
+                    isFree={isFree}
+                  />
+                  <PayButtonRow total={total} submitting={false} disabled={false} />
+                </form>
+              </CheckoutPaymentSection>
             )}
           </div>
-
-          <aside>
-            <div className="md:sticky md:top-10">
-              <CheckoutSummary
-                course={course}
-                selectedTier={selectedTier}
-                subtotal={subtotal}
-                fee={fee}
-                total={total}
-                isFree={isFree}
-              />
-            </div>
-          </aside>
         </div>
       </div>
     </>
