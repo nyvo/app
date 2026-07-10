@@ -157,11 +157,20 @@ function TimeplanStrip({
 }) {
   const visible = sessions.slice(0, MAX_VISIBLE_SESSIONS);
   const hiddenCount = sessions.length - visible.length;
+  // Once sessions have been held, the first upcoming card's eyebrow swaps
+  // to «Neste økt» — same slot, one string, so drop-in buyers see exactly
+  // which session they'd be joining.
+  const anyHeld = sessions.some(
+    (x) => x.status !== 'cancelled' && hasSessionFinished(x, duration),
+  );
+  const nextId = anyHeld
+    ? sessions.find((x) => x.status !== 'cancelled' && !hasSessionFinished(x, duration))?.id ?? null
+    : null;
 
   return (
     <div className="mt-2.5 flex gap-2.5 overflow-x-auto pb-1">
       {visible.map((s, i) => (
-        <SessionCard key={s.id} session={s} index={i} duration={duration} />
+        <SessionCard key={s.id} session={s} index={i} duration={duration} isNext={s.id === nextId} />
       ))}
       {hiddenCount > 0 && (
         <button
@@ -180,10 +189,12 @@ function SessionCard({
   session,
   index,
   duration,
+  isNext = false,
 }: {
   session: CourseSession;
   index: number;
   duration: number | null;
+  isNext?: boolean;
 }) {
   const isCancelled = session.status === 'cancelled';
   const isPast = !isCancelled && hasSessionFinished(session, duration);
@@ -200,7 +211,7 @@ function SessionCard({
       )}
     >
       <span className="block text-[11px] font-medium uppercase tracking-wide text-foreground-muted">
-        Økt {index + 1}
+        {isNext ? 'Neste økt' : `Økt ${index + 1}`}
       </span>
       <p
         className={cn(

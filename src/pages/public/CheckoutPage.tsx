@@ -486,6 +486,7 @@ const CheckoutPage = () => {
           <CheckoutCourseContext
             course={course}
             metaOverride={contextMetaOverride}
+            metaLoading={isDropInSelected && dropInResolving}
             trailing={
               !closed && !showBillett && billettLowStock ? (
                 <span className="ml-auto whitespace-nowrap text-[13px] text-warning">
@@ -1079,11 +1080,14 @@ export function CheckoutCourseContext({
   course,
   trailing,
   metaOverride,
+  metaLoading = false,
 }: {
   course: PublicCourseWithDetails;
   trailing?: React.ReactNode;
   /** Replaces the default meta line, e.g. drop-in's «Neste økt: …». */
   metaOverride?: string | null;
+  /** True while the override is being resolved (drop-in session lookup). */
+  metaLoading?: boolean;
 }) {
   const meta = metaOverride ?? buildCheckoutContextMeta(course, course.seller?.name ?? null);
   const img = resolveCourseImage(course);
@@ -1095,7 +1099,15 @@ export function CheckoutCourseContext({
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14.5px] font-medium text-foreground">{course.title}</p>
-        {meta && <p className="mt-px truncate text-[13px] text-foreground-muted">{meta}</p>}
+        {metaLoading ? (
+          <Skeleton className="mt-1 h-[13px] w-44" />
+        ) : (
+          meta && (
+            <p key={meta} className="mt-px truncate text-[13px] text-foreground-muted animate-in fade-in-0 duration-200">
+              {meta}
+            </p>
+          )
+        )}
       </div>
       {trailing}
     </div>

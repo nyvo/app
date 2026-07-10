@@ -64,6 +64,7 @@ function PreviewBody({ variant }: { variant: Variant }) {
   const dropInTier = tiers.find((t) => t.ticket_kind === 'drop_in') ?? null;
   const showBillett = tiers.length === 2 && !!mainTier && !!dropInTier;
 
+  const [metaResolving, setMetaResolving] = useState(false);
   const [selectedKind, setSelectedKind] = useState<TicketId>(
     variant === 'drop-in' ? 'drop-in' : 'main',
   );
@@ -115,6 +116,7 @@ function PreviewBody({ variant }: { variant: Variant }) {
           <CheckoutCourseContext
             course={course}
             metaOverride={metaOverride}
+            metaLoading={metaResolving && selectedKind === 'drop-in'}
             trailing={
               !showBillett ? (
                 <span className="ml-auto whitespace-nowrap text-[13px] text-warning">
@@ -129,7 +131,13 @@ function PreviewBody({ variant }: { variant: Variant }) {
               mainTier={mainTier}
               dropInTier={dropInTier}
               selectedKind={selectedKind}
-              onSelect={setSelectedKind}
+              onSelect={(k) => {
+                setSelectedKind(k);
+                if (k === 'drop-in') {
+                  setMetaResolving(true);
+                  window.setTimeout(() => setMetaResolving(false), 400);
+                }
+              }}
               lowStock
               spotsLeft={billettSpotsLeft}
               disabled={false}
