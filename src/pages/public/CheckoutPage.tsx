@@ -1102,11 +1102,7 @@ export function CheckoutCourseContext({
         {metaLoading ? (
           <Skeleton className="mt-1 h-[13px] w-44" />
         ) : (
-          meta && (
-            <p key={meta} className="mt-px truncate text-[13px] text-foreground-muted animate-in fade-in-0 duration-200">
-              {meta}
-            </p>
-          )
+          meta && <MetaLine text={meta} />
         )}
       </div>
       {trailing}
@@ -1244,6 +1240,36 @@ export function BillettSection({
         ]}
       />
     </div>
+  );
+}
+
+/** Crossfades the context meta line when its value swaps (billett toggle).
+ * A 2px blur masks the text exchange so it reads as one element changing,
+ * not two overlapping; transitions (not keyframes) keep rapid toggles
+ * interruptible. Honors prefers-reduced-motion. */
+function MetaLine({ text }: { text: string }) {
+  const [displayed, setDisplayed] = useState(text);
+  const [swapping, setSwapping] = useState(false);
+
+  useEffect(() => {
+    if (text === displayed) return;
+    setSwapping(true);
+    const t = window.setTimeout(() => {
+      setDisplayed(text);
+      setSwapping(false);
+    }, 120);
+    return () => window.clearTimeout(t);
+  }, [text, displayed]);
+
+  return (
+    <p
+      className={cn(
+        'mt-px truncate text-[13px] text-foreground-muted transition-[opacity,filter] duration-150 ease-out motion-reduce:transition-none motion-reduce:opacity-100 motion-reduce:blur-none',
+        swapping && 'opacity-0 blur-[2px]',
+      )}
+    >
+      {displayed}
+    </p>
   );
 }
 
