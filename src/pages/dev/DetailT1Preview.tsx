@@ -17,13 +17,29 @@ import type { AvailableTicketType, CourseSession } from '@/types/database';
  * preview can never drift from what ships.
  */
 
-type Variant = 'normal' | 'startet' | 'enkelt' | 'uten-bilde';
+type Variant =
+  | 'normal'
+  | 'startet'
+  | 'enkelt'
+  | 'uten-bilde'
+  | 'fullt'
+  | 'pakke-full'
+  | 'gratis'
+  | 'avlyst-okt'
+  | 'enkelt-fullt'
+  | 'enkelt-gratis';
 
 const VARIANT_LABELS: Record<Variant, string> = {
   normal: 'Normal (2 billetter, bilde, 3 plasser)',
   startet: 'Startet (prorata: 6 av 8 økter, 1650 av 2200 kr)',
   enkelt: 'Enkeltkurs (én billett, ingen drop-in)',
   'uten-bilde': 'Uten bilde',
+  fullt: 'Fullt (helt utsolgt)',
+  'pakke-full': 'Kurspakken full, drop-in åpen',
+  gratis: 'Gratis kurs',
+  'avlyst-okt': 'Avlyst økt i timeplanen',
+  'enkelt-fullt': 'Enkeltkurs, fullt',
+  'enkelt-gratis': 'Enkeltkurs, gratis',
 };
 
 const DetailT1Preview = () => {
@@ -143,6 +159,27 @@ function makeMockCourse(variant: Variant): PublicCourseWithDetails {
     upcoming_session_dates: [],
   };
 
+  const enkelt: PublicCourseWithDetails = {
+    ...base,
+    format: 'single',
+    title: 'Helgeworkshop: Yin og pust',
+    description: 'En rolig lørdag med yin-yoga og pustøvelser. Passer for alle nivåer, ingen erfaring nødvendig.',
+    total_weeks: null,
+    start_date: '2026-08-15',
+    end_date: null,
+    time_schedule: '10:00-13:00',
+    duration: 180,
+    price: 1400,
+    allows_drop_in: false,
+    drop_in_price: null,
+    max_participants: 12,
+    spots_available: 6,
+    instructor_name: null,
+    instructor: null,
+    instructors: [],
+    next_session: { session_date: '2026-08-15', session_number: 1, total_sessions: 1 },
+  };
+
   switch (variant) {
     case 'startet':
       return {
@@ -151,28 +188,18 @@ function makeMockCourse(variant: Variant): PublicCourseWithDetails {
         end_date: '2026-08-11',
       };
     case 'enkelt':
-      return {
-        ...base,
-        format: 'single',
-        title: 'Helgeworkshop: Yin og pust',
-        description: 'En rolig lørdag med yin-yoga og pustøvelser. Passer for alle nivåer, ingen erfaring nødvendig.',
-        total_weeks: null,
-        start_date: '2026-08-15',
-        end_date: null,
-        time_schedule: '10:00-13:00',
-        duration: 180,
-        price: 1400,
-        allows_drop_in: false,
-        drop_in_price: null,
-        max_participants: 12,
-        spots_available: 6,
-        instructor_name: null,
-        instructor: null,
-        instructors: [],
-        next_session: { session_date: '2026-08-15', session_number: 1, total_sessions: 1 },
-      };
+      return enkelt;
+    case 'enkelt-fullt':
+      return { ...enkelt, spots_available: 0 };
+    case 'enkelt-gratis':
+      return { ...enkelt, price: 0 };
     case 'uten-bilde':
       return { ...base, image_url: null };
+    case 'fullt':
+    case 'pakke-full':
+      return { ...base, spots_available: 0 };
+    case 'gratis':
+      return { ...base, price: 0, allows_drop_in: false, drop_in_price: null, spots_available: 8 };
     default:
       return base;
   }
@@ -181,6 +208,10 @@ function makeMockCourse(variant: Variant): PublicCourseWithDetails {
 /** Mock tier rows shaped like `available_ticket_types` output — what the
  * real page passes to `getBookingTiles`. */
 function makeMockTiers(course: PublicCourseWithDetails, variant: Variant): AvailableTicketType[] {
+  // Fully sold out: the RPC returns no purchasable tiers at all (package
+  // withheld on courseFull, drop-in gated on next-session capacity).
+  if (variant === 'fullt' || variant === 'enkelt-fullt') return [];
+
   const tiers: AvailableTicketType[] = [
     {
       id: 'tier-main',
@@ -243,7 +274,7 @@ function makeMockSessions(courseId: string, variant: Variant): CourseSession[] {
     updated_at: null,
   });
 
-  if (variant === 'enkelt') {
+  if (variant.startsWith('enkelt')) {
     return [session('s1', '2026-08-15', 1, '10:00:00', '13:00:00')];
   }
 
@@ -252,7 +283,13 @@ function makeMockSessions(courseId: string, variant: Variant): CourseSession[] {
       ? ['2026-06-23', '2026-06-30', '2026-07-07', '2026-07-14', '2026-07-21', '2026-07-28', '2026-08-04', '2026-08-11']
       : ['2026-08-11', '2026-08-18', '2026-08-25', '2026-09-01', '2026-09-08', '2026-09-15', '2026-09-22', '2026-09-29'];
 
-  return dates.map((d, i) => session(`s${i + 1}`, d, i + 1));
+  return dates.map((d, i) => {
+    const row = session(`s${i + 1}`, d, i + 1);
+    // Session-level cancellation (the only public «avlyst» state today — a
+    // fully cancelled course never reaches the public page).
+    if (variant === 'avlyst-okt' && i === 2) return { ...row, status: 'cancelled' };
+    return row;
+  });
 }
 
 export default DetailT1Preview;
