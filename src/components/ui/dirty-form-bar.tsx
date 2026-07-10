@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { Info } from "@/lib/icons"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -77,15 +77,37 @@ export function DirtyFormBar({
     }
   }, [])
 
+  // Keep the pill mounted through its exit instead of unmounting on the same
+  // frame `visible` flips false, so save/Avbryt gets a real exit transition
+  // instead of a hard cut. `open` drives a data-state that a CSS transition
+  // (not a keyframe animation) reads — interruptible, so rapid dirty/clean
+  // toggling retargets smoothly instead of restarting from scratch.
+  const [shouldRender, setShouldRender] = useState(visible)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (visible) {
+      setShouldRender(true)
+      // Flip to "open" a frame after mount so the transition animates from
+      // the closed base classes instead of starting already-open.
+      const raf = requestAnimationFrame(() => setOpen(true))
+      return () => cancelAnimationFrame(raf)
+    }
+    setOpen(false)
+    const timeout = setTimeout(() => setShouldRender(false), 150)
+    return () => clearTimeout(timeout)
+  }, [visible])
+
   return (
     <>
       {/* display:none anchor — out of flow (no layout slot), used only to read
           the parent column's box. */}
       <span ref={anchorRef} aria-hidden className="hidden" />
-      {visible && box && (
+      {shouldRender && box && (
         <div
           role="region"
           aria-label={dirtyLabel}
+          data-state={open ? "open" : "closed"}
           // Fixed vertically (overlay), but horizontally pinned to the center
           // of the measured content column, capped to its width.
           style={{ left: box.left + box.width / 2, maxWidth: box.width }}
@@ -97,8 +119,11 @@ export function DirtyFormBar({
             "flex items-center gap-4 rounded-2xl bg-surface py-2 pr-2 pl-5",
             "text-foreground",
             "shadow-float",
-            // Slide-up entry. Matches toast motion (200ms slide-up + fade).
-            "animate-in fade-in-0 slide-in-from-bottom-2 duration-200 ease-out",
+            // Interruptible transition (not a keyframe animation) so it can
+            // reverse mid-flight. Matches toast motion (slide-up + fade);
+            // exit is faster than enter, matching the rest of the app.
+            "opacity-0 translate-y-2 transition-[opacity,transform] duration-200 ease-out data-[state=closed]:duration-150",
+            "data-[state=open]:opacity-100 data-[state=open]:translate-y-0",
             className,
           )}
         >

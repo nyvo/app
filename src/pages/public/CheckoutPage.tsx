@@ -483,65 +483,72 @@ const CheckoutPage = () => {
                 disabled={step === 'payment'}
               />
             )}
-            {closed ? null : step === 'contact' || isFree ? (
-              <>
-                <CheckoutStepHeader step={1} showSteps={!isFree} />
+            {closed ? null : (
+              /* Step swap fades in (from main's animation pass). The Billett
+                 toggle above stays OUTSIDE the keyed wrapper so it never
+                 remounts when the step flips. */
+              <div key={step} className="animate-in fade-in-0 duration-200 space-y-6">
+                {step === 'contact' || isFree ? (
+                  <>
+                    <CheckoutStepHeader step={1} showSteps={!isFree} />
 
-                {/* Mobile-only condensed summary — the full aside summary sits below
-                    the fold on <md, so the buyer needs the course + total in view
-                    before filling in the contact form. */}
-                <div className="md:hidden">
-                  <div className="flex items-center justify-between gap-3 rounded-lg bg-panel px-4 py-3">
-                    <span className="truncate text-sm font-medium text-foreground">{course.title}</span>
-                    <span className="shrink-0 text-sm font-medium tabular-nums text-foreground">
-                      {formatCoursePrice(total)}
-                    </span>
-                  </div>
-                </div>
+                    {/* Mobile-only condensed summary — the full aside summary sits below
+                        the fold on <md, so the buyer needs the course + total in view
+                        before filling in the contact form. */}
+                    <div className="md:hidden">
+                      <div className="flex items-center justify-between gap-3 rounded-lg bg-panel px-4 py-3">
+                        <span className="truncate text-sm font-medium text-foreground">{course.title}</span>
+                        <span className="shrink-0 text-sm font-medium tabular-nums text-foreground">
+                          {formatCoursePrice(total)}
+                        </span>
+                      </div>
+                    </div>
 
-                <form onSubmit={handleContactSubmit} noValidate className="space-y-6">
-                  <ContactFields
-                    form={form}
-                    setForm={setForm}
-                    nameError={nameError}
-                    emailError={emailError}
-                    phoneError={phoneError}
-                    termsError={termsError}
-                    onEmailEdited={() => {
-                      if (emailMessage || sessionError) {
-                        setEmailMessage(null);
-                        setSessionError(null);
-                      }
-                    }}
-                    onEmailBlur={() => setEmailTouched(true)}
-                    onPhoneBlur={() => setPhoneTouched(true)}
-                  />
+                    <form onSubmit={handleContactSubmit} noValidate className="space-y-6">
+                      <ContactFields
+                        form={form}
+                        setForm={setForm}
+                        nameError={nameError}
+                        emailError={emailError}
+                        phoneError={phoneError}
+                        termsError={termsError}
+                        onEmailEdited={() => {
+                          if (emailMessage || sessionError) {
+                            setEmailMessage(null);
+                            setSessionError(null);
+                          }
+                        }}
+                        onEmailBlur={() => setEmailTouched(true)}
+                        onPhoneBlur={() => setPhoneTouched(true)}
+                      />
 
-                  <ContactSubmitSection
-                    isFree={isFree}
-                    submitting={submitting}
-                    dropInResolving={dropInResolving}
-                    disabled={!paymentReady || isFull || isCancelled}
-                    sessionError={sessionError}
-                    showDropInLookupFailed={isDropInSelected && dropInLookupFailed}
-                    showNoUpcomingDropIn={isDropInSelected && dropInSessionId === null}
-                    sellerName={course.seller?.name ?? null}
-                  />
-                </form>
-              </>
-            ) : (
-              <>
-                <CheckoutStepHeader step={2} />
+                      <ContactSubmitSection
+                        isFree={isFree}
+                        submitting={submitting}
+                        dropInResolving={dropInResolving}
+                        disabled={!paymentReady || isFull || isCancelled}
+                        sessionError={sessionError}
+                        showDropInLookupFailed={isDropInSelected && dropInLookupFailed}
+                        showNoUpcomingDropIn={isDropInSelected && dropInSessionId === null}
+                        sellerName={course.seller?.name ?? null}
+                      />
+                    </form>
+                  </>
+                ) : (
+                  <>
+                    <CheckoutStepHeader step={2} />
 
-                <div id="payment" className="scroll-mt-6">
-                  <StripeEmbed
-                    clientSecret={stripeSession?.clientSecret ?? null}
-                    total={total}
-                    errorMessage={sessionError}
-                    returnUrl={`${window.location.origin}/checkout/success?ref=${encodeURIComponent(stripeSession?.attemptId ?? '')}&org=${slug}`}
-                  />
-                </div>
-              </>
+                    <div id="payment" className="scroll-mt-6">
+                      <StripeEmbed
+                        clientSecret={stripeSession?.clientSecret ?? null}
+                        total={total}
+                        errorMessage={sessionError}
+                        returnUrl={`${window.location.origin}/checkout/success?ref=${encodeURIComponent(stripeSession?.attemptId ?? '')}&org=${slug}`}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
 

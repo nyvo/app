@@ -53,7 +53,7 @@ export function MobilePriceBar({
         : null;
 
   return (
-    <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-border-subtle safe-area-bottom px-4 py-3 flex items-center justify-between gap-3">
+    <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-border-subtle safe-area-bottom px-4 py-3 flex items-center justify-between gap-3 animate-in slide-in-from-bottom-[100%] fade-in-0 duration-[250ms] ease-out">
       {stateText ? (
         <p className="text-sm font-medium text-foreground">{stateText}</p>
       ) : (

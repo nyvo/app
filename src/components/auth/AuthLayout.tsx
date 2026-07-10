@@ -1,6 +1,4 @@
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { authPageVariants, authPageTransition } from '@/lib/motion'
 
 interface AuthLayoutProps {
   title: string
@@ -35,13 +33,7 @@ export function AuthLayout({
       </header>
 
       <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
-        <motion.div
-          variants={authPageVariants}
-          initial="initial"
-          animate="animate"
-          transition={authPageTransition}
-          className="w-full max-w-md"
-        >
+        <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-300">
           {customContent ? (
             // min-height keeps multi-step flows (identify → password → code) from
             // re-centering as content height changes; `relative` anchors a step's
@@ -63,7 +55,7 @@ export function AuthLayout({
               {children}
             </div>
           )}
-        </motion.div>
+        </div>
       </main>
 
       {footer && (

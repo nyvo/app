@@ -2,14 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { EmptyState } from '@/components/ui/empty-state';
 import { PageState } from '@/components/page-state/page-state';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug, fetchStudioLocation, type PublicSeller, type StudioLocationRow } from '@/services/sellers';
 import { toLocalDate } from '@/utils/dateUtils';
 import { StudioMasthead } from '@/components/public/studio/StudioMasthead';
-import { StudioDayList } from '@/components/public/studio/StudioDayList';
+import { StudioAgendaList } from '@/components/public/studio/StudioAgendaList';
 import { StudioFilterPill } from '@/components/public/studio/StudioFilterPill';
 import { deriveStudioFacts, type StudioLocation } from '@/components/public/studio/studioFacts';
 import { useDocumentTitle } from '@/hooks/use-document-title';
@@ -161,14 +160,23 @@ const PublicCoursesPage = () => {
     [sorted, typeFilter, instructorFilter],
   );
 
-  const filters = (typeOptions.length > 1 || instructorOptions.length > 0) ? (
+  const hasFilters = typeOptions.length > 1 || instructorOptions.length > 0;
+  const filtersActive = typeFilter !== 'all' || instructorFilter !== 'all';
+
+  const resetFilters = () => {
+    setTypeFilter('all');
+    setInstructorFilter('all');
+  };
+
+  // The one control row between masthead and agenda (mockup Q1): filters
+  // only — the date headers in the list are the navigation.
+  const filters = hasFilters ? (
     <div className="flex items-center gap-2">
       {typeOptions.length > 1 && (
         <StudioFilterPill
           value={typeFilter}
           onChange={setTypeFilter}
           options={typeOptions}
-          allValue="all"
           ariaLabel="Filtrer på kurstype"
         />
       )}
@@ -177,7 +185,6 @@ const PublicCoursesPage = () => {
           value={instructorFilter}
           onChange={setInstructorFilter}
           options={instructorOptions}
-          allValue="all"
           ariaLabel="Filtrer på instruktør"
         />
       )}
@@ -203,25 +210,37 @@ const PublicCoursesPage = () => {
 
             <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
               {visible.length === 0 ? (
-                <div className="py-16">
-                  <EmptyState
-                    title="Ingen planlagte kurs"
-                    description="Kom tilbake snart."
-                  />
+                /* Truly empty: keep the masthead, say it in plain text — no
+                 * illustration card (Time2book/SeatGeek pattern). */
+                <div className="pt-10 pb-24">
+                  <p className="text-base font-medium text-foreground">Ingen planlagte kurs</p>
+                  <p className="mt-1 text-sm text-foreground-muted">
+                    Det er ingen planlagte kurs akkurat nå. Kom tilbake snart.
+                  </p>
                 </div>
               ) : (
-                <div className="pt-10 pb-16">
+                <div className="pt-8 pb-16">
+                  {filters}
                   {filteredCourses.length === 0 ? (
-                    <EmptyState
-                      title="Ingen kurs i filteret"
-                      description="Velg et annet filter for å se flere kurs."
-                    />
+                    /* Filtered empty: one inline sentence + recovery link,
+                     * page structure retained (Skillshare pattern). */
+                    <p className="py-8 text-[15px] text-foreground-muted">
+                      Ingen kurs passer filteret.{' '}
+                      {filtersActive && (
+                        <button
+                          type="button"
+                          onClick={resetFilters}
+                          className="underline decoration-foreground-disabled underline-offset-2 hover:text-foreground hover:decoration-foreground transition-colors"
+                        >
+                          Nullstill filter
+                        </button>
+                      )}
+                    </p>
                   ) : (
-                    <StudioDayList
+                    <StudioAgendaList
                       courses={filteredCourses}
                       viewingSlug={slug}
                       viewingName={organization.name}
-                      headerAction={filters}
                     />
                   )}
                 </div>
@@ -242,35 +261,42 @@ function StudioPageSkeleton() {
       aria-live="polite"
     >
       <span className="sr-only">Laster…</span>
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14">
-        {/* Identity lockup — squircle logo + name + location */}
-        <div className="flex items-start gap-5 sm:gap-6">
-          <Skeleton className="size-20 sm:size-24 shrink-0 rounded-2xl" />
-          <div className="flex-1 space-y-3 pt-1">
-            <Skeleton className="h-9 w-56 max-w-full" />
-            <Skeleton className="h-4 w-72 max-w-full" />
+      {/* Cover band */}
+      <div className="h-32 sm:h-44 w-full bg-muted" />
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        {/* Profile lockup — overlapping logo, name + location stacked under */}
+        <Skeleton className="relative -mt-9 size-18 rounded-full border-[3px] border-background" />
+        <Skeleton className="mt-4 h-7 w-56 max-w-full" />
+        <Skeleton className="mt-2.5 h-4 w-72 max-w-full" />
+        {/* Filter pills + date-grouped agenda rows */}
+        <div className="pt-8">
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-32 rounded-full" />
+            <Skeleton className="h-8 w-36 rounded-full" />
           </div>
-        </div>
-        {/* Day strip + rows */}
-        <div className="pt-10 space-y-6">
-          <Skeleton className="h-6 w-24" />
-          <div className="flex gap-3 overflow-hidden">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <Skeleton key={i} className="h-[104px] w-28 shrink-0 rounded-2xl" />
-            ))}
-          </div>
-          {/* Mirrors the real list rows: transparent, hairline-divided, py-5 (~84px) */}
-          <div className="divide-y divide-border-subtle pt-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 py-5 sm:gap-5">
-                <Skeleton className="size-12 shrink-0 rounded-lg" />
-                <div className="min-w-0 flex-1 space-y-2">
-                  <Skeleton className="h-4 w-48 max-w-full" />
-                  <Skeleton className="h-3.5 w-64 max-w-full" />
+          <div className="pt-6">
+            {/* Date header */}
+            <Skeleton className="h-5 w-44" />
+            {/* Mirrors the agenda rows: time stack · thumb · title stack · price */}
+            <div className="divide-y divide-border-subtle pt-1">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 py-4">
+                  <div className="w-14 shrink-0 space-y-1.5">
+                    <Skeleton className="h-4 w-11" />
+                    <Skeleton className="h-3.5 w-12" />
+                  </div>
+                  <Skeleton className="size-12 shrink-0 rounded-lg" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Skeleton className="h-4 w-48 max-w-full" />
+                    <Skeleton className="h-3.5 w-64 max-w-full" />
+                  </div>
+                  <div className="shrink-0 flex flex-col items-end gap-1.5">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-8 w-20 rounded-full" />
+                  </div>
                 </div>
-                <Skeleton className="hidden h-8 w-20 shrink-0 rounded-full sm:block" />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>

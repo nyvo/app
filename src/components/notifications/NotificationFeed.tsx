@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { NotificationRow } from './NotificationRow'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -38,6 +39,22 @@ export function NotificationFeed({
   onActivate,
   onArchive,
 }: NotificationFeedProps) {
+  // Ids present the first time the feed has data — those rows render
+  // instantly (no entrance) when the panel opens. Anything added afterwards
+  // (realtime) is new and gets NotificationRow's fade-in.
+  const seenIdsRef = useRef<Set<number>>(new Set())
+  const hasCapturedInitialRef = useRef(false)
+
+  useEffect(() => {
+    if (!hasCapturedInitialRef.current) {
+      if (isLoading) return
+      seenIdsRef.current = new Set(notifications.map((n) => n.id))
+      hasCapturedInitialRef.current = true
+      return
+    }
+    notifications.forEach((n) => seenIdsRef.current.add(n.id))
+  }, [isLoading, notifications])
+
   if (isLoading) {
     return (
       <DelayedFallback>
@@ -99,6 +116,7 @@ export function NotificationFeed({
             openedAt={openedAt}
             onActivate={onActivate}
             onArchive={onArchive}
+            isNew={hasCapturedInitialRef.current && !seenIdsRef.current.has(n.id)}
           />
         ))}
       </AnimatePresence>

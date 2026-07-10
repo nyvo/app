@@ -2,7 +2,6 @@ import type { PublicCourseWithDetails } from '@/services/publicCourses';
 
 /* ── Norwegian calendar labels (storefront-wide) ─────────────────── */
 
-export const WEEKDAYS_SHORT_NB = ['søn', 'man', 'tir', 'ons', 'tor', 'fre', 'lør'] as const;
 export const WEEKDAYS_FULL_NB = [
   'søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag',
 ] as const;
