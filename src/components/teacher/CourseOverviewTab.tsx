@@ -697,7 +697,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
           </div>
         </div>
         {priceError && (
-          <p className="mt-2 text-sm text-danger">Drop-in krever en pris høyere enn 0 kr.</p>
+          <p className="mt-2 text-sm text-danger animate-in fade-in-0 duration-150">Drop-in krever en pris høyere enn 0 kr.</p>
         )}
       </div>
       <Switch checked={checked} onCheckedChange={handleToggle} className="mt-1 shrink-0" />

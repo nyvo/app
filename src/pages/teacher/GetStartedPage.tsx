@@ -78,7 +78,7 @@ export default function GetStartedPage() {
                 tint alone (no border — the opaque tint separates by itself).
                 The dashboard button is the deliberate exit that replaces the
                 old auto-redirect. */}
-            <div className="flex flex-col gap-4 rounded-xl bg-success-subtle px-5 py-4 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-4 rounded-xl bg-success-subtle px-5 py-4 sm:flex-row sm:items-center animate-in fade-in-0 slide-in-from-bottom-1 duration-200">
               <span aria-hidden="true" className="shrink-0 text-2xl leading-none">
                 🎉
               </span>

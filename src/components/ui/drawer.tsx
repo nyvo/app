@@ -31,7 +31,8 @@ function DrawerOverlay({
     <DrawerPrimitive.Overlay
       data-slot="drawer-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-foreground/40",
+        // Nested over an open sheet, scrims compound — lighten so combined dim stays ≈40%.
+        "fixed inset-0 z-50 bg-foreground/40 [body:has([data-slot=sheet-overlay])_&]:bg-foreground/15",
         className
       )}
       {...props}

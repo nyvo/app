@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { ImageIcon } from '@/lib/icons';
 import { Link } from 'react-router-dom';
@@ -8,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { useAuth } from '@/contexts/AuthContext';
-import { authPageVariants, authPageTransition } from '@/lib/motion';
 import { supabase } from '@/lib/supabase';
 import { lookupInviteLink, redeemInviteLink } from '@/services/invite-links';
 import { friendlyError } from '@/lib/error-messages';
@@ -54,15 +52,9 @@ function Shell({ children }: { children: React.ReactNode }) {
         </Link>
       </header>
       <main className="flex-1 flex items-center justify-center px-4 py-12 sm:px-6">
-        <motion.div
-          variants={authPageVariants}
-          initial="initial"
-          animate="animate"
-          transition={authPageTransition}
-          className="w-full max-w-md text-center"
-        >
+        <div className="w-full max-w-md text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
           {children}
-        </motion.div>
+        </div>
       </main>
     </div>
   );

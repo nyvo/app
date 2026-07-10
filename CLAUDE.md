@@ -13,6 +13,10 @@
 
 Before building or restyling any UI from external references, follow `docs/mobbin-reference-rule.md` exactly — query with intent, write the Reference Extraction block before any code, borrow structure only, re-skin in our system, and run the counterfactual self-check. Where that rule says `STYLE.md` and `PATTERNS.md`, this repo's files are `docs/design-language.md` and `docs/ui-patterns.md`.
 
+## Design craft skill (mandatory for UI work)
+
+Whenever you implement — or plan/discuss implementing — new or restyled UI, actively invoke the `emil-design-eng` skill together with the `ux-ui-pro` gate, and apply its craft bar throughout the build (component behavior, polish, animation decisions, invisible details), not as a one-time read. For motion/gesture-heavy work also load `apple-design`; run `review-animations` on new animation code before commit.
+
 ## Design tokens
 
 Source of truth is `src/index.css` — a 3-layer OKLCH system: primitives (`--neutral-*`, `--jade/amber/red/blue-*`) → semantic tokens (`--foreground`, `--primary`, `--success`…) → Tailwind `@theme` utilities. Consume semantic tokens in components, never primitives directly; build hierarchy through spacing + the tier gaps (surface → border → muted-text → foreground), not bold weights.

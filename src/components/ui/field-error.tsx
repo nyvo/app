@@ -24,7 +24,7 @@ export function FieldError({ id, children, className }: FieldErrorProps) {
     <p
       id={id}
       role="alert"
-      className={cn('mt-2 text-xs font-medium text-danger', className)}
+      className={cn('mt-2 text-xs font-medium text-danger animate-in fade-in-0 duration-150', className)}
     >
       {children}
     </p>
