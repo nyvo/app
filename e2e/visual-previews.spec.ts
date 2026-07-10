@@ -28,6 +28,8 @@ const PREVIEWS = [
   'billing-preview',
   'modals-buttons-toasts',
   'settings-rows-preview',
+  'detail-t1-preview',
+  'checkout-t1-preview',
 ];
 
 for (const route of PREVIEWS) {

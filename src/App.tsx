@@ -65,6 +65,8 @@ const DashboardPreview = lazy(() => import('./pages/dev/DashboardPreview'));
 const CoursesListPreview = lazy(() => import('./pages/dev/CoursesListPreview'));
 const CheckoutFormReworkPreview = lazy(() => import('./pages/dev/CheckoutFormReworkPreview'));
 const DetailReworkPreview = lazy(() => import('./pages/dev/DetailReworkPreview'));
+const DetailT1Preview = lazy(() => import('./pages/dev/DetailT1Preview'));
+const CheckoutT1Preview = lazy(() => import('./pages/dev/CheckoutT1Preview'));
 const ModalsButtonsToastsPreview = lazy(() => import('./pages/dev/ModalsButtonsToastsPreview'));
 const BillingPreview = lazy(() => import('./pages/dev/BillingPreview'));
 const CourseDetailPreview = lazy(() => import('./pages/dev/CourseDetailPreview'));
@@ -217,6 +219,8 @@ const router = createBrowserRouter(
             <Route path="/dev/courses-list-preview" element={<CoursesListPreview />} />
             <Route path="/dev/checkout-form-rework" element={<CheckoutFormReworkPreview />} />
             <Route path="/dev/detail-rework" element={<DetailReworkPreview />} />
+            <Route path="/dev/detail-t1-preview" element={<DetailT1Preview />} />
+            <Route path="/dev/checkout-t1-preview" element={<CheckoutT1Preview />} />
             <Route path="/dev/modals-buttons-toasts" element={<ModalsButtonsToastsPreview />} />
             <Route path="/dev/billing-preview" element={<BillingPreview />} />
             <Route path="/dev/course-detail-preview" element={<CourseDetailPreview />} />
