@@ -451,14 +451,6 @@ const CheckoutPage = () => {
         </Link>
       </header>
       <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">
-        <button
-          type="button"
-          onClick={() => navigate(backHref)}
-          className="focus-ring mb-8 rounded inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
-        >
-          <ChevronLeft className="size-4" strokeWidth={1.75} />
-          Tilbake til kurset
-        </button>
 
         {isCancelled && (
           <Alert variant="warning" className="mb-8">
@@ -482,6 +474,14 @@ const CheckoutPage = () => {
         )}
 
         <div className="mx-auto max-w-[520px] space-y-6">
+          <button
+            type="button"
+            onClick={() => navigate(backHref)}
+            className="focus-ring -mb-1 rounded inline-flex items-center gap-1.5 self-start text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+          >
+            <ChevronLeft className="size-4" strokeWidth={1.75} />
+            Tilbake til kurset
+          </button>
           <CheckoutTitle />
           <CheckoutCourseContext
             course={course}
@@ -1280,8 +1280,8 @@ function CheckoutSkeleton() {
         <span className="text-base font-medium text-foreground">Openspot</span>
       </header>
       <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">
-        <Skeleton className="mb-8 h-4 w-32" />
         <div className="mx-auto max-w-[520px] space-y-6">
+          <Skeleton className="h-4 w-32" />
           <Skeleton className="h-8 w-2/3" />
           <Skeleton className="h-11 w-full rounded-lg" />
           <Skeleton className="h-9 w-full" />
