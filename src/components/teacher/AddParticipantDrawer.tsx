@@ -250,7 +250,7 @@ export function AddParticipantDrawer({
               {[0, 1, 2].map((i) => (
                 <div key={i} className="space-y-2">
                   <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-11 w-full" />
+                  <Skeleton className="h-10 w-full" />
                 </div>
               ))}
             </div>

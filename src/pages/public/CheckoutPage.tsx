@@ -882,7 +882,7 @@ function PaidCheckoutSkeleton() {
         <Skeleton className="h-10 w-full" />
         <Skeleton className="mt-3 h-10 w-full" />
       </div>
-      <Skeleton className="h-11 w-full rounded-full" />
+      <Skeleton className="h-10 w-full rounded-full" />
     </div>
   );
 }
@@ -1291,7 +1291,7 @@ function CheckoutSkeleton() {
         <div className="mx-auto max-w-[520px] space-y-6">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-8 w-2/3" />
-          <Skeleton className="h-11 w-full rounded-lg" />
+          <Skeleton className="h-10 w-full rounded-lg" />
           <Skeleton className="h-9 w-full" />
           <Skeleton className="h-9 w-full" />
           <Skeleton className="h-9 w-full" />
