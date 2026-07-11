@@ -29,6 +29,12 @@ import { Spinner } from "./spinner"
  *   link       — inline text link styled as button.
  *   plain      — inline text action with button semantics. No chrome.
  *
+ * Disabled (all variants): text drops to --foreground-disabled, and the
+ * filled variants (default/destructive) flatten to bg-muted — never 50%
+ * opacity, which read as an enabled secondary button. A disabled button
+ * shares secondary's muted fill but is told apart by the pale text and the
+ * absence of any hover/press response.
+ *
  * Size axis (height / horizontal padding / text-size):
  *   default  40px   px-4     text-sm    Normal app buttons. 2026-07-11: the
  *                                       whole control system moved 44 → 40
@@ -61,14 +67,14 @@ import { Spinner } from "./spinner"
  * `default` (40px); CTAs use `cta`.
  */
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,transform] duration-150 ease-out outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 dark:aria-invalid:border-danger/50 dark:aria-invalid:ring-danger/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 cursor-pointer",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,transform] duration-150 ease-out outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:text-foreground-disabled aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 dark:aria-invalid:border-danger/50 dark:aria-invalid:ring-danger/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 cursor-pointer",
   {
     variants: {
       variant: {
         // Primary — monochrome near-black (neutral-12 via --foreground); azure
         // is reserved as a sprinkle accent (links, selected states). No hover
         // shift by design; focus ring stays visible via the ring-offset.
-        default: "bg-foreground text-background",
+        default: "bg-foreground text-background disabled:bg-muted",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-border dark:bg-surface-on-dark dark:hover:bg-surface-on-dark",
         secondary:
@@ -78,7 +84,7 @@ const buttonVariants = cva(
         soft:
           "bg-muted text-foreground hover:bg-active aria-expanded:bg-active",
         destructive:
-          "bg-danger text-danger-foreground hover:bg-danger/90 focus-visible:ring-danger",
+          "bg-danger text-danger-foreground hover:bg-danger/90 focus-visible:ring-danger disabled:bg-muted",
         link: "text-primary underline-offset-4 hover:underline",
         plain:
           "bg-transparent border-transparent text-foreground-muted hover:bg-transparent hover:text-foreground",

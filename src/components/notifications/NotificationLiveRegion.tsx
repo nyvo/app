@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Notification } from '@/types/database'
+import { formatNotificationBody } from './format-body'
 
 interface NotificationLiveRegionProps {
   notifications: Notification[]
@@ -50,7 +51,7 @@ export function NotificationLiveRegion({
         if (newest) {
           // Compose: "Nytt varsel: <title>. <body>"
           const announcement = newest.body
-            ? `Nytt varsel: ${newest.title}. ${newest.body}`
+            ? `Nytt varsel: ${newest.title}. ${formatNotificationBody(newest.body)}`
             : `Nytt varsel: ${newest.title}`
           // Reset before assigning so identical consecutive messages still
           // re-trigger announcement on some readers.

@@ -1112,9 +1112,11 @@ const CoursePage = () => {
                         Legg til deltaker
                       </Button>
                       {/* A disabled button's title is unreachable — the hint
-                          needs to be visible text to actually communicate. */}
+                          needs to be visible text to actually communicate.
+                          basis-full drops it to its own line under the actions
+                          instead of floating loose at the container edge. */}
                       {isFull && (
-                        <span className="text-sm text-foreground-muted">
+                        <span className="basis-full text-right text-sm text-foreground-muted">
                           Kurset er fullt — øk antall plasser for å legge til flere
                         </span>
                       )}
