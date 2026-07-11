@@ -108,7 +108,7 @@ function renderNotification(input: NotificationInput): RenderedNotification {
         action_required: false,
         dedupe_key: `booking.created:${input.signupId}`,
         title: 'Ny påmelding',
-        body: `${input.buyerName} · ${input.courseTitle}`,
+        body: `${input.buyerName} – ${input.courseTitle}`,
         action_url: `/courses/${input.courseId}`,
         metadata: { signup_id: input.signupId, course_id: input.courseId },
       }
@@ -120,7 +120,7 @@ function renderNotification(input: NotificationInput): RenderedNotification {
         action_required: false,
         dedupe_key: `booking.waitlist_promoted:${input.signupId}`,
         title: 'Ny påmelding fra venteliste',
-        body: `${input.buyerName} · ${input.courseTitle}`,
+        body: `${input.buyerName} – ${input.courseTitle}`,
         action_url: `/courses/${input.courseId}`,
         metadata: { signup_id: input.signupId, course_id: input.courseId },
       }
@@ -132,7 +132,7 @@ function renderNotification(input: NotificationInput): RenderedNotification {
         action_required: true,
         dedupe_key: `payment.failed:${input.transactionId}`,
         title: 'Betaling feilet',
-        body: `${input.buyerName} · ${formatKroner(input.amount)}`,
+        body: `${input.buyerName} – ${formatKroner(input.amount)}`,
         action_url: `/courses/${input.courseId}`,
         metadata: {
           signup_id: input.signupId,
@@ -148,7 +148,7 @@ function renderNotification(input: NotificationInput): RenderedNotification {
         action_required: false,
         dedupe_key: `refund.completed:${input.refundId}`,
         title: 'Refusjon utbetalt',
-        body: `${input.buyerName} · ${formatKroner(input.amount)}`,
+        body: `${input.buyerName} – ${formatKroner(input.amount)}`,
         action_url: `/courses/${input.courseId}`,
         metadata: {
           signup_id: input.signupId,

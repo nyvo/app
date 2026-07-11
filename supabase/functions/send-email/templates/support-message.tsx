@@ -61,7 +61,7 @@ export const SupportMessage = ({
 }: SupportMessageProps) => (
   <EmailLayout preview={`Ny supportmelding — ${supportSubject}`}>
     <Text style={styles.eyebrow}>
-      Fra {senderName || senderEmail} · svar går til {senderEmail}
+      Fra {senderName || senderEmail} – svar går til {senderEmail}
     </Text>
     <Heading as="h1" style={styles.h1}>
       {supportSubject}

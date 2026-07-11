@@ -15,7 +15,7 @@ import { verifyAuth, handleCors, errorResponse, successResponse } from '../_shar
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
-interface Studio { seller_id: string; name: string | null }
+interface Studio { seller_id: string; name: string | null; reason?: 'active_subscription' }
 interface Blockers {
   blocking_studios: Studio[]
   dormant_studios: Studio[]
@@ -44,7 +44,11 @@ function extractSellerLogoPath(url: string | null): string | null {
 
 function blockerMessage(b: Blockers): string {
   if (b.blocking_studios.length > 0) {
-    const name = b.blocking_studios[0]?.name?.trim()
+    const blocker = b.blocking_studios[0]
+    const name = blocker?.name?.trim()
+    if (blocker?.reason === 'active_subscription') {
+      return 'Du har et aktivt abonnement. Si opp abonnementet før du sletter kontoen.'
+    }
     return name
       ? `Du har aktive kurs eller uavsluttede betalinger i «${name}». Fullfør eller avlys disse før du kan slette kontoen.`
       : 'Du har et studio med aktive kurs eller uavsluttede betalinger. Fullfør eller avlys disse før du kan slette kontoen.'

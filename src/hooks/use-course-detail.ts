@@ -222,7 +222,7 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
   const error = !courseId
     ? 'Fant ikke kurset.'
     : courseQuery.isError
-      ? 'Noe gikk galt. Prøv igjen.'
+      ? 'Noe gikk galt – prøv igjen'
       : !courseQuery.isPending && courseQuery.data === null
         ? 'Fant ikke kurset.'
         : null;

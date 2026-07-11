@@ -358,7 +358,7 @@ const CheckoutPage = () => {
       : null;
   const emailError = emailFormatError || emailMessage;
 
-  const termsError = attempted && !form.terms ? 'Du må godta vilkårene.' : null;
+  const termsError = attempted && !form.terms ? 'Godta vilkårene for å fortsette.' : null;
 
   const onEmailEdited = () => {
     if (emailMessage || sessionError) {
@@ -387,7 +387,7 @@ const CheckoutPage = () => {
       // Surface inline under the email field (like the paid path's 409) rather
       // than a toast — the dominant free-signup failure is "already signed up",
       // which belongs next to the email that caused it.
-      setEmailMessage(friendlyError(signupErr, 'Kunne ikke fullføre påmelding. Prøv igjen.'));
+      setEmailMessage(friendlyError(signupErr, 'Kunne ikke fullføre påmeldingen. Prøv igjen.'));
       setSubmitting(false);
       return;
     }

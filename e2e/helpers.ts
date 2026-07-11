@@ -42,3 +42,26 @@ export async function mockEmailAuthStatus(
     });
   });
 }
+
+// ---------------------------------------------------------------------------
+// Public-surface smoke helpers (docs/smoke-test-checklist.md, section D).
+// Unlike the auth specs above, these hit the real remote Supabase DB behind
+// the local dev server — the same test seller scripts/smoke-public-
+// storefront.mjs targets — so there is nothing to mock: the tests read
+// whatever is actually published for that seller right now.
+
+/** Real test-seller storefront slug — same default scripts/smoke-public-storefront.mjs uses. */
+export const SMOKE_SELLER_SLUG = process.env.SMOKE_SELLER_SLUG || 'kristoffer-studio';
+
+/**
+ * Opens the storefront for `sellerSlug` and returns the `href` of its first
+ * course link (e.g. `/kristoffer-studio/yoga-basics`), or `null` if the
+ * studio currently has no visible published courses. Lets specs discover a
+ * real course at test time instead of hardcoding a slug that could go stale.
+ */
+export async function getFirstCourseHref(page: Page, sellerSlug: string): Promise<string | null> {
+  await page.goto(`/${sellerSlug}`);
+  const link = page.locator(`a[href^="/${sellerSlug}/"]`).first();
+  if ((await link.count()) === 0) return null;
+  return link.getAttribute('href');
+}

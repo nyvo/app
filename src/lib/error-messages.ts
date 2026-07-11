@@ -33,7 +33,7 @@ const MESSAGE_PATTERNS: [RegExp, string][] = [
   [/violates foreign key/i,
     'Noe mangler. Last siden på nytt.'],
   [/rate limit|too many requests/i,
-    'For mange forsøk. Vent litt før du prøver igjen.'],
+    'For mange forsøk – vent litt før du prøver igjen'],
   [/network|fetch|timeout|ECONNREFUSED/i,
     'Sjekk nettforbindelsen og prøv igjen.'],
   [/row-level security/i,

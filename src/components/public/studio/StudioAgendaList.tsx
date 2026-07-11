@@ -256,7 +256,7 @@ function subLabel(course: PublicCourseWithDetails): string {
   }
   if (course.instructor_name) parts.push(course.instructor_name);
   if (course.delivery_mode === 'online') parts.push('Nettkurs');
-  return parts.join(' · ');
+  return parts.join(', ');
 }
 
 function CourseThumb({ course }: { course: PublicCourseWithDetails }) {

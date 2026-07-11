@@ -351,18 +351,22 @@ export async function handleStripeConnectWebhook(req: Request): Promise<Response
         }
 
         // Full refund: cancel the signup + free the spot. wasAppInitiated => owner used
-        // cancel-course/teacher-cancel-signup (refunded_at already set) → skip the notification.
+        // cancel-course/teacher-cancel-signup (refunded_at already set) → that path already
+        // wrote the full refund set incl. the right status ('course_cancelled' vs 'cancelled'),
+        // so skip the write here or it would clobber that distinction.
         const wasAppInitiated = !!signupBefore?.refunded_at
-        await supabase
-          .from('signups')
-          .update({
-            payment_status: 'refunded',
-            status: 'cancelled',
-            cancelled_at: signupBefore?.cancelled_at ?? new Date().toISOString(),
-            refund_amount: refundAmountNok,
-            refunded_at: new Date().toISOString(),
-          })
-          .eq('stripe_payment_intent_id', piId)
+        if (!wasAppInitiated) {
+          await supabase
+            .from('signups')
+            .update({
+              payment_status: 'refunded',
+              status: 'cancelled',
+              cancelled_at: signupBefore?.cancelled_at ?? new Date().toISOString(),
+              refund_amount: refundAmountNok,
+              refunded_at: new Date().toISOString(),
+            })
+            .eq('stripe_payment_intent_id', piId)
+        }
 
         if (signupBefore && !wasAppInitiated && signupBefore.participant_name) {
           await enqueueNotification(supabase, {

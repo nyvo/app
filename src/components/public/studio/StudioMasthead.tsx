@@ -47,7 +47,7 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
         {location && (
           <p className="mt-[5px] text-[15px] text-foreground-muted truncate">
             {location.address || location.label}
-            {' · '}
+            {', '}
             <a
               href={directionsUrl(location)}
               target="_blank"
