@@ -96,6 +96,7 @@
   --color-danger: var(--danger);
   --color-danger-foreground: var(--danger-foreground);
   --color-danger-subtle: var(--danger-subtle);
+  --color-danger-border: var(--danger-border);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
   --color-info-subtle: var(--info-subtle);
@@ -288,6 +289,7 @@
   --danger: var(--red-11);
   --danger-foreground: var(--neutral-1);
   --danger-subtle: var(--red-3);
+  --danger-border: oklch(0.885 0.045 22);       /* danger-zone container edge — mirrors --primary-border's role */
   --info: var(--blue-11);
   --info-foreground: var(--neutral-1);
   --info-subtle: var(--blue-3);
@@ -379,6 +381,7 @@
   --amber-11: oklch(0.800 0.135 85);
   --red-3:    oklch(0.290 0.080 25);
   --red-11:   oklch(0.730 0.155 25);  /* chroma softened to match the light-mode red-11 de-tint; 5.7:1 on red-3 */
+  --danger-border: oklch(0.360 0.070 25);
   --blue-3:   oklch(0.30 0.05 270);
   --blue-11:  oklch(0.68 0.18 270);
 
@@ -509,14 +512,14 @@
 
   /* Soft elevation — the system is otherwise flat (white-on-white + border).
      Reserved for focal floating surfaces (booking card, checkout summary) so
-     they read as premium without breaking the editorial flatness elsewhere. */
+     they read as premium without breaking the editorial flatness elsewhere.
+     Overlays (dialogs, popovers, dropdowns, toasts) are BORDERED, not lifted —
+     the old .shadow-float overlay shadow was removed 2026-07-11; don't
+     reintroduce it. */
   .shadow-soft {
     box-shadow:
       0 1px 2px rgb(16 24 40 / 0.04),
       0 6px 20px -6px rgb(16 24 40 / 0.10);
-  }
-  .shadow-float {
-    box-shadow: 0 10px 30px -6px rgb(0 0 0 / 0.22);
   }
 
 

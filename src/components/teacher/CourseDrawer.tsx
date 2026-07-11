@@ -12,6 +12,8 @@ import {
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorState } from '@/components/ui/error-state';
 import { StatusBadge, type CourseStatus } from '@/components/ui/status-badge';
 import { ShareCoursePopover } from '@/components/ui/share-course-popover';
 import {
@@ -86,11 +88,17 @@ function ParticipantsBody({
   }
 
   if (error) {
-    return <p className="text-base text-foreground-muted">Kunne ikke laste deltakerne.</p>;
+    return (
+      <ErrorState
+        variant="inline"
+        title="Kunne ikke laste deltakerne"
+        message="Sjekk nettet og prøv igjen."
+      />
+    );
   }
 
   if (participants.length === 0) {
-    return <p className="text-base text-foreground-muted">Ingen påmeldinger ennå.</p>;
+    return <EmptyState variant="compact" title="Ingen påmeldinger ennå" />;
   }
 
   return (
@@ -563,10 +571,9 @@ function ScheduleQuickView({
   const sessionTimeRange = currentSession?.start_time
     ? buildTimeRange(currentSession.start_time, courseData.durationMinutes)
     : null;
-  // Duration appended only when known — the "·" separator is approved here.
   const sessionTimeLine =
     sessionTimeRange && courseData.durationMinutes > 0
-      ? `${sessionTimeRange} · ${courseData.durationMinutes} min`
+      ? `${sessionTimeRange}, ${courseData.durationMinutes} min`
       : sessionTimeRange;
 
   // Single metadata row (list-row meta grammar): calendar icon + long date,

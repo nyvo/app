@@ -157,7 +157,7 @@ const TeacherProfilePage = () => {
             >
               <div className="divide-y divide-border-subtle">
                 <PasswordRow />
-                <div className="flex items-center justify-between gap-4 py-5">
+                <div className="flex items-center justify-between gap-4 py-5 last:pb-0">
                   <span className="text-base font-medium text-foreground">Logg ut alle enheter</span>
                   <Button
                     variant="secondary"
@@ -167,16 +167,18 @@ const TeacherProfilePage = () => {
                     Logg ut alle
                   </Button>
                 </div>
-                <div className="flex items-center justify-between gap-4 py-5 last:pb-0">
-                  <span className="text-base font-medium text-foreground">Slett kontoen din</span>
-                  <Button
-                    variant="destructive"
-                    className="shrink-0"
-                    onClick={() => setDeleteOpen(true)}
-                  >
-                    Slett konto
-                  </Button>
-                </div>
+              </div>
+
+              {/* Danger zone — its own tinted container (ui-patterns §2.4). */}
+              <div className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-danger-border bg-danger-subtle px-5 py-4">
+                <span className="text-base font-medium text-foreground">Slett kontoen din</span>
+                <Button
+                  variant="destructive"
+                  className="shrink-0"
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  Slett konto
+                </Button>
               </div>
 
               <ConfirmDialog

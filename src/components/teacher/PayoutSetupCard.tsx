@@ -31,6 +31,10 @@ export interface PayoutSetupViewModel {
   steps: PayoutStepViewModel[];
 }
 
+// These three 12×12 glyphs are hand-drawn on purpose, not missing-lucide
+// drift: at 12px inside the step circles, lucide's Check/AlertTriangle/X at
+// the app's 1.75 stroke render thin and mushy — the custom paths carry a
+// heavier 1.8 stroke tuned for this size. Don't swap them for size-3 lucide.
 function CheckGlyph() {
   return (
     <svg viewBox="0 0 12 12" width="12" height="12" fill="none" aria-hidden="true">

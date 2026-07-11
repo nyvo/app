@@ -89,7 +89,7 @@ export function SegmentedTabs<T extends string>({
       onKeyDown={handleKeyDown}
       className={cn(
         'items-center rounded-full bg-muted p-1 gap-1',
-        size === 'lg' ? 'h-11' : 'h-9',
+        size === 'lg' ? 'h-10' : 'h-9',
         stretch ? 'flex w-full' : 'inline-flex w-fit',
         disabled && 'opacity-60',
         className,

@@ -12,6 +12,7 @@ export interface PublicSeller {
   name: string
   slug: string
   logo_url: string | null
+  cover_image_url: string | null
   default_course_image_url: string | null
   stripe_onboarding_complete: boolean
 }
@@ -21,7 +22,7 @@ export async function fetchSellerBySlug(
 ): Promise<{ data: PublicSeller | null; error: Error | null }> {
   const lookupSlug = slug.trim().toLowerCase()
 
-  const publicColumns = 'id, name, logo_url, slug, default_course_image_url, stripe_onboarding_complete'
+  const publicColumns = 'id, name, logo_url, slug, cover_image_url, default_course_image_url, stripe_onboarding_complete'
 
   // Slug lives directly on the seller. On miss, fall back to
   // seller_slug_aliases so previously shared URLs keep resolving — callers
@@ -136,6 +137,7 @@ export async function updateSeller(
       stripe_account_id: operational?.stripe_account_id ?? null,
       stripe_account_status: operational?.stripe_account_status ?? null,
       stripe_onboarding_complete: operational?.stripe_onboarding_complete ?? false,
+      stripe_payouts_enabled: operational?.stripe_payouts_enabled ?? false,
       operating_model: operational?.operating_model ?? 'solo',
       organization_number: null,
       subscription_plan: operational?.subscription_plan ?? 'free',
@@ -187,6 +189,7 @@ export interface SellerOperational {
   stripe_account_id: string | null
   stripe_account_status: string | null
   stripe_onboarding_complete: boolean
+  stripe_payouts_enabled: boolean
   operating_model: string
   subscription_plan: SubscriptionPlan
   subscription_status: SubscriptionStatus

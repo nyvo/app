@@ -29,6 +29,9 @@ export interface FreeReceipt {
   imageUrl: string | null;
   sellerName: string;
   sellerSlug: string;
+  /** Optional (added 2026-07-11 for the white-label receipt header) — older
+   *  stored receipts won't have it, so the header falls back to initials. */
+  sellerLogoUrl?: string | null;
   /** Already masked (k•••@example.com) — the full address is never stored. */
   participantEmailMasked: string;
   createdAt: string;

@@ -65,12 +65,15 @@ const DashboardPreview = lazy(() => import('./pages/dev/DashboardPreview'));
 const CoursesListPreview = lazy(() => import('./pages/dev/CoursesListPreview'));
 const CheckoutFormReworkPreview = lazy(() => import('./pages/dev/CheckoutFormReworkPreview'));
 const DetailReworkPreview = lazy(() => import('./pages/dev/DetailReworkPreview'));
+const DetailT1Preview = lazy(() => import('./pages/dev/DetailT1Preview'));
+const CheckoutT1Preview = lazy(() => import('./pages/dev/CheckoutT1Preview'));
 const ModalsButtonsToastsPreview = lazy(() => import('./pages/dev/ModalsButtonsToastsPreview'));
 const BillingPreview = lazy(() => import('./pages/dev/BillingPreview'));
 const CourseDetailPreview = lazy(() => import('./pages/dev/CourseDetailPreview'));
 const StudioPreview = lazy(() => import('./pages/dev/StudioPreview'));
 const DraftExperiencePreview = lazy(() => import('./pages/dev/DraftExperiencePreview'));
 const CourseBuilderPreview = lazy(() => import('./pages/dev/CourseBuilderPreview'));
+const CourseBuilderLivePreview = lazy(() => import('./pages/dev/CourseBuilderLivePreview'));
 const CourseBuilderEventbrite = lazy(() => import('./pages/dev/CourseBuilderEventbrite'));
 const SessionDaysPreview = lazy(() => import('./pages/dev/SessionDaysPreview'));
 const CourseOversiktWireframe = lazy(() => import('./pages/dev/CourseOversiktWireframe'));
@@ -124,7 +127,7 @@ function SkipLink() {
           main.focus({ preventScroll: false });
         }
       }}
-      className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-full focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-float focus:outline-none focus:ring-2 focus:ring-ring"
+      className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-full focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:border focus:border-border focus:outline-none focus:ring-2 focus:ring-ring"
     >
       Hopp til hovedinnholdet
     </a>
@@ -218,12 +221,15 @@ const router = createBrowserRouter(
             <Route path="/dev/courses-list-preview" element={<CoursesListPreview />} />
             <Route path="/dev/checkout-form-rework" element={<CheckoutFormReworkPreview />} />
             <Route path="/dev/detail-rework" element={<DetailReworkPreview />} />
+            <Route path="/dev/detail-t1-preview" element={<DetailT1Preview />} />
+            <Route path="/dev/checkout-t1-preview" element={<CheckoutT1Preview />} />
             <Route path="/dev/modals-buttons-toasts" element={<ModalsButtonsToastsPreview />} />
             <Route path="/dev/billing-preview" element={<BillingPreview />} />
             <Route path="/dev/course-detail-preview" element={<CourseDetailPreview />} />
             <Route path="/dev/studio-preview" element={<StudioPreview />} />
             <Route path="/dev/draft-experience-preview" element={<DraftExperiencePreview />} />
             <Route path="/dev/course-builder-preview" element={<CourseBuilderPreview />} />
+            <Route path="/dev/course-builder-live" element={<CourseBuilderLivePreview />} />
             <Route path="/dev/course-builder-eventbrite" element={<CourseBuilderEventbrite />} />
             <Route path="/dev/session-days-preview" element={<SessionDaysPreview />} />
             <Route path="/dev/oversikt-wireframe" element={<CourseOversiktWireframe />} />

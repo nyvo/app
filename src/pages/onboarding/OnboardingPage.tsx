@@ -40,15 +40,17 @@ import type { UserRole } from '@/types/database'
 // reads identically across the app's multi-step flows.
 function BackLink({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="sm"
       onClick={onClick}
       disabled={disabled}
-      className="mb-8 -ml-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm text-foreground-muted transition-colors duration-150 ease-out cursor-pointer hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+      className="mb-8 -ml-2.5 gap-1.5 text-foreground-muted"
     >
       <ChevronLeft className="size-4" strokeWidth={1.75} />
       Tilbake
-    </button>
+    </Button>
   )
 }
 
@@ -158,14 +160,16 @@ export default function OnboardingPage() {
         </AnimatePresence>
       </div>
       <footer className="flex justify-center px-4 sm:px-6 py-8">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => { void signOut() }}
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-foreground-muted hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+          className="gap-1.5 text-foreground-muted"
         >
           <LogOut className="size-3.5" strokeWidth={1.75} />
           Logg ut
-        </button>
+        </Button>
       </footer>
     </main>
   )

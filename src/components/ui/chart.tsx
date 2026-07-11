@@ -189,7 +189,7 @@ function ChartTooltipContent({
   return (
     <div
       className={cn(
-        "grid min-w-32 items-start gap-1.5 rounded-lg border border-border-subtle bg-background px-2.5 py-1.5 text-xs shadow-md",
+        "grid min-w-32 items-start gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs",
         className
       )}
     >
@@ -252,6 +252,11 @@ function ChartTooltipContent({
                       </div>
                       {item.value != null && (
                         <span className="font-medium text-foreground tabular-nums">
+                          {/* Plain nb-NO number — NOT currency. A chart whose
+                              series is NOK must pass `formatter` and route it
+                              through formatKroner (CLAUDE.md currency rule);
+                              this fallback would render "2200", not
+                              "2 200 kr". */}
                           {typeof item.value === "number"
                             ? item.value.toLocaleString('nb-NO')
                             : String(item.value)}

@@ -296,7 +296,7 @@ function IncomeTooltip({
   // previous-period row so the tooltip never implies a zero we don't have.
   const hasCurrent = point.amount != null
   return (
-    <div className="min-w-[180px] rounded-xl border border-border bg-background px-3 py-2.5 text-sm shadow-soft">
+    <div className="min-w-[180px] rounded-xl border border-border bg-background px-3 py-2.5 text-sm">
       <div className="text-xs font-medium text-foreground-muted">Sum hittil</div>
       {/* Two tiers: the header is the quiet tier; both value rows share the
           same treatment — the markers alone tell the series apart. */}

@@ -181,7 +181,7 @@ const LandingPage = () => {
       >
         <img
           src="/landing-storefront.webp"
-          alt="Offentlig studio-side i Openspot"
+          alt="Offentlig studioside i Openspot"
           width={1600}
           height={1357}
           loading="lazy"
@@ -289,7 +289,7 @@ const LandingPage = () => {
               tier={{
                 name: 'Pro',
                 recommended: true,
-                description: 'Lønner seg fra rundt 10 000 kr i påmeldinger i måneden.',
+                description: `Lønner seg fra rundt ${formatKroner(10000)} i påmeldinger i måneden.`,
                 price: formatKroner(499),
                 priceSub: '/ mnd eks. mva',
                 features: [

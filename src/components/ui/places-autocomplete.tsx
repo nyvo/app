@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Loader2, MapPin } from '@/lib/icons';
+import { MapPin } from '@/lib/icons';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
 import { searchPlaces, getPlaceDetails, type PlaceDetails, type PlaceSuggestion } from '@/services/places';
@@ -185,12 +186,12 @@ export function PlacesAutocomplete({
         }}
       />
       {loading && (
-        <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-foreground-muted" />
+        <Spinner size="sm" className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted" />
       )}
       {open && searchError && (
         <div
           role="status"
-          className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-surface shadow-md"
+          className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-surface"
         >
           <p className="px-3 py-2 text-sm text-foreground-muted">
             Stedsøket er utilgjengelig. Skriv inn adressen manuelt.
@@ -198,7 +199,7 @@ export function PlacesAutocomplete({
         </div>
       )}
       {open && !searchError && results.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full origin-top animate-in overflow-hidden rounded-lg border border-border bg-surface shadow-md fade-in-0 zoom-in-95 duration-150">
+        <div className="absolute z-50 mt-1 w-full origin-top animate-in overflow-hidden rounded-lg border border-border bg-surface fade-in-0 zoom-in-95 duration-150">
           <ul id={listboxId} role="listbox" className="max-h-60 overflow-y-auto p-1">
             {results.map((r, i) => (
               <li key={r.placeId} role="presentation">

@@ -20,7 +20,7 @@ function Input({ className, type, icon: Icon, ...props }: InputProps) {
           type={type}
           data-slot="input"
           className={cn(
-            "h-11 w-full min-w-0 rounded-xl border border-border bg-surface px-4 pl-12 text-base transition-[color,border-color,box-shadow] duration-150 ease-out outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-foreground-muted focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20",
+            "h-10 w-full min-w-0 rounded-xl border border-border bg-surface px-4 pl-12 text-base transition-[color,border-color,box-shadow] duration-150 ease-out outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-foreground-muted focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20",
             className
           )}
           {...props}
@@ -34,7 +34,7 @@ function Input({ className, type, icon: Icon, ...props }: InputProps) {
       type={type}
       data-slot="input"
       className={cn(
-        "h-11 w-full min-w-0 rounded-xl border border-border bg-surface px-4 text-base transition-[color,border-color,box-shadow] duration-150 ease-out outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-foreground-muted focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20",
+        "h-10 w-full min-w-0 rounded-xl border border-border bg-surface px-4 text-base transition-[color,border-color,box-shadow] duration-150 ease-out outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-foreground-muted focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20",
         className
       )}
       {...props}

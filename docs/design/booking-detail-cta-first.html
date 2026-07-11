@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/geist@5/index.css">
+<title>Kursside — CTA-first (v3.1)</title>
+<style>
+  /* ══ Tokens — lifted verbatim from src/index.css (light) ══ */
+  :root{
+    --bg:#fff;
+    --fg:oklch(0.185 0.004 250);
+    --fg-muted:oklch(0.550 0.010 250);
+    --fg-subtle:oklch(0.645 0.010 250);
+    --fg-disabled:oklch(0.794 0.008 250);
+    --muted:oklch(0.967 0.0015 250);
+    --panel:oklch(0.976 0.0015 250);
+    --border:oklch(0.853 0.006 250);
+    --border-subtle:oklch(0.932 0.003 250);
+    --input:oklch(0.794 0.008 250);
+    --primary:oklch(0.540 0.150 245);
+    --primary-border:oklch(0.900 0.030 245);
+    --selection-light:color-mix(in oklab,oklch(0.540 0.150 245) 8%,transparent);
+    --hover:color-mix(in oklab,oklch(0.185 0.004 250) 6%,transparent);
+    --amber-text:oklch(0.557 0.131 65);
+    --ok:oklch(0.45 0.10 155);            /* deduction lines — matches --success */
+    --canvas:oklch(0.952 0.002 250);
+    --sans:'Geist Variable',Geist,Inter,-apple-system,'Segoe UI',system-ui,sans-serif;
+    --shadow-soft:0 1px 2px rgb(16 24 40/.04),0 6px 20px -6px rgb(16 24 40/.10);
+    --shadow-xs:0 1px 2px 0 rgb(0 0 0/.05);
+    --ease-out:cubic-bezier(.23,1,.32,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+  body{background:var(--canvas);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.55;font-feature-settings:"cv05"}
+  .wrap{max-width:1100px;margin:0 auto;padding:56px 24px 96px}
+  img{display:block}
+  .tnum{font-variant-numeric:tabular-nums}
+
+  /* ══ Document chrome ══ */
+  .doc-kicker{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--fg-muted);font-weight:600}
+  h1{font-size:28px;font-weight:600;letter-spacing:-.015em;margin-top:10px;text-wrap:balance}
+  .doc-lede{color:var(--fg-muted);max-width:64ch;margin-top:12px;font-size:15.5px}
+  .doc-lede strong{color:var(--fg);font-weight:600}
+  .doc-section{margin-top:72px}
+  .opt-head{display:flex;align-items:center;gap:10px;border-top:1px solid var(--border);padding-top:26px;margin-bottom:8px}
+  .opt-chip{font-size:12px;font-weight:600;background:var(--fg);color:var(--bg);border-radius:999px;padding:3px 10px}
+  .opt-title{font-weight:600;font-size:19px;letter-spacing:-.008em}
+  .opt-sub{color:var(--fg-muted);font-size:15px;max-width:70ch;margin:2px 0 16px}
+  .opt-sub a,.x-body a{color:var(--primary);text-decoration:underline;text-underline-offset:3px}
+  .step-lab{font-size:12px;letter-spacing:.07em;text-transform:uppercase;font-weight:600;color:var(--fg-muted);margin:22px 0 8px}
+  .verdict{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+  .verdict div{background:var(--bg);border:1px solid var(--border-subtle);border-radius:10px;padding:13px 15px;font-size:13.5px;color:var(--fg-muted);line-height:1.5}
+  .verdict b{display:block;color:var(--fg);font-size:11px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
+  @media(max-width:640px){.verdict{grid-template-columns:1fr}}
+  details.extract{margin:0 0 16px;border:1px solid var(--border-subtle);border-radius:10px;background:var(--bg)}
+  details.extract summary{cursor:pointer;padding:10px 14px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:500;color:var(--fg-muted)}
+  details.extract .x-body{padding:2px 16px 14px;font-size:13.5px;color:var(--fg-muted);line-height:1.55}
+  details.extract .x-body p{margin-top:6px}
+  details.extract .x-body b{color:var(--fg);font-weight:500}
+  .val-wrap{border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden;margin-top:16px;background:var(--bg)}
+  .val-wrap table{width:100%;border-collapse:collapse;font-size:14.5px}
+  .val-wrap th{text-align:left;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-muted);font-weight:600;padding:12px 18px;border-bottom:1px solid var(--border-subtle)}
+  .val-wrap td{padding:13px 18px;border-bottom:1px solid var(--border-subtle);vertical-align:top;line-height:1.5;color:var(--fg-muted)}
+  .val-wrap tr:last-child td{border-bottom:0}
+  .val-wrap td:first-child{font-weight:500;white-space:nowrap;color:var(--fg)}
+  .footer-cta{margin-top:80px;border-top:1px solid var(--border);padding-top:26px;color:var(--fg-muted);max-width:66ch;font-size:15px}
+  .footer-cta b{color:var(--fg)}
+
+  /* ══ Browser frame ══ */
+  .frame{background:var(--bg);border:1px solid var(--border-subtle);border-radius:12px;box-shadow:var(--shadow-soft);overflow:hidden}
+  .frame+.frame,.step-lab+.frame{margin-top:0}
+  .frame-bar{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--border-subtle);background:var(--panel)}
+  .frame-bar .dots{display:flex;gap:5px}
+  .frame-bar .dots span{width:8px;height:8px;border-radius:50%;background:var(--border-subtle)}
+  .frame-bar .url{font-size:12px;color:var(--fg-muted);background:var(--bg);border:1px solid var(--border-subtle);border-radius:999px;padding:2px 12px;margin-left:6px}
+  .frame-scroll{overflow-x:auto}
+  .mock{min-width:760px;padding:0 48px;background:var(--bg)}
+  .mock-flush{min-width:760px;padding:0;background:var(--bg)}
+  .mock-fade{position:relative}
+  .mock-fade::after{content:"";position:absolute;left:0;right:0;bottom:0;height:64px;background:linear-gradient(to bottom,transparent,var(--bg));pointer-events:none}
+
+  /* ══ Shared atoms (brand + copy only — no booking components carried over) ══ */
+  .m-muted{color:var(--fg-muted)}
+  .avatar{border-radius:50%;background:linear-gradient(135deg,#B9C7D6,#8FA5BC);display:inline-flex;align-items:center;justify-content:center;font-weight:500;color:#fff;flex-shrink:0}
+  .logo-sq{border-radius:8px;background:linear-gradient(150deg,#2E4B43,#5C7A6E);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#EAF1ED;font-weight:500}
+  .quiet-link{color:var(--fg-muted);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--fg-disabled);cursor:pointer;white-space:nowrap}
+  .scarce{font-size:13px;color:var(--amber-text);white-space:nowrap}
+  .art{position:relative;overflow:hidden;background:linear-gradient(140deg,#C9D3C6,#9FB4A8 60%,#7E9A8C)}
+  .art img{width:100%;height:100%;object-fit:cover}
+
+  /* buttons — the app Button default, sized for inline + block use */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:999px;background:var(--fg);color:var(--bg);font:inherit;font-weight:500;font-size:16px;height:44px;padding:0 26px;cursor:pointer;text-decoration:none;white-space:nowrap}
+  .btn:hover{background:color-mix(in oklab,var(--fg) 90%,transparent)}
+  .btn-block{display:flex;width:100%;padding:0}
+  .fine{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;color:var(--fg-muted);margin-top:11px;line-height:1.5}
+  .fine svg{width:13px;height:13px;flex-shrink:0}
+
+  /* floating-label field — the public-page input grammar, resting state */
+  .fl{position:relative;height:52px;border:1px solid var(--input);border-radius:10px;background:var(--bg);display:flex;align-items:center;padding:0 15px;color:var(--fg-muted);font-size:15px}
+  .fl+.fl{margin-top:10px}
+  .fl-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .fl-row .fl+.fl{margin-top:0}
+  .fl-group .fl-row{margin-top:10px}
+
+  /* ══ T1 — Magasin ══ */
+  .t1{max-width:640px;margin:0 auto;padding:18px 0 8px}
+  .t1-art{aspect-ratio:21/9;border-radius:16px;margin-top:28px}
+  .t1-title{font-size:38px;font-weight:500;letter-spacing:-.021em;line-height:1.08;margin-top:28px;text-wrap:balance}
+  /* instructor row — flat; the filled surface belongs to the booking strip
+     (the commerce moment), not the trust signal above it */
+  /* metadata band — V1's fact tiles framed by hairlines with dividers
+     between (V3's fact-band structure), no cards; collapses to a stacked
+     list with row dividers below 480px (container query) */
+  .meta-cq{container-type:inline-size;margin-top:22px}
+  .meta{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border-subtle);border-bottom:1px solid var(--border-subtle)}
+  .mi{display:flex;align-items:center;gap:12px;padding:14px 24px 14px 0;min-width:0}
+  .mi:nth-child(2){border-left:1px solid var(--border-subtle);padding-left:24px}
+  @container (max-width:480px){
+    .meta{grid-template-columns:1fr}
+    .mi:nth-child(2){border-left:0;padding-left:0}
+    .mi+.mi{border-top:1px solid var(--border-subtle)}
+  }
+  .mi>p{font-size:14.5px;font-weight:500;line-height:1.35}
+  .mi>p span{display:block;font-size:13px;color:var(--fg-muted);font-weight:400;margin-top:2px}
+  .date-badge{width:38px;height:38px;border:1px solid var(--border-subtle);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+  .date-badge b{font-size:8.5px;letter-spacing:.08em;color:var(--fg-muted);font-weight:500;text-transform:uppercase}
+  .date-badge span{font-size:15px;font-weight:500;line-height:1;margin-top:1px}
+  .mic{width:38px;height:38px;border:1px solid var(--border-subtle);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--fg-subtle);flex-shrink:0}
+  .mic svg{width:17px;height:17px}
+  .mi .avatar{width:38px;height:38px;font-size:12.5px}
+  /* booking strip — one focal price: label small, amount big, secondary
+     facts (drop-in + scarcity) share one qualifier line. Filled panel so
+     price and CTA read as one component across the column width. */
+  /* booking card — the page contract: everything is flat hairlines; the ONE
+     elevated surface is the object that takes money (border + shadow-soft,
+     the system's focal-surface rule). Interior follows the page: information
+     column flush-left, single action right. Airbnb/Luma give the structure;
+     the skin is derived from this page, not theirs. Mobile condenses to
+     DICE's pinned bar: price left, button right. */
+  .t1-strip{display:flex;align-items:center;justify-content:space-between;gap:20px;background:var(--bg);border:1px solid var(--border-subtle);border-radius:12px;box-shadow:var(--shadow-soft);padding:18px 20px;margin-top:26px}
+  /* the two offers are peers: identical rows, prices aligned — priority is
+     expressed by order only (hele kurset first) */
+  .t1-strip .prices{display:grid;grid-template-columns:auto auto;column-gap:28px;row-gap:7px;align-items:baseline}
+  .t1-strip .prices .l{font-size:14.5px;color:var(--fg-muted)}
+  .t1-strip .prices .p{font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;text-align:right}
+  .t1-strip .prices .p s{font-size:13.5px;font-weight:400;color:var(--fg-disabled);margin-right:8px}
+  .t1-strip{position:relative}
+  /* scarcity badge — perched on the card's top edge, CTA side; white fill
+     punches the card border, radius matches the card */
+  .t1-strip .scarce-badge{position:absolute;top:-13px;right:20px;background:var(--bg);border:1px solid var(--border-subtle);border-radius:12px;padding:3px 12px;font-size:13px;color:var(--amber-text);white-space:nowrap}
+  .t1-strip .btn{flex-shrink:0}
+  .t1-sec{margin-top:32px}
+  .t1-sec h4{font-size:16px;font-weight:500}
+  .t1-body{font-size:15.5px;line-height:1.65;margin-top:10px}
+  .dstrip{display:flex;gap:10px;margin-top:14px;overflow-x:auto;padding-bottom:4px}
+  .dcard{min-width:104px;border:1px solid var(--border-subtle);border-radius:12px;padding:12px 14px;flex-shrink:0}
+  .dcard b{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-muted);font-weight:500}
+  .dcard p{font-size:15px;font-weight:500;margin-top:3px}
+  .dcard span{display:block;font-size:13px;color:var(--fg-muted);margin-top:1px;font-variant-numeric:tabular-nums}
+  .dcard.more{display:flex;align-items:center;justify-content:center;color:var(--fg-muted);font-size:14px;border-style:dashed}
+  .dcard.held{opacity:.55}
+  .dcard.held p{text-decoration:line-through}
+
+  /* Sted — the map earns location its own section (Airbnb «Where you'll be»);
+     the app already ships MapEmbed/LocationCard on Google Places — the .map
+     block is that embed's slot */
+  .map{position:relative;height:210px;border-radius:12px;overflow:hidden;background:
+    linear-gradient(63deg,transparent 41%,var(--bg) 41% 44%,transparent 44%),
+    linear-gradient(-20deg,transparent 68%,var(--bg) 68% 70.5%,transparent 70.5%),
+    linear-gradient(90deg,transparent 22%,var(--bg) 22% 25%,transparent 25%),
+    linear-gradient(0deg,transparent 55%,var(--bg) 55% 59%,transparent 59%),
+    var(--muted)}
+  .map .pin{position:absolute;left:50%;top:50%;transform:translate(-50%,-88%);width:34px;height:34px;color:var(--fg)}
+  .map-addr{font-size:14.5px;margin-top:12px}
+
+  /* T1 step 2 — focused column */
+  .t1s2{max-width:520px;margin:0 auto;padding:34px 0 40px}
+  .backlink{font-size:14px;color:var(--fg-muted);cursor:pointer}
+  .t1s2 h3{font-size:26px;font-weight:500;letter-spacing:-.014em;margin-top:14px}
+  .ctx{display:flex;align-items:center;gap:12px;margin-top:18px}
+  .ctx .thumb{width:44px;height:44px;border-radius:10px;flex-shrink:0}
+  .ctx p{font-size:14.5px;font-weight:500}
+  .ctx p span{display:block;font-size:13px;color:var(--fg-muted);font-weight:400;margin-top:1px}
+  .flab{font-size:13.5px;font-weight:500;margin:26px 0 9px}
+  .flab .scarce{font-weight:400;margin-left:10px}
+  /* ticket toggle — SegmentedTabs verbatim (44px muted track, active
+     white pill + shadow-xs); constraint line re-renders under the track */
+  .seg{display:flex;width:100%;height:44px;align-items:center;gap:4px;padding:4px;border-radius:999px;background:var(--muted)}
+  .seg-btn{flex:1;height:36px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;background:transparent;color:var(--fg);font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+  .seg-btn[aria-checked="true"]{background:var(--bg);box-shadow:var(--shadow-xs)}
+  .seg-sub{font-size:13.5px;color:var(--fg-muted);margin-top:10px}
+  /* receipt summary — one line per amount, total emphasized */
+  .rcpt{margin-top:26px;border-top:1px solid var(--border-subtle);padding-top:12px}
+  .rcpt .row{display:flex;justify-content:space-between;gap:12px;font-size:14.5px;color:var(--fg-muted);padding:3px 0}
+  .rcpt .row span:last-child{color:var(--fg);font-variant-numeric:tabular-nums}
+  .rcpt .row.dim span:last-child{color:var(--fg-muted)}
+  .rcpt .row.ded span:last-child{color:var(--ok)}
+  .rcpt .row.total{border-top:1px solid var(--border-subtle);margin-top:9px;padding-top:11px;font-weight:500;color:var(--fg);font-size:15px;align-items:baseline}
+  .rcpt .row.total span:last-child{font-size:20px}
+
+  /* Stripe Payment Element, tabs layout — method cards; selecting one
+     re-renders the pane below (card → fields, wallet → wallet button).
+     Wallet buttons are the brands' own assets, exempt from our tokens. */
+  .pm-tabs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .pm-tab{border:2px solid transparent;border-radius:10px;background:var(--muted);padding:10px 12px;font:inherit;font-size:13.5px;font-weight:500;color:var(--fg);cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left}
+  .pm-tab:hover{border-color:var(--border)}
+  .pm-tab svg{width:19px;height:19px;color:var(--fg-subtle)}
+  .pm-tab .glyph{font-size:17px;line-height:19px;color:var(--fg)}
+  .pm-tab[aria-selected="true"]{border-color:var(--fg)}
+  .pm-pane{margin-top:10px}
+  .wallet-btn{display:flex;width:100%;height:48px;align-items:center;justify-content:center;gap:6px;border:0;border-radius:10px;font:inherit;font-size:16px;font-weight:500;cursor:pointer}
+  .wallet-btn.apple{background:#000;color:#fff}
+
+  /* ══ T3 — Delt (brand band + transaction) ══ */
+  .t3{display:grid;grid-template-columns:300px minmax(0,1fr);min-height:560px}
+  .t3-band{background:linear-gradient(165deg,#243B34,#3D5A4E 55%,#54746A);color:#fff;padding:28px 28px 26px;display:flex;flex-direction:column}
+  .t3-band .logo-sq{width:40px;height:40px;border-radius:10px;font-size:13px;background:oklch(1 0 0/.14)}
+  .t3-band .studio{font-size:13.5px;font-weight:500;margin-top:10px;opacity:.85}
+  .t3-band h3{font-size:28px;font-weight:500;letter-spacing:-.015em;line-height:1.12;margin-top:22px;text-wrap:balance}
+  .t3-band .when{font-size:14px;margin-top:12px;opacity:.85;line-height:1.5}
+  .t3-band .prices{margin-top:auto;padding-top:28px;font-size:14px;line-height:1.7;opacity:.92}
+  .t3-band .prices b{font-weight:500}
+  .t3-main{padding:30px 40px 40px}
+  .t3-cta{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--border-subtle);border-radius:12px;padding:16px 18px;background:var(--panel)}
+  .t3-cta p{font-size:14.5px;font-weight:500}
+  .t3-cta p span{display:block;font-size:13px;color:var(--fg-muted);font-weight:400;margin-top:1px}
+  .t3-sec{margin-top:28px}
+  .t3-sec h4{font-size:15px;font-weight:500}
+  .t3-body{font-size:15px;line-height:1.6;margin-top:8px;max-width:56ch}
+  .t3-dates{margin-top:10px;font-size:14.5px;line-height:1.9;color:var(--fg-muted);font-variant-numeric:tabular-nums}
+  .t3-dates b{color:var(--fg);font-weight:500}
+
+  /* T3 step 2 — summary band + form column */
+  .t3s2-band .sumrow{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;opacity:.88}
+  .t3s2-band .sumrow.total{border-top:1px solid oklch(1 0 0/.25);margin-top:10px;padding-top:12px;font-weight:500;opacity:1}
+  .t3s2-band .sumrow.total span:last-child{font-size:19px;font-variant-numeric:tabular-nums}
+  .t3s2-band .note{margin-top:auto;padding-top:24px;font-size:12.5px;line-height:1.6;opacity:.72}
+
+  /* ══ Press feedback + focus — Button grammar ══ */
+  .btn,.seg-btn{transition:background-color .15s ease,color .15s ease,box-shadow .15s ease,transform .16s var(--ease-out)}
+  .btn:active,.seg-btn:active{transform:scale(.98)}
+  button:focus-visible,a.btn:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}html{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+  <p class="doc-kicker">Kursside — CTA-first (v3.1) — T2 retired; T1 refined; Stripe Payment Element + receipt summary</p>
+  <h1>T1 vs T3: «one CTA, then billett + skjema + betaling»</h1>
+  <p class="doc-lede">Model confirmed by the research pass: event products (Eventbrite, DICE, Zomato, Open) put <strong>no tier selection on the detail page</strong> — it shows the prices as content and one action; step two is a single focused screen holding ticket choice, guest details and payment together. Both takes share that skeleton and the system (tokens verbatim, real fees, floating-label inputs). New in v3.1: payment renders as the real <strong>Stripe Payment Element</strong> in tabs layout — method cards where selecting one re-renders the pane below (card → fields; a wallet swaps the bottom pay button for its own branded one, so the action never moves) — and the order summary reads as a <strong>receipt</strong>: price line, fee line, total. Wallet buttons are the payment brands' own assets and sit outside our tokens by design. <strong>Step two is clickable everywhere</strong>; detail CTAs scroll to their step two.</p>
+
+  <!-- ═══════════ T1 MAGASIN ═══════════ -->
+  <section class="doc-section">
+    <div class="opt-head"><span class="opt-chip">T1</span><span class="opt-title">Magasin — image-led feature page, booking strip, focused checkout</span></div>
+    <p class="opt-sub">The detail page reads like a magazine feature: wide hero, display title, and a scannable <strong>metadata row</strong> directly under it — when, where and instructor as two-line stacks with a leading badge or icon (Luma's fact tiles in V3's hairline fact-band structure — framed, divided, no cards), collapsing to a stacked list on narrow viewports. Commerce is the page's <strong>only elevated surface</strong> — flat hairlines everywhere, and exactly one floating card for the object that takes money (the system's focal-surface rule). Inside it the page's own grammar continues: information column flush-left (label, price, drop-in, scarcity), single action right. Airbnb/Luma supplied the structure; the skin is derived from this page. Location gets its own «Sted» section further down, because the map is functional — Google Places is already wired in the app. The schedule is a flickable strip of date cards. Step two is Open's calm, single-column «complete your booking» screen: the prebuilt segmented toggle for the two tiers, the Stripe Payment Element in tabs layout, and a receipt-style summary.</p>
+    <details class="extract">
+      <summary>Reference extraction — T1</summary>
+      <div class="x-body">
+        <p><b>Structural question:</b> what does a detail page owe the buyer when selection moves to step two, and what does the focused step-two screen contain?</p>
+        <p><b>Sources:</b> <a href="https://mobbin.com/flows/da7d4575-6036-4c60-a292-d6fe3d5a5a38">Eventbrite purchase flow</a> (detail = price range + «Get tickets»; step 2 = tiers, then form, then pay), <a href="https://mobbin.com/flows/ce431a24-e038-442d-8dd8-30edbf713e87">Open booking flow</a> (editorial class page → one «Book» → focused checkout with details + payment), <a href="https://mobbin.com/screens/57a02165-4fcc-4c87-abf7-f27bd4abca8b">MasterClass</a> (price-first offer block).</p>
+        <p><b>Adopted:</b> (1) both prices printed in the strip — nobody clicks blind; (2) date cards replace the numbered session list (Posh's date-card strip); (3) step two = one screen: billett → opplysninger → betaling, no wizard; (4) cancellation reassurance sits under the pay button, where Open puts its policy; (5) payment = the Stripe Payment Element, tabs layout — method cards where the selected method's pane renders below; a wallet tab renders the wallet's own button instead of fields (Stripe's default behavior); (6) the summary is a receipt: one line per amount, total last; (7) started courses change <em>values, never layout</em>: the strip only updates label + price («Kurspakke 1 650 kr»), held sessions are marked on the date cards, and the receipt alone carries the story — ordinær pris, named deduction (green, Typeform's coupon-line grammar), result.</p>
+        <p><b>Rejected:</b> quantity steppers (one seat per booking); a persistent mini-bar on the detail page (the strip is one scroll away, and mobile keeps the CTA visible early); wallets-above-the-form with an «eller» divider (Eventbrite's variant — valid, but the tabs element keeps one payment zone).</p>
+      </div>
+    </details>
+
+    <p class="step-lab">Steg 1 — kurssiden</p>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/yoga-for-nybegynnere</span></div>
+      <div class="frame-scroll"><div class="mock mock-fade">
+        <div class="t1">
+          <span class="backlink">‹ Tilbake til kursoversikten</span>
+          <div class="art t1-art"><img src="https://picsum.photos/id/1018/1400/600" alt="" onerror="this.remove()"></div>
+          <h3 class="t1-title">Yoga for nybegynnere</h3>
+          <div class="meta-cq"><div class="meta">
+            <div class="mi"><span class="date-badge"><b>Aug</b><span>12</span></span><p>Tirsdager kl. 18:00–19:30<span>12. august – 30. september, 8 økter</span></p></div>
+            <div class="mi"><span class="avatar">IL</span><p>Ingrid Larsen<span>Instruktør</span></p></div>
+          </div></div>
+          <div class="t1-strip">
+            <div class="prices">
+              <span class="l">Hele kurset</span><span class="p">2 200 kr</span>
+              <span class="l">Drop-in</span><span class="p">250 kr</span>
+            </div>
+            <a class="btn" href="#t1s2">Meld deg på</a>
+            <span class="scarce-badge">3 plasser igjen</span>
+          </div>
+          <div class="t1-sec">
+            <h4>Om kurset</h4>
+            <p class="t1-body">Vi går gjennom grunnstillingene i et tempo der ingen blir hengende etter. Du trenger ikke ta med noe: matter og blokker ligger i studio. Kurset holdes av Ingrid Larsen, tirsdager kl. 18:00–19:30.</p>
+          </div>
+          <div class="t1-sec">
+            <h4>Timeplan</h4>
+            <div class="dstrip">
+              <div class="dcard"><b>Økt 1</b><p>Tir. 12. aug</p><span>18:00–19:30</span></div>
+              <div class="dcard"><b>Økt 2</b><p>Tir. 19. aug</p><span>18:00–19:30</span></div>
+              <div class="dcard"><b>Økt 3</b><p>Tir. 26. aug</p><span>18:00–19:30</span></div>
+              <div class="dcard"><b>Økt 4</b><p>Tir. 2. sep</p><span>18:00–19:30</span></div>
+              <div class="dcard more">+ 4 økter</div>
+            </div>
+          </div>
+          <div class="t1-sec">
+            <h4>Sted</h4>
+            <div class="map"><svg class="pin" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3" fill="white"/></svg></div>
+            <p class="map-addr">Fjell Yoga Oslo, Thorvald Meyers gate 45 <span class="quiet-link" style="margin-left:8px">Veibeskrivelse</span></p>
+          </div>
+          <div class="t1-sec" style="padding-bottom:44px">
+            <h4>Greit å vite</h4>
+            <p class="t1-body m-muted">Gratis avbestilling frem til 5. august.</p>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <p class="step-lab" style="margin-top:34px">Smal visning — metadataraden bryter</p>
+    <div class="frame" style="max-width:430px">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/yoga-for-…</span></div>
+      <div style="background:var(--bg);padding:26px 20px 30px">
+        <h3 class="t1-title" style="font-size:28px;margin-top:0">Yoga for nybegynnere</h3>
+        <div class="meta-cq"><div class="meta">
+          <div class="mi"><span class="date-badge"><b>Aug</b><span>12</span></span><p>Tirsdager kl. 18:00–19:30<span>12. august – 30. september, 8 økter</span></p></div>
+          <div class="mi"><span class="avatar">IL</span><p>Ingrid Larsen<span>Instruktør</span></p></div>
+        </div></div>
+      </div>
+    </div>
+
+    <p class="step-lab" style="margin-top:34px">Samme side uten bilde — layouten avhenger ikke av det</p>
+    <p class="opt-sub" style="margin-bottom:12px">The hero is an <strong>optional slot, not structure</strong>: with no image the page simply starts at the title, and the instructor card + booking strip carry the top. Nothing reads as missing — which is the test an image-dependent layout fails.</p>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/yoga-for-nybegynnere</span></div>
+      <div class="frame-scroll"><div class="mock mock-fade" style="padding-bottom:0">
+        <div class="t1" style="padding-bottom:0">
+          <span class="backlink">‹ Tilbake til kursoversikten</span>
+          <h3 class="t1-title">Yoga for nybegynnere</h3>
+          <div class="meta-cq"><div class="meta">
+            <div class="mi"><span class="date-badge"><b>Aug</b><span>12</span></span><p>Tirsdager kl. 18:00–19:30<span>12. august – 30. september, 8 økter</span></p></div>
+            <div class="mi"><span class="avatar">IL</span><p>Ingrid Larsen<span>Instruktør</span></p></div>
+          </div></div>
+          <div class="t1-strip">
+            <div class="prices">
+              <span class="l">Hele kurset</span><span class="p">2 200 kr</span>
+              <span class="l">Drop-in</span><span class="p">250 kr</span>
+            </div>
+            <a class="btn" href="#t1s2">Meld deg på</a>
+            <span class="scarce-badge">3 plasser igjen</span>
+          </div>
+          <div class="t1-sec" style="padding-bottom:56px">
+            <h4>Om kurset</h4>
+            <p class="t1-body">Vi går gjennom grunnstillingene i et tempo der ingen blir hengende etter. Du trenger ikke ta med noe: matter og blokker ligger i studio.</p>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <p class="step-lab" id="t1s2">Steg 2 — billett, opplysninger og betaling på én skjerm</p>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/yoga-for-nybegynnere/pamelding</span></div>
+      <div class="frame-scroll"><div class="mock">
+        <div class="t1s2">
+          <span class="backlink">‹ Tilbake til kurset</span>
+          <h3>Fullfør påmeldingen</h3>
+          <div class="ctx">
+            <div class="art thumb" style="width:44px;height:44px;border-radius:10px"></div>
+            <p>Yoga for nybegynnere<span>Tirsdager kl. 18:00, Fjell Yoga Oslo</span></p>
+          </div>
+          <p class="flab">Billett<span class="scarce">3 plasser igjen</span></p>
+          <div class="seg" role="radiogroup" aria-label="Billett" id="t1Seg">
+            <button type="button" class="seg-btn" role="radio" aria-checked="true" data-p="2200" data-f="110" data-l="Hele kurset" data-s="8 økter, tirsdager">Hele kurset</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-p="250" data-f="13" data-l="Drop-in" data-s="Neste økt: tir. 12. aug kl. 18:00">Drop-in</button>
+          </div>
+          <p class="seg-sub" id="t1Sub">8 økter, tirsdager</p>
+          <p class="flab">Dine opplysninger</p>
+          <div class="fl-group">
+            <div class="fl">Fullt navn</div>
+            <div class="fl">E-post</div>
+          </div>
+          <p class="flab">Betaling</p>
+          <div class="pm" data-pay="t1Pay">
+            <div class="pm-tabs" role="tablist" aria-label="Betalingsmåte">
+              <button type="button" class="pm-tab" role="tab" aria-selected="true"><!-- lucide credit-card, verbatim path --><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>Kort</button>
+              <button type="button" class="pm-tab" role="tab" aria-selected="false"><span class="glyph">&#63743;</span>Apple Pay</button>
+            </div>
+            <div class="pm-pane">
+              <div class="fl">Kortnummer</div>
+              <div class="fl-row" style="margin-top:10px">
+                <div class="fl">Utløpsdato</div>
+                <div class="fl">CVC</div>
+              </div>
+            </div>
+            <div class="pm-pane" style="display:none"></div>
+          </div>
+          <div class="rcpt">
+            <div class="row"><span id="t1SumLab">Hele kurset</span><span class="tnum" id="t1SumAmt">2 200 kr</span></div>
+            <div class="row dim"><span>Tjenestegebyr</span><span class="tnum" id="t1SumFee">110 kr</span></div>
+            <div class="row total"><span>Totalt</span><span id="t1Tot">2 310 kr</span></div>
+          </div>
+          <button class="btn btn-block" style="margin-top:14px" id="t1Pay">Betal 2 310 kr</button>
+          <button type="button" class="wallet-btn apple" id="t1PayApple" style="display:none;margin-top:14px">Betal med &#63743;&thinsp;Pay</button>
+          <p class="fine"><!-- lucide lock, verbatim path --><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Sikker betaling</p>
+        </div>
+      </div></div>
+    </div>
+
+    <p class="step-lab" style="margin-top:34px" id="t1edge">Edge — kurset har startet: steg 1 viser fratrekket, steg 2 regner det ut</p>
+    <p class="opt-sub" style="margin-bottom:12px">The locked late-signup rule, rendered with <strong>zero layout shift</strong>: the strip is geometrically identical to the normal state — only the label and price update («Kurspakke <s>2 200</s> 1 650 kr» — førpris struck to the left of the new price, the standard was-to-now order), since «hele kurset» is no longer what's for sale. The held sessions are already marked on the date cards, and the <strong>reason lives where breakdowns belong</strong> — step two's receipt shows ordinær pris, the named deduction and the result. Two of eight økter held: 2 200 kr − 550 kr = 1 650 kr, fee 83 kr. <strong>Clickable</strong> — switching to Drop-in swaps the receipt.</p>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/yoga-for-nybegynnere</span></div>
+      <div class="frame-scroll"><div class="mock" style="padding-top:26px;padding-bottom:30px">
+        <div class="t1" style="padding-bottom:0">
+          <div class="t1-strip" style="margin-top:0">
+            <div class="prices">
+              <span class="l">Kurspakke</span><span class="p"><s>2 200 kr</s>1 650 kr</span>
+              <span class="l">Drop-in</span><span class="p">250 kr</span>
+            </div>
+            <a class="btn" href="#t1ps2">Meld deg på</a>
+            <span class="scarce-badge">3 plasser igjen</span>
+          </div>
+          <div class="dstrip" style="margin-top:20px">
+            <div class="dcard held"><b>Økt 1</b><p>Tir. 12. aug</p><span>Holdt</span></div>
+            <div class="dcard held"><b>Økt 2</b><p>Tir. 19. aug</p><span>Holdt</span></div>
+            <div class="dcard"><b>Økt 3</b><p>Tir. 26. aug</p><span>18:00–19:30</span></div>
+            <div class="dcard"><b>Økt 4</b><p>Tir. 2. sep</p><span>18:00–19:30</span></div>
+            <div class="dcard more">+ 4 økter</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <p class="step-lab" id="t1ps2">Samme steg 2 — receipten bærer fratrekket</p>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/yoga-for-nybegynnere/pamelding</span></div>
+      <div class="frame-scroll"><div class="mock">
+        <div class="t1s2">
+          <span class="backlink">‹ Tilbake til kurset</span>
+          <h3>Fullfør påmeldingen</h3>
+          <div class="ctx">
+            <div class="art thumb" style="width:44px;height:44px;border-radius:10px"></div>
+            <p>Yoga for nybegynnere<span>Tirsdager kl. 18:00, Fjell Yoga Oslo</span></p>
+          </div>
+          <p class="flab">Billett<span class="scarce">3 plasser igjen</span></p>
+          <div class="seg" role="radiogroup" aria-label="Billett" id="t1pSeg">
+            <button type="button" class="seg-btn" role="radio" aria-checked="true" data-mode="hele" data-s="6 økter igjen">Kurspakke</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-mode="dropin" data-s="Neste økt: tir. 26. aug kl. 18:00">Drop-in</button>
+          </div>
+          <p class="seg-sub" id="t1pSub">6 økter igjen</p>
+          <p class="flab">Dine opplysninger</p>
+          <div class="fl-group">
+            <div class="fl">Fullt navn</div>
+            <div class="fl">E-post</div>
+          </div>
+          <p class="flab">Betaling</p>
+          <div class="pm" data-pay="t1pPay">
+            <div class="pm-tabs" role="tablist" aria-label="Betalingsmåte">
+              <button type="button" class="pm-tab" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>Kort</button>
+              <button type="button" class="pm-tab" role="tab" aria-selected="false"><span class="glyph">&#63743;</span>Apple Pay</button>
+            </div>
+            <div class="pm-pane">
+              <div class="fl">Kortnummer</div>
+              <div class="fl-row" style="margin-top:10px">
+                <div class="fl">Utløpsdato</div>
+                <div class="fl">CVC</div>
+              </div>
+            </div>
+            <div class="pm-pane" style="display:none"></div>
+          </div>
+          <div class="rcpt" id="t1pRcpt">
+            <div class="row"><span>Kurspakke, ordinær pris</span><span class="tnum">2 200 kr</span></div>
+            <div class="row ded"><span>Fratrekk for 2 holdte økter</span><span class="tnum">&minus;550 kr</span></div>
+            <div class="row dim"><span>Tjenestegebyr</span><span class="tnum">83 kr</span></div>
+            <div class="row total"><span>Totalt</span><span>1 733 kr</span></div>
+          </div>
+          <button class="btn btn-block" style="margin-top:14px" id="t1pPay">Betal 1 733 kr</button>
+          <button type="button" class="wallet-btn apple" id="t1pPayApple" style="display:none;margin-top:14px">Betal med &#63743;&thinsp;Pay</button>
+          <p class="fine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Sikker betaling</p>
+        </div>
+      </div></div>
+    </div>
+
+    <p class="step-lab" style="margin-top:34px">Ett alternativ — enkeltkurs: billettvalget forsvinner</p>
+    <p class="opt-sub" style="margin-bottom:12px">A single course sells exactly one thing, so the «Billett» section drops entirely — the receipt already names what you're buying (the weekend workshop from the structure doc: 1 400 kr, fee 70 kr). Same screen, one section shorter; nothing else moves.</p>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/helgeworkshop-yin-og-pust/pamelding</span></div>
+      <div class="frame-scroll"><div class="mock">
+        <div class="t1s2">
+          <span class="backlink">‹ Tilbake til kurset</span>
+          <h3>Fullfør påmeldingen</h3>
+          <div class="ctx">
+            <div class="art thumb" style="width:44px;height:44px;border-radius:10px"></div>
+            <p>Helgeworkshop: Yin og pust<span>Lørdag og søndag, Fjell Yoga Oslo</span></p>
+            <span class="scarce" style="margin-left:auto">3 plasser igjen</span>
+          </div>
+          <p class="flab">Dine opplysninger</p>
+          <div class="fl-group">
+            <div class="fl">Fullt navn</div>
+            <div class="fl">E-post</div>
+          </div>
+          <p class="flab">Betaling</p>
+          <div class="pm" data-pay="tsPay">
+            <div class="pm-tabs" role="tablist" aria-label="Betalingsmåte">
+              <button type="button" class="pm-tab" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>Kort</button>
+              <button type="button" class="pm-tab" role="tab" aria-selected="false"><span class="glyph">&#63743;</span>Apple Pay</button>
+            </div>
+            <div class="pm-pane">
+              <div class="fl">Kortnummer</div>
+              <div class="fl-row" style="margin-top:10px">
+                <div class="fl">Utløpsdato</div>
+                <div class="fl">CVC</div>
+              </div>
+            </div>
+            <div class="pm-pane" style="display:none"></div>
+          </div>
+          <div class="rcpt">
+            <div class="row"><span>Hele kurset</span><span class="tnum">1 400 kr</span></div>
+            <div class="row dim"><span>Tjenestegebyr</span><span class="tnum">70 kr</span></div>
+            <div class="row total"><span>Totalt</span><span>1 470 kr</span></div>
+          </div>
+          <button class="btn btn-block" style="margin-top:14px" id="tsPay">Betal 1 470 kr</button>
+          <button type="button" class="wallet-btn apple" id="tsPayApple" style="display:none;margin-top:14px">Betal med &#63743;&thinsp;Pay</button>
+          <p class="fine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Sikker betaling</p>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="verdict">
+      <div><b>For</b>The detail page is pure story — strongest editorial read, and the strip still answers «hva koster det?» without a click. Step two is the calmest possible transaction: three short groups, one screen, reassurance at the pay button — and the receipt naturally absorbs the started-course deduction as one green line.</div>
+      <div><b>Mot</b>The strip scrolls away with the page; a very long description means scrolling back up (or repeating the CTA at the bottom). Two taps to see the total where on-page selection needs none.</div>
+    </div>
+  </section>
+
+  <!-- ═══════════ T3 DELT ═══════════ -->
+  <section class="doc-section">
+    <div class="opt-head"><span class="opt-chip">T3</span><span class="opt-title">Delt — brand band on the left, transaction on the right (expression experiment)</span></div>
+    <p class="opt-sub">Stripe Checkout's architecture applied to both steps: a <strong>studio-colored band</strong> owns identity and price context on the left, the white column does the work on the right. On the detail page the band holds title + when + prices; in step two it becomes a live order summary that updates as the buyer switches tickets. Flagged as an expression experiment: the band uses the studio's brand color as a full-height surface — a step beyond Q2's cover band, so it needs an explicit yes.</p>
+    <details class="extract">
+      <summary>Reference extraction — T3</summary>
+      <div class="x-body">
+        <p><b>Structural question:</b> what does the split gain when the same two-column grammar carries the buyer from the detail page through payment?</p>
+        <p><b>Sources:</b> Stripe Checkout (product — dark summary column left, form right; the canonical split checkout), <a href="https://mobbin.com/flows/e51a21b7-06b8-4ae7-8d86-b5e790aff5ea">StubHub purchase flow</a> (persistent order context above the payment step), <a href="https://mobbin.com/flows/ce431a24-e038-442d-8dd8-30edbf713e87">Open</a> (context header carried into checkout).</p>
+        <p><b>Adopted:</b> (1) one grammar for both steps — the band is the constant, the right column changes job; (2) the band's step-two summary re-renders live on ticket switch (Stripe's summary column); (3) cancellation note lives in the band, always visible; (4) the tier choice is the prebuilt segmented toggle — the same control as the dashboard filters.</p>
+        <p><b>Rejected:</b> Stripe's dark neutral (the band borrows the <em>studio's</em> color instead — the seller is the brand here); a third column; any selection on step one.</p>
+      </div>
+    </details>
+
+    <p class="step-lab">Steg 1 — kurssiden</p>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/yoga-for-nybegynnere</span></div>
+      <div class="frame-scroll"><div class="mock-flush" style="min-width:860px">
+        <div class="t3">
+          <div class="t3-band">
+            <span class="logo-sq">FY</span>
+            <p class="studio">Fjell Yoga Oslo</p>
+            <h3>Yoga for nybegynnere</h3>
+            <p class="when">Tirsdager kl. 18:00–19:30<br>12. august – 30. september</p>
+            <p class="prices"><b>Hele kurset 2 200 kr</b><br>Drop-in 250 kr per økt</p>
+          </div>
+          <div class="t3-main">
+            <div class="t3-cta">
+              <p>Påmeldingen er åpen<span class="scarce" style="font-size:13px">3 plasser igjen</span></p>
+              <a class="btn" href="#t3s2">Meld deg på</a>
+            </div>
+            <div class="t3-sec">
+              <h4>Om kurset</h4>
+              <p class="t3-body">Et rolig og grundig introduksjonskurs for deg som aldri har stått på matten før. Vi går gjennom grunnstillingene, pust og enkle flyter i et tempo der ingen blir hengende etter. Matter og blokker ligger i studio.</p>
+            </div>
+            <div class="t3-sec">
+              <h4>Timeplan</h4>
+              <p class="t3-dates"><b>Åtte tirsdager:</b> 12. aug, 19. aug, 26. aug, 2. sep, 9. sep, 16. sep, 23. sep og 30. sep, alle kl. 18:00–19:30.</p>
+            </div>
+            <div class="t3-sec">
+              <h4>Greit å vite</h4>
+              <p class="t3-body m-muted">Gratis avbestilling frem til 5. august. Kurset holdes av Ingrid Larsen.</p>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <p class="step-lab" id="t3s2">Steg 2 — billett, opplysninger og betaling på én skjerm</p>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/yoga-for-nybegynnere/pamelding</span></div>
+      <div class="frame-scroll"><div class="mock-flush" style="min-width:860px">
+        <div class="t3">
+          <div class="t3-band t3s2-band">
+            <span class="logo-sq">FY</span>
+            <p class="studio">Fjell Yoga Oslo</p>
+            <h3 style="font-size:22px">Yoga for nybegynnere</h3>
+            <p class="when">Tirsdager kl. 18:00–19:30</p>
+            <div style="margin-top:26px">
+              <div class="sumrow"><span id="t3SumLab">Hele kurset</span><span class="tnum" id="t3SumAmt">2 200 kr</span></div>
+              <div class="sumrow"><span>Tjenestegebyr</span><span class="tnum" id="t3SumFee">110 kr</span></div>
+              <div class="sumrow total"><span>Totalt</span><span id="t3SumTot">2 310 kr</span></div>
+            </div>
+            <p class="note" style="display:flex;align-items:center;gap:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;flex-shrink:0" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Sikker betaling</p>
+          </div>
+          <div class="t3-main">
+            <span class="backlink">‹ Tilbake til kurset</span>
+            <p class="flab" style="margin-top:22px">Billett<span class="scarce">3 plasser igjen</span></p>
+            <div class="seg" role="radiogroup" aria-label="Billett" id="t3Seg">
+              <button type="button" class="seg-btn" role="radio" aria-checked="true" data-p="2200" data-f="110" data-l="Hele kurset" data-s="8 økter, tirsdager">Hele kurset</button>
+              <button type="button" class="seg-btn" role="radio" aria-checked="false" data-p="250" data-f="13" data-l="Drop-in" data-s="Neste økt: tir. 12. aug kl. 18:00">Drop-in</button>
+            </div>
+            <p class="seg-sub" id="t3Sub">8 økter, tirsdager</p>
+            <p class="flab">Dine opplysninger</p>
+            <div class="fl-group">
+              <div class="fl">Fullt navn</div>
+              <div class="fl">E-post</div>
+            </div>
+            <p class="flab">Betaling</p>
+            <div class="pm" data-pay="t3Pay">
+              <div class="pm-tabs" role="tablist" aria-label="Betalingsmåte">
+                <button type="button" class="pm-tab" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>Kort</button>
+                <button type="button" class="pm-tab" role="tab" aria-selected="false"><span class="glyph">&#63743;</span>Apple Pay</button>
+              </div>
+              <div class="pm-pane">
+                <div class="fl">Kortnummer</div>
+                <div class="fl-row" style="margin-top:10px">
+                  <div class="fl">Utløpsdato</div>
+                  <div class="fl">CVC</div>
+                </div>
+              </div>
+              <div class="pm-pane" style="display:none"></div>
+            </div>
+            <button class="btn btn-block" style="margin-top:24px" id="t3Pay">Betal 2 310 kr</button>
+          <button type="button" class="wallet-btn apple" id="t3PayApple" style="display:none;margin-top:14px">Betal med &#63743;&thinsp;Pay</button>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="verdict">
+      <div><b>For</b>The strongest continuity of the three — the buyer never changes rooms, the band just switches from selling to summarizing, and the live summary answers «hva betaler jeg?» at every moment. The studio's color makes every page unmistakably theirs.</div>
+      <div><b>Mot</b>A full-height brand surface needs a per-studio color with guaranteed white-text contrast — real theming work, and a step beyond the design language's current cover-band ceiling. Collapses to a stacked band on mobile.</div>
+    </div>
+  </section>
+
+  <!-- ═══════════ COMPARISON ═══════════ -->
+  <section class="doc-section">
+    <div class="opt-head"><span class="opt-chip">Valg</span><span class="opt-title">Side by side</span></div>
+    <div class="val-wrap"><table>
+      <thead><tr><th>Take</th><th>Detail page</th><th>Step two</th><th>Watch out</th></tr></thead>
+      <tbody>
+        <tr><td>T1 Magasin</td><td>Hero image, fact band, booking card, date cards, map</td><td>Focused column, segmented ticket toggle, Stripe tabs, receipt</td><td>Needs decent imagery; CTA scrolls away</td></tr>
+        <tr><td>T3 Delt</td><td>Studio-color band + content column</td><td>Band becomes a live order summary, Stripe tabs</td><td>Per-studio theming + contrast work</td></tr>
+      </tbody>
+    </table></div>
+    <p class="footer-cta" style="margin-top:24px"><b>To decide, reply with:</b> T1 or T3 — mixing is fine (e.g. «T1's detail page with T3's step two»). Both share the CTA-first skeleton, so the ticket-chooser question from the structure doc collapses into step two — and the on-page-selection styles in <code>booking-detail-styles-v2.html</code> remain the alternative if you'd rather keep selection on the page. Single-tier courses skip nothing here: step two just renders one pre-selected ticket. Vipps can join the payment tabs whenever it's wired in (Stripe supports it in Norway).</p>
+  </section>
+</div>
+
+<script>
+  const kr=n=>n.toLocaleString('nb-NO')+' kr';
+
+  function wire(sel,onPick){
+    const items=document.querySelectorAll(sel);
+    items.forEach(el=>el.addEventListener('click',()=>{
+      items.forEach(x=>x.setAttribute('aria-checked','false'));
+      el.setAttribute('aria-checked','true');
+      onPick(+el.dataset.p,+el.dataset.f,el.dataset.l||'',el);
+    }));
+  }
+
+  // T1 — the toggle re-renders the constraint line, receipt and pay button
+  wire('#t1Seg .seg-btn',(p,f,l,el)=>{
+    document.getElementById('t1Sub').textContent=el.dataset.s;
+    document.getElementById('t1SumLab').textContent=l;
+    document.getElementById('t1SumAmt').textContent=kr(p);
+    document.getElementById('t1SumFee').textContent=kr(f);
+    document.getElementById('t1Tot').textContent=kr(p+f);
+    document.getElementById('t1Pay').textContent='Betal '+kr(p+f);
+  });
+
+  // T1 edge — started course: the receipt re-renders per ticket; the
+  // deduction line exists only for the prorated package
+  const t1pRcpt=document.getElementById('t1pRcpt');
+  const T1P={
+    hele:'<div class="row"><span>Kurspakke, ordinær pris</span><span class="tnum">2 200 kr</span></div>'+
+         '<div class="row ded"><span>Fratrekk for 2 holdte økter</span><span class="tnum">−550 kr</span></div>'+
+         '<div class="row dim"><span>Tjenestegebyr</span><span class="tnum">83 kr</span></div>'+
+         '<div class="row total"><span>Totalt</span><span>1 733 kr</span></div>',
+    dropin:'<div class="row"><span>Drop-in</span><span class="tnum">250 kr</span></div>'+
+           '<div class="row dim"><span>Tjenestegebyr</span><span class="tnum">13 kr</span></div>'+
+           '<div class="row total"><span>Totalt</span><span>263 kr</span></div>',
+  };
+  const t1pSegs=document.querySelectorAll('#t1pSeg .seg-btn');
+  t1pSegs.forEach(t=>t.addEventListener('click',()=>{
+    t1pSegs.forEach(x=>x.setAttribute('aria-checked','false'));
+    t.setAttribute('aria-checked','true');
+    const mode=t.dataset.mode;
+    document.getElementById('t1pSub').textContent=t.dataset.s;
+    t1pRcpt.innerHTML=T1P[mode];
+    document.getElementById('t1pPay').textContent='Betal '+(mode==='hele'?'1 733 kr':'263 kr');
+  }));
+
+  // Stripe Payment Element behavior: selecting a method tab swaps the pane.
+  // A wallet's own button IS the payment trigger, so the merchant pay button
+  // hides while a wallet tab is selected (matches the real element).
+  document.querySelectorAll('.pm').forEach(pm=>{
+    const tabs=[...pm.querySelectorAll('.pm-tab')];
+    const panes=[...pm.querySelectorAll('.pm-pane')];
+    const pay=document.getElementById(pm.dataset.pay);
+    tabs.forEach((t,i)=>t.addEventListener('click',()=>{
+      tabs.forEach(x=>x.setAttribute('aria-selected','false'));
+      t.setAttribute('aria-selected','true');
+      panes.forEach((pane,j)=>pane.style.display=i===j?'':'none');
+      if(pay)pay.style.display=i===0?'':'none';
+      const payApple=document.getElementById(pm.dataset.pay+'Apple');
+      if(payApple)payApple.style.display=i===1?'':'none';
+    }));
+  });
+
+  // T3 — the toggle re-renders the band summary
+  wire('#t3Seg .seg-btn',(p,f,l,el)=>{
+    document.getElementById('t3Sub').textContent=el.dataset.s;
+    document.getElementById('t3SumLab').textContent=l;
+    document.getElementById('t3SumAmt').textContent=kr(p);
+    document.getElementById('t3SumFee').textContent=kr(f);
+    document.getElementById('t3SumTot').textContent=kr(p+f);
+    document.getElementById('t3Pay').textContent='Betal '+kr(p+f);
+  });
+</script>
+</html>

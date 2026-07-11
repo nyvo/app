@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/geist@5/index.css">
 <title>Storefront — structure options</title>
 <style>
   /* ══ Tokens — lifted verbatim from src/index.css (light) ══ */
@@ -22,6 +27,8 @@
     --canvas:oklch(0.952 0.002 250);      /* doc chrome only — mocks sit on pure white */
     --sans:'Geist Variable',Geist,Inter,-apple-system,'Segoe UI',system-ui,sans-serif;
     --shadow-soft:0 1px 2px rgb(16 24 40/.04),0 6px 20px -6px rgb(16 24 40/.10);
+    --shadow-xs:0 1px 2px 0 rgb(0 0 0/.05);
+    --ease-out:cubic-bezier(.23,1,.32,1);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-text-size-adjust:100%}
@@ -76,8 +83,10 @@
   .v3m-facts div:nth-child(n+3){border-top:1px solid var(--border-subtle)}
   .v3m-facts b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-muted);font-weight:500;margin-bottom:4px}
   .v3m-facts p{font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
-  .rdot{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--input);display:inline-block;flex-shrink:0}
-  .rdot.on{border-color:var(--primary);box-shadow:inset 0 0 0 4.5px var(--primary)}
+  .rdot{width:18px;height:18px;border-radius:50%;border:2px solid var(--input);display:inline-block;flex-shrink:0;position:relative}
+  .rdot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--primary);transform:scale(0)}
+  .rdot.on{border-color:var(--primary)}
+  .rdot.on::after{transform:scale(1)}
 
   /* reference extraction blocks (docs/mobbin-reference-rule.md, step 2) */
   details.extract{margin-top:14px;border:1px solid var(--border-subtle);border-radius:10px;background:var(--bg)}
@@ -120,7 +129,7 @@
   .agenda-date{font-size:16px;font-weight:500;letter-spacing:-.005em}
   .agenda-date span{color:var(--fg-muted);font-weight:400;font-size:14px;margin-left:10px}
   /* Row grammar copied from ClassPass venue schedule: two-line stacks, no chips.
-     Left = time over duration; middle = title over details·instructor; right = price. */
+     Left = time over duration; middle = title over details + instructor; right = price. */
   .agenda-rows{list-style:none;margin-top:4px}
   .agenda-rows li{display:flex;align-items:center;gap:16px;padding:15px 0}
   .agenda-rows li+li{border-top:1px solid var(--border-subtle)}
@@ -167,6 +176,7 @@
   .date-badge b{font-size:8.5px;letter-spacing:.08em;color:var(--fg-muted);font-weight:500;text-transform:uppercase}
   .date-badge span{font-size:15px;font-weight:500;line-height:1;margin-top:1px}
   .ic{width:38px;height:38px;border:1px solid var(--border-subtle);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--fg-subtle)}
+  .ic svg{width:17px;height:17px}
   /* the focal card: border-card + shadow-soft, per system */
   .v1-panel{margin-top:30px;background:var(--bg);border:1px solid var(--border-subtle);border-radius:12px;box-shadow:var(--shadow-soft);overflow:hidden}
   .v1-panel-head{padding:14px 18px 12px;font-size:14px;font-weight:500;display:flex;justify-content:space-between;align-items:center}
@@ -178,8 +188,11 @@
   .ledger .lab b{font-weight:500;font-size:15px;display:block}
   .ledger .lab span{font-size:13.5px;color:var(--fg-muted)}
   .ledger .pr{font-variant-numeric:tabular-nums;font-weight:500;font-size:15px;white-space:nowrap}
-  .ledger .ck{width:19px;height:19px;border-radius:50%;border:1.5px solid var(--input);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:transparent;font-size:10px;transition:all .12s}
-  .ledger li[aria-checked="true"] .ck{background:var(--primary);border-color:var(--primary);color:#fff}
+  /* radio dot — verbatim from checkout's TicketTileButton: 18px ring, 8px primary dot scaling in over 150ms */
+  .ledger .ck{width:18px;height:18px;border-radius:50%;border:2px solid var(--input);flex-shrink:0;position:relative;font-size:0;color:transparent;transition:border-color .15s ease}
+  .ledger .ck::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--primary);transform:scale(0);transition:transform .15s var(--ease-out)}
+  .ledger li[aria-checked="true"] .ck{border-color:var(--primary)}
+  .ledger li[aria-checked="true"] .ck::after{transform:scale(1)}
   .v1-foot{padding:14px 18px 18px;border-top:1px solid var(--border-subtle)}
   .sum-row{display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-size:14px;color:var(--fg-muted)}
   .sum-row .r{font-variant-numeric:tabular-nums;color:var(--fg)}
@@ -193,6 +206,43 @@
   .cta{display:block;width:100%;margin-top:14px;border:0;border-radius:999px;background:var(--fg);color:var(--bg);font:inherit;font-weight:500;font-size:16px;height:44px;cursor:pointer}
   .cta:hover{background:color-mix(in oklab,var(--fg) 90%,transparent)}
   .fine{font-size:12.5px;color:var(--fg-muted);text-align:center;margin-top:11px}
+  /* ══ Q3B ticket chooser — SegmentedTabs lifted verbatim (44px muted track,
+     4px padding/gap, active segment = white pill + shadow-xs, 14px medium) ══ */
+  .seg{display:flex;width:100%;height:44px;align-items:center;gap:4px;padding:4px;border-radius:999px;background:var(--muted)}
+  .seg-btn{flex:1;height:36px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;background:transparent;color:var(--fg);font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+  .seg-btn[aria-checked="true"]{background:var(--bg);box-shadow:var(--shadow-xs)}
+  .seg-sub{font-size:13.5px;color:var(--fg-muted);margin-top:10px}
+  .sum-sub{display:block;font-size:13px;color:var(--fg-muted);font-weight:400;margin-top:1px}
+  /* FilterChips grammar — rendered only as the rejected aside */
+  .chip{display:inline-flex;height:40px;align-items:center;border-radius:999px;border:1px solid var(--border);background:var(--bg);padding:0 16px;font-size:15px;font-weight:500;color:var(--fg)}
+  .chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+
+  /* ══ Q3C — V1 skeleton, two new skins ══ */
+  /* R1 editorial: cover band, display title + when-block, hairline fact band,
+     booking as a FLAT embedded panel-fill zone (Luma's soft registration
+     panel) — zero elevation, the grey fill is the only separation */
+  .r1-cover{height:170px;background:linear-gradient(120deg,#3B5449,#6B8A79 55%,#93AC9C)}
+  .r1-col{max-width:620px;margin:0 auto;padding:0 24px}
+  .r1-title{font-size:34px;font-weight:500;letter-spacing:-.02em;line-height:1.12;margin-top:28px;text-wrap:balance}
+  .r1-when{margin-top:12px;font-size:15px}
+  .r1-when p:first-child{font-weight:500}
+  .r1-when p+p{color:var(--fg-muted);font-size:14px;margin-top:2px}
+  .r1-book{margin-top:28px;background:var(--panel);border-radius:12px;overflow:hidden;padding:2px 0 4px}
+  /* R2 compact product: full-width art, facts absorbed into the panel as
+     labeled context fields (the shipped BookingRailLite «Når» idiom), story
+     in a two-column read */
+  .r2-col{max-width:640px;margin:0 auto}
+  .r2-art{width:100%;aspect-ratio:16/7;border-radius:16px;background:linear-gradient(140deg,#C9D3C6,#9FB4A8 60%,#7E9A8C)}
+  .r2-title{font-size:28px;font-weight:500;letter-spacing:-.016em;line-height:1.15;margin-top:22px;text-wrap:balance}
+  .r2-inst{display:flex;align-items:center;gap:9px;margin-top:10px;font-size:14px;color:var(--fg-muted)}
+  .r2-ctx{display:grid;grid-template-columns:1fr 1fr}
+  .r2-ctx>div{padding:14px 18px}
+  .r2-ctx>div+div{border-left:1px solid var(--border-subtle)}
+  .r2-ctx b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-muted);font-weight:500;margin-bottom:4px}
+  .r2-ctx p{font-size:14px;font-weight:500}
+  .r2-ctx p span{display:block;font-size:13px;color:var(--fg-muted);font-weight:400;margin-top:1px}
+  .r2-story{display:grid;grid-template-columns:1.35fr 1fr;gap:44px;border-top:1px solid var(--border-subtle);margin-top:30px;padding-top:26px}
+  @media(max-width:820px){.r2-story{grid-template-columns:1fr}}
   .v1-sec{border-top:1px solid var(--border-subtle);margin-top:30px;padding-top:26px}
   .sec-label{font-size:14px;font-weight:500;margin-bottom:10px}
   .v1-body{font-size:15.5px;line-height:1.65}
@@ -251,10 +301,12 @@
   .v3-table td.det{color:var(--fg-muted);font-size:14px}
   .v3-table td.pr{text-align:right;font-variant-numeric:tabular-nums;font-weight:500;white-space:nowrap}
   .v3-table td.sel{width:40px;text-align:right}
-  .v3-table .dot{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--input);display:inline-block;transition:box-shadow .12s,border-color .12s}
+  .v3-table .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--input);display:inline-block;position:relative;transition:border-color .15s ease}
+  .v3-table .dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--primary);transform:scale(0);transition:transform .15s var(--ease-out)}
   .v3-table tr{cursor:pointer}
   .v3-table tr:hover td{background:var(--hover)}
-  .v3-table tr[aria-checked="true"] .dot{border-color:var(--primary);box-shadow:inset 0 0 0 4.5px var(--primary)}
+  .v3-table tr[aria-checked="true"] .dot{border-color:var(--primary)}
+  .v3-table tr[aria-checked="true"] .dot::after{transform:scale(1)}
   .v3-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--border-subtle);background:oklch(1 0 0/.92);backdrop-filter:blur(6px);padding:14px 56px;margin-top:40px;box-shadow:0 -4px 16px rgb(16 24 40/.05)}
   .v3-bar .sel-lab{font-weight:500;font-size:15px}
   .v3-bar .sel-lab span{display:block;font-size:13px;color:var(--fg-muted);font-weight:400;margin-top:1px}
@@ -291,18 +343,25 @@
 
   .footer-cta{margin-top:88px;border-top:1px solid var(--border);padding-top:28px;color:var(--fg-muted);max-width:66ch;font-size:15px}
   .footer-cta b{color:var(--fg)}
+
+  /* ══ Press feedback + focus — Button grammar: scale(.97) on :active,
+     neutral 2px focus ring (never brand-colored) ══ */
+  .cta,.v2-cta,.cta3,.velg,.seg-btn{transition:background-color .15s ease,color .15s ease,border-color .15s ease,box-shadow .15s ease,transform .16s var(--ease-out)}
+  .cta:active,.v2-cta:active,.cta3:active,.velg:active,.seg-btn:active{transform:scale(.97)}
+  .cta.off:active{transform:none}
+  button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
   @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 
 <div class="wrap">
-  <p class="doc-kicker">Storefront · struktur og innhold · rev 9 — rule-compliant reference pass: extractions + edge states</p>
-  <h1>Two pages, four decisions — rendered so you can point at what you want</h1>
-  <p class="doc-lede">Mocks use the design system verbatim: Geist, pure-white page, hue-250 neutrals, hairline dividers with borderless resting surfaces, <code>shadow-soft</code> reserved for the one focal booking surface. CTAs are the real Button default — <strong>monochrome near-black pill, 44px, font-medium</strong> — azure appears only on selected states, exactly like the app. Nothing in the mocks exceeds weight 500; hierarchy comes from size, spacing and the grey tiers. Interactive parts still work.</p>
+  <p class="doc-kicker">Storefront — struktur og innhold — rev 11: ticket-chooser pass + V1 re-skins (same skeleton, two skins), real fee math</p>
+  <h1>Two pages, six decisions — rendered so you can point at what you want</h1>
+  <p class="doc-lede">Mocks use the design system verbatim: Geist, pure-white page, hue-250 neutrals, hairline dividers with borderless resting surfaces, <code>shadow-soft</code> reserved for the one focal booking surface. CTAs are the real Button default — <strong>monochrome near-black pill, 44px, font-medium</strong> — azure appears only on selected states, exactly like the app. Selection markers are checkout's radio dot everywhere, and every fee is computed with the real <code>pricing.ts</code> formula (5&nbsp;%, min 9 kr, maks 149 kr) — totals shown are totals charged. Nothing in the mocks exceeds weight 500; hierarchy comes from size, spacing and the grey tiers. Interactive parts still work.</p>
 
   <!-- ═══════════════ Q1 OVERVIEW ═══════════════ -->
   <section class="doc-section">
     <div class="doc-q"><span class="doc-qnum">Question 1 · updated</span><h2 class="doc-qtitle">Storefront overview — date-grouped agenda with filters</h2></div>
-    <p class="doc-note">Row grammar copied from <a href="https://mobbin.com/screens/222757f4-74d8-435b-a780-6149bb5fac62">ClassPass's venue schedule</a>: everything is a <strong>two-line stack</strong> — time over duration on the left, title over details·instructor in the middle, price alone on the right. <strong>No chips.</strong> A series says «8 økter» as plain second-line text; a drop-in class needs no label at all (like ClassPass, where booking a single class is the default). Scarcity is plain amber text under the price, not a pill.</p>
+    <p class="doc-note">Row grammar copied from <a href="https://mobbin.com/screens/222757f4-74d8-435b-a780-6149bb5fac62">ClassPass's venue schedule</a>: everything is a <strong>two-line stack</strong> — time over duration on the left, title over details + instructor in the middle, price alone on the right. <strong>No chips.</strong> A series says «8 økter» as plain second-line text; a drop-in class needs no label at all (like ClassPass, where booking a single class is the default). Scarcity is plain amber text under the price, not a pill.</p>
 
     <details class="extract">
       <summary>Reference extraction — schedule page</summary>
@@ -326,7 +385,7 @@
           <div class="logo-sq">FY</div>
           <div>
             <h2>Fjell Yoga Oslo</h2>
-            <p>Thorvald Meyers gate 45, Oslo · <span class="quiet-link">Veibeskrivelse</span></p>
+            <p>Thorvald Meyers gate 45, Oslo <span class="quiet-link" style="margin-left:8px">Veibeskrivelse</span></p>
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:34px">
@@ -358,7 +417,7 @@
             <p class="agenda-date">Tirsdag 12. august</p>
             <ul class="agenda-rows">
               <li><span class="agenda-time"><b>18:00</b><i>90 min</i></span><div class="thumb"></div>
-                <div class="row-main"><p class="row-title">Yoga for nybegynnere</p><p class="row-sub">8 økter · Ingrid Larsen</p></div>
+                <div class="row-main"><p class="row-title">Yoga for nybegynnere</p><p class="row-sub">8 økter med Ingrid Larsen</p></div>
                 <div class="row-right"><span class="row-price"><span class="fra">fra </span>2 200 kr</span></div></li>
             </ul>
           </div>
@@ -366,7 +425,7 @@
             <p class="agenda-date">Onsdag 20. august</p>
             <ul class="agenda-rows">
               <li><span class="agenda-time"><b>17:00</b><i>75 min</i></span><div class="thumb plum"></div>
-                <div class="row-main"><p class="row-title">Prenatal yoga</p><p class="row-sub">6 økter · Sara Nilsen</p></div>
+                <div class="row-main"><p class="row-title">Prenatal yoga</p><p class="row-sub">6 økter med Sara Nilsen</p></div>
                 <div class="row-right"><span class="row-price"><span class="fra">fra </span>1 800 kr</span></div></li>
             </ul>
           </div>
@@ -384,7 +443,7 @@
 
     <p class="opt-sub" style="margin-top:20px">The row contract — five fixed slots, nothing else allowed in:</p>
     <div class="anatomy">
-      <span>Tid / varighet</span><span>Bilde</span><span class="flex1">Tittel / økter · instruktør</span><span>Pris</span><span>Plasser (tekst, kun ved knapphet)</span>
+      <span>Tid / varighet</span><span>Bilde</span><span class="flex1">Tittel / økter + instruktør</span><span>Pris</span><span>Plasser (tekst, kun ved knapphet)</span>
     </div>
 
     <p class="opt-sub" style="margin:20px 0 10px">Edge states — a filtered-empty result keeps the page and offers a reset inline (<a href="https://mobbin.com/screens/37c6810f-eb9c-4d0a-b92d-1a75123f6446">Skillshare</a>); a storefront with nothing upcoming keeps the masthead and says so in one sentence (<a href="https://mobbin.com/screens/21e1ab53-b15f-4b54-8c9b-a19cd175a56b">Time2book</a>). Plain text, no illustration cards.</p>
@@ -401,7 +460,7 @@
 
     <div class="verdict">
       <div><b>Hva dette løser</b>Season a month away is visible without scrolling past empty days. A series is <em>one</em> row on its start date («8 økter» on the second line), never scattered. One view, no toggle, no clutter — filters are the only control. «Reserver»-pills dropped from rows: the whole row is the link, price is the signal.</div>
-      <div><b>Metadata-regler</b>Two-line stacks everywhere, no chips: time/duration → image → title/details·instructor → price. Drop-in classes carry no type label — a bookable single class is the default reading. Long schedule text belongs to the detail page; «Nettkurs» replaces the duration line when delivery is online. Scarcity: plain amber text under price, ≤ 3 left only.</div>
+      <div><b>Metadata-regler</b>Two-line stacks everywhere, no chips: time/duration → image → title/details + instructor → price. Drop-in classes carry no type label — a bookable single class is the default reading. Long schedule text belongs to the detail page; «Nettkurs» replaces the duration line when delivery is online. Scarcity: plain amber text under price, ≤ 3 left only.</div>
     </div>
   </section>
 
@@ -421,7 +480,7 @@
               <div class="logo-sq" style="width:64px;height:64px;font-size:17px">FY</div>
               <div style="padding-bottom:2px">
                 <h2 style="font-size:21px">Fjell Yoga Oslo</h2>
-                <p style="font-size:14px;margin-top:3px">Thorvald Meyers gate 45, Oslo · <span class="quiet-link">Veibeskrivelse</span></p>
+                <p style="font-size:14px;margin-top:3px">Thorvald Meyers gate 45, Oslo <span class="quiet-link" style="margin-left:8px">Veibeskrivelse</span></p>
               </div>
             </div>
           </div>
@@ -436,7 +495,7 @@
               <div class="logo-sq" style="width:64px;height:64px;font-size:17px">FY</div>
               <div>
                 <h2 style="font-size:21px">Fjell Yoga Oslo</h2>
-                <p style="font-size:14px;margin-top:3px">Thorvald Meyers gate 45, Oslo · <span class="quiet-link">Veibeskrivelse</span></p>
+                <p style="font-size:14px;margin-top:3px">Thorvald Meyers gate 45, Oslo <span class="quiet-link" style="margin-left:8px">Veibeskrivelse</span></p>
               </div>
             </div>
           </div>
@@ -495,8 +554,8 @@
             <div style="min-width:0">
               <h3 class="v1-title">Yoga for nybegynnere</h3>
               <div class="v1-facts">
-                <div class="v1-fact"><span class="date-badge"><b>Aug</b><span>12</span></span><span>Tirsdager, 12. aug – 30. sep<span class="sub">8 økter · 18:00–19:30</span></span></div>
-                <div class="v1-fact"><span class="ic">◎</span><span>Fjell Yoga Oslo<span class="sub">Thorvald Meyers gate 45</span></span></div>
+                <div class="v1-fact"><span class="date-badge"><b>Aug</b><span>12</span></span><span>Tirsdager, 12. aug – 30. sep<span class="sub">8 økter, kl. 18:00–19:30</span></span></div>
+                <div class="v1-fact"><span class="ic"><!-- lucide map-pin, verbatim path (app icon family) --><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span><span>Fjell Yoga Oslo<span class="sub">Thorvald Meyers gate 45</span></span></div>
                 <div class="v1-fact"><span class="ic"><span class="avatar" style="width:20px;height:20px;font-size:8.5px">IL</span></span><span>Ingrid Larsen<span class="sub">Instruktør</span></span></div>
               </div>
             </div>
@@ -505,19 +564,19 @@
           <div class="v1-panel">
             <div class="v1-panel-head"><span>Velg billett</span><span class="scarce">3 plasser igjen</span></div>
             <ul class="ledger" id="v1Ledger">
-              <li aria-checked="true" data-p="2200" data-f="59" data-l="Hele kurset">
+              <li aria-checked="true" data-p="2200" data-f="110" data-l="Hele kurset">
                 <span class="lab"><b>Hele kurset</b><span>8 økter, tirsdager</span></span>
                 <span class="pr">2 200 kr</span><span class="ck">✓</span>
               </li>
-              <li aria-checked="false" data-p="250" data-f="19" data-l="Drop-in">
-                <span class="lab"><b>Drop-in</b><span>Neste økt: tir. 12. aug · 18:00</span></span>
+              <li aria-checked="false" data-p="250" data-f="13" data-l="Drop-in">
+                <span class="lab"><b>Drop-in</b><span>Neste økt: tir. 12. aug kl. 18:00</span></span>
                 <span class="pr">250 kr</span><span class="ck">✓</span>
               </li>
             </ul>
             <div class="v1-foot">
               <div class="sum-row"><span id="v1Lab">Hele kurset</span><span class="r" id="v1Amt">2 200 kr</span></div>
-              <div class="sum-row"><span>Tjenestegebyr</span><span class="r dim" id="v1Fee">59 kr</span></div>
-              <div class="v1-total"><span class="t">Totalt</span><span class="amt" id="v1Tot">2 259 kr</span></div>
+              <div class="sum-row"><span>Tjenestegebyr</span><span class="r dim" id="v1Fee">110 kr</span></div>
+              <div class="v1-total"><span class="t">Totalt</span><span class="amt" id="v1Tot">2 310 kr</span></div>
               <button class="cta">Reserver</button>
               <p class="fine">Sikker betaling med Stripe</p>
             </div>
@@ -529,7 +588,7 @@
           </div>
           <div class="v1-sec" style="padding-bottom:44px">
             <p class="sec-label">Timeplan</p>
-            <p class="v1-body m-muted">Tirsdag 12. august · 18:00–19:30 …</p>
+            <p class="v1-body m-muted">Tirsdag 12. august, kl. 18:00–19:30 …</p>
           </div>
         </div>
       </div></div>
@@ -541,19 +600,19 @@
         <div class="v1m-art"></div>
         <h3 class="v1-title" style="font-size:22px;margin-top:16px">Yoga for nybegynnere</h3>
         <div class="v1-facts" style="margin-top:14px">
-          <div class="v1-fact"><span class="date-badge"><b>Aug</b><span>12</span></span><span>Tirsdager, 12. aug – 30. sep<span class="sub">8 økter · 18:00–19:30</span></span></div>
-          <div class="v1-fact"><span class="ic">◎</span><span>Fjell Yoga Oslo<span class="sub">Thorvald Meyers gate 45</span></span></div>
+          <div class="v1-fact"><span class="date-badge"><b>Aug</b><span>12</span></span><span>Tirsdager, 12. aug – 30. sep<span class="sub">8 økter, kl. 18:00–19:30</span></span></div>
+          <div class="v1-fact"><span class="ic"><!-- lucide map-pin, verbatim path (app icon family) --><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span><span>Fjell Yoga Oslo<span class="sub">Thorvald Meyers gate 45</span></span></div>
         </div>
         <div class="v1-panel" style="margin-top:22px">
           <div class="v1-panel-head"><span>Velg billett</span><span class="scarce">3 plasser igjen</span></div>
           <ul class="ledger">
             <li aria-checked="true"><span class="lab"><b>Hele kurset</b><span>8 økter, tirsdager</span></span><span class="pr">2 200 kr</span><span class="ck">✓</span></li>
-            <li aria-checked="false"><span class="lab"><b>Drop-in</b><span>Neste økt: tir. 12. aug · 18:00</span></span><span class="pr">250 kr</span><span class="ck">✓</span></li>
+            <li aria-checked="false"><span class="lab"><b>Drop-in</b><span>Neste økt: tir. 12. aug kl. 18:00</span></span><span class="pr">250 kr</span><span class="ck">✓</span></li>
           </ul>
           <div class="v1-foot">
             <div class="sum-row"><span>Hele kurset</span><span class="r">2 200 kr</span></div>
-            <div class="sum-row"><span>Tjenestegebyr</span><span class="r dim">59 kr</span></div>
-            <div class="v1-total"><span class="t">Totalt</span><span class="amt">2 259 kr</span></div>
+            <div class="sum-row"><span>Tjenestegebyr</span><span class="r dim">110 kr</span></div>
+            <div class="v1-total"><span class="t">Totalt</span><span class="amt">2 310 kr</span></div>
             <button class="cta">Reserver</button>
             <p class="fine">Sikker betaling med Stripe</p>
           </div>
@@ -572,12 +631,12 @@
             <div class="v1-panel-head"><span>Velg billett</span></div>
             <ul class="ledger">
               <li class="off"><span class="lab"><b>Hele kurset</b><span>8 økter, tirsdager</span></span><span class="pr" style="color:var(--fg-muted);font-weight:400">Fullt</span><span class="ck" style="visibility:hidden">✓</span></li>
-              <li aria-checked="true"><span class="lab"><b>Drop-in</b><span>Neste økt: tir. 26. aug · 18:00</span></span><span class="pr">250 kr</span><span class="ck">✓</span></li>
+              <li aria-checked="true"><span class="lab"><b>Drop-in</b><span>Neste økt: tir. 26. aug kl. 18:00</span></span><span class="pr">250 kr</span><span class="ck">✓</span></li>
             </ul>
             <div class="v1-foot">
               <div class="sum-row"><span>Drop-in</span><span class="r">250 kr</span></div>
-              <div class="sum-row"><span>Tjenestegebyr</span><span class="r dim">19 kr</span></div>
-              <div class="v1-total"><span class="t">Totalt</span><span class="amt">269 kr</span></div>
+              <div class="sum-row"><span>Tjenestegebyr</span><span class="r dim">13 kr</span></div>
+              <div class="v1-total"><span class="t">Totalt</span><span class="amt">263 kr</span></div>
               <button class="cta">Reserver</button>
             </div>
           </div>
@@ -590,10 +649,10 @@
             <div class="v1-panel-head"><span>Velg billett</span></div>
             <ul class="ledger">
               <li class="off"><span class="lab"><b>Hele kurset</b><span>8 økter, tirsdager</span></span><span class="pr" style="color:var(--fg-muted);font-weight:400">Fullt</span><span class="ck" style="visibility:hidden">✓</span></li>
-              <li class="off"><span class="lab"><b>Drop-in</b><span>Neste økt: tir. 26. aug · 18:00</span></span><span class="pr" style="color:var(--fg-muted);font-weight:400">Fullt</span><span class="ck" style="visibility:hidden">✓</span></li>
+              <li class="off"><span class="lab"><b>Drop-in</b><span>Neste økt: tir. 26. aug kl. 18:00</span></span><span class="pr" style="color:var(--fg-muted);font-weight:400">Fullt</span><span class="ck" style="visibility:hidden">✓</span></li>
             </ul>
             <div class="v1-foot">
-              <button class="cta off" style="margin-top:0">Utsolgt — kurset er fullt</button>
+              <button class="cta off" style="margin-top:0">Kurset er fullt</button>
               <p class="fine"><span class="quiet-link">Se andre kurs fra Fjell Yoga Oslo</span></p>
             </div>
           </div>
@@ -638,12 +697,12 @@
             <h3 class="v2-title">Yoga for nybegynnere</h3>
             <div class="v2-when">
               <p>Tirsdager kl. 18:00–19:30</p>
-              <p class="m-muted">12. august – 30. september · 8 økter</p>
+              <p class="m-muted">12. august – 30. september, 8 økter</p>
             </div>
             <p class="v2-lede">Et rolig og grundig introduksjonskurs for deg som aldri har stått på matten før — grunnstillinger, pust og enkle flyter over åtte tirsdagskvelder på Grünerløkka.</p>
 
             <div class="v2-sec">
-              <p class="lbl">Timeplan · 8 økter</p>
+              <p class="lbl">Timeplan</p>
               <ul class="tl">
                 <li class="past"><span class="n">1</span><span class="dt">Tirsdag 12. august</span><time>18:00–19:30</time></li>
                 <li class="past"><span class="n">2</span><span class="dt">Tirsdag 19. august</span><time>18:00–19:30</time></li>
@@ -657,15 +716,15 @@
               <p class="lbl">Billetter</p>
               <ul class="v2-tix">
                 <li>
-                  <span class="lab"><b>Hele kurset — 6 økter igjen</b><span><span class="strike">2 200 kr</span> · fratrukket 2 økter som er holdt</span></span>
+                  <span class="lab"><b>Hele kurset, 6 økter igjen</b><span><span class="strike">2 200 kr</span> fratrukket 2 økter som er holdt</span></span>
                   <span class="pr">1 650 kr</span><button class="velg on">Valgt</button>
                 </li>
                 <li>
-                  <span class="lab"><b>Drop-in</b><span>Neste økt: tir. 26. aug · 18:00</span></span>
+                  <span class="lab"><b>Drop-in</b><span>Neste økt: tir. 26. aug kl. 18:00</span></span>
                   <span class="pr">250 kr</span><button class="velg">Velg</button>
                 </li>
               </ul>
-              <button class="v2-cta">Reserver <small>· 1 650 kr</small></button>
+              <button class="v2-cta">Reserver <small>1 650 kr</small></button>
               <p style="font-size:13px;color:var(--fg-muted);margin-top:10px">Tjenestegebyr kommer i tillegg og vises før betaling.</p>
             </div>
           </div>
@@ -678,9 +737,9 @@
       <div class="pmock mock-fade">
         <div class="v2m-art"></div>
         <h3 class="v2-title" style="font-size:26px;margin-top:16px">Yoga for nybegynnere</h3>
-        <div class="v2-when"><p>Tirsdager kl. 18:00–19:30</p><p class="m-muted">12. august – 30. september · 8 økter</p></div>
+        <div class="v2-when"><p>Tirsdager kl. 18:00–19:30</p><p class="m-muted">12. august – 30. september, 8 økter</p></div>
         <div class="v2-sec" style="margin-top:26px">
-          <p class="lbl">Timeplan · 8 økter</p>
+          <p class="lbl">Timeplan</p>
           <ul class="tl">
             <li class="past"><span class="n">1</span><span class="dt">Tirsdag 12. august</span><time>18:00</time></li>
             <li class="past"><span class="n">2</span><span class="dt">Tirsdag 19. august</span><time>18:00</time></li>
@@ -690,10 +749,10 @@
         <div class="v2-sec" style="margin-top:26px;padding-bottom:36px">
           <p class="lbl">Billetter</p>
           <ul class="v2-tix">
-            <li><span class="lab"><b>Hele kurset — 6 økter igjen</b><span><span class="strike">2 200 kr</span> · fratrukket 2 økter</span></span><span class="pr">1 650 kr</span><button class="velg on">Valgt</button></li>
+            <li><span class="lab"><b>Hele kurset, 6 økter igjen</b><span><span class="strike">2 200 kr</span> fratrukket 2 økter</span></span><span class="pr">1 650 kr</span><button class="velg on">Valgt</button></li>
             <li><span class="lab"><b>Drop-in</b><span>Neste økt: tir. 26. aug</span></span><span class="pr">250 kr</span><button class="velg">Velg</button></li>
           </ul>
-          <button class="v2-cta" style="width:100%;justify-content:center">Reserver <small>· 1 650 kr</small></button>
+          <button class="v2-cta" style="width:100%;justify-content:center">Reserver <small>1 650 kr</small></button>
         </div>
       </div>
     </div>
@@ -704,9 +763,9 @@
           <p style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;color:var(--fg-muted);margin-bottom:12px">Billetter</p>
           <ul class="v2-tix">
             <li style="opacity:.55"><span class="lab"><b>Hele kurset</b><span>8 økter, tirsdager</span></span><span class="pr" style="font-weight:400;color:var(--fg-muted)">Fullt</span></li>
-            <li><span class="lab"><b>Drop-in</b><span>Neste økt: tir. 26. aug · 18:00</span></span><span class="pr">250 kr</span><button class="velg on">Valgt</button></li>
+            <li><span class="lab"><b>Drop-in</b><span>Neste økt: tir. 26. aug kl. 18:00</span></span><span class="pr">250 kr</span><button class="velg on">Valgt</button></li>
           </ul>
-          <button class="v2-cta">Reserver <small>· 250 kr</small></button>
+          <button class="v2-cta">Reserver <small>250 kr</small></button>
         </div></div>
         <p class="rail-caption"><b>Kurspakken full, drop-in åpen.</b> The row stays, «Fullt» takes the price slot, the Velg-pill disappears with the choice; the CTA carries the remaining option's price.</p>
       </div>
@@ -715,9 +774,9 @@
           <p style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;color:var(--fg-muted);margin-bottom:12px">Billetter</p>
           <ul class="v2-tix">
             <li style="opacity:.55"><span class="lab"><b>Hele kurset</b><span>8 økter, tirsdager</span></span><span class="pr" style="font-weight:400;color:var(--fg-muted)">Fullt</span></li>
-            <li style="opacity:.55"><span class="lab"><b>Drop-in</b><span>Neste økt: tir. 26. aug · 18:00</span></span><span class="pr" style="font-weight:400;color:var(--fg-muted)">Fullt</span></li>
+            <li style="opacity:.55"><span class="lab"><b>Drop-in</b><span>Neste økt: tir. 26. aug kl. 18:00</span></span><span class="pr" style="font-weight:400;color:var(--fg-muted)">Fullt</span></li>
           </ul>
-          <button class="v2-cta" style="background:var(--muted);color:var(--fg-muted);cursor:default">Utsolgt — kurset er fullt</button>
+          <button class="v2-cta" style="background:var(--muted);color:var(--fg-muted);cursor:default">Kurset er fullt</button>
           <p style="font-size:13px;margin-top:10px"><span class="quiet-link">Se andre kurs fra Fjell Yoga Oslo</span></p>
         </div></div>
         <p class="rail-caption"><b>Helt utsolgt.</b> Same CTA-replacement rule as V1 and V3, rendered in V2's inline-row grammar.</p>
@@ -750,12 +809,12 @@
       <div class="frame-scroll"><div class="mock-flush" style="min-width:860px">
         <div class="v3-hero"></div>
         <div class="v3-inner">
-          <span class="v3-datebadge">TIR 12. AUG · 18:00</span>
+          <span class="v3-datebadge">TIR 12. AUG KL. 18:00</span>
           <h3 class="v3-title">Yoga for nybegynnere</h3>
           <div class="v3-facts">
             <div><b>Starter</b><p>Tir. 12. august</p></div>
             <div><b>Tid</b><p>18:00–19:30</p></div>
-            <div><b>Omfang</b><p>8 økter · 8 uker</p></div>
+            <div><b>Omfang</b><p>8 økter over 8 uker</p></div>
             <div><b>Sted</b><p>Thorvald Meyers g. 45</p></div>
           </div>
           <p class="v3-body">Et rolig og grundig introduksjonskurs for deg som aldri har stått på matten før. Vi går gjennom grunnstillingene, pust og enkle flyter i et tempo der ingen blir hengende etter. Kurset går over åtte tirsdager — matter og blokker ligger i studio.</p>
@@ -763,11 +822,11 @@
           <p class="v3-sec-lbl">Priser</p>
           <table class="v3-table" id="v3Table">
             <tbody>
-              <tr aria-checked="true" data-p="2200" data-f="59" data-l="Hele kurset" data-s="8 økter, tirsdager">
+              <tr aria-checked="true" data-p="2200" data-f="110" data-l="Hele kurset" data-s="8 økter, tirsdager">
                 <td>Hele kurset</td><td class="det">8 økter, tirsdager</td><td class="pr">2 200 kr</td><td class="sel"><span class="dot"></span></td>
               </tr>
-              <tr aria-checked="false" data-p="250" data-f="19" data-l="Drop-in" data-s="Neste økt: tir. 12. aug · 18:00">
-                <td>Drop-in</td><td class="det">Neste økt: tir. 12. aug · 18:00</td><td class="pr">250 kr</td><td class="sel"><span class="dot"></span></td>
+              <tr aria-checked="false" data-p="250" data-f="13" data-l="Drop-in" data-s="Neste økt: tir. 12. aug kl. 18:00">
+                <td>Drop-in</td><td class="det">Neste økt: tir. 12. aug kl. 18:00</td><td class="pr">250 kr</td><td class="sel"><span class="dot"></span></td>
               </tr>
             </tbody>
           </table>
@@ -775,7 +834,7 @@
         <div class="v3-bar">
           <p class="sel-lab" id="v3Lab">Hele kurset<span id="v3Sub">8 økter, tirsdager</span></p>
           <div class="right">
-            <span style="text-align:right"><span class="amt" id="v3Amt">2 259 kr</span><span class="feenote" id="v3FeeNote">inkl. 59 kr tjenestegebyr</span></span>
+            <span style="text-align:right"><span class="amt" id="v3Amt">2 310 kr</span><span class="feenote" id="v3FeeNote">inkl. 110 kr tjenestegebyr</span></span>
             <button class="cta3">Reserver</button>
           </div>
         </div>
@@ -787,12 +846,12 @@
       <div style="background:var(--bg)">
         <div class="v3m-hero"></div>
         <div style="padding:0 20px">
-          <span class="v3-datebadge">TIR 12. AUG · 18:00</span>
+          <span class="v3-datebadge">TIR 12. AUG KL. 18:00</span>
           <h3 class="v3-title" style="font-size:28px;margin-top:14px">Yoga for nybegynnere</h3>
           <div class="v3m-facts">
             <div><b>Starter</b><p>Tir. 12. august</p></div>
             <div><b>Tid</b><p>18:00–19:30</p></div>
-            <div><b>Omfang</b><p>8 økter · 8 uker</p></div>
+            <div><b>Omfang</b><p>8 økter over 8 uker</p></div>
             <div><b>Sted</b><p>Th. Meyers g. 45</p></div>
           </div>
           <p class="v3-body" style="font-size:15px;margin-top:20px">Et rolig og grundig introduksjonskurs for deg som aldri har stått på matten før.</p>
@@ -803,7 +862,7 @@
           </ul>
         </div>
         <div class="v3-bar" style="padding:12px 20px;margin-top:20px">
-          <p class="sel-lab">Hele kurset<span>2 259 kr inkl. gebyr</span></p>
+          <p class="sel-lab">Hele kurset<span>2 310 kr inkl. gebyr</span></p>
           <button class="cta3">Reserver</button>
         </div>
       </div>
@@ -811,7 +870,7 @@
     <p class="opt-sub" style="margin:18px 0 10px">The bar persists in the sold-out state — the message replaces the price side, the action greys out (<a href="https://mobbin.com/screens/33c3642c-5be8-4d1e-a678-0e965f3167a3">Eventbrite iOS</a> keeps its bar in every state).</p>
     <div class="frame">
       <div class="v3-bar" style="margin-top:0;box-shadow:none;padding:14px 28px">
-        <p class="sel-lab">Utsolgt — kurset er fullt<span><span class="quiet-link">Se andre kurs fra Fjell Yoga Oslo</span></span></p>
+        <p class="sel-lab">Kurset er fullt<span><span class="quiet-link">Se andre kurs fra Fjell Yoga Oslo</span></span></p>
         <div class="right">
           <button class="cta3" style="background:var(--muted);color:var(--fg-muted);cursor:default">Utsolgt</button>
         </div>
@@ -827,12 +886,240 @@
     <div class="opt-head" style="margin-top:52px"><span class="opt-chip">Regel</span><span class="opt-title">Pris ved sen påmelding — original pris + fratrekk, aldri bare et «rart» beløp</span></div>
     <p class="opt-sub">Your rule, made canonical for whichever variant wins. Example: a 12-week course where 2 sessions are already held. The buyer always sees the full price, the named deduction, and the result — never an unexplained prorated number.</p>
     <div class="ls-card">
-      <div class="ls-head"><b>Hele kurset</b><span>12 økter · 2 er allerede holdt</span></div>
+      <div class="ls-head"><b>Hele kurset</b><span>12 økter, 2 er allerede holdt</span></div>
       <div class="ls-row"><span class="l">Ordinær pris</span><span class="r strike">3 300 kr</span></div>
       <div class="ls-row"><span class="l">Fratrekk for 2 holdte økter</span><span class="r ok">−550 kr</span></div>
       <div class="ls-total"><span>Totalt</span><span>2 750 kr</span></div>
     </div>
     <p class="rail-caption" style="margin-top:12px">Backed by the existing RPC proration — this is purely a presentation change: show <code>original</code>, <code>original − prorated</code> as the deduction line, and the prorated result as the total. V2's ticket row above shows the compact inline form of the same rule.</p>
+  </section>
+
+  <!-- ═══════════════ Q3B TICKET CHOOSER ═══════════════ -->
+  <section class="doc-section">
+    <div class="doc-q"><span class="doc-qnum">Question 3B · new</span><h2 class="doc-qtitle">The ticket chooser — two rows or one toggle?</h2></div>
+    <p class="doc-note">The chooser's cardinality is fixed by the product: a series sells at most <strong>two</strong> tiers (Hele kurset + optional Drop-in), and a single course or workshop sells exactly <strong>one</strong> — the shipped rail already hides the selector entirely at one tier (<code>tiles.length &gt; 1</code> gate in <code>BookingRailLite</code>). That makes a segmented toggle a legitimate alternative to rows: it can never overflow. Both panels below are the <strong>same V1 booking panel</strong> — head, summary, CTA and edge-state rules identical — only the middle zone changes. <strong>Both are clickable.</strong></p>
+
+    <details class="extract">
+      <summary>Reference extraction — ticket chooser (Q3B)</summary>
+      <div class="x-body">
+        <p><b>Structural question:</b> when a booking panel offers at most two mutually exclusive purchase modes, do shipped products use rows or a toggle — and what carries the price?</p>
+        <p><b>Source screens:</b> <a href="https://mobbin.com/screens/ca0a9daf-e4c1-4de4-9052-b12fb6578c74">Time2book checkout</a> (segmented «Pay in person / My memberships» switching the panel's mode zone), <a href="https://mobbin.com/screens/1a9103b0-d862-4caf-948d-4d828f151ccb">Preply lesson booking</a> + <a href="https://mobbin.com/screens/894a4475-ecf0-4d68-a1d7-c85e1f8a5665">its 50-min state</a> (two-segment toggle; the detail re-renders beneath, the price follows), <a href="https://mobbin.com/screens/c8912b42-1a21-4bc2-b7e6-13f7689b289e">Salesforce term toggle</a>, <a href="https://mobbin.com/screens/1e646fc8-a188-4e6f-92f0-4abd6d7ecb69">Substack plan toggle</a>, <a href="https://mobbin.com/screens/8cb8daa1-bb8e-42e0-b18b-92cb68e5f6ee">Square checkout</a> (the rows counterpart: radio rows with per-row price + order summary), <a href="https://mobbin.com/screens/57a02165-4fcc-4c87-abf7-f27bd4abca8b">MasterClass single class</a> (one option → no selector at all).</p>
+        <p><b>Layout skeleton:</b> the toggle sits between the panel head and the price summary; summary + CTA never move; only the constraint line under the track re-renders on switch.</p>
+        <p><b>Hierarchy:</b> segments carry <b>labels only</b> — none of the references put prices in the pills; the selected price lives in the summary, keeping the 20px total as the page's single price focal.</p>
+        <p><b>States observed:</b> exactly one option → the control disappears (MasterClass), which is also the shipped rail's behavior.</p>
+        <p><b>Decisions adopted:</b> (1) the toggle is <code>SegmentedTabs</code> verbatim — the dashboard filter control, so buyer and seller surfaces share one grammar; (2) labels only in segments; (3) constraint sublabel under the track; (4) summary + CTA fixed across switches; (5) one tier = no chooser apparatus at all.</p>
+        <p><b>Decisions rejected:</b> prices inside the segments (no reference does it; crowds the pill and duplicates the summary); the FilterChips grammar (standalone bordered chips are the list-filter idiom, and the inverted-black active fights the black CTA below — rendered at the bottom for the record); a select/dropdown (hides the second option completely).</p>
+      </div>
+    </details>
+
+    <div class="edge-duo" style="margin-top:24px">
+      <div>
+        <div class="frame"><div class="mini-mock">
+          <div class="v1-panel" style="margin-top:0;box-shadow:none">
+            <div class="v1-panel-head"><span>Velg billett</span><span class="scarce">3 plasser igjen</span></div>
+            <ul class="ledger" id="qaLedger">
+              <li aria-checked="true" data-p="2200" data-f="110" data-l="Hele kurset">
+                <span class="lab"><b>Hele kurset</b><span>8 økter, tirsdager</span></span>
+                <span class="pr">2 200 kr</span><span class="ck">✓</span>
+              </li>
+              <li aria-checked="false" data-p="250" data-f="13" data-l="Drop-in">
+                <span class="lab"><b>Drop-in</b><span>Neste økt: tir. 12. aug kl. 18:00</span></span>
+                <span class="pr">250 kr</span><span class="ck">✓</span>
+              </li>
+            </ul>
+            <div class="v1-foot">
+              <div class="sum-row"><span id="qaLab">Hele kurset</span><span class="r" id="qaAmt">2 200 kr</span></div>
+              <div class="sum-row"><span>Tjenestegebyr</span><span class="r dim" id="qaFee">110 kr</span></div>
+              <div class="v1-total"><span class="t">Totalt</span><span class="amt" id="qaTot">2 310 kr</span></div>
+              <button class="cta">Reserver</button>
+              <p class="fine">Sikker betaling med Stripe</p>
+            </div>
+          </div>
+        </div></div>
+        <p class="rail-caption"><b>A — two rows.</b> Both prices are visible before any interaction; each row carries its own constraint line; the radio dot is checkout's (<a href="https://mobbin.com/screens/8cb8daa1-bb8e-42e0-b18b-92cb68e5f6ee">Square</a>'s grammar). Survives a third tier if one ever ships.</p>
+      </div>
+      <div>
+        <div class="frame"><div class="mini-mock">
+          <div class="v1-panel" style="margin-top:0;box-shadow:none">
+            <div class="v1-panel-head"><span>Velg billett</span><span class="scarce">3 plasser igjen</span></div>
+            <div style="padding:2px 18px 14px">
+              <div class="seg" role="radiogroup" aria-label="Velg billett" id="qbSeg">
+                <button type="button" class="seg-btn" role="radio" aria-checked="true" data-p="2200" data-f="110" data-l="Hele kurset" data-s="8 økter, tirsdager">Hele kurset</button>
+                <button type="button" class="seg-btn" role="radio" aria-checked="false" data-p="250" data-f="13" data-l="Drop-in" data-s="Neste økt: tir. 12. aug kl. 18:00">Drop-in</button>
+              </div>
+              <p class="seg-sub" id="qbSub">8 økter, tirsdager</p>
+            </div>
+            <div class="v1-foot">
+              <div class="sum-row"><span id="qbLab">Hele kurset</span><span class="r" id="qbAmt">2 200 kr</span></div>
+              <div class="sum-row"><span>Tjenestegebyr</span><span class="r dim" id="qbFee">110 kr</span></div>
+              <div class="v1-total"><span class="t">Totalt</span><span class="amt" id="qbTot">2 310 kr</span></div>
+              <button class="cta">Reserver</button>
+              <p class="fine">Sikker betaling med Stripe</p>
+            </div>
+          </div>
+        </div></div>
+        <p class="rail-caption"><b>B — toggle.</b> <code>SegmentedTabs</code> verbatim (the same control as the dashboard filters): muted track, active white pill, labels only — the summary carries the price (<a href="https://mobbin.com/screens/ca0a9daf-e4c1-4de4-9052-b12fb6578c74">Time2book</a>, <a href="https://mobbin.com/screens/1a9103b0-d862-4caf-948d-4d828f151ccb">Preply</a>). The constraint line re-renders under the track.</p>
+      </div>
+    </div>
+
+    <div class="verdict">
+      <div><b>A — to rader</b>Price comparison at a glance — both amounts visible before any click, which matters when drop-in exists precisely to undercut the package price. The sublabel sits inside the row it describes. Cost: the selected price prints twice (row + summary), and this is the tallest version of the panel.</div>
+      <div><b>B — toggle</b>Reads unmistakably as either/or — one control, one selection, one row shorter than A; the track echoes the dashboard filter grammar so the whole product uses one switching control. Cost: drop-in's price is hidden until toggled — comparison costs a click — and the track hard-caps at two labels of this length.</div>
+    </div>
+
+    <div class="opt-head" style="margin-top:44px"><span class="opt-chip">Én</span><span class="opt-title">Enkeltkurs — one tier, no chooser at all</span></div>
+    <p class="opt-sub">A single course or workshop sells exactly one thing, so the chooser apparatus disappears with the choice: no «Velg billett» head, no rows, no track — the panel <em>is</em> the price block (<a href="https://mobbin.com/screens/57a02165-4fcc-4c87-abf7-f27bd4abca8b">MasterClass</a>; shipped behavior in the rail today). Scarcity moves down to the decision point. This panel is identical whichever chooser wins for series — A/B only decide the middle zone that no longer exists here.</p>
+    <div class="edge-duo">
+      <div>
+        <div class="frame"><div class="mini-mock">
+          <div class="v1-panel" style="margin-top:0;box-shadow:none">
+            <div class="v1-foot" style="border-top:0;padding-top:16px">
+              <div class="sum-row"><span>Hele kurset<span class="sum-sub">Lørdag og søndag, 2 dager</span></span><span class="r">1 400 kr</span></div>
+              <div class="sum-row"><span>Tjenestegebyr</span><span class="r dim">70 kr</span></div>
+              <div class="v1-total"><span class="t">Totalt</span><span class="amt">1 470 kr</span></div>
+              <p class="scarce" style="margin-top:12px">3 plasser igjen</p>
+              <button class="cta" style="margin-top:8px">Reserver</button>
+              <p class="fine">Sikker betaling med Stripe</p>
+            </div>
+          </div>
+        </div></div>
+        <p class="rail-caption"><b>One tier</b> — the weekend workshop from Q1. The first summary row carries the tier label and its constraint as a quiet second line; everything else is byte-identical to A/B, so the panel degrades to this without a redesign.</p>
+      </div>
+      <div>
+        <div class="frame"><div class="mini-mock" style="display:flex;flex-direction:column;justify-content:center;min-height:100%">
+          <p style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;color:var(--fg-muted)">Considered and rejected — FilterChips grammar</p>
+          <div style="display:flex;gap:8px;margin-top:14px"><span class="chip on">Hele kurset</span><span class="chip">Drop-in</span></div>
+          <p style="font-size:13.5px;color:var(--fg-muted);margin-top:14px;line-height:1.55">Standalone chips are the <em>list-filter</em> idiom (public listings) — two separate pills don't say «either/or» the way one track does, and the inverted-black active is a second black pill fighting the CTA inside one small panel. <code>SegmentedTabs</code> even ships a <code>radiogroup</code> role for exactly this case.</p>
+        </div></div>
+        <p class="rail-caption"><b>Why not chips:</b> grammar mismatch, not taste — chips filter lists, a track picks a value.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ Q3C SAME SKELETON, NEW SKIN ═══════════════ -->
+  <section class="doc-section">
+    <div class="doc-q"><span class="doc-qnum">Question 3C · remix</span><h2 class="doc-qtitle">V1's skeleton, re-skinned — two fresh takes on the same page</h2></div>
+    <p class="doc-note">V1's wireframe is treated as a fixed contract: <strong>identity (art + title + facts) → decision (booking inline in the flow) → story</strong>, one column, same order on mobile. Everything else is negotiable. Both remixes below keep that contract and every rule this doc already locked (real fee math, radio dots, edge states, tokens only) — they change the <em>skin</em>: how each slot is rendered, and where the facts live. No new components; every pattern is re-composed from the ones already traced in the appendix. <strong>Both booking zones are clickable.</strong></p>
+
+    <details class="extract">
+      <summary>Reference extraction — re-skin sources (Q3C)</summary>
+      <div class="x-body">
+        <p><b>Structural question:</b> holding V1's slot order fixed, which shipped skins can each slot wear — and where can the facts move without leaving the skeleton?</p>
+        <p><b>Sources (all previously extracted in this doc):</b> <a href="https://mobbin.com/screens/fb172cac-fa93-407d-bb68-1dc4a27db64d">Luma</a> — the registration panel is a <b>soft embedded fill</b>, not an elevated card; <a href="https://mobbin.com/screens/db948a58-427b-44f2-8281-1741d107cc34">Time2book</a> — cover band as identity; <a href="https://mobbin.com/screens/80d1eaab-1208-4d9d-9e28-e33d9a5e6a2e">Posh</a> — quiet two-line when-block under a display title; <a href="https://mobbin.com/screens/c5c743ef-60f0-42a0-8cb1-d0192ddcaf30">Eventbrite</a> — labeled hairline fact band; app <code>BookingRailLite.tsx</code> — labeled context fields («Når») inside the booking card.</p>
+        <p><b>Decisions adopted:</b> (1) the skeleton slots never reorder; (2) facts may render as a band (R1) or move inside the panel (R2) — both are still slot 1/2 content; (3) R1's booking zone is flat panel-fill (Luma), R2's keeps border + shadow-soft (the system's one focal surface); (4) story labels reuse the two label styles already in the doc.</p>
+        <p><b>Decisions rejected:</b> serif display (marketing-only per the design language, storefronts stay a neutral frame); reordering story above booking (breaks V1's decision-height idea); sticky sidebars (that's V2/V3 territory, not a skin).</p>
+      </div>
+    </details>
+
+    <!-- R1 -->
+    <div class="opt-head" style="margin-top:28px"><span class="opt-chip">R1</span><span class="opt-title">Editorial — cover band, fact band, flat embedded booking</span></div>
+    <p class="opt-sub">The same page wearing Q2's cover identity and V3's editorial confidence: full-bleed cover instead of the square thumb, display title with Posh's quiet when-block, facts as one labeled hairline band, and the booking zone as a <strong>flat panel fill</strong> — no border, no shadow (Luma). Calmest possible read; the grey fill alone marks the decision zone.</p>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/yoga-for-nybegynnere</span></div>
+      <div class="frame-scroll"><div class="mock-flush mock-fade" style="min-width:720px;padding-bottom:0">
+        <div class="r1-cover"></div>
+        <div class="r1-col">
+          <h3 class="r1-title">Yoga for nybegynnere</h3>
+          <div class="r1-when">
+            <p>Tirsdager kl. 18:00–19:30</p>
+            <p>12. august – 30. september, 8 økter</p>
+          </div>
+          <div class="v3-facts" style="grid-template-columns:repeat(3,1fr);margin-top:26px">
+            <div><b>Starter</b><p>Tir. 12. august</p></div>
+            <div><b>Sted</b><p>Th. Meyers gate 45</p></div>
+            <div><b>Instruktør</b><p>Ingrid Larsen</p></div>
+          </div>
+          <div class="r1-book">
+            <div class="v1-panel-head"><span>Velg billett</span><span class="scarce">3 plasser igjen</span></div>
+            <ul class="ledger" id="r1Ledger">
+              <li aria-checked="true" data-p="2200" data-f="110" data-l="Hele kurset">
+                <span class="lab"><b>Hele kurset</b><span>8 økter, tirsdager</span></span>
+                <span class="pr">2 200 kr</span><span class="ck">✓</span>
+              </li>
+              <li aria-checked="false" data-p="250" data-f="13" data-l="Drop-in">
+                <span class="lab"><b>Drop-in</b><span>Neste økt: tir. 12. aug kl. 18:00</span></span>
+                <span class="pr">250 kr</span><span class="ck">✓</span>
+              </li>
+            </ul>
+            <div class="v1-foot">
+              <div class="sum-row"><span id="r1Lab">Hele kurset</span><span class="r" id="r1Amt">2 200 kr</span></div>
+              <div class="sum-row"><span>Tjenestegebyr</span><span class="r dim" id="r1Fee">110 kr</span></div>
+              <div class="v1-total"><span class="t">Totalt</span><span class="amt" id="r1Tot">2 310 kr</span></div>
+              <button class="cta">Reserver</button>
+              <p class="fine">Sikker betaling med Stripe</p>
+            </div>
+          </div>
+          <div class="v2-sec">
+            <p class="lbl">Om kurset</p>
+            <p class="v1-body">Et rolig og grundig introduksjonskurs for deg som aldri har stått på matten før. Vi går gjennom grunnstillingene, pust og enkle flyter i et tempo der ingen blir hengende etter.</p>
+          </div>
+          <div class="v2-sec" style="padding-bottom:44px">
+            <p class="lbl">Timeplan</p>
+            <p class="v1-body m-muted">Tirsdag 12. august, kl. 18:00–19:30 …</p>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <p class="rail-caption" style="margin-top:12px"><b>What changed vs. V1:</b> thumb → cover band (Time2book); icon fact rows → labeled hairline band (Eventbrite); elevated card → flat <code>--panel</code> fill (Luma); 14px story labels → uppercase micro-labels. Skeleton untouched.</p>
+
+    <!-- R2 -->
+    <div class="opt-head" style="margin-top:44px"><span class="opt-chip">R2</span><span class="opt-title">Compact product — facts absorbed into the booking card</span></div>
+    <p class="opt-sub">The same page compressed toward the shipped app: full-width artwork, tighter title with the instructor as a quiet line, and the facts <strong>move inside the panel</strong> as labeled context fields — the «Når»-field idiom <code>BookingRailLite</code> already ships. The panel stays the page's one elevated surface. Story becomes a two-column read so the page ends in one screen less.</p>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span><span class="url">app.no/fjellyoga/yoga-for-nybegynnere</span></div>
+      <div class="frame-scroll"><div class="mock mock-fade" style="padding-bottom:0">
+        <div class="r2-col">
+          <div class="r2-art"></div>
+          <h3 class="r2-title">Yoga for nybegynnere</h3>
+          <div class="r2-inst"><span class="avatar">IL</span><span>Med Ingrid Larsen</span></div>
+          <div class="v1-panel" style="margin-top:24px">
+            <div class="r2-ctx">
+              <div><b>Når</b><p>Tirsdager 18:00–19:30<span>12. aug – 30. sep, 8 økter</span></p></div>
+              <div><b>Hvor</b><p>Fjell Yoga Oslo<span>Thorvald Meyers gate 45</span></p></div>
+            </div>
+            <ul class="ledger" id="r2Ledger">
+              <li aria-checked="true" data-p="2200" data-f="110" data-l="Hele kurset">
+                <span class="lab"><b>Hele kurset</b><span>8 økter, tirsdager</span></span>
+                <span class="pr">2 200 kr</span><span class="ck">✓</span>
+              </li>
+              <li aria-checked="false" data-p="250" data-f="13" data-l="Drop-in">
+                <span class="lab"><b>Drop-in</b><span>Neste økt: tir. 12. aug kl. 18:00</span></span>
+                <span class="pr">250 kr</span><span class="ck">✓</span>
+              </li>
+            </ul>
+            <div class="v1-foot">
+              <div class="sum-row"><span id="r2Lab">Hele kurset</span><span class="r" id="r2Amt">2 200 kr</span></div>
+              <div class="sum-row"><span>Tjenestegebyr</span><span class="r dim" id="r2Fee">110 kr</span></div>
+              <div class="v1-total"><span class="t">Totalt</span><span class="amt" id="r2Tot">2 310 kr</span></div>
+              <p class="scarce" style="margin-top:12px">3 plasser igjen</p>
+              <button class="cta" style="margin-top:8px">Reserver</button>
+              <p class="fine">Sikker betaling med Stripe</p>
+            </div>
+          </div>
+          <div class="r2-story" style="padding-bottom:40px">
+            <div>
+              <p class="sec-label">Om kurset</p>
+              <p class="v1-body">Et rolig og grundig introduksjonskurs for deg som aldri har stått på matten før. Vi går gjennom grunnstillingene, pust og enkle flyter.</p>
+            </div>
+            <div>
+              <p class="sec-label">Timeplan</p>
+              <ul class="tl">
+                <li><span class="n">1</span><span class="dt">Tir. 12. august</span><time>18:00</time></li>
+                <li><span class="n">2</span><span class="dt">Tir. 19. august</span><time>18:00</time></li>
+                <li><span class="n">3</span><span class="dt">Tir. 26. august</span><time>18:00</time></li>
+              </ul>
+              <p style="margin-top:8px"><span class="quiet-link" style="font-size:14px">Vis alle 8 økter</span></p>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <p class="rail-caption" style="margin-top:12px"><b>What changed vs. V1:</b> facts left the page body and became the panel's context fields (shipped «Når» idiom) — the panel now answers what/when/where/how-much in one surface; the story splits into two columns. Skeleton untouched: identity → decision → story.</p>
+
+    <div class="verdict">
+      <div><b>R1 — editorial</b>Strongest sense of place: the cover band gives every studio a branded page even without course photography, and the flat booking zone keeps the calm, editorial read. Cost: less compact; the fact band pushes booking one beat further down, and a grey fill separates more weakly than a bordered card.</div>
+      <div><b>R2 — compact product</b>The panel becomes self-sufficient — a buyer who lands mid-page has everything inside one surface, which is exactly the sticky-rail behavior the shipped app already has. Shortest path to reuse existing components. Cost: the page body is left with only title + story, so weak artwork makes the top feel thin.</div>
+    </div>
   </section>
 
   <!-- ═══════════════ Q4 CONTENT VALUE ═══════════════ -->
@@ -868,6 +1155,8 @@
         <tr><td>Detail header</td><td>Large title, then a quiet two-line when-block (venue/time), hairline-separated sections.</td><td><a href="https://mobbin.com/screens/80d1eaab-1208-4d9d-9e28-e33d9a5e6a2e">Posh event page</a></td></tr>
         <tr><td>Fact rows (V1)</td><td>Two-line tiles: date badge / icon + value over sublabel.</td><td><a href="https://mobbin.com/screens/fb172cac-fa93-407d-bb68-1dc4a27db64d">Luma event page</a></td></tr>
         <tr><td>Ticket rows</td><td>Selection marked by accent border/marker; the sublabel carries the constraint (dates, sales end).</td><td><a href="https://mobbin.com/screens/88dd0e07-4d2d-4407-b94f-f08301ca3942">Eventbrite ticket modal</a></td></tr>
+        <tr><td>Ticket toggle (Q3B)</td><td>Segmented track switches the offer; labels only in segments — the price stays in the summary; the constraint line re-renders under the track.</td><td><a href="https://mobbin.com/screens/ca0a9daf-e4c1-4de4-9052-b12fb6578c74">Time2book checkout</a> · <a href="https://mobbin.com/screens/1a9103b0-d862-4caf-948d-4d828f151ccb">Preply</a></td></tr>
+        <tr><td>Single-tier panel</td><td>Exactly one sellable option → no selector at all; the price block + CTA carry the panel, scarcity moves to the decision point.</td><td><a href="https://mobbin.com/screens/57a02165-4fcc-4c87-abf7-f27bd4abca8b">MasterClass</a> · app <code>BookingRailLite.tsx</code></td></tr>
         <tr><td>Price summary</td><td>Muted label rows, hairline, modest medium-weight total above the CTA.</td><td><a href="https://mobbin.com/screens/a71d7de2-810c-4550-bdde-686c5f615ef8">Fiverr</a> · <a href="https://mobbin.com/screens/5ba93d23-406d-47ea-a8da-d07454d2d8a0">Typeform</a></td></tr>
         <tr><td>Deduction line</td><td>Discount as a named green line item above the total.</td><td><a href="https://mobbin.com/screens/5ba93d23-406d-47ea-a8da-d07454d2d8a0">Typeform coupon</a></td></tr>
         <tr><td>CTA</td><td>Near-black pill, 44px, text-base font-medium — no azure buttons.</td><td>App <code>button.tsx</code> default variant</td></tr>
@@ -880,7 +1169,7 @@
   </section>
 
   <div class="footer-cta">
-    <p><b>To decide, reply in chat with:</b> Q1 — confirm the agenda direction (or adjust the row contract) · Q2 — cover band yes/no + seller header yes/no · Q3 — V1, V2 or V3 (mixing is fine, e.g. «V1 with V3's fact bar») · Q4 — policy-only, or a different line. The late-signup pricing rule is locked in as you described.</p>
+    <p><b>To decide, reply in chat with:</b> Q1 — confirm the agenda direction (or adjust the row contract) · Q2 — cover band yes/no + seller header yes/no · Q3 — V1, V2 or V3 (mixing is fine, e.g. «V1 with V3's fact bar») · Q3B — ticket chooser: A (two rows) or B (toggle) · Q3C — V1 skin: as-is, R1 (editorial) or R2 (compact) · Q4 — policy-only, or a different line. The late-signup pricing rule is locked in as you described.</p>
     <p style="margin-top:12px;font-size:14px">Everything mocked renders only what the app supports end-to-end today: the two real tiers (Hele kurset + optional Drop-in, with RPC proration), sessions, spots left, service fee, seller cover image. Drop-in shows the auto-picked next session (today's behavior) — a date picker would be new scope. The single proposed new field remains the policy text in Q4.</p>
   </div>
 </div>
@@ -899,6 +1188,45 @@
     document.getElementById('v1Fee').textContent=kr(f);
     document.getElementById('v1Tot').textContent=kr(p+f);
   }));
+
+  // Q3B — A: rows
+  const qaRows=document.querySelectorAll('#qaLedger li');
+  qaRows.forEach(r=>r.addEventListener('click',()=>{
+    qaRows.forEach(x=>x.setAttribute('aria-checked','false'));
+    r.setAttribute('aria-checked','true');
+    const p=+r.dataset.p,f=+r.dataset.f;
+    document.getElementById('qaLab').textContent=r.dataset.l;
+    document.getElementById('qaAmt').textContent=kr(p);
+    document.getElementById('qaFee').textContent=kr(f);
+    document.getElementById('qaTot').textContent=kr(p+f);
+  }));
+
+  // Q3B — B: segmented toggle
+  const qbSegs=document.querySelectorAll('#qbSeg .seg-btn');
+  qbSegs.forEach(b=>b.addEventListener('click',()=>{
+    qbSegs.forEach(x=>x.setAttribute('aria-checked','false'));
+    b.setAttribute('aria-checked','true');
+    const p=+b.dataset.p,f=+b.dataset.f;
+    document.getElementById('qbSub').textContent=b.dataset.s;
+    document.getElementById('qbLab').textContent=b.dataset.l;
+    document.getElementById('qbAmt').textContent=kr(p);
+    document.getElementById('qbFee').textContent=kr(f);
+    document.getElementById('qbTot').textContent=kr(p+f);
+  }));
+
+  // Q3C — R1/R2 remix ledgers
+  ['r1','r2'].forEach(pre=>{
+    const rows=document.querySelectorAll('#'+pre+'Ledger li');
+    rows.forEach(r=>r.addEventListener('click',()=>{
+      rows.forEach(x=>x.setAttribute('aria-checked','false'));
+      r.setAttribute('aria-checked','true');
+      const p=+r.dataset.p,f=+r.dataset.f;
+      document.getElementById(pre+'Lab').textContent=r.dataset.l;
+      document.getElementById(pre+'Amt').textContent=kr(p);
+      document.getElementById(pre+'Fee').textContent=kr(f);
+      document.getElementById(pre+'Tot').textContent=kr(p+f);
+    }));
+  });
 
   // V3 table + bottom bar
   const v3rows=document.querySelectorAll('#v3Table tr');

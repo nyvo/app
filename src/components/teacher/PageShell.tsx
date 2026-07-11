@@ -25,6 +25,9 @@ import { cn } from '@/lib/utils';
  *      - `narrow="left"` → `max-w-3xl` (narrow content alongside tabs / preview
  *        / supporting context — rarely needed at the PageShell level since most
  *        such cases handle the inner constraint inside their tab component)
+ *      - `narrow="form"` → `mx-auto max-w-2xl` (full-bleed create/edit form
+ *        screens, e.g. the course builder — fields land in the §2.3 480–560px
+ *        band once panel padding is subtracted)
  */
 
 interface PageShellProps {
@@ -48,7 +51,7 @@ interface PageShellProps {
    *  - 'centered'→ self-contained form/help/payment pages
    *  - 'left'    → narrow content adjacent to tabs/preview/context
    */
-  narrow?: 'centered' | 'left';
+  narrow?: 'centered' | 'left' | 'form';
   /** Set to false to skip motion wrapper (rare). */
   animate?: boolean;
   /** Override outer className if a page needs custom bottom padding etc. */
@@ -59,6 +62,7 @@ interface PageShellProps {
 const narrowClass = {
   centered: 'mx-auto max-w-3xl',
   left: 'max-w-3xl',
+  form: 'mx-auto max-w-2xl',
 } as const;
 
 export function PageShell({

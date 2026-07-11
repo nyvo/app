@@ -452,7 +452,7 @@ BEGIN
 
     -- Series with drop-in: standard package + drop-in tier
     (t_dropin_pkg,   c_series_dropin,      'package',  'standard', 'Hele kurset (8 uker)',   NULL, 1400.00, 8, true,  true, 0),
-    (t_dropin_drop,  c_series_dropin,      'drop_in',  'standard', 'Drop-in (per gang)',     'Betal én gang om gangen', 200.00, NULL, false, true, 1),
+    (t_dropin_drop,  c_series_dropin,      'drop_in',  'standard', 'Drop-in',     'Betal én gang om gangen', 200.00, NULL, false, true, 1),
 
     -- Expensive course: 3 tiers
     (t_exp_full,     c_series_expensive,   'package',  'standard', 'Full modul (10 samlinger)', 'Yoga Alliance-sertifikat', 18500.00, 10, true,  true, 0),
@@ -520,7 +520,7 @@ BEGIN
   SELECT
     v_seller_id, c_series_dropin,
     name_email.name, name_email.email,
-    'confirmed', 'paid', 200.00, t_dropin_drop, 'Drop-in (per gang)', 'standard', 'drop_in',
+    'confirmed', 'paid', 200.00, t_dropin_drop, 'Drop-in', 'standard', 'drop_in',
     (SELECT id FROM public.course_sessions WHERE course_id = c_series_dropin AND status = 'upcoming' ORDER BY session_date LIMIT 1)
   FROM (VALUES
     ('Julie Moen',      'julie.moen@example.com'),

@@ -7,6 +7,8 @@ import { useCopyToClipboard } from '@/components/ui/copy-button';
 interface ShareCoursePopoverProps {
   courseUrl: string;
   courseTitle?: string;
+  /** Height of the default trigger — match the buttons sharing its row. */
+  size?: React.ComponentProps<typeof Button>['size'];
   children?: React.ReactNode;
 }
 
@@ -24,6 +26,7 @@ interface ShareCoursePopoverProps {
 export function ShareCoursePopover({
   courseUrl,
   courseTitle = 'kurset',
+  size = 'default',
   children,
 }: ShareCoursePopoverProps) {
   const [open, setOpen] = useState(false);
@@ -53,7 +56,7 @@ export function ShareCoursePopover({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         {children || (
-          <Button>
+          <Button size={size}>
             <Send data-icon="inline-start" />
             Del kurs
           </Button>
@@ -63,7 +66,7 @@ export function ShareCoursePopover({
         <button
           type="button"
           onClick={handleCopy}
-          className="w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm outline-none hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring ring-inset transition-[color,background-color,transform] active:translate-y-px cursor-pointer"
+          className="w-full flex items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm outline-none hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring ring-inset transition-[color,background-color,transform] active:translate-y-px cursor-pointer"
         >
           <div className="size-8 rounded-md bg-muted flex items-center justify-center shrink-0">
             {copied ? (
@@ -84,7 +87,7 @@ export function ShareCoursePopover({
           <button
             type="button"
             onClick={handleNativeShare}
-            className="w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm outline-none hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring ring-inset transition-[color,background-color,transform] active:translate-y-px cursor-pointer"
+            className="w-full flex items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm outline-none hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring ring-inset transition-[color,background-color,transform] active:translate-y-px cursor-pointer"
           >
             <div className="size-8 rounded-md bg-muted flex items-center justify-center shrink-0">
               <Send className="size-4 text-foreground-muted" strokeWidth={1.75} />

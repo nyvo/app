@@ -239,7 +239,7 @@ export default function JoinPage() {
               <Skeleton className="mx-auto h-8 w-56" />
               <Skeleton className="mx-auto h-4 w-72 max-w-full" />
             </div>
-            <Skeleton className="h-11 w-full rounded-full" />
+            <Skeleton className="h-10 w-full rounded-full" />
           </div>
         </DelayedFallback>
       </Shell>
@@ -299,7 +299,7 @@ export default function JoinPage() {
           Bli med i {team.name}
         </h1>
         <p className="text-base text-foreground-muted mb-8">
-          Logg inn eller opprett en konto for å fortsette. Du blir tilbake hit etterpå.
+          Logg inn eller opprett en konto for å fortsette. Du kommer tilbake hit etterpå.
         </p>
         <Button
           size="cta"
@@ -329,7 +329,7 @@ export default function JoinPage() {
           Denne lenken er for kursholdere
         </h1>
         <p className="text-base text-foreground-muted mb-8">
-          Invitasjonen lar kursholdere vise kursene sine på {team.name} sin side. Kontoen din er en deltakerkonto.
+          Invitasjonen lar kursholdere vise kursene sine på siden til {team.name}. Kontoen din er en deltakerkonto.
         </p>
         <Button size="cta" className="w-full" onClick={() => navigate('/overview')}>
           Gå til Min side
@@ -348,7 +348,7 @@ export default function JoinPage() {
             <Skeleton className="mx-auto h-8 w-56" />
             <Skeleton className="mx-auto h-4 w-72 max-w-full" />
           </div>
-          <Skeleton className="h-11 w-full rounded-full" />
+          <Skeleton className="h-10 w-full rounded-full" />
         </div>
       </Shell>
     );

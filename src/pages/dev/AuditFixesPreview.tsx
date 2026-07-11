@@ -20,7 +20,8 @@ const AuditFixesPreview = () => {
           <h1 className="text-2xl font-medium">Designaudit — foreslåtte endringer</h1>
           <p className="text-sm text-foreground-muted max-w-2xl">
             Oppdatert etter gjennomgang: punkt 1, 4 og 7 beholdes som i dag.
-            Punkt 2, 3, 5, 6 og 8 er implementert.
+            Punkt 2, 3, 5 og 8 er implementert. Punkt 6 utgikk — storefronten
+            ble redesignet i parallell (StudioAgendaList) med pris i fast kolonne.
           </p>
         </header>
 
@@ -104,10 +105,10 @@ const AuditFixesPreview = () => {
 
         <CompareSection
           title="6 · Storefront — avlyst økt viser ikke pris"
-          status="implementert"
-          note="Prisen fjernes på avlyste rader og Avlyst-pillen sentreres vertikalt i høyrekolonnen. Radhøyden styres av venstrekolonnen (tittel + meta), så blandede lister holder samme rytme. Pillen har ingen gjennomstreking — det var kun en feil i forrige forhåndsvisning; dashbordets Avlyst-badge er egen komponent."
-          beforeLabel="Før"
-          afterLabel="Nå (implementert)"
+          status="utgått"
+          note="Utgått: storefronten ble redesignet i en annen arbeidsflate (StudioAgendaList, ClassPass-grammatikk) mens dette var underveis. Den nye radkontrakten har fem faste kolonner der prisen alltid rendres — også på fulle/avlyste rader — for kolonnejustering. Endringen ble derfor droppet i merge; ta den opp mot den nye komponenten hvis ønsket."
+          beforeLabel="Gammel komponent"
+          afterLabel="Forslaget (ikke videreført)"
           before={<CancelledRow showPrice />}
           after={<CancelledRow showPrice={false} />}
         />
@@ -152,7 +153,7 @@ function CompareSection({
   afterCaption,
 }: {
   title: string;
-  status: 'implementert' | 'til vurdering';
+  status: 'implementert' | 'til vurdering' | 'utgått';
   note: string;
   before: ReactNode;
   after: ReactNode;
@@ -166,8 +167,12 @@ function CompareSection({
       <div className="space-y-1">
         <div className="flex items-center gap-2.5">
           <h2 className="text-lg font-medium">{title}</h2>
-          <Badge variant={status === 'implementert' ? 'success' : 'info'} shape="pill" size="sm">
-            {status === 'implementert' ? 'Implementert' : 'Til vurdering'}
+          <Badge
+            variant={status === 'implementert' ? 'success' : status === 'utgått' ? 'neutral' : 'info'}
+            shape="pill"
+            size="sm"
+          >
+            {status === 'implementert' ? 'Implementert' : status === 'utgått' ? 'Utgått' : 'Til vurdering'}
           </Badge>
         </div>
         <p className="text-sm text-foreground-muted max-w-3xl">{note}</p>
