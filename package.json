@@ -16,7 +16,9 @@
     "test:e2e:ui": "npx playwright test --ui",
     "test:e2e:headed": "npx playwright test --headed",
     "email:preview": "email dev --dir supabase/functions/send-email/templates",
-    "smoke:public": "node scripts/smoke-public-storefront.mjs"
+    "smoke:public": "node scripts/smoke-public-storefront.mjs",
+    "smoke": "node scripts/smoke/run.mjs",
+    "smoke:cleanup": "node scripts/smoke/cleanup.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

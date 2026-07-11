@@ -53,6 +53,10 @@ stripe-cli.zip
 # Supabase CLI temp
 supabase/.temp/
 
+# Smoke-test harness manifest (tracks resources created in the shared DB —
+# never commit; scripts/smoke/cleanup.mjs reads/clears it)
+scripts/smoke/.manifest.json
+
 # MCP config (contains tokens)
 .mcp.json
 
