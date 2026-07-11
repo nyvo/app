@@ -355,10 +355,10 @@ export default function CourseBuilderPage() {
           const { error: updErr } = await updateCourse(created.id, { image_url: url });
           if (updErr) {
             if (currentSeller?.id) void deleteCourseImage(created.id, url, currentSeller.id);
-            toast.error('Bildet ble ikke lastet opp — legg det til fra kurssiden');
+            toast.error('Bildet ble ikke lastet opp – legg det til fra kurssiden');
           }
         } else {
-          toast.error('Bildet ble ikke lastet opp — legg det til fra kurssiden');
+          toast.error('Bildet ble ikke lastet opp – legg det til fra kurssiden');
         }
       }
 

@@ -562,7 +562,7 @@ const CoursePage = () => {
         toast.success('Endringer lagret');
       }
     } catch {
-      setSaveError('Noe gikk galt. Prøv igjen.');
+      setSaveError('Noe gikk galt – prøv igjen');
     } finally {
       setIsSaving(false);
     }

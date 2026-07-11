@@ -97,7 +97,7 @@ const EmbedCalendarPage = () => {
 
         {!loading && errorKind === 'load-failed' && (
           <p className="py-20 text-center text-base text-foreground-muted">
-            Noe gikk galt. Prøv igjen senere.
+            Noe gikk galt – prøv igjen senere.
           </p>
         )}
 

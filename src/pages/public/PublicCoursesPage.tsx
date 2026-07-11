@@ -215,7 +215,7 @@ const PublicCoursesPage = () => {
                 <div className="pt-10 pb-24">
                   <p className="text-base font-medium text-foreground">Ingen planlagte kurs</p>
                   <p className="mt-1 text-sm text-foreground-muted">
-                    Det er ingen planlagte kurs akkurat nå. Kom tilbake snart.
+                    Kom gjerne tilbake senere.
                   </p>
                 </div>
               ) : (

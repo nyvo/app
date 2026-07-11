@@ -43,7 +43,7 @@ export const RefundReceipt = ({
       <DetailRow
         label="Arrangør"
         value={
-          arrangorOrgNumber ? `${studioName} · org.nr ${arrangorOrgNumber}` : studioName
+          arrangorOrgNumber ? `${studioName}, org.nr ${arrangorOrgNumber}` : studioName
         }
       />
       <DetailRow label="Referanse" value={bookingId} />

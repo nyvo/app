@@ -154,7 +154,7 @@ export function buildDropInSublabel(sessions: CourseSession[]): string | null {
   if (!next) return null;
   const dateLabel = formatRelativeDate(next.session_date);
   const time = next.start_time ? next.start_time.slice(0, 5) : null;
-  if (dateLabel && time) return `${dateLabel} · ${time}`;
+  if (dateLabel && time) return `${dateLabel} kl. ${time}`;
   return dateLabel || time || null;
 }
 
