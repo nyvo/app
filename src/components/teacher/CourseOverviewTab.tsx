@@ -306,6 +306,7 @@ function ReadinessCard({
           <p className="mt-1.5 text-base text-foreground-muted">{sub}</p>
         </div>
         <Button
+          size="sm"
           onClick={onClick}
           loading={loading}
           loadingText="Publiserer"

@@ -152,6 +152,7 @@ export function PasswordRow() {
         <span className="text-base font-medium text-foreground">Passord</span>
         <Button
           variant="secondary"
+          size="sm"
           className="shrink-0"
           disabled={hasPassword === null}
           onClick={toggleOpen}
@@ -278,10 +279,10 @@ export function PasswordRow() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button onClick={handleSave} loading={isSaving}>
+            <Button size="sm" onClick={handleSave} loading={isSaving}>
               Lagre passord
             </Button>
-            <Button variant="secondary" disabled={isSaving} onClick={resetAndClose}>
+            <Button size="sm" variant="secondary" disabled={isSaving} onClick={resetAndClose}>
               Avbryt
             </Button>
           </div>

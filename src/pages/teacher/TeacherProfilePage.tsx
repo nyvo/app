@@ -161,6 +161,7 @@ const TeacherProfilePage = () => {
                   <span className="text-base font-medium text-foreground">Logg ut alle enheter</span>
                   <Button
                     variant="secondary"
+                    size="sm"
                     className="shrink-0"
                     onClick={() => setLogoutAllOpen(true)}
                   >
@@ -171,6 +172,7 @@ const TeacherProfilePage = () => {
                   <span className="text-base font-medium text-foreground">Slett kontoen din</span>
                   <Button
                     variant="destructive"
+                    size="sm"
                     className="shrink-0"
                     onClick={() => setDeleteOpen(true)}
                   >

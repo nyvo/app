@@ -912,6 +912,7 @@ const CoursePage = () => {
                 <ShareCoursePopover
                   courseUrl={courseUrl}
                   courseTitle={courseData.title}
+                  size="sm"
                 />
               )}
               {/* State-change actions (unpublish) live in the kebab —
@@ -921,7 +922,7 @@ const CoursePage = () => {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="soft"
-                    size="icon"
+                    size="icon-sm"
                     aria-label="Mer"
                     title="Mer"
                   >

@@ -7,6 +7,8 @@ import { useCopyToClipboard } from '@/components/ui/copy-button';
 interface ShareCoursePopoverProps {
   courseUrl: string;
   courseTitle?: string;
+  /** Height of the default trigger — match the buttons sharing its row. */
+  size?: React.ComponentProps<typeof Button>['size'];
   children?: React.ReactNode;
 }
 
@@ -24,6 +26,7 @@ interface ShareCoursePopoverProps {
 export function ShareCoursePopover({
   courseUrl,
   courseTitle = 'kurset',
+  size = 'default',
   children,
 }: ShareCoursePopoverProps) {
   const [open, setOpen] = useState(false);
@@ -53,7 +56,7 @@ export function ShareCoursePopover({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         {children || (
-          <Button>
+          <Button size={size}>
             <Send data-icon="inline-start" />
             Del kurs
           </Button>

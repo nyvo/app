@@ -33,8 +33,12 @@ import { Spinner } from "./spinner"
  *   default  44px   px-4     text-sm    Normal app buttons
  *   lg       40px   px-5     text-sm    Modal footer actions
  *   cta      44px   px-6     text-base  Public/mobile primary CTAs
+ *   sm       32px   px-3     text-sm    Inline/secondary actions in dense chrome
+ *                                       (settings rows, toolbars, card utilities);
+ *                                       never on touch-first public surfaces
  *   icon     44px square              Icon-only controls
  *   icon-lg  40px square              Larger icon-only controls
+ *   icon-sm  32px square              Icon-only controls in dense chrome
  *
  * Touch surfaces (mobile booking, public pages, `BookingBar` at
  * src/components/public/course-details/BookingBar.tsx): minimum
@@ -67,8 +71,10 @@ const buttonVariants = cva(
         default: "h-11 gap-1.5 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
         lg: "h-10 gap-1.5 px-5 has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
         cta: "h-11 gap-2 px-6 text-base has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5",
+        sm: "h-8 gap-1 px-3 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
         icon: "size-11",
         "icon-lg": "size-10",
+        "icon-sm": "size-8",
       },
     },
     compoundVariants: [
@@ -77,11 +83,13 @@ const buttonVariants = cva(
       // explicit for icon sizes so it can't drift.
       { size: "icon", className: "rounded-full" },
       { size: "icon-lg", className: "rounded-full" },
+      { size: "icon-sm", className: "rounded-full" },
       // Plain variant strips chrome (height + padding) at every size.
       // Size still controls font-size; `plain` is "text inline, no button shell".
       { variant: "plain", size: "default", className: "h-auto p-0" },
       { variant: "plain", size: "lg", className: "h-auto p-0" },
       { variant: "plain", size: "cta", className: "h-auto p-0" },
+      { variant: "plain", size: "sm", className: "h-auto p-0" },
     ],
     defaultVariants: {
       variant: "default",

@@ -590,6 +590,7 @@ function ActionRow({ title, sub, buttonLabel, onClick, tone = 'default' }: Actio
       </div>
       <Button
         variant={tone === 'danger' ? 'destructive' : 'secondary'}
+        size="sm"
         onClick={onClick}
         className="shrink-0"
       >

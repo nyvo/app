@@ -200,6 +200,19 @@ export default function ModalsButtonsToastsPreview() {
                   <Button size="cta">Action</Button>
                 </SizeChip>
               </div>
+
+              <div className="mt-6 border-t border-border-subtle pt-6">
+                <ButtonRow label="sm (32px) — inline/dense actions">
+                  <Button size="sm">Action</Button>
+                  <Button size="sm" variant="secondary">Action</Button>
+                  <Button size="sm" variant="outline">Action</Button>
+                  <Button size="sm" variant="ghost">Action</Button>
+                  <Button size="sm" variant="destructive">Action</Button>
+                  <Button size="icon-sm" variant="ghost" aria-label="Handling">
+                    <Check className="size-4" />
+                  </Button>
+                </ButtonRow>
+              </div>
             </div>
           </div>
         </Section>

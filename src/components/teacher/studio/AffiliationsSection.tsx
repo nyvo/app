@@ -246,11 +246,11 @@ function IndividualView({
               vises ikke. Du kan stoppe visningen når som helst.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <Button variant="destructive" onClick={() => setConfirmLeave(true)}>
+              <Button variant="destructive" size="sm" onClick={() => setConfirmLeave(true)}>
                 Stopp visning
               </Button>
               {hostUrl && (
-                <Button variant="secondary" asChild>
+                <Button variant="secondary" size="sm" asChild>
                   <a href={hostUrl} target="_blank" rel="noopener noreferrer">
                     Vis studiosiden
                   </a>
@@ -364,7 +364,7 @@ function InstructorActionsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="soft" size="icon" aria-label="Handlinger">
+        <Button variant="soft" size="icon-sm" aria-label="Handlinger">
           <MoreVertical className="size-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -455,6 +455,7 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
         <Button
           type="button"
           variant="default"
+          size="sm"
           disabled={creating}
           onClick={() => (fetchFailed ? void loadLink() : void handleRegenerate())}
         >
@@ -476,6 +477,7 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
         <CopyButton
           value={`${window.location.origin}/join/${link.code}`}
           label="Kopier lenke"
+          size="sm"
         />
       </div>
       <p className="mt-3 text-sm text-foreground-muted">
