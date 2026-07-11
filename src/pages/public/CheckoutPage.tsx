@@ -84,7 +84,9 @@ const STRIPE_APPEARANCE = {
     colorPrimary: '#0074BF',
     colorText: '#111314',
     colorDanger: '#BD3838',
-    borderRadius: '6px',
+    // Match the page's own FloatingField inputs (rounded-xl) so the Stripe
+    // fields read as part of the same form.
+    borderRadius: '12px',
   },
 };
 
@@ -564,6 +566,11 @@ const CheckoutPage = () => {
                   amount: amountOre,
                   currency: 'nok',
                   captureMethod: 'manual',
+                  // Locked to bokmål — default 'auto' follows the buyer's
+                  // browser language, which splits the page into two languages
+                  // (Norwegian form, English payment fields) for any
+                  // non-Norwegian system locale.
+                  locale: 'nb',
                   appearance: STRIPE_APPEARANCE,
                 }}
               >
