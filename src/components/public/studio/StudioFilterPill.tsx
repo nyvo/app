@@ -36,8 +36,8 @@ export function StudioFilterPill<T extends string>({
       <SelectTrigger
         aria-label={ariaLabel}
         className={cn(
-          'h-8 gap-1 rounded-full border-transparent bg-muted px-3.5 text-sm font-medium text-foreground',
-          'hover:bg-border-subtle/60 [&_svg]:size-3.5 [&_svg]:text-foreground',
+          'h-8 gap-1 rounded-full border-transparent bg-muted px-3 text-sm font-medium text-foreground',
+          'hover:bg-pressed [&_svg]:size-3.5 [&_svg]:text-foreground',
         )}
       >
         <SelectValue />

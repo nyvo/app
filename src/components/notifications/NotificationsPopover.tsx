@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/drawer'
 import { cn } from '@/lib/utils'
 import { Bell } from '@/lib/icons'
+import { Button } from '@/components/ui/button'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useNotifications } from '@/hooks/use-notifications'
 import { NotificationFeed } from './NotificationFeed'
@@ -74,14 +75,13 @@ export function NotificationsPopover() {
   const hasUnseen = unseenCount > 0
 
   const triggerButton = (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon"
       aria-label={hasUnseen ? 'Varsler, uleste' : 'Varsler'}
       aria-haspopup="dialog"
-      className={cn(
-        'relative inline-flex size-9 shrink-0 items-center justify-center rounded-full outline-none transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-muted data-[state=open]:text-foreground',
-        hasUnseen ? 'text-foreground' : 'text-foreground-muted',
-      )}
+      className={cn('relative', hasUnseen ? 'text-foreground' : 'text-foreground-muted')}
     >
       <Bell className="size-5" />
       {/* Always mounted, toggled via classes — interruptible fade/scale
@@ -93,7 +93,7 @@ export function NotificationsPopover() {
           hasUnseen ? 'scale-100 opacity-100' : 'scale-50 opacity-0',
         )}
       />
-    </button>
+    </Button>
   )
 
   // Header + feed are identical across surfaces. Only the wrapping
@@ -103,13 +103,15 @@ export function NotificationsPopover() {
       <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
         {titleSlot}
         {notifications.length > 0 && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={archiveAll}
-            className="rounded-full px-2 py-1 text-xs text-foreground-muted transition-colors hover:bg-muted hover:text-foreground"
+            className="h-auto px-2 py-1 text-xs text-foreground-muted"
           >
             Fjern alle
-          </button>
+          </Button>
         )}
       </div>
 
@@ -152,7 +154,7 @@ export function NotificationsPopover() {
             sideOffset={8}
             aria-label="Varsler"
             className={cn(
-              'z-50 flex max-h-[520px] w-[380px] origin-(--radix-popover-content-transform-origin) flex-col overflow-hidden rounded-xl bg-surface text-sm text-foreground shadow-float outline-hidden duration-100',
+              'z-50 flex max-h-[520px] w-[380px] origin-(--radix-popover-content-transform-origin) flex-col overflow-hidden rounded-xl border border-border bg-surface text-sm text-foreground outline-hidden duration-100',
               'data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95',
               'data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
               'data-[side=bottom]:slide-in-from-top-2',

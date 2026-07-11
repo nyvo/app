@@ -12,12 +12,18 @@ const toastActionClassName =
 const toastClassName =
   "flex w-[calc(100vw-2rem)] items-start gap-3 rounded-2xl " +
   "bg-[var(--toast-surface)] px-5 py-4 text-chrome-foreground " +
-  "shadow-float ring-1 ring-chrome-foreground/10 " +
+  "ring-1 ring-chrome-foreground/10 " +
   "sm:w-[380px]"
 
 const toastIconClassName =
   "flex size-5 shrink-0 items-center justify-center rounded-full " +
   "bg-chrome-foreground/15 text-chrome-foreground [&_svg]:size-3.5 [&_svg]:stroke-[2.5]"
+
+// bg-danger/30 below is a sanctioned opacity mix, not the banned "-subtle
+// opacity hack": the opaque --danger-subtle is tuned for light surfaces and
+// is unreadable on dark chrome, and a dedicated --chrome-danger token with a
+// single consumer would be more drift surface than this one blessed usage.
+// If dark chrome grows a second status fill, tokenize then.
 
 const errorToastIconClassName =
   "flex size-5 shrink-0 items-center justify-center rounded-full " +

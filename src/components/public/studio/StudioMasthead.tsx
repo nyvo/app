@@ -40,12 +40,12 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
           <LogoTile organization={organization} />
         </div>
 
-        <h1 className="mt-4 text-2xl sm:text-[26px] font-medium text-foreground leading-tight tracking-[-0.012em]">
+        <h1 className="mt-4 text-2xl font-medium text-foreground">
           {organization.name}
         </h1>
 
         {location && (
-          <p className="mt-[5px] text-[15px] text-foreground-muted truncate">
+          <p className="mt-1 text-sm text-foreground-muted truncate">
             {location.address || location.label}
             {', '}
             <a
@@ -96,7 +96,7 @@ function LogoTile({ organization }: { organization: PublicSeller }) {
 
   return (
     <div className={cn(frame, 'bg-muted')} aria-label={organization.name}>
-      <span className="text-xl font-medium tracking-[0.02em] text-foreground-muted">
+      <span className="text-xl font-medium text-foreground-muted">
         {initials(organization.name)}
       </span>
     </div>

@@ -21,7 +21,8 @@ only. Categorical blues (`--category-*`) are identity markers only.
 1. **Separation by an escalation ladder — use the earliest step that works,
    never skip ahead:** whitespace → hairline (`border-subtle`) → background tint
    (`bg-muted` / `--primary-subtle`) → visible border (`border-card` / `border`)
-   → shadow (`shadow-soft` on focal floating cards; `shadow-float` on overlays).
+   → shadow (`shadow-soft` on focal floating cards ONLY — overlays are
+   bordered, not lifted).
    Borders are a legitimate rung here, not a smell, but `border-card` is
    reserved exclusively for the floating-focal-card edge (booking rail,
    checkout) — it is not a general card border. Plain `border` is for
@@ -41,10 +42,12 @@ only. Categorical blues (`--category-*`) are identity markers only.
    use the 4–10px radius scale; ALL buttons are pills (`rounded-full`) — the
    pill is the action affordance, the soft rectangle is the surface/field
    affordance. Chips, badges, and avatars are also fully round.
-5. **Flat with subtle depth.** No shadows on resting cards. Two sanctioned
-   exceptions: `shadow-soft` on the focal floating cards (booking rail, checkout
-   summary, receipt pane — paired with `rounded-2xl`), and `shadow-float` on
-   overlays (dialogs, popovers, dropdowns, toasts).
+5. **Flat with subtle depth.** No shadows on resting cards. ONE sanctioned
+   exception: `shadow-soft` on the focal floating cards (booking rail, checkout
+   summary, receipt pane — paired with `rounded-2xl`). Overlays (dialogs,
+   popovers, dropdowns, toasts) are separated by a plain `border-border` edge
+   on `bg-surface` — never a shadow (2026-07-11; the old `shadow-float` overlay
+   shadow was removed).
 
 ---
 
@@ -253,6 +256,12 @@ filled look is the DISABLED affordance, which is why resting fields are never
 filled. Labels above inputs: `text-sm font-medium text-foreground` (not
 muted — labels are read).
 
+**Binary controls (switch, checkbox, radio, selected calendar day):** the
+checked/on fill is neutral near-black — `bg-foreground` with a
+`text-background` glyph / `bg-background` thumb — matching the primary-action
+fill, per the monochrome direction (decided 2026-07-11; extends the 2026-07-08
+neutral `RadioGroupCardItem` call). Never brand-azure on control fills.
+
 ### Chips / badges / status
 
 Soft-rounded or full pill, `bg-muted` fill, foreground or muted text, `text-xs`,
@@ -268,9 +277,11 @@ fill change (`--selection-light` or `bg-muted`), never a colored border alone.
 No vertical rules ever. Row separation: `border-subtle` hairline or spacing.
 Header row: `text-xs`/`text-sm`, muted, no fill. Tall rows; one weighted cell
 per row; metadata as small muted stroke-icon+text pairs. Row hover: `bg-hover`.
-No "·" interpuncts between metadata fields (separation via spacing/layout);
-the one sanctioned "·" is INSIDE a single composed when-string
-("fredag 28. nov · kl. 18:00") — date and time form one value, not two fields.
+Interpunct rule (2026-07-11): ONE "·" may pair two related values in a string
+("fredag 28. nov · kl. 18:00", "adresse · Veibeskrivelse", "8 økter ·
+Ingrid Larsen"). More than one "·" in the same string is banned — a third
+value means the string is a list, so use commas or layout instead. Never use
+"·" as a generic column separator across a row's metadata fields.
 
 ### Progress bars
 
@@ -292,7 +303,11 @@ still applies to every new chart.
 ### Overlays
 
 Dialogs, popovers, dropdowns, toasts: `bg-surface`, `rounded-xl`,
-`shadow-float`. Toasts use `--toast-surface` (dark chrome).
+`border border-border` — no shadow (overlays are bordered, not lifted).
+Toasts use `--toast-surface` (dark chrome) with the `ring-chrome-foreground/10`
+hairline as their edge. Modal scrims are `bg-foreground/40` — sanctioned:
+foreground-ink at alpha adapts to theme like `--hover`/`--pressed` do; use
+exactly this value, don't invent per-surface scrims.
 
 ### Icons
 
@@ -328,7 +343,7 @@ When touching existing code, hunt for these and convert them:
 | `font-bold`; more than one weighted cell per row | `font-medium`/`font-semibold` per §2; one weighted cell |
 | `tracking-*` stacked on scale sizes | Delete — letter-spacing is in the type token |
 | Pure black `#000` text | `text-foreground` |
-| `box-shadow` on resting cards/buttons | Delete; shadows only on overlays + the sanctioned focal floating cards |
+| `box-shadow` on resting cards/buttons/overlays | Delete; `shadow-soft` on the sanctioned focal floating cards is the only shadow — overlays get `border border-border` |
 | Radii outside the scale (arbitrary `rounded-[14px]` etc.) | Nearest scale step (§2) |
 | Non-pill buttons (`rounded-xl`/`rounded-lg` on any button) | `rounded-full` per button.tsx — all buttons are pills |
 | Brand-colored focus rings | `ring-ring` (neutral) |

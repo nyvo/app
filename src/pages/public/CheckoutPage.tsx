@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +10,7 @@ import { FieldError } from '@/components/ui/field-error';
 import { PageState } from '@/components/page-state/page-state';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { FloatingField } from '@/components/public/FloatingField';
+import { StorefrontHeader } from '@/components/public/StorefrontHeader';
 import { Elements, PaymentElement, useStripe as useStripeHook, useElements } from '@stripe/react-stripe-js';
 import type { Stripe } from '@stripe/stripe-js';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
@@ -65,30 +66,47 @@ function firstInvalidField(form: FormState): 'name' | 'email' | 'phone' | 'terms
   return null;
 }
 
+/**
+ * Resolve a src/index.css token to a Stripe-safe color. Stripe's appearance
+ * API validates color strings and rejects OKLCH in some versions, so the
+ * computed token is normalized through a canvas fill — browsers serialize an
+ * opaque `fillStyle` back as sRGB hex. Reading the live token (instead of a
+ * hand-copied hex) means a token retune can't silently leave checkout on
+ * stale brand colors; the fallback is the last-known resolved value.
+ */
+function tokenToHex(varName: string, fallback: string): string {
+  if (typeof document === 'undefined') return fallback;
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  if (!raw) return fallback;
+  const ctx = document.createElement('canvas').getContext('2d');
+  if (!ctx) return fallback;
+  ctx.fillStyle = fallback; // seed with a known-valid color
+  ctx.fillStyle = raw; // an invalid/unsupported value leaves the seed in place
+  return String(ctx.fillStyle);
+}
+
 // Stripe Elements appearance for the deferred-intent Payment Element.
-const STRIPE_APPEARANCE = {
-  theme: 'stripe' as const,
-  variables: {
-    // Stripe loads its PaymentElement in a cross-origin iframe, so it can't
-    // inherit the page's @font-face — 'Geist Variable' is self-hosted with
-    // no public URL to pass via Stripe's `fonts` config, so this falls back
-    // to system-ui in every browser.
-    fontFamily: "'Geist Variable', system-ui, sans-serif",
-    // Stripe's appearance API validates color strings and rejects OKLCH in
-    // some versions — hardcoded to the resolved sRGB hex of the matching
-    // src/index.css tokens rather than risk a silent fallback to Stripe's
-    // default blue:
-    //   colorPrimary → --primary   oklch(0.540 0.150 245) → #0074BF
-    //   colorText    → --foreground (--neutral-12) oklch(0.185 0.004 250) → #111314
-    //   colorDanger  → --danger (--red-11) oklch(0.540 0.170 25) → #BD3838
-    colorPrimary: '#0074BF',
-    colorText: '#111314',
-    colorDanger: '#BD3838',
-    // Match the page's own FloatingField inputs (rounded-xl) so the Stripe
-    // fields read as part of the same form.
-    borderRadius: '12px',
-  },
-};
+// Resolved lazily (and once) so the tokens are read after index.css is live.
+let stripeAppearance: { theme: 'stripe'; variables: Record<string, string> } | null = null;
+function getStripeAppearance() {
+  stripeAppearance ??= {
+    theme: 'stripe',
+    variables: {
+      // Stripe loads its PaymentElement in a cross-origin iframe, so it can't
+      // inherit the page's @font-face — 'Geist Variable' is self-hosted with
+      // no public URL to pass via Stripe's `fonts` config, so this falls back
+      // to system-ui in every browser.
+      fontFamily: "'Geist Variable', system-ui, sans-serif",
+      colorPrimary: tokenToHex('--primary', '#0074bf'),
+      colorText: tokenToHex('--foreground', '#111314'),
+      colorDanger: tokenToHex('--danger', '#bd3838'),
+      // Match the page's own FloatingField inputs (rounded-xl) so the Stripe
+      // fields read as part of the same form.
+      borderRadius: '12px',
+    },
+  };
+  return stripeAppearance;
+}
 
 /**
  * Resolve Stripe.js once, gated on `enabled` (paid + payment-ready courses
@@ -409,6 +427,7 @@ const CheckoutPage = () => {
       imageUrl: resolveCourseImage(course),
       sellerName: course.seller?.name ?? '',
       sellerSlug: course.seller?.slug ?? slug,
+      sellerLogoUrl: course.seller?.logo_url ?? null,
       participantEmailMasked: maskEmail(form.email.trim()),
       createdAt: new Date().toISOString(),
     });
@@ -447,11 +466,11 @@ const CheckoutPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
-        <Link to={`/${slug}`} className="flex select-none items-center">
-          <span className="text-base font-medium text-foreground">Openspot</span>
-        </Link>
-      </header>
+      <StorefrontHeader
+        name={course.seller?.name}
+        slug={slug}
+        logoUrl={course.seller?.logo_url}
+      />
       <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">
 
         {isCancelled && (
@@ -491,7 +510,7 @@ const CheckoutPage = () => {
             metaLoading={isDropInSelected && dropInResolving}
             trailing={
               !closed && !showBillett && billettLowStock ? (
-                <span className="ml-auto whitespace-nowrap text-[13px] text-warning">
+                <span className="ml-auto whitespace-nowrap text-xs text-warning">
                   {billettSpotsLeft} {billettSpotsLeft === 1 ? 'plass' : 'plasser'} igjen
                 </span>
               ) : undefined
@@ -572,7 +591,7 @@ const CheckoutPage = () => {
                   // (Norwegian form, English payment fields) for any
                   // non-Norwegian system locale.
                   locale: 'nb',
-                  appearance: STRIPE_APPEARANCE,
+                  appearance: getStripeAppearance(),
                 }}
               >
                 <ElementsAmountSync amountOre={amountOre} />
@@ -620,7 +639,7 @@ const CheckoutPage = () => {
  * render together on one screen, so there's nothing left to count. */
 export function CheckoutTitle() {
   return (
-    <h1 className="mt-3.5 text-[26px] font-medium tracking-[-0.014em] text-foreground">
+    <h1 className="mt-3 text-2xl font-medium text-foreground">
       Fullfør påmeldingen
     </h1>
   );
@@ -1190,8 +1209,8 @@ export function CheckoutReceipt({
       )}
       <div
         className={cn(
-          'flex items-baseline justify-between gap-3 text-[15px] font-medium text-foreground',
-          !isFree && 'mt-[9px] border-t border-border-subtle pt-[11px]',
+          'flex items-baseline justify-between gap-3 text-base font-medium text-foreground',
+          !isFree && 'mt-2 border-t border-border-subtle pt-3',
         )}
       >
         <span>Totalt</span>
@@ -1272,7 +1291,7 @@ function MetaLine({ text }: { text: string }) {
   return (
     <p
       className={cn(
-        'mt-px truncate text-[13px] text-foreground-muted transition-[opacity,filter] duration-150 ease-out motion-reduce:transition-none motion-reduce:opacity-100 motion-reduce:blur-none',
+        'mt-px truncate text-xs text-foreground-muted transition-[opacity,filter] duration-150 ease-out motion-reduce:transition-none motion-reduce:opacity-100 motion-reduce:blur-none',
         swapping && 'opacity-0 blur-[2px]',
       )}
     >
@@ -1284,9 +1303,7 @@ function MetaLine({ text }: { text: string }) {
 function CheckoutSkeleton() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
-        <span className="text-base font-medium text-foreground">Openspot</span>
-      </header>
+      <StorefrontHeader />
       <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">
         <div className="mx-auto max-w-[520px] space-y-6">
           <Skeleton className="h-4 w-32" />

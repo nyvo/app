@@ -27,6 +27,7 @@ import {
 } from '@/components/teacher/SessionDaysEditor';
 import type { SessionDay } from '@/components/teacher/SessionDaysEditor';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { PageShell } from '@/components/teacher/PageShell';
 import { LocationField } from '@/components/ui/location-field';
 import { useAuth } from '@/contexts/AuthContext';
 import { createCourse, updateCourse, publishCourse } from '@/services/courses';
@@ -387,10 +388,9 @@ export default function CourseBuilderPage() {
       <MobileTeacherHeader />
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {/* 2xl column so the fields inside the panel's p-8 land in the §2.3
-            480–560px band (672 − 64 gutters − 64 padding = 544px). */}
-        <div className="mx-auto max-w-2xl px-4 pb-12 pt-6 sm:px-6 lg:px-8 lg:pt-12">
-          <h1 className="mb-8 text-2xl font-medium text-foreground">Nytt kurs</h1>
+        {/* narrow="form" (max-w-2xl) so the fields inside the panel's p-8 land
+            in the §2.3 480–560px band (672 − 64 gutters − 64 padding = 544px). */}
+        <PageShell title="Nytt kurs" narrow="form" animate={false} className="pb-12">
 
           {/* Focused form column on ONE utility panel (one-shot form recipe:
               grey bg-panel on the white page, white fields on top). Hierarchy
@@ -673,7 +673,7 @@ export default function CourseBuilderPage() {
               </section>
             </div>
           </div>
-        </div>
+        </PageShell>
       </div>
 
       {/* Pinned footer */}

@@ -114,11 +114,9 @@ export function DirtyFormBar({
           className={cn(
             "fixed bottom-6 z-40 w-fit -translate-x-1/2",
             // Surface chrome — light floating pill. Matches dialog's surface +
-            // ring convention; matches toast's radius + shadow convention for
-            // floating bottom chrome (see studio-design components.md § Toast).
-            "flex items-center gap-4 rounded-2xl bg-surface py-2 pr-2 pl-5",
+            // border convention (overlays are bordered, not lifted — 2026-07-11).
+            "flex items-center gap-4 rounded-2xl border border-border bg-surface py-2 pr-2 pl-5",
             "text-foreground",
-            "shadow-float",
             // Interruptible transition (not a keyframe animation) so it can
             // reverse mid-flight. Matches toast motion (slide-up + fade);
             // exit is faster than enter, matching the rest of the app.

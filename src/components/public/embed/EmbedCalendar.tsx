@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from '@/lib/icons';
+import { Button } from '@/components/ui/button';
 import { cn, formatCoursePrice, formatKroner } from '@/lib/utils';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 import {
@@ -158,26 +159,30 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
         <section className="shrink-0 p-5 @2xl:w-[328px]">
           <div className="mx-auto w-fit @2xl:mx-0">
             <header className="mb-4 flex items-center justify-between gap-2">
-              <h2 className="text-[0.9375rem] font-medium tabular-nums first-letter:uppercase text-foreground">
+              <h2 className="text-sm font-medium tabular-nums first-letter:uppercase text-foreground">
                 {monthLabel}
               </h2>
               <div className="flex items-center gap-1">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="icon-sm"
                   onClick={() => goMonth(-1)}
-                  className="flex size-9 items-center justify-center rounded-full border border-border text-foreground-muted transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="text-foreground-muted"
                   aria-label="Forrige måned"
                 >
                   <ChevronLeft className="size-4" />
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
+                  size="icon-sm"
                   onClick={() => goMonth(1)}
-                  className="flex size-9 items-center justify-center rounded-full border border-border text-foreground-muted transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="text-foreground-muted"
                   aria-label="Neste måned"
                 >
                   <ChevronRight className="size-4" />
-                </button>
+                </Button>
               </div>
             </header>
 
