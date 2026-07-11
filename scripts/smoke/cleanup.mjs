@@ -59,6 +59,33 @@ async function cleanupPaymentIntents(entries, { dryRun }) {
   }
 }
 
+// Backstop for the webhook race: the payment webhook mints the signup
+// asynchronously, so a test that fails (or is killed) after create+confirm but
+// before it records the signup id leaves an orphaned signup the type-based
+// delete below would miss. Every such signup carries a manifest'd
+// stripe_payment_intent_id, so delete by that backlink too — scoped strictly to
+// PIs this run created, never a blanket delete.
+async function cleanupSignupsByPaymentIntent(entries, { dryRun }) {
+  const piIds = entries
+    .filter((entry) => entry.type === 'payment_intent')
+    .map((entry) => entry.stripe_id || entry.id)
+    .filter(Boolean)
+  if (piIds.length === 0) return
+  if (dryRun) {
+    console.log(`[dry-run] would delete any signups back-linked to ${piIds.length} manifest PaymentIntent(s)`)
+    return
+  }
+  const { error, count } = await getServiceClient()
+    .from('signups')
+    .delete({ count: 'exact' })
+    .in('stripe_payment_intent_id', piIds)
+  if (error) {
+    console.error(`[cleanup] failed to delete signups by payment_intent: ${error.message}`)
+  } else if (count) {
+    console.log(`[cleanup] deleted ${count} signup(s) via payment_intent backlink (webhook-minted, unrecorded)`)
+  }
+}
+
 async function cleanupRows(entries, { dryRun }) {
   for (const type of DELETE_ORDER) {
     const ids = entries.filter((entry) => entry.type === type).map((entry) => entry.id)
@@ -95,6 +122,7 @@ export async function cleanup({ dryRun }) {
   )
 
   await cleanupPaymentIntents(entries, { dryRun })
+  await cleanupSignupsByPaymentIntent(entries, { dryRun })
   await cleanupRows(entries, { dryRun })
 
   if (dryRun) {
