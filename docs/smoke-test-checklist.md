@@ -106,4 +106,18 @@ Living checklist for the pre-launch smoke pass. Status column: `☐` todo · `�
 - ✅ Mailosaur — API key + server id in `.env.local`, inbox reachable
 - ✅ `VITE_STRIPE_PUBLISHABLE_KEY=pk_test_…` in `.env.local`
 - ✅ Supabase URL + anon key present; Playwright + Vitest installed
-- ⬜ Confirm edge-fn `STRIPE_SECRET_KEY` is test + same account (functional check on A1)
+- ✅ Edge-fn `STRIPE_SECRET_KEY` is test + same account (confirmed by A1 booking succeeding live)
+
+## Run results (2026-07-11, test mode, all created data cleaned up)
+Ran against the real deployed backend + shared DB. Fixtures under `kristoffer-studio`.
+
+- **A1–A12 money — all PASS.** A11 initially failed and thereby caught that the committed `charge.refunded` fix was **not deployed**; after `supabase functions deploy stripe-connect-webhook` it passed live.
+- **E1, E2, E5, E6 PASS.** E4 PASS after fixing it to trip the per-email bucket (sandbox rotates egress IPs). E3 — security is correct (all webhooks reject unsigned/bad-sig 4xx); harness assertion is over-strict (accept any 4xx) — TODO.
+- **F3 PASS.** F1 = the 3 uncommitted-to-remote migrations (expected — Day-2 apply). F6 = SPF missing on the sending domain (`mail.openspot.no` has DKIM; DMARC `p=none`) — Day-2 DNS.
+- **Playwright D1, D2, D3, D4, D6, A1-render — PASS.** D1 course-detail skips (storefront cards aren't anchors; covered indirectly by A1-render).
+
+### Launch deploy gaps this surfaced (all committed, none live)
+1. **Edge functions**: `stripe-connect-webhook` now deployed. Still to deploy WITH their migration: `check-stripe-connect-status` + `stripe-connect-account-events` (write `stripe_payouts_enabled`), `delete-account` (subscription blocker).
+2. **Migrations**: `20260711120000`, `20260711130000`, `20260711131000` need `db push` + land on `main`.
+3. **Frontend**: headers/OG/copy/payouts-banner ship on next Vercel deploy.
+4. **Email DNS**: add SPF for the Resend sending domain (F6).

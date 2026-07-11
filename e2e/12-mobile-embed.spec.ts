@@ -20,10 +20,16 @@ test.describe('D6 mobile pamelding layout', () => {
   test.use({ viewport: MOBILE_VIEWPORT, isMobile: true, hasTouch: true });
 
   test('D6 pamelding has no horizontal overflow and a visible primary CTA at 375px', async ({ page }) => {
-    const href = await getFirstCourseHref(page, SMOKE_SELLER_SLUG);
-    test.skip(!href, `No visible published course under /${SMOKE_SELLER_SLUG} to open a booking flow for.`);
+    // Prefer the explicit paid-course pamelding URL; fall back to discovering a
+    // course link on the storefront (works only if cards render as anchors).
+    let pameldingUrl = process.env.SMOKE_PAID_COURSE_URL;
+    if (!pameldingUrl) {
+      const href = await getFirstCourseHref(page, SMOKE_SELLER_SLUG);
+      test.skip(!href, `No SMOKE_PAID_COURSE_URL and no visible course under /${SMOKE_SELLER_SLUG}.`);
+      pameldingUrl = `${href}/pamelding`;
+    }
 
-    await page.goto(`${href}/pamelding`);
+    await page.goto(pameldingUrl);
 
     // Works for both the free ("Bekreft påmelding") and paid ("Betal …")
     // submit buttons — there is exactly one <form> submit action per state.
