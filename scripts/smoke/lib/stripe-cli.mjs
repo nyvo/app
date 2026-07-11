@@ -50,12 +50,25 @@ function parseJsonOutput(result, label) {
   if (result.status !== 0) {
     throw new Error(`${label} failed (exit ${result.status}): ${result.stderr || result.stdout}`)
   }
+  let parsed
   try {
-    return JSON.parse(result.stdout)
+    parsed = JSON.parse(result.stdout)
   } catch {
     throw new Error(`${label} did not return JSON on stdout: ${result.stdout.slice(0, 500)}`)
   }
+  // The Stripe CLI prints an error OBJECT (exit 0) when the API rejects a
+  // request — surface it instead of returning a statusless object that a
+  // caller would misread as "unexpected status: undefined".
+  if (parsed && parsed.error) {
+    throw new Error(`${label} returned a Stripe error: ${parsed.error.message || parsed.error.code}`)
+  }
+  return parsed
 }
+
+// Confirming server-side with a test card still requires a return_url because
+// the app's PaymentIntents enable automatic_payment_methods with redirect-
+// capable methods (klarna/link). Any valid URL satisfies Stripe in test mode.
+const CONFIRM_RETURN_URL = 'https://openspot.no/checkout/success'
 
 /**
  * Async (non-blocking) CLI invocation — for the ONE thing spawnSync can't do:
@@ -93,7 +106,10 @@ async function runCliAsync(args, label) {
 export function confirmPaymentIntentsConcurrently(paymentIntentIds, paymentMethod = 'pm_card_visa') {
   return Promise.allSettled(
     paymentIntentIds.map((id) =>
-      runCliAsync(['payment_intents', 'confirm', id, '--payment-method', paymentMethod], `stripe payment_intents confirm ${id}`),
+      runCliAsync(
+        ['payment_intents', 'confirm', id, '--payment-method', paymentMethod, '-d', `return_url=${CONFIRM_RETURN_URL}`],
+        `stripe payment_intents confirm ${id}`,
+      ),
     ),
   )
 }
@@ -127,7 +143,11 @@ export function trigger(event, { overrides = {}, add = {}, skip = [] } = {}) {
 
 /** Confirm a PaymentIntent with a test payment method (pm_card_visa, pm_card_chargeDeclined, ...). */
 export function confirmPaymentIntent(paymentIntentId, paymentMethod = 'pm_card_visa') {
-  const result = runCli(['payment_intents', 'confirm', paymentIntentId, '--payment-method', paymentMethod])
+  const result = runCli([
+    'payment_intents', 'confirm', paymentIntentId,
+    '--payment-method', paymentMethod,
+    '-d', `return_url=${CONFIRM_RETURN_URL}`,
+  ])
   return parseJsonOutput(result, `stripe payment_intents confirm ${paymentIntentId}`)
 }
 
