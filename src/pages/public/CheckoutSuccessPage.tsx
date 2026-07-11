@@ -15,6 +15,7 @@ import { toLocalDate } from '@/utils/dateUtils';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { COMPANY } from '@/lib/company';
 import { readFreeReceipt, type FreeReceipt } from '@/lib/free-receipt';
+import { StorefrontHeader } from '@/components/public/StorefrontHeader';
 import { downloadIcs, resolveEventEnd, type IcsEvent } from '@/utils/ics';
 import { directionsUrl } from '@/components/public/studio/studioFacts';
 
@@ -88,6 +89,8 @@ interface DisplaySignup {
     locationPlaceId: string | null;
     imageUrl: string | null;
     sellerSlug: string;
+    sellerName: string | null;
+    sellerLogoUrl: string | null;
   };
 }
 
@@ -297,11 +300,7 @@ const CheckoutSuccessPage = () => {
   if (error) {
     return (
       <div className="min-h-screen w-full bg-background">
-        <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
-          <Link to={orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/'} className="flex select-none items-center">
-            <span className="text-base font-medium text-foreground">Openspot</span>
-          </Link>
-        </header>
+        <StorefrontHeader />
         <div>
           <PageState variant="server-error" description={error} />
         </div>
@@ -328,6 +327,8 @@ const CheckoutSuccessPage = () => {
           locationPlaceId: null,
           imageUrl: signup.course.image_url ?? null,
           sellerSlug: signup.course.seller.slug,
+          sellerName: signup.course.seller.name ?? null,
+          sellerLogoUrl: signup.course.seller.logo_url ?? null,
         },
       }
     : freeReceipt
@@ -347,16 +348,12 @@ const CheckoutSuccessPage = () => {
             locationPlaceId: freeReceipt.locationPlaceId,
             imageUrl: freeReceipt.imageUrl,
             sellerSlug: freeReceipt.sellerSlug,
+            sellerName: freeReceipt.sellerName || null,
+            sellerLogoUrl: freeReceipt.sellerLogoUrl ?? null,
           },
         }
       : null;
 
-  // Determine studio URL from signup/receipt data or URL parameter
-  const studioUrl = displaySignup?.course.sellerSlug
-    ? `/${displaySignup.course.sellerSlug}`
-    : orgSlugFromUrl
-      ? `/${orgSlugFromUrl}`
-      : '/';
 
   // Show booking failed state
   if (bookingFailed) {
@@ -484,11 +481,11 @@ const CheckoutSuccessPage = () => {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
-      <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
-        <Link to={studioUrl} className="flex select-none items-center">
-          <span className="text-base font-medium text-foreground">Openspot</span>
-        </Link>
-      </header>
+      <StorefrontHeader
+        name={displaySignup?.course.sellerName}
+        slug={displaySignup?.course.sellerSlug ?? orgSlugFromUrl}
+        logoUrl={displaySignup?.course.sellerLogoUrl}
+      />
 
       <main className="flex flex-1 items-start justify-center px-4 pb-16 sm:px-6 lg:px-8 md:items-center">
         <div className="w-full max-w-md">

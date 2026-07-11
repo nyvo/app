@@ -224,7 +224,7 @@ const PublicCoursesPage = () => {
                   {filteredCourses.length === 0 ? (
                     /* Filtered empty: one inline sentence + recovery link,
                      * page structure retained (Skillshare pattern). */
-                    <p className="py-8 text-[15px] text-foreground-muted">
+                    <p className="py-8 text-base text-foreground-muted">
                       Ingen kurs passer filteret.{' '}
                       {filtersActive && (
                         <button

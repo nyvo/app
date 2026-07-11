@@ -514,14 +514,16 @@ const AuthPage = () => {
     const isSignup = accountMode === 'signup'
     return (
       <AuthLayout title="" customContent>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-sm"
           onClick={backToIdentify}
           aria-label="Tilbake"
-          className="absolute -left-2 -top-0.5 rounded-full p-2 text-foreground-muted transition-colors hover:bg-hover hover:text-foreground"
+          className="absolute -left-2 -top-0.5 text-foreground-muted"
         >
           <ChevronLeft className="size-5" />
-        </button>
+        </Button>
         <div className="mb-8 space-y-2 text-center">
           <h1 className="text-2xl font-medium text-foreground">
             {isSignup ? 'Lag et passord' : 'Skriv inn passordet'}

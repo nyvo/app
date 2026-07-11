@@ -54,7 +54,7 @@ export function CourseDetailContent({ course, sessions, backHref }: CourseDetail
 
       <CourseImage course={course} />
 
-      <h1 className="mt-7 text-4xl font-medium tracking-tight leading-[1.08] text-foreground">
+      <h1 className="mt-8 text-4xl font-medium text-foreground">
         {course.title}
       </h1>
 
@@ -179,7 +179,7 @@ function TimeplanStrip({
         <button
           type="button"
           onClick={onOpenSchedule}
-          className="flex min-w-[104px] shrink-0 items-center justify-center rounded-xl border border-dashed border-border-subtle px-3.5 py-3 text-sm text-foreground-muted hover:text-foreground hover:border-border transition-colors"
+          className="flex min-w-[104px] shrink-0 items-center justify-center rounded-xl border border-dashed border-border-subtle px-3 py-3 text-sm text-foreground-muted hover:text-foreground hover:border-border transition-colors"
         >
           + {hiddenCount} {hiddenCount === 1 ? 'økt' : 'økter'}
         </button>
@@ -209,7 +209,7 @@ function SessionCard({
   return (
     <div
       className={cn(
-        'min-w-[104px] shrink-0 rounded-xl border border-border-subtle px-3.5 py-3',
+        'min-w-[104px] shrink-0 rounded-xl border border-border-subtle px-3 py-3',
         (isPast || isCancelled) && 'opacity-55',
       )}
     >
@@ -218,7 +218,7 @@ function SessionCard({
       </span>
       <p
         className={cn(
-          'mt-[3px] text-[15px] font-medium text-foreground',
+          'mt-1 text-sm font-medium text-foreground',
           (isPast || isCancelled) && 'line-through',
         )}
       >
@@ -229,7 +229,7 @@ function SessionCard({
           Avlyst
         </Badge>
       ) : (
-        <span className="mt-px block text-[13px] tabular-nums text-foreground-muted">
+        <span className="mt-px block text-xs tabular-nums text-foreground-muted">
           {isPast ? 'Gjennomført' : timeRange}
         </span>
       )}

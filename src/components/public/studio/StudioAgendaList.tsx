@@ -58,7 +58,7 @@ export function StudioAgendaList({ courses, viewingSlug, viewingName }: StudioAg
       {groups.map(([key, groupCourses], index) => (
         <section
           key={key}
-          className={cn('pt-6', index > 0 && 'mt-3.5 border-t border-border-subtle')}
+          className={cn('pt-6', index > 0 && 'mt-4 border-t border-border-subtle')}
         >
           <GroupHeading groupKey={key} todayKey={todayKey} tomorrowKey={tomorrowKey} />
           <ul className="mt-1">
@@ -156,7 +156,7 @@ function AgendaRow({
   const body = (
     <>
       <span className="w-14 shrink-0 flex flex-col gap-0.5">
-        <span className="text-[15px] font-medium tabular-nums text-foreground">{time || '—'}</span>
+        <span className="text-base font-medium tabular-nums text-foreground">{time || '—'}</span>
         {duration && (
           <span className="text-sm text-foreground-muted whitespace-nowrap">{duration}</span>
         )}
@@ -174,7 +174,7 @@ function AgendaRow({
         * deliberately NOT shown here — urgency copy lives on the detail
         * page only. */}
       <div className="shrink-0 flex flex-col items-end gap-1.5">
-        <span className="text-[15px] font-medium tabular-nums whitespace-nowrap text-foreground">
+        <span className="text-base font-medium tabular-nums whitespace-nowrap text-foreground">
           {price.from && price.amount ? (
             <>
               <span className="font-normal text-foreground-muted">fra </span>
@@ -186,7 +186,7 @@ function AgendaRow({
         </span>
         <span
           className={cn(
-            'inline-flex h-8 items-center rounded-full px-3.5 text-sm font-medium transition-colors duration-150',
+            'inline-flex h-8 items-center rounded-full px-3 text-sm font-medium transition-colors duration-150',
             bookability === 'open'
               ? 'bg-muted text-foreground group-hover:bg-foreground group-hover:text-background'
               : 'bg-muted text-foreground-muted',
@@ -247,7 +247,9 @@ function durationLabel(course: PublicCourseWithDetails): string {
 
 /** Second line of the title stack: «8 økter · Ingrid Larsen» for a series,
  * instructor alone for a workshop or drop-in class — no type chips. Online
- * delivery is a detail, so «Nettkurs» lives here, not in the time stack. */
+ * delivery is a detail, so «Nettkurs» lives here, not in the time stack.
+ * Copy rule: one «·» may pair two values; with three parts we fall back to
+ * commas — more than one interpunct in a string is banned. */
 function subLabel(course: PublicCourseWithDetails): string {
   const parts: string[] = [];
   if (course.format === 'series') {
@@ -256,7 +258,7 @@ function subLabel(course: PublicCourseWithDetails): string {
   }
   if (course.instructor_name) parts.push(course.instructor_name);
   if (course.delivery_mode === 'online') parts.push('Nettkurs');
-  return parts.join(' · ');
+  return parts.length > 2 ? parts.join(', ') : parts.join(' · ');
 }
 
 function CourseThumb({ course }: { course: PublicCourseWithDetails }) {

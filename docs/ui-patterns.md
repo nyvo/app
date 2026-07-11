@@ -57,8 +57,10 @@ Row ...
 - Group rows by a meaningful key (date, status) with small weighted group
   headers ("I morgen — fredag 28. nov") rather than showing a grouping column.
 - Metadata inside a row: small stroke icon + text pairs, muted, inline. Max 3–4
-  per row; more belongs on the detail screen. No "·" interpunct separators —
-  use spacing/layout.
+  per row; more belongs on the detail screen. One "·" may pair two related
+  values inside a single string; never more than one "·" per string, and never
+  "·" as a separator across a row's metadata fields (see design-language
+  §Tables/lists).
 - No pagination UI below ~50 items; prefer load-more or infinite scroll.
 - Zero results after filtering: one muted sentence + "Nullstill filtre" ghost
   button (use `EmptyState`).
@@ -110,8 +112,14 @@ Label
 - Use `SettingsRows` (label + one-line muted description left, control right,
   hairline-separated). This row pattern is for SETTINGS content only — one-shot
   forms and status surfaces keep a focused card column.
-- Destructive zone: last section, plain rows with `text-danger` actions — no
-  red-tinted panel.
+- Section descriptions and field hints on settings pages are part of the
+  layout and SANCTIONED (2026-07-11) — a `SettingsRow` description or an
+  input hint may restate/orient rather than add strictly new information.
+  The no-filler-helper-text rule still applies everywhere else.
+- Destructive zone: last section, inside its own tinted container —
+  `rounded-xl border border-danger-border bg-danger-subtle px-5 py-4`, label
+  left, `destructive` button right (decided 2026-07-11; supersedes the earlier
+  plain-row rule).
 
 ### 2.5 Dashboard / overview
 - **Lead with the most actionable thing** — usually a short list ("I dag",
@@ -125,6 +133,11 @@ Label
 - No chart by default. A chart appears only when trend is the actual question.
 - Setup/onboarding state: the sidebar setup card is the single persistent
   onboarding anchor — don't add a second dashboard-home setup card.
+- Notifications: the bell (`NotificationsPopover`) is deliberately scoped to
+  the seller Oversikt header only (2026-07-11) — it lives in the page-header
+  action slot, which other pages use for their primary action. Don't sprinkle
+  it onto more routes; making it app-wide chrome is a post-launch layout
+  decision.
 
 ### 2.6 Empty states
 - Use `EmptyState`: one muted sentence stating what will appear here + one

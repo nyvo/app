@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageState } from '@/components/page-state/page-state';
@@ -7,6 +7,7 @@ import { CourseDetailContent } from '@/components/public/course-details/CourseDe
 import { getBookingTiles } from '@/components/public/course-details/BookingRailLite';
 import { buildDropInSublabel } from '@/components/public/course-details/schedule-format';
 import { BookingBar } from '@/components/public/course-details/BookingBar';
+import { StorefrontHeader } from '@/components/public/StorefrontHeader';
 import { fetchPublicCourseBySlug, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug } from '@/services/sellers';
 import { supabase } from '@/lib/supabase';
@@ -135,11 +136,15 @@ export default function PublicCourseDetailPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
-        <Link to={`/${slug}`} className="flex select-none items-center">
-          <span className="text-base font-medium text-foreground">Openspot</span>
-        </Link>
-      </header>
+      {/* White-label: the viewing storefront's lockup (affiliate name wins
+          over the owner); the owner's logo only when they're the same studio. */}
+      <StorefrontHeader
+        name={navState?.fromName ?? course?.seller?.name}
+        slug={slug}
+        logoUrl={!navState?.fromName || navState.fromName === course?.seller?.name
+          ? course?.seller?.logo_url
+          : null}
+      />
 
       <main className="flex-1">
         {loading && <CourseDetailSkeleton />}
