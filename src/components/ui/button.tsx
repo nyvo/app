@@ -36,9 +36,9 @@ import { Spinner } from "./spinner"
  *   sm       32px   px-3     text-sm    Inline/secondary actions in dense chrome
  *                                       (settings rows, toolbars, card utilities);
  *                                       never on touch-first public surfaces
- *   icon     44px square              Icon-only controls
- *   icon-lg  40px square              Larger icon-only controls
- *   icon-sm  32px square              Icon-only controls in dense chrome
+ *   icon     44×44 circle            Icon-only controls
+ *   icon-lg  40×40 circle            Larger icon-only controls
+ *   icon-sm  32×32 circle            Icon-only controls in dense chrome
  *
  * Touch surfaces (mobile booking, public pages, `BookingBar` at
  * src/components/public/course-details/BookingBar.tsx): minimum
