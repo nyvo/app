@@ -477,7 +477,6 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
         <CopyButton
           value={`${window.location.origin}/join/${link.code}`}
           label="Kopier lenke"
-          size="sm"
         />
       </div>
       <p className="mt-3 text-sm text-foreground-muted">

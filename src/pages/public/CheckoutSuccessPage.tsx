@@ -596,7 +596,6 @@ const CheckoutSuccessPage = () => {
                             <Button
                               type="button"
                               variant="secondary"
-                              size="lg"
                               onClick={() => downloadIcs(displaySignup.course.title, icsEvent)}
                             >
                               <CalendarPlus className="size-4" strokeWidth={1.75} />

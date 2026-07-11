@@ -537,6 +537,7 @@ const CheckoutPage = () => {
                 />
                 <Button
                   type="submit"
+                  size="cta"
                   className="w-full"
                   loading={submitting}
                   disabled={!paymentReady || isFull || isCancelled}
@@ -842,7 +843,7 @@ export function PayButtonRow({
 }) {
   return (
     <>
-      <Button type="submit" className="w-full" loading={submitting} disabled={disabled}>
+      <Button type="submit" size="cta" className="w-full" loading={submitting} disabled={disabled}>
         {`Betal ${formatKroner(total)}`}
       </Button>
       <p className="flex items-center justify-center gap-1.5 text-[12.5px] text-foreground-muted">
