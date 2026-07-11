@@ -12,8 +12,6 @@ interface BookingBarProps {
   courseFull: boolean;
   soldOut: boolean;
   closed: boolean;
-  spotsLeft: number;
-  lowStock: boolean;
   /** Seller can't take payment yet (Stripe onboarding incomplete) — same gate
    * that hides the rail's CTA, so the bar never offers a dead checkout. */
   paymentNotReady: boolean;
@@ -22,8 +20,6 @@ interface BookingBarProps {
   dropInPrice: number | null;
   /** /:slug/:courseSlug/pamelding — no `?billett=`, tier choice lives on checkout. */
   checkoutHref: string;
-  sellerName: string | null;
-  sellerSlug: string | null;
   /** CTA label. Defaults to "Meld deg på". */
   ctaLabel?: string;
 }
@@ -48,13 +44,9 @@ export function BookingBar({
   courseFull,
   soldOut,
   closed,
-  spotsLeft,
-  lowStock,
   paymentNotReady,
   dropInPrice,
   checkoutHref,
-  sellerName,
-  sellerSlug,
   ctaLabel = 'Meld deg på',
 }: BookingBarProps) {
   const mainTile = tiles.find((t) => t.id === 'main') ?? null;
@@ -74,56 +66,57 @@ export function BookingBar({
     <div className="fixed bottom-0 inset-x-0 z-40 border-t border-border-subtle bg-background/90 backdrop-blur-sm safe-area-bottom animate-in slide-in-from-bottom-[100%] fade-in-0 duration-[250ms] ease-out">
       <div className="mx-auto flex w-full max-w-[640px] items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="min-w-0">
-          {/* The package tile was withheld because the course is full, but
+          {/* Second line: the drop-in price (live tile, or the course-row
+              fallback in sold-out/closed states where the RPC returns no
+              tiles). Resolved first because the PRICE size depends on it:
+              a lone price line scales up to text-lg so it holds its own
+              against the CTA; in the two-line stack text-base + the text-sm
+              secondary already carry enough mass. Type sizes are tokens only.
+
+              The package tile was withheld because the course is full, but
               drop-in is still open — say why the package is missing
               (steady state of a running drop-in series). */}
-          {courseFull && !soldOut ? (
-            <p className="text-sm text-foreground-muted truncate">Kurspakken er full.</p>
-          ) : mainTile ? (
-            <p className="truncate">
-              <span className="text-sm text-foreground-muted">{mainTile.label} </span>
-              <span className="text-[15px] font-medium tabular-nums text-foreground">
-                {mainTile.prorated && (
-                  <s className="mr-1.5 text-[13.5px] font-normal text-foreground/40">
-                    {formatKroner(coursePrice)}
-                  </s>
-                )}
-                {formatKroner(mainTile.amount)}
-              </span>
-            </p>
-          ) : coursePrice != null ? (
-            <p className="truncate">
-              <span className="text-sm text-foreground-muted">Hele kurset </span>
-              <span className="text-[15px] font-medium tabular-nums text-foreground">
-                {formatKroner(coursePrice)}
-              </span>
-            </p>
-          ) : null}
-          {dropInTile ? (
-            <p className="truncate text-[13px] text-foreground-muted tabular-nums">
-              {dropInTile.label} {formatKroner(dropInTile.amount)}
-            </p>
-          ) : stateLabel && dropInPrice != null ? (
-            <p className="truncate text-[13px] text-foreground-muted tabular-nums">
-              Drop-in {formatKroner(dropInPrice)}
-            </p>
-          ) : null}
+          {(() => {
+            const hasDropInLine = dropInTile != null || (stateLabel !== null && dropInPrice != null);
+            // Two lines: both at text-sm — a compact uniform block that
+            // doesn't crowd the bar. A lone line steps up to text-lg to hold
+            // its own against the CTA.
+            const priceSize = hasDropInLine ? 'text-sm' : 'text-lg';
+            return (
+              <>
+                {courseFull && !soldOut ? (
+                  <p className="text-sm text-foreground-muted truncate">Kurspakken er full</p>
+                ) : mainTile ? (
+                  <p className={`${priceSize} truncate tabular-nums`}>
+                    <span className="text-foreground-muted">{mainTile.label} </span>
+                    {mainTile.prorated && (
+                      <s className="mr-1 text-foreground-disabled">{formatKroner(coursePrice)}</s>
+                    )}
+                    <span className="font-medium text-foreground">{formatKroner(mainTile.amount)}</span>
+                  </p>
+                ) : coursePrice != null ? (
+                  <p className={`${priceSize} truncate tabular-nums`}>
+                    <span className="text-foreground-muted">Hele kurset </span>
+                    <span className="font-medium text-foreground">{formatKroner(coursePrice)}</span>
+                  </p>
+                ) : null}
+                {dropInTile ? (
+                  <p className="truncate text-sm tabular-nums">
+                    <span className="text-foreground-muted">{dropInTile.label} </span>
+                    <span className="font-medium text-foreground">{formatKroner(dropInTile.amount)}</span>
+                  </p>
+                ) : stateLabel && dropInPrice != null ? (
+                  <p className="truncate text-sm tabular-nums">
+                    <span className="text-foreground-muted">Drop-in </span>
+                    <span className="font-medium text-foreground">{formatKroner(dropInPrice)}</span>
+                  </p>
+                ) : null}
+              </>
+            );
+          })()}
         </div>
 
         <div className="flex shrink-0 items-center gap-3">
-          {stateLabel === null && lowStock && (
-            <span className="text-[13px] text-warning whitespace-nowrap">
-              {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
-            </span>
-          )}
-          {soldOut && sellerName && sellerSlug && (
-            <Link
-              to={`/${sellerSlug}`}
-              className="hidden sm:inline text-[13px] text-foreground-muted underline decoration-foreground-disabled underline-offset-2 hover:text-foreground hover:decoration-foreground transition-colors whitespace-nowrap"
-            >
-              Se andre kurs fra {sellerName}
-            </Link>
-          )}
           {stateLabel ? (
             <Button size="cta" disabled>
               {stateLabel}

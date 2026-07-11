@@ -70,7 +70,10 @@ export function CourseDetailContent({ course, sessions, backHref }: CourseDetail
         </section>
       )}
 
-      {sessions.length > 0 && (
+      {/* One session = the metadata card's Start/Tid rows already say
+          everything a Timeplan card would repeat. Multi-day courses (series
+          or multi-day workshops) still list their økter. */}
+      {sessions.length > 1 && (
         <section className="mt-8">
           <h2 className="text-base font-medium text-foreground">Timeplan</h2>
           <TimeplanStrip
@@ -126,7 +129,7 @@ function CourseImage({ course }: { course: PublicCourseWithDetails }) {
   );
 }
 
-// ── Metadata card — Start / Tid / Omfang / Instruktør ────────────────────
+// ── Metadata card — Start / Tid / Varighet / Instruktør ──────────────────
 
 function MetadataCard({ course, sessions }: { course: PublicCourseWithDetails; sessions: CourseSession[] }) {
   const rows = buildMetaCardRows(course, sessions.length);
@@ -178,7 +181,7 @@ function TimeplanStrip({
           onClick={onOpenSchedule}
           className="flex min-w-[104px] shrink-0 items-center justify-center rounded-xl border border-dashed border-border-subtle px-3.5 py-3 text-sm text-foreground-muted hover:text-foreground hover:border-border transition-colors"
         >
-          + {hiddenCount} økter
+          + {hiddenCount} {hiddenCount === 1 ? 'økt' : 'økter'}
         </button>
       )}
     </div>
@@ -227,7 +230,7 @@ function SessionCard({
         </Badge>
       ) : (
         <span className="mt-px block text-[13px] tabular-nums text-foreground-muted">
-          {isPast ? 'Holdt' : timeRange}
+          {isPast ? 'Gjennomført' : timeRange}
         </span>
       )}
     </div>
