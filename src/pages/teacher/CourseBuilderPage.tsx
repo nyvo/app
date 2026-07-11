@@ -1,13 +1,14 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Calendar, Clock, ImageIcon } from '@/lib/icons';
+import { Calendar, Clock } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { DatePicker } from '@/components/ui/date-picker';
 import { FieldError } from '@/components/ui/field-error';
+import { ImageField } from '@/components/ui/image-upload';
 import {
   Select,
   SelectContent,
@@ -56,7 +57,7 @@ interface FormErrors {
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-base font-medium text-foreground">{children}</h2>;
+  return <h2 className="text-lg font-medium text-foreground">{children}</h2>;
 }
 
 interface FieldRenderProps {
@@ -125,25 +126,8 @@ export default function CourseBuilderPage() {
 
   // Cover image is picked locally and uploaded AFTER createCourse (the storage
   // path needs the new course id — same pattern as the course detail page).
+  // ImageField owns the preview URL and file validation.
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    return () => {
-      if (imagePreview) URL.revokeObjectURL(imagePreview);
-    };
-  }, [imagePreview]);
-
-  const handleImagePick = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
-    setImagePreview((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
-    });
-  };
 
   const [submitAttempted, setSubmitAttempted] = useState(false);
   // Which footer action is in flight — only the clicked button shows its
@@ -403,35 +387,43 @@ export default function CourseBuilderPage() {
       <MobileTeacherHeader />
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {/* Form column capped near the §2.3 480–560px band (xl = 576px) */}
-        <div className="mx-auto max-w-xl px-4 pb-12 pt-6 sm:px-6 lg:px-8 lg:pt-12">
+        {/* 2xl column so the fields inside the panel's p-8 land in the §2.3
+            480–560px band (672 − 64 gutters − 64 padding = 544px). */}
+        <div className="mx-auto max-w-2xl px-4 pb-12 pt-6 sm:px-6 lg:px-8 lg:pt-12">
           <h1 className="mb-8 text-2xl font-medium text-foreground">Nytt kurs</h1>
 
-          <div className="flex flex-col">
-            {/* Cover banner */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImagePick}
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="relative flex h-44 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl overflow-hidden border-b border-border bg-muted text-foreground-muted outline-none transition-colors hover:border-border-strong focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {imagePreview ? (
-                <img src={imagePreview} alt="" className="absolute inset-0 size-full object-cover" />
-              ) : (
-                <>
-                  <ImageIcon className="size-6" strokeWidth={1.75} />
-                  <span className="text-sm font-medium text-foreground">Legg til et bilde</span>
-                </>
-              )}
-            </button>
+          {/* Focused form column on ONE utility panel (one-shot form recipe:
+              grey bg-panel on the white page, white fields on top). Hierarchy
+              inside is type-size + whitespace (Circle/Eventbrite create-event
+              pattern): text-lg section headings over text-sm labels. */}
+          <div className="rounded-xl bg-panel p-6 sm:p-8">
+            <div className="space-y-10">
+              {/* Cover banner */}
+              <ImageField
+                value={null}
+                onChange={setImageFile}
+                onRemove={() => setImageFile(null)}
+                uploadLabel="Legg til et bilde"
+              />
 
-            <div className="space-y-8 p-6 sm:p-8">
+              {/* Format branches the whole form (Eventbrite puts "Type of event"
+                  first) — so it's the first choice after the cover. */}
+              <Field label="Type">
+                <SegmentedTabs<FormatType>
+                  value={format}
+                  onChange={(v) => {
+                    setFormat(v);
+                  }}
+                  tabs={[
+                    { key: 'single', label: 'Enkelttime' },
+                    { key: 'series', label: 'Kursrekke' },
+                  ]}
+                  ariaLabel="Type"
+                  role="radiogroup"
+                  stretch
+                />
+              </Field>
+
               {/* Om kurset */}
               <section className="space-y-5">
                 <SectionTitle>Om kurset</SectionTitle>
@@ -473,27 +465,9 @@ export default function CourseBuilderPage() {
                 </Field>
               </section>
 
-              <hr className="border-border-subtle" />
-
               {/* Når */}
               <section className="space-y-5">
                 <SectionTitle>Når</SectionTitle>
-
-                <Field label="Type">
-                  <SegmentedTabs<FormatType>
-                    value={format}
-                    onChange={(v) => {
-                      setFormat(v);
-                    }}
-                    tabs={[
-                      { key: 'single', label: 'Enkelttime' },
-                      { key: 'series', label: 'Kursrekke' },
-                    ]}
-                    ariaLabel="Type"
-                    role="radiogroup"
-                    stretch
-                  />
-                </Field>
 
                 {/* Single format: per-day editor */}
                 {format === 'single' && (
@@ -551,7 +525,7 @@ export default function CourseBuilderPage() {
                               >
                                 <SelectTrigger
                                   id="cb-start-time"
-                                  className="w-full gap-2.5 rounded-xl"
+                                  className="w-full gap-2.5"
                                   aria-label="Starttid"
                                   aria-invalid={showError('startTime') ? 'true' : undefined}
                                   aria-describedby={timeError ? timeErrorId : undefined}
@@ -576,7 +550,7 @@ export default function CourseBuilderPage() {
                               <Select value={endTime} onValueChange={setEndTime}>
                                 <SelectTrigger
                                   id="cb-end-time"
-                                  className="w-full gap-2.5 rounded-xl"
+                                  className="w-full gap-2.5"
                                   aria-label="Sluttid"
                                   aria-invalid={showError('endTime') ? 'true' : undefined}
                                   aria-describedby={timeError ? timeErrorId : undefined}
@@ -622,8 +596,6 @@ export default function CourseBuilderPage() {
                   </>
                 )}
               </section>
-
-              <hr className="border-border-subtle" />
 
               {/* Hvor og pris */}
               <section className="space-y-5">
@@ -706,7 +678,7 @@ export default function CourseBuilderPage() {
 
       {/* Pinned footer */}
       <div className="border-t border-border bg-background">
-        <div className="mx-auto flex max-w-xl items-center justify-between gap-2 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-2xl items-center justify-between gap-2 px-4 py-3 sm:px-6 lg:px-8">
           <Button
             variant="ghost"
             size="lg"

@@ -73,6 +73,7 @@ const CourseDetailPreview = lazy(() => import('./pages/dev/CourseDetailPreview')
 const StudioPreview = lazy(() => import('./pages/dev/StudioPreview'));
 const DraftExperiencePreview = lazy(() => import('./pages/dev/DraftExperiencePreview'));
 const CourseBuilderPreview = lazy(() => import('./pages/dev/CourseBuilderPreview'));
+const CourseBuilderLivePreview = lazy(() => import('./pages/dev/CourseBuilderLivePreview'));
 const CourseBuilderEventbrite = lazy(() => import('./pages/dev/CourseBuilderEventbrite'));
 const SessionDaysPreview = lazy(() => import('./pages/dev/SessionDaysPreview'));
 const CourseOversiktWireframe = lazy(() => import('./pages/dev/CourseOversiktWireframe'));
@@ -227,6 +228,7 @@ const router = createBrowserRouter(
             <Route path="/dev/studio-preview" element={<StudioPreview />} />
             <Route path="/dev/draft-experience-preview" element={<DraftExperiencePreview />} />
             <Route path="/dev/course-builder-preview" element={<CourseBuilderPreview />} />
+            <Route path="/dev/course-builder-live" element={<CourseBuilderLivePreview />} />
             <Route path="/dev/course-builder-eventbrite" element={<CourseBuilderEventbrite />} />
             <Route path="/dev/session-days-preview" element={<SessionDaysPreview />} />
             <Route path="/dev/oversikt-wireframe" element={<CourseOversiktWireframe />} />
