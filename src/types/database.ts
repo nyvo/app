@@ -729,6 +729,7 @@ export type Database = {
           stripe_account_id: string | null
           stripe_account_status: string | null
           stripe_onboarding_complete: boolean
+          stripe_payouts_enabled: boolean
           subscription_cancel_at_period_end: boolean
           subscription_current_period_end: string | null
           subscription_customer_id: string | null
@@ -754,6 +755,7 @@ export type Database = {
           stripe_account_id?: string | null
           stripe_account_status?: string | null
           stripe_onboarding_complete?: boolean
+          stripe_payouts_enabled?: boolean
           subscription_cancel_at_period_end?: boolean
           subscription_current_period_end?: string | null
           subscription_customer_id?: string | null
@@ -779,6 +781,7 @@ export type Database = {
           stripe_account_id?: string | null
           stripe_account_status?: string | null
           stripe_onboarding_complete?: boolean
+          stripe_payouts_enabled?: boolean
           subscription_cancel_at_period_end?: boolean
           subscription_current_period_end?: string | null
           subscription_customer_id?: string | null
@@ -1109,6 +1112,7 @@ export type Database = {
           stripe_account_id: string
           stripe_account_status: string
           stripe_onboarding_complete: boolean
+          stripe_payouts_enabled: boolean
           subscription_cancel_at_period_end: boolean
           subscription_current_period_end: string
           subscription_customer_id: string

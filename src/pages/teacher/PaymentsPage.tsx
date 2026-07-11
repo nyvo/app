@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ErrorState } from '@/components/ui/error-state';
 import { PageShell } from '@/components/teacher/PageShell';
@@ -36,6 +37,9 @@ const STEP_3_TITLE = 'Motta utbetalinger';
  *   • not started         → step 1 current, "Kom i gang" (hosted Stripe onboarding)
  *   • started, !connected → step 2 current, "Fortsett oppsettet" (+ restricted/rejected sub-cases)
  *   • connected           → step 3 current, "Se oversikt" (Stripe Express dashboard)
+ *     — if charges are enabled but payouts are still blocked (unverified bank, risk
+ *       hold), a warning callout sits above the card. Surfaced only — never gates
+ *       checkout/publish, which key off stripe_onboarding_complete alone.
  *
  * No balance / settlements UI — the merchant manages all of that on Stripe's
  * own Express dashboard. Status re-syncs automatically on return from Stripe
@@ -48,6 +52,10 @@ const PaymentsPage = () => {
   const stripeConnected = !!currentSeller?.stripe_onboarding_complete;
   const stripeStarted = !!currentSeller?.stripe_account_id;
   const stripeStatus = currentSeller?.stripe_account_status ?? null;
+  // Charges work as soon as stripe_onboarding_complete is true, but Stripe can still
+  // block the actual bank transfer (unverified account, risk hold) — surfaced only,
+  // never gates checkout/publish.
+  const stripePayoutsBlocked = stripeConnected && !currentSeller?.stripe_payouts_enabled;
   const [stripeLoading, setStripeLoading] = useState(false);
   // True while the ?stripe=return status re-sync runs — the current step's
   // action shows a "Sjekker status" indicator instead of looking idle.
@@ -240,7 +248,21 @@ const PaymentsPage = () => {
           onRetry={refreshSellers}
         />
       ) : (
-        <PayoutSetupCard viewModel={viewModel} />
+        <>
+          {stripePayoutsBlocked && (
+            <Alert variant="warning" className="mb-6">
+              <AlertTitle className="text-base">Utbetalinger er ikke aktive ennå</AlertTitle>
+              <AlertDescription className="text-base text-foreground">
+                Stripe mangler noe informasjon før pengene kan utbetales til deg. Åpne
+                Stripe-dashbordet for å fullføre.
+              </AlertDescription>
+              <div className="mt-3">
+                <Button onClick={handleOpenStripeDashboard}>Åpne Stripe</Button>
+              </div>
+            </Alert>
+          )}
+          <PayoutSetupCard viewModel={viewModel} />
+        </>
       )}
       <PayoutFaqSection />
     </PageShell>
