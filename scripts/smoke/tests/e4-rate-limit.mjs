@@ -36,25 +36,31 @@ async function hammer(ctx, { name, count, buildBody }) {
 }
 
 export async function run(ctx) {
+  // Reuse ONE address per endpoint so the per-EMAIL bucket accumulates
+  // (free-signup 5/email/h, connect 10/email/h). The per-IP bucket can't be
+  // relied on here: some sandboxes rotate egress IPs, so a fresh address per
+  // call would never trip either bucket. Per-email is IP-independent.
+  const freeEmail = ctx.mailosaur.mint('e4-free')
   const freeSignup = await hammer(ctx, {
     name: 'create-free-signup',
     count: 15,
-    buildBody: (i) => ({
+    buildBody: () => ({
       courseId: BOGUS_COURSE_ID,
       participantName: 'Smoke Test E4',
-      participantEmail: ctx.mailosaur.mint(`e4-free-${i}`),
+      participantEmail: freeEmail,
       participantPhone: '99999999',
     }),
   })
 
+  const connectEmail = ctx.mailosaur.mint('e4-connect')
   const connectSession = await hammer(ctx, {
     name: 'create-stripe-connect-session',
     count: 25,
-    buildBody: (i) => ({
+    buildBody: () => ({
       courseId: BOGUS_COURSE_ID,
       organizationSlug: 'smoke-e4-nonexistent-slug',
       ticketTypeId: BOGUS_TICKET_TYPE_ID,
-      customerEmail: ctx.mailosaur.mint(`e4-connect-${i}`),
+      customerEmail: connectEmail,
       customerName: 'Smoke Test E4',
       customerPhone: '99999999',
     }),
