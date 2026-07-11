@@ -153,6 +153,7 @@ export default function PublicCourseDetailPage() {
             <BookingBar
               tiles={tiles}
               coursePrice={course.price}
+              dropInPrice={course.allows_drop_in ? course.drop_in_price : null}
               courseFull={courseFull}
               soldOut={soldOut}
               closed={closed}
