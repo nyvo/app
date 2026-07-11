@@ -79,6 +79,7 @@ const EmbedCodePreview = lazy(() => import('./pages/dev/EmbedCodePreview'));
 const SchedulePreview = lazy(() => import('./pages/dev/SchedulePreview'));
 const SettingsRowsPreview = lazy(() => import('./pages/dev/SettingsRowsPreview'));
 const LandingWireframe = lazy(() => import('./pages/dev/LandingWireframe'));
+const AuditFixesPreview = lazy(() => import('./pages/dev/AuditFixesPreview'));
 
 // Public team page at root: only renders if the slug is NOT a reserved word.
 // Reserved words 404 (since they should hit a literal route higher in the
@@ -231,6 +232,7 @@ const router = createBrowserRouter(
             <Route path="/dev/schedule-preview" element={<SchedulePreview />} />
             <Route path="/dev/settings-rows-preview" element={<SettingsRowsPreview />} />
             <Route path="/dev/landing-wireframe" element={<LandingWireframe />} />
+            <Route path="/dev/audit-fixes-preview" element={<AuditFixesPreview />} />
           </>
         )}
 

@@ -994,10 +994,10 @@ function buildMeta(course: PublicCourseWithDetails): string | null {
     // the wrong weekday for any buyer in a timezone west of UTC.
     const d = toLocalDate(dateStr);
     if (!isNaN(d.getTime())) {
-      return `${typeLabel} · ${SHORT_WEEKDAYS[d.getDay()]} kl. ${time}`;
+      return `${typeLabel}, ${SHORT_WEEKDAYS[d.getDay()]} kl. ${time}`;
     }
   }
-  if (time) return `${typeLabel} · kl. ${time}`;
+  if (time) return `${typeLabel} kl. ${time}`;
   return typeLabel;
 }
 

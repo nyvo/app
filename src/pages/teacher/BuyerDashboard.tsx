@@ -43,7 +43,7 @@ function SignupRow({ signup }: { signup: BuyerSignup }) {
 
   const dateLine = formatCourseDate(course?.start_date ?? null)
   const time = extractTimeFromSchedule(course?.time_schedule)?.time ?? null
-  const whenLine = [dateLine, time ? `kl. ${time}` : null].filter(Boolean).join(' · ')
+  const whenLine = [dateLine, time ? `kl. ${time}` : null].filter(Boolean).join(' ')
 
   const isCancelled = signup.status === 'cancelled'
   const isCourseCancelled = signup.status === 'course_cancelled'

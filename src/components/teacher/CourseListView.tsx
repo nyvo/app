@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight, ChevronUp } from '@/lib/icons';
 import { cn, formatKroner } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import { StatusBadge, type CourseStatus } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SessionScheduleRow } from '@/services/courses';
@@ -29,23 +30,39 @@ function typeMarker(format: CourseFormat, delivery: DeliveryMode) {
  * Publish-state badge — silent on the healthy states (upcoming/active, i.e.
  * Publisert); only renders for states the teacher might need to notice.
  * Label + presentation delegate to StatusBadge so status copy stays centralized.
+ *
+ * `isFull` is a derived capacity state (signups ≥ capacity), not a
+ * course_status value — for the teacher a fully booked course is a win, so
+ * it renders as a success badge rather than a warning. Publish-state badges
+ * take precedence (a cancelled-but-full course reads Avlyst).
  */
-function StatusBadgeRow({ courseStatus }: { courseStatus: string }) {
-  if (courseStatus !== 'draft' && courseStatus !== 'cancelled' && courseStatus !== 'completed') return null;
-  return <StatusBadge status={courseStatus as CourseStatus} />;
+function StatusBadgeRow({ courseStatus, isFull }: { courseStatus: string; isFull?: boolean }) {
+  if (courseStatus === 'draft' || courseStatus === 'cancelled' || courseStatus === 'completed') {
+    return <StatusBadge status={courseStatus as CourseStatus} />;
+  }
+  if (isFull) {
+    return (
+      <Badge variant="success" shape="pill" size="sm" role="status" aria-label="Status: Fullt">
+        Fullt
+      </Badge>
+    );
+  }
+  return null;
 }
 
 // ─── Table primitives ───────────────────────────────────────────────────
 // Borderless flat-table pattern: column headers + hairline-divided rows,
-// no card chrome. Each metric column has a fixed width so values align left
-// under their header (not right-justified). Sort lives on the column headers
+// no card chrome. Numeric columns (Påmeldte/Pris) are right-aligned with
+// their headers for scanability. Sort lives on the column headers
 // themselves (canonical Stripe/Linear/Notion 2025 pattern) — no separate
 // sort dropdown in the toolbar.
 
 export type SortKey = 'name' | 'next' | 'signups' | 'price';
 export type SortDir = 'asc' | 'desc';
 
-const COLS = 'grid grid-cols-[minmax(0,1fr)_100px_80px] items-center gap-6 md:grid-cols-[minmax(0,1fr)_120px_120px_120px]';
+// pr-8 keeps a gutter between the right-aligned numeric columns and the
+// absolutely-positioned hover chevron at right-0.
+const COLS = 'grid grid-cols-[minmax(0,1fr)_100px_80px] items-center gap-6 pr-8 md:grid-cols-[minmax(0,1fr)_120px_120px_120px]';
 
 interface TableHeaderProps {
   sortKey: SortKey;
@@ -103,8 +120,8 @@ function TableHeader({ sortKey, sortDir, onSort }: TableHeaderProps) {
     <div role="row" className={cn(COLS, 'py-3 border-b border-border-subtle')}>
       <SortableHeader label="Navn" columnKey="name" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
       <div role="columnheader" className="text-sm text-foreground-muted">Status</div>
-      <SortableHeader label="Påmeldte" columnKey="signups" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
-      <SortableHeader label="Pris" columnKey="price" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:block" />
+      <SortableHeader label="Påmeldte" columnKey="signups" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-right" />
+      <SortableHeader label="Pris" columnKey="price" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:block text-right" />
     </div>
   );
 }
@@ -139,12 +156,19 @@ function TableRow({ course, countsUnavailable }: { course: SessionScheduleRow; c
         })()}
       </div>
       <div role="cell">
-        <StatusBadgeRow courseStatus={course.courseStatus} />
+        <StatusBadgeRow
+          courseStatus={course.courseStatus}
+          isFull={
+            !countsUnavailable &&
+            !!course.maxParticipants &&
+            course.signupsCount >= course.maxParticipants
+          }
+        />
       </div>
-      <span role="cell" className="whitespace-nowrap text-base text-foreground tabular-nums">
+      <span role="cell" className="whitespace-nowrap text-right text-base text-foreground tabular-nums">
         {roster}
       </span>
-      <span role="cell" className="hidden whitespace-nowrap text-base text-foreground tabular-nums md:inline">
+      <span role="cell" className="hidden whitespace-nowrap text-right text-base text-foreground tabular-nums md:inline">
         {formatKroner(course.price)}
       </span>
       <ChevronRight

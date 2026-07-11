@@ -546,7 +546,7 @@ function formatFullDate(dateStr: string): string {
 function buildCardMeta(course: PublicCourseWithDetails, nextSessionDate: string | null): string | null {
   const dateLabel = formatRelativeDate(nextSessionDate);
   const timeRange = resolveTimeRange(course.time_schedule, course.duration);
-  if (dateLabel && timeRange) return `${dateLabel} · ${timeRange}`;
+  if (dateLabel && timeRange) return `${dateLabel} kl. ${timeRange}`;
   return dateLabel || timeRange || null;
 }
 
@@ -595,6 +595,6 @@ function buildDropInSublabel(sessions: CourseSession[]): string | null {
   if (!next) return null;
   const dateLabel = formatRelativeDate(next.session_date);
   const time = next.start_time ? next.start_time.slice(0, 5) : null;
-  if (dateLabel && time) return `${dateLabel} · ${time}`;
+  if (dateLabel && time) return `${dateLabel} kl. ${time}`;
   return dateLabel || time || null;
 }

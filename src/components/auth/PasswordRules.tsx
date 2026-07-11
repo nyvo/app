@@ -15,7 +15,13 @@ export function isPasswordValid(password: string): boolean {
   return RULES.every((rule) => rule.test(password))
 }
 
-/** Live password-requirement row — neutral filled disc when met, empty ring when not. */
+/**
+ * Live password-requirement row. The check glyph is always present — pale in
+ * an outline circle when unmet, filling success-green when met — so the unmet
+ * state never reads as a selectable radio button (an empty ring did). Matches
+ * the production consensus (Rocket Money, Kraken, Spotify, OKX signups):
+ * a constant glyph whose color/fill carries the state.
+ */
 function Rule({ met, children }: { met: boolean; children: React.ReactNode }) {
   return (
     <li
@@ -26,10 +32,13 @@ function Rule({ met, children }: { met: boolean; children: React.ReactNode }) {
       <span
         aria-hidden="true"
         className={`flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
-          met ? 'border-foreground bg-foreground' : 'border-border bg-transparent'
+          met ? 'border-success bg-success' : 'border-border bg-transparent'
         }`}
       >
-        {met && <Check className="size-2.5 text-background" strokeWidth={3} />}
+        <Check
+          className={`size-2.5 transition-colors ${met ? 'text-background' : 'text-foreground-disabled'}`}
+          strokeWidth={3}
+        />
       </span>
       {children}
       <span className="sr-only">{met ? '(oppfylt)' : '(mangler)'}</span>

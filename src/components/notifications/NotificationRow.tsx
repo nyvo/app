@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { X } from '@/lib/icons'
 import { formatRelativeTime } from '@/lib/format-relative-time'
+import { formatNotificationBody } from './format-body'
 import { getNotificationIcon } from './notification-icons'
 import type { Notification } from '@/types/database'
 
@@ -24,11 +25,14 @@ interface NotificationRowProps {
 /**
  * One row in the notifications feed.
  *
- * Anatomy: 32px rounded-square glyph plate · title · sub · relative time
+ * Anatomy: 32px rounded-square glyph plate, then title / sub / relative time
  * (tabular-nums). The panel is all-neutral — no per-status hue. Hierarchy is
- * carried by weight + color: fresh rows use a dark plate (foreground fill,
- * light glyph) with a font-medium foreground title; dimmed rows use a muted
- * plate and drop title, body and timestamp to muted text (never disabled —
+ * carried by weight + color in three tiers (2026-07 audit decision): the dark
+ * plate (foreground fill, light glyph) is reserved for unresolved
+ * action_required rows so a stack of routine signups can't become a wall of
+ * black squares; fresh informational rows use a muted plate but keep the
+ * font-medium foreground title (title weight alone carries "unread"); dimmed
+ * rows drop title, body and timestamp to muted text (never disabled —
  * everything stays readable).
  *
  * A row dims once it's been read, its action resolved, or it was seen in a
@@ -121,9 +125,9 @@ export function NotificationRow({
         <div
           className={cn(
             'flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors duration-150 ease-out',
-            dimmed
-              ? 'bg-muted text-foreground-muted'
-              : 'bg-foreground text-background',
+            !dimmed && notification.action_required
+              ? 'bg-foreground text-background'
+              : 'bg-muted text-foreground-muted',
           )}
           aria-hidden="true"
         >
@@ -141,7 +145,7 @@ export function NotificationRow({
           </div>
           {notification.body && (
             <div className="text-sm leading-5 text-foreground-muted">
-              {notification.body}
+              {formatNotificationBody(notification.body)}
             </div>
           )}
         </div>

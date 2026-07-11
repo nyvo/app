@@ -210,6 +210,29 @@ export function StudioDayList({ courses, viewingSlug, viewingName, headerAction 
   const headingDay = days[Math.min(visibleIndex, days.length - 1)] ?? selectedDay;
   const monthLabel = MONTHS_NB[headingDay.getMonth()];
 
+  // First day after the selected one that actually has classes — gives the
+  // empty state a destination instead of a dead end.
+  const nextKeyWithCourses = useMemo(() => {
+    let best: string | null = null;
+    for (const key of buckets.keys()) {
+      if (key > selectedKey && (best === null || key < best)) best = key;
+    }
+    return best;
+  }, [buckets, selectedKey]);
+
+  const goToNextCourseDay = () => {
+    if (!nextKeyWithCourses) return;
+    setSelectedKey(nextKeyWithCourses);
+    // After commit, center the newly selected pill in the strip.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollerRef.current
+          ?.querySelector<HTMLButtonElement>('button[aria-pressed="true"]')
+          ?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      });
+    });
+  };
+
   useEffect(() => {
     updateScrollState();
     const el = scrollerRef.current;
@@ -314,11 +337,22 @@ export function StudioDayList({ courses, viewingSlug, viewingName, headerAction 
 
       <div>
         {selectedCourses.length === 0 ? (
-          <p className="py-12 text-center text-base text-foreground-muted">
-            {selectedKey === dateKey(today)
-              ? 'Ingen flere kurs i dag.'
-              : 'Ingen kurs denne dagen.'}
-          </p>
+          <div className="py-12 text-center">
+            <p className="text-base text-foreground-muted">
+              {selectedKey === dateKey(today)
+                ? 'Ingen flere kurs i dag.'
+                : 'Ingen kurs denne dagen.'}
+            </p>
+            {nextKeyWithCourses && (
+              <button
+                type="button"
+                onClick={goToNextCourseDay}
+                className="mt-3 text-base font-medium text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm transition-[text-decoration-color] cursor-pointer"
+              >
+                Neste kurs er {formatLongDay(toLocalDate(nextKeyWithCourses))}
+              </button>
+            )}
+          </div>
         ) : (
           <ul className="divide-y divide-border-subtle">
             {selectedCourses.map(course => (
@@ -407,12 +441,23 @@ function ClassRow({
         </p>
       </div>
 
-      <div className="shrink-0 flex flex-col items-end justify-between gap-2 self-stretch py-0.5">
-        <span className="text-base font-medium tabular-nums whitespace-nowrap text-foreground">
-          {price.from && price.amount
-            ? <><span className="font-normal text-foreground-muted">fra </span>{formatKroner(price.amount)}</>
-            : formatCoursePrice(price.amount)}
-        </span>
+      {/* Cancelled rows drop the price — it can't be bought, and a price next
+          to the Avlyst pill reads as "still available". The pill centers in
+          the freed space; row height is set by the left column, so mixed
+          lists stay visually consistent. */}
+      <div
+        className={cn(
+          'shrink-0 flex flex-col items-end self-stretch py-0.5',
+          isCancelled ? 'justify-center' : 'justify-between gap-2',
+        )}
+      >
+        {!isCancelled && (
+          <span className="text-base font-medium tabular-nums whitespace-nowrap text-foreground">
+            {price.from && price.amount
+              ? <><span className="font-normal text-foreground-muted">fra </span>{formatKroner(price.amount)}</>
+              : formatCoursePrice(price.amount)}
+          </span>
+        )}
         <span
           className={cn(
             'inline-flex h-8 items-center rounded-full px-3 text-sm font-medium transition-colors duration-150',

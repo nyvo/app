@@ -498,7 +498,7 @@ const CheckoutSuccessPage = () => {
             const courseImage = displaySignup?.course.imageUrl ?? null;
             const isFree = displaySignup ? displaySignup.amountPaid === 0 : isFreeSignup;
             const bookedAt = displaySignup?.createdAt ? new Date(displaySignup.createdAt) : new Date();
-            const whenLine = [dateLong, time ? `kl. ${time}` : null].filter(Boolean).join(' · ');
+            const whenLine = [dateLong, time ? `kl. ${time}` : null].filter(Boolean).join(' ');
 
             // Paid-path startDate is the course's first session, not the
             // buyer's own next one — a drop-in bought mid-series would offer
