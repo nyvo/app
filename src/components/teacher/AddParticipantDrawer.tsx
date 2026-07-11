@@ -225,7 +225,7 @@ export function AddParticipantDrawer({
       onSuccess(); // Trigger refresh
       toast.success('Deltaker lagt til');
     } catch (err) {
-      setSubmitError(friendlyError(err, 'Noe gikk galt. Prøv igjen.'));
+      setSubmitError(friendlyError(err, 'Noe gikk galt – prøv igjen'));
       setIsSubmitting(false);
     }
   };

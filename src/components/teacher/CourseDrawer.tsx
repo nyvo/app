@@ -571,10 +571,9 @@ function ScheduleQuickView({
   const sessionTimeRange = currentSession?.start_time
     ? buildTimeRange(currentSession.start_time, courseData.durationMinutes)
     : null;
-  // Duration appended only when known — the "·" separator is approved here.
   const sessionTimeLine =
     sessionTimeRange && courseData.durationMinutes > 0
-      ? `${sessionTimeRange} · ${courseData.durationMinutes} min`
+      ? `${sessionTimeRange}, ${courseData.durationMinutes} min`
       : sessionTimeRange;
 
   // Single metadata row (list-row meta grammar): calendar icon + long date,

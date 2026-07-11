@@ -98,7 +98,10 @@ const CheckoutSuccessPage = () => {
   useDocumentTitle('Kvittering');
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const orgSlugFromUrl = searchParams.get('org');
+  // Only accept a plain slug — anything else (e.g. `?org=/evil.com` → a
+  // protocol-relative href) falls back to the front page.
+  const rawOrgSlug = searchParams.get('org');
+  const orgSlugFromUrl = rawOrgSlug && /^[a-z0-9-]+$/.test(rawOrgSlug) ? rawOrgSlug : null;
   const isFreeSignup = searchParams.get('free') === 'true';
   // Stripe checkout returns with ?payment_intent=pi_… (Stripe appends it to our return_url).
   // The webhook captures + mints the signup async; here we poll get_signup_by_stripe_id.
@@ -495,7 +498,7 @@ const CheckoutSuccessPage = () => {
             const courseImage = displaySignup?.course.imageUrl ?? null;
             const isFree = displaySignup ? displaySignup.amountPaid === 0 : isFreeSignup;
             const bookedAt = displaySignup?.createdAt ? new Date(displaySignup.createdAt) : new Date();
-            const whenLine = [dateLong, time ? `kl. ${time}` : null].filter(Boolean).join(' · ');
+            const whenLine = [dateLong, time ? `kl. ${time}` : null].filter(Boolean).join(' ');
 
             // Paid-path startDate is the course's first session, not the
             // buyer's own next one — a drop-in bought mid-series would offer

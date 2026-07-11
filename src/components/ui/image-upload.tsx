@@ -305,7 +305,6 @@ export function ImageField({
           >
             {changeLabel}
           </Button>
-          <span aria-hidden="true" className="text-foreground-disabled">·</span>
           <Button
             type="button"
             variant="plain"

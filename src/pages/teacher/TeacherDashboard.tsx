@@ -406,7 +406,7 @@ export function UpcomingCoursesSection({
 function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
   const day = dayLabel(course.date);
   const time = course.time;
-  const when = [day, time && `kl. ${time}`].filter(Boolean).join(' · ');
+  const when = [day, time && `kl. ${time}`].filter(Boolean).join(' ');
   const hasCapacity = course.signups != null && course.capacity != null;
 
   return (

@@ -99,10 +99,15 @@ Deno.serve(async (req: Request) => {
         const account = await retrieveAccount(accountId)
         const status = mapAccountStatus(account)
         const onboardingComplete = account.charges_enabled === true
+        const payoutsEnabled = account.payouts_enabled === true
 
         const { error } = await supabase
           .from('sellers')
-          .update({ stripe_account_status: status, stripe_onboarding_complete: onboardingComplete })
+          .update({
+            stripe_account_status: status,
+            stripe_onboarding_complete: onboardingComplete,
+            stripe_payouts_enabled: payoutsEnabled,
+          })
           .eq('stripe_account_id', accountId)
         // Throw on write failure so Stripe retries rather than leaving the status stale.
         if (error) {
@@ -110,7 +115,8 @@ Deno.serve(async (req: Request) => {
         }
 
         await markEventResult(supabase, eventKey, {
-          type: 'account_updated', account: accountId, status, onboarding_complete: onboardingComplete,
+          type: 'account_updated', account: accountId, status,
+          onboarding_complete: onboardingComplete, payouts_enabled: payoutsEnabled,
         })
         return new Response('OK', { status: 200 })
       }

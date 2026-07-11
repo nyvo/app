@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
 
     const { data: seller, error: sellerError } = await supabase
       .from('sellers')
-      .select('id, stripe_account_id, stripe_onboarding_complete, stripe_account_status')
+      .select('id, stripe_account_id, stripe_onboarding_complete, stripe_account_status, stripe_payouts_enabled')
       .eq('id', body.sellerId)
       .single()
 
@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
     const account = await retrieveAccount(seller.stripe_account_id)
     const status = mapAccountStatus(account)
     const onboardingComplete = account.charges_enabled === true
+    const payoutsEnabled = account.payouts_enabled === true
 
     // Surface the requirements blocking the studio so the UI can prompt them.
     const requirementsDue: string[] = [
@@ -83,13 +84,15 @@ Deno.serve(async (req) => {
     // this must go through the SERVICE-ROLE client.
     if (
       seller.stripe_account_status !== status ||
-      seller.stripe_onboarding_complete !== onboardingComplete
+      seller.stripe_onboarding_complete !== onboardingComplete ||
+      seller.stripe_payouts_enabled !== payoutsEnabled
     ) {
       const { error: updateError } = await supabase
         .from('sellers')
         .update({
           stripe_account_status: status,
           stripe_onboarding_complete: onboardingComplete,
+          stripe_payouts_enabled: payoutsEnabled,
         })
         .eq('id', body.sellerId)
 
@@ -102,6 +105,7 @@ Deno.serve(async (req) => {
       {
         status,
         onboarding_complete: onboardingComplete,
+        payouts_enabled: payoutsEnabled,
         requirements_due: requirementsDue,
       },
       200,
