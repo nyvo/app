@@ -33,11 +33,10 @@ export function EmbedCodeSection({ slug }: { slug: string }) {
         Juster height-verdien etter behov.
       </p>
       <div className="mt-3 flex items-center gap-2">
-        <CopyButton value={snippet} label="Kopier kode" size="sm" />
+        <CopyButton value={snippet} label="Kopier kode" />
         <Button
           type="button"
           variant="ghost"
-          size="sm"
           onClick={() => window.open(previewUrl, '_blank')}
         >
           <ExternalLink data-icon="inline-start" />

@@ -33,12 +33,17 @@ import { Spinner } from "./spinner"
  *   default  44px   px-4     text-sm    Normal app buttons
  *   lg       40px   px-5     text-sm    Modal footer actions
  *   cta      44px   px-6     text-base  Public/mobile primary CTAs
- *   sm       32px   px-3     text-sm    Inline/secondary actions in dense chrome
- *                                       (settings rows, toolbars, card utilities);
- *                                       never on touch-first public surfaces
+ *   sm       32px   px-3     text-sm    RESERVED — only for contexts that are
+ *                                       naturally small-scale (e.g. compact
+ *                                       in-card row affordances). Dashboard
+ *                                       chrome stays `default`: a lone 32px
+ *                                       button on an otherwise-44px surface
+ *                                       reads as a mistake, not hierarchy
+ *                                       (2026-07-11 decision, tried + reverted).
+ *                                       Never on touch-first public surfaces.
  *   icon     44×44 circle            Icon-only controls
  *   icon-lg  40×40 circle            Larger icon-only controls
- *   icon-sm  32×32 circle            Icon-only controls in dense chrome
+ *   icon-sm  32×32 circle            Same reservation as `sm`
  *
  * Touch surfaces (mobile booking, public pages, `BookingBar` at
  * src/components/public/course-details/BookingBar.tsx): minimum
