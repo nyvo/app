@@ -84,7 +84,9 @@ const STRIPE_APPEARANCE = {
     colorPrimary: '#0074BF',
     colorText: '#111314',
     colorDanger: '#BD3838',
-    borderRadius: '6px',
+    // Match the page's own FloatingField inputs (rounded-xl) so the Stripe
+    // fields read as part of the same form.
+    borderRadius: '12px',
   },
 };
 
@@ -535,6 +537,7 @@ const CheckoutPage = () => {
                 />
                 <Button
                   type="submit"
+                  size="cta"
                   className="w-full"
                   loading={submitting}
                   disabled={!paymentReady || isFull || isCancelled}
@@ -564,6 +567,11 @@ const CheckoutPage = () => {
                   amount: amountOre,
                   currency: 'nok',
                   captureMethod: 'manual',
+                  // Locked to bokmål — default 'auto' follows the buyer's
+                  // browser language, which splits the page into two languages
+                  // (Norwegian form, English payment fields) for any
+                  // non-Norwegian system locale.
+                  locale: 'nb',
                   appearance: STRIPE_APPEARANCE,
                 }}
               >
@@ -835,7 +843,7 @@ export function PayButtonRow({
 }) {
   return (
     <>
-      <Button type="submit" className="w-full" loading={submitting} disabled={disabled}>
+      <Button type="submit" size="cta" className="w-full" loading={submitting} disabled={disabled}>
         {`Betal ${formatKroner(total)}`}
       </Button>
       <p className="flex items-center justify-center gap-1.5 text-[12.5px] text-foreground-muted">
@@ -874,7 +882,7 @@ function PaidCheckoutSkeleton() {
         <Skeleton className="h-10 w-full" />
         <Skeleton className="mt-3 h-10 w-full" />
       </div>
-      <Skeleton className="h-11 w-full rounded-full" />
+      <Skeleton className="h-10 w-full rounded-full" />
     </div>
   );
 }
@@ -1283,7 +1291,7 @@ function CheckoutSkeleton() {
         <div className="mx-auto max-w-[520px] space-y-6">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-8 w-2/3" />
-          <Skeleton className="h-11 w-full rounded-lg" />
+          <Skeleton className="h-10 w-full rounded-lg" />
           <Skeleton className="h-9 w-full" />
           <Skeleton className="h-9 w-full" />
           <Skeleton className="h-9 w-full" />

@@ -30,15 +30,35 @@ import { Spinner } from "./spinner"
  *   plain      — inline text action with button semantics. No chrome.
  *
  * Size axis (height / horizontal padding / text-size):
- *   default  44px   px-4     text-sm    Normal app buttons
- *   lg       40px   px-5     text-sm    Modal footer actions
- *   cta      44px   px-6     text-base  Public/mobile primary CTAs
- *   icon     44px square              Icon-only controls
- *   icon-lg  40px square              Larger icon-only controls
+ *   default  40px   px-4     text-sm    Normal app buttons. 2026-07-11: the
+ *                                       whole control system moved 44 → 40
+ *                                       (Input, Select, DatePicker, InputGroup,
+ *                                       SegmentedTabs lg moved with it — keep
+ *                                       them in lockstep, buttons share rows
+ *                                       with fields)
+ *   lg       40px   px-5     text-sm    Legacy alias of default (wider padding,
+ *                                       same height since the 40px shift);
+ *                                       prefer `default` in new code
+ *   cta      40px   px-6     text-sm    Public/mobile primary CTAs (wider
+ *                                       padding only — 14px text everywhere
+ *                                       since 2026-07-11; 16px text-base was
+ *                                       the pre-hierarchy exception)
+ *   sm       32px   px-3     text-sm    RESERVED — only for contexts that are
+ *                                       naturally small-scale and don't have
+ *                                       room for the 40px button (e.g. compact
+ *                                       in-card row affordances). Don't sprinkle
+ *                                       it into normal chrome: a lone 32px
+ *                                       button on an otherwise-40px surface
+ *                                       reads as a mistake, not hierarchy
+ *                                       (2026-07-11 decision, tried + reverted).
+ *                                       Never on touch-first public surfaces.
+ *   icon     40×40 circle            Icon-only controls
+ *   icon-lg  40×40 circle            Legacy alias of `icon` since the 40px shift
+ *   icon-sm  32×32 circle            Same reservation as `sm`
  *
  * Touch surfaces (mobile booking, public pages, `BookingBar` at
  * src/components/public/course-details/BookingBar.tsx): minimum
- * `default` (44px); CTAs use `cta` (44px).
+ * `default` (40px); CTAs use `cta`.
  */
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,transform] duration-150 ease-out outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 dark:aria-invalid:border-danger/50 dark:aria-invalid:ring-danger/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 cursor-pointer",
@@ -64,11 +84,13 @@ const buttonVariants = cva(
           "bg-transparent border-transparent text-foreground-muted hover:bg-transparent hover:text-foreground",
       },
       size: {
-        default: "h-11 gap-1.5 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+        default: "h-10 gap-1.5 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
         lg: "h-10 gap-1.5 px-5 has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
-        cta: "h-11 gap-2 px-6 text-base has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5",
-        icon: "size-11",
+        cta: "h-10 gap-2 px-6 has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5",
+        sm: "h-8 gap-1 px-3 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
+        icon: "size-10",
         "icon-lg": "size-10",
+        "icon-sm": "size-8",
       },
     },
     compoundVariants: [
@@ -77,11 +99,13 @@ const buttonVariants = cva(
       // explicit for icon sizes so it can't drift.
       { size: "icon", className: "rounded-full" },
       { size: "icon-lg", className: "rounded-full" },
+      { size: "icon-sm", className: "rounded-full" },
       // Plain variant strips chrome (height + padding) at every size.
       // Size still controls font-size; `plain` is "text inline, no button shell".
       { variant: "plain", size: "default", className: "h-auto p-0" },
       { variant: "plain", size: "lg", className: "h-auto p-0" },
       { variant: "plain", size: "cta", className: "h-auto p-0" },
+      { variant: "plain", size: "sm", className: "h-auto p-0" },
     ],
     defaultVariants: {
       variant: "default",

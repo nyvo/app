@@ -5,12 +5,12 @@ import { useSidebar } from '@/components/ui/sidebar';
 
 /**
  * Height of the fixed bar's chrome below the safe-area inset: py-2 (16px)
- * + the default Button's h-11 (44px) + border-b (1px) = 61px. Both the bar
+ * + the default Button's h-10 (40px) + border-b (1px) = 57px. Both the bar
  * (as an explicit min-height, so it can't silently drift from its own
  * padding/button sizing) and the sibling spacer below derive from this one
  * constant instead of duplicating the number.
  */
-export const MOBILE_HEADER_HEIGHT = 61;
+export const MOBILE_HEADER_HEIGHT = 57;
 
 /**
  * Mobile-only top bar (hidden ≥md, where the persistent sidebar rail shows).

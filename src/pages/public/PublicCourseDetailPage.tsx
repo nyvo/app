@@ -126,9 +126,9 @@ export default function PublicCourseDetailPage() {
 
   // Same tile/state derivation the checkout page's BookingRailLite and this
   // page's BookingBar both render off — one source of truth, no drift.
-  const { tiles, courseFull, soldOut, closed, spotsLeft, lowStock } = course
+  const { tiles, courseFull, soldOut, closed } = course
     ? getBookingTiles(course, tiers, buildDropInSublabel(sessions))
-    : { tiles: [], courseFull: false, soldOut: false, closed: false, spotsLeft: 0, lowStock: false };
+    : { tiles: [], courseFull: false, soldOut: false, closed: false };
 
   const checkoutHref = course ? `/${slug}/${course.slug}/pamelding` : '';
   const paymentNotReady = tiles.some((t) => t.amount > 0) && !course?.seller?.stripe_onboarding_complete;
@@ -153,15 +153,12 @@ export default function PublicCourseDetailPage() {
             <BookingBar
               tiles={tiles}
               coursePrice={course.price}
+              dropInPrice={course.allows_drop_in ? course.drop_in_price : null}
               courseFull={courseFull}
               soldOut={soldOut}
               closed={closed}
-              spotsLeft={spotsLeft}
-              lowStock={lowStock}
               paymentNotReady={paymentNotReady}
               checkoutHref={checkoutHref}
-              sellerName={course.seller?.name ?? null}
-              sellerSlug={course.seller?.slug ?? null}
             />
           </>
         )}

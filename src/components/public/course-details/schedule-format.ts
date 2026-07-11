@@ -254,7 +254,7 @@ export interface MetaCardRow {
 }
 
 /**
- * Rows for the course-detail metadata card — Start / Tid / Omfang /
+ * Rows for the course-detail metadata card — Start / Tid / Varighet /
  * Instruktør, skipping any row whose data is missing. Built from the same
  * date/time primitives as `buildMainTierConstraintLabel` (weekday-plural
  * pattern, `resolveTimeRange`, `singleDayCount`) so the metadata card and
@@ -289,12 +289,12 @@ export function buildMetaCardRows(
       const value = course.total_weeks
         ? `${count} ${noun} over ${course.total_weeks} ${course.total_weeks === 1 ? 'uke' : 'uker'}`
         : `${count} ${noun}`;
-      rows.push({ label: 'Omfang', value });
+      rows.push({ label: 'Varighet', value });
     }
   } else {
     if (timeRange) rows.push({ label: 'Tid', value: `Kl. ${timeRange}` });
     const days = singleDayCount(course);
-    rows.push({ label: 'Omfang', value: days > 1 ? `${days} dager` : '1 økt' });
+    rows.push({ label: 'Varighet', value: days > 1 ? `${days} dager` : '1 økt' });
   }
 
   if (course.instructor_name) {

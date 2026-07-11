@@ -239,7 +239,7 @@ export default function JoinPage() {
               <Skeleton className="mx-auto h-8 w-56" />
               <Skeleton className="mx-auto h-4 w-72 max-w-full" />
             </div>
-            <Skeleton className="h-11 w-full rounded-full" />
+            <Skeleton className="h-10 w-full rounded-full" />
           </div>
         </DelayedFallback>
       </Shell>
@@ -348,7 +348,7 @@ export default function JoinPage() {
             <Skeleton className="mx-auto h-8 w-56" />
             <Skeleton className="mx-auto h-4 w-72 max-w-full" />
           </div>
-          <Skeleton className="h-11 w-full rounded-full" />
+          <Skeleton className="h-10 w-full rounded-full" />
         </div>
       </Shell>
     );

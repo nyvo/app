@@ -60,7 +60,7 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(({
           disabled={disabled}
           aria-invalid={error || undefined}
           className={cn(
-            'flex h-11 w-full items-center justify-between gap-2.5 rounded-xl border border-border bg-surface px-4 text-base text-foreground outline-none transition-[color,border-color,box-shadow] duration-150 ease-out focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20',
+            'flex h-10 w-full items-center justify-between gap-2.5 rounded-xl border border-border bg-surface px-4 text-base text-foreground outline-none transition-[color,border-color,box-shadow] duration-150 ease-out focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20',
             !value && 'text-foreground-muted',
             className
           )}

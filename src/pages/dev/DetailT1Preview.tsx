@@ -47,7 +47,7 @@ const DetailT1Preview = () => {
   const sessions = useMemo(() => makeMockSessions(course.id, variant), [course.id, variant]);
   const tiers = useMemo(() => makeMockTiers(course, variant), [course, variant]);
 
-  const { tiles, courseFull, soldOut, closed, spotsLeft, lowStock } = getBookingTiles(
+  const { tiles, courseFull, soldOut, closed } = getBookingTiles(
     course,
     tiers,
     buildDropInSublabel(sessions),
@@ -70,15 +70,12 @@ const DetailT1Preview = () => {
         <BookingBar
           tiles={tiles}
           coursePrice={course.price}
+          dropInPrice={course.allows_drop_in ? course.drop_in_price : null}
           courseFull={courseFull}
           soldOut={soldOut}
           closed={closed}
-          spotsLeft={spotsLeft}
-          lowStock={lowStock}
           paymentNotReady={paymentNotReady}
           checkoutHref={checkoutHref}
-          sellerName={course.seller?.name ?? null}
-          sellerSlug={course.seller?.slug ?? null}
         />
       </main>
     </div>

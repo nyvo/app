@@ -41,6 +41,8 @@ interface CopyButtonProps extends Omit<ButtonProps, 'onClick' | 'children'> {
   label?: string;
   /** Default: "Kopiert". */
   copiedLabel?: string;
+  /** Default: "default" (Button's own default size). */
+  size?: ButtonProps['size'];
 }
 
 /**
@@ -54,13 +56,14 @@ export function CopyButton({
   label = 'Kopier',
   copiedLabel = 'Kopiert',
   variant = 'secondary',
+  size = 'default',
   type = 'button',
   ...props
 }: CopyButtonProps) {
   const { copied, copy } = useCopyToClipboard();
 
   return (
-    <Button type={type} variant={variant} onClick={() => void copy(value)} {...props}>
+    <Button type={type} variant={variant} size={size} onClick={() => void copy(value)} {...props}>
       {/* Both states are stacked in the same grid cell so the wider label
           ("Kopiert") sets the button's width — no layout shift on swap.
           Opacity crossfades: entering "copied" is snappy (120ms), reverting
