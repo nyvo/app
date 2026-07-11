@@ -26,10 +26,13 @@ function PopoverContent({
 }: React.ComponentProps<typeof PopoverPrimitive.Content> & { showOverlay?: boolean }) {
   return (
     <PopoverPrimitive.Portal>
-      {/* Content precedes the overlay div so the peer-data-[state=closed]
-          selector below can target it as a preceding DOM sibling; z-40 vs
-          z-50 keeps the overlay visually beneath the content regardless of
-          DOM order. */}
+      {/* Radix's Portal slots onto its child (React.Children.only), so content
+          + overlay must share a single wrapper — `display: contents` keeps them
+          out of layout while staying DOM siblings. Content precedes the overlay
+          div so the peer-data-[state=closed] selector below can target it as a
+          preceding DOM sibling; z-40 vs z-50 keeps the overlay visually beneath
+          the content regardless of DOM order. */}
+      <div className="contents">
       <PopoverPrimitive.Content
         data-slot="popover-content"
         align={align}
@@ -41,8 +44,9 @@ function PopoverContent({
         {...props}
       />
       {showOverlay && (
-        <div className="fixed inset-0 z-40 bg-foreground/20 animate-in fade-in-0 duration-100 peer-data-[state=closed]:animate-out peer-data-[state=closed]:fade-out-0" />
+        <div aria-hidden="true" className="fixed inset-0 z-40 bg-foreground/20 animate-in fade-in-0 duration-100 peer-data-[state=closed]:animate-out peer-data-[state=closed]:fade-out-0" />
       )}
+      </div>
     </PopoverPrimitive.Portal>
   )
 }
