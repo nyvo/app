@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Landing mockup — Openspot</title>
+<style>
+  /* Token approximations from src/index.css (OKLCH). Mockup only — production uses the real tokens. */
+  :root{
+    --background:#ffffff;
+    --foreground:oklch(0.22 0.013 250);
+    --muted-text:oklch(0.50 0.011 250);
+    --faint-text:oklch(0.62 0.009 250);
+    --border:oklch(0.90 0.005 250);
+    --border-subtle:oklch(0.93 0.004 250);
+    --muted:oklch(0.975 0.002 250);
+    --primary:oklch(0.540 0.150 245);
+    --primary-hover:oklch(0.500 0.150 245);
+    --primary-subtle:#F2F7FB;
+    --chrome:oklch(0.24 0.012 250);
+    --chrome-text:oklch(0.97 0.002 250);
+    --chrome-muted:oklch(0.72 0.008 250);
+    --chrome-border:oklch(0.33 0.012 250);
+    --radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-font-smoothing:antialiased}
+  body{background:var(--background);color:var(--foreground);font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  .container{max-width:1040px;margin:0 auto;padding:0 32px}
+  a{text-decoration:none;color:inherit}
+
+  /* ============ header ============ */
+  header{border-bottom:1px solid var(--border-subtle)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:650;font-size:15.5px;letter-spacing:-.01em}
+  .brand .mark{width:22px;height:22px;border-radius:6px;background:var(--primary)}
+  .nav .links{display:flex;align-items:center;gap:26px;font-size:14px;color:var(--muted-text)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 18px;border-radius:var(--radius);background:var(--primary);color:#fff;font-size:14px;font-weight:550;border:0;cursor:pointer}
+  .btn:hover{background:var(--primary-hover)}
+  .btn.sm{height:34px;padding:0 15px}
+  .btn.lg{height:44px;padding:0 22px;font-size:15px}
+  .btn.inverse{background:#fff;color:var(--foreground)}
+
+  /* ============ hero ============ */
+  .hero{padding:88px 0 64px;text-align:center}
+  .hero h1{font-size:46px;line-height:1.12;letter-spacing:-.025em;font-weight:650;max-width:640px;margin:0 auto}
+  .hero p{font-size:17.5px;color:var(--muted-text);max-width:560px;margin:18px auto 0}
+  .hero .cta{margin-top:30px}
+  .hero .cta-note{margin-top:12px;font-size:13px;color:var(--faint-text)}
+
+  /* ============ tinted band + app window ============ */
+  .band{background-color:var(--primary-subtle);background-image:repeating-linear-gradient(90deg, rgba(58,110,165,.05) 0 1px, transparent 1px 14px);border-top:1px solid var(--border-subtle);border-bottom:1px solid var(--border-subtle);padding:56px 0 0}
+  .appwin{max-width:920px;margin:0 auto;background:#fff;border:1px solid var(--border);border-bottom:0;border-radius:14px 14px 0 0;box-shadow:0 24px 48px -24px rgba(30,41,59,.18);overflow:hidden}
+  .appwin .chrome{display:flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-bottom:1px solid var(--border-subtle)}
+  .appwin .chrome i{width:9px;height:9px;border-radius:50%;background:var(--border);display:block}
+  .app{display:flex;height:330px}
+  .app .side{width:190px;border-right:1px solid var(--border-subtle);padding:14px 10px;display:flex;flex-direction:column;gap:2px}
+  .app .side .item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;font-size:12.5px;color:var(--muted-text)}
+  .app .side .item.active{background:rgba(30,41,59,.06);color:var(--foreground);font-weight:550}
+  .app .side .item i{width:13px;height:13px;border-radius:4px;background:var(--border);flex:none}
+  .app .main{flex:1;padding:18px 22px;min-width:0}
+  .app .main .toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .app .main .toolbar .t{font-size:14.5px;font-weight:600;letter-spacing:-.01em}
+  .app .row{display:flex;align-items:center;gap:14px;padding:12px 4px;border-top:1px solid var(--border-subtle);font-size:13px}
+  .app .row:first-of-type{border-top:0}
+  .app .row .time{width:92px;color:var(--muted-text);font-variant-numeric:tabular-nums}
+  .app .row .name{flex:1;font-weight:530}
+  .app .row .type{color:var(--faint-text);width:80px}
+  .app .row .pill{font-size:11.5px;padding:3px 9px;border-radius:999px;background:var(--muted);border:1px solid var(--border-subtle);color:var(--muted-text);font-variant-numeric:tabular-nums}
+  .app .row .pill.ok{color:oklch(0.45 0.10 165);background:oklch(0.97 0.02 165);border-color:oklch(0.90 0.04 165)}
+
+  /* ============ features ============ */
+  .features{padding:96px 0}
+  .features h2{font-size:28px;letter-spacing:-.02em;font-weight:640;text-align:center}
+  .features .lede{text-align:center;color:var(--muted-text);margin-top:10px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:44px}
+  .card{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#fff}
+  .card .visual{height:170px;background:var(--muted);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:center;padding:20px}
+  .card .body{padding:18px 20px 22px}
+  .card h3{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
+  .card p{font-size:13.5px;color:var(--muted-text);margin-top:5px}
+
+  /* wide card */
+  .card.wide{grid-column:1 / -1;display:flex;align-items:stretch;margin-top:0}
+  .card.wide .body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:34px 38px}
+  .card.wide h3{font-size:18px}
+  .card.wide p{font-size:14.5px;margin-top:8px;max-width:360px}
+  .card.wide .visual{flex:1.15;height:auto;min-height:230px;border-bottom:0;border-left:1px solid var(--border-subtle)}
+
+  /* mini-mocks inside cards */
+  .mini{background:#fff;border:1px solid var(--border);border-radius:10px;width:100%;max-width:210px;box-shadow:0 10px 20px -14px rgba(30,41,59,.25);padding:12px}
+  .mini .mrow{display:flex;align-items:center;gap:8px;padding:7px 8px;border:1px solid var(--border-subtle);border-radius:7px;margin-top:6px;font-size:11px;color:var(--muted-text)}
+  .mini .mrow:first-child{margin-top:0}
+  .mini .mrow b{font-weight:550;color:var(--foreground)}
+  .mini .mrow .spacer{flex:1}
+  .mini .dot{width:14px;height:14px;border-radius:50%;background:var(--border);flex:none}
+  .mini .mbtn{margin-top:8px;height:26px;border-radius:7px;background:var(--primary);color:#fff;font-size:11px;font-weight:550;display:flex;align-items:center;justify-content:center}
+  .mini .amount{font-size:16px;font-weight:640;letter-spacing:-.01em;padding:2px 0 6px;text-align:center}
+  .mini .head{font-size:11.5px;font-weight:600;padding-bottom:6px;display:flex;align-items:center;gap:6px}
+  .mini .head .logo{width:12px;height:12px;border-radius:4px;background:var(--foreground)}
+  .mini .cardicon{width:18px;height:12px;border-radius:3px;background:var(--border);flex:none}
+
+  /* embed mini site */
+  .minisite{background:#fff;border:1px solid var(--border);border-radius:10px;width:100%;max-width:300px;box-shadow:0 10px 20px -14px rgba(30,41,59,.25);overflow:hidden}
+  .minisite .snav{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--border-subtle)}
+  .minisite .snav .sdot{width:9px;height:9px;border-radius:50%;background:var(--border)}
+  .minisite .snav i{width:26px;height:5px;border-radius:3px;background:var(--border);display:block}
+  .minisite .shero{padding:10px 12px 4px}
+  .minisite .shero i{display:block;height:8px;border-radius:4px;background:var(--border);width:55%}
+  .minisite .embedbox{margin:10px;border:1.5px dashed oklch(0.75 0.06 245);border-radius:8px;padding:8px;background:var(--primary-subtle)}
+  .minisite .erow{display:flex;align-items:center;gap:8px;padding:6px 6px;font-size:10.5px;color:var(--muted-text);border-top:1px solid var(--border-subtle)}
+  .minisite .erow:first-child{border-top:0}
+  .minisite .erow b{font-weight:550;color:var(--foreground)}
+  .minisite .erow .spacer{flex:1}
+  .minisite .ebtn{background:var(--primary);color:#fff;border-radius:5px;font-size:9.5px;font-weight:550;padding:3px 8px}
+
+  /* details strip */
+  .details{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin-top:56px;padding-top:44px;border-top:1px solid var(--border-subtle)}
+  .details h4{font-size:14px;font-weight:600;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+  .details h4::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
+  .details p{font-size:13px;color:var(--muted-text);margin-top:6px}
+
+  /* ============ dark CTA + footer ============ */
+  .chromeband{background:var(--chrome);color:var(--chrome-text)}
+  .chromeband .cta-block{padding:88px 0;text-align:center}
+  .chromeband h2{font-size:32px;letter-spacing:-.02em;font-weight:640}
+  .chromeband .cta-block p{color:var(--chrome-muted);margin-top:10px;font-size:15.5px}
+  .chromeband .cta-block .btn{margin-top:26px}
+  .footer{border-top:1px solid var(--chrome-border);padding:26px 0}
+  .footer .inner{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--chrome-muted)}
+  .footer .left{display:flex;align-items:center;gap:22px}
+  .footer .brand{font-size:13.5px;color:var(--chrome-text);gap:7px}
+  .footer .brand .mark{width:16px;height:16px;border-radius:5px}
+  .footer a:hover{color:var(--chrome-text)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container nav">
+    <div class="brand"><span class="mark"></span>Openspot</div>
+    <nav class="links">
+      <a href="#">Priser</a>
+      <a href="#">Logg inn</a>
+      <button class="btn sm">Kom i gang</button>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <h1>Kundene melder seg på og betaler selv</h1>
+    <p>Openspot er bookingsystemet for yogalærere og studioer. Publiser timeplanen og ta betalt på nett — uten regneark og meldingstråder.</p>
+    <div class="cta"><button class="btn lg">Kom i gang gratis</button></div>
+    <div class="cta-note">Ingen binding.</div>
+  </div>
+</section>
+
+<div class="band">
+  <div class="container" style="padding-bottom:0">
+    <div class="appwin">
+      <div class="chrome"><i></i><i></i><i></i></div>
+      <div class="app">
+        <div class="side">
+          <div class="item"><i></i>Oversikt</div>
+          <div class="item active"><i></i>Timeplan</div>
+          <div class="item"><i></i>Kurs</div>
+          <div class="item"><i></i>Studio</div>
+          <div class="item"><i></i>Utbetalinger</div>
+        </div>
+        <div class="main">
+          <div class="toolbar">
+            <span class="t">Denne uken</span>
+            <button class="btn sm" style="height:30px;padding:0 12px;font-size:12.5px">Nytt kurs</button>
+          </div>
+          <div class="row"><span class="time">Man 17:00</span><span class="name">Yin yoga</span><span class="type">Kurs</span><span class="pill">12 av 14</span></div>
+          <div class="row"><span class="time">Man 19:00</span><span class="name">Vinyasa flow</span><span class="type">Drop-in</span><span class="pill ok">Fullt</span></div>
+          <div class="row"><span class="time">Tir 07:00</span><span class="name">Morgenflyt</span><span class="type">Drop-in</span><span class="pill">8 av 16</span></div>
+          <div class="row"><span class="time">Ons 18:00</span><span class="name">Yoga for nybegynnere</span><span class="type">Kurs</span><span class="pill">14 av 20</span></div>
+          <div class="row"><span class="time">Tor 17:30</span><span class="name">Prenatal yoga</span><span class="type">Kurs</span><span class="pill">9 av 12</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="features">
+  <div class="container">
+    <h2>Fra påmelding til utbetaling</h2>
+    <p class="lede">Alt du trenger for å drive kursene, samlet på ett sted.</p>
+    <div class="grid">
+
+      <div class="card">
+        <div class="visual">
+          <div class="mini">
+            <div class="head"><span class="logo"></span>Ditt studio</div>
+            <div class="mrow"><b>Yin yoga</b><span class="spacer"></span>Man 17:00</div>
+            <div class="mrow"><b>Morgenflyt</b><span class="spacer"></span>Tir 07:00</div>
+            <div class="mbtn">Meld deg på</div>
+          </div>
+        </div>
+        <div class="body">
+          <h3>Egen påmeldingsside</h3>
+          <p>Del én lenke. Kundene melder seg på selv — uten konto og uten app.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="visual">
+          <div class="mini">
+            <div class="amount">1 200 kr</div>
+            <div class="mrow"><span class="cardicon"></span><b>Kort</b><span class="spacer"></span>•••• 4242</div>
+            <div class="mbtn">Betal</div>
+          </div>
+        </div>
+        <div class="body">
+          <h3>Integrert betaling</h3>
+          <p>Kundene betaler i det de melder seg på, og pengene går rett til kontoen din. Plassen bekreftes først når den er betalt.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="visual">
+          <div class="mini">
+            <div class="mrow"><span class="dot"></span><b>Anna Berg</b><span class="spacer"></span>Betalt</div>
+            <div class="mrow"><span class="dot"></span><b>Jonas Vik</b><span class="spacer"></span>Betalt</div>
+            <div class="mrow"><span class="dot"></span><b>Sara Moe</b><span class="spacer"></span>Betalt</div>
+          </div>
+        </div>
+        <div class="body">
+          <h3>Oversikt over deltakerne</h3>
+          <p>Se hvem som kommer og hvem som har betalt, oppdatert i sanntid.</p>
+        </div>
+      </div>
+
+      <div class="card wide">
+        <div class="body">
+          <h3>Timeplanen på din egen nettside</h3>
+          <p>Har studioet en nettside fra før? Lim inn én kodesnutt, så kan kundene booke direkte der — uten å forlate siden din.</p>
+        </div>
+        <div class="visual">
+          <div class="minisite">
+            <div class="snav"><span class="sdot"></span><i></i><i></i><span style="flex:1"></span><i style="width:32px"></i></div>
+            <div class="shero"><i></i></div>
+            <div class="embedbox">
+              <div class="erow"><b>Yin yoga</b><span class="spacer"></span>Man 17:00<span class="ebtn">Meld deg på</span></div>
+              <div class="erow"><b>Vinyasa flow</b><span class="spacer"></span>Man 19:00<span class="ebtn">Meld deg på</span></div>
+              <div class="erow"><b>Morgenflyt</b><span class="spacer"></span>Tir 07:00<span class="ebtn">Meld deg på</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="details">
+      <div>
+        <h4>Kurspakke og drop-in</h4>
+        <p>Selg hele kurs og enkelttimer. Sene påmeldinger betaler bare for gangene som gjenstår.</p>
+      </div>
+      <div>
+        <h4>Automatiske e-poster</h4>
+        <p>Bekreftelser, kvitteringer og beskjed ved endringer sendes for deg.</p>
+      </div>
+      <div>
+        <h4>Refunder med ett klikk</h4>
+        <p>Avlys en påmelding eller hele kurset — pengene går automatisk tilbake.</p>
+      </div>
+      <div>
+        <h4>Gjestelærere</h4>
+        <p>Inviter andre instruktører og samle kursene deres på samme side.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="chromeband">
+  <section class="cta-block">
+    <div class="container">
+      <h2>Klar til å fylle timene?</h2>
+      <p>Sett opp studioet på noen minutter.</p>
+      <button class="btn inverse lg">Kom i gang gratis</button>
+    </div>
+  </section>
+  <div class="footer">
+    <div class="container inner">
+      <div class="left">
+        <div class="brand"><span class="mark"></span>Openspot</div>
+        <a href="#">Priser</a>
+        <a href="#">Personvern</a>
+        <a href="#">Vilkår</a>
+        <a href="#">Kontakt</a>
+      </div>
+      <div>© 2026 Framio AS</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
