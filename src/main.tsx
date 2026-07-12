@@ -6,6 +6,7 @@ import { initMonitoring } from '@/lib/monitoring'
 // Self-hosted fonts — no Google CDN (GDPR + render-blocking). Imported here
 // (not via CSS @import) so Vite's asset pipeline emits the woff2 files.
 import '@fontsource-variable/geist/index.css'
+import '@fontsource-variable/geist-mono/index.css'
 import '@fontsource-variable/eb-garamond/index.css'
 import './index.css'
 

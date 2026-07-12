@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
 import { PageShell } from '@/components/teacher/PageShell';
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
-import { ChevronRight } from '@/lib/icons';
+import { ChevronRight, CircleAlert } from '@/lib/icons';
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
 // Lazy: IncomeChart is the only recharts consumer in product code, and
 // recharts alone is a ~350 KB chunk — keep it out of the dashboard's own
@@ -21,8 +21,7 @@ import {
   type IncomeSeries,
 } from '@/services/income';
 import { DateBadge } from '@/components/ui/date-badge';
-import { PaymentBadge } from '@/components/ui/payment-badge';
-import { cn, formatKroner } from '@/lib/utils';
+import { formatKroner } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -412,7 +411,7 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="group flex items-center gap-3 px-5 py-4 no-underline outline-none focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="group flex items-center gap-3 px-4 py-4 no-underline outline-none focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
@@ -484,18 +483,22 @@ function SignupRow({
   const name = signup.profile?.name || signup.participant_name || 'Ukjent deltaker';
   const courseTitle = signup.course?.title;
   const when = signup.created_at ? formatRelativeTimePast(signup.created_at) : '';
-  // Actionable-only badge: pending/failed call for attention. Settled states
-  // (paid, refunded, external) stay silent here — this card is a pulse, not
-  // a ledger; the full status lives in the participant drawer. On exception
-  // rows the badge is the one trailing token on mobile; the timestamp yields.
-  const hasExceptionBadge =
-    signup.payment_status === 'pending' || signup.payment_status === 'failed';
+  // Actionable-only indicator: pending/failed call for attention. Settled
+  // states (paid, refunded, external) stay silent here — this card is a
+  // pulse, not a ledger. A full badge is too loud for these compact rows;
+  // a small red alert glyph flags the row and the drawer carries the detail.
+  const paymentAlert =
+    signup.payment_status === 'pending' || signup.payment_status === 'failed'
+      ? signup.payment_status === 'failed'
+        ? 'Betaling feilet'
+        : 'Venter på betaling'
+      : null;
 
   return (
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="group flex w-full items-center gap-3 px-5 py-4 text-left outline-none cursor-pointer focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="group flex w-full items-center gap-3 px-4 py-4 text-left outline-none cursor-pointer focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
@@ -504,18 +507,15 @@ function SignupRow({
           {courseTitle ?? 'Ny påmelding'}
         </p>
       </div>
-      {hasExceptionBadge && signup.payment_status && (
-        <PaymentBadge status={signup.payment_status} className="shrink-0" />
+      {paymentAlert && (
+        <span className="shrink-0" role="img" aria-label={paymentAlert} title={paymentAlert}>
+          <CircleAlert className="size-4 text-danger" aria-hidden="true" />
+        </span>
       )}
       {/* Trailing slot: timestamp stays put, chevron fades in beside it on
           hover (150ms ease-out, transform+opacity only) — reserved space so
-          nothing shifts. The badge never yields to hover. */}
-      <span
-        className={cn(
-          'flex shrink-0 items-center gap-1',
-          hasExceptionBadge && 'hidden sm:flex',
-        )}
-      >
+          nothing shifts. */}
+      <span className="flex shrink-0 items-center gap-1">
         <span className="text-sm tabular-nums text-foreground-muted">
           {when}
         </span>
@@ -536,7 +536,7 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
     return (
       <FramedCardPanel className="divide-y divide-border-subtle">
         {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 px-5 py-4">
+          <div key={i} className="flex items-center gap-3 px-4 py-4">
             <Skeleton className="size-10 rounded-lg" />
             <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
               <Skeleton className="h-3.5 w-32" />
@@ -552,7 +552,7 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
   return (
     <FramedCardPanel className="divide-y divide-border-subtle">
       {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 px-5 py-4">
+        <div key={i} className="flex items-center gap-3 px-4 py-4">
           <Skeleton className="size-10 rounded-full" />
           <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
             <Skeleton className="h-3.5 w-32" />

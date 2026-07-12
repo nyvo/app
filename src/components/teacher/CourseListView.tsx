@@ -10,20 +10,20 @@ import type { CourseFormat, DeliveryMode } from '@/types/database';
 import { routes } from '@/lib/routes';
 
 /**
- * Course-type marker — Linear's label pattern: a small bright pill + muted
- * text. The pill carries the categorical hue (--category-* tokens: legend
- * semantics like calendar event colors, NOT status), pastel-bright so it
- * reads instantly while the table stays calm at any row count.
+ * Course-type label — plain muted text. The earlier colored marker pill
+ * (--category-* hues) was dropped 2026-07-11: three same-family blue pastels
+ * at 8px were indistinguishable, so the pill added noise without carrying
+ * information the label doesn't already give.
  */
-const TYPE_MARKER: Record<'series' | 'single' | 'online', { label: string; dot: string }> = {
-  series: { label: 'Kursrekke', dot: 'bg-category-1' },
-  single: { label: 'Enkelttime', dot: 'bg-category-2' },
-  online: { label: 'Nettkurs', dot: 'bg-category-3' },
+const TYPE_LABEL: Record<'series' | 'single' | 'online', string> = {
+  series: 'Kursrekke',
+  single: 'Enkelttime',
+  online: 'Nettkurs',
 };
 
-function typeMarker(format: CourseFormat, delivery: DeliveryMode) {
-  if (delivery === 'online') return TYPE_MARKER.online;
-  return TYPE_MARKER[format] ?? TYPE_MARKER.single;
+function typeLabel(format: CourseFormat, delivery: DeliveryMode): string {
+  if (delivery === 'online') return TYPE_LABEL.online;
+  return TYPE_LABEL[format] ?? TYPE_LABEL.single;
 }
 
 /**
@@ -60,9 +60,10 @@ function StatusBadgeRow({ courseStatus, isFull }: { courseStatus: string; isFull
 export type SortKey = 'name' | 'next' | 'signups' | 'price';
 export type SortDir = 'asc' | 'desc';
 
-// pr-8 keeps a gutter between the right-aligned numeric columns and the
-// absolutely-positioned hover chevron at right-0.
-const COLS = 'grid grid-cols-[minmax(0,1fr)_100px_80px] items-center gap-6 pr-8 md:grid-cols-[minmax(0,1fr)_120px_120px_120px]';
+// Header and rows share pl-3/pr-8 so their grid tracks stay aligned: pl-3
+// mirrors the -mx-3 table bleed (content sits back on the page edge), pr-8
+// keeps a gutter between the numeric columns and the hover chevron.
+const COLS = 'grid grid-cols-[minmax(0,1fr)_100px_80px] items-center gap-6 pl-3 pr-8 md:grid-cols-[minmax(0,1fr)_120px_120px_120px]';
 
 interface TableHeaderProps {
   sortKey: SortKey;
@@ -117,7 +118,16 @@ function SortableHeader({
 
 function TableHeader({ sortKey, sortDir, onSort }: TableHeaderProps) {
   return (
-    <div role="row" className={cn(COLS, 'py-3 border-b border-border-subtle')}>
+    // The header rule also yields when the FIRST data row is hovered — it's
+    // the divider directly above that row's rounded hover fill.
+    <div
+      role="row"
+      className={cn(
+        COLS,
+        'py-3 border-b border-border-subtle',
+        '[&:has(+div>:first-child:hover)]:border-transparent [&:has(+div>:first-child:focus-visible)]:border-transparent',
+      )}
+    >
       <SortableHeader label="Navn" columnKey="name" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
       <div role="columnheader" className="text-sm text-foreground-muted">Status</div>
       <SortableHeader label="Påmeldte" columnKey="signups" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-right" />
@@ -140,20 +150,21 @@ function TableRow({ course, countsUnavailable }: { course: SessionScheduleRow; c
       role="row"
       className={cn(
         COLS,
-        'group relative py-4 no-underline outline-none transition-colors hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle',
+        // rounded-lg + the table's -mx-3 bleed keep the hover fill from
+        // reading as a hard-edged band cut off at the content edges.
+        'group relative rounded-lg py-4 no-underline outline-none transition-colors hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle',
+        // Hide the two hairlines touching the hovered row — Linear's
+        // list-hover treatment. v4 divide-y is border-BOTTOM on non-last
+        // children: the row's own border is the divider below it, the
+        // previous sibling's (`:has(+ :hover)`) is the one above it.
+        'hover:border-transparent focus-visible:border-transparent [&:has(+:hover)]:border-transparent [&:has(+:focus-visible)]:border-transparent',
       )}
     >
       <div role="cell" className="min-w-0">
         <h3 className="truncate text-base font-medium text-foreground">{course.courseTitle}</h3>
-        {(() => {
-          const { label, dot } = typeMarker(course.courseFormat, course.deliveryMode);
-          return (
-            <p className="mt-1 flex items-center gap-1.5 text-sm text-foreground-muted">
-              <span className={cn('h-2 w-3.5 shrink-0 rounded-full', dot)} aria-hidden="true" />
-              {label}
-            </p>
-          );
-        })()}
+        <p className="mt-1 truncate text-sm text-foreground-muted">
+          {typeLabel(course.courseFormat, course.deliveryMode)}
+        </p>
       </div>
       <div role="cell">
         <StatusBadgeRow
@@ -173,7 +184,7 @@ function TableRow({ course, countsUnavailable }: { course: SessionScheduleRow; c
       </span>
       <ChevronRight
         aria-hidden="true"
-        className="pointer-events-none absolute right-0 top-1/2 size-4 -translate-y-1/2 text-foreground-muted opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+        className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-foreground-muted opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
       />
     </Link>
   );
@@ -205,10 +216,13 @@ interface CourseListViewProps {
 
 export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState, countsUnavailable }: CourseListViewProps) {
   return (
-    <div role="table" className="overflow-hidden">
+    // -mx-3 lets the rounded row-hover fill bleed past the content edges
+    // (Linear-style) instead of stopping flush against the text columns;
+    // pl-3 inside COLS puts the content back on the page grid.
+    <div role="table" className="-mx-3">
       <TableHeader sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
       {courses.length === 0 && emptyState ? (
-        <div>{emptyState}</div>
+        <div className="pl-3 pr-8">{emptyState}</div>
       ) : (
         <TableBody courses={courses} countsUnavailable={countsUnavailable} />
       )}
@@ -218,7 +232,7 @@ export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState, 
 
 export function CourseListSkeleton() {
   return (
-    <div className="overflow-hidden">
+    <div className="-mx-3">
       <div className={cn(COLS, 'py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
         <span>Navn</span>
         <span>Status</span>

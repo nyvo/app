@@ -16,25 +16,23 @@ export function useSellerSetupStatus() {
   const navigate = useNavigate()
   const [hasPublishedCourse, setHasPublishedCourse] = useState(false)
   const [hasPaidCourse, setHasPaidCourse] = useState(false)
-  const [hasLocation, setHasLocation] = useState(false)
   const [draftCourseId, setDraftCourseId] = useState<string | null>(null)
-  // True until the first courses/locations fetch resolves. Without this, the
+  // True until the first courses fetch resolves. Without this, the
   // hook derives state from `hasPublishedCourse=false` on the first paint —
   // even when the seller actually has a published course — so consumers flash
   // the incomplete checklist before the fetch flips them to "done". Only ever
   // flips to false (realtime refreshes never set it back true), so a live
   // refresh doesn't blink the UI back to a skeleton.
   const [isLoading, setIsLoading] = useState(true)
-  // True when the courses/locations fetch itself failed — distinct from "no
-  // courses yet". Consumers must not derive an incomplete checklist from a
-  // failed fetch (a false negative), so they gate on this instead.
+  // True when the courses fetch itself failed — distinct from "no courses
+  // yet". Consumers must not derive an incomplete checklist from a failed
+  // fetch (a false negative), so they gate on this instead.
   const [loadFailed, setLoadFailed] = useState(false)
 
   const refresh = useCallback(async () => {
     if (!currentSeller?.id) {
       setHasPublishedCourse(false)
       setHasPaidCourse(false)
-      setHasLocation(false)
       setDraftCourseId(null)
       setLoadFailed(false)
       setIsLoading(false)
@@ -46,20 +44,12 @@ export function useSellerSetupStatus() {
     // (drafts included) with a price — that's what makes the Stripe step
     // required — plus the newest draft's id so the course step can resume it
     // instead of starting over.
-    const [
-      { data: courses, error: coursesError },
-      { count: locationCount, error: locationsError },
-    ] = await Promise.all([
-      supabase.from('courses')
-        .select('id, status, price')
-        .eq('seller_id', currentSeller.id)
-        .order('created_at', { ascending: false }),
-      supabase.from('teacher_locations')
-        .select('id', { count: 'exact', head: true })
-        .eq('seller_id', currentSeller.id),
-    ])
-    if (coursesError || locationsError) {
-      logger.error('[setup-status] fetch failed', coursesError ?? locationsError)
+    const { data: courses, error: coursesError } = await supabase.from('courses')
+      .select('id, status, price')
+      .eq('seller_id', currentSeller.id)
+      .order('created_at', { ascending: false })
+    if (coursesError) {
+      logger.error('[setup-status] fetch failed', coursesError)
       // Don't touch the signals — a failed fetch must never commit a false
       // "nothing done yet" over the last-known (or default) state.
       setLoadFailed(true)
@@ -70,7 +60,6 @@ export function useSellerSetupStatus() {
     setHasPublishedCourse(rows.some((c) => c.status !== 'draft'))
     setHasPaidCourse(rows.some((c) => (c.price ?? 0) > 0))
     setDraftCourseId(rows.find((c) => c.status === 'draft')?.id ?? null)
-    setHasLocation((locationCount ?? 0) > 0)
     setLoadFailed(false)
     setIsLoading(false)
   }, [currentSeller?.id])
@@ -80,10 +69,7 @@ export function useSellerSetupStatus() {
   }, [refresh])
 
   useMultiTableSubscription(
-    [
-      { table: 'courses', filter: `seller_id=eq.${currentSeller?.id}` },
-      { table: 'teacher_locations', filter: `seller_id=eq.${currentSeller?.id}` },
-    ],
+    [{ table: 'courses', filter: `seller_id=eq.${currentSeller?.id}` }],
     refresh,
     !!currentSeller?.id,
     currentSeller?.id,
@@ -95,7 +81,6 @@ export function useSellerSetupStatus() {
 
   const progress = useSetupProgress({
     currentSeller,
-    hasLocation,
     hasPublishedCourse,
     hasPaidCourse,
     draftCourseId,

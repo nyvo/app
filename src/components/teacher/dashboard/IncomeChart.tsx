@@ -21,13 +21,12 @@ interface IncomeChartProps {
   tooltipContent?: ReactElement
 }
 
-// Labels disclose the actual rolling window (services/income.ts) — no
-// ratified design reference mandates "Uke/Måned/År", and that phrasing read
-// as calendar-aligned periods the rolling windows don't match.
+// Period labels per product decision 2026-07-11 — note the windows are still
+// rolling (7/30/365 days, services/income.ts), not calendar-aligned periods.
 const RANGE_TABS: { key: IncomeRange; label: string }[] = [
-  { key: 'week', label: '7 dager' },
-  { key: 'month', label: '30 dager' },
-  { key: 'year', label: '12 mnd' },
+  { key: 'week', label: 'Uke' },
+  { key: 'month', label: 'Måned' },
+  { key: 'year', label: 'År' },
 ]
 
 /* Series ink stays azure (--primary) — ratified exception to the
@@ -165,8 +164,9 @@ export function IncomeChart({
         />
       }
     >
-      <FramedCardPanel className="p-5 sm:p-6">
-        <div className="flex items-baseline gap-3">
+      {/* px-4 keeps the total aligned with the FramedCard title above. */}
+      <FramedCardPanel className="px-4 py-5 sm:py-6">
+        <div className="flex items-center gap-3">
           {isLoading ? (
             <Skeleton className="h-9 w-40" />
           ) : (

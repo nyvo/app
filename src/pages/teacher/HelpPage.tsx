@@ -219,8 +219,14 @@ export default function HelpPage() {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={!canSubmit} loading={submitting} loadingText="Sender">
-                Send
+              <Button
+                type="submit"
+                size="cta"
+                disabled={!canSubmit}
+                loading={submitting}
+                loadingText="Sender"
+              >
+                Send melding
               </Button>
             </div>
           </form>

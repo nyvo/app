@@ -519,8 +519,10 @@ export const CourseSettingsTab = ({
         if (!showCancel && !showDelete) return null;
         return (
           // Destructive zone: plain hairline rows, no red-tinted panel
-          // (ui-patterns §2.4) — matches TeacherProfilePage.
-          <section className="mt-12">
+          // (ui-patterns §2.4) — matches TeacherProfilePage. border-t + the
+          // py-8 rhythm continues the SettingsRows dividers, so a rule
+          // separates Påmelding from Avlys kurset.
+          <section className="mt-8 border-t border-border-subtle pt-8">
             <div className="divide-y divide-border-subtle">
               {showCancel && (
                 <ActionRow
@@ -582,19 +584,25 @@ function ScheduleLockTooltip({ locked, children }: { locked: boolean; children: 
 }
 
 function ActionRow({ title, sub, buttonLabel, onClick, tone = 'default' }: ActionRowProps) {
+  // Same 220px label + 42rem control grid as SettingsRow — a full-width flex
+  // pushed the button past where the form's inputs end, so it floated alone
+  // at the shell edge. Right-aligned in the control column, the button's
+  // right edge now matches the inputs above.
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 py-5 first:pt-0 last:pb-0">
+    <div className="grid gap-4 py-5 first:pt-0 last:pb-0 md:grid-cols-[220px_minmax(0,42rem)] md:gap-12">
       <div className="min-w-0">
         <p className="text-base font-medium text-foreground">{title}</p>
-        <p className="text-sm text-foreground-muted">{sub}</p>
+        <p className="mt-1 text-sm text-foreground-muted">{sub}</p>
       </div>
-      <Button
-        variant={tone === 'danger' ? 'destructive' : 'secondary'}
-        onClick={onClick}
-        className="shrink-0"
-      >
-        {buttonLabel}
-      </Button>
+      <div className="flex items-center md:justify-end">
+        <Button
+          variant={tone === 'danger' ? 'destructive' : 'secondary'}
+          onClick={onClick}
+          className="shrink-0"
+        >
+          {buttonLabel}
+        </Button>
+      </div>
     </div>
   );
 }

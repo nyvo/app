@@ -7,10 +7,11 @@ import { ErrorState } from '@/components/ui/error-state';
 import { PageShell } from '@/components/teacher/PageShell';
 import {
   PayoutSetupCard,
-  PayoutFaqSection,
+  PayoutFaq,
   type PayoutSetupViewModel,
   type MarkerTone,
 } from '@/components/teacher/PayoutSetupCard';
+import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   startStripeConnectOnboarding,
@@ -236,35 +237,43 @@ const PaymentsPage = () => {
 
   const viewModel: PayoutSetupViewModel = { h2, counter, steps };
 
+  // Same layout skeleton as the other settings pages (profile, studio):
+  // default-width PageShell + SettingsRows sections, not a centered column.
   return (
-    <PageShell narrow="centered" title="Utbetalingskonto" description="Slik får du betalt for kursene dine.">
-      {currentSellerHydrateFailed ? (
-        // stripe_account_id is a stale safe-default (null) — the timeline would
-        // show step 1 to a seller who already started onboarding. Bail to a
-        // bounded retry instead. The FAQ below is static, so it stays.
-        <ErrorState
-          title="Kunne ikke hente kontoinformasjon"
-          message="Prøv igjen om litt."
-          onRetry={refreshSellers}
-        />
-      ) : (
-        <>
-          {stripePayoutsBlocked && (
-            <Alert variant="warning" className="mb-6">
-              <AlertTitle className="text-base">Utbetalinger er ikke aktive ennå</AlertTitle>
-              <AlertDescription className="text-base text-foreground">
-                Stripe mangler noe informasjon før pengene kan utbetales til deg. Åpne
-                Stripe-dashbordet for å fullføre.
-              </AlertDescription>
-              <div className="mt-3">
-                <Button onClick={handleOpenStripeDashboard}>Åpne Stripe</Button>
-              </div>
-            </Alert>
+    <PageShell title="Utbetalingskonto">
+      <SettingsRows>
+        <SettingsRow title="Utbetalinger" description="Slik får du betalt for kursene dine.">
+          {currentSellerHydrateFailed ? (
+            // stripe_account_id is a stale safe-default (null) — the timeline
+            // would show step 1 to a seller who already started onboarding.
+            // Bail to a bounded retry instead. The FAQ below is static, so it stays.
+            <ErrorState
+              title="Kunne ikke hente kontoinformasjon"
+              message="Prøv igjen om litt."
+              onRetry={refreshSellers}
+            />
+          ) : (
+            <>
+              {stripePayoutsBlocked && (
+                <Alert variant="warning">
+                  <AlertTitle className="text-base">Utbetalinger er ikke aktive ennå</AlertTitle>
+                  <AlertDescription className="text-base text-foreground">
+                    Stripe mangler noe informasjon før pengene kan utbetales til deg. Åpne
+                    Stripe-dashbordet for å fullføre.
+                  </AlertDescription>
+                  <div className="mt-3">
+                    <Button onClick={handleOpenStripeDashboard}>Åpne Stripe</Button>
+                  </div>
+                </Alert>
+              )}
+              <PayoutSetupCard viewModel={viewModel} />
+            </>
           )}
-          <PayoutSetupCard viewModel={viewModel} />
-        </>
-      )}
-      <PayoutFaqSection />
+        </SettingsRow>
+        <SettingsRow title="Vanlige spørsmål">
+          <PayoutFaq />
+        </SettingsRow>
+      </SettingsRows>
     </PageShell>
   );
 };

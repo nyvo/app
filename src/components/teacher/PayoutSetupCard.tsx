@@ -188,20 +188,30 @@ const FAQ_ITEMS = [
   },
 ];
 
+/** Bare FAQ accordion — for surfaces that already provide their own section
+ *  label (e.g. the payouts SettingsRow). */
+export function PayoutFaq() {
+  return (
+    <Accordion type="single" collapsible className="border-t border-border-subtle">
+      {FAQ_ITEMS.map((item) => (
+        <AccordionItem key={item.q} value={item.q} className="border-border-subtle">
+          <AccordionTrigger>{item.q}</AccordionTrigger>
+          <AccordionContent className="text-sm text-foreground">{item.a}</AccordionContent>
+        </AccordionItem>
+      ))}
+    </Accordion>
+  );
+}
+
 export function PayoutFaqSection() {
   return (
     // mt-12 = THE page section gap; this component owns its distance from the
-    // setup card above it (PaymentsPage renders them as adjacent siblings).
+    // setup card above it (the dev preview renders them as adjacent siblings).
     <section className="mt-12">
       <h2 className="text-sm font-medium text-foreground">Vanlige spørsmål</h2>
-      <Accordion type="single" collapsible className="mt-3 border-t border-border-subtle">
-        {FAQ_ITEMS.map((item) => (
-          <AccordionItem key={item.q} value={item.q} className="border-border-subtle">
-            <AccordionTrigger>{item.q}</AccordionTrigger>
-            <AccordionContent className="text-sm text-foreground">{item.a}</AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+      <div className="mt-3">
+        <PayoutFaq />
+      </div>
     </section>
   );
 }

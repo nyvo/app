@@ -1076,8 +1076,10 @@ const CoursePage = () => {
                 const isFull =
                   courseData.capacity > 0 && participantKpis.confirmed >= courseData.capacity;
 
+                // px-3 pairs with the table's -mx-3 bleed (same rounded
+                // hover treatment as /courses) so content stays on the page grid.
                 const PARTICIPANT_COLS =
-                  'grid grid-cols-[minmax(0,1fr)_24px] items-center gap-4 ' +
+                  'grid grid-cols-[minmax(0,1fr)_24px] items-center gap-4 px-3 ' +
                   'md:grid-cols-[minmax(0,1fr)_80px_160px_20px] md:gap-8';
 
                 return (
@@ -1151,10 +1153,10 @@ const CoursePage = () => {
                         description="Deltakere som melder seg på, dukker opp her."
                       />
                     ) : (
-                      <div role="table">
+                      <div role="table" className="-mx-3">
                         {/* Column header — anchored at the leading edge so the
                             "Navn" label sits above the avatar+name unit. */}
-                        <div role="row" className={cn(PARTICIPANT_COLS, 'hidden md:grid py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
+                        <div role="row" className={cn(PARTICIPANT_COLS, 'hidden md:grid py-3 border-b border-border-subtle text-sm text-foreground-muted', '[&:has(+div>:first-child:hover)]:border-transparent [&:has(+div>:first-child:focus-visible)]:border-transparent')}>
                           <span role="columnheader">Navn</span>
                           <span role="columnheader">Notat</span>
                           <span role="columnheader">Status</span>
@@ -1188,9 +1190,13 @@ const CoursePage = () => {
                                 onClick={() => setSelectedParticipantId(p.id)}
                                 className={cn(
                                   PARTICIPANT_COLS,
-                                  'w-full text-left py-4 transition-colors cursor-pointer',
+                                  'w-full text-left rounded-lg py-4 transition-colors cursor-pointer',
                                   'hover:bg-hover focus-visible:bg-hover outline-none',
                                   'focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle',
+                                  // Hide the hairlines touching the hovered row so the
+                                  // rounded fill doesn't collide with the dividers
+                                  // (own border-bottom + previous sibling's).
+                                  'hover:border-transparent focus-visible:border-transparent [&:has(+:hover)]:border-transparent [&:has(+:focus-visible)]:border-transparent',
                                   isCancelled && 'opacity-60',
                                 )}
                               >

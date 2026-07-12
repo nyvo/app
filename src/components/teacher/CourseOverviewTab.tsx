@@ -10,6 +10,7 @@ import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
 import { cn, formatKroner } from '@/lib/utils';
 import { osloTodayKey } from '@/utils/dateUtils';
 import { MapPin, ChevronRight } from '@/lib/icons';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import type { MappedCourse } from '@/hooks/use-course-detail';
 import type { CourseSession } from '@/types/database';
 
@@ -406,24 +407,27 @@ function TimeplanCard({
   const nextId = sessions.find((s) => s.session_date >= today && s.status !== 'cancelled')?.id;
   return (
     <FramedCard title="Timeplan" action={statusLabel}>
-      <FramedCardPanel className="divide-y divide-border-subtle">
-        {preview.map((s) => (
-          <SessionRow
-            key={s.id}
-            session={s}
-            today={today}
-            isNext={s.id === nextId}
-            onEdit={() => onEditSession(s.id)}
-          />
-        ))}
+      <FramedCardPanel>
+        {/* Dividers only between the session rows — the trailing "Se alle
+            timer" is a plain link at the bottom, not a fourth list row. */}
+        <div className="divide-y divide-border-subtle">
+          {preview.map((s) => (
+            <SessionRow
+              key={s.id}
+              session={s}
+              today={today}
+              isNext={s.id === nextId}
+              onEdit={() => onEditSession(s.id)}
+            />
+          ))}
+        </div>
         {sessions.length > preview.length && (
           <button
             type="button"
             onClick={onOpenAll}
-            className="group flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground outline-none focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+            className="mx-4 mb-3.5 mt-1 w-fit rounded text-left text-sm font-medium text-foreground-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           >
             Se alle timer
-            <ChevronRight className="size-4 shrink-0 text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
           </button>
         )}
       </FramedCardPanel>
@@ -594,10 +598,10 @@ function TogglesSection({
       />
       <ToggleRow
         label="Tillat påmelding etter oppstart"
-        help={
+        info={
           isFree
-            ? 'Lar deltakere melde seg på etter at kurset har startet.'
-            : 'Prisen blir justert automatisk etter antall uker igjen.'
+            ? 'Deltakere kan melde seg på selv om kurset er i gang.'
+            : 'Deltakere kan melde seg på selv om kurset er i gang. Prisen justeres automatisk etter hvor mange uker som er igjen.'
         }
         checked={acceptsLateSignups}
         onChange={onAcceptsLateSignupsChange}
@@ -608,18 +612,24 @@ function TogglesSection({
 
 interface ToggleRowProps {
   label: string;
-  help?: string;
+  /** Rendered as an info-icon tooltip beside the label (not a visible sub-line). */
+  info?: string;
   checked: boolean;
   onChange: (next: boolean) => void;
   children?: React.ReactNode;
 }
 
-function ToggleRow({ label, help, checked, onChange, children }: ToggleRowProps) {
+function ToggleRow({ label, info, checked, onChange, children }: ToggleRowProps) {
+  // Rows keep their own vertical padding (no first/last stripping) — the old
+  // first:pt-0/last:pb-0 left the content flush against the panel's top and
+  // bottom edges while px-4 padded the sides.
   return (
-    <div className="flex items-start justify-between gap-6 py-5 first:pt-0 last:pb-0">
+    <div className="flex items-start justify-between gap-6 py-4">
       <div className="min-w-0 flex-1">
-        <p className="text-base font-medium text-foreground">{label}</p>
-        {help && <p className="mt-1 text-base text-foreground-muted">{help}</p>}
+        <div className="flex items-center gap-1">
+          <p className="text-base font-medium text-foreground">{label}</p>
+          {info && <InfoTooltip content={info} />}
+        </div>
         {children}
       </div>
       <Switch checked={checked} onCheckedChange={onChange} className="mt-1 shrink-0" />
@@ -668,9 +678,12 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
   }
 
   return (
-    <div className="flex items-start justify-between gap-6 py-5 first:pt-0 last:pb-0">
+    <div className="flex items-start justify-between gap-6 py-4">
       <div className="min-w-0 flex-1">
-        <p className="text-base font-medium text-foreground">Tillat drop-in</p>
+        <div className="flex items-center gap-1">
+          <p className="text-base font-medium text-foreground">Tillat drop-in</p>
+          <InfoTooltip content="Deltakere kan betale for én enkelt time i stedet for hele kurset." />
+        </div>
         <div className="mt-2.5 flex items-center gap-2.5">
           <label htmlFor="overview-drop-in-price" className="text-sm text-foreground-muted">
             Pris per time
