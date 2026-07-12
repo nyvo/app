@@ -9,11 +9,15 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
+import { DevPage, PreviewSection } from './_kit';
 
 /**
  * Dev preview for the shared horizontal settings layout (SettingsRows /
  * SettingsRow). Auth-free, no data — mock state only. Sign-off surface for the
  * Phase 2 design pass before adopting the pattern on Studio / Innstillinger.
+ * No error state: SettingsRows/SettingsRow are pure layout primitives with no
+ * data fetching of their own, so there's nothing to fail here — that lives on
+ * whichever real page adopts the pattern.
  *
  * Two blocks:
  *  1. "Rediger kurs" — the four course-edit sections (Bilde / Detaljer /
@@ -21,8 +25,8 @@ import { cn } from '@/lib/utils';
  *  2. "Studio" — a settings-page shape (Profilbilde / Navn / Nettadresse) to
  *     judge the same pattern for the next adoption step.
  *
- * The outer column mimics PageShell: max-w-6xl + px-8 py-12. The narrowing is
- * done entirely inside SettingsRow (220px label + 42rem control cap).
+ * The narrowing is done entirely inside SettingsRow (220px label + 42rem
+ * control cap); the outer column uses the shared DevPage frame.
  */
 
 /** Mirrors the local FieldLabel in CourseSettingsTab (vertical label-over-input). */
@@ -58,20 +62,15 @@ const SettingsRowsPreview = () => {
   const [kontotype, setKontotype] = useState<'solo' | 'studio'>('studio');
 
   return (
-    <div className="min-h-screen bg-canvas">
-      <div className="mx-auto max-w-6xl px-8 py-12 space-y-20">
-        {/* Block 1 — course "Rediger" tab shape */}
-        <section>
-          <header className="mb-8">
-            <h1 className="text-2xl font-medium text-foreground">
-              Rediger kurs (preview)
-            </h1>
-            <p className="mt-2 text-base text-foreground-muted">
-              Fire representative rader med de faktiske primitivene.
-            </p>
-          </header>
-
-          <SettingsRows>
+    <DevPage
+      title="Innstillinger-rader (layout)"
+      description="Delt horisontal SettingsRows/SettingsRow-layout — auth-fritt, kun mock-data. Godkjenningsflate for design-gjennomgangen før mønsteret tas i bruk på Studio / Innstillinger."
+    >
+      <PreviewSection
+        label="Rediger kurs"
+        description="Fire representative rader med de faktiske primitivene."
+      >
+        <SettingsRows>
             <SettingsRow
               title="Bilde"
               description="Vises på kurskortet og kurssiden."
@@ -161,21 +160,14 @@ const SettingsRowsPreview = () => {
                 </div>
               </div>
             </SettingsRow>
-          </SettingsRows>
-        </section>
+        </SettingsRows>
+      </PreviewSection>
 
-        {/* Block 2 — settings-page shape (Studio adoption target) */}
-        <section>
-          <header className="mb-8">
-            <h1 className="text-2xl font-medium text-foreground">
-              Studio (preview)
-            </h1>
-            <p className="mt-2 text-base text-foreground-muted">
-              Samme mønster brukt på en innstillingsside.
-            </p>
-          </header>
-
-          <SettingsRows>
+      <PreviewSection
+        label="Studio"
+        description="Samme mønster brukt på en innstillingsside."
+      >
+        <SettingsRows>
             <SettingsRow
               title="Profilbilde"
               description="Vises på studiosiden og i kalenderen."
@@ -242,10 +234,9 @@ const SettingsRowsPreview = () => {
                 </p>
               </div>
             </SettingsRow>
-          </SettingsRows>
-        </section>
-      </div>
-    </div>
+        </SettingsRows>
+      </PreviewSection>
+    </DevPage>
   );
 };
 

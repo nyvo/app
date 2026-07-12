@@ -1,78 +1,91 @@
-import type { ReactNode } from 'react'
 import { ExternalLink } from '@/lib/icons'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { PageShell } from '@/components/teacher/PageShell'
+import { ErrorState } from '@/components/ui/error-state'
 import { BillingPlanSections, subscriptionStatusLine } from '@/pages/teacher/BillingPage'
+import { DevPage, PreviewSection } from './_kit'
 
 /**
  * Dev preview for the Abonnement page states. Renders the real PageShell +
  * BillingPlanSections (not a mock), so the page header pattern — title with an
  * inline "Administrer abonnement" action and the subscription status as the
  * description — can be reviewed alongside the plan cards without a logged-in
- * seller.
+ * seller. Also covers the hydrate-failed error state (ErrorState), mirroring
+ * what BillingPage shows in place of the plan cards.
  */
 export default function BillingPreview() {
   const noop = () => {}
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-5xl space-y-6 py-6">
-        <PreviewState label="Start (gratis) — med Månedlig/Årlig">
-          <BillingPagePreview
-            plan={null}
-            status={null}
-            renewsAt={null}
-            cancel={false}
-            onUpgrade={noop}
-            yearly={{ price: '416 kr', priceSub: '/mnd, fakturert årlig', savings: 'Spar 17 %' }}
-          />
-        </PreviewState>
+    <DevPage
+      title="Abonnement"
+      description="PageShell + BillingPlanSections i alle abonnementstilstander, statuslinjens varianter og feiltilstanden ved mislykket kontohenting."
+    >
+      <PreviewSection label="Start (gratis) — med Månedlig/Årlig">
+        <BillingPagePreview
+          plan={null}
+          status={null}
+          renewsAt={null}
+          cancel={false}
+          onUpgrade={noop}
+          yearly={{ price: '416 kr', priceSub: '/mnd, fakturert årlig', savings: 'Spar 17 %' }}
+        />
+      </PreviewSection>
 
-        <PreviewState label="Pro – aktiv">
-          <BillingPagePreview
-            plan="pro"
-            status="active"
-            renewsAt="10. juli 2026"
-            cancel={false}
-            onUpgrade={noop}
-          />
-        </PreviewState>
+      <PreviewSection label="Pro – aktiv">
+        <BillingPagePreview
+          plan="pro"
+          status="active"
+          renewsAt="10. juli 2026"
+          cancel={false}
+          onUpgrade={noop}
+        />
+      </PreviewSection>
 
-        <PreviewState label="Pro – sies opp ved periodeslutt">
-          <BillingPagePreview
-            plan="pro"
-            status="active"
-            renewsAt="10. juli 2026"
-            cancel
-            onUpgrade={noop}
-          />
-        </PreviewState>
+      <PreviewSection label="Pro – sies opp ved periodeslutt">
+        <BillingPagePreview
+          plan="pro"
+          status="active"
+          renewsAt="10. juli 2026"
+          cancel
+          onUpgrade={noop}
+        />
+      </PreviewSection>
 
-        <PreviewState label="Pro – betaling feilet">
-          <BillingPagePreview
-            plan="pro"
-            status="past_due"
-            renewsAt={null}
-            cancel={false}
-            onUpgrade={noop}
-          />
-        </PreviewState>
+      <PreviewSection label="Pro – betaling feilet">
+        <BillingPagePreview
+          plan="pro"
+          status="past_due"
+          renewsAt={null}
+          cancel={false}
+          onUpgrade={noop}
+        />
+      </PreviewSection>
 
-        <PreviewState label="Statuslinje — alle varianter (kontrollsjekk)">
-          <div className="divide-y divide-border-subtle rounded-xl border border-border bg-surface px-5">
-            {STATUS_VARIANTS.map((v) => (
-              <div key={v.label} className="flex flex-col gap-0.5 py-3">
-                <span className="text-xs font-medium text-foreground">{v.label}</span>
-                <span className="text-sm text-foreground-muted">
-                  {subscriptionStatusLine(v.status, v.renewsAt, v.cancel)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </PreviewState>
-      </div>
-    </main>
+      <PreviewSection label="Statuslinje — alle varianter (kontrollsjekk)">
+        <div className="divide-y divide-border-subtle rounded-xl border border-border bg-surface px-5">
+          {STATUS_VARIANTS.map((v) => (
+            <div key={v.label} className="flex flex-col gap-0.5 py-3">
+              <span className="text-xs font-medium text-foreground">{v.label}</span>
+              <span className="text-sm text-foreground-muted">
+                {subscriptionStatusLine(v.status, v.renewsAt, v.cancel)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </PreviewSection>
+
+      <PreviewSection
+        label="Feil"
+        description="currentSellerHydrateFailed — samme ErrorState som BillingPage viser i stedet for planoversikten når kontoinformasjonen ikke kan hentes."
+      >
+        <ErrorState
+          title="Kunne ikke hente kontoinformasjon"
+          message="Prøv igjen om litt."
+          onRetry={noop}
+        />
+      </PreviewSection>
+    </DevPage>
   )
 }
 
@@ -141,14 +154,3 @@ const STATUS_VARIANTS: {
   { label: 'Sies opp — uten dato', status: 'active', renewsAt: null, cancel: true },
   { label: 'Ingen aktiv betaling', status: null, renewsAt: null, cancel: false },
 ]
-
-function PreviewState({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <section className="rounded-xl border border-border-subtle bg-surface p-6">
-      <Badge variant="neutral" size="sm" className="mb-6">
-        {label}
-      </Badge>
-      {children}
-    </section>
-  )
-}

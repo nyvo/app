@@ -55,34 +55,35 @@ const JoinPage = lazy(() => import('./pages/public/JoinPage'));
 const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage'));
 
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
-const TokenPreview = lazy(() => import('./pages/dev/TokenPreview'));
-const OnboardingPreview = lazy(() => import('./pages/dev/OnboardingPreview'));
-const CreateCoursePreview = lazy(() => import('./pages/dev/CreateCoursePreview'));
-const CoursesGridPreview = lazy(() => import('./pages/dev/CoursesGridPreview'));
-const PayoutPreview = lazy(() => import('./pages/dev/PayoutPreview'));
-const IncomeChartPreview = lazy(() => import('./pages/dev/IncomeChartPreview'));
+// Dev preview gallery (DEV-only, tree-shaken from production). Index hub +
+// live-backed previews of the real product surfaces in their default / empty /
+// error / loading states. See src/pages/dev/DevIndex.tsx for the full map.
+const DevIndex = lazy(() => import('./pages/dev/DevIndex'));
+// Foundations
+const TokensPreview = lazy(() => import('./pages/dev/TokensPreview'));
+const PrimitivesPreview = lazy(() => import('./pages/dev/PrimitivesPreview'));
+const StatesPreview = lazy(() => import('./pages/dev/StatesPreview'));
+const SettingsRowsPreview = lazy(() => import('./pages/dev/SettingsRowsPreview'));
+// Seller — dashboard & daily
 const DashboardPreview = lazy(() => import('./pages/dev/DashboardPreview'));
+const IncomeChartPreview = lazy(() => import('./pages/dev/IncomeChartPreview'));
 const CoursesListPreview = lazy(() => import('./pages/dev/CoursesListPreview'));
-const CheckoutFormReworkPreview = lazy(() => import('./pages/dev/CheckoutFormReworkPreview'));
-const DetailReworkPreview = lazy(() => import('./pages/dev/DetailReworkPreview'));
+const CourseBuilderLivePreview = lazy(() => import('./pages/dev/CourseBuilderLivePreview'));
+const DraftExperiencePreview = lazy(() => import('./pages/dev/DraftExperiencePreview'));
+const SchedulePreview = lazy(() => import('./pages/dev/SchedulePreview'));
+const SessionDaysPreview = lazy(() => import('./pages/dev/SessionDaysPreview'));
+// Seller — money & studio
+const PayoutPreview = lazy(() => import('./pages/dev/PayoutPreview'));
+const BillingPreview = lazy(() => import('./pages/dev/BillingPreview'));
+const StudioPreview = lazy(() => import('./pages/dev/StudioPreview'));
+const EmbedCodePreview = lazy(() => import('./pages/dev/EmbedCodePreview'));
+// Buyer / public
+const StorefrontPreview = lazy(() => import('./pages/dev/StorefrontPreview'));
 const DetailT1Preview = lazy(() => import('./pages/dev/DetailT1Preview'));
 const CheckoutT1Preview = lazy(() => import('./pages/dev/CheckoutT1Preview'));
-const ModalsButtonsToastsPreview = lazy(() => import('./pages/dev/ModalsButtonsToastsPreview'));
-const BillingPreview = lazy(() => import('./pages/dev/BillingPreview'));
-const CourseDetailPreview = lazy(() => import('./pages/dev/CourseDetailPreview'));
-const StudioPreview = lazy(() => import('./pages/dev/StudioPreview'));
-const DraftExperiencePreview = lazy(() => import('./pages/dev/DraftExperiencePreview'));
-const CourseBuilderPreview = lazy(() => import('./pages/dev/CourseBuilderPreview'));
-const CourseBuilderLivePreview = lazy(() => import('./pages/dev/CourseBuilderLivePreview'));
-const CourseBuilderEventbrite = lazy(() => import('./pages/dev/CourseBuilderEventbrite'));
-const SessionDaysPreview = lazy(() => import('./pages/dev/SessionDaysPreview'));
-const CourseOversiktWireframe = lazy(() => import('./pages/dev/CourseOversiktWireframe'));
 const EmbedPreview = lazy(() => import('./pages/dev/EmbedPreview'));
-const EmbedCodePreview = lazy(() => import('./pages/dev/EmbedCodePreview'));
-const SchedulePreview = lazy(() => import('./pages/dev/SchedulePreview'));
-const SettingsRowsPreview = lazy(() => import('./pages/dev/SettingsRowsPreview'));
-const LandingWireframe = lazy(() => import('./pages/dev/LandingWireframe'));
-const AuditFixesPreview = lazy(() => import('./pages/dev/AuditFixesPreview'));
+// Onboarding
+const OnboardingPreview = lazy(() => import('./pages/dev/OnboardingPreview'));
 
 // Public team page at root: only renders if the slug is NOT a reserved word.
 // Reserved words 404 (since they should hit a literal route higher in the
@@ -206,39 +207,38 @@ const router = createBrowserRouter(
           </Route>
         </Route>
 
-        {/* Dev preview (no auth, direct-URL only). DEV-only: tree-shaken out
-            of production builds so these half-finished galleries never ship
-            or get indexed. */}
+        {/* Dev preview gallery (no auth, direct-URL only). DEV-only:
+            tree-shaken out of production builds so it never ships or gets
+            indexed. Index hub at /dev; every preview renders REAL components
+            in their default / empty / error / loading states. */}
         {import.meta.env.DEV && (
           <>
-            <Route path="/dev/token-preview" element={<TokenPreview />} />
-            <Route path="/dev/onboarding-preview" element={<OnboardingPreview />} />
-            <Route path="/dev/create-course-preview" element={<CreateCoursePreview />} />
-            <Route path="/dev/courses-grid-preview" element={<CoursesGridPreview />} />
-            <Route path="/dev/payout-preview" element={<PayoutPreview />} />
-            <Route path="/dev/income-chart-preview" element={<IncomeChartPreview />} />
+            <Route path="/dev" element={<DevIndex />} />
+            {/* Foundations */}
+            <Route path="/dev/tokens" element={<TokensPreview />} />
+            <Route path="/dev/primitives" element={<PrimitivesPreview />} />
+            <Route path="/dev/states" element={<StatesPreview />} />
+            <Route path="/dev/settings-rows-preview" element={<SettingsRowsPreview />} />
+            {/* Seller — dashboard & daily */}
             <Route path="/dev/dashboard-preview" element={<DashboardPreview />} />
+            <Route path="/dev/income-chart-preview" element={<IncomeChartPreview />} />
             <Route path="/dev/courses-list-preview" element={<CoursesListPreview />} />
-            <Route path="/dev/checkout-form-rework" element={<CheckoutFormReworkPreview />} />
-            <Route path="/dev/detail-rework" element={<DetailReworkPreview />} />
+            <Route path="/dev/course-builder-live" element={<CourseBuilderLivePreview />} />
+            <Route path="/dev/draft-experience-preview" element={<DraftExperiencePreview />} />
+            <Route path="/dev/schedule-preview" element={<SchedulePreview />} />
+            <Route path="/dev/session-days-preview" element={<SessionDaysPreview />} />
+            {/* Seller — money & studio */}
+            <Route path="/dev/payout-preview" element={<PayoutPreview />} />
+            <Route path="/dev/billing-preview" element={<BillingPreview />} />
+            <Route path="/dev/studio-preview" element={<StudioPreview />} />
+            <Route path="/dev/embed-code-preview" element={<EmbedCodePreview />} />
+            {/* Buyer / public */}
+            <Route path="/dev/storefront" element={<StorefrontPreview />} />
             <Route path="/dev/detail-t1-preview" element={<DetailT1Preview />} />
             <Route path="/dev/checkout-t1-preview" element={<CheckoutT1Preview />} />
-            <Route path="/dev/modals-buttons-toasts" element={<ModalsButtonsToastsPreview />} />
-            <Route path="/dev/billing-preview" element={<BillingPreview />} />
-            <Route path="/dev/course-detail-preview" element={<CourseDetailPreview />} />
-            <Route path="/dev/studio-preview" element={<StudioPreview />} />
-            <Route path="/dev/draft-experience-preview" element={<DraftExperiencePreview />} />
-            <Route path="/dev/course-builder-preview" element={<CourseBuilderPreview />} />
-            <Route path="/dev/course-builder-live" element={<CourseBuilderLivePreview />} />
-            <Route path="/dev/course-builder-eventbrite" element={<CourseBuilderEventbrite />} />
-            <Route path="/dev/session-days-preview" element={<SessionDaysPreview />} />
-            <Route path="/dev/oversikt-wireframe" element={<CourseOversiktWireframe />} />
             <Route path="/dev/embed-preview" element={<EmbedPreview />} />
-            <Route path="/dev/embed-code-preview" element={<EmbedCodePreview />} />
-            <Route path="/dev/schedule-preview" element={<SchedulePreview />} />
-            <Route path="/dev/settings-rows-preview" element={<SettingsRowsPreview />} />
-            <Route path="/dev/landing-wireframe" element={<LandingWireframe />} />
-            <Route path="/dev/audit-fixes-preview" element={<AuditFixesPreview />} />
+            {/* Onboarding */}
+            <Route path="/dev/onboarding-preview" element={<OnboardingPreview />} />
           </>
         )}
 

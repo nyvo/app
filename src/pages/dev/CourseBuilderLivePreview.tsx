@@ -1,5 +1,6 @@
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import CourseBuilderPage from '@/pages/teacher/CourseBuilderPage';
+import { DevPage } from './_kit';
 
 /**
  * Dev-only — mounts the REAL CourseBuilderPage auth-free (no seller, no
@@ -8,10 +9,12 @@ import CourseBuilderPage from '@/pages/teacher/CourseBuilderPage';
  */
 export default function CourseBuilderLivePreview() {
   return (
-    <SidebarProvider>
-      <SidebarInset>
-        <CourseBuilderPage />
-      </SidebarInset>
-    </SidebarProvider>
+    <DevPage title="Kursbygger (live)" bleed>
+      <SidebarProvider>
+        <SidebarInset>
+          <CourseBuilderPage />
+        </SidebarInset>
+      </SidebarProvider>
+    </DevPage>
   );
 }
