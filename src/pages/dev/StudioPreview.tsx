@@ -1,56 +1,134 @@
-import type { ReactNode } from 'react'
-import { Check, Plus, X } from '@/lib/icons'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
-import { ImageField } from '@/components/ui/image-upload'
-import { UserAvatar } from '@/components/ui/user-avatar'
-import { PageShell } from '@/components/teacher/PageShell'
+import { ErrorState } from '@/components/ui/error-state';
+import { ImageField } from '@/components/ui/image-upload';
+import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
+import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
+import { EmbedCodeSection } from '@/components/teacher/studio/EmbedCodeSection';
+import type { GuestHost } from '@/services/affiliations';
+import type { Seller } from '@/types/database';
+import { DevPage, PreviewSection } from './_kit';
 
 /**
- * Dev-only structural preview for the /studio rework — Time2Book style:
- * flat two-column rows (label + description on the left, control on the
- * right), separated by divider lines, no cards. Matches the project's
- * "flat, don't box every section" rule and the existing CourseSettingsTab
- * label-left layout. Sample data only; fields are inert.
+ * /dev/studio-preview — the real section components from /studio
+ * (`src/pages/teacher/StudioPage.tsx`), fed mock/empty/loading/error props.
+ * No hand-rolled markup.
+ *
+ * `StudioPage` itself is hook/context-driven (useAuth, useLocations, dirty-form
+ * state) and isn't mountable outside the app — this preview instead targets its
+ * two extractable, props-only section components:
+ *
+ *  - `AffiliationsSection` (Samarbeid) — the richest stateful section. Its
+ *    guest/solo branch (`IndividualView`) is fully prop-driven off `host`, so
+ *    that branch's med-data/tomt/laster states are shown live below. The
+ *    "feil" state is rendered by `StudioPage` itself (not by
+ *    `AffiliationsSection`) when the host fetch fails — mirrored here with the
+ *    same real `ErrorState` composition.
+ *  - Its studio/business branch (invite link + instructor list) fetches *and
+ *    writes* to Supabase from inside the component (no props expose that
+ *    state) — mounting it here would attempt real network calls, including
+ *    lazily creating an invite link, against the shared database. Per the
+ *    "real components or an honest note" rule, it's intentionally not
+ *    mounted; see the note below instead.
+ *  - `EmbedCodeSection` (Nettsted) is shown once, briefly — the in-depth
+ *    coverage lives in `/dev/embed-code-preview`.
+ *
+ * The "Studio-oppsett" block shows the shared `SettingsRows`/`SettingsRow`
+ * layout with the Profil tab's own rows (Profilbilde/Navn/Nettadresse), since
+ * that's the settings-row shape the Studio page actually uses.
  */
-const ROOMS = [
-  { name: 'Sal 1', capacity: 18 },
-  { name: 'Behandlingsrom', capacity: 4 },
-  { name: 'Ute', capacity: null as number | null },
-]
 
-const AFFILIATES = [
-  { name: 'Maja Berg', email: 'maja@example.no' },
-  { name: 'Lars Solheim', email: 'lars@example.no' },
-]
-
-function Row({
-  label,
-  description,
-  children,
-}: {
-  label: string
-  description?: string
-  children: ReactNode
-}) {
-  return (
-    <div className="grid gap-x-10 gap-y-3 py-7 first:pt-0 last:pb-0 md:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
-      <div className="min-w-0">
-        <h3 className="text-sm font-medium text-foreground">{label}</h3>
-        {description && <p className="mt-1 text-sm text-foreground-muted">{description}</p>}
-      </div>
-      <div className="min-w-0">{children}</div>
-    </div>
-  )
+// Mock Seller row — only the fields the sections below read matter; the rest
+// of the DB shape is filled with harmless defaults so the object type-checks
+// as a full `Seller` without an `any` cast.
+function mockSeller(overrides: Partial<Seller> = {}): Seller {
+  return {
+    id: 'mock-seller-id',
+    name: 'Flow Studio',
+    slug: 'flow-studio',
+    email: null,
+    logo_url: null,
+    cover_image_url: null,
+    default_course_image_url: null,
+    operating_model: 'solo',
+    organization_number: null,
+    stripe_account_id: null,
+    stripe_account_status: null,
+    stripe_onboarding_complete: false,
+    stripe_payouts_enabled: false,
+    subscription_cancel_at_period_end: false,
+    subscription_current_period_end: null,
+    subscription_customer_id: null,
+    subscription_external_id: null,
+    subscription_plan: 'free',
+    subscription_provider: null,
+    subscription_status: 'active',
+    created_at: null,
+    updated_at: null,
+    closed_at: null,
+    uses_integrated_payments: null,
+    ...overrides,
+  };
 }
+
+type HostStudio = GuestHost['host'];
+
+const MOCK_HOST: HostStudio = {
+  id: 'host-seller-id',
+  slug: 'yoga-huset',
+  name: 'Yogahuset',
+  cover_image_url: null,
+};
 
 export default function StudioPreview() {
   return (
-    <main className="flex-1 min-h-full overflow-y-auto bg-canvas">
-      <PageShell narrow="centered" title="Studio">
-        <div className="divide-y divide-border-subtle">
-          <Row label="Profilbilde" description="Vises på studiosiden din.">
+    <DevPage
+      title="Studio"
+      description="De ekte seksjonskomponentene fra /studio — AffiliationsSection og settingsrad-mønsteret — matet med mock-, tomt-, laster- og feil-props. Hele StudioPage er hook/context-drevet og lar seg ikke montere direkte; se den i appen på /studio."
+    >
+      <PreviewSection
+        label="Samarbeid — med data"
+        description="Solo-instruktør tilknyttet et studio. Ekte AffiliationsSection, guest-grenen (IndividualView), host satt til en aktiv tilkobling."
+      >
+        <AffiliationsSection seller={mockSeller()} host={MOCK_HOST} onHostChange={() => {}} />
+      </PreviewSection>
+
+      <PreviewSection
+        label="Samarbeid — laster"
+        description="host=undefined — samme tilstand som mens StudioPage venter på fetchGuestHost."
+      >
+        <AffiliationsSection seller={mockSeller()} host={undefined} onHostChange={() => {}} />
+      </PreviewSection>
+
+      <PreviewSection
+        label="Samarbeid — tomt"
+        description="host=null: raden vises (tittel + beskrivelse), men tilkoblingskortet uteblir. I appen er denne kombinasjonen i praksis ikke nåbar (fanen skjules helt før dette), men vist her for fullstendighet."
+      >
+        <AffiliationsSection seller={mockSeller()} host={null} onHostChange={() => {}} />
+      </PreviewSection>
+
+      <PreviewSection
+        label="Samarbeid — feil"
+        description="AffiliationsSection rendrer ikke selv en feiltilstand for gjeste-siden — StudioPage bytter den ut med denne ErrorState-en når host-fetchen feiler (host==='error'). Samme oppsett kopiert herfra."
+      >
+        <ErrorState title="Kunne ikke hente samarbeidet ditt" message="Prøv igjen." onRetry={() => {}} />
+      </PreviewSection>
+
+      <PreviewSection
+        label="Samarbeid — studio-visning (kun i appen)"
+        description="Studio-grenen (Inviter instruktører + Instruktørliste) henter og skriver direkte mot Supabase inne i komponenten selv — ingen prop styrer med-data/tomt/laster/feil herfra, og å montere den ville forsøkt å opprette en ekte invitasjonslenke mot delt database. Se den ekte tilstanden på /studio#samarbeid som et tilkoblet studio."
+      >
+        <p className="rounded-md border border-dashed border-border-subtle px-4 py-3 text-sm text-foreground-muted">
+          Ikke montert her — se begrunnelsen over.
+        </p>
+      </PreviewSection>
+
+      <PreviewSection
+        label="Studio-oppsett (SettingsRows-layout)"
+        description="Samme SettingsRows/SettingsRow-primitiv som Profil-fanen på /studio bruker, med et par representative rader."
+      >
+        <SettingsRows>
+          <SettingsRow title="Profilbilde" description="Vises på studiosiden din.">
             <ImageField
               variant="avatar"
               value={null}
@@ -59,94 +137,29 @@ export default function StudioPreview() {
               changeLabel="Endre"
               ariaLabel="Last opp profilbilde"
             />
-          </Row>
+          </SettingsRow>
 
-          <Row label="Navn" description="Navnet deltakerne ser på studiosiden.">
-            <Input defaultValue="Flow Studio" className="max-w-md" />
-          </Row>
+          <SettingsRow title="Navn" description="Navnet kundene ser på studiosiden.">
+            <Input defaultValue="Flow Studio" aria-label="Navn" />
+          </SettingsRow>
 
-          <Row label="Nettadresse" description="Lenken til den offentlige studiosiden.">
-            <InputGroup className="max-w-md">
+          <SettingsRow title="Nettadresse" description="Den offentlige adressen til studiosiden din.">
+            <InputGroup>
               <InputGroupAddon align="inline-start">openspot.no/</InputGroupAddon>
-              <InputGroupInput defaultValue="flow-studio" />
+              <InputGroupInput defaultValue="flow-studio" aria-label="Nettadresse" />
             </InputGroup>
-          </Row>
+          </SettingsRow>
+        </SettingsRows>
+      </PreviewSection>
 
-          <Row label="Sted" description="Brukes når du lager kurs, og vises til deltakerne som skal møte opp.">
-            <div className="space-y-3">
-              <Input defaultValue="Flow Studio" placeholder="Søk etter studio eller adresse…" />
-              <p className="text-sm text-foreground-muted">Storgata 12, 0155 Oslo</p>
-              <div className="grid h-44 place-items-center rounded-md border border-border bg-muted text-sm text-foreground-muted">
-                Kart
-              </div>
-            </div>
-          </Row>
-
-          <Row label="Rom" description="Antall plasser per rom — fylles inn automatisk når du bruker rommet på et kurs.">
-            <div className="space-y-3">
-              <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-surface">
-                {ROOMS.map((room) => (
-                  <div key={room.name} className="flex items-center gap-3 px-3 py-2">
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-                      {room.name}
-                    </span>
-                    <Input
-                      type="number"
-                      defaultValue={room.capacity ?? undefined}
-                      placeholder="–"
-                      aria-label={`Antall plasser i ${room.name}`}
-                      className="h-8 w-16 shrink-0 text-center"
-                    />
-                    <span className="shrink-0 text-sm text-foreground-muted">plasser</span>
-                    <button
-                      type="button"
-                      className="flex size-7 shrink-0 items-center justify-center rounded-md text-foreground-muted transition-colors hover:bg-active hover:text-foreground"
-                      aria-label={`Fjern ${room.name}`}
-                    >
-                      <X className="size-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button
-                type="button"
-                className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border bg-surface px-3 py-2.5 text-sm font-medium text-foreground-muted transition-colors hover:border-foreground/25 hover:text-foreground"
-              >
-                <Plus className="size-4" />
-                Legg til rom
-              </button>
-            </div>
-          </Row>
-
-          <Row label="Samarbeid" description="Inviter instruktører til å holde kurs hos studioet ditt.">
-            <div className="space-y-3">
-              <InputGroup>
-                <InputGroupInput readOnly value="openspot.no/join/flow-9f3a2" />
-                <InputGroupAddon align="inline-end">
-                  <Button variant="soft">
-                    <Check className="size-3.5" />
-                    Kopier
-                  </Button>
-                </InputGroupAddon>
-              </InputGroup>
-              <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-surface">
-                {AFFILIATES.map((a) => (
-                  <div key={a.email} className="flex items-center gap-3 px-3 py-2.5">
-                    <UserAvatar name={a.name} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">{a.name}</p>
-                      <p className="truncate text-sm text-foreground-muted">{a.email}</p>
-                    </div>
-                    <Button variant="ghost">
-                      Fjern
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Row>
-        </div>
-      </PageShell>
-    </main>
-  )
+      <PreviewSection
+        label="Nettsted — embed-kode"
+        description="EmbedCodeSection, kort visning — dybdedekningen ligger i /dev/embed-code-preview."
+      >
+        <SettingsRows>
+          <EmbedCodeSection slug="flow-studio" />
+        </SettingsRows>
+      </PreviewSection>
+    </DevPage>
+  );
 }

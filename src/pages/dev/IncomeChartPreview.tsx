@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from '@/lib/icons';
 import { cn } from '@/lib/utils';
+import { DevPage, PreviewSection } from './_kit';
 import type { IncomePoint, IncomeRange, IncomeSeries } from '@/services/income';
 
 const RANGE_LABEL: Record<IncomeRange, string> = {
@@ -115,87 +116,76 @@ export default function IncomeChartPreview() {
   const empty = buildEmptySeries(range);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <header className="mb-10">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            IncomeChart preview
-          </h1>
-          <p className="mt-2 text-sm text-foreground-muted">
-            Cumulative running total with a faint previous-period overlay,
-            hidden Y-axis, and X-axis edge labels — Time2Book pattern.
-          </p>
-        </header>
+    <DevPage
+      title="Inntektsgraf"
+      description="Cumulative running total with a faint previous-period overlay, hidden Y-axis, and X-axis edge labels — Time2Book pattern."
+    >
+      <PreviewSection label="Range toggle — SegmentedTabs (was: too loud)">
+        <SegmentedTabs
+          value={range}
+          onChange={setRange}
+          tabs={[
+            { key: 'week', label: 'Uke' },
+            { key: 'month', label: '30 dager' },
+            { key: 'year', label: 'År' },
+          ]}
+          ariaLabel="Velg tidsrom"
+        />
+      </PreviewSection>
 
-        <div className="space-y-12">
-          <Section title="Range toggle — SegmentedTabs (was: too loud)">
-            <SegmentedTabs
-              value={range}
-              onChange={setRange}
-              tabs={[
-                { key: 'week', label: 'Uke' },
-                { key: 'month', label: '30 dager' },
-                { key: 'year', label: 'År' },
-              ]}
-              ariaLabel="Velg tidsrom"
+      <PreviewSection label="Range toggle — quiet small tabs (now shipped in IncomeChart)">
+        <QuietRangeToggle value={range} onChange={setRange} />
+      </PreviewSection>
+
+      <PreviewSection label="Range toggle — dropdown (alternative)">
+        <RangeDropdown value={range} onChange={setRange} />
+      </PreviewSection>
+
+      <PreviewSection label="Chart — with data (default tooltip)">
+        <IncomeChart
+          series={populated}
+          isLoading={false}
+          range={range}
+          onRangeChange={setRange}
+        />
+      </PreviewSection>
+
+      <PreviewSection label="Chart — with data (shadcn ChartTooltipContent)">
+        <IncomeChart
+          series={populated}
+          isLoading={false}
+          range={range}
+          onRangeChange={setRange}
+          tooltipContent={
+            <ChartTooltipContent
+              labelKey="label"
+              formatter={(value, _name, item) => {
+                const point = item.payload as IncomePoint | undefined;
+                return (
+                  <div className="flex w-full items-center justify-between gap-3">
+                    <span className="text-foreground-muted">
+                      {SHADCN_TOOLTIP_CONFIG.amount.label}
+                    </span>
+                    <span className="font-medium text-foreground tabular-nums">
+                      {Number(point?.amount ?? value).toLocaleString('nb-NO')} kr
+                    </span>
+                  </div>
+                );
+              }}
             />
-          </Section>
+          }
+        />
+      </PreviewSection>
 
-          <Section title="Range toggle — quiet small tabs (now shipped in IncomeChart)">
-            <QuietRangeToggle value={range} onChange={setRange} />
-          </Section>
-
-          <Section title="Range toggle — dropdown (alternative)">
-            <RangeDropdown value={range} onChange={setRange} />
-          </Section>
-
-          <Section title="Chart — with data (default tooltip)">
-            <IncomeChart
-              series={populated}
-              isLoading={false}
-              range={range}
-              onRangeChange={setRange}
-            />
-          </Section>
-
-          <Section title="Chart — with data (shadcn ChartTooltipContent)">
-            <IncomeChart
-              series={populated}
-              isLoading={false}
-              range={range}
-              onRangeChange={setRange}
-              tooltipContent={
-                <ChartTooltipContent
-                  labelKey="label"
-                  formatter={(value, _name, item) => {
-                    const point = item.payload as IncomePoint | undefined;
-                    return (
-                      <div className="flex w-full items-center justify-between gap-3">
-                        <span className="text-foreground-muted">
-                          {SHADCN_TOOLTIP_CONFIG.amount.label}
-                        </span>
-                        <span className="font-medium text-foreground tabular-nums">
-                          {Number(point?.amount ?? value).toLocaleString('nb-NO')} kr
-                        </span>
-                      </div>
-                    );
-                  }}
-                />
-              }
-            />
-          </Section>
-
-          <Section title="Empty state — flat line at 0">
-            <IncomeChart
-              series={empty}
-              isLoading={false}
-              range={range}
-              onRangeChange={setRange}
-            />
-          </Section>
-        </div>
-      </div>
-    </div>
+      <PreviewSection label="Empty state — flat line at 0">
+        <IncomeChart
+          series={empty}
+          isLoading={false}
+          range={range}
+          onRangeChange={setRange}
+        />
+      </PreviewSection>
+    </DevPage>
   );
 }
 
@@ -264,16 +254,5 @@ function RangeDropdown({
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-foreground-muted">
-        {title}
-      </h2>
-      {children}
-    </div>
   );
 }

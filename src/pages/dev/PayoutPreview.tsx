@@ -4,13 +4,16 @@ import {
   PayoutFaqSection,
   type PayoutSetupViewModel,
 } from '@/components/teacher/PayoutSetupCard';
+import { ErrorState } from '@/components/ui/error-state';
 import { COMPANY } from '@/lib/company';
+import { DevPage, PreviewSection } from './_kit';
 
 /**
  * /dev/payout-preview — auth-free preview of the payouts settings timeline.
  * Production lives at src/pages/teacher/PaymentsPage.tsx + route
- * /settings/payouts. Renders all five onboarding states with no-op handlers
- * so the design can be reviewed without a real Stripe Connect account.
+ * /settings/payouts. Renders all five onboarding states, the FAQ and the
+ * hydrate-failed error state, with no-op handlers so the design can be
+ * reviewed without a real Stripe Connect account.
  */
 
 const STEP_1_TITLE = 'Bekreft virksomheten';
@@ -19,26 +22,6 @@ const STEP_3_TITLE = 'Motta utbetalinger';
 
 function noop() {
   // no-op — dev preview only, not wired to real Stripe/auth handlers
-}
-
-function PreviewFrame({
-  label,
-  description,
-  children,
-}: {
-  label: string;
-  description: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-3">
-      <div className="border-b border-border pb-2">
-        <p className="text-sm font-medium text-foreground">{label}</p>
-        <p className="mt-1 text-sm text-foreground-muted">{description}</p>
-      </div>
-      {children}
-    </div>
-  );
 }
 
 const STATES: { id: string; label: string; description: string; viewModel: PayoutSetupViewModel }[] = [
@@ -150,46 +133,31 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
 
 const PayoutPreview = () => {
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-3xl px-6 py-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Utbetalingskonto — 5 tilstander</h1>
-          <p className="mt-2 text-sm text-foreground-muted">
-            Dev preview, ikke koblet til ekte data. Fem tilstander stablet — bla nedover eller bruk lenkene under.
-          </p>
-          <nav className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm">
-            {STATES.map((s) => (
-              <a key={s.id} href={`#${s.id}`} className="text-foreground underline-offset-4 hover:underline">
-                {s.label}
-              </a>
-            ))}
-          </nav>
-        </div>
-      </header>
+    <DevPage
+      title="Utbetalinger"
+      description="Fem onboardingtilstander for /settings/payouts (PaymentsPage), FAQ-seksjonen og feiltilstanden ved mislykket kontohenting."
+    >
+      {STATES.map((s) => (
+        <PreviewSection key={s.id} label={s.label} description={s.description}>
+          <PayoutSetupCard viewModel={s.viewModel} />
+        </PreviewSection>
+      ))}
 
-      <div className="mx-auto max-w-3xl px-6 py-10 space-y-12">
-        {STATES.map((s) => (
-          <section key={s.id} id={s.id} className="scroll-mt-6">
-            <PreviewFrame label={s.label} description={s.description}>
-              <PayoutSetupCard viewModel={s.viewModel} />
-            </PreviewFrame>
-          </section>
-        ))}
+      <PreviewSection label="FAQ" description="Vises under kortet i alle fem tilstander.">
+        <PayoutFaqSection />
+      </PreviewSection>
 
-        <section id="faq" className="scroll-mt-6">
-          <PreviewFrame label="FAQ" description="Vises under kortet i alle fem tilstander.">
-            <PayoutFaqSection />
-          </PreviewFrame>
-        </section>
-
-        <footer className="border-t border-border pt-6 pb-12">
-          <p className="text-xs text-foreground-muted">
-            Implementasjon: <code className="font-medium">src/pages/teacher/PaymentsPage.tsx</code> (ruten{' '}
-            <code className="font-medium">/settings/payouts</code>).
-          </p>
-        </footer>
-      </div>
-    </main>
+      <PreviewSection
+        label="Feil"
+        description="currentSellerHydrateFailed — samme ErrorState som PaymentsPage viser i stedet for tidslinjen når kontoinformasjonen ikke kan hentes."
+      >
+        <ErrorState
+          title="Kunne ikke hente kontoinformasjon"
+          message="Prøv igjen om litt."
+          onRetry={noop}
+        />
+      </PreviewSection>
+    </DevPage>
   );
 };
 

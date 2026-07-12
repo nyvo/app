@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { PageState } from '@/components/page-state/page-state';
 import { CourseDetailContent } from '@/components/public/course-details/CourseDetailContent';
 import { getBookingTiles } from '@/components/public/course-details/BookingRailLite';
 import { buildDropInSublabel } from '@/components/public/course-details/schedule-format';
 import { BookingBar } from '@/components/public/course-details/BookingBar';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 import type { AvailableTicketType, CourseSession } from '@/types/database';
+import { DevPage } from './_kit';
 
 /**
  * Preview for the T1 "Magasin" course-detail rework (CTA-first: no tier
@@ -26,7 +28,8 @@ type Variant =
   | 'gratis'
   | 'avlyst-okt'
   | 'enkelt-fullt'
-  | 'enkelt-gratis';
+  | 'enkelt-gratis'
+  | 'feil';
 
 const VARIANT_LABELS: Record<Variant, string> = {
   normal: 'Normal (2 billetter, bilde, 3 plasser)',
@@ -39,6 +42,7 @@ const VARIANT_LABELS: Record<Variant, string> = {
   'avlyst-okt': 'Avlyst økt i timeplanen',
   'enkelt-fullt': 'Enkeltkurs, fullt',
   'enkelt-gratis': 'Enkeltkurs, gratis',
+  feil: 'Feil (henting av kurs feilet — PageState server-error)',
 };
 
 const DetailT1Preview = () => {
@@ -54,31 +58,40 @@ const DetailT1Preview = () => {
   );
   const checkoutHref = '/dev/checkout-t1-preview';
   const paymentNotReady = tiles.some((t) => t.amount > 0) && !course.seller?.stripe_onboarding_complete;
+  const isErrorVariant = variant === 'feil';
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <DevBar variant={variant} onVariantChange={setVariant} />
+    <DevPage title="Kursside (offentlig)" bleed>
+      <div className="text-foreground flex flex-col">
+        <DevBar variant={variant} onVariantChange={setVariant} />
 
-      <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
-        <Link to="/" className="flex select-none items-center">
-          <span className="text-base font-medium text-foreground">Openspot</span>
-        </Link>
-      </header>
+        <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
+          <Link to="/" className="flex select-none items-center">
+            <span className="text-base font-medium text-foreground">Openspot</span>
+          </Link>
+        </header>
 
-      <main className="flex-1">
-        <CourseDetailContent course={course} sessions={sessions} backHref="/dev/detail-t1-preview" />
-        <BookingBar
-          tiles={tiles}
-          coursePrice={course.price}
-          dropInPrice={course.allows_drop_in ? course.drop_in_price : null}
-          courseFull={courseFull}
-          soldOut={soldOut}
-          closed={closed}
-          paymentNotReady={paymentNotReady}
-          checkoutHref={checkoutHref}
-        />
-      </main>
-    </div>
+        <main className="flex-1">
+          {isErrorVariant ? (
+            <PageState variant="server-error" as="div" />
+          ) : (
+            <>
+              <CourseDetailContent course={course} sessions={sessions} backHref="/dev/detail-t1-preview" />
+              <BookingBar
+                tiles={tiles}
+                coursePrice={course.price}
+                dropInPrice={course.allows_drop_in ? course.drop_in_price : null}
+                courseFull={courseFull}
+                soldOut={soldOut}
+                closed={closed}
+                paymentNotReady={paymentNotReady}
+                checkoutHref={checkoutHref}
+              />
+            </>
+          )}
+        </main>
+      </div>
+    </DevPage>
   );
 };
 

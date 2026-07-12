@@ -19,17 +19,23 @@ import { test, expect } from '@playwright/test';
 const FIXED_TIME = new Date('2026-07-05T10:00:00');
 
 const PREVIEWS = [
-  'token-preview',
-  'onboarding-preview',
-  'dashboard-preview',
-  'courses-grid-preview',
-  'courses-list-preview',
-  'income-chart-preview',
-  'billing-preview',
-  'modals-buttons-toasts',
+  // Foundations
+  'tokens',
+  'primitives',
+  'states',
   'settings-rows-preview',
+  // Seller — dashboard & daily
+  'dashboard-preview',
+  'income-chart-preview',
+  'courses-list-preview',
+  // Money
+  'billing-preview',
+  // Buyer / public
+  'storefront',
   'detail-t1-preview',
   'checkout-t1-preview',
+  // Onboarding
+  'onboarding-preview',
 ];
 
 for (const route of PREVIEWS) {
