@@ -289,12 +289,12 @@ const LandingPage = () => {
               tier={{
                 name: 'Pro',
                 recommended: true,
-                description: `Lønner seg fra rundt ${formatKroner(10000)} i påmeldinger i måneden.`,
+                description: 'Behold hele kursprisen – uansett hvor mye du selger.',
                 price: formatKroner(499),
                 priceSub: '/ mnd eks. mva',
                 features: [
                   'Alt i Start',
-                  '0 % plattformgebyr – du beholder hele kursprisen',
+                  '0 % plattformgebyr',
                   'Månedlig eller årlig betaling',
                 ],
                 cta: PRELAUNCH
