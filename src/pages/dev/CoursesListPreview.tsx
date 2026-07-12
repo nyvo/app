@@ -1,12 +1,22 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { cn, formatKroner } from '@/lib/utils';
-import { CourseListView, type SortDir, type SortKey } from '@/components/teacher/CourseListView';
+import { ErrorState } from '@/components/ui/error-state';
+import { EmptyState } from '@/components/ui/empty-state';
+import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
+import { CourseListView, CourseListSkeleton, type SortDir, type SortKey } from '@/components/teacher/CourseListView';
 import type { SessionScheduleRow } from '@/services/courses';
+import { DevPage, PreviewSection } from './_kit';
+
+/**
+ * /dev/courses-list-preview — every real state of the "Mine kurs" list
+ * (`src/pages/teacher/CoursesPage.tsx` → `CourseListView`). No hand-rolled
+ * markup: each section below mounts the shipped component/skeleton/empty
+ * state exactly as the real page wires it up.
+ */
 
 // ─── Mock data ────────────────────────────────────────────────────────────
+// Shape matches SessionScheduleRow (the real prop type for CourseListView).
 
-const MOCK: SessionScheduleRow[] = [
+const MOCK_COURSES: SessionScheduleRow[] = [
   {
     sessionId: 'a',
     courseId: 'a',
@@ -116,164 +126,144 @@ const MOCK: SessionScheduleRow[] = [
     totalWeeks: 10,
     imageUrl: null,
   },
+  {
+    sessionId: 'online-1',
+    courseId: 'online-1',
+    courseTitle: 'Kveldsmeditasjon online',
+    courseFormat: 'single',
+    deliveryMode: 'online',
+    sessionDate: '2026-05-19',
+    startTime: '20:00',
+    endTime: '20:30',
+    location: 'Online',
+    price: 150,
+    signupsCount: 23,
+    maxParticipants: null,
+    courseStatus: 'active',
+    courseStartDate: '2026-05-19',
+    imageUrl: null,
+  },
 ];
 
-const MONTHS_NB = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
-const FORMAT_LABEL_NB = { series: 'Kursrekke', single: 'Enkelttime' } as const;
-
-function nextSessionText(course: SessionScheduleRow): string {
-  if (!course.sessionDate) return '—';
-  const d = new Date(course.sessionDate);
-  if (isNaN(d.getTime())) return '—';
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
-  const time = course.startTime;
-  if (diff === 0) return `I dag · ${time}`;
-  if (diff === 1) return `I morgen · ${time}`;
-  return `${d.getDate()}. ${MONTHS_NB[d.getMonth()]} · ${time}`;
-}
-
-type CardStatus = 'active' | 'full' | 'draft' | 'cancelled' | 'upcoming';
-function derive(course: SessionScheduleRow): CardStatus {
-  if (course.courseStatus === 'draft') return 'draft';
-  if (course.courseStatus === 'cancelled') return 'cancelled';
-  if (course.courseStatus === 'upcoming') return 'upcoming';
-  if (course.maxParticipants !== null && course.signupsCount >= course.maxParticipants) return 'full';
-  return 'active';
-}
-function statusLabel(s: CardStatus): string {
-  return { active: 'Aktiv', full: 'Fullt', draft: 'Utkast', cancelled: 'Avlyst', upcoming: 'Kommer' }[s];
-}
-
-function StatusPill({ status }: { status: CardStatus }) {
-  if (status === 'active') return null;
-  return (
-    <span
-      className={cn(
-        'inline-flex h-5 items-center rounded-full px-2 text-xs font-medium tabular-nums',
-        status === 'full' && 'bg-foreground text-background',
-        status === 'draft' && 'bg-muted text-foreground-muted',
-        status === 'cancelled' && 'bg-muted text-foreground-muted line-through',
-        status === 'upcoming' && 'bg-muted text-foreground',
-      )}
-    >
-      {statusLabel(status)}
-    </span>
-  );
-}
-
-// ─── Borderless flat table ───────────────────────────────────────────────
-// Time2Book-style: column headers + hairline-divided rows, no card chrome.
-// Each metric column has a fixed width so values align LEFT under headers
-// (not right-justified against the row edge).
-
-const COLS = 'grid grid-cols-[minmax(0,1fr)_180px_120px_120px] items-center gap-6 px-3';
-
-function CoursesFlatTable({ courses }: { courses: SessionScheduleRow[] }) {
-  return (
-    <div>
-      <div className={cn(COLS, 'pb-3 text-xs font-medium text-foreground-muted')}>
-        <span>Navn</span>
-        <span>Neste time</span>
-        <span>Påmeldte</span>
-        <span>Pris</span>
-      </div>
-      <div className="divide-y divide-border border-t border-border">
-        {courses.map((c) => {
-          const status = derive(c);
-          return (
-            <Link
-              key={c.sessionId}
-              to="#"
-              className={cn(COLS, 'py-4 no-underline transition-colors hover:bg-muted/50')}
-            >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="truncate text-sm font-medium text-foreground">{c.courseTitle}</h3>
-                  <StatusPill status={status} />
-                </div>
-                <p className="mt-0.5 truncate text-sm text-foreground-muted">
-                  {FORMAT_LABEL_NB[c.courseFormat]}
-                </p>
-              </div>
-              <span className="whitespace-nowrap text-sm text-foreground-muted tabular-nums">
-                {nextSessionText(c)}
-              </span>
-              <span className="whitespace-nowrap text-sm text-foreground-muted tabular-nums">
-                {c.maxParticipants ? `${c.signupsCount} / ${c.maxParticipants}` : `${c.signupsCount}`}
-              </span>
-              <span className="whitespace-nowrap text-sm text-foreground-muted tabular-nums">
-                {formatKroner(c.price)}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────
-
-export default function CoursesListPreview() {
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <header className="mb-10">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Courses — flat table
-          </h1>
-          <p className="mt-2 text-sm text-foreground-muted">
-            Time2Book pattern: column headers, hairline-divided rows, no card chrome.
-            Type lives below the title; metric columns have fixed widths so values
-            align left under each header.
-          </p>
-        </header>
-
-        <CoursesFlatTable courses={MOCK} />
-
-        <header className="mb-6 mt-16">
-          <h2 className="text-lg font-medium text-foreground">
-            Live CourseListView (shipped component)
-          </h2>
-          <p className="mt-1 text-sm text-foreground-muted">
-            The real table from /courses — plain muted type labels
-            (Kursrekke / Enkelttime / Nettkurs), rounded row hover with -mx bleed.
-          </p>
-        </header>
-        <LiveListSection />
-      </div>
-    </div>
-  );
-}
-
-function LiveListSection() {
-  const [sortKey, setSortKey] = useState<SortKey>('name');
+/** "Med kurs" — real CourseListView with interactive header-click sorting,
+ * mirroring CoursesPage's own sortKey/sortDir/onSort wiring. */
+function WithCoursesSection() {
+  const [sortKey, setSortKey] = useState<SortKey>('next');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+
   const handleSort = (key: SortKey) => {
-    if (key === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else setSortKey(key);
+    if (key === sortKey) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortKey(key);
+    setSortDir(key === 'signups' || key === 'price' ? 'desc' : 'asc');
   };
-  const withOnline: SessionScheduleRow[] = [
-    ...MOCK,
-    {
-      ...MOCK[0],
-      sessionId: 'online-1',
-      courseId: 'online-1',
-      courseTitle: 'Kveldsmeditasjon online',
-      courseFormat: 'single',
-      deliveryMode: 'online',
-      price: 150,
-      signupsCount: 23,
-      maxParticipants: null,
-    },
-  ];
+
   return (
     <CourseListView
-      courses={withOnline}
+      courses={MOCK_COURSES}
       sortKey={sortKey}
       sortDir={sortDir}
       onSort={handleSort}
     />
+  );
+}
+
+/** "Tellinger utilgjengelig" — same interactive list, but the signup-counts
+ * RPC failed, so `countsUnavailable` degrades the Påmeldte column to `–`. */
+function CountsUnavailableSection() {
+  const [sortKey, setSortKey] = useState<SortKey>('next');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const handleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortKey(key);
+    setSortDir(key === 'signups' || key === 'price' ? 'desc' : 'asc');
+  };
+
+  return (
+    <CourseListView
+      courses={MOCK_COURSES}
+      sortKey={sortKey}
+      sortDir={sortDir}
+      onSort={handleSort}
+      countsUnavailable
+    />
+  );
+}
+
+export default function CoursesListPreview() {
+  return (
+    <DevPage
+      title="Mine kurs (kursliste)"
+      description="Alle tilstandene til den ekte CourseListView-komponenten fra /courses — data, tomt, lasting, degraderte tellinger og feil. Ingen håndlaget markup; hver seksjon monterer den skipede komponenten slik CoursesPage gjør det."
+    >
+      <PreviewSection
+        label="Med kurs"
+        description="Klikk kolonneoverskriftene (Navn, Påmeldte, Pris) for å sortere — samme onSort-kobling som CoursesPage."
+      >
+        <WithCoursesSection />
+      </PreviewSection>
+
+      <PreviewSection
+        label="Tomt — ingen kurs"
+        description="courses={[]} + emptyState — samme CoursesEmptyState som første-gangs-tilstanden på /courses."
+      >
+        <CourseListView
+          courses={[]}
+          sortKey="next"
+          sortDir="asc"
+          onSort={() => {}}
+          emptyState={<CoursesEmptyState />}
+        />
+      </PreviewSection>
+
+      <PreviewSection
+        label="Tomt — ingen treff på søk"
+        description="Samme tabell, men emptyState er søkeresultat-varianten CoursesPage viser når et søkeord ikke gir treff."
+      >
+        <CourseListView
+          courses={[]}
+          sortKey="next"
+          sortDir="asc"
+          onSort={() => {}}
+          emptyState={
+            <EmptyState
+              title="Fant ingen kurs for «yin»"
+              description="Prøv et annet søkeord."
+            />
+          }
+        />
+      </PreviewSection>
+
+      <PreviewSection label="Laster" description="Den ekte CourseListSkeleton — vises mens kurs hentes.">
+        <div role="status" aria-live="polite" aria-label="Laster kurs">
+          <span className="sr-only">Henter kurs</span>
+          <CourseListSkeleton />
+        </div>
+      </PreviewSection>
+
+      <PreviewSection
+        label="Tellinger utilgjengelig"
+        description="signup_counts-RPC-en feilet — Påmeldte-kolonnen viser «–» i stedet for et fabrikkert tall."
+      >
+        <CountsUnavailableSection />
+      </PreviewSection>
+
+      <PreviewSection
+        label="Feil"
+        description="Kurs-henting feilet — ErrorState med retry, samme som CoursesPage viser på load-feil."
+      >
+        <ErrorState
+          title="Kunne ikke hente kurs"
+          message="Kunne ikke hente kurs. Sjekk nettet og prøv igjen."
+          onRetry={() => {}}
+        />
+      </PreviewSection>
+    </DevPage>
   );
 }

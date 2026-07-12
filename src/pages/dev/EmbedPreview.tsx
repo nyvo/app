@@ -1,47 +1,47 @@
 import { useMemo } from 'react';
 import { EmbedCalendar } from '@/components/public/embed/EmbedCalendar';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
+import { DevPage, PreviewSection } from './_kit';
 
 /**
  * Preview of the embeddable calendar widget (/embed/:slug) at two iframe
  * widths, so we can judge how the layout holds up narrow vs wide. Inline
- * mock data — no auth, no database.
+ * mock data — no auth, no database. Also covers the widget's load-failed
+ * text state, copied verbatim from EmbedCalendarPage's `errorKind ===
+ * 'load-failed'` branch (there's no shared error component for this surface —
+ * the real page renders this exact paragraph).
  */
 const EmbedPreview = () => {
   const courses = useMemo<PublicCourseWithDetails[]>(() => makeMockCourses(), []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground py-12">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-16">
-        <header className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Embed calendar</h1>
-          <p className="text-sm text-foreground-muted max-w-xl">
-            The <code>/embed/:slug</code> widget rendered with mock data at two
-            iframe widths. Course rows link out (new tab) to the detail page.
-          </p>
-        </header>
-
-        <div className="flex flex-wrap items-start gap-12">
-          <section className="space-y-3">
-            <p className="text-xs font-medium uppercase tracking-wider text-foreground-muted">
-              760px (horizontal)
-            </p>
-            <div className="rounded-lg border border-dashed border-border p-4 w-[760px] max-w-full">
-              <EmbedCalendar courses={courses} slug="mock" sellerName="Mock Studio" />
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <p className="text-xs font-medium uppercase tracking-wider text-foreground-muted">
-              400px (stacked)
-            </p>
-            <div className="rounded-lg border border-dashed border-border p-4 w-[400px] max-w-full">
-              <EmbedCalendar courses={courses} slug="mock" sellerName="Mock Studio" />
-            </div>
-          </section>
+    <DevPage
+      title="Embed-kalender (widget)"
+      description="EmbedCalendar-widgeten (/embed/:slug) rendret med mock-data ved to iframe-bredder. Kursradene lenker ut (ny fane) til kurssiden."
+    >
+      <PreviewSection label="760px (horisontal)">
+        <div className="rounded-lg border border-dashed border-border p-4 w-[760px] max-w-full">
+          <EmbedCalendar courses={courses} slug="mock" sellerName="Mock Studio" />
         </div>
-      </div>
-    </div>
+      </PreviewSection>
+
+      <PreviewSection label="400px (stablet)">
+        <div className="rounded-lg border border-dashed border-border p-4 w-[400px] max-w-full">
+          <EmbedCalendar courses={courses} slug="mock" sellerName="Mock Studio" />
+        </div>
+      </PreviewSection>
+
+      <PreviewSection
+        label="Feil"
+        description="Henting av studio/kurs feilet (errorKind === 'load-failed') — samme tekst som EmbedCalendarPage viser i stedet for kalenderen."
+      >
+        <div className="rounded-lg border border-dashed border-border p-4 w-[760px] max-w-full">
+          <p className="py-20 text-center text-base text-foreground-muted">
+            Noe gikk galt – prøv igjen senere.
+          </p>
+        </div>
+      </PreviewSection>
+    </DevPage>
   );
 };
 

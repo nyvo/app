@@ -1,4 +1,8 @@
+import { ErrorState } from '@/components/ui/error-state';
 import { SessionCard, TimelineDay, type SessionRow } from '@/pages/teacher/SchedulePage';
+import { DevPage, PreviewSection } from './_kit';
+
+const noop = () => {};
 
 /**
  * Auth-free preview of the schedule agenda — the sign-off surface for the
@@ -7,12 +11,8 @@ import { SessionCard, TimelineDay, type SessionRow } from '@/pages/teacher/Sched
  */
 const SchedulePreview = () => {
   return (
-    <div className="min-h-screen bg-canvas text-foreground py-12">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
-        <header>
-          <h1 className="text-2xl font-medium">Timeplan — kortpreview</h1>
-        </header>
-
+    <DevPage title="Timeplan">
+      <PreviewSection label="Med data">
         <div>
           <TimelineDay primary="I dag" secondary="3. juli" first>
             {MOCK_SESSIONS.slice(0, 3).map((s) => (
@@ -25,8 +25,13 @@ const SchedulePreview = () => {
             ))}
           </TimelineDay>
         </div>
-      </div>
-    </div>
+      </PreviewSection>
+
+      <PreviewSection label="Feil">
+        {/* Mirrors SchedulePage's fetch-failure state (real `error` copy + retry). */}
+        <ErrorState title="Noe gikk galt" message="Kunne ikke laste timeplanen." onRetry={noop} />
+      </PreviewSection>
+    </DevPage>
   );
 };
 

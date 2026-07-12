@@ -179,7 +179,7 @@ export default function OnboardingPage() {
 // Step 1 — universal role chooser
 // ---------------------------------------------------------------------------
 
-function RoleChooser({ onAdvance }: { onAdvance: () => void }) {
+export function RoleChooser({ onAdvance }: { onAdvance: () => void }) {
   const { setRole } = useAuth()
   // No pre-selection — an explicit pick enables Fortsett, so a reflexive
   // first click can't submit the wrong account type.
@@ -309,7 +309,7 @@ function BuyerSetup({ nextPath, onBack }: { nextPath: string; onBack: () => void
   )
 }
 
-function BuyerSetupForm({
+export function BuyerSetupForm({
   nextPath,
   onBack,
   claimedName,
@@ -416,7 +416,7 @@ function BuyerSetupForm({
 // Step 2b — Seller flow (single screen: name → slug)
 // ---------------------------------------------------------------------------
 
-function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () => void }) {
+export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () => void }) {
   const { profile, sellers, ensureSeller, markOnboardingComplete, setRole } = useAuth()
   const navigate = useNavigate()
 

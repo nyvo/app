@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import type { ReactNode } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
 import {
   PlatformFeeHint,
   RecentSignupsSection,
   UpcomingCoursesSection,
 } from '@/pages/teacher/TeacherDashboard';
+import { PageState } from '@/components/page-state/page-state';
+import { DevPage, PreviewSection } from './_kit';
 import type { SignupWithDetails } from '@/services/signups';
 import type { Course as DashboardCourse } from '@/types/dashboard';
 import type { IncomePoint, IncomeRange, IncomeSeries } from '@/services/income';
@@ -134,82 +134,75 @@ export default function DashboardPreview() {
   const noop = () => {};
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto w-full max-w-6xl space-y-16 px-4 py-10 sm:px-6 lg:px-8">
-        <PreviewState label="Pro – med data">
-          <div className="space-y-8">
+    <DevPage title="Oversikt (dashboard)">
+      <PreviewSection label="Pro – med data">
+        <div className="space-y-8">
+          <IncomeChart
+            series={incomeSeries}
+            isLoading={false}
+            range={range}
+            onRangeChange={setRange}
+          />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
+            <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />
+          </div>
+        </div>
+      </PreviewSection>
+
+      <PreviewSection label="Start (gratis) – med plattformgebyr-linje">
+        <div className="space-y-8">
+          <div className="space-y-3">
             <IncomeChart
               series={incomeSeries}
               isLoading={false}
               range={range}
               onRangeChange={setRange}
             />
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
-              <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />
-            </div>
+            <PlatformFeeHint feeNok={312} />
           </div>
-        </PreviewState>
-
-        <PreviewState label="Start (gratis) – med plattformgebyr-linje">
-          <div className="space-y-8">
-            <div className="space-y-3">
-              <IncomeChart
-                series={incomeSeries}
-                isLoading={false}
-                range={range}
-                onRangeChange={setRange}
-              />
-              <PlatformFeeHint feeNok={312} />
-            </div>
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
-              <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />
-            </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
+            <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />
           </div>
-        </PreviewState>
+        </div>
+      </PreviewSection>
 
-        <PreviewState label="Tomt – ingen inntekt, kurs eller påmeldinger">
-          <div className="space-y-8">
-            <IncomeChart
-              series={buildZeroIncome(range)}
-              isLoading={false}
-              range={range}
-              onRangeChange={setRange}
-            />
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <UpcomingCoursesSection courses={[]} isLoading={false} />
-              <RecentSignupsSection signups={[]} isLoading={false} onSelect={noop} />
-            </div>
+      <PreviewSection label="Tomt – ingen inntekt, kurs eller påmeldinger">
+        <div className="space-y-8">
+          <IncomeChart
+            series={buildZeroIncome(range)}
+            isLoading={false}
+            range={range}
+            onRangeChange={setRange}
+          />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <UpcomingCoursesSection courses={[]} isLoading={false} />
+            <RecentSignupsSection signups={[]} isLoading={false} onSelect={noop} />
           </div>
-        </PreviewState>
+        </div>
+      </PreviewSection>
 
-        <PreviewState label="Laster">
-          <div className="space-y-8">
-            <IncomeChart
-              series={null}
-              isLoading
-              range={range}
-              onRangeChange={setRange}
-            />
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <UpcomingCoursesSection courses={null} isLoading />
-              <RecentSignupsSection signups={null} isLoading onSelect={noop} />
-            </div>
+      <PreviewSection label="Laster">
+        <div className="space-y-8">
+          <IncomeChart
+            series={null}
+            isLoading
+            range={range}
+            onRangeChange={setRange}
+          />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <UpcomingCoursesSection courses={null} isLoading />
+            <RecentSignupsSection signups={null} isLoading onSelect={noop} />
           </div>
-        </PreviewState>
-      </div>
-    </div>
-  );
-}
+        </div>
+      </PreviewSection>
 
-function PreviewState({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <section>
-      <Badge variant="neutral" size="sm" className="mb-6">
-        {label}
-      </Badge>
-      {children}
-    </section>
+      <PreviewSection label="Feil">
+        {/* Mirrors DashboardRouter: a failed seller-membership fetch shows this
+            page-level server-error instead of guessing buyer vs. seller. */}
+        <PageState variant="server-error" as="div" />
+      </PreviewSection>
+    </DevPage>
   );
 }

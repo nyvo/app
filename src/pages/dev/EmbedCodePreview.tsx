@@ -1,15 +1,18 @@
 import { EmbedCodeSection } from '@/components/teacher/studio/EmbedCodeSection';
+import { DevPage } from './_kit';
 
 /**
  * Auth-free preview of the Studio "copy embed code" section, so it can be
- * screenshotted without logging in. Injects a fake slug.
+ * screenshotted without logging in. Injects a fake slug. No error state:
+ * EmbedCodeSection has no data fetching of its own — it renders the given
+ * slug into static snippets, so there's nothing that can fail.
  */
 const EmbedCodePreview = () => (
-  <div className="min-h-screen bg-background text-foreground py-12">
-    <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+  <DevPage title="Embed-kode (studio)">
+    <div className="mx-auto max-w-2xl">
       <EmbedCodeSection slug="mock-studio" />
     </div>
-  </div>
+  </DevPage>
 );
 
 export default EmbedCodePreview;

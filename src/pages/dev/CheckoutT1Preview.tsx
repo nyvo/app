@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { PageState } from '@/components/page-state/page-state';
 import { ChevronLeft } from '@/lib/icons';
 import { calculateServiceFee } from '@/lib/pricing';
 import {
@@ -20,6 +21,7 @@ import {
 import type { TicketId } from '@/components/public/course-details/BookingRailLite';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 import type { AvailableTicketType } from '@/types/database';
+import { DevPage } from './_kit';
 
 /**
  * Preview for the single-screen T1 checkout ("Fullfør påmeldingen") — the
@@ -35,7 +37,7 @@ import type { AvailableTicketType } from '@/types/database';
  * (via CheckoutPaymentSection, the same wrapper the live page uses).
  */
 
-type Variant = 'to-billetter' | 'drop-in' | 'startet' | 'enkelt' | 'gratis';
+type Variant = 'to-billetter' | 'drop-in' | 'startet' | 'enkelt' | 'gratis' | 'feil';
 
 const VARIANT_LABELS: Record<Variant, string> = {
   'to-billetter': 'To billetter (Hele kurset valgt)',
@@ -43,27 +45,27 @@ const VARIANT_LABELS: Record<Variant, string> = {
   startet: 'Startet (prorata-kvittering: 2200 − 550)',
   enkelt: 'Enkeltkurs (én billett, ingen billettvelger)',
   gratis: 'Gratis kurs (uten gebyr og betaling)',
+  feil: 'Feil (henting av kurs feilet — PageState server-error)',
 };
 
 const CheckoutT1Preview = () => {
   const [variant, setVariant] = useState<Variant>('to-billetter');
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <DevBar variant={variant} onVariantChange={setVariant} />
-      {/* key resets tier/form state when the variant switches */}
-      <PreviewBody key={variant} variant={variant} />
-    </div>
+    <DevPage title="Kasse (checkout)" bleed>
+      <div className="text-foreground flex flex-col">
+        <DevBar variant={variant} onVariantChange={setVariant} />
+        {/* key resets tier/form state when the variant switches */}
+        <PreviewBody key={variant} variant={variant} />
+      </div>
+    </DevPage>
   );
 };
 
 function PreviewBody({ variant }: { variant: Variant }) {
-  const course = makeMockCourse(variant);
-  const tiers = makeMockTiers(variant, course);
-  const mainTier = tiers.find((t) => t.ticket_kind !== 'drop_in') ?? null;
-  const dropInTier = tiers.find((t) => t.ticket_kind === 'drop_in') ?? null;
-  const showBillett = tiers.length === 2 && !!mainTier && !!dropInTier;
-
+  // Hooks first (unconditionally) — the early return below only skips the
+  // rest of the render, never a hook call, so this stays rules-of-hooks safe
+  // even though `key={variant}` already remounts this component per variant.
   const [metaResolving, setMetaResolving] = useState(false);
   const [selectedKind, setSelectedKind] = useState<TicketId>(
     variant === 'drop-in' ? 'drop-in' : 'main',
@@ -75,6 +77,19 @@ function PreviewBody({ variant }: { variant: Variant }) {
     note: '',
     terms: false,
   });
+
+  // Mirrors CheckoutPage's `error === 'load-failed'` early return — no
+  // header, no form, just the real PageState this surface shows for a failed
+  // course/tier fetch.
+  if (variant === 'feil') {
+    return <PageState variant="server-error" />;
+  }
+
+  const course = makeMockCourse(variant);
+  const tiers = makeMockTiers(variant, course);
+  const mainTier = tiers.find((t) => t.ticket_kind !== 'drop_in') ?? null;
+  const dropInTier = tiers.find((t) => t.ticket_kind === 'drop_in') ?? null;
+  const showBillett = tiers.length === 2 && !!mainTier && !!dropInTier;
 
   const isFree = variant === 'gratis';
 

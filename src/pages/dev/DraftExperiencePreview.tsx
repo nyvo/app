@@ -1,9 +1,8 @@
-import type { ReactNode } from 'react'
-import { Badge } from '@/components/ui/badge'
 import { PageTab, PageTabs } from '@/components/ui/page-tabs'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { PageShell } from '@/components/teacher/PageShell'
 import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab'
+import { DevPage, PreviewSection } from './_kit'
 import type { MappedCourse } from '@/hooks/use-course-detail'
 import type { CourseSession } from '@/types/database'
 
@@ -67,6 +66,9 @@ interface StateProps {
   paymentSetupStatus?: string | null
   enrolledCount?: number
   revenue?: number
+  /** Sessions query failed — real CourseOverviewTab prop; the Timeplan card
+   *  shows an inline error while the rest of the page renders normally. */
+  sessionsError?: boolean
 }
 
 function State({
@@ -78,14 +80,15 @@ function State({
   paymentSetupStatus = null,
   enrolledCount = 0,
   revenue = 0,
+  sessionsError = false,
 }: StateProps) {
   const isDraft = course.status === 'draft'
   return (
-    <>
-      <Label>{label}</Label>
+    <PreviewSection label={label}>
       <div className="bg-canvas pb-12">
         <PageShell
           animate={false}
+          className="px-0 pb-0 pt-0 sm:px-0 lg:px-0 lg:pt-0 md:pb-0"
           title={course.title}
           badgePlacement="below"
           badge={<StatusBadge status={course.status} />}
@@ -120,16 +123,17 @@ function State({
             onPublish={noop}
             publishing={false}
             sessions={sessions}
+            sessionsError={sessionsError}
           />
         </PageShell>
       </div>
-    </>
+    </PreviewSection>
   )
 }
 
 export default function DraftExperiencePreview() {
   return (
-    <div className="bg-canvas">
+    <DevPage title="Kursoversikt (Oversikt-fane)">
       <State
         label="Utkast (kursrekke) — stepper + detaljer + kursplan-strip"
         course={course({ status: 'draft', format: 'series', totalWeeks: 8, imageUrl: null, description: '', location: null })}
@@ -211,16 +215,17 @@ export default function DraftExperiencePreview() {
         enrolledCount={3}
         revenue={1050}
       />
-    </div>
-  )
-}
 
-function Label({ children }: { children: ReactNode }) {
-  return (
-    <div className="px-6 pt-8 pb-2 sm:px-10">
-      <Badge variant="neutral" size="sm">
-        {children}
-      </Badge>
-    </div>
+      <State
+        label="Feil"
+        course={course({ status: 'upcoming' })}
+        sessions={ONE_DAY}
+        sessionsError
+        paymentSetupRequired
+        paymentSetupComplete
+        enrolledCount={5}
+        revenue={1750}
+      />
+    </DevPage>
   )
 }
