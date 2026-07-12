@@ -1,6 +1,6 @@
-import { ExternalLink } from '@/lib/icons';
+import { Check, Copy, ExternalLink } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { CopyButton } from '@/components/ui/copy-button';
+import { useCopyToClipboard } from '@/components/ui/copy-button';
 import { SettingsRow } from '@/components/teacher/SettingsRows';
 
 /**
@@ -16,27 +16,46 @@ import { SettingsRow } from '@/components/teacher/SettingsRows';
  */
 export function EmbedCodeSection({ slug }: { slug: string }) {
   const origin = window.location.origin;
-  const previewUrl = `${origin}/embed/${slug}`;
+  // Forhåndsvis opens the framed preview page, not the bare iframe payload.
+  const previewUrl = `${origin}/embed/${slug}/preview`;
   const snippet = `<iframe src="${origin}/embed/${slug}"
   style="width:100%;height:640px;border:0"
   loading="lazy" title="Kurskalender"></iframe>`;
+  const { copied, copy } = useCopyToClipboard();
 
   return (
     <SettingsRow
       title="Kalender på eget nettsted"
       description="Lim inn koden på nettstedet ditt for å vise kurskalenderen med påmelding."
     >
-      <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-xs leading-relaxed text-foreground select-all">
-        <code>{snippet}</code>
-      </pre>
-      <p className="mt-2 text-sm text-foreground-muted">
-        Juster height-verdien etter behov.
-      </p>
-      <div className="mt-3 flex items-center gap-2">
-        <CopyButton value={snippet} label="Kopier kode" />
+      {/* Copy lives INSIDE the code window (top-right icon, Copy→Check swap)
+          — the standard SaaS code-block anatomy — not as a button below. */}
+      <div className="relative">
+        {/* select-text (not select-all): all-select hijacked click-drag so
+            partial selection was impossible — normal text selection now works
+            alongside the copy chip. */}
+        <pre className="select-text overflow-x-auto rounded-lg bg-muted p-4 pr-14 font-mono text-xs leading-relaxed text-foreground">
+          <code>{snippet}</code>
+        </pre>
+        <button
+          type="button"
+          onClick={() => void copy(snippet)}
+          aria-label={copied ? 'Kopiert' : 'Kopier kode'}
+          // Opaque chip (white + hairline) so horizontally-scrolling code
+          // can't render through it — GitHub's copy-chip anatomy.
+          className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-lg border border-border-subtle bg-surface text-foreground-muted transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {copied ? (
+            <Check className="size-4" aria-hidden="true" />
+          ) : (
+            <Copy className="size-4" aria-hidden="true" />
+          )}
+        </button>
+      </div>
+      <div className="mt-3">
         <Button
           type="button"
-          variant="ghost"
+          variant="secondary"
           onClick={() => window.open(previewUrl, '_blank')}
         >
           <ExternalLink data-icon="inline-start" />

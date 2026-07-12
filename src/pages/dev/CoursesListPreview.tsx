@@ -237,8 +237,8 @@ export default function CoursesListPreview() {
             Live CourseListView (shipped component)
           </h2>
           <p className="mt-1 text-sm text-foreground-muted">
-            The real table from /courses with Linear-style type markers —
-            a small colored dot + muted label (Kursrekke / Enkelttime / Nettkurs).
+            The real table from /courses — plain muted type labels
+            (Kursrekke / Enkelttime / Nettkurs), rounded row hover with -mx bleed.
           </p>
         </header>
         <LiveListSection />

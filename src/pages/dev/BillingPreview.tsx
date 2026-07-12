@@ -25,7 +25,7 @@ export default function BillingPreview() {
             renewsAt={null}
             cancel={false}
             onUpgrade={noop}
-            yearly={{ price: '416 kr', priceSub: '/mnd, fakturert årlig', savings: 'Spar 17 %' }}
+            yearly={{ price: '4 990 kr', priceSub: '/år' }}
           />
         </PreviewState>
 
@@ -94,7 +94,7 @@ function BillingPagePreview({
   renewsAt: string | null
   cancel: boolean
   onUpgrade: () => void
-  yearly?: { price: string; priceSub: string; savings?: string }
+  yearly?: { price: string; priceSub: string }
 }) {
   const isPro = plan === 'pro'
   const isPastDue = isPro && status === 'past_due'

@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Check, ExternalLink, Sparkles } from '@/lib/icons'
+import { Check, ExternalLink } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { PageShell } from '@/components/teacher/PageShell'
+import { SegmentedTabs } from '@/components/teacher/SegmentedTabs'
 import { ErrorState } from '@/components/ui/error-state'
 import { useAuth } from '@/contexts/AuthContext'
-import { cn, formatKroner } from '@/lib/utils'
+import { formatKroner } from '@/lib/utils'
 import { createStripeCheckoutSession, createStripePortalSession } from '@/services/billing'
 import { toast } from 'sonner'
 
@@ -56,11 +57,11 @@ const PRO_FEATURES = [
   'Månedlig eller årlig betaling',
 ] as const
 
-// Yearly Pro — ~2 months free vs 12 × 499 kr.
+// Yearly Pro — 4 990 kr vs 12 × 499 kr = 5 988 kr: the 998 kr difference is
+// exactly two monthly payments, so the card nudge says "2 måneder gratis".
 const PRO_YEARLY = {
   price: formatKroner(4990),
   priceSub: '/år',
-  savings: `Spar ${formatKroner(998)}`,
 } as const
 
 const BillingPage = () => {
@@ -244,7 +245,7 @@ export function BillingPlanSections({
   plan: SubscriptionPlan
   status?: SubscriptionStatus
   /** When set, free sellers get a Månedlig/Årlig toggle on the Pro card. */
-  yearly?: { price: string; priceSub: string; savings?: string }
+  yearly?: { price: string; priceSub: string }
   onUpgrade: (interval: 'month' | 'year') => void
   onManage?: () => void
   checkoutLoading: boolean
@@ -258,6 +259,9 @@ export function BillingPlanSections({
   const proPrice = showInterval && interval === 'year' ? yearly.price : formatKroner(499)
   const proPriceSub = showInterval && interval === 'year' ? yearly.priceSub : '/mnd'
 
+  // Every card carries a button: the active plan states itself (disabled
+  // "Nåværende plan"), the other plan is the up-/downgrade action. Downgrade
+  // goes through the Stripe portal (cancel at period end) — same as Administrer.
   const startOption = (
     <PlanOption
       name="Start"
@@ -265,6 +269,22 @@ export function BillingPlanSections({
       description="Alt du trenger for å ta imot påmeldinger og betaling."
       features={START_FEATURES}
       active={!isPro}
+      action={
+        isPro ? (
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full"
+            onClick={onManage}
+            loading={portalLoading}
+            loadingText="Åpner"
+          >
+            Bytt til Start
+          </Button>
+        ) : (
+          <CurrentPlanButton />
+        )
+      }
     />
   )
   const proOption = (
@@ -276,7 +296,9 @@ export function BillingPlanSections({
       features={PRO_FEATURES}
       active={isPro}
       action={
-        !isPro && (
+        isPro ? (
+          <CurrentPlanButton />
+        ) : (
           <Button
             type="button"
             className="w-full"
@@ -293,19 +315,8 @@ export function BillingPlanSections({
 
   const cards = (
     <div className="grid gap-6 md:grid-cols-2">
-      {isPro ? (
-        <>
-          {startOption}
-          {proOption}
-        </>
-      ) : (
-        <>
-          <PlanColumn>{startOption}</PlanColumn>
-          <PlanColumn featured label="Anbefalt">
-            {proOption}
-          </PlanColumn>
-        </>
-      )}
+      {startOption}
+      {proOption}
     </div>
   )
 
@@ -340,11 +351,26 @@ export function BillingPlanSections({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-medium text-foreground">Velg plan</h2>
             {showInterval && (
-              <IntervalToggle
-                interval={interval}
-                onChange={setInterval}
-                savings={yearly?.savings}
-              />
+              // The yearly nudge sits right beside the toggle's Årlig segment
+              // and is always visible (Maze/Cycle pricing-toggle pattern:
+              // "Annual billing [25% OFF]") — the incentive to flip the
+              // toggle must be readable BEFORE the toggle is flipped.
+              <div className="flex items-center gap-2.5">
+                <SegmentedTabs<'month' | 'year'>
+                  value={interval}
+                  onChange={setInterval}
+                  tabs={[
+                    { key: 'month', label: 'Månedlig' },
+                    { key: 'year', label: 'Årlig' },
+                  ]}
+                  ariaLabel="Betalingsintervall"
+                  size="md"
+                  role="radiogroup"
+                />
+                <Badge variant="success" size="sm">
+                  2 måneder gratis
+                </Badge>
+              </div>
             )}
           </div>
           <div className="mt-4">{cards}</div>
@@ -354,71 +380,19 @@ export function BillingPlanSections({
   )
 }
 
-/** Segmented Månedlig/Årlig switch — mirrors SegmentedTabs construction
- *  (muted track, bg-surface + shadow-xs active pill, ring-subtle focus) but
- *  stays bespoke because the yearly segment carries the savings nudge, which
- *  SegmentedTabs' string labels can't render. */
-function IntervalToggle({
-  interval,
-  onChange,
-  savings,
-}: {
-  interval: 'month' | 'year'
-  onChange: (next: 'month' | 'year') => void
-  savings?: string
-}) {
+/** The active plan's self-describing, non-interactive button slot. White
+ *  surface + hairline (not the secondary muted fill, which vanishes against
+ *  the grey plan card) and readable muted text instead of the disabled tier. */
+function CurrentPlanButton() {
   return (
-    <div className="inline-flex h-9 items-center gap-1 rounded-full bg-muted p-1 text-sm">
-      {(['month', 'year'] as const).map((value) => (
-        <button
-          key={value}
-          type="button"
-          onClick={() => onChange(value)}
-          aria-pressed={interval === value}
-          className={cn(
-            'inline-flex h-7 items-center gap-1.5 rounded-full px-3 font-medium transition-colors',
-            'outline-none focus-visible:ring-2 focus-visible:ring-ring-subtle',
-            interval === value
-              ? 'bg-surface text-foreground shadow-xs'
-              : 'text-foreground-muted hover:text-foreground',
-          )}
-        >
-          {value === 'month' ? 'Månedlig' : 'Årlig'}
-          {value === 'year' && savings && <span className="text-success">{savings}</span>}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-/**
- * Wraps the featured plan: the SAME card as every tier, sitting inside an outer
- * frame whose header caps it with "Mest populær". Non-featured columns reserve
- * the header height (desktop) so the inner cards line up.
- */
-function PlanColumn({
-  featured,
-  label,
-  children,
-}: {
-  featured?: boolean
-  label?: string
-  children: ReactNode
-}) {
-  return (
-    <div className="flex flex-col">
-      {featured ? (
-        <div className="flex h-10 items-center justify-center gap-1.5 rounded-t-2xl bg-muted text-sm font-medium text-foreground">
-          <Sparkles className="size-3.5" aria-hidden />
-          {label}
-        </div>
-      ) : (
-        <div className="hidden h-10 md:block" aria-hidden />
-      )}
-      <div className={cn('flex-1', featured && 'rounded-b-2xl bg-muted p-1.5 pt-0')}>
-        {children}
-      </div>
-    </div>
+    <Button
+      type="button"
+      variant="secondary"
+      className="w-full border-border-subtle bg-surface disabled:text-foreground-muted"
+      disabled
+    >
+      Nåværende plan
+    </Button>
   )
 }
 
@@ -440,13 +414,15 @@ function PlanOption({
   action?: ReactNode
 }) {
   return (
-    <Card className="h-full">
-      <CardContent className="flex h-full flex-col gap-5">
+    // rounded-2xl + a step more padding than the stock Card: the plan cards
+    // are the page's focal surfaces, so they get the product-frame radius.
+    <Card className="h-full rounded-2xl py-7">
+      <CardContent className="flex h-full flex-col gap-5 px-7">
         <div>
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-base font-medium text-foreground">{name}</h3>
             {active && (
-              <Badge variant="neutral" size="sm">
+              <Badge variant="inverted" size="sm">
                 Aktiv plan
               </Badge>
             )}
@@ -460,10 +436,10 @@ function PlanOption({
           <p className="mt-2 text-sm text-foreground-muted">{description}</p>
         </div>
 
-        <ul className="space-y-2.5 text-sm text-foreground-muted">
+        <ul className="space-y-2.5 text-sm font-medium text-foreground">
           {features.map((feature) => (
             <li key={feature} className="flex gap-2.5">
-              <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+              <Check className="mt-0.5 size-4 shrink-0 text-foreground" strokeWidth={2} aria-hidden />
               <span>{feature}</span>
             </li>
           ))}

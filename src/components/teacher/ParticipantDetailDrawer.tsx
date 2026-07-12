@@ -7,6 +7,7 @@ import {
   SheetDescription,
   SheetFooter,
 } from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -131,10 +132,15 @@ function buildActivity(signup: SignupWithProfile): ActivityEvent[] {
   const paidAtomically =
     isPaid && !!signup.stripe_payment_intent_id;
 
+  // An unsettled payment (pending/failed) must not paint the signup event
+  // green — that made problem rows look healthy in the drawer.
+  const paymentUnsettled =
+    signup.payment_status === 'pending' || signup.payment_status === 'failed';
+
   if (signup.created_at) {
     events.push({
       icon: paidAtomically ? CreditCard : UserCheck,
-      tone: 'success',
+      tone: paymentUnsettled ? 'neutral' : 'success',
       label: paidAtomically ? 'Påmeldt og betalt' : 'Påmeldt',
       timestamp: formatNorwegianShort(signup.created_at),
     });
@@ -148,6 +154,18 @@ function buildActivity(signup: SignupWithProfile): ActivityEvent[] {
       icon: CreditCard,
       tone: 'success',
       label: 'Betalt',
+      timestamp: formatNorwegianShort(signup.updated_at ?? signup.created_at),
+    });
+  }
+
+  // A failed charge is an event in its own right — without it the timeline
+  // reads as a healthy "Påmeldt" while the roster flags the row. updated_at
+  // is the closest timestamp we hold for the failure.
+  if (signup.payment_status === 'failed') {
+    events.push({
+      icon: CreditCard,
+      tone: 'danger',
+      label: 'Betaling feilet',
       timestamp: formatNorwegianShort(signup.updated_at ?? signup.created_at),
     });
   }
@@ -283,6 +301,24 @@ export function ParticipantDetailDrawer({
           <div className="flex-1 divide-y divide-border-subtle overflow-y-auto px-6">
             <DetailGroup title="Betaling">
               <dl className="space-y-2.5">
+                {/* Exception states only — settled payments stay silent here
+                    (the amount/method rows + timeline carry the happy path).
+                    Without this row the drawer read as healthy while the
+                    roster flagged the same signup. */}
+                {(paymentStatus === 'pending' || paymentStatus === 'failed') && (
+                  <Row
+                    label="Status"
+                    value={
+                      <Badge
+                        variant={paymentStatus === 'failed' ? 'destructive' : 'warning'}
+                        shape="rect"
+                        size="sm"
+                      >
+                        {paymentStatus === 'failed' ? 'Betaling feilet' : 'Venter på betaling'}
+                      </Badge>
+                    }
+                  />
+                )}
                 <Row
                   label="Billett"
                   value={ticketLabel(signup.ticket_kind_snapshot, signup.ticket_audience_snapshot)}

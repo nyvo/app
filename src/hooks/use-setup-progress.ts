@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
-import { CreditCard, BookOpen, MapPin, Image, User } from '@/lib/icons'
+import { CreditCard, BookOpen, Image, User } from '@/lib/icons'
 import type { LucideIcon } from '@/lib/icons'
 import type { Seller } from '@/types/database'
 import { routes } from '@/lib/routes'
 
 export interface SetupStep {
-  id: 'account' | 'payments' | 'location' | 'course' | 'logo'
+  id: 'account' | 'payments' | 'course' | 'logo'
   title: string
   description: string
   isComplete: boolean
@@ -20,7 +20,6 @@ export interface SetupStep {
 
 interface UseSetupProgressParams {
   currentSeller: Seller | null
-  hasLocation: boolean
   hasPublishedCourse: boolean
   /** Any course (any status) with a price > 0 — makes Stripe onboarding required. */
   hasPaidCourse: boolean
@@ -32,7 +31,7 @@ interface UseSetupProgressParams {
 interface UseSetupProgressResult {
   /** Required steps — these drive the progress bar and completion. */
   steps: SetupStep[]
-  /** Optional polish steps (location, logo) — shown but never block completion. */
+  /** Optional polish steps (logo) — shown but never block completion. */
   optionalSteps: SetupStep[]
   completedCount: number
   totalCount: number
@@ -50,7 +49,6 @@ function getMotivationalSubtitle(completedCount: number, totalCount: number): st
 
 export function useSetupProgress({
   currentSeller,
-  hasLocation,
   hasPublishedCourse,
   hasPaidCourse,
   draftCourseId,
@@ -110,16 +108,6 @@ export function useSetupProgress({
     const optionalSteps: SetupStep[] = [
       ...(paymentsRequired ? [] : [paymentsStep]),
       {
-        id: 'location',
-        title: 'Legg til studioadresse',
-        description: 'Lagre en fast adresse for kursene dine.',
-        isComplete: hasLocation,
-        actionLabel: 'Legg til sted',
-        actionHref: routes.studio,
-        icon: MapPin,
-        optional: true,
-      },
-      {
         id: 'logo',
         title: 'Last opp logo',
         description: 'Logoen vises øverst på studiosiden din.',
@@ -145,5 +133,5 @@ export function useSetupProgress({
       nextStep,
       motivationalSubtitle,
     }
-  }, [currentSeller, hasLocation, hasPublishedCourse, hasPaidCourse, draftCourseId, onConnectPayments])
+  }, [currentSeller, hasPublishedCourse, hasPaidCourse, draftCourseId, onConnectPayments])
 }

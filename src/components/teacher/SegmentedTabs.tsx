@@ -30,9 +30,11 @@ interface SegmentedTabsProps<T extends string> {
 }
 
 /**
- * Inline segmented control — muted track, active pill flips to bg-background
- * + soft shadow. Shared across /teacher/courses, /signups, /schedule, and
- * the course detail tab bar so the dashboard reads as one system.
+ * Inline segmented control — muted track, active segment flips to bg-surface
+ * with a hairline border (no shadow — the system separates via borders).
+ * Surface-radius family, not pills: track rounded-xl, segments rounded-lg.
+ * Shared across /teacher/courses, /signups, /schedule, and the course detail
+ * tab bar so the dashboard reads as one system.
  */
 export function SegmentedTabs<T extends string>({
   value,
@@ -88,7 +90,7 @@ export function SegmentedTabs<T extends string>({
       aria-label={ariaLabel}
       onKeyDown={handleKeyDown}
       className={cn(
-        'items-center rounded-full bg-muted p-1 gap-1',
+        'items-center rounded-xl bg-muted p-1 gap-1',
         size === 'lg' ? 'h-10' : 'h-9',
         stretch ? 'flex w-full' : 'inline-flex w-fit',
         disabled && 'opacity-60',
@@ -109,17 +111,21 @@ export function SegmentedTabs<T extends string>({
             tabIndex={active ? 0 : -1}
             onClick={() => { if (!disabled) onChange(t.key); }}
             className={cn(
-              'inline-flex items-center justify-center gap-2 rounded-full text-sm font-medium transition-[color,background-color,box-shadow,transform] duration-150 ease-out',
+              'inline-flex items-center justify-center gap-2 rounded-lg border text-sm font-medium transition-[color,background-color,border-color,transform] duration-150 ease-out',
               size === 'lg' ? 'h-9 px-4' : 'h-7 px-3',
               'outline-none focus-visible:ring-2 focus-visible:ring-ring active:translate-y-px',
               disabled && 'cursor-not-allowed',
               stretch && 'flex-1',
-              active ? 'bg-surface text-foreground shadow-xs' : 'text-foreground',
+              // Transparent border on inactive segments keeps the text from
+              // shifting 1px when the bordered active state lands.
+              active
+                ? 'border-border-subtle bg-surface text-foreground'
+                : 'border-transparent text-foreground-muted hover:text-foreground',
             )}
           >
             {t.label}
             {t.count !== undefined && (
-              <span className="tabular-nums text-sm text-foreground">
+              <span className="tabular-nums text-sm">
                 {t.count}
               </span>
             )}

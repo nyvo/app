@@ -5,12 +5,16 @@ import { Info, CheckCircle2, AlertTriangle, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const alertVariants = cva(
-  "group/alert relative grid w-full gap-1 rounded-lg border text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2.5 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4",
+  "group/alert relative grid w-full gap-1 rounded-lg border text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2.5 has-data-[slot=alert-icon]:grid-cols-[auto_1fr] has-data-[slot=alert-icon]:gap-x-2.5 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default: "bg-surface text-foreground",
-        info: "bg-surface [&_svg]:text-info",
+        // Informational note — a filled neutral panel (no border, no status
+        // hue): the glyph sits in its own muted circle and the copy reads
+        // font-medium foreground. Purely neutral by design (2026-07-11) —
+        // these boxes state what will happen, they don't warn.
+        info: "border-transparent bg-panel font-medium text-foreground",
         success: "bg-surface [&_svg]:text-success",
         warning: "bg-surface [&_svg]:text-warning",
         error: "bg-surface text-danger *:data-[slot=alert-description]:text-danger *:[svg]:text-current",
@@ -30,7 +34,7 @@ const alertVariants = cva(
 
 const variantTextColor: Record<string, string> = {
   default: "text-foreground",
-  info: "text-info",
+  info: "text-foreground",
   success: "text-success",
   warning: "text-warning",
   error: "text-danger",
@@ -70,7 +74,20 @@ function Alert({
   if (icon !== false) {
     const IconComp = icon ?? defaultIcons[variant || "default"]
     if (IconComp) {
-      iconNode = <IconComp aria-hidden={true} />
+      // The filled info variant carries its glyph in a muted circle; the
+      // status variants keep the bare colored glyph.
+      iconNode =
+        variant === "info" ? (
+          <span
+            data-slot="alert-icon"
+            aria-hidden={true}
+            className="row-span-2 flex size-8 shrink-0 items-center justify-center self-start rounded-full bg-muted text-foreground-muted"
+          >
+            <IconComp className="size-4" />
+          </span>
+        ) : (
+          <IconComp aria-hidden={true} />
+        )
     }
   }
 

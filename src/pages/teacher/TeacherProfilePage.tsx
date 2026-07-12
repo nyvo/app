@@ -153,7 +153,7 @@ const TeacherProfilePage = () => {
 
             <SettingsRow
               title="Konto og sikkerhet"
-              description="Passord, pålogging og sletting av kontoen."
+              description="Passord og pålogging."
             >
               <div className="divide-y divide-border-subtle">
                 <PasswordRow />
@@ -169,18 +169,6 @@ const TeacherProfilePage = () => {
                 </div>
               </div>
 
-              {/* Danger zone — its own tinted container (ui-patterns §2.4). */}
-              <div className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-danger-border bg-danger-subtle px-5 py-4">
-                <span className="text-base font-medium text-foreground">Slett kontoen din</span>
-                <Button
-                  variant="destructive"
-                  className="shrink-0"
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  Slett konto
-                </Button>
-              </div>
-
               <ConfirmDialog
                 open={logoutAllOpen}
                 onOpenChange={setLogoutAllOpen}
@@ -191,6 +179,25 @@ const TeacherProfilePage = () => {
                 loading={isLoggingOutAll}
                 loadingText="Logger ut"
               />
+            </SettingsRow>
+
+            <SettingsRow
+              title="Slett konto"
+              description="Kontoen og innloggingen din slettes permanent."
+            >
+              {/* Plain row — the destructive button carries the danger signal
+                  by itself; no tinted container. */}
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-base font-medium text-foreground">Slett kontoen din</span>
+                <Button
+                  variant="destructive"
+                  className="shrink-0"
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  Slett konto
+                </Button>
+              </div>
+
               <ConfirmDialog
                 open={deleteOpen}
                 onOpenChange={(open) => {

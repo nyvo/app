@@ -9,14 +9,8 @@ import { UnsavedChangesDialog, useUnsavedChanges } from '@/components/ui/unsaved
 import { PageTab, PageTabs } from '@/components/ui/page-tabs';
 import { FieldError } from '@/components/ui/field-error';
 import { ErrorState } from '@/components/ui/error-state';
-import { Skeleton } from '@/components/ui/skeleton';
-import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { ImageField } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { PlacesAutocomplete } from '@/components/ui/places-autocomplete';
-import { MapEmbed } from '@/components/ui/map-embed';
-import type { PlaceDetails } from '@/services/places';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { PageShell } from '@/components/teacher/PageShell';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
@@ -24,11 +18,9 @@ import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
 import { EmbedCodeSection } from '@/components/teacher/studio/EmbedCodeSection';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLocations } from '@/hooks/use-locations';
 import { friendlyError } from '@/lib/error-messages';
 import { extractEdgeError } from '@/lib/edge-errors';
 import { supabase } from '@/lib/supabase';
-import { createLocation, updateLocation } from '@/services/locations';
 import { fetchGuestHost, type GuestHost } from '@/services/affiliations';
 import { renameSellerSlug, updateSeller } from '@/services/sellers';
 import { deleteSellerLogo, uploadSellerLogo } from '@/services/storage';
@@ -75,9 +67,6 @@ function StudioPublicSettings({
   onSaved: () => Promise<void> | void;
   hydrateFailed: boolean;
 }) {
-  const { locations, isLoading: loadingLocations, error: locationsError, refetch } = useLocations(seller.id);
-  const primaryLocation = locations[0] ?? null;
-
   const isStudio = seller.operating_model === 'studio';
 
   const { hash } = useLocation();
@@ -103,7 +92,7 @@ function StudioPublicSettings({
   const showSamarbeid =
     !hydrateFailed && (isStudio || hasHost || (host === 'error' && hash === '#samarbeid'));
 
-  const [tab, setTab] = useState<'profil' | 'sted' | 'samarbeid' | 'nettsted'>('profil');
+  const [tab, setTab] = useState<'profil' | 'samarbeid'>('profil');
   // Joining a studio lands at /studio#samarbeid — open that tab once it renders.
   useEffect(() => {
     if (hash === '#samarbeid' && showSamarbeid) setTab('samarbeid');
@@ -132,45 +121,12 @@ function StudioPublicSettings({
     setSlug(seller.slug);
   }, [seller.slug]);
 
-  const [placeName, setPlaceName] = useState('');
-  const [address, setAddress] = useState('');
-  const [placeError, setPlaceError] = useState<string | null>(null);
-  // Coords from the Google Place behind the address (null until a place is
-  // picked, and cleared again the moment the name is edited by hand).
-  const [placeCoords, setPlaceCoords] = useState<
-    { lat: number | null; lon: number | null; placeId: string | null } | null
-  >(null);
-
-  const coordsFromLocation = (loc: typeof primaryLocation) =>
-    loc?.lat != null ? { lat: loc.lat, lon: loc.lon, placeId: loc.google_place_id } : null;
-
-  useEffect(() => {
-    setPlaceName(primaryLocation?.name ?? '');
-    setAddress(primaryLocation?.address ?? '');
-    setPlaceCoords(coordsFromLocation(primaryLocation));
-    setPlaceError(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [primaryLocation?.id, primaryLocation?.name, primaryLocation?.address]);
-
   const [isSaving, setIsSaving] = useState(false);
   // Generic save failure (thrown/network) — field-specific errors go to the
   // inline FieldErrors instead; this feeds the DirtyFormBar's error slot.
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Split by which tab the dirty field lives on — the Samarbeid/Nettsted tabs
-  // keep the bar visible while dirty (rather than hiding it on tab switch),
-  // and need to know which tab to point the user back to.
-  const profileDirty = name.trim() !== seller.name || slug.trim() !== seller.slug;
-  // Compare the picked place identity too — re-picking a same-name address to
-  // add a map pin (legacy pin-less place) changes only the place id, which
-  // must still surface the save bar.
-  const pickedPlaceId = placeCoords?.placeId ?? null;
-  const locationDirty = primaryLocation
-    ? placeName.trim() !== primaryLocation.name ||
-      address.trim() !== (primaryLocation.address ?? '') ||
-      pickedPlaceId !== (primaryLocation.google_place_id ?? null)
-    : placeName.trim() !== '' || address.trim() !== '' || pickedPlaceId != null;
-  const isDirty = profileDirty || locationDirty;
+  const isDirty = name.trim() !== seller.name || slug.trim() !== seller.slug;
 
   const { blocker } = useUnsavedChanges(isDirty);
 
@@ -180,10 +136,6 @@ function StudioPublicSettings({
     setNameError(null);
     setSlugError(null);
     setSaveError(null);
-    setPlaceName(primaryLocation?.name ?? '');
-    setAddress(primaryLocation?.address ?? '');
-    setPlaceCoords(coordsFromLocation(primaryLocation));
-    setPlaceError(null);
   };
 
   const handleSave = async () => {
@@ -192,8 +144,6 @@ function StudioPublicSettings({
 
     const trimmedName = name.trim();
     const trimmedSlug = slug.trim();
-    const trimmedPlaceName = placeName.trim();
-    const trimmedAddress = address.trim();
 
     let blocked = false;
     const nameInvalid = !trimmedName;
@@ -212,42 +162,23 @@ function StudioPublicSettings({
       setSlugError(null);
     }
 
-    // The place must come from the Google search — free text has no coords, so
-    // buyers would get a location line with no map or directions. Only enforced
-    // when the name changed, so legacy pin-less places can still save untouched.
-    const placeChanged = trimmedPlaceName !== (primaryLocation?.name ?? '');
-    let placeInvalid = false;
-    if ((primaryLocation || trimmedAddress) && !trimmedPlaceName) {
-      setPlaceError('Skriv inn et navn på stedet.');
-      blocked = true;
-      placeInvalid = true;
-    } else if (trimmedPlaceName && placeChanged && !placeCoords?.placeId) {
-      setPlaceError('Velg et sted fra listen.');
-      blocked = true;
-      placeInvalid = true;
-    } else {
-      setPlaceError(null);
-    }
-
     if (blocked) {
       // Surface the offending field by jumping to its tab, then focus it once
       // the panel has rendered — a tab switch alone leaves keyboard/AT users
       // without a cue for which field needs attention.
-      setTab(nameInvalid || slugInvalid ? 'profil' : 'sted');
-      const focusId = nameInvalid ? 'studio-name' : slugInvalid ? 'studio-slug' : placeInvalid ? 'studio-place-name' : null;
-      if (focusId) {
-        requestAnimationFrame(() => {
-          document.getElementById(focusId)?.focus();
-        });
-      }
+      setTab('profil');
+      const focusId = nameInvalid ? 'studio-name' : 'studio-slug';
+      requestAnimationFrame(() => {
+        document.getElementById(focusId)?.focus();
+      });
       return;
     }
 
     setIsSaving(true);
-    // Writes are sequential (name → slug → place) with no rollback. When a
-    // later step fails, refresh the seller so the already-persisted steps'
-    // baselines update — the bar then only tracks what actually failed, and
-    // Avbryt restores values that match the database.
+    // Writes are sequential (name → slug) with no rollback. When a later step
+    // fails, refresh the seller so the already-persisted steps' baselines
+    // update — the bar then only tracks what actually failed, and Avbryt
+    // restores values that match the database.
     let persistedAny = false;
     try {
       if (trimmedName !== seller.name) {
@@ -273,27 +204,6 @@ function StudioPublicSettings({
         }
         persistedAny = true;
         setSlug(nextSlug);
-      }
-
-      const shouldPersistLocation = !!primaryLocation || !!trimmedPlaceName || !!trimmedAddress;
-      if (shouldPersistLocation) {
-        const payload = {
-          name: trimmedPlaceName,
-          address: trimmedAddress || null,
-          lat: placeCoords?.lat ?? null,
-          lon: placeCoords?.lon ?? null,
-          google_place_id: placeCoords?.placeId ?? null,
-        };
-        const result = primaryLocation
-          ? await updateLocation(primaryLocation.id, payload)
-          : await createLocation({ seller_id: seller.id, ...payload });
-
-        if (result.error) {
-          setPlaceError(friendlyError(result.error, 'Kunne ikke lagre stedet.'));
-          if (persistedAny) await onSaved();
-          return;
-        }
-        await refetch();
       }
 
       await onSaved();
@@ -377,14 +287,6 @@ function StudioPublicSettings({
         >
           Profil
         </PageTab>
-        <PageTab
-          active={tab === 'sted'}
-          onClick={() => setTab('sted')}
-          id="studio-tab-sted"
-          ariaControls="studio-panel-sted"
-        >
-          Sted
-        </PageTab>
         {showSamarbeid && (
           <PageTab
             active={tab === 'samarbeid'}
@@ -395,32 +297,8 @@ function StudioPublicSettings({
             Samarbeid
           </PageTab>
         )}
-        {!!seller.slug && (
-          <PageTab
-            active={tab === 'nettsted'}
-            onClick={() => setTab('nettsted')}
-            id="studio-tab-nettsted"
-            ariaControls="studio-panel-nettsted"
-          >
-            Nettsted
-          </PageTab>
-        )}
       </PageTabs>
 
-      {locationsError ? (
-        <ErrorState
-          title="Kunne ikke hente studioet ditt"
-          message="Sjekk forbindelsen og prøv igjen."
-          onRetry={() => void refetch()}
-        />
-      ) : loadingLocations ? (
-        // Skeleton held back 200ms (Studio § 10 — no flash-loader for
-        // sub-second loads); tabs above stay visible, only the panel is replaced.
-        <DelayedFallback>
-          <StudioRowsSkeleton />
-        </DelayedFallback>
-      ) : (
-        <>
       {tab === 'profil' && (
         <div
           role="tabpanel"
@@ -491,64 +369,11 @@ function StudioPublicSettings({
               onBecameSolo={() => setTab('profil')}
               hydrateFailed={hydrateFailed}
             />
-          </SettingsRows>
-        </div>
-      )}
 
-      {tab === 'sted' && (
-        <div
-          role="tabpanel"
-          id="studio-panel-sted"
-          aria-labelledby="studio-tab-sted"
-        >
-          <SettingsRows>
-            <SettingsRow
-              title="Sted"
-              description="Brukes når du lager kurs, og vises til deltakerne som skal møte opp."
-            >
-              <div className="grid gap-2">
-                <Label htmlFor="studio-place-name" data-error={!!placeError || undefined}>
-                  Stedsnavn
-                </Label>
-                <PlacesAutocomplete
-                    id="studio-place-name"
-                    value={placeName}
-                    onChange={(v) => {
-                      setPlaceName(v);
-                      // The name field is the search box — typing means you're after a
-                      // different place, so the picked address + coords no longer apply.
-                      setAddress('');
-                      setPlaceCoords(null);
-                      if (placeError) setPlaceError(null);
-                    }}
-                    onSelect={(place: PlaceDetails) => {
-                      setPlaceName(place.name || placeName);
-                      setAddress(place.address);
-                      setPlaceCoords({ lat: place.lat, lon: place.lon, placeId: place.placeId });
-                      setPlaceError(null);
-                    }}
-                    onKeyDown={handleKeyDown}
-                    disabled={isSaving || loadingLocations}
-                    placeholder="Søk etter studio eller adresse…"
-                    aria-invalid={!!placeError || undefined}
-                    aria-describedby={placeError ? 'studio-place-error' : undefined}
-                  />
-                  {placeError && <FieldError id="studio-place-error">{placeError}</FieldError>}
-                  {/* Address is derived from the picked place — shown for confirmation,
-                      not editable. Re-pick from the search to change it. */}
-                  {address && <p className="text-sm text-foreground-muted">{address}</p>}
-                  {(placeCoords?.placeId != null ||
-                    (placeCoords?.lat != null && placeCoords?.lon != null)) && (
-                    <MapEmbed
-                      placeId={placeCoords.placeId}
-                      lat={placeCoords.lat}
-                      lon={placeCoords.lon}
-                      title={`Kart over ${placeName}`}
-                      className="mt-1 h-44"
-                    />
-                  )}
-                </div>
-            </SettingsRow>
+            {/* Own-website embed snippet — lives here (not its own page/tab):
+                it's storefront distribution, and the slug two rows up is what
+                the embed URL is built from. Needs a live slug to render. */}
+            {!!seller.slug && <EmbedCodeSection slug={seller.slug} />}
           </SettingsRows>
         </div>
       )}
@@ -580,64 +405,21 @@ function StudioPublicSettings({
         </div>
       )}
 
-      {tab === 'nettsted' && !!seller.slug && (
-        <div
-          role="tabpanel"
-          id="studio-panel-nettsted"
-          aria-labelledby="studio-tab-nettsted"
-        >
-          <SettingsRows>
-            <EmbedCodeSection slug={seller.slug} />
-          </SettingsRows>
-        </div>
-      )}
-        </>
-      )}
-
       <DirtyFormBar
-        // Stays visible on Samarbeid/Nettsted too — hiding it on tab switch
-        // would silently strand unsaved Profil/Sted changes. Save still works
-        // from any tab (it operates on this page's state, not the visible
-        // panel); the hint just points back to where the changed field lives.
+        // Stays visible on Samarbeid too — hiding it on tab switch would
+        // silently strand unsaved Profil changes. Save still works from any
+        // tab (it operates on this page's state, not the visible panel); the
+        // hint just points back to where the changed field lives.
         visible={isDirty || !!saveError}
         error={saveError}
         isSaving={isSaving}
         onSave={handleSave}
         onCancel={handleCancel}
         dirtyLabel={
-          tab === 'samarbeid' || tab === 'nettsted'
-            ? profileDirty && locationDirty
-              ? 'Endringene ligger på Profil- og Sted-fanen'
-              : locationDirty
-                ? 'Endringene ligger på Sted-fanen'
-                : 'Endringene ligger på Profil-fanen'
-            : undefined
+          tab === 'samarbeid' ? 'Endringene ligger på Profil-fanen' : undefined
         }
       />
       <UnsavedChangesDialog blocker={blocker} />
-    </div>
-  );
-}
-
-// Placeholder for the settings panel while locations load — mirrors the
-// SettingsRows rhythm (220px label column + capped control column) so the tab
-// content doesn't jump when the fetch lands.
-function StudioRowsSkeleton() {
-  return (
-    <div className="divide-y divide-border-subtle" role="status" aria-live="polite">
-      <span className="sr-only">Laster…</span>
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div
-          key={i}
-          className="grid gap-4 py-8 first:pt-0 last:pb-0 md:grid-cols-[220px_minmax(0,42rem)] md:gap-12"
-        >
-          <div className="space-y-2">
-            <Skeleton className="h-5 w-28" />
-            <Skeleton className="h-4 w-40" />
-          </div>
-          <Skeleton className="h-10 w-full max-w-md" />
-        </div>
-      ))}
     </div>
   );
 }
