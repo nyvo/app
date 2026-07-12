@@ -53,7 +53,7 @@ const START_FEATURES = [
 
 const PRO_FEATURES = [
   'Alt i Start',
-  '0 % plattformgebyr – du beholder hele kursprisen',
+  '0 % plattformgebyr',
   'Månedlig eller årlig betaling',
 ] as const
 
@@ -292,7 +292,7 @@ export function BillingPlanSections({
       name="Pro"
       price={proPrice}
       priceSub={proPriceSub}
-      description={`Lønner seg fra rundt ${formatKroner(10000)} i påmeldinger i måneden.`}
+      description="Behold hele kursprisen – uansett hvor mye du selger."
       features={PRO_FEATURES}
       active={isPro}
       action={

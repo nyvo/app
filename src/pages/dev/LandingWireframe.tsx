@@ -291,12 +291,12 @@ function Pricing() {
             <span className="text-sm font-normal text-foreground-muted"> / mnd eks. mva</span>
           </p>
           <p className="mt-1 text-sm text-foreground-muted">
-            Lønner seg fra rundt {formatKroner(10000)} i påmeldinger i måneden
+            Behold hele kursprisen – uansett hvor mye du selger
           </p>
           <ul className="mt-6 space-y-2.5">
             {[
               'Alt i Start',
-              '0 % gebyr – du beholder hele kursprisen',
+              '0 % plattformgebyr',
               'Månedlig eller årlig betaling',
             ].map((f) => (
               <li key={f} className="flex items-start gap-2.5 text-base text-foreground">
