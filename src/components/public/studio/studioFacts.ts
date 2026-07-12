@@ -77,9 +77,11 @@ export function entryPrice(
 
 /* ── Studio location + derived facts ─────────────────────────────── */
 
-/** A studio's display location. The canonical source is the location the
- * studio sets in the Studio tab (`teacher_locations`, fetched via RPC); when
- * that isn't available we fall back to the most-used course location here. */
+/** A studio's display location — derived from the studio's courses (the
+ * most-used physical course location, with the coords + Google place id the
+ * course builder saved). The old canonical `teacher_locations` source was
+ * retired 2026-07-11 with the Studio "Sted" tab; course data is the single
+ * source now. */
 export interface StudioLocation {
   label: string;
   address: string | null;
@@ -104,8 +106,8 @@ export function directionsUrl(location: StudioLocation): string {
 }
 
 export interface StudioFacts {
-  /** Most-used physical course location — the fallback studio location when
-   * the canonical teacher_location isn't available. Null when all online. */
+  /** Most-used physical course location — THE studio display location.
+   * Null when all courses are online. */
   primaryLocation: StudioLocation | null;
   /** Unique instructor names, in first-seen course order. */
   instructors: string[];

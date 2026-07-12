@@ -42,6 +42,7 @@ const PaymentsPage = lazy(() => import('./pages/teacher/PaymentsPage'));
 const StudioPage = lazy(() => import('./pages/teacher/StudioPage'));
 const PublicCoursesPage = lazy(() => import('./pages/public/PublicCoursesPage'));
 const EmbedCalendarPage = lazy(() => import('./pages/public/EmbedCalendarPage'));
+const EmbedPreviewPage = lazy(() => import('./pages/public/EmbedPreviewPage'));
 const PublicCourseDetailPage = lazy(() => import('./pages/public/PublicCourseDetailPage'));
 const CheckoutPage = lazy(() => import('./pages/public/CheckoutPage'));
 const LandingPage = lazy(() => import('./pages/public/LandingPage'));
@@ -246,6 +247,9 @@ const router = createBrowserRouter(
             site. Literal `/embed/` prefix, so it MUST come before the flat
             `/:slug` catch-all below (which would otherwise swallow it). */}
         <Route path="/embed/:slug" element={<EmbedCalendarPage />} />
+        {/* Teacher-facing preview of the embed above — framed with back link
+            + title; the bare route stays chrome-less for iframes. */}
+        <Route path="/embed/:slug/preview" element={<EmbedPreviewPage />} />
 
         {/* Flat-slug team pages at root — `ourapp.no/<team-slug>[/courseId]`.
             FlatTeamRoute checks the slug against the reserved-words list and

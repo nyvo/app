@@ -68,40 +68,11 @@ export async function fetchSellerBySlug(
   return { data: aliasedSeller as unknown as PublicSeller, error: null }
 }
 
-/** The studio's canonical location (set in the Studio tab → teacher_locations).
- * Display fields only — never rooms. Null when the studio has no saved
- * location, or until the `public_studio_location` migration is deployed. */
-export interface StudioLocationRow {
-  name: string
-  address: string | null
-  lat: number | null
-  lon: number | null
-  placeId: string | null
-}
-
-export async function fetchStudioLocation(
-  slug: string
-): Promise<{ data: StudioLocationRow | null; error: Error | null }> {
-  const { data, error } = await supabase.rpc('public_studio_location', { p_slug: slug })
-
-  // The RPC may not be deployed yet — treat any error as "no canonical
-  // location" so the storefront falls back to a course-derived one.
-  if (error || !data || data.length === 0) {
-    return { data: null, error: null }
-  }
-
-  const row = data[0]
-  return {
-    data: {
-      name: row.name,
-      address: row.address,
-      lat: row.lat,
-      lon: row.lon,
-      placeId: row.google_place_id,
-    },
-    error: null,
-  }
-}
+// The old `fetchStudioLocation` (RPC `public_studio_location` over
+// `teacher_locations`) was removed 2026-07-11 with the Studio "Sted" tab —
+// the table never got data, so the storefront's display location is derived
+// from course locations alone (deriveStudioFacts). The RPC/table still exist
+// in the DB; re-add a read here if the saved-locations feature returns.
 
 /**
  * Browser-side seller update. Deliberately narrowed to the columns the

@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Landing page wireframes — 5 skeletons</title>
+<style>
+  :root{
+    --canvas:#eceef1;
+    --paper:#ffffff;
+    --ink:#374151;
+    --bar:#c7ccd4;      /* text bars, light surfaces */
+    --bar-strong:#9aa2ae;
+    --line:#d4d8de;     /* hairlines on light */
+    --media:#aeb5bf;    /* media placeholder stroke */
+    --primary:#6b7484;  /* solid buttons / emphasis */
+    --dark:#33373e;     /* dark band fill */
+    --dark-bar:#5c626c; /* bars on dark */
+    --dark-line:#474c55;
+    --label:#8b929c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--canvas);font:12px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);padding:36px 40px 64px}
+  h1{font-size:17px;font-weight:650;letter-spacing:-.01em}
+  .sub{color:var(--label);margin-top:4px;max-width:860px}
+  .legend{display:flex;gap:18px;align-items:center;margin:14px 0 30px;color:var(--label);font-size:10px}
+  .legend span{display:flex;gap:6px;align-items:center}
+  .boards{display:flex;flex-wrap:wrap;gap:34px;align-items:flex-start}
+  .board{width:380px}
+  .board h2{font-size:12.5px;font-weight:650;margin-bottom:2px}
+  .board .meta{font-size:10px;color:var(--label);margin-bottom:8px;min-height:26px}
+  .page{background:var(--paper);border:1px solid var(--line);border-radius:6px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+  .sec{position:relative;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .sec:last-child{border-bottom:0}
+  .tag{position:absolute;top:4px;left:6px;font-size:7.5px;font-weight:600;letter-spacing:.08em;color:var(--label);text-transform:uppercase;z-index:3}
+  .dark{background:var(--dark);border-color:var(--dark-line)}
+  .dark .tag{color:#8e959f}
+
+  /* primitives */
+  .bar{height:7px;border-radius:4px;background:var(--bar)}
+  .bar.h{height:12px;background:var(--bar-strong)}
+  .bar.xs{height:5px}
+  .dark .bar{background:var(--dark-bar)}
+  .dark .bar.h{background:#7c828d}
+  .w15{width:15%}.w20{width:20%}.w25{width:25%}.w30{width:30%}.w35{width:35%}.w40{width:40%}.w45{width:45%}.w50{width:50%}.w55{width:55%}.w60{width:60%}.w65{width:65%}.w70{width:70%}.w80{width:80%}.w90{width:90%}
+  .stack{display:flex;flex-direction:column;gap:7px}
+  .center{align-items:center}
+  .row{display:flex;gap:8px;align-items:center}
+  .row.center{justify-content:center}
+  .btn{width:56px;height:16px;border-radius:8px;background:var(--primary);flex:none}
+  .btn.ghost{background:transparent;border:1.5px solid var(--bar-strong)}
+  .dark .btn{background:#c3c8d0}
+  .dark .btn.ghost{border-color:var(--dark-bar);background:transparent}
+  .media{position:relative;border:1.5px dashed var(--media);border-radius:6px;background:
+    linear-gradient(to top right, transparent calc(50% - .75px), var(--media) calc(50% - .25px), var(--media) calc(50% + .25px), transparent calc(50% + .75px)),
+    linear-gradient(to bottom right, transparent calc(50% - .75px), var(--media) calc(50% - .25px), var(--media) calc(50% + .25px), transparent calc(50% + .75px))}
+  .dark .media{border-color:#666d78;background:
+    linear-gradient(to top right, transparent calc(50% - .75px), #666d78 calc(50% - .25px), #666d78 calc(50% + .25px), transparent calc(50% + .75px)),
+    linear-gradient(to bottom right, transparent calc(50% - .75px), #666d78 calc(50% - .25px), #666d78 calc(50% + .25px), transparent calc(50% + .75px))}
+  .appwin{border:1.5px solid var(--media);border-radius:8px;background:var(--paper);overflow:hidden}
+  .appwin .chrome{display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid var(--line)}
+  .appwin .chrome i{width:6px;height:6px;border-radius:50%;background:var(--bar);display:block}
+  .appwin .body{margin:8px;height:calc(100% - 36px)}
+  .dark .appwin{background:#3d424a;border-color:#666d78}
+  .dark .appwin .chrome{border-color:var(--dark-line)}
+  .dark .appwin .chrome i{background:var(--dark-bar)}
+  .logoRow{display:flex;gap:10px;justify-content:center}
+  .logoRow i{width:44px;height:10px;border-radius:3px;background:var(--bar);display:block;opacity:.85}
+  .dark .logoRow i{background:var(--dark-bar)}
+  .card{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--paper)}
+  .dark .card{background:#3a3f47;border-color:var(--dark-line)}
+  .avatar{width:14px;height:14px;border-radius:50%;background:var(--bar);flex:none}
+  .pillnav{display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 10px;box-shadow:0 2px 6px rgba(15,23,42,.12)}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--bar-strong);flex:none}
+  .navlinks{display:flex;gap:6px}
+  .navlinks i{width:24px;height:5px;border-radius:3px;background:var(--bar);display:block}
+  .pinstripe{background-image:repeating-linear-gradient(90deg, rgba(120,128,140,.14) 0 1px, transparent 1px 12px)}
+  .fieldbtn{display:flex;align-items:center;justify-content:space-between;border:1.5px solid var(--bar-strong);border-radius:999px;padding:4px 4px 4px 12px;width:200px;background:var(--paper)}
+  .fieldbtn .btn{height:14px;width:48px;border-radius:999px}
+  .statuspill{display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:3px 8px;font-size:0}
+  .statuspill b{width:5px;height:5px;border-radius:50%;background:var(--bar-strong);display:block}
+  .statuspill i{width:40px;height:5px;border-radius:3px;background:var(--bar);display:block}
+  .ghostmark{height:46px;overflow:hidden;display:flex;align-items:flex-start;justify-content:center}
+  .ghostmark span{font-weight:800;font-size:58px;line-height:1;letter-spacing:.02em;color:var(--ink);opacity:.10;user-select:none}
+  .dark .ghostmark span{color:#ffffff;opacity:.08}
+  .cap{font-size:9.5px;color:var(--label);margin-top:8px;line-height:1.5}
+  .headerbar{display:flex;align-items:center;justify-content:space-between;padding:10px 18px 9px}
+  .headerbar .right{display:flex;gap:6px;align-items:center}
+  .annbar{height:14px;background:var(--dark);display:flex;align-items:center;justify-content:center}
+  .annbar i{width:120px;height:4px;border-radius:2px;background:#8e959f;display:block}
+  .faqrow{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+  .faqrow b{width:8px;height:8px;border:1.5px solid var(--bar-strong);border-radius:2px;display:block;background:transparent}
+  .cols{display:flex;gap:12px}
+  .col{flex:1;display:flex;flex-direction:column;gap:6px}
+  .page .media{background-color:#f7f8fa}
+  .page .dark .media, .page.dark .media{background-color:#3d424a}
+  .scrim{background:rgba(255,255,255,.82);border-radius:8px;padding:10px 12px}
+  .tag.chip{background:rgba(255,255,255,.9);padding:1px 5px;border-radius:3px;left:4px}
+</style>
+</head>
+<body>
+
+<h1>Landing page wireframes — 5 skeletons from the research</h1>
+<p class="sub">Layout only, no content. Each variant is a different pattern family; all stay at 4–6 sections. Solid pill = primary CTA, outlined pill = secondary, dashed ⨉ box = media, grey bars = text.</p>
+<div class="legend">
+  <span><i class="btn" style="transform:scale(.8)"></i> primary CTA</span>
+  <span><i class="btn ghost" style="transform:scale(.8)"></i> secondary CTA</span>
+  <span><i class="media" style="width:34px;height:20px;display:block"></i> media / screenshot</span>
+  <span><i class="bar" style="width:40px;display:block"></i> text</span>
+</div>
+
+<div class="boards">
+
+  <!-- ===================== V1 — Canonical PLG funnel ===================== -->
+  <div class="board">
+    <h2>1 · Canonical PLG funnel</h2>
+    <div class="meta">The proven default: centered hero, app window breaking the fold, zigzag features. (Craft, incident.io, Notion)</div>
+    <div class="page">
+      <div class="sec headerbar" style="border-bottom:1px solid var(--line);padding-top:12px">
+        <div class="row"><span class="dot"></span><span class="navlinks"><i></i><i></i><i></i></span></div>
+        <div class="right"><span class="btn ghost" style="width:40px"></span><span class="btn"></span></div>
+      </div>
+      <div class="sec" style="padding-bottom:0">
+        <span class="tag">Hero</span>
+        <div class="stack center" style="padding-top:10px">
+          <div class="bar h w70"></div>
+          <div class="bar h w50"></div>
+          <div class="bar w60" style="margin-top:3px"></div>
+          <div class="row center" style="margin-top:6px"><span class="btn"></span><span class="btn ghost"></span></div>
+        </div>
+        <div class="appwin" style="height:110px;width:86%;margin:16px auto -34px;position:relative;z-index:2">
+          <div class="chrome"><i></i><i></i><i></i></div>
+          <div class="media body"></div>
+        </div>
+      </div>
+      <div class="sec" style="padding-top:46px">
+        <span class="tag" style="top:38px">Logo wall</span>
+        <div class="logoRow" style="margin-top:6px"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="sec">
+        <span class="tag">Features · zigzag ×2</span>
+        <div class="row" style="gap:14px;margin-top:8px">
+          <div class="stack" style="flex:1"><div class="bar h w80"></div><div class="bar w90"></div><div class="bar w70"></div></div>
+          <div class="media" style="flex:1.2;height:64px"></div>
+        </div>
+        <div class="row" style="gap:14px;margin-top:14px">
+          <div class="media" style="flex:1.2;height:64px"></div>
+          <div class="stack" style="flex:1"><div class="bar h w80"></div><div class="bar w90"></div><div class="bar w70"></div></div>
+        </div>
+      </div>
+      <div class="sec">
+        <span class="tag">Testimonials</span>
+        <div class="row" style="gap:8px;margin-top:8px">
+          <div class="card" style="flex:1"><div class="stack"><div class="bar xs w90"></div><div class="bar xs w80"></div><div class="row" style="margin-top:4px"><span class="avatar"></span><span class="bar xs w40"></span></div></div></div>
+          <div class="card" style="flex:1"><div class="stack"><div class="bar xs w90"></div><div class="bar xs w80"></div><div class="row" style="margin-top:4px"><span class="avatar"></span><span class="bar xs w40"></span></div></div></div>
+          <div class="card" style="flex:1"><div class="stack"><div class="bar xs w90"></div><div class="bar xs w80"></div><div class="row" style="margin-top:4px"><span class="avatar"></span><span class="bar xs w40"></span></div></div></div>
+        </div>
+      </div>
+      <div class="sec">
+        <span class="tag">Final CTA</span>
+        <div class="stack center" style="padding:10px 0 6px"><div class="bar h w45"></div><div class="row center" style="margin-top:5px"><span class="btn"></span><span class="btn ghost"></span></div></div>
+      </div>
+      <div class="sec">
+        <span class="tag">Footer · sitemap</span>
+        <div class="cols" style="margin-top:10px">
+          <div class="col"><span class="dot"></span></div>
+          <div class="col"><div class="bar xs w60"></div><div class="bar xs w50"></div><div class="bar xs w55"></div></div>
+          <div class="col"><div class="bar xs w60"></div><div class="bar xs w50"></div><div class="bar xs w55"></div></div>
+          <div class="col"><div class="bar xs w60"></div><div class="bar xs w50"></div><div class="bar xs w55"></div></div>
+        </div>
+        <div class="row" style="margin-top:12px;justify-content:space-between"><span class="bar xs w25"></span><span class="bar xs w15"></span></div>
+      </div>
+    </div>
+    <div class="cap">header → hero (app window breaks the fold) → logos → 2 zigzag features → quotes → final CTA → footer</div>
+  </div>
+
+  <!-- ===================== V2 — Dark left-aligned narrative ===================== -->
+  <div class="board">
+    <h2>2 · Dark narrative (Linear-style)</h2>
+    <div class="meta">Full-bleed dark, left-aligned type, hairline dividers, CTA lives in the nav. (Linear, Polar, Vercel)</div>
+    <div class="page dark" style="border-color:var(--dark-line)">
+      <div class="sec dark headerbar" style="border-bottom:1px solid var(--dark-line);padding-top:12px">
+        <div class="row"><span class="dot" style="background:#c3c8d0"></span><span class="navlinks"><i style="background:var(--dark-bar)"></i><i style="background:var(--dark-bar)"></i><i style="background:var(--dark-bar)"></i><i style="background:var(--dark-bar)"></i></span></div>
+        <div class="right"><span class="btn"></span></div>
+      </div>
+      <div class="sec dark" style="padding-bottom:0">
+        <span class="tag">Hero · left-aligned</span>
+        <div class="stack" style="padding-top:12px">
+          <div class="bar h w80"></div>
+          <div class="bar h w60"></div>
+          <div class="row" style="justify-content:space-between;margin-top:4px"><span class="bar w45"></span><span class="bar xs w20"></span></div>
+        </div>
+        <div class="appwin" style="height:104px;margin:14px -18px 0;border-radius:8px 8px 0 0;border-bottom:0">
+          <div class="chrome"><i></i><i></i><i></i></div>
+          <div class="media body"></div>
+        </div>
+      </div>
+      <div class="sec dark">
+        <span class="tag">Value props · 3 col text</span>
+        <div class="cols" style="margin-top:10px">
+          <div class="col"><div class="bar w60"></div><div class="bar xs w90"></div><div class="bar xs w80"></div></div>
+          <div class="col"><div class="bar w60"></div><div class="bar xs w90"></div><div class="bar xs w80"></div></div>
+          <div class="col"><div class="bar w60"></div><div class="bar xs w90"></div><div class="bar xs w80"></div></div>
+        </div>
+      </div>
+      <div class="sec dark">
+        <span class="tag">Feature block ×2 · headline + media</span>
+        <div class="row" style="justify-content:space-between;margin-top:8px"><span class="bar h w40"></span><span class="bar w35"></span></div>
+        <div class="media" style="height:70px;margin-top:10px"></div>
+        <div class="row" style="justify-content:space-between;margin-top:14px"><span class="bar h w40"></span><span class="bar w35"></span></div>
+        <div class="media" style="height:70px;margin-top:10px"></div>
+      </div>
+      <div class="sec dark">
+        <span class="tag">Quotes row</span>
+        <div class="cols" style="margin-top:9px">
+          <div class="col"><div class="bar xs w90"></div><div class="bar xs w70"></div><div class="row" style="margin-top:3px"><span class="avatar" style="background:var(--dark-bar)"></span><span class="bar xs w40"></span></div></div>
+          <div class="col"><div class="bar xs w90"></div><div class="bar xs w70"></div><div class="row" style="margin-top:3px"><span class="avatar" style="background:var(--dark-bar)"></span><span class="bar xs w40"></span></div></div>
+          <div class="col"><div class="bar xs w90"></div><div class="bar xs w70"></div><div class="row" style="margin-top:3px"><span class="avatar" style="background:var(--dark-bar)"></span><span class="bar xs w40"></span></div></div>
+        </div>
+      </div>
+      <div class="sec dark">
+        <span class="tag">Final CTA · statement</span>
+        <div class="stack center" style="padding:12px 0 8px"><div class="bar h w55"></div><div class="row center" style="margin-top:6px"><span class="btn"></span><span class="btn ghost"></span></div></div>
+      </div>
+      <div class="sec dark">
+        <span class="tag">Footer · 4 col</span>
+        <div class="cols" style="margin-top:10px">
+          <div class="col"><span class="dot" style="background:#c3c8d0"></span></div>
+          <div class="col"><div class="bar xs w60"></div><div class="bar xs w50"></div><div class="bar xs w55"></div></div>
+          <div class="col"><div class="bar xs w60"></div><div class="bar xs w50"></div><div class="bar xs w55"></div></div>
+          <div class="col"><div class="bar xs w60"></div><div class="bar xs w50"></div><div class="bar xs w55"></div></div>
+        </div>
+        <div class="row" style="margin-top:12px"><span class="bar xs w30"></span></div>
+      </div>
+    </div>
+    <div class="cap">header (CTA in nav) → left hero + full-width app window → 3-col value props → 2 feature blocks → quotes → CTA → footer</div>
+  </div>
+
+  <!-- ===================== V3 — Light + tinted app-window band ===================== -->
+  <div class="board">
+    <h2>3 · Light + tinted band, dark footer</h2>
+    <div class="meta">Centered hero over a pinstriped tinted band holding the app window; body flips to a dark fused CTA+footer. (Attio)</div>
+    <div class="page">
+      <div class="annbar"><i></i></div>
+      <div class="sec headerbar" style="border-bottom:1px solid var(--line)">
+        <div class="row"><span class="dot"></span><span class="navlinks"><i></i><i></i><i></i><i></i></span></div>
+        <div class="right"><span class="btn ghost" style="width:40px"></span><span class="btn"></span></div>
+      </div>
+      <div class="sec" style="border-bottom:0;padding-bottom:0">
+        <span class="tag">Hero · centered</span>
+        <div class="stack center" style="padding-top:10px">
+          <div class="btn ghost" style="width:90px;height:12px;border-radius:999px"></div>
+          <div class="bar h w75" style="margin-top:4px"></div>
+          <div class="bar w55"></div>
+          <div class="row center" style="margin-top:6px"><span class="btn ghost"></span><span class="btn"></span></div>
+        </div>
+      </div>
+      <div class="sec pinstripe" style="background-color:#f3f5f7">
+        <span class="tag">Tinted band · pinstripes</span>
+        <div class="appwin" style="height:110px;width:88%;margin:10px auto 4px">
+          <div class="chrome"><i></i><i></i><i></i></div>
+          <div class="media body"></div>
+        </div>
+        <div class="logoRow" style="margin:12px 0 2px"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="sec">
+        <span class="tag">Features · tabbed</span>
+        <div class="row center" style="margin-top:8px"><span class="btn ghost" style="width:44px;height:13px"></span><span class="btn ghost" style="width:44px;height:13px"></span><span class="btn ghost" style="width:44px;height:13px"></span></div>
+        <div class="media" style="height:84px;margin-top:10px"></div>
+      </div>
+      <div class="sec">
+        <span class="tag">Stats row</span>
+        <div class="cols" style="margin-top:10px;text-align:center">
+          <div class="col center" style="align-items:center"><div class="bar h w50"></div><div class="bar xs w70"></div></div>
+          <div class="col center" style="align-items:center"><div class="bar h w50"></div><div class="bar xs w70"></div></div>
+          <div class="col center" style="align-items:center"><div class="bar h w50"></div><div class="bar xs w70"></div></div>
+        </div>
+      </div>
+      <div class="sec dark" style="padding-bottom:8px">
+        <span class="tag">Inverted · CTA + footer fused</span>
+        <div class="stack center" style="padding:14px 0 10px"><div class="bar h w50"></div><div class="row center" style="margin-top:6px"><span class="btn"></span><span class="btn ghost"></span></div></div>
+        <div style="border-top:1px solid var(--dark-line);margin:0 -18px;padding:12px 18px 6px">
+          <div class="cols">
+            <div class="col"><span class="dot" style="background:#c3c8d0"></span></div>
+            <div class="col"><div class="bar xs w60"></div><div class="bar xs w50"></div></div>
+            <div class="col"><div class="bar xs w60"></div><div class="bar xs w50"></div></div>
+            <div class="col"><div class="bar xs w60"></div><div class="bar xs w50"></div></div>
+          </div>
+          <div class="row" style="margin-top:10px;justify-content:space-between"><span class="bar xs w25"></span><span class="bar xs w15"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="cap">announcement bar → header → centered hero → pinstriped band (app window + logos) → tabbed features → stats → dark CTA+footer</div>
+  </div>
+
+  <!-- ===================== V4 — Pill nav + sheet stack ===================== -->
+  <div class="board">
+    <h2>4 · Pill nav + rounded sheet</h2>
+    <div class="meta">Floating island nav over full-bleed hero media; a big-radius sheet rises over it and carries the page. (Clay, Fuser, Daydream)</div>
+    <div class="page">
+      <div class="sec" style="padding:0;border-bottom:0">
+        <span class="tag chip">Hero · full-bleed media</span>
+        <div class="media" style="height:150px;border-radius:0;border-width:0 0 1.5px 0">
+          <div class="pillnav" style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:78%">
+            <span class="dot"></span><span class="navlinks" style="flex:1;justify-content:center"><i></i><i></i><i></i></span><span class="btn" style="width:40px;height:13px"></span>
+          </div>
+          <div class="stack scrim" style="position:absolute;left:14px;bottom:34px;width:58%">
+            <div class="bar h w90" style="background:var(--bar-strong)"></div>
+            <div class="bar h w60" style="background:var(--bar-strong)"></div>
+            <div class="row" style="margin-top:5px"><span class="btn"></span><span class="btn ghost"></span></div>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--paper);border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0;margin:-22px 10px 0;position:relative;z-index:2">
+        <div class="sec" style="border-bottom:1px solid var(--line)">
+          <span class="tag">Sheet · logo strip</span>
+          <div class="logoRow" style="margin-top:8px"><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="sec" style="border-bottom:1px solid var(--line)">
+          <span class="tag">Bento · 1 big + 2 small</span>
+          <div class="row" style="gap:8px;margin-top:8px;align-items:stretch">
+            <div class="card" style="flex:1.4;display:flex;flex-direction:column;gap:6px"><div class="media" style="height:52px"></div><div class="bar w60"></div><div class="bar xs w80"></div></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+              <div class="card" style="flex:1"><div class="stack"><div class="bar w50"></div><div class="bar xs w80"></div></div></div>
+              <div class="card" style="flex:1"><div class="stack"><div class="bar w50"></div><div class="bar xs w80"></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="sec" style="border-bottom:1px solid var(--line)">
+          <span class="tag">Testimonial wall · fade-out</span>
+          <div style="position:relative;margin-top:8px">
+            <div class="row" style="gap:8px;align-items:flex-start">
+              <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+                <div class="card"><div class="stack"><div class="bar xs w90"></div><div class="bar xs w70"></div><div class="row"><span class="avatar"></span><span class="bar xs w40"></span></div></div></div>
+                <div class="card"><div class="stack"><div class="bar xs w80"></div><div class="row"><span class="avatar"></span><span class="bar xs w40"></span></div></div></div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+                <div class="card"><div class="stack"><div class="bar xs w85"></div><div class="row"><span class="avatar"></span><span class="bar xs w40"></span></div></div></div>
+                <div class="card"><div class="stack"><div class="bar xs w90"></div><div class="bar xs w60"></div><div class="row"><span class="avatar"></span><span class="bar xs w40"></span></div></div></div>
+              </div>
+            </div>
+            <div style="position:absolute;inset:auto 0 0 0;height:34px;background:linear-gradient(to bottom, rgba(255,255,255,0), #fff)"></div>
+          </div>
+        </div>
+        <div class="sec" style="border-bottom:0;padding-bottom:6px">
+          <span class="tag">CTA + footer · ghost wordmark</span>
+          <div class="stack center" style="padding:8px 0 6px"><div class="bar h w45"></div><span class="btn" style="margin-top:5px"></span></div>
+          <div class="row" style="justify-content:space-between;margin-top:8px"><span class="dot"></span><span class="row"><i class="bar xs" style="width:30px"></i><i class="bar xs" style="width:30px"></i><i class="bar xs" style="width:30px"></i></span></div>
+          <div class="ghostmark" style="margin-top:8px"><span>LOGOTYPE</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="cap">floating pill nav → full-bleed hero media → rounded sheet rises: logos → bento → testimonial wall (fade) → CTA + ghost-wordmark footer</div>
+  </div>
+
+  <!-- ===================== V5 — Compact conversion one-pager ===================== -->
+  <div class="board">
+    <h2>5 · Compact one-pager</h2>
+    <div class="meta">Shortest path: email capture in the hero, one bento, slim FAQ, single-row utility footer. (Mercury, Calendly, Cal.com, Autosend)</div>
+    <div class="page">
+      <div class="sec headerbar" style="border-bottom:1px solid var(--line);padding-top:12px">
+        <div class="row"><span class="dot"></span><span class="navlinks"><i></i><i></i></span></div>
+        <div class="right"><span class="btn"></span></div>
+      </div>
+      <div class="sec" style="padding:0;border-bottom:1px solid var(--line)">
+        <span class="tag chip">Hero · media bg + email capture</span>
+        <div class="media" style="height:140px;border-radius:0;border-width:0">
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <div class="stack center scrim" style="width:70%">
+              <div class="bar h w60" style="background:var(--bar-strong)"></div>
+              <div class="bar w45"></div>
+              <div class="fieldbtn" style="margin-top:8px"><span class="bar xs" style="width:70px"></span><span class="btn"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sec">
+        <span class="tag">Logo wall</span>
+        <div class="logoRow" style="margin-top:8px"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="sec">
+        <span class="tag">Features · one bento row</span>
+        <div class="row" style="gap:8px;margin-top:8px;align-items:stretch">
+          <div class="card" style="flex:1"><div class="stack"><div class="media" style="height:38px"></div><div class="bar w60"></div><div class="bar xs w85"></div></div></div>
+          <div class="card" style="flex:1"><div class="stack"><div class="media" style="height:38px"></div><div class="bar w60"></div><div class="bar xs w85"></div></div></div>
+          <div class="card" style="flex:1"><div class="stack"><div class="media" style="height:38px"></div><div class="bar w60"></div><div class="bar xs w85"></div></div></div>
+        </div>
+      </div>
+      <div class="sec">
+        <span class="tag">FAQ · slim accordion</span>
+        <div class="stack" style="margin-top:8px;gap:6px">
+          <div class="faqrow"><span class="bar xs w60"></span><b></b></div>
+          <div class="faqrow"><span class="bar xs w50"></span><b></b></div>
+          <div class="faqrow"><span class="bar xs w65"></span><b></b></div>
+        </div>
+      </div>
+      <div class="sec">
+        <span class="tag">Final CTA</span>
+        <div class="stack center" style="padding:8px 0 4px"><div class="bar h w50"></div><div class="fieldbtn" style="margin-top:6px"><span class="bar xs" style="width:70px"></span><span class="btn"></span></div></div>
+      </div>
+      <div class="sec">
+        <span class="tag">Footer · single-row utility</span>
+        <div class="row" style="justify-content:space-between;margin-top:10px">
+          <span class="row"><span class="dot"></span><i class="bar xs" style="width:26px"></i><i class="bar xs" style="width:26px"></i><i class="bar xs" style="width:26px"></i></span>
+          <span class="row"><span class="statuspill"><b></b><i></i></span><i class="bar xs" style="width:34px"></i></span>
+        </div>
+      </div>
+    </div>
+    <div class="cap">header (single CTA) → media hero with inline email field → logos → one bento row → slim FAQ → CTA (email again) → utility footer w/ status pill</div>
+  </div>
+
+</div>
+</body>
+</html>

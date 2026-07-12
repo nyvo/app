@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageState } from '@/components/page-state/page-state';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
-import { fetchSellerBySlug, fetchStudioLocation, type PublicSeller, type StudioLocationRow } from '@/services/sellers';
+import { fetchSellerBySlug, type PublicSeller } from '@/services/sellers';
 import { toLocalDate } from '@/utils/dateUtils';
 import { StudioMasthead } from '@/components/public/studio/StudioMasthead';
 import { StudioAgendaList } from '@/components/public/studio/StudioAgendaList';
@@ -66,27 +66,18 @@ const PublicCoursesPage = () => {
 
   const isCanonical = !!sellerQuery.data && sellerQuery.data.slug === slug;
 
-  // Courses (required) + the studio's canonical location (best-effort) in
-  // parallel. A missing/undeployed location RPC just yields null.
   const contentQuery = useQuery({
     queryKey: ['storefront', slug],
     enabled: isCanonical,
     queryFn: async () => {
-      const [activeResult, locationResult] = await Promise.all([
-        fetchPublicCourses({ teamSlug: slug! }),
-        fetchStudioLocation(slug!),
-      ]);
+      const activeResult = await fetchPublicCourses({ teamSlug: slug! });
       if (activeResult.error) throw activeResult.error;
-      return {
-        courses: activeResult.data || [],
-        location: locationResult.data as StudioLocationRow | null,
-      };
+      return { courses: activeResult.data || [] };
     },
   });
 
   const organization: PublicSeller | null = isCanonical ? (sellerQuery.data ?? null) : null;
   const courses = contentQuery.data?.courses ?? [];
-  const studioLocation = contentQuery.data?.location ?? null;
 
   const redirecting = !!sellerQuery.data && !!slug && sellerQuery.data.slug !== slug;
   const loading =
@@ -113,20 +104,9 @@ const PublicCoursesPage = () => {
 
   const facts = useMemo(() => deriveStudioFacts(visible), [visible]);
 
-  // The display location: the studio's canonical one (Studio tab) when set,
-  // else the most-used course location as a fallback.
-  const displayLocation = useMemo<StudioLocation | null>(() => {
-    if (studioLocation) {
-      return {
-        label: studioLocation.name,
-        address: studioLocation.address,
-        lat: studioLocation.lat,
-        lon: studioLocation.lon,
-        placeId: studioLocation.placeId,
-      };
-    }
-    return facts.primaryLocation;
-  }, [studioLocation, facts.primaryLocation]);
+  // The display location comes from the courses themselves: the most-used
+  // physical course location (coords + place id saved by the course builder).
+  const displayLocation: StudioLocation | null = facts.primaryLocation;
 
   // Course-type filter — only offer types that actually exist on this studio.
   const typeOptions = useMemo(() => {

@@ -34,13 +34,11 @@ function makeQuery(result: Record<string, unknown>) {
 }
 
 let coursesResult: Record<string, unknown>
-let locationsResult: Record<string, unknown>
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     from: vi.fn((table: string) => {
       if (table === 'courses') return makeQuery(coursesResult)
-      if (table === 'teacher_locations') return makeQuery(locationsResult)
       // 'profiles' (setup_complete_seen_at stamp) and anything else — a
       // harmless no-op success, not under test here.
       return makeQuery({ error: null })
@@ -55,20 +53,10 @@ describe('useSellerSetupStatus — error handling', () => {
     mockUseAuth.mockReset()
     mockUseAuth.mockReturnValue({ currentSeller: seller, profile: { id: 'p1', setup_complete_seen_at: null } })
     coursesResult = { data: [], error: null }
-    locationsResult = { count: 0, error: null }
   })
 
   it('exposes loadFailed and stops the loading flag when the courses fetch errors', async () => {
     coursesResult = { data: null, error: new Error('network down') }
-
-    const { result } = renderHook(() => useSellerSetupStatus())
-
-    await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(result.current.loadFailed).toBe(true)
-  })
-
-  it('exposes loadFailed when the locations fetch errors, even if courses succeeded', async () => {
-    locationsResult = { count: null, error: new Error('network down') }
 
     const { result } = renderHook(() => useSellerSetupStatus())
 
@@ -82,18 +70,16 @@ describe('useSellerSetupStatus — error handling', () => {
     const { result } = renderHook(() => useSellerSetupStatus())
 
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    // Prior to the failed fetch, hasPublishedCourse/hasLocation default to
-    // false — the point under test is that the error path doesn't touch
-    // them at all (no explicit "nothing done" commit), which the completed
-    // step count still reflects here since the state never moved off its
-    // initial default.
+    // Prior to the failed fetch, hasPublishedCourse defaults to false — the
+    // point under test is that the error path doesn't touch it at all (no
+    // explicit "nothing done" commit), which the completed step count still
+    // reflects here since the state never moved off its initial default.
     expect(result.current.completedCount).toBe(1) // only the pre-completed 'account' step
     expect(result.current.isSetupComplete).toBe(false)
   })
 
   it('clears loadFailed and reports a normal, complete checklist on success', async () => {
     coursesResult = { data: [{ id: 'c1', status: 'upcoming', price: 100 }], error: null }
-    locationsResult = { count: 1, error: null }
     mockUseAuth.mockReturnValue({
       currentSeller: { id: 'seller-1', stripe_onboarding_complete: true },
       profile: { id: 'p1', setup_complete_seen_at: null },
@@ -113,7 +99,6 @@ describe('useSellerSetupStatus — error handling', () => {
     await waitFor(() => expect(result.current.loadFailed).toBe(true))
 
     coursesResult = { data: [], error: null }
-    locationsResult = { count: 0, error: null }
     await result.current.refresh()
 
     await waitFor(() => expect(result.current.loadFailed).toBe(false))

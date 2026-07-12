@@ -11,6 +11,7 @@ import {
   Settings01Icon,
   HelpCircleIcon,
   Logout03Icon,
+  SourceCodeIcon,
 } from '@hugeicons/core-free-icons';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -135,6 +136,22 @@ export const TeacherSidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              {/* Local-dev only: the /dev preview index. import.meta.env.DEV is
+                  statically false in production builds, so this never ships. */}
+              {import.meta.env.DEV && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname.startsWith('/dev')}
+                    tooltip="Dev"
+                  >
+                    <Link to="/dev">
+                      <HugeiconsIcon icon={SourceCodeIcon} strokeWidth={1.75} />
+                      <span>Dev</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
             {isSeller && <SidebarSetupCard />}
           </SidebarGroupContent>

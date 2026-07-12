@@ -2,7 +2,6 @@ import { Link, Navigate } from 'react-router-dom'
 import { Check, ChevronRight } from '@/lib/icons'
 import { PageShell } from '@/components/teacher/PageShell'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/ui/error-state'
 import { routes } from '@/lib/routes'
@@ -98,38 +97,30 @@ export default function GetStartedPage() {
             <p className="mt-12 mb-3 text-base font-medium text-foreground">
               Gjør studiosiden ferdig
             </p>
-            <Card className="overflow-hidden p-0 gap-0">
-              {optionalSteps.map((step, index) => (
-                <StepRow
-                  key={step.id}
-                  step={step}
-                  isLast={index === optionalSteps.length - 1}
-                />
+            <StepList>
+              {optionalSteps.map((step) => (
+                <StepRow key={step.id} step={step} />
               ))}
-            </Card>
+            </StepList>
           </>
         ) : (
           <>
-            <Card className="overflow-hidden p-0 gap-0">
-              {steps.map((step, index) => (
-                <StepRow key={step.id} step={step} isLast={index === steps.length - 1} />
+            <StepList>
+              {steps.map((step) => (
+                <StepRow key={step.id} step={step} />
               ))}
-            </Card>
+            </StepList>
 
             {optionalSteps.length > 0 && (
               <>
                 <p className="mt-12 mb-3 text-base font-medium text-foreground">
                   Valgfritt
                 </p>
-                <Card className="overflow-hidden p-0 gap-0">
-                  {optionalSteps.map((step, index) => (
-                    <StepRow
-                      key={step.id}
-                      step={step}
-                      isLast={index === optionalSteps.length - 1}
-                    />
+                <StepList>
+                  {optionalSteps.map((step) => (
+                    <StepRow key={step.id} step={step} />
                   ))}
-                </Card>
+                </StepList>
               </>
             )}
           </>
@@ -138,13 +129,21 @@ export default function GetStartedPage() {
   )
 }
 
-function StepRow({ step, isLast }: { step: SetupStep; isLast: boolean }) {
+// Steps sit directly on the canvas — hairline dividers between rows, no card
+// chrome. -mx-3/px-3 lets the rounded hover fill bleed past the content edge
+// (same treatment as the /courses table) while the text stays on the page grid.
+function StepList({ children }: { children: React.ReactNode }) {
+  return <div className="-mx-3 divide-y divide-border-subtle">{children}</div>
+}
+
+function StepRow({ step }: { step: SetupStep }) {
   const hasAction = !!step.actionHref || !!step.actionOnClick
   const rowClass = cn(
-    'group flex w-full items-center gap-4 px-5 py-4 text-left no-underline',
+    'group flex w-full items-center gap-4 px-3 py-4 text-left no-underline',
     hasAction &&
-      'transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
-    !isLast && 'border-b border-border',
+      // Adjacent hairlines yield to the rounded hover fill (same divider
+      // treatment as the /courses table): own border-bottom + previous sibling's.
+      'rounded-lg transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring hover:border-transparent focus-visible:border-transparent [&:has(+:hover)]:border-transparent [&:has(+:focus-visible)]:border-transparent',
   )
 
   const body = (
