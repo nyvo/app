@@ -6,6 +6,40 @@ not strict dependency.
 
 ---
 
+## 2026-07-13 infra pass (dev/prod split, CI deploys, ops-alert fix)
+
+- **Vercel blocker ESCALATED** — the `vite.config.ts` guard (c9fba8e, Jul 11)
+  hard-fails any build without `VITE_STRIPE_PUBLISHABLE_KEY`, and Vercel's env
+  still lacks it, so **every Vercel deploy (preview + production) now fails**.
+  openspot.no is frozen at the last pre-guard deploy; merges since — incl.
+  PR #128 (billing UI fixes) and #129 — are NOT live. Setting the key in the
+  Vercel dashboard unfreezes everything; it is now the single gate on prod
+  frontend deploys. (GitHub CI got the key as a repo *variable* the same day —
+  CI is green again; that does not touch Vercel.)
+- **Ops monitoring was silently offline — fixed.** `ops-health-alert` was
+  deployed with `verify_jwt=true` against config.toml's `false`, so the daily
+  06:00 cron (x-cron-secret, no JWT) was 401'd at the gateway. Redeployed
+  correctly (v10+). **Verify the next 06:00 run in `cron.job_run_details`.**
+- **Edge functions now auto-deploy from `main`** —
+  `.github/workflows/deploy-edge-functions.yml` (PR #129): deno-test gate,
+  pinned CLI, verify_jwt from config.toml; `SUPABASE_ACCESS_TOKEN` repo secret
+  set; maiden run shipped all 23 functions. Hand-deploy drift is closed.
+- **Stripe checkout/portal return URLs** now echo the caller's allowed origin
+  (PR #129) — `SITE_URL` is fallback only; non-5173 dev ports + staging work.
+- **Dev/prod split live.** New project `openspot-dev` (`pwwqrrbhusjmstdyqddj`,
+  same org/region): full migration history, all functions, secrets copied
+  (test-mode Stripe; `SITE_URL=localhost:5173`; no `OPS_ALERT_EMAIL`), auth
+  redirects → localhost, seeded with a copy of Kristoffer Studio (courses,
+  tiers, sessions, owner login, same test-mode Connect acct). All
+  `.env.local`s now point at dev; prod keys exist only in Vercel, GitHub
+  Actions, and Supabase itself. Consequences for this list:
+  - Future test-mode smoke runs target **dev**, and need a test-mode Stripe
+    webhook endpoint for dev (or `stripe listen --forward-to`) first.
+  - The live-mode cutover (item in the 2026-07-06 list) must also **recreate
+    webhook endpoints in live mode** — live `whsec_…` values differ from test.
+
+---
+
 ## 2026-07-07 live cross-check (prod bundle + remote DB verified)
 
 Re-verified the open items below against what is actually live: downloaded the
