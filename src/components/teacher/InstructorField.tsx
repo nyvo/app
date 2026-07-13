@@ -141,14 +141,22 @@ function ManageInstructorsDialog({
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  const [busyId, setBusyId] = useState<string | null>(null);
+  // Busy state is keyed per id — a single shared value would let one row's
+  // action reset another's mid-request, re-enabling its button (double-submit).
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
+  const setBusy = (id: string, busy: boolean) =>
+    setBusyIds((prev) => {
+      const next = new Set(prev);
+      if (busy) next.add(id); else next.delete(id);
+      return next;
+    });
 
   const handleRename = async (id: string) => {
     const name = editName.trim();
     if (!name) return;
-    setBusyId(id);
+    setBusy(id, true);
     const { error } = await renameInstructor(id, name);
-    setBusyId(null);
+    setBusy(id, false);
     if (error) { toast.error('Kunne ikke endre navnet'); return; }
     setEditingId(null);
     await onChanged();
@@ -156,9 +164,9 @@ function ManageInstructorsDialog({
   };
 
   const handleDelete = async (id: string) => {
-    setBusyId(id);
+    setBusy(id, true);
     const { error } = await deleteInstructor(id);
-    setBusyId(null);
+    setBusy(id, false);
     if (error) { toast.error('Kunne ikke slette instruktøren'); return; }
     await onChanged();
     if (id === selectedId) onDeletedSelected();
@@ -184,7 +192,7 @@ function ManageInstructorsDialog({
                     className="h-8"
                     onKeyDown={(e) => { if (e.key === 'Enter') void handleRename(i.id); }}
                   />
-                  <Button size="sm" loading={busyId === i.id} disabled={!editName.trim()}
+                  <Button size="sm" loading={busyIds.has(i.id)} disabled={!editName.trim()}
                     onClick={() => void handleRename(i.id)}>
                     Lagre
                   </Button>
@@ -198,7 +206,7 @@ function ManageInstructorsDialog({
                     Endre navn
                   </Button>
                   <Button size="sm" variant="ghost" className="text-danger"
-                    loading={busyId === i.id} onClick={() => void handleDelete(i.id)}>
+                    loading={busyIds.has(i.id)} onClick={() => void handleDelete(i.id)}>
                     Slett
                   </Button>
                 </>
