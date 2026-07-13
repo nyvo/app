@@ -36,8 +36,8 @@ an array, so multi-instructor display has a ready-made shape.
 
 ## Approaches considered
 
-1. **Saved instructor list + repointed FK — CHOSEN.** New seller-scoped
-   `instructors` table; repoint the dead `courses.instructor_id` at it; keep
+1. **Saved instructor list + re-added FK — CHOSEN.** New seller-scoped
+   `instructors` table; re-add the dead `courses.instructor_id` pointed at it; keep
    `courses.instructor_name` as the denormalized display copy. Real save/select,
    central rename/delete, minimal schema churn.
 2. **Free-text with memory.** Combobox suggesting distinct past `instructor_name`
@@ -67,16 +67,18 @@ CREATE INDEX ON instructors(seller_id);
   helper/policy shape against a recent migration when writing it). No anon access —
   public pages read `instructor_name` off `courses`, never this table.
 - Grants: follow the repo's explicit-grant style (no PUBLIC).
-- Repoint the legacy column: drop constraint `courses_instructor_id_fkey`
-  (`→ profiles`, per the production baseline) and add
-  `REFERENCES instructors(id) ON DELETE SET NULL`. Safe: the column is NULL on
-  every row. `instructor_id` is already in the anon column grant, so public reads
-  need no grant change. The existing partial index `idx_courses_instructor` and the
-  legacy `create_course` RPC (which inserts `p_instructor_id`) are unaffected — the
-  column's type doesn't change.
+- Re-add `courses.instructor_id uuid REFERENCES instructors(id) ON DELETE SET NULL`
+  plus a partial index. (Correction 2026-07-14: the original profiles-FK column was
+  dropped by `20260702153923_business_consolidation.sql` §2 as never-written dead
+  weight — there is nothing to repoint.) authenticated's table-level grants on
+  courses cover the new column; anon does not need it (public pages read
+  `instructor_name`, which still exists and keeps its anon grant).
 - `courses.instructor_name` stays the display source of truth on course rows. On
   instructor delete, the FK nulls but the name remains — historical attribution
-  stays correct on existing courses.
+  stays correct on existing courses. That retention has a limit: it lasts until
+  the course's settings are next saved, at which point the form commits whatever
+  it currently shows (an unset picker saves as no instructor and clears the
+  retained name) — accepted as form-matches-reality, not a bug.
 
 Per CLAUDE.md: the migration is done only when the file is committed and on
 `origin/main`; state the apply/merge status explicitly when delivering.
@@ -150,7 +152,7 @@ The repo unit-tests pure functions only (no supabase-client mock harness), and a
 new logic here is thin DB/UI glue — so verification is typecheck + the existing
 vitest suite + a scripted manual click-through against the dev DB:
 
-- Migration sanity: `courses.instructor_id` repoint applies cleanly (column is
+- Migration sanity: `courses.instructor_id` re-add applies cleanly (column is
   all-NULL).
 - Manual: create with/without instructor; rename propagates to the course's public
   page; delete preserves the name on existing courses and clears the picker;

@@ -70,7 +70,7 @@ export function InstructorField({ sellerId, value, onChange, id }: InstructorFie
     return (
       <p className="text-sm text-foreground-muted">
         Kunne ikke laste instruktører.{' '}
-        <button type="button" className="underline" onClick={() => void load()}>Prøv igjen</button>
+        <button type="button" className="text-foreground underline" onClick={() => void load()}>Prøv igjen</button>
       </p>
     );
   }

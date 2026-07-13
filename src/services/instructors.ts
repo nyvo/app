@@ -6,7 +6,10 @@ import type { Instructor } from '@/types/database';
 // courses.instructor_name is the denormalized display copy the public pages
 // read; renameInstructor keeps it in sync. Deleting an instructor nulls the
 // FK (ON DELETE SET NULL) but leaves instructor_name on existing courses, so
-// past attribution stays truthful.
+// past attribution stays truthful — until that course's settings are next
+// saved, at which point the form commits whatever it shows (see
+// CourseSettingsTab: an unset picker saves as no instructor and clears the
+// retained name).
 // ---------------------------------------------------------------------------
 
 export async function fetchInstructors(
@@ -55,5 +58,6 @@ export async function renameInstructor(
 
 export async function deleteInstructor(id: string): Promise<{ error: Error | null }> {
   const { error } = await supabase.from('instructors').delete().eq('id', id);
-  return { error: (error as Error) ?? null };
+  if (error) return { error: error as Error };
+  return { error: null };
 }
