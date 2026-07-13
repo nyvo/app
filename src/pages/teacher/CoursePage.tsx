@@ -257,6 +257,7 @@ const CoursePage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
+  const [instructorError, setInstructorError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showCancelPreview, setShowCancelPreview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -442,6 +443,15 @@ const CoursePage = () => {
       return;
     }
     setLocationError(null);
+    // Studio courses carry a named instructor — the picker has no "none"
+    // choice, so an unset field (incl. after the instructor was deleted)
+    // blocks the save until a new one is picked.
+    const isStudio = currentSeller?.operating_model === 'studio';
+    if (isStudio && !settingsInstructor) {
+      setInstructorError('Velg en instruktør.');
+      return;
+    }
+    setInstructorError(null);
     setIsSaving(true);
     setSaveError(null);
     try {
@@ -475,8 +485,16 @@ const CoursePage = () => {
         price: settingsPrice,
         time_schedule: timeSchedule,
         duration: settingsDuration,
-        instructor_id: settingsInstructor?.id ?? null,
-        instructor_name: settingsInstructor?.name ?? null,
+        // Only studios write the instructor columns (validated non-null
+        // above). Omitting the keys for solo sellers makes the RPC keep
+        // existing values, so a retained name on an old course survives
+        // unrelated edits.
+        ...(isStudio
+          ? {
+              instructor_id: settingsInstructor!.id,
+              instructor_name: settingsInstructor!.name,
+            }
+          : {}),
       };
 
       // Desired full session state for the RPC's server-side diff. The 🔴
@@ -561,8 +579,12 @@ const CoursePage = () => {
               durationMinutes: settingsDuration || prev.durationMinutes,
               allowsDropIn: settingsAllowsDropIn,
               dropInPrice: effectiveDropInPrice,
-              instructorId: settingsInstructor?.id ?? null,
-              instructorName: settingsInstructor?.name ?? null,
+              ...(isStudio
+                ? {
+                    instructorId: settingsInstructor!.id,
+                    instructorName: settingsInstructor!.name,
+                  }
+                : {}),
             }
           : null,
       );
@@ -849,6 +871,7 @@ const CoursePage = () => {
     setSaveError(null);
     setTitleError(null);
     setLocationError(null);
+    setInstructorError(null);
   };
 
   if (!courseId) {
@@ -1067,8 +1090,9 @@ const CoursePage = () => {
               price={settingsPrice}
               onPriceChange={setSettingsPrice}
               instructor={settingsInstructor}
-              onInstructorChange={setSettingsInstructor}
+              onInstructorChange={(v) => { setSettingsInstructor(v); if (v) setInstructorError(null); }}
               instructorSellerId={currentSeller?.operating_model === 'studio' ? currentSeller.id : null}
+              instructorError={instructorError}
               isDirty={isSettingsDirty}
               saveError={saveError}
               onSave={handleSave}

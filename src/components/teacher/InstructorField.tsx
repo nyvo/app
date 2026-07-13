@@ -11,6 +11,7 @@ import {
   createInstructor, deleteInstructor, fetchInstructors, renameInstructor,
 } from '@/services/instructors';
 import type { Instructor } from '@/types/database';
+import { Plus, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export interface InstructorRef { id: string; name: string }
@@ -20,15 +21,21 @@ interface InstructorFieldProps {
   value: InstructorRef | null;
   onChange: (v: InstructorRef | null) => void;
   id?: string;
+  'aria-invalid'?: boolean;
+  'aria-describedby'?: string;
 }
 
 // Sentinel Select values — intercepted in onValueChange, never committed.
 // The Select is controlled, so ignoring them keeps the display unchanged.
-const NONE = '__none__';
+// There is deliberately no "none" choice: a studio course needs an instructor,
+// so the unset state is only the placeholder (invalid for save).
 const ADD = '__add__';
 const MANAGE = '__manage__';
 
-export function InstructorField({ sellerId, value, onChange, id }: InstructorFieldProps) {
+export function InstructorField({
+  sellerId, value, onChange, id,
+  'aria-invalid': ariaInvalid, 'aria-describedby': ariaDescribedby,
+}: InstructorFieldProps) {
   const [instructors, setInstructors] = useState<Instructor[] | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -49,7 +56,6 @@ export function InstructorField({ sellerId, value, onChange, id }: InstructorFie
   const handleSelect = (v: string) => {
     if (v === ADD) { setNewName(''); setAddOpen(true); return; }
     if (v === MANAGE) { setManageOpen(true); return; }
-    if (v === NONE) { onChange(null); return; }
     const picked = instructors?.find((i) => i.id === v);
     if (picked) onChange({ id: picked.id, name: picked.name });
   };
@@ -77,18 +83,30 @@ export function InstructorField({ sellerId, value, onChange, id }: InstructorFie
 
   return (
     <>
-      <Select value={value?.id ?? NONE} onValueChange={handleSelect} disabled={instructors === null}>
-        <SelectTrigger id={id}>
+      <Select value={value?.id ?? ''} onValueChange={handleSelect} disabled={instructors === null}>
+        <SelectTrigger
+          id={id}
+          className="w-full"
+          aria-invalid={ariaInvalid || undefined}
+          aria-describedby={ariaDescribedby}
+        >
           <SelectValue placeholder="Velg instruktør" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={NONE}>Ingen</SelectItem>
           {(instructors ?? []).map((i) => (
             <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
           ))}
-          <SelectSeparator />
-          <SelectItem value={ADD}>Legg til ny</SelectItem>
-          {(instructors ?? []).length > 0 && <SelectItem value={MANAGE}>Administrer</SelectItem>}
+          {(instructors ?? []).length > 0 && <SelectSeparator />}
+          <SelectItem value={ADD}>
+            <Plus className="size-4 text-foreground-muted" />
+            Legg til ny
+          </SelectItem>
+          {(instructors ?? []).length > 0 && (
+            <SelectItem value={MANAGE}>
+              <Settings2 className="size-4 text-foreground-muted" />
+              Administrer
+            </SelectItem>
+          )}
         </SelectContent>
       </Select>
 
@@ -192,20 +210,20 @@ function ManageInstructorsDialog({
                     className="h-8"
                     onKeyDown={(e) => { if (e.key === 'Enter') void handleRename(i.id); }}
                   />
+                  <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Avbryt</Button>
                   <Button size="sm" loading={busyIds.has(i.id)} disabled={!editName.trim()}
                     onClick={() => void handleRename(i.id)}>
                     Lagre
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Avbryt</Button>
                 </>
               ) : (
                 <>
                   <span className="flex-1 truncate text-sm">{i.name}</span>
-                  <Button size="sm" variant="ghost"
+                  <Button size="sm" variant="secondary"
                     onClick={() => { setEditingId(i.id); setEditName(i.name); }}>
-                    Endre navn
+                    Endre
                   </Button>
-                  <Button size="sm" variant="ghost" className="text-danger"
+                  <Button size="sm" variant="destructive"
                     loading={busyIds.has(i.id)} onClick={() => void handleDelete(i.id)}>
                     Slett
                   </Button>

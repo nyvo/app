@@ -75,10 +75,11 @@ CREATE INDEX ON instructors(seller_id);
   `instructor_name`, which still exists and keeps its anon grant).
 - `courses.instructor_name` stays the display source of truth on course rows. On
   instructor delete, the FK nulls but the name remains — historical attribution
-  stays correct on existing courses. That retention has a limit: it lasts until
-  the course's settings are next saved, at which point the form commits whatever
-  it currently shows (an unset picker saves as no instructor and clears the
-  retained name) — accepted as form-matches-reality, not a bug.
+  stays correct on existing courses. Because the picker is required for studios
+  (no "Ingen" choice) and settings saves are blocked while it is unset, the
+  retained name survives until the teacher deliberately picks a replacement
+  instructor; solo saves omit the instructor keys entirely, so they never touch
+  retained names.
 
 Per CLAUDE.md: the migration is done only when the file is committed and on
 `origin/main`; state the apply/merge status explicitly when delivering.
@@ -106,8 +107,11 @@ creation is a direct insert and `CourseInsert`/`CourseUpdate` already include
 
 **Picker (shared component, used in both places).** Rendered only for studio
 accounts (`currentSeller.operating_model === 'studio'` — same gate idiom as
-`AffiliationsSection`); solo sellers see no change to their course forms. An
-optional "Instruktør" field: a select listing the seller's saved instructors, plus:
+`AffiliationsSection`); solo sellers see no change to their course forms. A
+REQUIRED "Instruktør" field (user decision 2026-07-14: a studio course needs a
+named instructor — the select has no "Ingen" choice, the unset placeholder «Velg
+instruktør» blocks create/save with «Velg en instruktør»): a select listing the
+seller's saved instructors, plus:
 
 - an inline "Legg til ny…" action that takes a name, creates the row, and selects
   it;
@@ -120,9 +124,9 @@ Follow the design system: bordered inputs, pill buttons, semantic tokens; UI cop
 Bokmål, one-line neutral errors. Invoke the repo's UI gates (`ux-ui-pro`,
 `emil-design-eng`) when building.
 
-**CreateCourseDrawer.** Add the picker as an optional field; on submit pass the
-selected `instructor_id` and its `name` as `instructor_name` (replacing the
-hardcoded null). No instructor selected → both null, exactly as today.
+**CreateCourseDrawer.** Add the picker as a required field for studios; on submit
+pass the selected `instructor_id` and its `name` as `instructor_name` (replacing
+the hardcoded null). Solo sellers: field hidden, both columns stay null.
 
 **CourseSettingsTab.** Add the same picker to the general-info section, wired
 through the existing dirty-form/save flow. The settings save goes through the

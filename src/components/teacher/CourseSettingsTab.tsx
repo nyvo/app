@@ -37,10 +37,13 @@ interface CourseSettingsTabProps {
   titleError?: string | null;
   settingsDescription: string;
   onDescriptionChange: (description: string) => void;
-  /** Saved-instructor picker (studios only) — null sellerId hides the field. */
+  /** Saved-instructor picker (studios only) — null sellerId hides the field.
+   *  Required when shown: the parent blocks saves and sets instructorError
+   *  while the picker is unset. */
   instructor: InstructorRef | null;
   onInstructorChange: (v: InstructorRef | null) => void;
   instructorSellerId: string | null;
+  instructorError?: string | null;
 
   // Image
   settingsImageUrl: string | null;
@@ -129,6 +132,7 @@ export const CourseSettingsTab = ({
   instructor,
   onInstructorChange,
   instructorSellerId,
+  instructorError,
   settingsImageUrl,
   onImageFileChange,
   onImageRemove,
@@ -329,13 +333,18 @@ export const CourseSettingsTab = ({
 
           {instructorSellerId && (
             <div className="space-y-2">
-              <Label htmlFor="settings-instructor">Instruktør (valgfritt)</Label>
+              <Label htmlFor="settings-instructor">Instruktør</Label>
               <InstructorField
                 id="settings-instructor"
                 sellerId={instructorSellerId}
                 value={instructor}
                 onChange={onInstructorChange}
+                aria-invalid={!!instructorError}
+                aria-describedby={instructorError ? 'settings-instructor-error' : undefined}
               />
+              {instructorError && (
+                <FieldError id="settings-instructor-error">{instructorError}</FieldError>
+              )}
             </div>
           )}
         </SettingsRow>

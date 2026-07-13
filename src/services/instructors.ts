@@ -6,10 +6,10 @@ import type { Instructor } from '@/types/database';
 // courses.instructor_name is the denormalized display copy the public pages
 // read; renameInstructor keeps it in sync. Deleting an instructor nulls the
 // FK (ON DELETE SET NULL) but leaves instructor_name on existing courses, so
-// past attribution stays truthful — until that course's settings are next
-// saved, at which point the form commits whatever it shows (see
-// CourseSettingsTab: an unset picker saves as no instructor and clears the
-// retained name).
+// past attribution stays truthful. The picker is required for studios (no
+// "Ingen" choice) and settings saves are blocked while it is unset, so the
+// retained name survives until the teacher deliberately picks a replacement;
+// solo saves omit the instructor keys and never touch retained names.
 // ---------------------------------------------------------------------------
 
 export async function fetchInstructors(
