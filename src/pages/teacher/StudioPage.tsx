@@ -333,7 +333,7 @@ function StudioPublicSettings({
                   aria-invalid={!!nameError || undefined}
                   aria-describedby={nameError ? 'studio-name-error' : undefined}
                 />
-                {nameError && <FieldError id="studio-name-error">{nameError}</FieldError>}
+                {nameError && <FieldError id="studio-name-error" className="mt-0">{nameError}</FieldError>}
               </div>
             </SettingsRow>
 
@@ -359,7 +359,7 @@ function StudioPublicSettings({
                     aria-describedby={slugError ? 'studio-slug-error' : undefined}
                   />
                 </InputGroup>
-                {slugError && <FieldError id="studio-slug-error">{slugError}</FieldError>}
+                {slugError && <FieldError id="studio-slug-error" className="mt-0">{slugError}</FieldError>}
               </div>
             </SettingsRow>
 
