@@ -224,7 +224,6 @@ const LandingPage = () => {
       <FeatureWide
         eyebrow="Oversikt"
         title="Inntekter og påmeldinger på ett sted."
-        body="Hver påmelding havner i oversikten."
       >
         <img
           src="/landing-courses.webp"
@@ -502,7 +501,7 @@ function FeatureWide({
 }: {
   eyebrow?: string;
   title: string;
-  body: string;
+  body?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -522,7 +521,7 @@ function FeatureWide({
           <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
             {title}
           </h2>
-          <p className="mt-4 text-base text-foreground-muted">{body}</p>
+          {body && <p className="mt-4 text-base text-foreground-muted">{body}</p>}
         </motion.div>
         <motion.div
           initial="hidden"

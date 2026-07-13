@@ -34,7 +34,7 @@ const AboutPage = () => {
                 <p>Org.nr. {COMPANY.organizationNumber}</p>
               </div>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Openspot er en digital tjeneste. Formell selskapsinformasjon for kjøp og betaling står i vilkårene.
+                Formell selskapsinformasjon for kjøp og betaling står i vilkårene.
               </p>
             </section>
 

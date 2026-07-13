@@ -1151,7 +1151,6 @@ const CoursePage = () => {
                     ) : sortedParticipants.length === 0 ? (
                       <EmptyState
                         title="Ingen påmeldte ennå"
-                        description="Deltakere som melder seg på, dukker opp her."
                       />
                     ) : (
                       <div role="table" className="-mx-3">

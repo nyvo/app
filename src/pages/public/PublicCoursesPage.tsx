@@ -194,9 +194,6 @@ const PublicCoursesPage = () => {
                  * illustration card (Time2book/SeatGeek pattern). */
                 <div className="pt-10 pb-24">
                   <p className="text-base font-medium text-foreground">Ingen planlagte kurs</p>
-                  <p className="mt-1 text-sm text-foreground-muted">
-                    Kom gjerne tilbake senere.
-                  </p>
                 </div>
               ) : (
                 <div className="pt-8 pb-16">

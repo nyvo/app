@@ -282,13 +282,13 @@ function ReadinessCard({
       label = 'Se status';
     } else {
       heading = 'Sett opp utbetaling for å publisere';
-      sub = 'Koble til Stripe for å ta imot betaling – det eneste som gjenstår.';
+      sub = 'Koble til Stripe for å ta imot betaling.';
       label = 'Sett opp utbetaling';
     }
     onClick = onSetupPaymentsClick;
   } else {
     heading = 'Klar til å publisere';
-    sub = 'Alt er på plass – publiser for å åpne for påmelding.';
+    sub = 'Publiser for å åpne for påmelding.';
     label = 'Publiser kurs';
     onClick = onPublish;
     loading = publishing;

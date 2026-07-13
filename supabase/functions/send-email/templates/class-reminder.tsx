@@ -29,8 +29,6 @@ export const ClassReminder = ({
       <DetailRow label="Tid" value={courseStart} last={!courseLocation} />
       {courseLocation ? <DetailRow label="Sted" value={courseLocation} last /> : null}
     </DetailBlock>
-
-    <Text style={styles.paragraphMuted}>Vi gleder oss til å se deg.</Text>
   </EmailLayout>
 )
 
