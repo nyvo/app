@@ -22,8 +22,8 @@ export interface PayoutRow {
   /** Amount in kroner. */
   amount: number;
   status: 'paid' | 'in_transit';
-  /** Last 4 digits of the destination bank account. */
-  accountLast4: string;
+  /** Last 4 digits of the destination bank account, when Stripe exposes it. */
+  accountLast4?: string;
 }
 
 export interface PayoutStatsProps {
@@ -96,7 +96,9 @@ export function PayoutStats({
                     {formatKroner(payout.amount)}
                   </p>
                   <p className="mt-0.5 text-sm text-foreground-muted">
-                    {payout.date} · konto ••{payout.accountLast4}
+                    {payout.accountLast4
+                      ? `${payout.date} · konto ••${payout.accountLast4}`
+                      : payout.date}
                   </p>
                 </div>
                 {/* Only the in-transit row is flagged — a settled payout is the
