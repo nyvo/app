@@ -28,7 +28,7 @@
 - Create: `supabase/migrations/20260714100000_course_instructors.sql` (re-timestamp if `ls supabase/migrations | sort | tail -3` shows anything ≥ this)
 
 **Interfaces:**
-- Produces: table `public.instructors(id uuid, seller_id uuid, name text, created_at timestamptz)`; `courses.instructor_id` now references `instructors(id) ON DELETE SET NULL`; `save_course_schedule` accepts `instructor_id` / `instructor_name` keys in `p_course`.
+- Produces: table `public.instructors(id uuid, seller_id uuid, name text, created_at timestamptz)`; new column `courses.instructor_id uuid` referencing `instructors(id) ON DELETE SET NULL`; `save_course_schedule` accepts `instructor_id` / `instructor_name` keys in `p_course`.
 
 - [ ] **Step 1: Check the latest migration timestamp**
 
@@ -45,11 +45,11 @@ Create `supabase/migrations/20260714100000_course_instructors.sql`:
 --
 -- 1. instructors: a studio's saved instructor names. No logins, no anon access
 --    — public pages read the denormalized courses.instructor_name instead.
--- 2. courses.instructor_id was an all-NULL FK to profiles, referenced nowhere
---    in app code. Repoint it at instructors so the saved entry is the
---    identity and renames can propagate. ON DELETE SET NULL keeps
---    instructor_name on the course when an instructor is removed — past
---    attribution stays truthful.
+-- 2. courses.instructor_id (the old all-NULL FK to profiles) was DROPPED by
+--    20260702153923_business_consolidation.sql §2 as dead weight. Re-add it
+--    fresh, referencing instructors, so the saved entry is the identity and
+--    renames can propagate. ON DELETE SET NULL keeps instructor_name on the
+--    course when an instructor is removed — past attribution stays truthful.
 -- 3. save_course_schedule learns the two columns (key-presence guarded like
 --    every other field) so the CoursePage settings save can write them.
 --
@@ -79,12 +79,14 @@ CREATE POLICY "instructors_all_member" ON public.instructors
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.instructors TO authenticated;
 GRANT ALL ON TABLE public.instructors TO service_role;
 
--- Repoint the legacy FK. Column is NULL on every row (verified 2026-07-14),
--- so this cannot fail validation.
-ALTER TABLE public.courses DROP CONSTRAINT courses_instructor_id_fkey;
+-- Re-add the column (the profiles-FK original was dropped 2026-07-02 in
+-- business_consolidation §2). authenticated's table-level grants on courses
+-- cover new columns; anon does NOT need it (public pages read instructor_name).
 ALTER TABLE public.courses
-  ADD CONSTRAINT courses_instructor_id_fkey
-  FOREIGN KEY (instructor_id) REFERENCES public.instructors(id) ON DELETE SET NULL;
+  ADD COLUMN instructor_id uuid REFERENCES public.instructors(id) ON DELETE SET NULL;
+
+CREATE INDEX idx_courses_instructor ON public.courses(instructor_id)
+  WHERE instructor_id IS NOT NULL;
 ```
 
 Then, in the same file, append a `CREATE OR REPLACE FUNCTION public.save_course_schedule(...)` that is a **verbatim copy** of the entire function from `supabase/migrations/20260705200000_save_course_schedule_rpc.sql` (lines 34–215, including the trailing `REVOKE`/`GRANT`), with exactly ONE change — the `UPDATE public.courses SET` block gains the two instructor lines. The full replacement block (swap it in for the existing one at the function's "Course fields" comment):
