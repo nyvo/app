@@ -29,9 +29,13 @@ interface BookingBarProps {
  * ALL viewports (previously an elevated inline card on desktop and a
  * separate <768px bar). A long course-detail page otherwise pushes price +
  * CTA below the fold; pinning removes that regardless of scroll position.
- * Mirrors Airbnb's mobile booking bar: price + qualifier left, single CTA
- * right, hairline top border, fixed bottom — now the only pattern, not a
- * mobile-only fallback.
+ *
+ * Rendered as a floating capsule detached from the viewport edges (Airbnb's
+ * current app footer treatment; the two-zone structure — price + qualifier
+ * left, single pill CTA right — mirrors Airbnb/Viator listing-detail bars on
+ * Mobbin). Fully rounded, hairline border + `shadow-soft` (the allowlisted
+ * focal-floating-surface pair), CTA nested concentrically with a tight
+ * right inset.
  *
  * Deliberately stateless — every value here (`tiles`, `courseFull`,
  * `soldOut`, `closed`, …) is derived by the course-detail page from the same
@@ -63,8 +67,8 @@ export function BookingBar({
         : null;
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-40 border-t border-border-subtle bg-background/90 backdrop-blur-sm safe-area-bottom animate-in slide-in-from-bottom-[100%] fade-in-0 duration-[250ms] ease-out">
-      <div className="mx-auto flex w-full max-w-[640px] items-center justify-between gap-4 px-4 py-3 sm:px-6">
+    <div className="pointer-events-none fixed bottom-0 inset-x-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
+      <div className="pointer-events-auto mx-auto flex w-full max-w-[640px] items-center justify-between gap-4 rounded-full border border-border-subtle bg-background py-2 pl-6 pr-2 shadow-soft animate-in slide-in-from-bottom-4 fade-in-0 duration-[250ms] ease-out">
         <div className="min-w-0">
           {/* Second line: the drop-in price (live tile, or the course-row
               fallback in sold-out/closed states where the RPC returns no
@@ -78,27 +82,55 @@ export function BookingBar({
               (steady state of a running drop-in series). */}
           {(() => {
             const hasDropInLine = dropInTile != null || (stateLabel !== null && dropInPrice != null);
-            // Two lines: both at text-sm — a compact uniform block that
-            // doesn't crowd the bar. A lone line steps up to text-lg to hold
-            // its own against the CTA.
-            const priceSize = hasDropInLine ? 'text-sm' : 'text-lg';
+            // Two lines: both at text-sm with a muted label / medium price
+            // split — a compact uniform block that doesn't crowd the bar.
+            // A single ticket drops the tier label (it adds nothing next to
+            // the CTA) and instead stacks price over a muted qualifier —
+            // the tile's sublabel ("8 uker", "6 uker igjen") or "Per person"
+            // — the Airbnb/Viator bar shape: prominent price, context line
+            // below. Keeps the bar's two-line mass in every state.
             return (
               <>
                 {courseFull && !soldOut ? (
                   <p className="text-sm text-foreground-muted truncate">Kurspakken er full</p>
                 ) : mainTile ? (
-                  <p className={`${priceSize} truncate tabular-nums`}>
-                    <span className="text-foreground-muted">{mainTile.label} </span>
-                    {mainTile.prorated && (
-                      <s className="mr-1 text-foreground-disabled">{formatKroner(coursePrice)}</s>
-                    )}
-                    <span className="font-medium text-foreground">{formatKroner(mainTile.amount)}</span>
-                  </p>
+                  hasDropInLine ? (
+                    <p className="text-sm truncate tabular-nums">
+                      <span className="text-foreground-muted">{mainTile.label} </span>
+                      {mainTile.prorated && (
+                        <s className="mr-1 text-foreground-disabled">{formatKroner(coursePrice)}</s>
+                      )}
+                      <span className="font-medium text-foreground">{formatKroner(mainTile.amount)}</span>
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-base font-medium text-foreground truncate tabular-nums">
+                        {mainTile.prorated && (
+                          <s className="mr-1 font-normal text-foreground-disabled">
+                            {formatKroner(coursePrice)}
+                          </s>
+                        )}
+                        {mainTile.amount === 0 ? 'Gratis' : formatKroner(mainTile.amount)}
+                      </p>
+                      <p className="truncate text-sm text-foreground-muted">
+                        {mainTile.sublabel ?? 'Per person'}
+                      </p>
+                    </>
+                  )
                 ) : coursePrice != null ? (
-                  <p className={`${priceSize} truncate tabular-nums`}>
-                    <span className="text-foreground-muted">Hele kurset </span>
-                    <span className="font-medium text-foreground">{formatKroner(coursePrice)}</span>
-                  </p>
+                  hasDropInLine ? (
+                    <p className="text-sm truncate tabular-nums">
+                      <span className="text-foreground-muted">Hele kurset </span>
+                      <span className="font-medium text-foreground">{formatKroner(coursePrice)}</span>
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-base font-medium text-foreground truncate tabular-nums">
+                        {coursePrice === 0 ? 'Gratis' : formatKroner(coursePrice)}
+                      </p>
+                      <p className="truncate text-sm text-foreground-muted">Per person</p>
+                    </>
+                  )
                 ) : null}
                 {dropInTile ? (
                   <p className="truncate text-sm tabular-nums">
