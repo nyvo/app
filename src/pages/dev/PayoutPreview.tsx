@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   PayoutSetupCard,
@@ -6,19 +6,19 @@ import {
   type PayoutSetupViewModel,
 } from '@/components/teacher/PayoutSetupCard';
 import { PayoutStats, type PayoutRow } from '@/components/teacher/PayoutStats';
-import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
+import { PayoutStatsSkeleton } from '@/pages/teacher/PaymentsPage';
 import { ErrorState } from '@/components/ui/error-state';
 import { COMPANY } from '@/lib/company';
 import { DevPage, PreviewSection } from './_kit';
-import { buildMockSeries, buildEmptySeries } from './IncomeChartPreview';
-import type { IncomeRange } from '@/services/income';
 
 /**
- * /dev/payout-preview — auth-free preview of the payouts settings timeline.
+ * /dev/payout-preview — auth-free preview of the payouts settings page.
  * Production lives at src/pages/teacher/PaymentsPage.tsx + route
- * /settings/payouts. Renders all five onboarding states, the FAQ and the
- * hydrate-failed error state, with no-op handlers so the design can be
- * reviewed without a real Stripe Connect account.
+ * /settings/payouts. Renders the four onboarding timeline states, the
+ * payouts-blocked warning, the onboarded PayoutStats view (data / tom /
+ * laster / feil), the FAQ row and the hydrate-failed error state, with no-op
+ * handlers so the design can be reviewed without a real Stripe Connect
+ * account.
  */
 
 const STEP_1_TITLE = 'Bekreft virksomheten';
@@ -108,80 +108,114 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
       ],
     },
   },
-  {
-    id: 'enabled',
-    label: '5 — Aktiv',
-    description: 'Utbetalinger er satt opp og klare til bruk.',
-    viewModel: {
-      h2: 'Utbetalingene er klare',
-      steps: [
-        { title: STEP_1_TITLE, status: 'done' },
-        { title: STEP_2_TITLE, status: 'done' },
-        {
-          title: STEP_3_TITLE,
-          status: 'current',
-          tone: 'success',
-          description: 'Pengene overføres automatisk til kontoen din.',
-          action: <Button onClick={noop}>Se oversikt</Button>,
-        },
-      ],
+];
+
+// "Utbetalingene er klare" — live renders this card only in the blocked state
+// (stripeConnected && stripePayoutsBlocked), always under the warning Alert.
+// Once payouts actually flow, PayoutStats replaces the stepper entirely.
+const ENABLED_VIEW_MODEL: PayoutSetupViewModel = {
+  h2: 'Utbetalingene er klare',
+  steps: [
+    { title: STEP_1_TITLE, status: 'done' },
+    { title: STEP_2_TITLE, status: 'done' },
+    {
+      title: STEP_3_TITLE,
+      status: 'current',
+      tone: 'success',
+      description: 'Pengene overføres automatisk til kontoen din.',
+      action: <Button onClick={noop}>Se oversikt</Button>,
     },
-  },
-];
+  ],
+};
 
+// Live never shows the bank last4 — derivePayoutStats renders the date only.
 const MOCK_PAYOUTS: PayoutRow[] = [
-  { id: 'p1', date: '11. juli 2026', amount: 3200, status: 'in_transit', accountLast4: '1234' },
-  { id: 'p2', date: '4. juli 2026', amount: 1750, status: 'paid', accountLast4: '1234' },
-  { id: 'p3', date: '27. juni 2026', amount: 2400, status: 'paid', accountLast4: '1234' },
-  { id: 'p4', date: '20. juni 2026', amount: 900, status: 'paid', accountLast4: '1234' },
+  { id: 'p1', date: '11. juli 2026', amount: 3200, status: 'in_transit' },
+  { id: 'p2', date: '4. juli 2026', amount: 1750, status: 'paid' },
+  { id: 'p3', date: '27. juni 2026', amount: 2400, status: 'paid' },
+  { id: 'p4', date: '20. juni 2026', amount: 900, status: 'paid' },
 ];
-
-// Wraps PayoutStats with the reused dashboard IncomeChart + its own range
-// state, mirroring how the real page composes them.
-function PayoutStatsPreview({ empty }: { empty?: boolean }) {
-  const [range, setRange] = useState<IncomeRange>('month');
-  const series = empty ? buildEmptySeries(range) : buildMockSeries(range);
-  return (
-    <PayoutStats
-      inTransit={empty ? 0 : 3200}
-      paidYearToDate={empty ? 0 : 24850}
-      nextPayoutDate={empty ? null : '14. juli'}
-      payouts={empty ? [] : MOCK_PAYOUTS}
-      onOpenStripe={noop}
-      chart={
-        <IncomeChart series={series} isLoading={false} range={range} onRangeChange={setRange} />
-      }
-    />
-  );
-}
 
 const PayoutPreview = () => {
   return (
     <DevPage
-      title="Utbetalinger"
-      description="Onboardet statistikk-visning (forslag) + de fem onboardingtilstandene for /settings/payouts (PaymentsPage), FAQ-seksjonen og feiltilstanden."
+      title="Utbetalingskonto"
+      description="Alle tilstander for /settings/payouts (PaymentsPage): de fire onboardingstegene, blokkert-varselet, statistikk-visningen (data/tom/laster/feil), FAQ-seksjonen og feiltilstanden."
     >
-      <PreviewSection
-        label="Statistikk — ferdig onboardet (forslag)"
-        description="Erstatter «steg 3»-visningen når utbetalinger er aktive: tre nøkkeltall (på vei / utbetalt i år / neste utbetaling), siste utbetalinger, og en lenke til Stripe for kvitteringer. Fôret med mock-data — den ekte siden henter tallene fra en Stripe-edge-funksjon."
-      >
-        <PayoutStatsPreview />
-      </PreviewSection>
-
-      <PreviewSection
-        label="Statistikk — ingen utbetalinger ennå"
-        description="Tom liste — det en fersk (nettopp onboardet) selger ser før første betalte kurs."
-      >
-        <PayoutStatsPreview empty />
-      </PreviewSection>
-
       {STATES.map((s) => (
         <PreviewSection key={s.id} label={s.label} description={s.description}>
           <PayoutSetupCard viewModel={s.viewModel} />
         </PreviewSection>
       ))}
 
-      <PreviewSection label="FAQ" description="Vises under kortet i alle fem tilstander.">
+      <PreviewSection
+        label="5 — Aktiv, men utbetalinger holdes igjen"
+        description="stripePayoutsBlocked — kortbetalinger virker, men Stripe holder igjen bankoverføringen. Varselet står over kortet; dette er den eneste tilstanden der «Utbetalingene er klare»-kortet vises."
+      >
+        {/* space-y-6 mirrors the wrapper the live Alert + card pair sits in. */}
+        <div className="space-y-6">
+          <Alert variant="warning">
+            <AlertTitle className="text-base">Utbetalinger er ikke aktive ennå</AlertTitle>
+            <AlertDescription className="text-base text-foreground">
+              Stripe mangler noe informasjon før pengene kan utbetales til deg. Åpne
+              Stripe-dashbordet for å fullføre.
+            </AlertDescription>
+            <div className="mt-3">
+              <Button onClick={noop}>Åpne Stripe</Button>
+            </div>
+          </Alert>
+          <PayoutSetupCard viewModel={ENABLED_VIEW_MODEL} />
+        </div>
+      </PreviewSection>
+
+      <PreviewSection
+        label="Statistikk — ferdig onboardet"
+        description="Erstatter tidslinjen når utbetalinger er aktive: tre nøkkeltall (på vei / utbetalt i år / neste utbetaling), siste utbetalinger og en lenke til Stripe. Den ekte siden henter tallene fra en Stripe-edge-funksjon."
+      >
+        <PayoutStats
+          inTransit={3200}
+          paidYearToDate={24850}
+          nextPayoutDate="14. juli"
+          payouts={MOCK_PAYOUTS}
+          onOpenStripe={noop}
+        />
+      </PreviewSection>
+
+      <PreviewSection
+        label="Statistikk — ingen utbetalinger ennå"
+        description="Tom liste — det en fersk (nettopp onboardet) selger ser før første betalte kurs."
+      >
+        <PayoutStats
+          inTransit={0}
+          paidYearToDate={0}
+          nextPayoutDate={null}
+          payouts={[]}
+          onOpenStripe={noop}
+        />
+      </PreviewSection>
+
+      <PreviewSection
+        label="Statistikk — laster"
+        description="PayoutStatsSkeleton — vises mens utbetalingene hentes fra Stripe."
+      >
+        <PayoutStatsSkeleton />
+      </PreviewSection>
+
+      <PreviewSection
+        label="Statistikk — feil"
+        description="Utbetalingene kunne ikke hentes — egen ErrorState med retry, atskilt fra kontofeilen nederst."
+      >
+        <ErrorState
+          title="Kunne ikke hente utbetalinger"
+          message="Prøv igjen om litt."
+          onRetry={noop}
+        />
+      </PreviewSection>
+
+      <PreviewSection
+        label="FAQ"
+        description="PayoutFaqSection — vises under tidslinjen/statistikken i alle tilstander."
+      >
         <PayoutFaqSection />
       </PreviewSection>
 

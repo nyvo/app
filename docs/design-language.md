@@ -73,6 +73,7 @@ All tokens live in `src/index.css` (3-layer OKLCH: primitives → semantic →
 | Decorative glyphs/icons only (fails AA for text) | `text-foreground-subtle` |
 | Primary action fill | `bg-foreground text-background` |
 | Sprinkle accent (links, selected states only) | `text-primary`, `--selection-light`, `bg-primary-subtle` (selected tier / availability) |
+| Checked/on state of selection controls (Switch track, Checkbox, radio dot/square) | `bg-primary` + `text-primary-foreground` ink — azure = selected; the radio CARD row fill stays neutral `bg-muted` (2026-07-08 decision), only the check square is azure. Segmented tabs / nav active states stay grey. |
 | Status | `text-success` / `-warning` / `-danger` / `-info`; tinted fills via the `-subtle` pair (never `/10` opacity hacks) |
 | Categorical identity markers (tags, chart series) | `bg-category-1/2/3` — small marker fills only, never text/surfaces/actions |
 | Dividers | `border-border-subtle` (hairline) or `border-border` (visible, on white) |
@@ -80,6 +81,26 @@ All tokens live in `src/index.css` (3-layer OKLCH: primitives → semantic →
 | Focus ring | `ring-2 ring-ring` (neutral foreground — never brand-colored) + offset; soft halo = `ring-ring-subtle`, never as the only cue |
 | Dark chrome (toasts, marketing bands — NOT the sidebar) | `--chrome-*` |
 | Currency | `formatKroner()` from `@/lib/utils`, always |
+
+### Inline links (the two canonical recipes — no others)
+
+Every textual link is azure. Exactly two treatments, chosen by placement:
+
+- **Standalone action link** (its own line/row — "Send på nytt", "Få veibeskrivelse",
+  "Se alle timer"): `font-medium text-primary underline-offset-4 hover:underline`.
+  This is also `Button variant="link"` — prefer the variant for button-element
+  pseudo-links (loading states, `onClick` actions).
+- **Link inside a sentence** (legal prose, consent lines, help text):
+  `text-primary underline underline-offset-2 hover:decoration-2` — resting
+  underline so it scans as a link mid-text; decoration thickens on hover
+  (same idiom as rich-text `.prose-content a`).
+
+Icons inside a link (`ExternalLink`, `ArrowUpRight`) take `currentColor` — never
+give them their own text color. Container-scoped anchor rules (Alert, Dialog,
+AlertDialog, Accordion, EmptyState, prose CSS) already apply the in-sentence
+recipe. NOT links: nav/sidebar/footer chrome (muted → foreground), whole-card
+row wrappers, and list-item titles — those stay neutral; the embed-widget
+attribution credit stays muted chrome on purpose.
 
 ### Radius
 

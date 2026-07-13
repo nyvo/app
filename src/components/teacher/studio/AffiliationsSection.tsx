@@ -504,11 +504,11 @@ export function InviteLinkView({
       </p>
       <Button
         type="button"
-        variant="plain"
+        variant="link"
         loading={regenerating}
         loadingText="Lager"
         onClick={onRegenerate}
-        className="mt-2"
+        className="mt-2 px-0"
       >
         Lag ny lenke
       </Button>

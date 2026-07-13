@@ -91,7 +91,7 @@ const AuthCallbackPage = () => {
         footer={
           <p className="text-sm text-foreground-muted">
             Trenger du hjelp?{' '}
-            <a href={`mailto:${COMPANY.email}`} className="font-medium text-foreground hover:underline">
+            <a href={`mailto:${COMPANY.email}`} className="text-primary underline underline-offset-2 hover:decoration-2">
               {COMPANY.email}
             </a>
           </p>

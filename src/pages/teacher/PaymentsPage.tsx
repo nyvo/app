@@ -1,7 +1,7 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ErrorState } from '@/components/ui/error-state';
@@ -9,12 +9,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageShell } from '@/components/teacher/PageShell';
 import {
   PayoutSetupCard,
-  PayoutFaq,
+  PayoutFaqSection,
   type PayoutSetupViewModel,
   type MarkerTone,
 } from '@/components/teacher/PayoutSetupCard';
 import { PayoutStats, type PayoutRow } from '@/components/teacher/PayoutStats';
-import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   startStripeConnectOnboarding,
@@ -22,15 +21,8 @@ import {
   getStripeSettlements,
   type StripeSettlementsResult,
 } from '@/services/stripe-connect';
-import { fetchIncomeSeries, type IncomeRange, type IncomeSeries } from '@/services/income';
 import { COMPANY } from '@/lib/company';
 import { toast } from 'sonner';
-
-// Lazy: IncomeChart pulls in recharts — keep it out of the payments route's
-// main chunk, same as TeacherDashboard.
-const IncomeChart = lazy(() =>
-  import('@/components/teacher/dashboard/IncomeChart').then((m) => ({ default: m.IncomeChart })),
-);
 
 const STEP_1_TITLE = 'Bekreft virksomheten';
 const STEP_2_TITLE = 'Vi kontrollerer opplysningene';
@@ -53,8 +45,10 @@ const STEP_3_TITLE = 'Motta utbetalinger';
  *       hold), a warning callout sits above the card. Surfaced only — never gates
  *       checkout/publish, which key off stripe_onboarding_complete alone.
  *
- * No balance / settlements UI — the merchant manages all of that on Stripe's
- * own Express dashboard. Status re-syncs automatically on return from Stripe
+ * Once payouts flow, the stepper is replaced by the PayoutStats overview (key
+ * figures + recent payouts from the settlements edge function); the raw
+ * settlement detail stays on Stripe's own Express dashboard. Status re-syncs
+ * automatically on return from Stripe
  * (?stripe=return) and server-side via the account.updated webhook, so there
  * is no manual "check status" control.
  */
@@ -76,8 +70,7 @@ const payoutDate = (unixSeconds: number): Date => new Date(unixSeconds * 1000);
 /**
  * Fold the raw Stripe settlements into the presentational PayoutStats figures.
  * "På vei til deg" / "Neste utbetaling" come from payouts still in flight;
- * "Utbetalt i år" sums this calendar year's settled payouts. The bank last4 is
- * not in the settlements payload yet, so rows show the date only.
+ * "Utbetalt i år" sums this calendar year's settled payouts.
  */
 function derivePayoutStats(data: StripeSettlementsResult): {
   inTransit: number;
@@ -118,13 +111,13 @@ function derivePayoutStats(data: StripeSettlementsResult): {
   };
 }
 
-// Height-matched placeholder while the settlements fetch is in flight — three
-// blocks standing in for Nøkkeltall, the trend chart, and the payout list.
-function PayoutStatsSkeleton() {
+// Height-matched placeholder while the settlements fetch is in flight — two
+// blocks standing in for Nøkkeltall and the payout list.
+// Exported so /dev/payout-preview can render the loading state without auth.
+export function PayoutStatsSkeleton() {
   return (
     <div className="space-y-4">
       <Skeleton className="h-28 w-full rounded-xl" />
-      <Skeleton className="h-[340px] w-full rounded-xl" />
       <Skeleton className="h-44 w-full rounded-xl" />
     </div>
   );
@@ -151,7 +144,6 @@ const PaymentsPage = () => {
   // The onboarded happy path — payouts are live and not blocked — swaps the
   // "step 3" stepper for the PayoutStats overview. Only then do we fetch.
   const showStats = stripeConnected && !stripePayoutsBlocked;
-  const [incomeRange, setIncomeRange] = useState<IncomeRange>('month');
 
   const settlementsQuery = useQuery({
     queryKey: ['payout-settlements', currentSeller?.id],
@@ -159,19 +151,6 @@ const PaymentsPage = () => {
     queryFn: async (): Promise<StripeSettlementsResult> => {
       const { data, error } = await getStripeSettlements(currentSeller!.id);
       if (error || !data) throw error ?? new Error('Utbetalinger utilgjengelig');
-      return data;
-    },
-  });
-
-  // Income trend for the chart slot — reuses the dashboard series/component;
-  // keyed on the range so the Uke/Måned/År toggle caches per window.
-  const incomeQuery = useQuery({
-    queryKey: ['payout-income-series', currentSeller?.id, incomeRange],
-    enabled: !!currentSeller?.id && showStats,
-    placeholderData: keepPreviousData,
-    queryFn: async (): Promise<IncomeSeries> => {
-      const { data, error } = await fetchIncomeSeries(currentSeller!.id, incomeRange);
-      if (error || !data) throw error ?? new Error('Inntektsserie utilgjengelig');
       return data;
     },
   });
@@ -339,73 +318,57 @@ const PaymentsPage = () => {
 
   const viewModel: PayoutSetupViewModel = { h2, steps };
 
-  // Same layout skeleton as the other settings pages (profile, studio):
-  // default-width PageShell + SettingsRows sections, not a centered column.
+  // Centered single column like the other money page (billing) — this is a
+  // status surface, not a settings form, so no label-column SettingsRows.
   return (
-    <PageShell title="Utbetalingskonto">
-      <SettingsRows>
-        <SettingsRow
-          title="Utbetalinger"
-          description={showStats ? undefined : 'Slik får du betalt for kursene dine.'}
-        >
-          {currentSellerHydrateFailed ? (
-            // stripe_account_id is a stale safe-default (null) — the timeline
-            // would show step 1 to a seller who already started onboarding.
-            // Bail to a bounded retry instead. The FAQ below is static, so it stays.
-            <ErrorState
-              title="Kunne ikke hente kontoinformasjon"
-              message="Prøv igjen om litt."
-              onRetry={refreshSellers}
-            />
-          ) : showStats ? (
-            // Onboarded + payouts flowing → the overview replaces the stepper.
-            settlementsQuery.isLoading ? (
-              <PayoutStatsSkeleton />
-            ) : settlementsQuery.isError || !settlementsQuery.data ? (
-              <ErrorState
-                title="Kunne ikke hente utbetalinger"
-                message="Prøv igjen om litt."
-                onRetry={() => void settlementsQuery.refetch()}
-              />
-            ) : (
-              <PayoutStats
-                {...derivePayoutStats(settlementsQuery.data)}
-                onOpenStripe={handleOpenStripeDashboard}
-                chart={
-                  <Suspense fallback={<Skeleton className="h-[340px] w-full rounded-xl" />}>
-                    <IncomeChart
-                      series={incomeQuery.data ?? null}
-                      isLoading={incomeQuery.isLoading}
-                      isFetching={incomeQuery.isFetching}
-                      range={incomeRange}
-                      onRangeChange={setIncomeRange}
-                    />
-                  </Suspense>
-                }
-              />
-            )
-          ) : (
-            <>
-              {stripePayoutsBlocked && (
-                <Alert variant="warning">
-                  <AlertTitle className="text-base">Utbetalinger er ikke aktive ennå</AlertTitle>
-                  <AlertDescription className="text-base text-foreground">
-                    Stripe mangler noe informasjon før pengene kan utbetales til deg. Åpne
-                    Stripe-dashbordet for å fullføre.
-                  </AlertDescription>
-                  <div className="mt-3">
-                    <Button onClick={handleOpenStripeDashboard}>Åpne Stripe</Button>
-                  </div>
-                </Alert>
-              )}
-              <PayoutSetupCard viewModel={viewModel} />
-            </>
+    <PageShell
+      title="Utbetalingskonto"
+      narrow="centered"
+      description={showStats ? undefined : 'Slik får du betalt for kursene dine.'}
+    >
+      {currentSellerHydrateFailed ? (
+        // stripe_account_id is a stale safe-default (null) — the timeline
+        // would show step 1 to a seller who already started onboarding.
+        // Bail to a bounded retry instead. The FAQ below is static, so it stays.
+        <ErrorState
+          title="Kunne ikke hente kontoinformasjon"
+          message="Prøv igjen om litt."
+          onRetry={refreshSellers}
+        />
+      ) : showStats ? (
+        // Onboarded + payouts flowing → the overview replaces the stepper.
+        settlementsQuery.isLoading ? (
+          <PayoutStatsSkeleton />
+        ) : settlementsQuery.isError || !settlementsQuery.data ? (
+          <ErrorState
+            title="Kunne ikke hente utbetalinger"
+            message="Prøv igjen om litt."
+            onRetry={() => void settlementsQuery.refetch()}
+          />
+        ) : (
+          <PayoutStats
+            {...derivePayoutStats(settlementsQuery.data)}
+            onOpenStripe={handleOpenStripeDashboard}
+          />
+        )
+      ) : (
+        <div className="space-y-6">
+          {stripePayoutsBlocked && (
+            <Alert variant="warning">
+              <AlertTitle className="text-base">Utbetalinger er ikke aktive ennå</AlertTitle>
+              <AlertDescription className="text-base text-foreground">
+                Stripe mangler noe informasjon før pengene kan utbetales til deg. Åpne
+                Stripe-dashbordet for å fullføre.
+              </AlertDescription>
+              <div className="mt-3">
+                <Button onClick={handleOpenStripeDashboard}>Åpne Stripe</Button>
+              </div>
+            </Alert>
           )}
-        </SettingsRow>
-        <SettingsRow title="Vanlige spørsmål">
-          <PayoutFaq />
-        </SettingsRow>
-      </SettingsRows>
+          <PayoutSetupCard viewModel={viewModel} />
+        </div>
+      )}
+      <PayoutFaqSection />
     </PageShell>
   );
 };

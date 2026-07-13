@@ -196,9 +196,7 @@ const FAQ_ITEMS = [
   },
 ];
 
-/** Bare FAQ accordion — for surfaces that already provide their own section
- *  label (e.g. the payouts SettingsRow). */
-export function PayoutFaq() {
+function PayoutFaq() {
   return (
     <Accordion type="single" collapsible className="border-t border-border-subtle">
       {FAQ_ITEMS.map((item) => (
@@ -211,10 +209,13 @@ export function PayoutFaq() {
   );
 }
 
+/** FAQ with its own stacked section heading — shared by the live payouts page
+ *  and /dev/payout-preview so the treatment can't drift between them. The
+ *  text-sm heading matches the FramedCard titles it sits alongside. */
 export function PayoutFaqSection() {
   return (
     // mt-12 = THE page section gap; this component owns its distance from the
-    // setup card above it (the dev preview renders them as adjacent siblings).
+    // setup card / stats above it.
     <section className="mt-12">
       <h2 className="text-sm font-medium text-foreground">Vanlige spørsmål</h2>
       <div className="mt-3">

@@ -9,6 +9,9 @@ import { PaymentBadge } from '@/components/ui/payment-badge';
 import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
 import { DateBadge } from '@/components/ui/date-badge';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem, RadioGroupCardItem } from '@/components/ui/radio-group';
 import {
   Dialog,
   DialogContent,
@@ -211,6 +214,62 @@ function BadgesSection() {
             <DateBadge date={new Date()} />
           </div>
         </div>
+      </div>
+    </PreviewSection>
+  );
+}
+
+function TogglesSection() {
+  const [switchOn, setSwitchOn] = useState(true);
+  const [switchSmOn, setSwitchSmOn] = useState(false);
+  const [checked, setChecked] = useState(true);
+  const [radio, setRadio] = useState('a');
+  const [card, setCard] = useState('solo');
+
+  return (
+    <PreviewSection
+      label="Valgkontroller"
+      description="Switch, Checkbox og RadioGroup — valgt/på-tilstanden er azure (bg-primary = «valgt»-aksenten), av-tilstanden nøytral. Radiokortets radfylling holder seg nøytral (beslutning 2026-07-08) — bare sjekkruten er azure. Alle er interaktive."
+    >
+      <div className="space-y-8">
+        <div className="flex flex-wrap items-center gap-8">
+          <label className="flex items-center gap-3 text-sm text-foreground">
+            <Switch checked={switchOn} onCheckedChange={setSwitchOn} />
+            Switch — {switchOn ? 'på' : 'av'}
+          </label>
+          <label className="flex items-center gap-3 text-sm text-foreground">
+            <Switch size="sm" checked={switchSmOn} onCheckedChange={setSwitchSmOn} />
+            Switch sm — {switchSmOn ? 'på' : 'av'}
+          </label>
+          <label className="flex items-center gap-3 text-sm text-foreground">
+            <Checkbox checked={checked} onCheckedChange={(v) => setChecked(v === true)} />
+            Checkbox
+          </label>
+        </div>
+
+        <RadioGroup value={radio} onValueChange={setRadio} className="flex w-auto gap-6">
+          <label className="flex items-center gap-3 text-sm text-foreground">
+            <RadioGroupItem value="a" />
+            Alternativ A
+          </label>
+          <label className="flex items-center gap-3 text-sm text-foreground">
+            <RadioGroupItem value="b" />
+            Alternativ B
+          </label>
+        </RadioGroup>
+
+        <RadioGroup value={card} onValueChange={setCard} className="max-w-md">
+          <RadioGroupCardItem
+            value="solo"
+            title="Individuell lærer"
+            description="Jeg holder kurs i mitt eget navn."
+          />
+          <RadioGroupCardItem
+            value="studio"
+            title="Studio"
+            description="Jeg representerer et studio eller en bedrift."
+          />
+        </RadioGroup>
       </div>
     </PreviewSection>
   );
@@ -450,10 +509,11 @@ export default function PrimitivesPreview() {
   return (
     <DevPage
       title="Primitiver"
-      description="Ekte UI-primitiver — Button, Badge, Dialog, AlertDialog, ConfirmDialog, Drawer, Sheet og Sonner-toasts — i alle varianter og interaktive tilstander."
+      description="Ekte UI-primitiver — Button, Badge, Switch/Checkbox/RadioGroup, Dialog, AlertDialog, ConfirmDialog, Drawer, Sheet og Sonner-toasts — i alle varianter og interaktive tilstander."
     >
       <ButtonsSection />
       <BadgesSection />
+      <TogglesSection />
       <DialogsSection />
       <PanelsSection />
       <ToastsSection />

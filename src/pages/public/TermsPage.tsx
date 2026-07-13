@@ -62,7 +62,7 @@ const TermsPage = () => {
               <p className="text-base text-foreground-muted leading-relaxed">
                 Trenger du å avbestille, kontakter du studioet eller arrangøren du har meldt deg
                 på hos – de avgjør om du får refusjon. Du kan også skrive til{' '}
-                <a href={`mailto:${COMPANY.email}`} className="underline underline-offset-2">
+                <a href={`mailto:${COMPANY.email}`} className="text-primary underline underline-offset-2 hover:decoration-2">
                   {COMPANY.email}
                 </a>
                 , så hjelper vi deg videre.
@@ -73,7 +73,7 @@ const TermsPage = () => {
               <h2 className="text-base font-medium text-foreground">Klager</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Er noe feil med en betaling eller påmelding, send en e-post til{' '}
-                <a href={`mailto:${COMPANY.email}`} className="underline underline-offset-2">
+                <a href={`mailto:${COMPANY.email}`} className="text-primary underline underline-offset-2 hover:decoration-2">
                   {COMPANY.email}
                 </a>
                 . Beskriv hva saken gjelder og hvilken påmelding det handler om, så svarer vi så
@@ -93,7 +93,7 @@ const TermsPage = () => {
               <h2 className="text-base font-medium text-foreground">Personvern</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Hvordan vi behandler personopplysninger står i{' '}
-                <Link to="/personvern" className="underline underline-offset-2">
+                <Link to="/personvern" className="text-primary underline underline-offset-2 hover:decoration-2">
                   personvernerklæringen
                 </Link>
                 .

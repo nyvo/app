@@ -52,7 +52,7 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
               href={directionsUrl(location)}
               target="_blank"
               rel="noreferrer"
-              className="underline decoration-foreground-disabled underline-offset-[3px] transition-colors hover:text-foreground hover:decoration-foreground"
+              className="text-primary underline underline-offset-2 hover:decoration-2"
             >
               Få veibeskrivelse
             </a>

@@ -467,7 +467,7 @@ const CheckoutSuccessPage = () => {
             Vi fant ingen bekreftelse her – sjekk e-posten din for kvittering, eller kontakt oss på{' '}
             <a
               href={`mailto:${SUPPORT_EMAIL}`}
-              className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+              className="text-primary underline underline-offset-2 hover:decoration-2"
             >
               {SUPPORT_EMAIL}
             </a>
@@ -606,7 +606,7 @@ const CheckoutSuccessPage = () => {
                               href={directionsHref}
                               target="_blank"
                               rel="noreferrer"
-                              className="focus-ring inline-flex items-center gap-1 rounded text-sm font-medium text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+                              className="focus-ring inline-flex items-center gap-1 rounded text-sm font-medium text-primary underline-offset-4 hover:underline"
                             >
                               Få veibeskrivelse
                               <ArrowUpRight className="size-3.5" strokeWidth={1.75} />
@@ -654,7 +654,7 @@ const CheckoutSuccessPage = () => {
                     Trenger du hjelp? Send en e-post til{' '}
                     <a
                       href={`mailto:${SUPPORT_EMAIL}`}
-                      className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+                      className="text-primary underline underline-offset-2 hover:decoration-2"
                     >
                       {SUPPORT_EMAIL}
                     </a>

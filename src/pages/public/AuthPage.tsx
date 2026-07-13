@@ -467,7 +467,7 @@ const AuthPage = () => {
                     type="button"
                     onClick={handleResend}
                     disabled={isResending}
-                    className="focus-ring rounded font-medium text-foreground hover:underline disabled:cursor-not-allowed disabled:text-foreground-muted"
+                    className="focus-ring rounded font-medium text-primary underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:text-foreground-muted"
                   >
                     Send på nytt
                   </button>
@@ -484,7 +484,7 @@ const AuthPage = () => {
                 <button
                   type="button"
                   onClick={backToIdentify}
-                  className="font-medium text-foreground hover:underline"
+                  className="font-medium text-primary underline-offset-4 hover:underline"
                 >
                   Gå tilbake og logg inn.
                 </button>
@@ -499,7 +499,7 @@ const AuthPage = () => {
                 if (codeCtx.hasPasswordFallback) setStep('password')
                 else backToIdentify()
               }}
-              className="focus-ring mt-8 rounded text-sm font-medium text-primary hover:underline"
+              className="focus-ring mt-8 rounded text-sm font-medium text-primary underline-offset-4 hover:underline"
             >
               {codeCtx.hasPasswordFallback ? 'Bruk passord i stedet' : 'Bruk en annen e-post'}
             </button>
@@ -587,7 +587,7 @@ const AuthPage = () => {
               type="button"
               onClick={handleUseCode}
               disabled={isSubmitting}
-              className="focus-ring rounded text-sm font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+              className="focus-ring rounded text-sm font-medium text-primary underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
             >
               Glemt passordet? Logg inn med kode
             </button>
@@ -640,11 +640,11 @@ const AuthPage = () => {
 
       <p className="mt-12 max-w-xs text-center text-sm text-foreground-muted">
         Ved å fortsette godtar du{' '}
-        <Link to="/terms" className="font-medium text-foreground-muted hover:text-foreground">
+        <Link to="/terms" className="text-primary underline underline-offset-2 hover:decoration-2">
           vilkårene
         </Link>{' '}
         og{' '}
-        <Link to="/personvern" className="font-medium text-foreground-muted hover:text-foreground">
+        <Link to="/personvern" className="text-primary underline underline-offset-2 hover:decoration-2">
           personvernerklæringen
         </Link>
         .
