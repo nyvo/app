@@ -28,8 +28,14 @@ jobs:
 
       # tsc already ran above; vite build alone catches asset-pipeline
       # breakage (e.g. fonts/images missing from dist) that tsc can't.
+      # VITE_STRIPE_PUBLISHABLE_KEY: vite.config.ts hard-fails production
+      # builds without it (c9fba8e). Publishable keys are public (they ship
+      # in the client bundle), so a repo *variable* — not a secret — holds
+      # the test key for CI throwaway builds.
       - name: Build
         run: npx vite build
+        env:
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ vars.VITE_STRIPE_PUBLISHABLE_KEY }}
 
   edge-functions:
     runs-on: ubuntu-latest
