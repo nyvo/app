@@ -79,7 +79,7 @@ export function NotificationsPopover() {
       type="button"
       variant="ghost"
       size="icon"
-      aria-label={hasUnseen ? 'Varsler, uleste' : 'Varsler'}
+      aria-label={hasUnseen ? 'Uleste varsler' : 'Varsler'}
       aria-haspopup="dialog"
       className={cn('relative', hasUnseen ? 'text-foreground' : 'text-foreground-muted')}
     >

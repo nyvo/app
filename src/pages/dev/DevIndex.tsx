@@ -54,8 +54,9 @@ const GROUPS: PreviewGroup[] = [
   {
     title: 'Kjøper / offentlig',
     items: [
+      { label: 'Oversikt (kjøper)', to: '/dev/buyer-dashboard-preview', blurb: 'BuyerDashboard — mine påmeldinger (kommende/tidligere, avmeldt/avlyst), tomt, laster og feil.' },
       { label: 'Storefront (studio)', to: '/dev/storefront', blurb: 'StudioMasthead + StudioAgendaList — med kurs, tomt, laster, ikke funnet, feil.' },
-      { label: 'Kursside (offentlig)', to: '/dev/detail-t1-preview', blurb: 'CourseDetailContent + BookingBar — fullt/utsolgt/stengt/ikke klar.' },
+      { label: 'Kursside (offentlig)', to: '/dev/detail-t1-preview', blurb: 'CourseDetailContent + BookingBar — fullt/utsolgt/stengt/betaling ikke klar, laster, ikke funnet, feil.' },
       { label: 'Kasse (checkout)', to: '/dev/checkout-t1-preview', blurb: 'Checkout-seksjonene — gratis/betalt/stengt/fullt.' },
       { label: 'Embed-kalender', to: '/dev/embed-preview', blurb: 'EmbedCalendar-widgeten på to bredder.' },
     ],

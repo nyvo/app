@@ -242,8 +242,8 @@ function IndividualView({
               Kursene dine vises på {host.name}
             </h3>
             <p className="mt-1 max-w-2xl text-base text-foreground-muted">
-              Alle publiserte kurs vises automatisk — utkast og avsluttede kurs
-              vises ikke. Du kan stoppe visningen når som helst.
+              Alle publiserte kurs vises automatisk – utkast og avsluttede kurs
+              vises ikke.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Button variant="destructive" onClick={() => setConfirmLeave(true)}>
@@ -456,7 +456,7 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
           disabled={creating}
           onClick={() => (fetchFailed ? void loadLink() : void handleRegenerate())}
         >
-          {creating ? 'Prøver igjen…' : 'Prøv igjen'}
+          {creating ? 'Prøver igjen' : 'Prøv igjen'}
         </Button>
       </div>
     );
@@ -506,7 +506,7 @@ export function InviteLinkView({
         type="button"
         variant="plain"
         loading={regenerating}
-        loadingText="Lager…"
+        loadingText="Lager"
         onClick={onRegenerate}
         className="mt-2"
       >

@@ -54,7 +54,7 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
               rel="noreferrer"
               className="underline decoration-foreground-disabled underline-offset-[3px] transition-colors hover:text-foreground hover:decoration-foreground"
             >
-              Veibeskrivelse
+              Få veibeskrivelse
             </a>
           </p>
         )}
@@ -86,7 +86,7 @@ function LogoTile({ organization }: { organization: PublicSeller }) {
       <div className={cn(frame, 'bg-surface')}>
         <img
           src={logoUrl}
-          alt={`${organization.name} logo`}
+          alt={`${organization.name}-logo`}
           className="size-full object-cover"
           onError={() => setLogoFailed(true)}
         />

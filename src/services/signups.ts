@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { extractEdgeError } from '@/lib/edge-errors'
+import { UNKNOWN_ERROR } from '@/lib/error-strings'
 import type { Signup, SignupInsert, Profile, Course } from '@/types/database'
 
 // Signup with joined course, profile, and (for drop-ins) session data.
@@ -334,7 +335,7 @@ export async function teacherCancelSignup(
   } catch (err) {
     return {
       data: null,
-      error: err instanceof Error ? err : new Error('Ukjent feil')
+      error: err instanceof Error ? err : new Error(UNKNOWN_ERROR)
     }
   }
 }
@@ -364,7 +365,7 @@ export async function createFreeSignup(input: {
     }
     return { data: data as { signupId: string }, error: null }
   } catch (err) {
-    return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
+    return { data: null, error: err instanceof Error ? err : new Error(UNKNOWN_ERROR) }
   }
 }
 

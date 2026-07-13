@@ -6,6 +6,7 @@ import { CourseDetailContent } from '@/components/public/course-details/CourseDe
 import { getBookingTiles } from '@/components/public/course-details/BookingRailLite';
 import { buildDropInSublabel } from '@/components/public/course-details/schedule-format';
 import { BookingBar } from '@/components/public/course-details/BookingBar';
+import { CourseDetailSkeleton } from '@/pages/public/PublicCourseDetailPage';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 import type { AvailableTicketType, CourseSession } from '@/types/database';
 import { DevPage } from './_kit';
@@ -29,6 +30,10 @@ type Variant =
   | 'avlyst-okt'
   | 'enkelt-fullt'
   | 'enkelt-gratis'
+  | 'stengt'
+  | 'betaling-ikke-klar'
+  | 'laster'
+  | 'ikke-funnet'
   | 'feil';
 
 const VARIANT_LABELS: Record<Variant, string> = {
@@ -42,6 +47,10 @@ const VARIANT_LABELS: Record<Variant, string> = {
   'avlyst-okt': 'Avlyst økt i timeplanen',
   'enkelt-fullt': 'Enkeltkurs, fullt',
   'enkelt-gratis': 'Enkeltkurs, gratis',
+  stengt: 'Stengt (påmelding stengt — ingen billetter, plasser igjen)',
+  'betaling-ikke-klar': 'Betaling ikke klar (selger mangler Stripe-oppsett)',
+  laster: 'Laster (CourseDetailSkeleton)',
+  'ikke-funnet': 'Ikke funnet (kurs 404 — PageState public-course)',
   feil: 'Feil (henting av kurs feilet — PageState server-error)',
 };
 
@@ -58,7 +67,6 @@ const DetailT1Preview = () => {
   );
   const checkoutHref = '/dev/checkout-t1-preview';
   const paymentNotReady = tiles.some((t) => t.amount > 0) && !course.seller?.stripe_onboarding_complete;
-  const isErrorVariant = variant === 'feil';
 
   return (
     <DevPage title="Kursside (offentlig)" bleed>
@@ -72,8 +80,12 @@ const DetailT1Preview = () => {
         </header>
 
         <main className="flex-1">
-          {isErrorVariant ? (
+          {variant === 'feil' ? (
             <PageState variant="server-error" as="div" />
+          ) : variant === 'ikke-funnet' ? (
+            <PageState variant="public-course" as="div" />
+          ) : variant === 'laster' ? (
+            <CourseDetailSkeleton />
           ) : (
             <>
               <CourseDetailContent course={course} sessions={sessions} backHref="/dev/detail-t1-preview" />
@@ -195,6 +207,22 @@ export function makeMockCourse(variant: Variant): PublicCourseWithDetails {
       return { ...enkelt, price: 0 };
     case 'uten-bilde':
       return { ...base, image_url: null };
+    case 'stengt':
+      // Started series, late signups + drop-in both off → the RPC returns no
+      // purchasable tiers while seats remain: "not full, no tiles" = closed.
+      return {
+        ...base,
+        start_date: '2026-06-23',
+        end_date: '2026-08-11',
+        accepts_late_signups: false,
+        allows_drop_in: false,
+        drop_in_price: null,
+      };
+    case 'betaling-ikke-klar':
+      return {
+        ...base,
+        seller: { ...base.seller!, stripe_onboarding_complete: false },
+      };
     case 'fullt':
     case 'pakke-full':
       return { ...base, spots_available: 0 };
@@ -211,6 +239,9 @@ function makeMockTiers(course: PublicCourseWithDetails, variant: Variant): Avail
   // Fully sold out: the RPC returns no purchasable tiers at all (package
   // withheld on courseFull, drop-in gated on next-session capacity).
   if (variant === 'fullt' || variant === 'enkelt-fullt') return [];
+  // Started + late signups off + no drop-in: no tiers, but seats remain, so
+  // getBookingTiles resolves this as `closed` rather than sold out.
+  if (variant === 'stengt') return [];
 
   const tiers: AvailableTicketType[] = [
     {
@@ -279,7 +310,7 @@ export function makeMockSessions(courseId: string, variant: Variant): CourseSess
   }
 
   const dates =
-    variant === 'startet'
+    variant === 'startet' || variant === 'stengt'
       ? ['2026-06-23', '2026-06-30', '2026-07-07', '2026-07-14', '2026-07-21', '2026-07-28', '2026-08-04', '2026-08-11']
       : ['2026-08-11', '2026-08-18', '2026-08-25', '2026-09-01', '2026-09-08', '2026-09-15', '2026-09-22', '2026-09-29'];
 

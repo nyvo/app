@@ -225,7 +225,7 @@ export function AddParticipantDrawer({
       onSuccess(); // Trigger refresh
       toast.success('Deltaker lagt til');
     } catch (err) {
-      setSubmitError(friendlyError(err, 'Noe gikk galt – prøv igjen'));
+      setSubmitError(friendlyError(err));
       setIsSubmitting(false);
     }
   };
@@ -245,7 +245,7 @@ export function AddParticipantDrawer({
           // wait crosses the DelayedFallback threshold, then show a form-shaped
           // skeleton rather than an empty panel (Studio § 10).
           <DelayedFallback>
-            <div className="flex-1 px-6 py-6 space-y-4" role="status" aria-label="Laster">
+            <div className="flex-1 px-6 py-6 space-y-4" role="status" aria-label="Laster skjema">
               <Skeleton className="h-16 w-full" />
               {[0, 1, 2].map((i) => (
                 <div key={i} className="space-y-2">
@@ -262,13 +262,13 @@ export function AddParticipantDrawer({
                 payment flow. Shown as an info callout so the teacher clearly
                 registers that they handle payment themselves. */}
             <Alert variant="info" size="sm">
-              Manuelle påmeldinger registreres som betalt. Du håndterer betalingen selv (Vipps, kontant, faktura).
+              Manuelle påmeldinger registreres som betalt – du håndterer betalingen selv (Vipps, kontant, faktura).
             </Alert>
 
             {/* Info banner if full */}
             {isFull && (
               <Alert variant="info" size="sm">
-                Kurset er fullt. Det er ikke mulig å legge til flere deltakere.
+                Kurset er fullt.
               </Alert>
             )}
 

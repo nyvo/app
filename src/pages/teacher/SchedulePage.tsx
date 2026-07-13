@@ -17,6 +17,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { MONTHS_LONG } from '@/lib/calendar-nb';
 import type { CourseFormat, DeliveryMode } from '@/types/database';
 
 // ---------------------------------------------------------------------------
@@ -59,9 +60,11 @@ interface SessionWithCourse {
   } | null;
 }
 
+// Title Case, Sunday-first — deliberately NOT the canonical lowercase
+// WEEKDAYS_LONG (@/lib/calendar-nb); this page's grammar capitalizes the
+// whole weekday, not just the first letter, so the values differ.
 const WEEKDAY_NB = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];
-const MONTH_NB = ['januar', 'februar', 'mars', 'april', 'mai', 'juni',
-                  'juli', 'august', 'september', 'oktober', 'november', 'desember'];
+const MONTH_NB = MONTHS_LONG;
 
 /** Local YYYY-MM-DD for "today" (no UTC drift). */
 function todayKey(): string {
@@ -283,7 +286,7 @@ const SchedulePage = () => {
         {/* Body */}
         {loading ? (
           <DelayedFallback>
-            <div role="status" aria-label="Laster">
+            <div role="status" aria-label="Laster…">
               {/* Mirrors the timeline anatomy: rail (day + date lines) left,
                   cards (title + one meta line) right. */}
               {[1, 2].map((i) => (

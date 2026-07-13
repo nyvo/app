@@ -29,7 +29,7 @@ export const CourseCancelled = ({
     </Heading>
     <Text style={styles.paragraph}>
       Hei{buyerName ? ` ${buyerName}` : ''}, {studioName} har dessverre avlyst{' '}
-      {courseTitle}. Du trenger ikke å foreta deg noe.
+      {courseTitle}.
     </Text>
 
     {refundNote ? <Text style={styles.paragraph}>{refundNote}</Text> : null}

@@ -47,7 +47,7 @@ function formatBillingDate(value: string): string {
 const START_FEATURES = [
   'Påmeldinger og kurslenker',
   'Kortbetaling ved påmelding',
-  'Automatiske utbetalinger via Stripe',
+  'Automatiske utbetalinger',
   '5 % plattformgebyr per betaling',
 ] as const
 

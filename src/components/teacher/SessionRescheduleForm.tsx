@@ -113,7 +113,7 @@ export function SessionRescheduleForm({
                 }
               }}
             >
-              <SelectTrigger className="flex-1" aria-label="Starter">
+              <SelectTrigger className="flex-1" aria-label="Starttid">
                 <SelectValue placeholder="Start" />
               </SelectTrigger>
               <SelectContent className="max-h-60">
@@ -128,7 +128,7 @@ export function SessionRescheduleForm({
               –
             </span>
             <Select value={newEnd} onValueChange={setNewEnd}>
-              <SelectTrigger className="flex-1" aria-label="Slutter">
+              <SelectTrigger className="flex-1" aria-label="Sluttid">
                 <SelectValue placeholder="Slutt" />
               </SelectTrigger>
               <SelectContent className="max-h-60">

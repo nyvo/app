@@ -479,7 +479,7 @@ export function ParticipantDetailDrawer({
         cancelLabel="Behold"
         destructive
         loading={loading}
-        loadingText="Avbestiller…"
+        loadingText="Avbestiller"
         onConfirm={() => runAction(() => onCancelEnrollment(signup.id, false))}
       />
 
@@ -492,7 +492,7 @@ export function ParticipantDetailDrawer({
         cancelLabel="Behold"
         destructive
         loading={loading}
-        loadingText="Refunderer…"
+        loadingText="Refunderer"
         onConfirm={() => runAction(() => onCancelEnrollment(signup.id, true))}
       />
 
@@ -504,7 +504,7 @@ export function ParticipantDetailDrawer({
         actionLabel="Refunder"
         destructive
         loading={loading}
-        loadingText="Refunderer…"
+        loadingText="Refunderer"
         // Reuse cancel-enrollment with refund=true; the edge function detects
         // the already-cancelled state and processes refund-only without
         // changing the signup status.

@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import { friendlyError } from '@/lib/error-messages'
 import { extractEdgeError } from '@/lib/edge-errors'
 import { withTimeout } from '@/lib/with-timeout'
+import { TIMEOUT_ERROR } from '@/lib/error-strings'
 
 interface BillingSessionResult {
   url: string
@@ -21,7 +22,7 @@ async function invokeBillingFunction(
         body: { sellerId, ...extraBody },
       }),
       15000,
-      'Dette tok for lang tid. Prøv igjen.',
+      TIMEOUT_ERROR,
     )
     // invoke() wraps a non-2xx as a generic FunctionsHttpError; the real body
     // (e.g. { error: 'Studioet har allerede Pro.' }) is only readable via the

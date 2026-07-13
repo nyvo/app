@@ -201,7 +201,7 @@ export function SessionDaysEditor({ value, onChange, readOnly = false }: Session
           className="w-full"
           onClick={addDay}
         >
-          {value.length === 1 ? 'Legg til en dag til' : 'Legg til enda en dag'}
+          {'Legg til en dag til'}
         </Button>
       )}
     </div>

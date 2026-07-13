@@ -90,7 +90,7 @@ export default function GetStartedPage() {
                 </p>
               </div>
               <Button asChild className="w-full shrink-0 sm:w-auto">
-                <Link to={routes.dashboard}>Gå til dashbordet</Link>
+                <Link to={routes.dashboard}>Gå til oversikten</Link>
               </Button>
             </div>
 

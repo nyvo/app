@@ -157,7 +157,7 @@ const LandingPage = () => {
             <ProductFrame>
               <img
                 src="/landing-dashboard.webp"
-                alt="Openspot — oversikt over inntekter og kommende kurs"
+                alt="Openspot – oversikt over inntekter og kommende kurs"
                 width={2400}
                 height={1659}
                 fetchPriority="high"
@@ -224,11 +224,10 @@ const LandingPage = () => {
       <FeatureWide
         eyebrow="Oversikt"
         title="Inntekter og påmeldinger på ett sted."
-        body="Hver påmelding havner i oversikten."
       >
         <img
           src="/landing-courses.webp"
-          alt="Openspot — kursoversikt"
+          alt="Openspot – kursoversikt"
           width={1600}
           height={838}
           loading="lazy"
@@ -291,7 +290,7 @@ const LandingPage = () => {
                 recommended: true,
                 description: 'Behold hele kursprisen – uansett hvor mye du selger.',
                 price: formatKroner(499),
-                priceSub: '/ mnd eks. mva',
+                priceSub: '/ mnd eks. mva.',
                 features: [
                   'Alt i Start',
                   '0 % plattformgebyr',
@@ -502,7 +501,7 @@ function FeatureWide({
 }: {
   eyebrow?: string;
   title: string;
-  body: string;
+  body?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -522,7 +521,7 @@ function FeatureWide({
           <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
             {title}
           </h2>
-          <p className="mt-4 text-base text-foreground-muted">{body}</p>
+          {body && <p className="mt-4 text-base text-foreground-muted">{body}</p>}
         </motion.div>
         <motion.div
           initial="hidden"

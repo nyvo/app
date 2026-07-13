@@ -18,6 +18,7 @@ import { stepVariants } from '@/lib/motion';
 import { friendlyError } from '@/lib/error-messages';
 import { rescheduleCourseSession } from '@/services/courses';
 import { osloTodayKey } from '@/utils/dateUtils';
+import { WEEKDAYS_LONG, MONTHS_LONG } from '@/lib/calendar-nb';
 import type { CourseSession } from '@/types/database';
 
 interface SessionsModalProps {
@@ -35,12 +36,6 @@ interface SessionsModalProps {
 }
 
 type View = 'list' | 'reschedule';
-
-const WEEKDAYS_LONG = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
-const MONTHS_LONG = [
-  'januar', 'februar', 'mars', 'april', 'mai', 'juni',
-  'juli', 'august', 'september', 'oktober', 'november', 'desember',
-] as const;
 
 function cap(s: string): string {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
@@ -153,7 +148,7 @@ export function SessionsModal({
     const notified = data?.notified ?? 0;
     toast.success(
       notified > 0
-        ? `Ny tid lagret, varslet ${notified} ${notified === 1 ? 'deltaker' : 'deltakere'}`
+        ? `Ny tid lagret – varslet ${notified} ${notified === 1 ? 'deltaker' : 'deltakere'}`
         : 'Ny tid lagret',
     );
     onSessionUpdated();
@@ -182,7 +177,7 @@ export function SessionsModal({
                 <ArrowLeft className="size-4" />
               </Button>
               <DialogTitle>
-                {editing ? `Endre time — ${dayMonth(editing.session_date)}` : 'Endre time'}
+                {editing ? `Endre time – ${dayMonth(editing.session_date)}` : 'Endre time'}
               </DialogTitle>
             </div>
           ) : (

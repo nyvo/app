@@ -63,7 +63,7 @@ export function UnsavedChangesDialog({
         if (!open && blocker.state === 'blocked') blocker.reset();
       }}
       title="Forlat siden?"
-      body="Endringene dine er ikke lagret og går tapt hvis du forlater siden."
+      body="Endringene dine er ikke lagret og går tapt."
       actionLabel="Forlat siden"
       cancelLabel="Bli på siden"
       destructive

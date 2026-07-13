@@ -16,7 +16,7 @@ import { COMPANY } from '@/lib/company'
 // The generic "link failed" error (expired / already redeemed / silently
 // absent token). Cancellation of an OAuth consent is a distinct, non-error
 // case handled separately below.
-const LINK_ERROR = { title: 'Lenken virker ikke', description: 'Lenken er utløpt eller fungerer ikke.' } as const
+const LINK_ERROR = { title: 'Lenken virker ikke', description: 'Den er utløpt eller allerede brukt.' } as const
 
 /**
  * Magic-link / OAuth callback handler.
