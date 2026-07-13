@@ -83,7 +83,7 @@ function buildMockPoints(range: IncomeRange): IncomePoint[] {
   });
 }
 
-function buildMockSeries(range: IncomeRange): IncomeSeries {
+export function buildMockSeries(range: IncomeRange): IncomeSeries {
   const points = buildMockPoints(range);
   // Match production (services/income.ts): the chart plots a cumulative running
   // total, not per-bucket amounts. Convert both series so the preview shows a
@@ -101,7 +101,7 @@ function buildMockSeries(range: IncomeRange): IncomeSeries {
   return { range, points, total: runningCurrent, previousTotal: runningPrevious };
 }
 
-function buildEmptySeries(range: IncomeRange): IncomeSeries {
+export function buildEmptySeries(range: IncomeRange): IncomeSeries {
   const points = buildMockPoints(range).map((p) => ({ ...p, amount: 0, previousAmount: 0 }));
   return { range, points, total: 0, previousTotal: 0 };
 }

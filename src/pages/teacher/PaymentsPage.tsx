@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ErrorState } from '@/components/ui/error-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import { PageShell } from '@/components/teacher/PageShell';
 import {
   PayoutSetupCard,
@@ -11,15 +13,24 @@ import {
   type PayoutSetupViewModel,
   type MarkerTone,
 } from '@/components/teacher/PayoutSetupCard';
+import { PayoutStats, type PayoutRow } from '@/components/teacher/PayoutStats';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   startStripeConnectOnboarding,
   refreshStripeConnectStatus,
   getStripeSettlements,
+  type StripeSettlementsResult,
 } from '@/services/stripe-connect';
+import { fetchIncomeSeries, type IncomeRange, type IncomeSeries } from '@/services/income';
 import { COMPANY } from '@/lib/company';
 import { toast } from 'sonner';
+
+// Lazy: IncomeChart pulls in recharts — keep it out of the payments route's
+// main chunk, same as TeacherDashboard.
+const IncomeChart = lazy(() =>
+  import('@/components/teacher/dashboard/IncomeChart').then((m) => ({ default: m.IncomeChart })),
+);
 
 const STEP_1_TITLE = 'Bekreft virksomheten';
 const STEP_2_TITLE = 'Vi kontrollerer opplysningene';
@@ -47,6 +58,78 @@ const STEP_3_TITLE = 'Motta utbetalinger';
  * (?stripe=return) and server-side via the account.updated webhook, so there
  * is no manual "check status" control.
  */
+
+// Stripe amounts are øre; the app displays kroner (mirrors CheckoutPage's amountOre).
+const oreToKroner = (ore: number): number => Math.round(ore / 100);
+
+// A payout that has left Stripe but not yet landed in the seller's bank.
+const IN_TRANSIT_STATUSES = new Set(['pending', 'in_transit']);
+
+const nbLongDate = new Intl.DateTimeFormat('nb-NO', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+const nbShortDate = new Intl.DateTimeFormat('nb-NO', { day: 'numeric', month: 'long' });
+const payoutDate = (unixSeconds: number): Date => new Date(unixSeconds * 1000);
+
+/**
+ * Fold the raw Stripe settlements into the presentational PayoutStats figures.
+ * "På vei til deg" / "Neste utbetaling" come from payouts still in flight;
+ * "Utbetalt i år" sums this calendar year's settled payouts. The bank last4 is
+ * not in the settlements payload yet, so rows show the date only.
+ */
+function derivePayoutStats(data: StripeSettlementsResult): {
+  inTransit: number;
+  paidYearToDate: number;
+  nextPayoutDate: string | null;
+  payouts: PayoutRow[];
+} {
+  const currentYear = new Date().getFullYear();
+  const { payouts } = data;
+
+  const inTransitOre = payouts
+    .filter((p) => IN_TRANSIT_STATUSES.has(p.status))
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  const paidYtdOre = payouts
+    .filter((p) => p.status === 'paid' && payoutDate(p.arrival_date).getFullYear() === currentYear)
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  const nextPayout = payouts
+    .filter((p) => IN_TRANSIT_STATUSES.has(p.status))
+    .sort((a, b) => a.arrival_date - b.arrival_date)[0];
+
+  const rows: PayoutRow[] = payouts
+    .filter((p) => p.status === 'paid' || IN_TRANSIT_STATUSES.has(p.status))
+    .slice(0, 8)
+    .map((p) => ({
+      id: p.id,
+      date: nbLongDate.format(payoutDate(p.arrival_date)),
+      amount: oreToKroner(p.amount),
+      status: p.status === 'paid' ? 'paid' : 'in_transit',
+    }));
+
+  return {
+    inTransit: oreToKroner(inTransitOre),
+    paidYearToDate: oreToKroner(paidYtdOre),
+    nextPayoutDate: nextPayout ? nbShortDate.format(payoutDate(nextPayout.arrival_date)) : null,
+    payouts: rows,
+  };
+}
+
+// Height-matched placeholder while the settlements fetch is in flight — three
+// blocks standing in for Nøkkeltall, the trend chart, and the payout list.
+function PayoutStatsSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Skeleton className="h-28 w-full rounded-xl" />
+      <Skeleton className="h-[340px] w-full rounded-xl" />
+      <Skeleton className="h-44 w-full rounded-xl" />
+    </div>
+  );
+}
+
 const PaymentsPage = () => {
   const { currentSeller, refreshSellers, currentSellerHydrateFailed } = useAuth();
 
@@ -64,6 +147,34 @@ const PaymentsPage = () => {
   // Set once the return check has synced + refreshed; a toast then fires from
   // the refreshed seller row so it can't contradict the card.
   const returnToastPending = useRef(false);
+
+  // The onboarded happy path — payouts are live and not blocked — swaps the
+  // "step 3" stepper for the PayoutStats overview. Only then do we fetch.
+  const showStats = stripeConnected && !stripePayoutsBlocked;
+  const [incomeRange, setIncomeRange] = useState<IncomeRange>('month');
+
+  const settlementsQuery = useQuery({
+    queryKey: ['payout-settlements', currentSeller?.id],
+    enabled: !!currentSeller?.id && showStats,
+    queryFn: async (): Promise<StripeSettlementsResult> => {
+      const { data, error } = await getStripeSettlements(currentSeller!.id);
+      if (error || !data) throw error ?? new Error('Utbetalinger utilgjengelig');
+      return data;
+    },
+  });
+
+  // Income trend for the chart slot — reuses the dashboard series/component;
+  // keyed on the range so the Uke/Måned/År toggle caches per window.
+  const incomeQuery = useQuery({
+    queryKey: ['payout-income-series', currentSeller?.id, incomeRange],
+    enabled: !!currentSeller?.id && showStats,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<IncomeSeries> => {
+      const { data, error } = await fetchIncomeSeries(currentSeller!.id, incomeRange);
+      if (error || !data) throw error ?? new Error('Inntektsserie utilgjengelig');
+      return data;
+    },
+  });
 
   const handleStartStripe = useCallback(async () => {
     if (!currentSeller?.id) return;
@@ -152,8 +263,6 @@ const PaymentsPage = () => {
 
   // ─── One view-model per onboarding state, rendered by PayoutSetupCard ───
   let h2: string;
-  let counter: string;
-  let step2Title = STEP_2_TITLE;
   let step2Tone: MarkerTone = 'neutral';
   let step2Desc: string;
   let step2Action: ReactNode;
@@ -161,13 +270,11 @@ const PaymentsPage = () => {
 
   if (!stripeStarted && !stripeConnected) {
     h2 = 'Sett opp utbetalinger';
-    counter = 'Steg 1 av 3';
     steps = [
       {
         title: STEP_1_TITLE,
         status: 'current',
-        description:
-          'Du blir sendt til Stripe for å bekrefte virksomheten og legge inn kontonummeret pengene skal gå til.',
+        description: 'Legg inn kontonummer og bekreft identiteten din hos Stripe.',
         action: (
           <Button
             onClick={handleStartStripe}
@@ -182,26 +289,23 @@ const PaymentsPage = () => {
       { title: STEP_3_TITLE, status: 'upcoming' },
     ];
   } else if (stripeStarted && !stripeConnected) {
-    counter = 'Steg 2 av 3';
     if (stripeStatus === 'rejected') {
       h2 = 'Søknaden ble avslått';
-      step2Title = 'Søknaden ble avslått';
       step2Tone = 'danger';
-      step2Desc = `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg videre.`;
+      step2Desc = `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg.`;
       step2Action = (
         <Button asChild>
           <a href={`mailto:${COMPANY.email}`}>Kontakt oss</a>
         </Button>
       );
     } else {
-      h2 = 'Fullfør oppsettet';
       if (stripeStatus === 'restricted') {
-        step2Title = 'Vi mangler litt informasjon';
+        h2 = 'Vi mangler litt informasjon';
         step2Tone = 'warning';
-        step2Desc = 'Fyll inn det som gjenstår, så aktiverer vi utbetalinger så snart alt er på plass.';
+        step2Desc = 'Fyll inn det som mangler, så aktiverer vi utbetalinger.';
       } else {
-        step2Desc =
-          'Vi aktiverer utbetalinger automatisk så snart alt er godkjent. Mangler det noe, kan du fortsette der du slapp.';
+        h2 = 'Fullfør oppsettet';
+        step2Desc = 'Vi aktiverer utbetalinger så snart alt er godkjent.';
       }
       step2Action = (
         <Button
@@ -215,12 +319,11 @@ const PaymentsPage = () => {
     }
     steps = [
       { title: STEP_1_TITLE, status: 'done' },
-      { title: step2Title, status: 'current', tone: step2Tone, description: step2Desc, action: step2Action },
+      { title: STEP_2_TITLE, status: 'current', tone: step2Tone, description: step2Desc, action: step2Action },
       { title: STEP_3_TITLE, status: 'upcoming' },
     ];
   } else {
     h2 = 'Utbetalingene er klare';
-    counter = 'Fullført';
     steps = [
       { title: STEP_1_TITLE, status: 'done' },
       { title: STEP_2_TITLE, status: 'done' },
@@ -228,21 +331,23 @@ const PaymentsPage = () => {
         title: STEP_3_TITLE,
         status: 'current',
         tone: 'success',
-        description:
-          'Pengene overføres automatisk til bankkontoen din. Saldo og alle utbetalinger finner du i Stripe-oversikten.',
-        action: <Button onClick={handleOpenStripeDashboard}>Åpne Stripe</Button>,
+        description: 'Pengene overføres automatisk til kontoen din.',
+        action: <Button onClick={handleOpenStripeDashboard}>Se oversikt</Button>,
       },
     ];
   }
 
-  const viewModel: PayoutSetupViewModel = { h2, counter, steps };
+  const viewModel: PayoutSetupViewModel = { h2, steps };
 
   // Same layout skeleton as the other settings pages (profile, studio):
   // default-width PageShell + SettingsRows sections, not a centered column.
   return (
     <PageShell title="Utbetalingskonto">
       <SettingsRows>
-        <SettingsRow title="Utbetalinger" description="Slik får du betalt for kursene dine.">
+        <SettingsRow
+          title="Utbetalinger"
+          description={showStats ? undefined : 'Slik får du betalt for kursene dine.'}
+        >
           {currentSellerHydrateFailed ? (
             // stripe_account_id is a stale safe-default (null) — the timeline
             // would show step 1 to a seller who already started onboarding.
@@ -252,6 +357,33 @@ const PaymentsPage = () => {
               message="Prøv igjen om litt."
               onRetry={refreshSellers}
             />
+          ) : showStats ? (
+            // Onboarded + payouts flowing → the overview replaces the stepper.
+            settlementsQuery.isLoading ? (
+              <PayoutStatsSkeleton />
+            ) : settlementsQuery.isError || !settlementsQuery.data ? (
+              <ErrorState
+                title="Kunne ikke hente utbetalinger"
+                message="Prøv igjen om litt."
+                onRetry={() => void settlementsQuery.refetch()}
+              />
+            ) : (
+              <PayoutStats
+                {...derivePayoutStats(settlementsQuery.data)}
+                onOpenStripe={handleOpenStripeDashboard}
+                chart={
+                  <Suspense fallback={<Skeleton className="h-[340px] w-full rounded-xl" />}>
+                    <IncomeChart
+                      series={incomeQuery.data ?? null}
+                      isLoading={incomeQuery.isLoading}
+                      isFetching={incomeQuery.isFetching}
+                      range={incomeRange}
+                      onRangeChange={setIncomeRange}
+                    />
+                  </Suspense>
+                }
+              />
+            )
           ) : (
             <>
               {stripePayoutsBlocked && (

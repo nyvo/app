@@ -101,6 +101,25 @@ are founder-side config actions and follow-up builds. Split into "flip on at lau
       *Remaining: drop-in tier purchase untested live (no upcoming course has a
       drop-in tier); a human 4242 card click-through in the prod UI still needs
       the publishable key above.*
+- [ ] **Payout overview — bank account last4 on rows** (2026-07-13) — the
+      onboarded `PaymentsPage` overview (`PayoutStats`) is wired to the existing
+      `get-stripe-settlements` function, but that payload has no bank last4, so
+      payout rows show the date only. Extend `get-stripe-settlements` to
+      `expand[]=data.destination` on the payout list and return `accountLast4`;
+      `PayoutStats.PayoutRow.accountLast4` is already optional and will render
+      "konto ••1234" once present. Needs a redeploy of the function.
+- [ ] **Payout overview — accurate "Utbetalt i år"** (2026-07-13) — the same
+      function fetches only the last 20 payouts, so the year-to-date figure in
+      `derivePayoutStats` (`PaymentsPage.tsx`) undercounts for a seller on
+      Stripe's *daily* payout schedule (~20 days of history). Compute YTD from
+      balance-transactions or a date-filtered/paginated payout list instead.
+      Not harmful pre-launch (test mode, no high-volume real payouts) but must
+      land before real payouts flow. Needs a redeploy of the function.
+- [ ] **Smoke-test the onboarded payout overview** (2026-07-13) — needs a
+      Stripe-connected test seller with real test-mode payouts; verify the
+      Nøkkeltall figures (øre→kr), the "Siste utbetalinger" list, the reused
+      income chart, and the "Se kvitteringer … på Stripe" link all render with
+      live data. Only the mock `/dev/payout-preview` has been visually verified.
 
 ## Accepted risks (no action planned)
 

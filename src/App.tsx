@@ -34,7 +34,6 @@ const GetStartedPage = lazy(() => import('./pages/teacher/GetStartedPage'));
 const HelpPage = lazy(() => import('./pages/teacher/HelpPage'));
 const SchedulePage = lazy(() => import('./pages/teacher/SchedulePage'));
 const CoursesPage = lazy(() => import('./pages/teacher/CoursesPage'));
-const CourseBuilderPage = lazy(() => import('./pages/teacher/CourseBuilderPage'));
 const CoursePage = lazy(() => import('./pages/teacher/CoursePage'));
 const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage'));
 const BillingPage = lazy(() => import('./pages/teacher/BillingPage'));
@@ -70,6 +69,8 @@ const DashboardPreview = lazy(() => import('./pages/dev/DashboardPreview'));
 const IncomeChartPreview = lazy(() => import('./pages/dev/IncomeChartPreview'));
 const CoursesListPreview = lazy(() => import('./pages/dev/CoursesListPreview'));
 const CourseBuilderLivePreview = lazy(() => import('./pages/dev/CourseBuilderLivePreview'));
+const CourseBuilderConceptsPreview = lazy(() => import('./pages/dev/CourseBuilderConceptsPreview'));
+const CourseBuilderWizardPreview = lazy(() => import('./pages/dev/CourseBuilderWizardPreview'));
 const DraftExperiencePreview = lazy(() => import('./pages/dev/DraftExperiencePreview'));
 const SchedulePreview = lazy(() => import('./pages/dev/SchedulePreview'));
 const SessionDaysPreview = lazy(() => import('./pages/dev/SessionDaysPreview'));
@@ -198,7 +199,7 @@ const router = createBrowserRouter(
             <Route path="get-started" element={<GetStartedPage />} />
             <Route path="schedule" element={<SchedulePage />} />
             <Route path="courses" element={<CoursesPage />} />
-            <Route path="courses/new" element={<CourseBuilderPage />} handle={{ fullBleed: true }} />
+            <Route path="courses/new" element={<CoursesPage />} />
             <Route path="courses/:id" element={<CoursePage />} />
             <Route path="studio" element={<StudioPage />} />
             {/* Samarbeid moved into the Studio page (2026-06). Old links and
@@ -226,6 +227,8 @@ const router = createBrowserRouter(
             <Route path="/dev/income-chart-preview" element={<IncomeChartPreview />} />
             <Route path="/dev/courses-list-preview" element={<CoursesListPreview />} />
             <Route path="/dev/course-builder-live" element={<CourseBuilderLivePreview />} />
+            <Route path="/dev/course-builder-concepts" element={<CourseBuilderConceptsPreview />} />
+            <Route path="/dev/course-builder-wizard" element={<CourseBuilderWizardPreview />} />
             <Route path="/dev/draft-experience-preview" element={<DraftExperiencePreview />} />
             <Route path="/dev/schedule-preview" element={<SchedulePreview />} />
             <Route path="/dev/session-days-preview" element={<SessionDaysPreview />} />

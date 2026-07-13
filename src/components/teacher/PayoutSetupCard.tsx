@@ -27,7 +27,6 @@ export interface PayoutStepViewModel {
 
 export interface PayoutSetupViewModel {
   h2: string;
-  counter: string;
   steps: PayoutStepViewModel[];
 }
 
@@ -65,11 +64,13 @@ function CrossGlyph() {
   );
 }
 
-const toneTextClass: Record<MarkerTone, string> = {
-  neutral: '',
-  warning: 'text-warning',
-  danger: 'text-danger',
-  success: 'text-success',
+// Toned markers (done + current warning/danger) use the same subtle coloured
+// pill as our status badges — a light tint with the coloured glyph — rather
+// than a grey circle, so completed and attention states read in colour.
+const toneMarkerClass: Record<'warning' | 'danger' | 'success', string> = {
+  warning: 'bg-warning-subtle text-warning',
+  danger: 'bg-danger-subtle text-danger',
+  success: 'bg-success-subtle text-success',
 };
 
 // Mirrors the done marker's "Fullført" label — the toned current-step glyph
@@ -87,7 +88,7 @@ function StepMarker({ index, status, tone }: { index: number; status: StepStatus
       <span
         role="img"
         aria-label="Fullført"
-        className="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-foreground text-background text-xs font-medium tabular-nums"
+        className="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-success-subtle text-success text-xs font-medium tabular-nums"
       >
         <CheckGlyph />
       </span>
@@ -101,9 +102,9 @@ function StepMarker({ index, status, tone }: { index: number; status: StepStatus
       <span
         role="img"
         aria-label={toneAriaLabel[tone]}
-        className="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium tabular-nums"
+        className={`flex size-[26px] shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums ${toneMarkerClass[tone]}`}
       >
-        <span className={toneTextClass[tone]}>{glyph}</span>
+        {glyph}
       </span>
     );
   }
@@ -129,43 +130,50 @@ function StepTitle({ status, title }: { status: StepStatus; title: string }) {
 }
 
 export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel }) {
-  const { h2, counter, steps } = viewModel;
+  const { h2, steps } = viewModel;
+  const current = steps.find((step) => step.status === 'current');
 
   return (
-    <Card>
-      <CardContent>
-        <div className="flex items-baseline justify-between gap-4 mb-6">
-          <h2 className="text-base font-medium text-foreground">{h2}</h2>
-          <span className="text-xs text-foreground-muted tabular-nums whitespace-nowrap">{counter}</span>
-        </div>
+    // The 1-2-3 progress rail sits on the canvas to the left; the active step's
+    // detail lives in the card on the right. Completed steps turn green so the
+    // ladder reads as genuinely done, not mid-process. Stacks on narrow widths.
+    <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-10">
+      <ol className="shrink-0 sm:w-56 sm:pt-1">
+        {steps.map((step, index) => {
+          const isLast = index === steps.length - 1;
+          return (
+            <li key={step.title + index} className="grid grid-cols-[26px_1fr] gap-x-3">
+              <div className="flex flex-col items-center">
+                <StepMarker index={index} status={step.status} tone={step.tone} />
+                {!isLast && (
+                  <span
+                    aria-hidden="true"
+                    className={`my-1 w-px flex-1 ${step.status === 'done' ? 'bg-success' : 'bg-border-subtle'}`}
+                  />
+                )}
+              </div>
+              <div className={`min-w-0 pt-[3px] ${isLast ? 'pb-0.5' : 'pb-5'}`}>
+                <StepTitle status={step.status} title={step.title} />
+              </div>
+            </li>
+          );
+        })}
+      </ol>
 
-        <ol>
-          {steps.map((step, index) => {
-            const isLast = index === steps.length - 1;
-            return (
-              <li key={step.title + index} className="grid grid-cols-[26px_1fr] gap-x-3">
-                <div className="flex flex-col items-center">
-                  <StepMarker index={index} status={step.status} tone={step.tone} />
-                  {!isLast && (
-                    <span
-                      aria-hidden="true"
-                      className={`my-1 w-px flex-1 ${step.status === 'done' ? 'bg-border' : 'bg-border-subtle'}`}
-                    />
-                  )}
-                </div>
-                <div className={`min-w-0 pt-[3px] ${isLast ? 'pb-0.5' : 'pb-4'}`}>
-                  <StepTitle status={step.status} title={step.title} />
-                  {step.status === 'current' && step.description && (
-                    <p className="mt-1 text-base text-foreground-muted max-w-prose">{step.description}</p>
-                  )}
-                  {step.status === 'current' && step.action && <div className="mt-4">{step.action}</div>}
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      </CardContent>
-    </Card>
+      <div className="min-w-0 flex-1">
+        <Card>
+          <CardContent>
+            {/* The card describes the current situation; the rail on the left
+                carries the process position, so no step counter is repeated here. */}
+            <h2 className="mb-2 text-base font-medium text-foreground">{h2}</h2>
+            {current?.description && (
+              <p className="max-w-prose text-base text-foreground-muted">{current.description}</p>
+            )}
+            {current?.action && <div className="mt-4">{current.action}</div>}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
 

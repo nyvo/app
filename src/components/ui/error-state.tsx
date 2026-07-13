@@ -41,7 +41,9 @@ export const ErrorState = React.memo(function ErrorState({
       role="status"
     >
       <p className="text-sm font-medium text-foreground">{title}</p>
-      <p className="mt-1 text-sm text-foreground-muted max-w-sm">{message}</p>
+      {message && (
+        <p className="mt-1 text-sm text-foreground-muted max-w-sm">{message}</p>
+      )}
       {onRetry && (
         <Button
           variant="default"

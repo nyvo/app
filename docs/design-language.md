@@ -265,12 +265,22 @@ neutral `RadioGroupCardItem` call). Never brand-azure on control fills.
 ### Chips / badges / status
 
 Soft-rounded or full pill, `bg-muted` fill, foreground or muted text, `text-xs`,
-medium. Status = a small `bg-success` / `bg-danger` dot beside muted text, or a
-`-subtle` tinted pill (`bg-success-subtle text-success`); settled/historical
-states (Refundert, Betales direkte) use the quietest tier — the Badge
-`subtle` variant, plain muted text with no fill — never a saturated
-filled badge, never color alone (pair with text). Selection on choice chips =
-fill change (`--selection-light` or `bg-muted`), never a colored border alone.
+medium.
+
+**Status colour is always the light treatment — never a saturated fill.** This
+applies to *every* status indicator, not just badges: badges, chips,
+**stepper/step markers**, status dots. Each is one of: (a) a small solid
+`bg-success` / `bg-danger` **dot** beside muted text, or (b) a `-subtle` tinted
+pill or circle — `bg-{success,warning,danger,info}-subtle` fill + the matching
+`text-*` glyph/ink (e.g. a done step marker is `bg-success-subtle text-success`,
+a step that needs action `bg-warning-subtle`/`bg-danger-subtle`). Settled /
+historical states (Refundert, Betales direkte) use the quietest tier — the Badge
+`subtle` variant, plain muted text with no fill. **Never** a saturated filled
+badge, **never** a solid `bg-success` / `bg-warning` / `bg-danger` circle behind
+a check/glyph, never colour alone (always pair with text or a glyph). Solid
+semantic fills (`bg-danger`, …) are reserved for action affordances — the
+destructive button — not for status display. Selection on choice chips = fill
+change (`--selection-light` or `bg-muted`), never a colored border alone.
 
 ### Tables / lists
 
@@ -337,7 +347,7 @@ When touching existing code, hunt for these and convert them:
 |---|---|
 | Hard-coded hex / raw `oklch()` / `--neutral-*` primitives in components | Semantic tokens (§2) |
 | Brand-blue fills on buttons or active nav | `bg-foreground` fill; `bg-muted` active states; brand blue stays on links + selected tints |
-| Saturated filled status badges | `-subtle` tinted pill or status dot + text |
+| Saturated filled status badges **or markers** (solid `bg-success`/`bg-warning`/`bg-danger` circle behind a glyph) | `-subtle` tinted pill / circle, or a small status dot + text |
 | `bg-success/10`-style opacity hacks | The opaque `-subtle` token |
 | Per-surface bespoke hover colors | `bg-hover` / `bg-pressed` overlays |
 | `font-bold`; more than one weighted cell per row | `font-medium`/`font-semibold` per §2; one weighted cell |

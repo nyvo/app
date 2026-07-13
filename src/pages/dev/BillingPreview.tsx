@@ -81,7 +81,7 @@ export default function BillingPreview() {
       >
         <ErrorState
           title="Kunne ikke hente kontoinformasjon"
-          message="Prøv igjen om litt."
+          message=""
           onRetry={noop}
         />
       </PreviewSection>

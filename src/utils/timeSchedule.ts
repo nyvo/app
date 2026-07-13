@@ -6,7 +6,7 @@
  * to make decisions — that pattern once meant a copy edit here could silently
  * create sessions at the wrong time.
  *
- * Both writers (CourseBuilderPage.createDraft and CoursePage.handleSave) go
+ * Both writers (CreateCourseDrawer.createDraft and CoursePage.handleSave) go
  * through these formatters so the label has exactly one shape.
  */
 

@@ -260,7 +260,7 @@ export default function CoursesListPreview() {
       >
         <ErrorState
           title="Kunne ikke hente kurs"
-          message="Kunne ikke hente kurs. Sjekk nettet og prøv igjen."
+          message="Sjekk nettforbindelsen."
           onRetry={() => {}}
         />
       </PreviewSection>

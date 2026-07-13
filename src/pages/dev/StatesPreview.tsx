@@ -68,26 +68,18 @@ export default function StatesPreview() {
       >
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <Frame>
-            <FrameLabel>default + action</FrameLabel>
+            <FrameLabel>default</FrameLabel>
             <EmptyState
               title="Du har ingen kurs ennå"
               description="Opprett ditt første kurs for å komme i gang."
-              action={<Button>Opprett kurs</Button>}
             />
           </Frame>
           <Frame>
-            <FrameLabel>compact + inlineLink</FrameLabel>
+            <FrameLabel>compact + description</FrameLabel>
             <EmptyState
               variant="compact"
               title="Ingen påmeldinger ennå"
-              inlineLink={
-                <a
-                  href="#"
-                  className="text-primary underline-offset-4 hover:underline"
-                >
-                  Se hvordan det fungerer →
-                </a>
-              }
+              description="Påmeldinger vises her så snart noen melder seg på."
             />
           </Frame>
           <div className="md:col-span-2">

@@ -388,8 +388,8 @@ function StudioPublicSettings({
             // Solo seller: the whole panel is the guest-host card, so a failed
             // fetch replaces it with a retry.
             <ErrorState
-              title="Kunne ikke hente samarbeidet ditt"
-              message="Prøv igjen."
+              title="Kunne ikke hente info"
+              message=""
               onRetry={() => void loadHost()}
             />
           ) : (
