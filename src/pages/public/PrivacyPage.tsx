@@ -20,8 +20,8 @@ const PrivacyPage = () => {
           <h1 className="text-2xl font-medium text-foreground">Personvern</h1>
           <p className="mt-2 text-sm text-foreground-muted">Sist oppdatert 11. juli 2026</p>
 
-          <div className="mt-12 space-y-10">
-            <section className="space-y-3">
+          <div className="mt-12 space-y-8">
+            <section className="space-y-4">
               <p className="text-base text-foreground-muted leading-relaxed">
                 Openspot leveres av {COMPANY.legalName}, org.nr. {COMPANY.organizationNumber},
                 som er behandlingsansvarlig for personopplysningene dine. Vi samler inn så lite
@@ -36,7 +36,7 @@ const PrivacyPage = () => {
               </p>
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Hva vi lagrer</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Når du oppretter konto eller melder deg på et kurs, lagrer vi navn,
@@ -57,7 +57,7 @@ const PrivacyPage = () => {
               </p>
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Hvorfor vi lagrer det</h2>
               <ul className="space-y-2 text-base text-foreground-muted leading-relaxed list-disc pl-5">
                 <li>For å gi deg tilgang til kontoen din og kursene du har meldt deg på</li>
@@ -70,7 +70,7 @@ const PrivacyPage = () => {
               </p>
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Hvem vi deler med</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi selger aldri data. Vi deler kun med tjenestene vi trenger for å drive
@@ -86,7 +86,7 @@ const PrivacyPage = () => {
               </p>
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Hvor lenge vi lagrer</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Sletter du kontoen din, sletter vi innloggingen og profilen din. Dokumentasjon
@@ -96,7 +96,7 @@ const PrivacyPage = () => {
               </p>
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Rettighetene dine</h2>
               <p className="text-base text-foreground-muted leading-relaxed">Du kan når som helst:</p>
               <ul className="space-y-2 text-base text-foreground-muted leading-relaxed list-disc pl-5">
@@ -120,7 +120,7 @@ const PrivacyPage = () => {
               </p>
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Sikkerhet</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 All data er kryptert i bevegelse og i ro. Skulle et datainnbrudd oppstå,
@@ -128,7 +128,7 @@ const PrivacyPage = () => {
               </p>
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Endringer</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi kan oppdatere denne erklæringen. Større endringer varsler vi om på e-post.
