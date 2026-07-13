@@ -167,7 +167,7 @@ const PaymentsPage = () => {
         title: STEP_1_TITLE,
         status: 'current',
         description:
-          'Du blir sendt til Stripe – betalingspartneren vår – for å bekrefte virksomheten og legge inn kontonummeret pengene skal gå til.',
+          'Du blir sendt til Stripe for å bekrefte virksomheten og legge inn kontonummeret pengene skal gå til.',
         action: (
           <Button
             onClick={handleStartStripe}

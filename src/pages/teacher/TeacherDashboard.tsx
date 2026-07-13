@@ -377,7 +377,6 @@ export function UpcomingCoursesSection({
           <EmptyState
             variant="compact"
             title="Ingen kommende kurs"
-            description="Opprett et kurs for å fylle timeplanen."
             inlineLink={
               <Link
                 to={routes.coursesNew}

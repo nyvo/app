@@ -206,12 +206,6 @@ export function BookingRailLite({
                 <Button asChild size="cta" className="w-full">
                   <Link to={href}>Reserver</Link>
                 </Button>
-
-                {ticketPrice > 0 && (
-                  <div className="border-t border-border pt-4">
-                    <p className="text-center text-xs text-foreground-muted">Sikker betaling med Stripe</p>
-                  </div>
-                )}
               </>
             )}
           </>

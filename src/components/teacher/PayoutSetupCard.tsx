@@ -184,7 +184,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Hva er Stripe?',
-    a: 'Stripe er betalingspartneren vår. De håndterer betalingen og sørger for at pengene kommer trygt til kontoen din.',
+    a: 'Stripe håndterer kortbetalinger og utbetalinger for oss.',
   },
 ];
 
