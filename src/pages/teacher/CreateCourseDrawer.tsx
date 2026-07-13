@@ -34,6 +34,7 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { LocationField } from '@/components/ui/location-field';
+import { InstructorField, type InstructorRef } from '@/components/teacher/InstructorField';
 import { useAuth } from '@/contexts/AuthContext';
 import { createCourse, updateCourse, publishCourse } from '@/services/courses';
 import { publishNeedsPaymentSetup } from '@/lib/payments';
@@ -51,6 +52,7 @@ type FormatType = 'single' | 'series';
 interface FormErrors {
   title?: string;
   description?: string;
+  instructor?: string;
   location?: string;
   // series-only fields
   startDate?: string;
@@ -123,6 +125,8 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
   const [format, setFormat] = useState<FormatType>('single');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [instructor, setInstructor] = useState<InstructorRef | null>(null);
+  const isStudio = currentSeller?.operating_model === 'studio';
   // series fields
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState('');
@@ -170,6 +174,9 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
     // (e.g. "<p></p>") doesn't count as filled.
     if (!description.replace(/<[^>]*>/g, '').trim()) e.description = 'Skriv inn beskrivelse';
 
+    // Studio courses carry a named instructor — the picker has no "none" choice.
+    if (isStudio && !instructor) e.instructor = 'Velg en instruktør';
+
     // Location must resolve to a real Google place (coords), not free text.
     if (!location.trim()) e.location = 'Velg et sted';
     else if (!locationCoords?.placeId) e.location = 'Velg et sted fra listen.';
@@ -213,7 +220,7 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
       if (isNaN(pri) || pri < 0) e.price = 'Må være 0 eller mer';
     }
     return e;
-  }, [title, description, location, locationCoords, startDate, startTime, endTime, format, weeks, sessionDays, capacity, price]);
+  }, [title, description, isStudio, instructor, location, locationCoords, startDate, startTime, endTime, format, weeks, sessionDays, capacity, price]);
 
   const isValid = Object.keys(errors).length === 0;
   const showError = (field: keyof FormErrors) => submitAttempted && !!errors[field];
@@ -224,6 +231,7 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
   const FIELD_ANCHORS: [keyof FormErrors, string][] = [
     ['title', 'cb-title'],
     ['description', 'cb-description'],
+    ['instructor', 'cb-instructor'],
     ['location', 'cb-location'],
     ['startDate', 'cb-date'],
     ['startTime', 'cb-start-time'],
@@ -262,8 +270,9 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
       startTime !== '' ||
       endTime !== '' ||
       imageFile != null ||
+      instructor != null ||
       sessionDays.some((d) => d.date != null || d.startTime !== '' || d.endTime !== ''),
-    [title, description, location, capacity, price, weeks, startDate, startTime, endTime, imageFile, sessionDays],
+    [title, description, location, capacity, price, weeks, startDate, startTime, endTime, imageFile, instructor, sessionDays],
   );
   const { blocker, bypass } = useUnsavedChanges(isDirty);
 
@@ -321,7 +330,8 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
           seller_id: currentSeller.id,
           title: title.trim(),
           description: description.trim() || null,
-          instructor_name: null,
+          instructor_id: instructor?.id ?? null,
+          instructor_name: instructor?.name ?? null,
           format: dbFormat,
           start_date: courseStartDate,
           time_schedule: timeSchedule,
@@ -484,6 +494,25 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
                     </div>
                   )}
                 </Field>
+
+                {isStudio && currentSeller && (
+                  <Field
+                    label="Instruktør"
+                    htmlFor="cb-instructor"
+                    error={showError('instructor') ? errors.instructor : undefined}
+                  >
+                    {({ errorId }) => (
+                      <InstructorField
+                        id="cb-instructor"
+                        sellerId={currentSeller.id}
+                        value={instructor}
+                        onChange={setInstructor}
+                        aria-invalid={showError('instructor')}
+                        aria-describedby={errorId}
+                      />
+                    )}
+                  </Field>
+                )}
               </section>
 
               {/* Når */}

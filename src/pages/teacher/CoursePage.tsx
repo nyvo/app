@@ -46,6 +46,7 @@ import { type SessionDay, timeToMin } from '@/components/teacher/SessionDaysEdit
 import { teacherCancelSignup } from '@/services/signups';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { useAuth } from '@/contexts/AuthContext';
+import type { InstructorRef } from '@/components/teacher/InstructorField';
 import { friendlyError } from '@/lib/error-messages';
 import { GENERIC_ERROR } from '@/lib/error-strings';
 import { runWithRevert } from '@/lib/undo';
@@ -252,9 +253,11 @@ const CoursePage = () => {
   const [sessionDays, setSessionDays] = useState<SessionDay[]>([]);
   const [settingsAcceptsLateSignups, setSettingsAcceptsLateSignups] = useState(true);
   const [settingsPrice, setSettingsPrice] = useState(0);
+  const [settingsInstructor, setSettingsInstructor] = useState<InstructorRef | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
+  const [instructorError, setInstructorError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showCancelPreview, setShowCancelPreview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -292,6 +295,11 @@ const CoursePage = () => {
     setSettingsDropInPrice(courseData.dropInPrice);
     setSettingsAcceptsLateSignups(courseData.acceptsLateSignups);
     setSettingsPrice(courseData.price);
+    setSettingsInstructor(
+      courseData.instructorId && courseData.instructorName
+        ? { id: courseData.instructorId, name: courseData.instructorName }
+        : null,
+    );
     if (courseData.startDate) setSettingsDate(parseLocalDate(courseData.startDate));
   }, [courseData, sessionsStartTime]);
 
@@ -315,6 +323,7 @@ const CoursePage = () => {
     if (maxParticipants !== courseData.capacity) return true;
     if (settingsPrice !== courseData.price) return true;
     if (settingsDuration !== courseData.durationMinutes) return true;
+    if ((settingsInstructor?.id ?? null) !== (courseData.instructorId ?? null)) return true;
 
     if (courseData.format === 'single') {
       // Dirty when session count changed or any day differs from loaded sessions
@@ -345,7 +354,7 @@ const CoursePage = () => {
   }, [
     courseData, settingsTitle, settingsDescription, settingsLocation, settingsLocationAddress,
     maxParticipants, settingsDuration, settingsDate, settingsTime,
-    settingsPrice, sessionDays, sessions, sessionsStartTime,
+    settingsPrice, sessionDays, sessions, sessionsStartTime, settingsInstructor,
   ]);
 
   const { blocker, bypass } = useUnsavedChanges(isSettingsDirty);
@@ -434,6 +443,15 @@ const CoursePage = () => {
       return;
     }
     setLocationError(null);
+    // Studio courses carry a named instructor — the picker has no "none"
+    // choice, so an unset field (incl. after the instructor was deleted)
+    // blocks the save until a new one is picked.
+    const isStudio = currentSeller?.operating_model === 'studio';
+    if (isStudio && !settingsInstructor) {
+      setInstructorError('Velg en instruktør.');
+      return;
+    }
+    setInstructorError(null);
     setIsSaving(true);
     setSaveError(null);
     try {
@@ -467,6 +485,16 @@ const CoursePage = () => {
         price: settingsPrice,
         time_schedule: timeSchedule,
         duration: settingsDuration,
+        // Only studios write the instructor columns (validated non-null
+        // above). Omitting the keys for solo sellers makes the RPC keep
+        // existing values, so a retained name on an old course survives
+        // unrelated edits.
+        ...(isStudio
+          ? {
+              instructor_id: settingsInstructor!.id,
+              instructor_name: settingsInstructor!.name,
+            }
+          : {}),
       };
 
       // Desired full session state for the RPC's server-side diff. The 🔴
@@ -551,6 +579,12 @@ const CoursePage = () => {
               durationMinutes: settingsDuration || prev.durationMinutes,
               allowsDropIn: settingsAllowsDropIn,
               dropInPrice: effectiveDropInPrice,
+              ...(isStudio
+                ? {
+                    instructorId: settingsInstructor!.id,
+                    instructorName: settingsInstructor!.name,
+                  }
+                : {}),
             }
           : null,
       );
@@ -823,6 +857,11 @@ const CoursePage = () => {
     setSettingsDropInPrice(courseData.dropInPrice);
     // Drop-in is instant-commit, so it's intentionally NOT reset by Forkast —
     // any drop-in change has already been persisted independently.
+    setSettingsInstructor(
+      courseData.instructorId && courseData.instructorName
+        ? { id: courseData.instructorId, name: courseData.instructorName }
+        : null,
+    );
     if (courseData.startDate) setSettingsDate(parseLocalDate(courseData.startDate));
     if (sessionsStartTime) setSettingsTime(sessionsStartTime);
     // Reset per-day session editor from the loaded sessions (single format).
@@ -832,6 +871,7 @@ const CoursePage = () => {
     setSaveError(null);
     setTitleError(null);
     setLocationError(null);
+    setInstructorError(null);
   };
 
   if (!courseId) {
@@ -1049,6 +1089,10 @@ const CoursePage = () => {
               courseFormat={courseData.format === 'series' ? 'series' : 'single'}
               price={settingsPrice}
               onPriceChange={setSettingsPrice}
+              instructor={settingsInstructor}
+              onInstructorChange={(v) => { setSettingsInstructor(v); if (v) setInstructorError(null); }}
+              instructorSellerId={currentSeller?.operating_model === 'studio' ? currentSeller.id : null}
+              instructorError={instructorError}
               isDirty={isSettingsDirty}
               saveError={saveError}
               onSave={handleSave}

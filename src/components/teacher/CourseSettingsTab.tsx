@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { InstructorField, type InstructorRef } from '@/components/teacher/InstructorField';
 
 interface CourseSettingsTabProps {
   // General info
@@ -36,6 +37,13 @@ interface CourseSettingsTabProps {
   titleError?: string | null;
   settingsDescription: string;
   onDescriptionChange: (description: string) => void;
+  /** Saved-instructor picker (studios only) — null sellerId hides the field.
+   *  Required when shown: the parent blocks saves and sets instructorError
+   *  while the picker is unset. */
+  instructor: InstructorRef | null;
+  onInstructorChange: (v: InstructorRef | null) => void;
+  instructorSellerId: string | null;
+  instructorError?: string | null;
 
   // Image
   settingsImageUrl: string | null;
@@ -121,6 +129,10 @@ export const CourseSettingsTab = ({
   titleError,
   settingsDescription,
   onDescriptionChange,
+  instructor,
+  onInstructorChange,
+  instructorSellerId,
+  instructorError,
   settingsImageUrl,
   onImageFileChange,
   onImageRemove,
@@ -318,6 +330,23 @@ export const CourseSettingsTab = ({
               onChange={onDescriptionChange}
             />
           </div>
+
+          {instructorSellerId && (
+            <div className="space-y-2">
+              <Label htmlFor="settings-instructor">Instruktør</Label>
+              <InstructorField
+                id="settings-instructor"
+                sellerId={instructorSellerId}
+                value={instructor}
+                onChange={onInstructorChange}
+                aria-invalid={!!instructorError}
+                aria-describedby={instructorError ? 'settings-instructor-error' : undefined}
+              />
+              {instructorError && (
+                <FieldError id="settings-instructor-error">{instructorError}</FieldError>
+              )}
+            </div>
+          )}
         </SettingsRow>
 
         <SettingsRow

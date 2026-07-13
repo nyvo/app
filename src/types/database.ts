@@ -166,6 +166,7 @@ export type Database = {
           id: string
           idempotency_key: string | null
           image_url: string | null
+          instructor_id: string | null
           instructor_name: string | null
           location: string | null
           location_address: string | null
@@ -194,6 +195,7 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           image_url?: string | null
+          instructor_id?: string | null
           instructor_name?: string | null
           location?: string | null
           location_address?: string | null
@@ -222,6 +224,7 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           image_url?: string | null
+          instructor_id?: string | null
           instructor_name?: string | null
           location?: string | null
           location_address?: string | null
@@ -242,6 +245,42 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "courses_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courses_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instructors: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          seller_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          seller_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructors_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "sellers"
@@ -1416,6 +1455,7 @@ export type SellerUpdate = TablesUpdate<"sellers">
 export type Course = Tables<"courses">
 export type CourseInsert = TablesInsert<"courses">
 export type CourseUpdate = TablesUpdate<"courses">
+export type Instructor = Tables<"instructors">
 export type CourseSession = Tables<"course_sessions">
 export type CourseSessionInsert = TablesInsert<"course_sessions">
 export type CourseSessionUpdate = TablesUpdate<"course_sessions">
