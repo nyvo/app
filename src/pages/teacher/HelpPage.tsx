@@ -135,7 +135,9 @@ export default function HelpPage() {
         title="Hjelp"
         description="Send oss en melding, så hjelper vi deg videre."
       >
-        <Card>
+        {/* Outlined, not filled — hairline border instead of the default
+            bg-panel fill (matches the outlined info cards elsewhere). */}
+        <Card className="border border-border-subtle bg-transparent">
           <CardContent>
           <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-2">

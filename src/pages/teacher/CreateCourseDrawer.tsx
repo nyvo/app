@@ -691,10 +691,11 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
             </div>
           </div>
 
-          <SheetFooter className="flex-row items-center justify-end gap-2">
+          <SheetFooter className="flex-row items-center gap-2">
             <Button
               variant="secondary"
               size="lg"
+              className="flex-1"
               onClick={handleSaveDraft}
               loading={submitting === 'draft'}
               disabled={submitting === 'publish'}
@@ -704,6 +705,7 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
             </Button>
             <Button
               size="lg"
+              className="flex-1"
               onClick={handlePublish}
               loading={submitting === 'publish'}
               disabled={submitting === 'draft'}
