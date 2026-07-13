@@ -1,11 +1,8 @@
 # Course instructor attribution — design
 
 **Date:** 2026-07-14
-**Status:** Draft — awaiting user review
-**Decision made without user input (user was away):** instructor = lightweight saved
-entry owned by the seller (name only, no login, no invite). Alternatives considered
-and rejected below. If the user wants linked accounts or photos/bios, revisit before
-planning.
+**Status:** Approved by user 2026-07-14 (lightweight model + mockups confirmed;
+studio-only gating chosen by user).
 
 ## Problem
 
@@ -28,6 +25,14 @@ NULL on every row.
 Non-goals (YAGNI, revisit later if asked): instructor photos/bios, instructor
 logins/invites, per-session instructors, filtering public pages by instructor,
 showing the instructor in the seller's own course list.
+
+**Parked for post-launch (user decision 2026-07-14):** exposing the picker to solo
+sellers (`operating_model = 'solo'`) — solo teachers do sometimes co-hold courses,
+but proper support wants multi-teacher display work on the public course page.
+Parking is safe: gating is purely form-level visibility, solo courses keep
+`instructor_id`/`instructor_name` NULL exactly as today, and un-gating later touches
+no existing rows. `publicCourses.flattenInstructors` already models instructors as
+an array, so multi-instructor display has a ready-made shape.
 
 ## Approaches considered
 
@@ -97,8 +102,10 @@ creation is a direct insert and `CourseInsert`/`CourseUpdate` already include
 
 ## UI
 
-**Picker (shared component, used in both places).** An optional "Instruktør" field:
-a select listing the seller's saved instructors, plus:
+**Picker (shared component, used in both places).** Rendered only for studio
+accounts (`currentSeller.operating_model === 'studio'` — same gate idiom as
+`AffiliationsSection`); solo sellers see no change to their course forms. An
+optional "Instruktør" field: a select listing the seller's saved instructors, plus:
 
 - an inline "Legg til ny…" action that takes a name, creates the row, and selects
   it;
@@ -116,8 +123,10 @@ selected `instructor_id` and its `name` as `instructor_name` (replacing the
 hardcoded null). No instructor selected → both null, exactly as today.
 
 **CourseSettingsTab.** Add the same picker to the general-info section, wired
-through the existing dirty-form/save flow; saving writes both columns via
-`updateCourse`.
+through the existing dirty-form/save flow. The settings save goes through the
+transactional `save_course_schedule` RPC (not `updateCourse`) — the RPC whitelists
+course fields with key-presence guards, so the migration must add
+`instructor_id`/`instructor_name` CASE lines to it.
 
 **Copy note:** the StudioPage affiliations section already uses "instruktører" for
 affiliated guest sellers. Contexts don't overlap (that's the storefront page; this
@@ -137,14 +146,16 @@ word in the management dialog title if it can read as referring to affiliates.
 
 ## Testing
 
-- Service tests: rename propagates `instructor_name` to that instructor's courses
-  and no others; delete nulls the FK and preserves names.
-- Migration sanity: `courses.instructor_id` repoint applies cleanly on a DB where
-  the column is all-NULL.
-- Form tests (follow `CoursePage.test.ts` conventions): create with/without
-  instructor; settings save writes both columns.
-- Manual: course detail shows the "Instruktør" row for an attributed course, embed
-  calendar and studio agenda show the name.
+The repo unit-tests pure functions only (no supabase-client mock harness), and all
+new logic here is thin DB/UI glue — so verification is typecheck + the existing
+vitest suite + a scripted manual click-through against the dev DB:
+
+- Migration sanity: `courses.instructor_id` repoint applies cleanly (column is
+  all-NULL).
+- Manual: create with/without instructor; rename propagates to the course's public
+  page; delete preserves the name on existing courses and clears the picker;
+  «Instruktør» row on course detail + embed calendar show the name; solo sellers
+  see no field.
 
 ## Open questions for the user
 
