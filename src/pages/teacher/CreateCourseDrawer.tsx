@@ -34,6 +34,7 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { LocationField } from '@/components/ui/location-field';
+import { InstructorField, type InstructorRef } from '@/components/teacher/InstructorField';
 import { useAuth } from '@/contexts/AuthContext';
 import { createCourse, updateCourse, publishCourse } from '@/services/courses';
 import { publishNeedsPaymentSetup } from '@/lib/payments';
@@ -123,6 +124,8 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
   const [format, setFormat] = useState<FormatType>('single');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [instructor, setInstructor] = useState<InstructorRef | null>(null);
+  const isStudio = currentSeller?.operating_model === 'studio';
   // series fields
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState('');
@@ -262,8 +265,9 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
       startTime !== '' ||
       endTime !== '' ||
       imageFile != null ||
+      instructor != null ||
       sessionDays.some((d) => d.date != null || d.startTime !== '' || d.endTime !== ''),
-    [title, description, location, capacity, price, weeks, startDate, startTime, endTime, imageFile, sessionDays],
+    [title, description, location, capacity, price, weeks, startDate, startTime, endTime, imageFile, instructor, sessionDays],
   );
   const { blocker, bypass } = useUnsavedChanges(isDirty);
 
@@ -321,7 +325,8 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
           seller_id: currentSeller.id,
           title: title.trim(),
           description: description.trim() || null,
-          instructor_name: null,
+          instructor_id: instructor?.id ?? null,
+          instructor_name: instructor?.name ?? null,
           format: dbFormat,
           start_date: courseStartDate,
           time_schedule: timeSchedule,
@@ -484,6 +489,19 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
                     </div>
                   )}
                 </Field>
+
+                {isStudio && currentSeller && (
+                  <Field label="Instruktør (valgfritt)" htmlFor="cb-instructor">
+                    {() => (
+                      <InstructorField
+                        id="cb-instructor"
+                        sellerId={currentSeller.id}
+                        value={instructor}
+                        onChange={setInstructor}
+                      />
+                    )}
+                  </Field>
+                )}
               </section>
 
               {/* Når */}
