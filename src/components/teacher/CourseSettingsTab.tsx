@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { InstructorField, type InstructorRef } from '@/components/teacher/InstructorField';
 
 interface CourseSettingsTabProps {
   // General info
@@ -36,6 +37,10 @@ interface CourseSettingsTabProps {
   titleError?: string | null;
   settingsDescription: string;
   onDescriptionChange: (description: string) => void;
+  /** Saved-instructor picker (studios only) — null sellerId hides the field. */
+  instructor: InstructorRef | null;
+  onInstructorChange: (v: InstructorRef | null) => void;
+  instructorSellerId: string | null;
 
   // Image
   settingsImageUrl: string | null;
@@ -121,6 +126,9 @@ export const CourseSettingsTab = ({
   titleError,
   settingsDescription,
   onDescriptionChange,
+  instructor,
+  onInstructorChange,
+  instructorSellerId,
   settingsImageUrl,
   onImageFileChange,
   onImageRemove,
@@ -318,6 +326,18 @@ export const CourseSettingsTab = ({
               onChange={onDescriptionChange}
             />
           </div>
+
+          {instructorSellerId && (
+            <div className="space-y-2">
+              <Label htmlFor="settings-instructor">Instruktør (valgfritt)</Label>
+              <InstructorField
+                id="settings-instructor"
+                sellerId={instructorSellerId}
+                value={instructor}
+                onChange={onInstructorChange}
+              />
+            </div>
+          )}
         </SettingsRow>
 
         <SettingsRow

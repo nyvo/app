@@ -46,6 +46,7 @@ import { type SessionDay, timeToMin } from '@/components/teacher/SessionDaysEdit
 import { teacherCancelSignup } from '@/services/signups';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { useAuth } from '@/contexts/AuthContext';
+import type { InstructorRef } from '@/components/teacher/InstructorField';
 import { friendlyError } from '@/lib/error-messages';
 import { GENERIC_ERROR } from '@/lib/error-strings';
 import { runWithRevert } from '@/lib/undo';
@@ -252,6 +253,7 @@ const CoursePage = () => {
   const [sessionDays, setSessionDays] = useState<SessionDay[]>([]);
   const [settingsAcceptsLateSignups, setSettingsAcceptsLateSignups] = useState(true);
   const [settingsPrice, setSettingsPrice] = useState(0);
+  const [settingsInstructor, setSettingsInstructor] = useState<InstructorRef | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
@@ -292,6 +294,11 @@ const CoursePage = () => {
     setSettingsDropInPrice(courseData.dropInPrice);
     setSettingsAcceptsLateSignups(courseData.acceptsLateSignups);
     setSettingsPrice(courseData.price);
+    setSettingsInstructor(
+      courseData.instructorId && courseData.instructorName
+        ? { id: courseData.instructorId, name: courseData.instructorName }
+        : null,
+    );
     if (courseData.startDate) setSettingsDate(parseLocalDate(courseData.startDate));
   }, [courseData, sessionsStartTime]);
 
@@ -315,6 +322,7 @@ const CoursePage = () => {
     if (maxParticipants !== courseData.capacity) return true;
     if (settingsPrice !== courseData.price) return true;
     if (settingsDuration !== courseData.durationMinutes) return true;
+    if ((settingsInstructor?.id ?? null) !== (courseData.instructorId ?? null)) return true;
 
     if (courseData.format === 'single') {
       // Dirty when session count changed or any day differs from loaded sessions
@@ -345,7 +353,7 @@ const CoursePage = () => {
   }, [
     courseData, settingsTitle, settingsDescription, settingsLocation, settingsLocationAddress,
     maxParticipants, settingsDuration, settingsDate, settingsTime,
-    settingsPrice, sessionDays, sessions, sessionsStartTime,
+    settingsPrice, sessionDays, sessions, sessionsStartTime, settingsInstructor,
   ]);
 
   const { blocker, bypass } = useUnsavedChanges(isSettingsDirty);
@@ -467,6 +475,8 @@ const CoursePage = () => {
         price: settingsPrice,
         time_schedule: timeSchedule,
         duration: settingsDuration,
+        instructor_id: settingsInstructor?.id ?? null,
+        instructor_name: settingsInstructor?.name ?? null,
       };
 
       // Desired full session state for the RPC's server-side diff. The 🔴
@@ -551,6 +561,8 @@ const CoursePage = () => {
               durationMinutes: settingsDuration || prev.durationMinutes,
               allowsDropIn: settingsAllowsDropIn,
               dropInPrice: effectiveDropInPrice,
+              instructorId: settingsInstructor?.id ?? null,
+              instructorName: settingsInstructor?.name ?? null,
             }
           : null,
       );
@@ -1049,6 +1061,9 @@ const CoursePage = () => {
               courseFormat={courseData.format === 'series' ? 'series' : 'single'}
               price={settingsPrice}
               onPriceChange={setSettingsPrice}
+              instructor={settingsInstructor}
+              onInstructorChange={setSettingsInstructor}
+              instructorSellerId={currentSeller?.operating_model === 'studio' ? currentSeller.id : null}
               isDirty={isSettingsDirty}
               saveError={saveError}
               onSave={handleSave}

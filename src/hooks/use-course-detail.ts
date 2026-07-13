@@ -57,6 +57,8 @@ function mapCourseToComponentFormat(
     allowsDropIn,
     dropInPrice,
     acceptsLateSignups: courseData.accepts_late_signups,
+    instructorId: courseData.instructor_id ?? null,
+    instructorName: courseData.instructor_name ?? null,
   };
 }
 
