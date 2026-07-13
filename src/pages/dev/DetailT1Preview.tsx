@@ -118,7 +118,7 @@ function DevBar({ variant, onVariantChange }: { variant: Variant; onVariantChang
 
 // ── Mock data ───────────────────────────────────────────────────────────
 
-function makeMockCourse(variant: Variant): PublicCourseWithDetails {
+export function makeMockCourse(variant: Variant): PublicCourseWithDetails {
   const base: PublicCourseWithDetails = {
     id: 'mock-course',
     slug: 'yoga-for-nybegynnere',
@@ -253,7 +253,7 @@ function makeMockTiers(course: PublicCourseWithDetails, variant: Variant): Avail
   return tiers;
 }
 
-function makeMockSessions(courseId: string, variant: Variant): CourseSession[] {
+export function makeMockSessions(courseId: string, variant: Variant): CourseSession[] {
   const session = (
     id: string,
     session_date: string,

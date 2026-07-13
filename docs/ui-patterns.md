@@ -105,8 +105,10 @@ Label
   field errors.
 - One primary button; the paired "Avbryt" uses the `secondary` variant (per
   `button.tsx` convention).
-- Multi-step: steps show number + short name; completed = `--success` check
-  circle.
+- Multi-step: steps show number + short name; completed/attention markers use
+  the light `-subtle` pill treatment (`bg-success-subtle` check when done,
+  `bg-warning-subtle`/`bg-danger-subtle` when the current step needs action) —
+  never a solid coloured circle. See design-language § Chips / badges / status.
 
 ### 2.4 Settings
 - Use `SettingsRows` (label + one-line muted description left, control right,
@@ -148,8 +150,8 @@ Label
 
 ### 2.7 Onboarding / checklist
 - Vertical numbered list: number circle, weighted title, one-line muted
-  description, state on the right (`--success` check when done, button when
-  actionable).
+  description, state on the right (a `success-subtle` check marker when done —
+  the light-pill treatment, never a solid circle — button when actionable).
 - Completed steps stay visible and checked — don't remove them.
 - End with the "graduation" action (e.g. "Del profil") separated by whitespace.
 

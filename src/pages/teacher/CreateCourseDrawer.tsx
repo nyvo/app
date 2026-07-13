@@ -26,8 +26,13 @@ import {
   endTimeSlotsFor,
 } from '@/components/teacher/SessionDaysEditor';
 import type { SessionDay } from '@/components/teacher/SessionDaysEditor';
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
-import { PageShell } from '@/components/teacher/PageShell';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from '@/components/ui/sheet';
 import { LocationField } from '@/components/ui/location-field';
 import { useAuth } from '@/contexts/AuthContext';
 import { createCourse, updateCourse, publishCourse } from '@/services/courses';
@@ -57,8 +62,17 @@ interface FormErrors {
   price?: string;
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-lg font-medium text-foreground">{children}</h2>;
+// Section header — title is text-base (matches SettingsRows; the page h1 "Nytt
+// kurs" owns text-lg, so text-lg here competed with it), with an optional
+// one-line muted description that says what the section is for. The description
+// is what turns a bare list of inputs into guided sections.
+function SectionHeader({ title, description }: { title: string; description?: string }) {
+  return (
+    <div className="space-y-1">
+      <h2 className="text-base font-medium text-foreground">{title}</h2>
+      {description && <p className="text-sm text-foreground-muted">{description}</p>}
+    </div>
+  );
 }
 
 interface FieldRenderProps {
@@ -97,7 +111,11 @@ function Field({
   );
 }
 
-export default function CourseBuilderPage() {
+interface CreateCourseDrawerProps {
+  onClose: () => void;
+}
+
+export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps) {
   const navigate = useNavigate();
   const { currentSeller } = useAuth();
 
@@ -134,7 +152,6 @@ export default function CourseBuilderPage() {
   // Which footer action is in flight — only the clicked button shows its
   // spinner; the other is merely disabled.
   const [submitting, setSubmitting] = useState<'draft' | 'publish' | null>(null);
-  const isSubmitting = submitting !== null;
   // One key per builder visit — a retry after a failed request reuses it, so
   // a double submit can't create two courses (unique index on the column).
   const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
@@ -384,31 +401,25 @@ export default function CourseBuilderPage() {
   };
 
   return (
-    <div className="flex h-dvh flex-col bg-canvas">
-      <MobileTeacherHeader />
+    <>
+      <Sheet open onOpenChange={(o) => { if (!o) onClose(); }}>
+        <SheetContent side="right" className="w-full gap-0">
+          <SheetHeader>
+            <SheetTitle>Nytt kurs</SheetTitle>
+          </SheetHeader>
 
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        {/* narrow="form" (max-w-2xl) so the fields inside the panel's p-8 land
-            in the §2.3 480–560px band (672 − 64 gutters − 64 padding = 544px). */}
-        <PageShell title="Nytt kurs" narrow="form" animate={false} className="pb-12">
-
-          {/* Focused form column on ONE utility panel (one-shot form recipe:
-              grey bg-panel on the white page, white fields on top). Hierarchy
-              inside is type-size + whitespace (Circle/Eventbrite create-event
-              pattern): text-lg section headings over text-sm labels. */}
-          <div className="rounded-xl bg-panel p-6 sm:p-8">
-            <div className="space-y-10">
-              {/* Cover banner */}
-              <ImageField
-                value={null}
-                onChange={setImageFile}
-                onRemove={() => setImageFile(null)}
-                uploadLabel="Legg til et bilde"
-              />
-
-              {/* Format branches the whole form (Eventbrite puts "Type of event"
-                  first) — so it's the first choice after the cover. */}
-              <Field label="Type">
+          {/* Fields sit directly on the panel (no utility card); sections are
+              separated by hairline dividers instead of a card fill. Hierarchy is
+              type-size + whitespace (Circle/Eventbrite create-event pattern). */}
+          <div className="@container min-h-0 flex-1 overflow-y-auto px-6">
+            <div className="divide-y divide-border-subtle">
+              {/* Type — branches the whole form (Eventbrite puts "Type of event"
+                  first), so it's the first choice and the only titled section. */}
+              <section className="space-y-3 py-6">
+                <SectionHeader
+                  title="Type"
+                  description="Enkelttime for én økt, eller kursrekke over flere uker."
+                />
                 <SegmentedTabs<FormatType>
                   value={format}
                   onChange={(v) => {
@@ -422,12 +433,21 @@ export default function CourseBuilderPage() {
                   role="radiogroup"
                   stretch
                 />
-              </Field>
+              </section>
 
-              {/* Om kurset */}
-              <section className="space-y-5">
-                <SectionTitle>Om kurset</SectionTitle>
+              {/* Cover banner — a short banner, not a tall hero. */}
+              <section className="space-y-3 py-6">
+                <ImageField
+                  value={null}
+                  onChange={setImageFile}
+                  onRemove={() => setImageFile(null)}
+                  uploadLabel="Legg til et bilde"
+                  pickerClassName="aspect-[3/1]"
+                />
+              </section>
 
+              {/* Tittel + Beskrivelse */}
+              <section className="space-y-5 py-6">
                 <Field
                   label="Tittel"
                   htmlFor="cb-title"
@@ -466,9 +486,7 @@ export default function CourseBuilderPage() {
               </section>
 
               {/* Når */}
-              <section className="space-y-5">
-                <SectionTitle>Når</SectionTitle>
-
+              <section className="space-y-5 py-6">
                 {/* Single format: per-day editor */}
                 {format === 'single' && (
                   <div id="cb-session-days">
@@ -482,7 +500,7 @@ export default function CourseBuilderPage() {
                 {/* Series format: Startdato + Tidspunkt + Antall uker */}
                 {format === 'series' && (
                   <>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
                       <Field
                         label="Startdato"
                         htmlFor="cb-date"
@@ -598,9 +616,7 @@ export default function CourseBuilderPage() {
               </section>
 
               {/* Hvor og pris */}
-              <section className="space-y-5">
-                <SectionTitle>Hvor og pris</SectionTitle>
-
+              <section className="space-y-5 py-6">
                 <Field
                   label="Sted"
                   htmlFor="cb-location"
@@ -623,7 +639,7 @@ export default function CourseBuilderPage() {
                   )}
                 </Field>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 @sm:grid-cols-2">
                   <Field
                     label="Antall plasser"
                     htmlFor="cb-capacity"
@@ -673,21 +689,8 @@ export default function CourseBuilderPage() {
               </section>
             </div>
           </div>
-        </PageShell>
-      </div>
 
-      {/* Pinned footer */}
-      <div className="border-t border-border bg-background">
-        <div className="mx-auto flex max-w-2xl items-center justify-between gap-2 px-4 py-3 sm:px-6 lg:px-8">
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={() => navigate(routes.courses)}
-            disabled={isSubmitting}
-          >
-            Avbryt
-          </Button>
-          <div className="flex items-center gap-2">
+          <SheetFooter className="flex-row items-center justify-end gap-2">
             <Button
               variant="secondary"
               size="lg"
@@ -707,9 +710,9 @@ export default function CourseBuilderPage() {
             >
               Publiser
             </Button>
-          </div>
-        </div>
-      </div>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       <PublishCourseDialog
         open={showPublishDialog}
@@ -722,6 +725,6 @@ export default function CourseBuilderPage() {
       />
 
       <UnsavedChangesDialog blocker={blocker} />
-    </div>
+    </>
   );
 }

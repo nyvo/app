@@ -116,6 +116,9 @@ function timeplanHeaderStatus(
   if (sessions[0].session_date > today) {
     return `Kurset starter ${dayMonth(sessions[0].session_date)}`;
   }
+  // A single day has no progress to track — "Dag 1/1" is noise, so drop it
+  // once the course is underway (the pre-start "Kurset starter" still shows).
+  if (total === 1) return null;
   const current = sessions.filter((s) => s.session_date <= today).length;
   return `${unit} ${current}/${total}`;
 }
@@ -194,8 +197,10 @@ export function CourseOverviewTab({
         <StatRow stats={stats} />
       )}
 
-      {/* Tid og sted — two equal-height cards inside one rhythm. */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      {/* Tid og sted — two equal-height cards inside one rhythm. A shared
+          min-height (the tallest Timeplan state — full list + "Se alle timer")
+          keeps the Sted map from being squished when Timeplan is short. */}
+      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-h-[302px]">
         <TimeplanCard
           sessions={ordered}
           loading={sessionsLoading}
@@ -405,12 +410,22 @@ function TimeplanCard({
   // future date that's been called off isn't "next"). `sessions` is already
   // sorted ascending, so the first match is the earliest.
   const nextId = sessions.find((s) => s.session_date >= today && s.status !== 'cancelled')?.id;
+  // When every session is shown (2–3 days, no "Se alle timer"), stretch the
+  // rows to split the panel evenly so the card isn't empty at the bottom. With
+  // a "Se alle timer" link (>3 sessions) the rows keep their natural height and
+  // the link trails below.
+  const showAll = sessions.length > preview.length;
   return (
     <FramedCard title="Timeplan" action={statusLabel}>
       <FramedCardPanel>
         {/* Dividers only between the session rows — the trailing "Se alle
             timer" is a plain link at the bottom, not a fourth list row. */}
-        <div className="divide-y divide-border-subtle">
+        <div
+          className={cn(
+            'divide-y divide-border-subtle',
+            !showAll && 'flex flex-1 flex-col',
+          )}
+        >
           {preview.map((s) => (
             <SessionRow
               key={s.id}
@@ -418,14 +433,15 @@ function TimeplanCard({
               today={today}
               isNext={s.id === nextId}
               onEdit={() => onEditSession(s.id)}
+              fill={!showAll}
             />
           ))}
         </div>
-        {sessions.length > preview.length && (
+        {showAll && (
           <button
             type="button"
             onClick={onOpenAll}
-            className="mx-4 mb-3.5 mt-1 w-fit rounded text-left text-sm font-medium text-foreground-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            className="mx-4 mb-3.5 mt-1 w-fit rounded text-left text-sm font-medium text-foreground-muted underline underline-offset-4 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           >
             Se alle timer
           </button>
@@ -440,11 +456,14 @@ function SessionRow({
   today,
   isNext,
   onEdit,
+  fill,
 }: {
   session: CourseSession;
   today: string;
   isNext: boolean;
   onEdit: () => void;
+  /** Grow to split the panel evenly (2–3 day cards with no "Se alle timer"). */
+  fill?: boolean;
 }) {
   const cancelled = session.status === 'cancelled';
   const past = session.session_date < today;
@@ -474,7 +493,12 @@ function SessionRow({
 
   // Sessions are divided rows inside the white inset. Hover never changes
   // the fill — affordance is the cursor, the chevron nudge and the focus ring.
-  const layout = 'flex w-full items-stretch gap-4 px-4 py-3';
+  // `fill` rows grow evenly and centre their content so a sparse card reads as
+  // deliberate rather than empty at the bottom.
+  const layout = cn(
+    'flex w-full items-stretch gap-4 px-4 py-3',
+    fill && 'flex-1 items-center',
+  );
 
   // Editable (upcoming) rows are the tap target — chevron nudge, open the
   // reschedule modal.

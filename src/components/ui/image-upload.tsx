@@ -30,6 +30,10 @@ interface ImageFieldProps {
   emptyLabel?: string
   ariaLabel?: string
   className?: string
+  /** Extra classes for the cover picker button itself — applied last, so an
+   *  `aspect-*` here overrides the default 16/10 cover ratio (e.g. a shorter
+   *  banner). No effect on the avatar variant. */
+  pickerClassName?: string
 }
 
 function validateFile(file: File): string | null {
@@ -59,6 +63,7 @@ export function ImageField({
   emptyLabel = 'Dra bildet hit, eller klikk for å laste opp.',
   ariaLabel,
   className,
+  pickerClassName,
 }: ImageFieldProps) {
   const id = useId()
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -193,6 +198,7 @@ export function ImageField({
         displayError && 'ring-2 ring-danger/20',
         dragActive && !displayUrl && 'border-foreground bg-muted',
         isDisabled && !loading && 'opacity-50',
+        pickerClassName,
       )}
     >
       {displayUrl ? (

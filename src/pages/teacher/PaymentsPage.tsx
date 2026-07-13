@@ -152,8 +152,6 @@ const PaymentsPage = () => {
 
   // ─── One view-model per onboarding state, rendered by PayoutSetupCard ───
   let h2: string;
-  let counter: string;
-  let step2Title = STEP_2_TITLE;
   let step2Tone: MarkerTone = 'neutral';
   let step2Desc: string;
   let step2Action: ReactNode;
@@ -161,13 +159,11 @@ const PaymentsPage = () => {
 
   if (!stripeStarted && !stripeConnected) {
     h2 = 'Sett opp utbetalinger';
-    counter = 'Steg 1 av 3';
     steps = [
       {
         title: STEP_1_TITLE,
         status: 'current',
-        description:
-          'Du blir sendt til Stripe – betalingspartneren vår – for å bekrefte virksomheten og legge inn kontonummeret pengene skal gå til.',
+        description: 'Legg inn kontonummer og bekreft identiteten din hos Stripe.',
         action: (
           <Button
             onClick={handleStartStripe}
@@ -182,26 +178,23 @@ const PaymentsPage = () => {
       { title: STEP_3_TITLE, status: 'upcoming' },
     ];
   } else if (stripeStarted && !stripeConnected) {
-    counter = 'Steg 2 av 3';
     if (stripeStatus === 'rejected') {
       h2 = 'Søknaden ble avslått';
-      step2Title = 'Søknaden ble ikke godkjent';
       step2Tone = 'danger';
-      step2Desc = `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg videre.`;
+      step2Desc = `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg.`;
       step2Action = (
         <Button asChild>
           <a href={`mailto:${COMPANY.email}`}>Kontakt oss</a>
         </Button>
       );
     } else {
-      h2 = 'Fullfør oppsettet';
       if (stripeStatus === 'restricted') {
-        step2Title = 'Vi mangler litt informasjon';
+        h2 = 'Vi mangler litt informasjon';
         step2Tone = 'warning';
-        step2Desc = 'Fyll inn det som gjenstår, så aktiverer vi utbetalinger så snart alt er på plass.';
+        step2Desc = 'Fyll inn det som mangler, så aktiverer vi utbetalinger.';
       } else {
-        step2Desc =
-          'Vi aktiverer utbetalinger automatisk så snart alt er godkjent. Mangler det noe, kan du fortsette der du slapp.';
+        h2 = 'Fullfør oppsettet';
+        step2Desc = 'Vi aktiverer utbetalinger så snart alt er godkjent.';
       }
       step2Action = (
         <Button
@@ -215,12 +208,11 @@ const PaymentsPage = () => {
     }
     steps = [
       { title: STEP_1_TITLE, status: 'done' },
-      { title: step2Title, status: 'current', tone: step2Tone, description: step2Desc, action: step2Action },
+      { title: STEP_2_TITLE, status: 'current', tone: step2Tone, description: step2Desc, action: step2Action },
       { title: STEP_3_TITLE, status: 'upcoming' },
     ];
   } else {
     h2 = 'Utbetalingene er klare';
-    counter = 'Fullført';
     steps = [
       { title: STEP_1_TITLE, status: 'done' },
       { title: STEP_2_TITLE, status: 'done' },
@@ -228,14 +220,13 @@ const PaymentsPage = () => {
         title: STEP_3_TITLE,
         status: 'current',
         tone: 'success',
-        description:
-          'Pengene overføres automatisk til bankkontoen din. Saldo og alle utbetalinger finner du i oversikten.',
+        description: 'Pengene overføres automatisk til kontoen din.',
         action: <Button onClick={handleOpenStripeDashboard}>Se oversikt</Button>,
       },
     ];
   }
 
-  const viewModel: PayoutSetupViewModel = { h2, counter, steps };
+  const viewModel: PayoutSetupViewModel = { h2, steps };
 
   // Same layout skeleton as the other settings pages (profile, studio):
   // default-width PageShell + SettingsRows sections, not a centered column.

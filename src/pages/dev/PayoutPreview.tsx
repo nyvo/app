@@ -1,12 +1,17 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   PayoutSetupCard,
   PayoutFaqSection,
   type PayoutSetupViewModel,
 } from '@/components/teacher/PayoutSetupCard';
+import { PayoutStats, type PayoutRow } from '@/components/teacher/PayoutStats';
+import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
 import { ErrorState } from '@/components/ui/error-state';
 import { COMPANY } from '@/lib/company';
 import { DevPage, PreviewSection } from './_kit';
+import { buildMockSeries, buildEmptySeries } from './IncomeChartPreview';
+import type { IncomeRange } from '@/services/income';
 
 /**
  * /dev/payout-preview — auth-free preview of the payouts settings timeline.
@@ -31,13 +36,11 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
     description: 'Selgeren har ikke startet Stripe-onboardingen ennå.',
     viewModel: {
       h2: 'Sett opp utbetalinger',
-      counter: 'Steg 1 av 3',
       steps: [
         {
           title: STEP_1_TITLE,
           status: 'current',
-          description:
-            'Du blir sendt til Stripe – betalingspartneren vår – for å bekrefte virksomheten og legge inn kontonummeret pengene skal gå til.',
+          description: 'Legg inn kontonummer og bekreft identiteten din hos Stripe.',
           action: <Button onClick={noop}>Kom i gang</Button>,
         },
         { title: STEP_2_TITLE, status: 'upcoming' },
@@ -51,14 +54,12 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
     description: 'Startet hos Stripe, venter på at kontrollen fullføres.',
     viewModel: {
       h2: 'Fullfør oppsettet',
-      counter: 'Steg 2 av 3',
       steps: [
         { title: STEP_1_TITLE, status: 'done' },
         {
           title: STEP_2_TITLE,
           status: 'current',
-          description:
-            'Vi aktiverer utbetalinger automatisk så snart alt er godkjent. Mangler det noe, kan du fortsette der du slapp.',
+          description: 'Vi aktiverer utbetalinger så snart alt er godkjent.',
           action: <Button onClick={noop}>Fortsett oppsettet</Button>,
         },
         { title: STEP_3_TITLE, status: 'upcoming' },
@@ -70,15 +71,14 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
     label: '3 — Mangler informasjon',
     description: 'Stripe trenger mer informasjon før kontoen kan aktiveres.',
     viewModel: {
-      h2: 'Fullfør oppsettet',
-      counter: 'Steg 2 av 3',
+      h2: 'Vi mangler litt informasjon',
       steps: [
         { title: STEP_1_TITLE, status: 'done' },
         {
-          title: 'Vi mangler litt informasjon',
+          title: STEP_2_TITLE,
           status: 'current',
           tone: 'warning',
-          description: 'Fyll inn det som gjenstår, så aktiverer vi utbetalinger så snart alt er på plass.',
+          description: 'Fyll inn det som mangler, så aktiverer vi utbetalinger.',
           action: <Button onClick={noop}>Fortsett oppsettet</Button>,
         },
         { title: STEP_3_TITLE, status: 'upcoming' },
@@ -91,14 +91,13 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
     description: 'Stripe avslo søknaden om en betalingskonto.',
     viewModel: {
       h2: 'Søknaden ble avslått',
-      counter: 'Steg 2 av 3',
       steps: [
         { title: STEP_1_TITLE, status: 'done' },
         {
-          title: 'Søknaden ble ikke godkjent',
+          title: STEP_2_TITLE,
           status: 'current',
           tone: 'danger',
-          description: `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg videre.`,
+          description: `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg.`,
           action: (
             <Button asChild>
               <a href={`mailto:${COMPANY.email}`}>Kontakt oss</a>
@@ -115,7 +114,6 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
     description: 'Utbetalinger er satt opp og klare til bruk.',
     viewModel: {
       h2: 'Utbetalingene er klare',
-      counter: 'Fullført',
       steps: [
         { title: STEP_1_TITLE, status: 'done' },
         { title: STEP_2_TITLE, status: 'done' },
@@ -123,7 +121,7 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
           title: STEP_3_TITLE,
           status: 'current',
           tone: 'success',
-          description: 'Pengene overføres automatisk til bankkontoen din. Saldo og alle utbetalinger finner du i oversikten.',
+          description: 'Pengene overføres automatisk til kontoen din.',
           action: <Button onClick={noop}>Se oversikt</Button>,
         },
       ],
@@ -131,12 +129,52 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
   },
 ];
 
+const MOCK_PAYOUTS: PayoutRow[] = [
+  { id: 'p1', date: '11. juli 2026', amount: 3200, status: 'in_transit', accountLast4: '1234' },
+  { id: 'p2', date: '4. juli 2026', amount: 1750, status: 'paid', accountLast4: '1234' },
+  { id: 'p3', date: '27. juni 2026', amount: 2400, status: 'paid', accountLast4: '1234' },
+  { id: 'p4', date: '20. juni 2026', amount: 900, status: 'paid', accountLast4: '1234' },
+];
+
+// Wraps PayoutStats with the reused dashboard IncomeChart + its own range
+// state, mirroring how the real page composes them.
+function PayoutStatsPreview({ empty }: { empty?: boolean }) {
+  const [range, setRange] = useState<IncomeRange>('month');
+  const series = empty ? buildEmptySeries(range) : buildMockSeries(range);
+  return (
+    <PayoutStats
+      inTransit={empty ? 0 : 3200}
+      paidYearToDate={empty ? 0 : 24850}
+      nextPayoutDate={empty ? null : '14. juli'}
+      payouts={empty ? [] : MOCK_PAYOUTS}
+      onOpenStripe={noop}
+      chart={
+        <IncomeChart series={series} isLoading={false} range={range} onRangeChange={setRange} />
+      }
+    />
+  );
+}
+
 const PayoutPreview = () => {
   return (
     <DevPage
       title="Utbetalinger"
-      description="Fem onboardingtilstander for /settings/payouts (PaymentsPage), FAQ-seksjonen og feiltilstanden ved mislykket kontohenting."
+      description="Onboardet statistikk-visning (forslag) + de fem onboardingtilstandene for /settings/payouts (PaymentsPage), FAQ-seksjonen og feiltilstanden."
     >
+      <PreviewSection
+        label="Statistikk — ferdig onboardet (forslag)"
+        description="Erstatter «steg 3»-visningen når utbetalinger er aktive: tre nøkkeltall (på vei / utbetalt i år / neste utbetaling), siste utbetalinger, og en lenke til Stripe for kvitteringer. Fôret med mock-data — den ekte siden henter tallene fra en Stripe-edge-funksjon."
+      >
+        <PayoutStatsPreview />
+      </PreviewSection>
+
+      <PreviewSection
+        label="Statistikk — ingen utbetalinger ennå"
+        description="Tom liste — det en fersk (nettopp onboardet) selger ser før første betalte kurs."
+      >
+        <PayoutStatsPreview empty />
+      </PreviewSection>
+
       {STATES.map((s) => (
         <PreviewSection key={s.id} label={s.label} description={s.description}>
           <PayoutSetupCard viewModel={s.viewModel} />

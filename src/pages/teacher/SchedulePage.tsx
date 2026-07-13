@@ -294,7 +294,7 @@ const SchedulePage = () => {
                   </div>
                   <div className="space-y-3 pb-6">
                     {[1, 2].map((j) => (
-                      <div key={j} className="rounded-xl bg-muted px-5 py-4">
+                      <div key={j} className="rounded-xl bg-panel px-5 py-4">
                         <Skeleton className="h-4 w-48" />
                         <Skeleton className="mt-1.5 h-3.5 w-72 max-w-full" />
                       </div>
@@ -401,7 +401,7 @@ export function SessionCard({ session }: { session: SessionRow }) {
     <Link
       to={{ search: `?kurs=${session.courseId}&sess=${session.id}&from=schedule` }}
       className={cn(
-        'block rounded-xl bg-muted px-5 py-4 outline-none transition-colors duration-150 hover:bg-hover',
+        'block rounded-xl bg-panel px-5 py-4 outline-none transition-colors duration-150 hover:bg-hover',
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
       )}
     >

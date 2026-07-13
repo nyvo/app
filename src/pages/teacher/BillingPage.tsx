@@ -211,7 +211,7 @@ const BillingPage = () => {
           // bounded retry instead of a confidently-wrong view.
           <ErrorState
             title="Kunne ikke hente kontoinformasjon"
-            message="Prøv igjen om litt."
+            message=""
             onRetry={refreshSellers}
           />
         ) : (
@@ -323,9 +323,9 @@ export function BillingPlanSections({
   return (
     <div className="space-y-8">
       {isPastDue && onManage && (
-        <Alert variant="warning">
-          <AlertTitle className="text-base">Betalingen gikk ikke gjennom</AlertTitle>
-          <AlertDescription className="text-base text-foreground">
+        <Alert variant="info">
+          <AlertTitle>Betalingen gikk ikke gjennom</AlertTitle>
+          <AlertDescription>
             Oppdater betalingsmåten for å beholde Pro-abonnementet.
           </AlertDescription>
           <div className="mt-3">
@@ -380,15 +380,17 @@ export function BillingPlanSections({
   )
 }
 
-/** The active plan's self-describing, non-interactive button slot. White
- *  surface + hairline (not the secondary muted fill, which vanishes against
- *  the grey plan card) and readable muted text instead of the disabled tier. */
+/** The active plan's self-describing, non-interactive slot. Rendered identically
+ *  on whichever card is the current plan — a disabled, muted `secondary` — so
+ *  "Nåværende plan" reads the same on both cards (the state is consistent, per
+ *  Qatalog/Linktree/Kajabi pricing pages) and the filled emphasis is reserved
+ *  for the real action (Oppgrader til Pro / Bytt til Start). */
 function CurrentPlanButton() {
   return (
     <Button
       type="button"
       variant="secondary"
-      className="w-full border-border-subtle bg-surface disabled:text-foreground-muted"
+      className="w-full disabled:text-foreground-muted"
       disabled
     >
       Nåværende plan
@@ -416,7 +418,10 @@ function PlanOption({
   return (
     // rounded-2xl + a step more padding than the stock Card: the plan cards
     // are the page's focal surfaces, so they get the product-frame radius.
-    <Card className="h-full rounded-2xl py-7">
+    // Outlined (white surface + border) rather than the stock panel fill, so
+    // the filled secondary/primary buttons inside separate cleanly from the
+    // card instead of blending into a grey fill.
+    <Card className="h-full rounded-2xl border border-border bg-surface py-7">
       <CardContent className="flex h-full flex-col gap-5 px-7">
         <div>
           <div className="flex items-center justify-between gap-3">

@@ -378,14 +378,6 @@ export function UpcomingCoursesSection({
             variant="compact"
             title="Ingen kommende kurs"
             description="Opprett et kurs for å fylle timeplanen."
-            inlineLink={
-              <Link
-                to={routes.coursesNew}
-                className="font-medium text-primary hover:underline"
-              >
-                Opprett kurs →
-              </Link>
-            }
           />
         </FramedCardPanel>
       ) : (

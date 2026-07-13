@@ -3,9 +3,13 @@ import { ImageField } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
-import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
+import {
+  AffiliationsSection,
+  AffiliatesList,
+  InviteLinkView,
+} from '@/components/teacher/studio/AffiliationsSection';
 import { EmbedCodeSection } from '@/components/teacher/studio/EmbedCodeSection';
-import type { GuestHost } from '@/services/affiliations';
+import type { GuestHost, HostAffiliate } from '@/services/affiliations';
 import type { Seller } from '@/types/database';
 import { DevPage, PreviewSection } from './_kit';
 
@@ -25,11 +29,11 @@ import { DevPage, PreviewSection } from './_kit';
  *    `AffiliationsSection`) when the host fetch fails — mirrored here with the
  *    same real `ErrorState` composition.
  *  - Its studio/business branch (invite link + instructor list) fetches *and
- *    writes* to Supabase from inside the component (no props expose that
- *    state) — mounting it here would attempt real network calls, including
- *    lazily creating an invite link, against the shared database. Per the
- *    "real components or an honest note" rule, it's intentionally not
- *    mounted; see the note below instead.
+ *    writes* to Supabase from inside `BusinessView`/`InviteLinkPanel`, so those
+ *    stateful wrappers can't mount here. The two presentational pieces they
+ *    render — `InviteLinkView` (the ready-link row) and `AffiliatesList` — are
+ *    the real components fed mock data below, so the studio-side design is
+ *    reviewable without any network call.
  *  - `EmbedCodeSection` (Nettsted) is shown once, briefly — the in-depth
  *    coverage lives in `/dev/embed-code-preview`.
  *
@@ -80,6 +84,12 @@ const MOCK_HOST: HostStudio = {
   cover_image_url: null,
 };
 
+const MOCK_AFFILIATES: HostAffiliate[] = [
+  { guest_seller_id: 'g1', guest: { id: 'g1', name: 'Ida Berg', logo_url: null } },
+  { guest_seller_id: 'g2', guest: { id: 'g2', name: 'Markus Lund', logo_url: null } },
+  { guest_seller_id: 'g3', guest: { id: 'g3', name: 'Sofie Aas', logo_url: null } },
+];
+
 export default function StudioPreview() {
   return (
     <DevPage
@@ -111,16 +121,41 @@ export default function StudioPreview() {
         label="Samarbeid — feil"
         description="AffiliationsSection rendrer ikke selv en feiltilstand for gjeste-siden — StudioPage bytter den ut med denne ErrorState-en når host-fetchen feiler (host==='error'). Samme oppsett kopiert herfra."
       >
-        <ErrorState title="Kunne ikke hente samarbeidet ditt" message="Prøv igjen." onRetry={() => {}} />
+        <ErrorState title="Kunne ikke hente info" message="" onRetry={() => {}} />
       </PreviewSection>
 
       <PreviewSection
-        label="Samarbeid — studio-visning (kun i appen)"
-        description="Studio-grenen (Inviter instruktører + Instruktørliste) henter og skriver direkte mot Supabase inne i komponenten selv — ingen prop styrer med-data/tomt/laster/feil herfra, og å montere den ville forsøkt å opprette en ekte invitasjonslenke mot delt database. Se den ekte tilstanden på /studio#samarbeid som et tilkoblet studio."
+        label="Samarbeid — studio-visning (med data)"
+        description="Studio-grenen: invitasjonslenke + instruktørliste. De ekte presentasjonskomponentene (InviteLinkView + AffiliatesList) matet med mock-data — samme oppsett BusinessView bygger, men uten Supabase-kallene wrapperne gjør."
       >
-        <p className="rounded-md border border-dashed border-border-subtle px-4 py-3 text-sm text-foreground-muted">
-          Ikke montert her — se begrunnelsen over.
-        </p>
+        <SettingsRows>
+          <SettingsRow
+            title="Inviter instruktører"
+            description="Del lenken så instruktører kan vise de publiserte kursene sine på studiosiden din."
+          >
+            <InviteLinkView code="a1b2c3d4" onRegenerate={() => {}} regenerating={false} />
+          </SettingsRow>
+          <SettingsRow
+            title="Instruktører"
+            description="Instruktørene som viser kursene sine på studiosiden din."
+          >
+            <AffiliatesList affiliates={MOCK_AFFILIATES} loading={false} onRevoke={() => {}} />
+          </SettingsRow>
+        </SettingsRows>
+      </PreviewSection>
+
+      <PreviewSection
+        label="Samarbeid — studio-visning (ingen instruktører ennå)"
+        description="Tom instruktørliste — det en ny studio ser før noen har tatt i bruk invitasjonslenken."
+      >
+        <SettingsRows>
+          <SettingsRow
+            title="Instruktører"
+            description="Instruktørene som viser kursene sine på studiosiden din."
+          >
+            <AffiliatesList affiliates={[]} loading={false} onRevoke={() => {}} />
+          </SettingsRow>
+        </SettingsRows>
       </PreviewSection>
 
       <PreviewSection

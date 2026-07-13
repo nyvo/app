@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { routes } from '@/lib/routes';
+import CreateCourseDrawer from './CreateCourseDrawer';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageShell } from '@/components/teacher/PageShell';
@@ -79,6 +80,10 @@ const DEFAULT_SORT_FOR_TAB: Record<ViewTab, { key: SortKey; dir: SortDir }> = {
 const CoursesPage = () => {
   const { currentSeller, isInitialized } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // `/courses/new` renders this list as the backdrop and opens the create
+  // drawer over it (the route swap lives in App.tsx).
+  const isNewRoute = location.pathname === routes.coursesNew;
   const [searchQuery, setSearchQuery] = useState('');
   const [viewTab, setViewTab] = useState<ViewTab>('active');
   const [sortKey, setSortKey] = useState<SortKey>('next');
@@ -109,7 +114,7 @@ const CoursesPage = () => {
       const coursesResult = await fetchCourses(currentSeller.id);
 
       if (coursesResult.error) {
-        setError('Kunne ikke hente kurs. Sjekk nettet og prøv igjen.');
+        setError('Sjekk nettforbindelsen.');
         return;
       }
 
@@ -165,7 +170,7 @@ const CoursesPage = () => {
         setDropInCourseIds(dropInIds);
       }
     } catch {
-      setError('Kunne ikke hente kurs. Prøv igjen.');
+      setError('Sjekk nettforbindelsen.');
     } finally {
       setIsLoading(false);
     }
@@ -282,6 +287,7 @@ const CoursesPage = () => {
   }
 
   return (
+    <>
         <PageShell
           title="Mine kurs"
           action={
@@ -368,6 +374,8 @@ const CoursesPage = () => {
             </>
           )}
         </PageShell>
+      {isNewRoute && <CreateCourseDrawer onClose={() => navigate(routes.courses)} />}
+    </>
   );
 };
 

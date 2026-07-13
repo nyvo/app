@@ -146,56 +146,44 @@ export function IncomeChart({
     0,
   )
   const domainMax = Math.max(dataMax, EMPTY_DOMAIN_MAX)
-  // Zero state per the analytics convention (Patreon/Airbnb earnings): the
-  // frame, grid and flat zero-line stay so layout never jumps — only a short
-  // muted message lands in the plot centre.
-  const showEmptyMessage = !isLoading && series !== null && !hasIncome
 
   return (
-    <FramedCard
-      title="Inntekt"
-      action={
-        <SegmentedTabs
-          value={range}
-          onChange={onRangeChange}
-          tabs={RANGE_TABS}
-          ariaLabel="Velg tidsrom"
-          size="md"
-        />
-      }
-    >
-      {/* px-4 keeps the total aligned with the FramedCard title above. */}
+    <FramedCard title="Inntekt">
+      {/* px-4 keeps the total aligned with the FramedCard title above. The range
+          toggle sits on the white surface beside the total it controls, so the
+          grey header stays a plain "Inntekt" label like the other cards. */}
       <FramedCardPanel className="px-4 py-5 sm:py-6">
-        <div className="flex items-center gap-3">
-          {isLoading ? (
-            <Skeleton className="h-9 w-40" />
-          ) : (
-            <span className="text-3xl font-medium text-foreground tabular-nums">
-              {formatKroner(total)}
-            </span>
-          )}
-          {hasDelta && (
-            <Badge
-              variant={deltaVariant}
-              size="sm"
-              className="tabular-nums"
-              title="mot forrige periode"
-              aria-label={`${formatPercent(delta)} mot forrige periode`}
-            >
-              {formatPercent(delta)}
-            </Badge>
-          )}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            {isLoading ? (
+              <Skeleton className="h-9 w-40" />
+            ) : (
+              <span className="text-3xl font-medium text-foreground tabular-nums">
+                {formatKroner(total)}
+              </span>
+            )}
+            {hasDelta && (
+              <Badge
+                variant={deltaVariant}
+                size="sm"
+                className="tabular-nums"
+                title="mot forrige periode"
+                aria-label={`${formatPercent(delta)} mot forrige periode`}
+              >
+                {formatPercent(delta)}
+              </Badge>
+            )}
+          </div>
+          <SegmentedTabs
+            value={range}
+            onChange={onRangeChange}
+            tabs={RANGE_TABS}
+            ariaLabel="Velg tidsrom"
+            size="md"
+          />
         </div>
 
         <div className={cn('relative mt-6 transition-opacity', isFetching && 'opacity-60')}>
-        {showEmptyMessage && (
-          <p
-            className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center text-sm text-foreground-muted"
-            role="status"
-          >
-            Ingen inntekt i denne perioden
-          </p>
-        )}
         <ChartContainer
           config={CHART_CONFIG}
           className="aspect-auto h-[220px] w-full sm:h-[260px]"

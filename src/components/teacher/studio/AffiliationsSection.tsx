@@ -250,7 +250,7 @@ function IndividualView({
                 Stopp visning
               </Button>
               {hostUrl && (
-                <Button variant="secondary" asChild>
+                <Button variant="outline" asChild>
                   <a href={hostUrl} target="_blank" rel="noopener noreferrer">
                     Vis studiosiden
                   </a>
@@ -295,7 +295,7 @@ function ConnectionSkeleton() {
 // Instructor list primitive — studio side only
 // ───────────────────────────────────────────────────────────────────────────
 
-function AffiliatesList({
+export function AffiliatesList({
   affiliates,
   loading,
   error,
@@ -433,8 +433,6 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
     toast.success('Ny lenke laget');
   };
 
-  const fullUrl = link ? `${window.location.host}/join/${link.code}` : '';
-
   if (link === undefined) {
     return (
       <div>
@@ -465,6 +463,29 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
   }
 
   return (
+    <InviteLinkView
+      code={link.code}
+      onRegenerate={() => void handleRegenerate()}
+      regenerating={creating}
+    />
+  );
+}
+
+/** Presentational "link is ready" state of InviteLinkPanel, split out so
+ *  /dev/studio-preview can render the studio branch with a mock code — the
+ *  panel itself fetches and lazily creates a link on mount, which a preview
+ *  must not do against the shared database. */
+export function InviteLinkView({
+  code,
+  onRegenerate,
+  regenerating,
+}: {
+  code: string;
+  onRegenerate: () => void;
+  regenerating: boolean;
+}) {
+  const fullUrl = `${window.location.host}/join/${code}`;
+  return (
     <div>
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
         <Input
@@ -474,7 +495,7 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
           aria-label="Invitasjonslenke"
         />
         <CopyButton
-          value={`${window.location.origin}/join/${link.code}`}
+          value={`${window.location.origin}/join/${code}`}
           label="Kopier lenke"
         />
       </div>
@@ -484,9 +505,9 @@ function InviteLinkPanel({ hostSellerId }: { hostSellerId: string }) {
       <Button
         type="button"
         variant="plain"
-        loading={creating}
+        loading={regenerating}
         loadingText="Lager…"
-        onClick={() => void handleRegenerate()}
+        onClick={onRegenerate}
         className="mt-2"
       >
         Lag ny lenke
