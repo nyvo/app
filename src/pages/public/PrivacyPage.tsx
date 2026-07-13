@@ -29,7 +29,7 @@ const PrivacyPage = () => {
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Spørsmål om personvern? Send en e-post til{' '}
-                <a href={`mailto:${COMPANY.email}`} className="underline underline-offset-2">
+                <a href={`mailto:${COMPANY.email}`} className="text-primary underline underline-offset-2 hover:decoration-2">
                   {COMPANY.email}
                 </a>
                 .
@@ -112,7 +112,7 @@ const PrivacyPage = () => {
                   href="https://datatilsynet.no"
                   target="_blank"
                   rel="noreferrer"
-                  className="underline underline-offset-2"
+                  className="text-primary underline underline-offset-2 hover:decoration-2"
                 >
                   datatilsynet.no
                 </a>

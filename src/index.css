@@ -594,7 +594,7 @@
       margin-bottom: 0;
     }
     & a {
-      color: var(--foreground);
+      color: var(--primary);
       text-decoration: underline;
       text-decoration-thickness: 1px;
       text-underline-offset: 2px;

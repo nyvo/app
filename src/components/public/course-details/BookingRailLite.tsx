@@ -115,7 +115,7 @@ export function BookingRailLite({
             {course.seller?.name && (
               <Link
                 to={`/${studioSlug}`}
-                className="text-sm text-foreground-muted underline decoration-foreground-disabled underline-offset-2 hover:text-foreground hover:decoration-foreground transition-colors"
+                className="text-sm font-medium text-primary underline-offset-4 hover:underline"
               >
                 Se andre kurs fra {course.seller.name}
               </Link>

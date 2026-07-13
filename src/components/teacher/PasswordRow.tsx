@@ -166,7 +166,7 @@ export function PasswordRow() {
           <button
             type="button"
             onClick={() => void checkHasPassword()}
-            className="font-medium underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            className="font-medium text-primary underline-offset-4 hover:underline"
           >
             Prøv igjen
           </button>
@@ -197,11 +197,11 @@ export function PasswordRow() {
               )}
               <Button
                 type="button"
-                variant="plain"
+                variant="link"
                 loading={isSendingCode}
                 loadingText="Sender"
                 onClick={handleSendCode}
-                className="justify-self-start"
+                className="justify-self-start px-0"
               >
                 Vet du ikke passordet? Få en kode på e-post
               </Button>

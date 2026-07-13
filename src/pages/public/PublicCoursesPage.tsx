@@ -207,7 +207,7 @@ const PublicCoursesPage = () => {
                         <button
                           type="button"
                           onClick={resetFilters}
-                          className="underline decoration-foreground-disabled underline-offset-2 hover:text-foreground hover:decoration-foreground transition-colors"
+                          className="text-primary underline underline-offset-2 hover:decoration-2"
                         >
                           Nullstill filter
                         </button>

@@ -42,7 +42,7 @@ const AboutPage = () => {
               <h2 className="text-lg font-medium text-foreground">Kontakt</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Spørsmål om Openspot, betaling eller en påmelding kan sendes til{' '}
-                <a href={`mailto:${COMPANY.email}`} className="underline underline-offset-2">
+                <a href={`mailto:${COMPANY.email}`} className="text-primary underline underline-offset-2 hover:decoration-2">
                   {COMPANY.email}
                 </a>.
               </p>

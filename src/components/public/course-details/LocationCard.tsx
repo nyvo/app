@@ -50,7 +50,7 @@ export function LocationCard({ location, lat, lon, placeId }: LocationCardProps)
             href={directionsUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+            className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
           >
             Få veibeskrivelse
             <ArrowUpRight className="size-3.5" strokeWidth={1.75} />

@@ -834,7 +834,7 @@ export function TermsField({
             href="/terms"
             target="_blank"
             rel="noreferrer"
-            className="focus-ring rounded underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+            className="focus-ring rounded text-primary underline underline-offset-2 hover:decoration-2"
           >
             vilkår og angrerett
           </a>
