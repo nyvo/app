@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchCourseById, fetchCourseSessions, fetchDropInTier } from '@/services/courses';
 import { fetchSignupsByCourseWithProfiles, type SignupWithProfile } from '@/services/signups';
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
+import { GENERIC_ERROR } from '@/lib/error-strings';
 import type { Course, CourseSession } from '@/types/database';
 
 // Helper to map database course to component format
@@ -222,7 +223,7 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
   const error = !courseId
     ? 'Fant ikke kurset.'
     : courseQuery.isError
-      ? 'Noe gikk galt – prøv igjen'
+      ? GENERIC_ERROR
       : !courseQuery.isPending && courseQuery.data === null
         ? 'Fant ikke kurset.'
         : null;

@@ -214,7 +214,7 @@ const TeacherDashboard = () => {
   const loadError =
     (nextSessionsQuery.isError && nextSessionsQuery.data === undefined) ||
     (recentSignupsQuery.isError && recentSignupsQuery.data === undefined)
-      ? 'Kunne ikke laste oversikten.'
+      ? 'Prøv igjen om litt.'
       : null;
   const incomeLoadFailed = incomeQuery.isError && incomeQuery.data === undefined;
   const retryDashboardLists = useCallback(() => {

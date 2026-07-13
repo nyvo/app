@@ -7,6 +7,8 @@
  * Returns a normalized shape: `{ status, message }`. `status=0` means the
  * error wasn't an HTTP error at all (network failure, etc.).
  */
+import { UNKNOWN_ERROR } from '@/lib/error-strings'
+
 export async function extractEdgeError(
   error: unknown,
 ): Promise<{ status: number; message: string }> {
@@ -25,6 +27,6 @@ export async function extractEdgeError(
   }
   return {
     status: 0,
-    message: error instanceof Error ? error.message : 'Ukjent feil',
+    message: error instanceof Error ? error.message : UNKNOWN_ERROR,
   }
 }

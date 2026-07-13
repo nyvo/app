@@ -11,6 +11,7 @@ import { cn, formatKroner } from '@/lib/utils';
 import { osloTodayKey } from '@/utils/dateUtils';
 import { MapPin, ChevronRight } from '@/lib/icons';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
+import { WEEKDAYS_LONG, MONTHS_LONG } from '@/lib/calendar-nb';
 import type { MappedCourse } from '@/hooks/use-course-detail';
 import type { CourseSession } from '@/types/database';
 
@@ -62,12 +63,6 @@ interface CourseOverviewTabProps {
 }
 
 const WAITING_STATUSES = new Set(['pending', 'restricted']);
-
-const WEEKDAYS_LONG = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
-const MONTHS_LONG = [
-  'januar', 'februar', 'mars', 'april', 'mai', 'juni',
-  'juli', 'august', 'september', 'oktober', 'november', 'desember',
-] as const;
 
 /** Parse a YYYY-MM-DD key as a *local* date (avoids the UTC off-by-one that
  *  `new Date('2026-07-07')` causes in negative-offset timezones). */
@@ -287,13 +282,13 @@ function ReadinessCard({
       label = 'Se status';
     } else {
       heading = 'Sett opp utbetaling for å publisere';
-      sub = 'Koble til Stripe for å ta imot betaling — det eneste som gjenstår.';
+      sub = 'Koble til Stripe for å ta imot betaling – det eneste som gjenstår.';
       label = 'Sett opp utbetaling';
     }
     onClick = onSetupPaymentsClick;
   } else {
     heading = 'Klar til å publisere';
-    sub = 'Alt er på plass — publiser for å åpne for påmelding. Kurset blir synlig for alle.';
+    sub = 'Alt er på plass – publiser for å åpne for påmelding.';
     label = 'Publiser kurs';
     onClick = onPublish;
     loading = publishing;
@@ -710,7 +705,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
           </div>
         </div>
         {priceError && (
-          <p className="mt-2 text-sm text-danger animate-in fade-in-0 duration-150">Drop-in krever en pris høyere enn 0 kr.</p>
+          <p className="mt-2 text-sm text-danger animate-in fade-in-0 duration-150">Drop-in krever en pris over 0 kr.</p>
         )}
       </div>
       <Switch checked={checked} onCheckedChange={handleToggle} className="mt-1 shrink-0" />

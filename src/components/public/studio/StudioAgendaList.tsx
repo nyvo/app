@@ -11,6 +11,7 @@ import {
   extractTimeValue,
   formatLongDay,
 } from './studioFacts';
+import { BOOKABILITY_LABELS } from '@/lib/bookability-labels';
 
 interface StudioAgendaListProps {
   courses: PublicCourseWithDetails[];
@@ -118,8 +119,6 @@ function GroupHeading({
   );
 }
 
-const CTA_LABELS = { open: 'Reserver', full: 'Fullt', closed: 'Stengt', cancelled: 'Avlyst' } as const;
-
 function AgendaRow({
   course,
   todayKey,
@@ -192,7 +191,7 @@ function AgendaRow({
               : 'bg-muted text-foreground-muted',
           )}
         >
-          {CTA_LABELS[bookability]}
+          {BOOKABILITY_LABELS[bookability]}
         </span>
       </div>
     </>

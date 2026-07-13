@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { extractEdgeError } from '@/lib/edge-errors'
 import { withTimeout } from '@/lib/with-timeout'
+import { UNKNOWN_ERROR, TIMEOUT_ERROR } from '@/lib/error-strings'
 
 export type StripeAccountStatus = 'pending' | 'enabled' | 'restricted' | 'rejected'
 
@@ -47,7 +48,7 @@ export async function startStripeConnectOnboarding(sellerId: string): Promise<{
         body: { sellerId },
       }),
       15000,
-      'Dette tok for lang tid. Prøv igjen.',
+      TIMEOUT_ERROR,
     )
     // Pull the real body message out of the FunctionsHttpError context so a
     // server-side reason reaches the caller instead of the generic wrapper;
@@ -62,7 +63,7 @@ export async function startStripeConnectOnboarding(sellerId: string): Promise<{
     if (data?.error) return { data: null, error: new Error(data.error) }
     return { data: data as StartOnboardingResult, error: null }
   } catch (err) {
-    return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
+    return { data: null, error: err instanceof Error ? err : new Error(UNKNOWN_ERROR) }
   }
 }
 
@@ -76,7 +77,7 @@ export async function refreshStripeConnectStatus(sellerId: string): Promise<{
         body: { sellerId },
       }),
       15000,
-      'Dette tok for lang tid. Prøv igjen.',
+      TIMEOUT_ERROR,
     )
     if (error) {
       const { status, message } = await extractEdgeError(error)
@@ -88,7 +89,7 @@ export async function refreshStripeConnectStatus(sellerId: string): Promise<{
     if (data?.error) return { data: null, error: new Error(data.error) }
     return { data: data as ConnectStatusResult, error: null }
   } catch (err) {
-    return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
+    return { data: null, error: err instanceof Error ? err : new Error(UNKNOWN_ERROR) }
   }
 }
 
@@ -102,7 +103,7 @@ export async function getStripeSettlements(sellerId: string): Promise<{
         body: { sellerId },
       }),
       15000,
-      'Dette tok for lang tid. Prøv igjen.',
+      TIMEOUT_ERROR,
     )
     if (error) {
       const { status, message } = await extractEdgeError(error)
@@ -114,6 +115,6 @@ export async function getStripeSettlements(sellerId: string): Promise<{
     if (data?.error) return { data: null, error: new Error(data.error) }
     return { data: data as StripeSettlementsResult, error: null }
   } catch (err) {
-    return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
+    return { data: null, error: err instanceof Error ? err : new Error(UNKNOWN_ERROR) }
   }
 }

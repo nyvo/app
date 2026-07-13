@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { lookupInviteLink, redeemInviteLink } from '@/services/invite-links';
 import { friendlyError } from '@/lib/error-messages';
+import { GENERIC_ERROR } from '@/lib/error-strings';
 import { routes } from '@/lib/routes';
 import type { LookupInviteLinkResult } from '@/types/database';
 
@@ -175,7 +176,7 @@ export default function JoinPage() {
     setPhase({ kind: 'redeeming' });
     const { data, error } = await redeemInviteLink(code, forceLeave);
     if (error || !data) {
-      toast.error(friendlyError(error, 'Noe gikk galt – prøv igjen'));
+      toast.error(friendlyError(error));
       setPhase({ kind: 'idle' });
       return;
     }
@@ -221,7 +222,7 @@ export default function JoinPage() {
         setPhase({ kind: 'idle' });
         return;
       default:
-        toast.error('Noe gikk galt – prøv igjen');
+        toast.error(GENERIC_ERROR);
         setPhase({ kind: 'idle' });
     }
   };
@@ -332,7 +333,7 @@ export default function JoinPage() {
           Invitasjonen lar kursholdere vise kursene sine på siden til {team.name}. Kontoen din er en deltakerkonto.
         </p>
         <Button size="cta" className="w-full" onClick={() => navigate('/overview')}>
-          Gå til Min side
+          Gå til min side
         </Button>
       </Shell>
     );

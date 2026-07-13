@@ -35,6 +35,7 @@ import { publishNeedsPaymentSetup } from '@/lib/payments';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { friendlyError } from '@/lib/error-messages';
+import { GENERIC_ERROR } from '@/lib/error-strings';
 import { routes } from '@/lib/routes';
 import { formatLocalDateKey } from '@/utils/dateUtils';
 import { singleScheduleLabel, seriesScheduleLabel } from '@/utils/timeSchedule';
@@ -154,7 +155,7 @@ export default function CourseBuilderPage() {
 
     // Location must resolve to a real Google place (coords), not free text.
     if (!location.trim()) e.location = 'Velg et sted';
-    else if (!locationCoords?.placeId) e.location = 'Velg et sted fra listen';
+    else if (!locationCoords?.placeId) e.location = 'Velg et sted fra listen.';
 
     if (format === 'series') {
       if (!startDate) e.startDate = 'Velg dato';
@@ -349,7 +350,7 @@ export default function CourseBuilderPage() {
 
       return created.id;
     } catch {
-      toast.error('Noe gikk galt – prøv igjen');
+      toast.error(GENERIC_ERROR);
       setSubmitting(null);
       return null;
     }

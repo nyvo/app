@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { formatLocalDateKey, osloTodayKey } from '@/utils/dateUtils'
+import { UNKNOWN_ERROR } from '@/lib/error-strings'
 import type {
   Course,
   CourseInsert,
@@ -533,7 +534,7 @@ export async function cancelCourse(
   } catch (err) {
     return {
       data: null,
-      error: err instanceof Error ? err : new Error('Ukjent feil')
+      error: err instanceof Error ? err : new Error(UNKNOWN_ERROR)
     }
   }
 }

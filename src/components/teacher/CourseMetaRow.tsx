@@ -1,6 +1,7 @@
 import { Calendar, Clock, MapPin } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { toLocalDate } from '@/utils/dateUtils';
+import { MONTHS_SHORT } from '@/lib/calendar-nb';
 
 /**
  * CourseMetaRow — the shared "date · time · place" line shown under a course
@@ -51,8 +52,6 @@ export function CourseMetaRow({
     </div>
   );
 }
-
-const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
 
 // "2026-07-04" → "4. jul" — compact day+month for session-list rows (no
 // weekday, no year). Distinct from `formatCourseDate` below (long form, for

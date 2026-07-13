@@ -180,11 +180,11 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Hvorfor må jeg bekrefte identiteten min?',
-    a: 'Alle som tar imot betalinger på nett, må bekrefte identiteten sin. Det er lovpålagt og gjelder alle plattformer.',
+    a: 'Alle som tar imot betalinger på nett, må bekrefte identiteten sin – det er lovpålagt.',
   },
   {
     q: 'Hva er Stripe?',
-    a: 'Stripe er betalingspartneren vår. De håndterer betalinger for millioner av virksomheter verden over, og sørger for at pengene kommer trygt frem til kontoen din.',
+    a: 'Stripe er betalingspartneren vår. De håndterer betalingen og sørger for at pengene kommer trygt til kontoen din.',
   },
 ];
 

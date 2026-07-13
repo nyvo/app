@@ -47,6 +47,7 @@ import { teacherCancelSignup } from '@/services/signups';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { useAuth } from '@/contexts/AuthContext';
 import { friendlyError } from '@/lib/error-messages';
+import { GENERIC_ERROR } from '@/lib/error-strings';
 import { runWithRevert } from '@/lib/undo';
 import { publishNeedsPaymentSetup } from '@/lib/payments';
 import { routes } from '@/lib/routes';
@@ -562,7 +563,7 @@ const CoursePage = () => {
         toast.success('Endringer lagret');
       }
     } catch {
-      setSaveError('Noe gikk galt – prøv igjen');
+      setSaveError(GENERIC_ERROR);
     } finally {
       setIsSaving(false);
     }
@@ -800,7 +801,7 @@ const CoursePage = () => {
       revert: () => setCourseData((prev) => (prev ? { ...prev, status: previousStatus } : prev)),
       commit: () => unpublishCourse(courseId),
       undo: () => publishCourse(courseId),
-      commitErrorMessage: (e) => friendlyError(e, 'Kunne ikke avpublisere kurset'),
+      commitErrorMessage: (e) => friendlyError(e, 'Kunne ikke gjøre kurset til utkast'),
       undoErrorMessage: (e) => friendlyError(e, 'Kunne ikke gjenopprette publisering'),
     });
   };
@@ -1119,7 +1120,7 @@ const CoursePage = () => {
                           instead of floating loose at the container edge. */}
                       {isFull && (
                         <span className="basis-full text-right text-sm text-foreground-muted">
-                          Kurset er fullt — øk antall plasser for å legge til flere
+                          Kurset er fullt – øk antall plasser for å legge til flere
                         </span>
                       )}
                     </div>
@@ -1305,7 +1306,7 @@ const CoursePage = () => {
         body={
           refundPreview.count > 0 ? (
             <>
-              <strong>{courseData.title}</strong> avlyses — {refundPreview.count} deltaker
+              <strong>{courseData.title}</strong> avlyses – {refundPreview.count} deltaker
               {refundPreview.count !== 1 ? 'e' : ''} refunderes{' '}
               <strong>{formatKroner(refundPreview.totalAmount)}</strong> og varsles.
             </>

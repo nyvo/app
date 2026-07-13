@@ -37,6 +37,9 @@ import { routes } from '@/lib/routes';
  * Count shown next to the "Påmeldte" heading. `–` while the roster is loading
  * or after a failed fetch, so a fabricated 0 never appears.
  */
+const NOT_FOUND_TITLE = 'Fant ikke kurset';
+const NOT_FOUND_BODY = 'Kurset finnes ikke eller er slettet.';
+
 function ParticipantCount({
   loading,
   error,
@@ -310,11 +313,11 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
     return (
       <>
         <SheetHeader>
-          <SheetTitle>Fant ikke kurset</SheetTitle>
+          <SheetTitle>{NOT_FOUND_TITLE}</SheetTitle>
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
           <p className="text-base text-foreground-muted">
-            {error || 'Kurset finnes ikke eller er slettet.'}
+            {error || NOT_FOUND_BODY}
           </p>
         </div>
       </>
@@ -449,7 +452,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
         {isMultiDay && (
           <section className="px-6 py-6">
             <h3 className="text-base font-medium text-foreground mb-3">
-              Økter ({sessions.length})
+              Timer ({sessions.length})
             </h3>
             <div className="space-y-1">
               {sessions.map((s, i) => (
@@ -548,11 +551,11 @@ function ScheduleQuickView({
     return (
       <>
         <SheetHeader>
-          <SheetTitle>Fant ikke kurset</SheetTitle>
+          <SheetTitle>{NOT_FOUND_TITLE}</SheetTitle>
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
           <p className="text-base text-foreground-muted">
-            {error || 'Kurset finnes ikke eller er slettet.'}
+            {error || NOT_FOUND_BODY}
           </p>
         </div>
       </>

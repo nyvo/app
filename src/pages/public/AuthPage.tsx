@@ -270,14 +270,14 @@ const AuthPage = () => {
     setErrors({})
     setPasswordError(null)
     if (!password) {
-      setPasswordError('Skriv inn passord')
+      setPasswordError('Skriv inn passord.')
       return
     }
     setIsSubmitting(true)
     try {
       if (accountMode === 'signup') {
         if (!passwordValid) {
-          setPasswordError('Passordet oppfyller ikke kravene under')
+          setPasswordError('Passordet oppfyller ikke kravene under.')
           setIsSubmitting(false)
           return
         }
@@ -328,7 +328,7 @@ const AuthPage = () => {
           setIsSubmitting(false)
           return
         }
-        setPasswordError('Passordet stemmer ikke')
+        setPasswordError('Passordet stemmer ikke.')
         setIsSubmitting(false)
         return
       }

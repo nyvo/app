@@ -185,7 +185,7 @@ const PaymentsPage = () => {
     counter = 'Steg 2 av 3';
     if (stripeStatus === 'rejected') {
       h2 = 'Søknaden ble avslått';
-      step2Title = 'Søknaden ble ikke godkjent';
+      step2Title = 'Søknaden ble avslått';
       step2Tone = 'danger';
       step2Desc = `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg videre.`;
       step2Action = (
@@ -229,8 +229,8 @@ const PaymentsPage = () => {
         status: 'current',
         tone: 'success',
         description:
-          'Pengene overføres automatisk til bankkontoen din. Saldo og alle utbetalinger finner du i oversikten.',
-        action: <Button onClick={handleOpenStripeDashboard}>Se oversikt</Button>,
+          'Pengene overføres automatisk til bankkontoen din. Saldo og alle utbetalinger finner du i Stripe-oversikten.',
+        action: <Button onClick={handleOpenStripeDashboard}>Åpne Stripe</Button>,
       },
     ];
   }

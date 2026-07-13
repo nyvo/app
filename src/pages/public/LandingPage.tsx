@@ -157,7 +157,7 @@ const LandingPage = () => {
             <ProductFrame>
               <img
                 src="/landing-dashboard.webp"
-                alt="Openspot — oversikt over inntekter og kommende kurs"
+                alt="Openspot – oversikt over inntekter og kommende kurs"
                 width={2400}
                 height={1659}
                 fetchPriority="high"
@@ -228,7 +228,7 @@ const LandingPage = () => {
       >
         <img
           src="/landing-courses.webp"
-          alt="Openspot — kursoversikt"
+          alt="Openspot – kursoversikt"
           width={1600}
           height={838}
           loading="lazy"
@@ -291,7 +291,7 @@ const LandingPage = () => {
                 recommended: true,
                 description: 'Behold hele kursprisen – uansett hvor mye du selger.',
                 price: formatKroner(499),
-                priceSub: '/ mnd eks. mva',
+                priceSub: '/ mnd eks. mva.',
                 features: [
                   'Alt i Start',
                   '0 % plattformgebyr',

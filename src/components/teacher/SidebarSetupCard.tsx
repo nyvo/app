@@ -64,7 +64,7 @@ export function SidebarSetupCard() {
           <SidebarMenuButton asChild isActive={isActive} tooltip="Oppsett">
             <Link
               to={routes.getStarted}
-              aria-label={`Oppsett — ${overallDone} av ${overallTotal} fullført`}
+              aria-label={`Oppsett – ${overallDone} av ${overallTotal} fullført`}
             >
               <ProgressRing progress={overallProgress} />
               <span>Oppsett</span>
@@ -94,7 +94,7 @@ export function SidebarSetupCard() {
       <SidebarSeparator className="mx-0 mb-2" />
       <Link
         to={routes.getStarted}
-        aria-label={`Kom i gang — ${completedCount} av ${totalCount} fullført`}
+        aria-label={`Kom i gang – ${completedCount} av ${totalCount} fullført`}
         className={cn(
           'block rounded-lg px-3 py-2.5 transition-colors duration-150',
           'hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',

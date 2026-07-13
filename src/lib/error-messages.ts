@@ -6,6 +6,8 @@
  *   toast.error(friendlyError(error))
  */
 
+import { GENERIC_ERROR } from './error-strings'
+
 interface ErrorLike {
   message?: string
   code?: string
@@ -59,7 +61,7 @@ const MESSAGE_PATTERNS: [RegExp, string][] = [
     'Betalingsmetoden er ikke tilgjengelig. Prøv en annen.'],
 ]
 
-const GENERIC_FALLBACK = 'Noe gikk galt – prøv igjen'
+const GENERIC_FALLBACK = GENERIC_ERROR
 
 /**
  * Convert a raw error into a user-friendly Norwegian message.

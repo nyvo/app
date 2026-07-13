@@ -11,6 +11,7 @@ import {
   formatLongDay,
   formatTimeRange,
 } from '@/components/public/studio/studioFacts';
+import { BOOKABILITY_LABELS } from '@/lib/bookability-labels';
 
 interface EmbedCalendarProps {
   courses: PublicCourseWithDetails[];
@@ -26,13 +27,6 @@ interface EmbedCalendarProps {
 function sentenceCase(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
-
-const CTA_LABELS: Record<ReturnType<typeof courseBookability>, string> = {
-  open: 'Reserver',
-  full: 'Fullt',
-  closed: 'Stengt',
-  cancelled: 'Avlyst',
-};
 
 const MONTHS_NB = [
   'januar', 'februar', 'mars', 'april', 'mai', 'juni',
@@ -357,7 +351,7 @@ function EmbedClassRow({
             course can't be booked. */}
         {isDisabled && (
           <span className="text-[0.8125rem] leading-5 text-foreground-muted">
-            {CTA_LABELS[bookability]}
+            {BOOKABILITY_LABELS[bookability]}
           </span>
         )}
       </div>
