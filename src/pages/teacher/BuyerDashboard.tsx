@@ -113,7 +113,7 @@ function SignupRow({ signup }: { signup: BuyerSignup }) {
 // Mirrors the SignupSection anatomy (heading + a bordered list of rows, each a
 // 64px thumbnail + three text lines + trailing amount) so the layout doesn't
 // jump when the single query lands.
-function DashboardSkeleton() {
+export function DashboardSkeleton() {
   return (
     <div className="space-y-12" role="status" aria-live="polite">
       <span className="sr-only">Laster…</span>
@@ -148,6 +148,60 @@ function SignupSection({ title, signups }: { title: string; signups: BuyerSignup
         ))}
       </ul>
     </section>
+  )
+}
+
+/**
+ * Presentational body — the loading / error / empty / populated switch, given
+ * already-resolved data. Split out from the data-loading default export so the
+ * `/dev` preview can mount the REAL states with mock props instead of a copy
+ * that drifts. `signups === null` means "still loading".
+ */
+export function BuyerDashboardBody({
+  signups,
+  loadFailed,
+  onRetry,
+}: {
+  signups: BuyerSignup[] | null
+  loadFailed: boolean
+  onRetry: () => void
+}) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const upcoming = (signups ?? []).filter((s) => !isPastSignup(s, today))
+  const past = (signups ?? []).filter((s) => isPastSignup(s, today))
+
+  if (loadFailed) {
+    return (
+      <ErrorState
+        title="Kunne ikke hente påmeldingene dine"
+        message="Sjekk forbindelsen og prøv igjen."
+        onRetry={onRetry}
+      />
+    )
+  }
+  if (signups === null) {
+    // Skeleton held back 200ms (Studio § 10 — no flash-loader for sub-second
+    // loads) so a fast query stays quiet.
+    return (
+      <DelayedFallback>
+        <DashboardSkeleton />
+      </DelayedFallback>
+    )
+  }
+  if (signups.length === 0) {
+    return (
+      <EmptyState
+        title="Ingen påmeldinger ennå"
+        description="Når du melder deg på et kurs vil du finne det her."
+      />
+    )
+  }
+  return (
+    <div className="space-y-12">
+      <SignupSection title="Kommende" signups={upcoming} />
+      <SignupSection title="Tidligere" signups={past} />
+    </div>
   )
 }
 
@@ -200,36 +254,9 @@ export default function BuyerDashboard() {
     }
   }, [loadSignups])
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const upcoming = (signups ?? []).filter((s) => !isPastSignup(s, today))
-  const past = (signups ?? []).filter((s) => isPastSignup(s, today))
-
   return (
     <PageShell title={firstName ? `Hei, ${firstName}` : 'Oversikt'}>
-        {loadFailed ? (
-          <ErrorState
-            title="Kunne ikke hente påmeldingene dine"
-            message="Sjekk forbindelsen og prøv igjen."
-            onRetry={loadSignups}
-          />
-        ) : signups === null ? (
-          // Skeleton held back 200ms (Studio § 10 — no flash-loader for
-          // sub-second loads) so a fast query stays quiet.
-          <DelayedFallback>
-            <DashboardSkeleton />
-          </DelayedFallback>
-        ) : signups.length === 0 ? (
-          <EmptyState
-            title="Ingen påmeldinger ennå"
-            description="Når du melder deg på et kurs vil du finne det her."
-          />
-        ) : (
-          <div className="space-y-12">
-            <SignupSection title="Kommende" signups={upcoming} />
-            <SignupSection title="Tidligere" signups={past} />
-          </div>
-        )}
-      </PageShell>
+      <BuyerDashboardBody signups={signups} loadFailed={loadFailed} onRetry={loadSignups} />
+    </PageShell>
   )
 }

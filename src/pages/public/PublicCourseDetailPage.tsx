@@ -172,7 +172,7 @@ export default function PublicCourseDetailPage() {
   );
 }
 
-function CourseDetailSkeleton() {
+export function CourseDetailSkeleton() {
   return (
     <div
       className="mx-auto w-full max-w-[640px] px-4 pb-16 sm:px-6 animate-in fade-in duration-150"
