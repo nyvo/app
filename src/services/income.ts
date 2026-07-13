@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { formatLocalDateKey } from '@/utils/dateUtils'
+import { MONTHS_SHORT as MONTH_ABBR_NB } from '@/lib/calendar-nb'
 
 export type IncomeRange = 'week' | 'month' | 'year'
 
@@ -34,7 +35,6 @@ interface IncomeRow {
   net_nok: number
 }
 
-const MONTH_ABBR_NB = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const
 const DAY_ABBR_NB = ['søn', 'man', 'tir', 'ons', 'tor', 'fre', 'lør'] as const
 
 function startOfDay(d: Date): Date {

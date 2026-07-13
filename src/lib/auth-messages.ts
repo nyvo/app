@@ -3,6 +3,8 @@
  * Centralised to prevent wording drift between teacher and student pages.
  */
 
+import { GENERIC_ERROR } from './error-strings'
+
 export const AUTH_VALIDATION = {
   emailRequired: 'Skriv inn e-posten din',
   emailInvalid: 'Sjekk at e-posten er riktig',
@@ -12,7 +14,7 @@ export const AUTH_VALIDATION = {
 
 export const AUTH_ERRORS = {
   invalidOrExpiredCode: 'Koden er ugyldig eller utløpt',
-  generic: 'Noe gikk galt – prøv igjen',
+  generic: GENERIC_ERROR,
   rateLimited: 'For mange forsøk – vent litt før du prøver igjen',
 } as const
 

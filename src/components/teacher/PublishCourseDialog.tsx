@@ -34,7 +34,7 @@ export function PublishCourseDialog({
           <DialogTitle>Sett opp betalinger for å publisere</DialogTitle>
           <DialogDescription>
             {courseTitle && <span className="text-base font-medium text-foreground">{courseTitle}</span>}
-            {courseTitle ? ' er lagret, men kan' : 'Kurset er lagret, men kan'} ikke ta imot påmeldinger før betalinger er satt opp. Du fullfører oppsettet hos Stripe.
+            {courseTitle ? ' er lagret, men kan' : 'Kurset er lagret, men kan'} ikke ta imot påmeldinger før betalinger er satt opp.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

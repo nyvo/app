@@ -105,7 +105,7 @@ const TeacherProfilePage = () => {
     const { error } = await supabase.functions.invoke('delete-account');
     if (error) {
       const { message } = await extractEdgeError(error);
-      toast.error(message || 'Kunne ikke slette kontoen – prøv igjen');
+      toast.error(message || 'Kunne ikke slette kontoen. Prøv igjen.');
       setIsDeletingAccount(false);
       return;
     }

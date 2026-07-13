@@ -109,7 +109,7 @@ const CoursesPage = () => {
       const coursesResult = await fetchCourses(currentSeller.id);
 
       if (coursesResult.error) {
-        setError('Kunne ikke hente kurs. Sjekk nettet og prøv igjen.');
+        setError('Sjekk nettet og prøv igjen.');
         return;
       }
 
@@ -165,7 +165,7 @@ const CoursesPage = () => {
         setDropInCourseIds(dropInIds);
       }
     } catch {
-      setError('Kunne ikke hente kurs. Prøv igjen.');
+      setError('Prøv igjen.');
     } finally {
       setIsLoading(false);
     }
@@ -327,7 +327,7 @@ const CoursesPage = () => {
               {isLoading ? (
                 <DelayedFallback>
                   <div role="status" aria-live="polite" aria-label="Laster kurs">
-                    <span className="sr-only">Henter kurs</span>
+                    <span className="sr-only">Laster kurs</span>
                     <CourseListSkeleton />
                   </div>
                 </DelayedFallback>

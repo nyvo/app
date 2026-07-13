@@ -1,6 +1,12 @@
 import { toLocalDate, osloNowKey, osloTodayKey } from '@/utils/dateUtils';
 import { singleDayCount, type PublicCourseWithDetails } from '@/services/publicCourses';
 import type { AvailableTicketType, CourseSession } from '@/types/database';
+import {
+  WEEKDAYS_LONG,
+  WEEKDAYS_PLURAL as WEEKDAYS_PLURAL_NB,
+  MONTHS_LONG,
+  MONTHS_SHORT as MONTHS_SHORT_NB,
+} from '@/lib/calendar-nb';
 
 /**
  * Shared date/time formatting for the course-detail metadata card, the T1
@@ -10,11 +16,11 @@ import type { AvailableTicketType, CourseSession } from '@/types/database';
  * and checkout can never render three slightly different date grammars.
  */
 
-export const WEEKDAYS = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
-export const WEEKDAYS_PLURAL = ['søndager', 'mandager', 'tirsdager', 'onsdager', 'torsdager', 'fredager', 'lørdager'] as const;
+export const WEEKDAYS = WEEKDAYS_LONG;
+export const WEEKDAYS_PLURAL = WEEKDAYS_PLURAL_NB;
 export const SHORT_WEEKDAYS = ['søn.', 'man.', 'tir.', 'ons.', 'tor.', 'fre.', 'lør.'] as const;
-export const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
-export const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
+export const MONTHS = MONTHS_LONG;
+export const MONTHS_SHORT = MONTHS_SHORT_NB;
 
 /** Capitalizes only the first character — safe for "tir. 12. aug" (unlike
  * CSS `capitalize`, which would also capitalize "aug"). */
@@ -241,8 +247,9 @@ export function buildMainTierConstraintLabel(
     const prorated = course.total_weeks != null && weeks < course.total_weeks;
     if (prorated) return `${weeks} ${weeks === 1 ? 'økt' : 'økter'} igjen`;
     const startDate = course.start_date ? toLocalDate(course.start_date) : null;
-    const weekday = startDate ? WEEKDAYS_PLURAL[startDate.getDay()] : null;
-    return weekday ? `${weeks} økter, ${weekday}` : `${weeks} økter`;
+    const noun = weeks === 1 ? 'økt' : 'økter';
+    const weekday = startDate ? (weeks === 1 ? WEEKDAYS[startDate.getDay()] : WEEKDAYS_PLURAL[startDate.getDay()]) : null;
+    return weekday ? `${weeks} ${noun}, ${weekday}` : `${weeks} ${noun}`;
   }
   const days = singleDayCount(course);
   return days > 1 ? `${days} dager` : null;

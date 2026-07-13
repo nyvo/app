@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { extractEdgeError } from '@/lib/edge-errors'
+import { UNKNOWN_ERROR } from '@/lib/error-strings'
 
 interface CreateSessionParams {
   courseId: string
@@ -56,7 +57,7 @@ export async function createStripeSession(
   } catch (err) {
     return {
       data: null,
-      error: err instanceof Error ? err : new Error('Ukjent feil'),
+      error: err instanceof Error ? err : new Error(UNKNOWN_ERROR),
       status: 0,
     }
   }

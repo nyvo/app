@@ -1,6 +1,5 @@
 import { cn } from '@/lib/utils';
-
-const MONTHS = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
+import { MONTHS_SHORT as MONTHS } from '@/lib/calendar-nb';
 
 type DateBadgeSize = 'sm' | 'default';
 

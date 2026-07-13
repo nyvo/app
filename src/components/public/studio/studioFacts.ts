@@ -1,14 +1,10 @@
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
+import { WEEKDAYS_LONG, MONTHS_LONG } from '@/lib/calendar-nb';
 
 /* ── Norwegian calendar labels (storefront-wide) ─────────────────── */
 
-export const WEEKDAYS_FULL_NB = [
-  'søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag',
-] as const;
-export const MONTHS_NB = [
-  'januar', 'februar', 'mars', 'april', 'mai', 'juni',
-  'juli', 'august', 'september', 'oktober', 'november', 'desember',
-] as const;
+export const WEEKDAYS_FULL_NB = WEEKDAYS_LONG;
+export const MONTHS_NB = MONTHS_LONG;
 
 export function dateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

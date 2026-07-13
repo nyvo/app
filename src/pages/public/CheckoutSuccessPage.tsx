@@ -18,9 +18,8 @@ import { readFreeReceipt, type FreeReceipt } from '@/lib/free-receipt';
 import { StorefrontHeader } from '@/components/public/StorefrontHeader';
 import { downloadIcs, resolveEventEnd, type IcsEvent } from '@/utils/ics';
 import { directionsUrl } from '@/components/public/studio/studioFacts';
+import { WEEKDAYS_LONG as WEEKDAYS, MONTHS_LONG as MONTHS } from '@/lib/calendar-nb';
 
-const WEEKDAYS = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
-const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
 const SUPPORT_EMAIL = COMPANY.email;
 
 // Full Norwegian date, e.g. "26. april 2026". Used in the receipt footer.
