@@ -20,8 +20,8 @@ const TermsPage = () => {
           <h1 className="text-2xl font-medium text-foreground">Vilkår</h1>
           <p className="mt-2 text-sm text-foreground-muted">Sist oppdatert 11. juli 2026</p>
 
-          <div className="mt-12 space-y-10">
-            <section className="space-y-3">
+          <div className="mt-12 space-y-8">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Om tjenesten</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Openspot er en tjeneste for påmelding og betaling til kurs, timer og arrangementer.
@@ -33,7 +33,7 @@ const TermsPage = () => {
               </p>
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Påmelding og betaling</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Før du betaler ser du kursnavn, pris og totalbeløp. Prisene er totalpriser –
@@ -49,7 +49,7 @@ const TermsPage = () => {
               </p>
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Angrerett og avbestilling</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Kurs, timer og arrangementer skjer på et fastsatt tidspunkt og er derfor unntatt
@@ -69,7 +69,7 @@ const TermsPage = () => {
               </p>
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Klager</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Er noe feil med en betaling eller påmelding, send en e-post til{' '}
@@ -81,7 +81,7 @@ const TermsPage = () => {
               </p>
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Ansvar</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Studioet eller arrangøren er ansvarlig for gjennomføringen og innholdet i kurset.
@@ -89,7 +89,7 @@ const TermsPage = () => {
               </p>
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Personvern</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Hvordan vi behandler personopplysninger står i{' '}
@@ -100,7 +100,7 @@ const TermsPage = () => {
               </p>
             </section>
 
-            <section className="space-y-3">
+            <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Endringer</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi kan oppdatere vilkårene ved behov. Vesentlige endringer publiseres her eller

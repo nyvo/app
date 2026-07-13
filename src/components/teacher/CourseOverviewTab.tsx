@@ -436,7 +436,7 @@ function TimeplanCard({
           <button
             type="button"
             onClick={onOpenAll}
-            className="mx-4 mb-3.5 mt-1 w-fit rounded text-left text-sm font-medium text-foreground-muted underline underline-offset-4 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            className="mx-4 mb-3 mt-1 w-fit rounded text-left text-sm font-medium text-foreground-muted underline underline-offset-4 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           >
             Se alle timer
           </button>

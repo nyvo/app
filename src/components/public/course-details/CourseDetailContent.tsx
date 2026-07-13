@@ -65,7 +65,7 @@ export function CourseDetailContent({ course, sessions, backHref }: CourseDetail
           <h2 className="text-base font-medium text-foreground">Om kurset</h2>
           <RichTextContent
             html={course.description}
-            className="mt-2.5 text-base leading-relaxed text-foreground"
+            className="mt-3 text-base leading-relaxed text-foreground"
           />
         </section>
       )}
@@ -87,7 +87,7 @@ export function CourseDetailContent({ course, sessions, backHref }: CourseDetail
       {course.location && (
         <section className="mt-8">
           <h2 className="text-base font-medium text-foreground">Sted</h2>
-          <div className="mt-2.5">
+          <div className="mt-3">
             <LocationCard
               location={course.location}
               lat={course.location_lat}
@@ -136,7 +136,7 @@ function MetadataCard({ course, sessions }: { course: PublicCourseWithDetails; s
   if (rows.length === 0) return null;
 
   return (
-    <div className="mt-[22px] rounded-xl border border-border-subtle divide-y divide-border-subtle">
+    <div className="mt-6 rounded-xl border border-border-subtle divide-y divide-border-subtle">
       {rows.map((row) => (
         <div key={row.label} className="flex items-baseline justify-between gap-4 px-4 py-3">
           <span className="text-sm text-foreground-muted whitespace-nowrap">{row.label}</span>
@@ -171,7 +171,7 @@ function TimeplanStrip({
     : null;
 
   return (
-    <div className="mt-2.5 flex gap-2.5 overflow-x-auto pb-1">
+    <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1">
       {visible.map((s, i) => (
         <SessionCard key={s.id} session={s} index={i} duration={duration} isNext={s.id === nextId} />
       ))}
