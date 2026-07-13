@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment } from 'react';
 import { ExternalLink } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,8 +22,6 @@ export interface PayoutRow {
   /** Amount in kroner. */
   amount: number;
   status: 'paid' | 'in_transit';
-  /** Last 4 digits of the destination bank account, when Stripe exposes it. */
-  accountLast4?: string;
 }
 
 export interface PayoutStatsProps {
@@ -35,10 +33,6 @@ export interface PayoutStatsProps {
   nextPayoutDate: string | null;
   payouts: PayoutRow[];
   onOpenStripe: () => void;
-  /** Optional income trend, sits between the key figures and the payout list.
-   *  Composed by the caller (the dashboard `IncomeChart` with its own data +
-   *  range state) so this view stays presentational. */
-  chart?: ReactNode;
 }
 
 export function PayoutStats({
@@ -47,7 +41,6 @@ export function PayoutStats({
   nextPayoutDate,
   payouts,
   onOpenStripe,
-  chart,
 }: PayoutStatsProps) {
   // Same Nøkkeltall spine idiom as the course overview: label + one figure per
   // tile, short inset dividers between.
@@ -73,8 +66,6 @@ export function PayoutStats({
         </FramedCardPanel>
       </FramedCard>
 
-      {chart}
-
       <FramedCard title="Siste utbetalinger">
         {payouts.length === 0 ? (
           <FramedCardPanel className="items-center justify-center p-8">
@@ -95,11 +86,7 @@ export function PayoutStats({
                   <p className="text-base font-medium tabular-nums text-foreground">
                     {formatKroner(payout.amount)}
                   </p>
-                  <p className="mt-0.5 text-sm text-foreground-muted">
-                    {payout.accountLast4
-                      ? `${payout.date} · konto ••${payout.accountLast4}`
-                      : payout.date}
-                  </p>
+                  <p className="mt-0.5 text-sm text-foreground-muted">{payout.date}</p>
                 </div>
                 {/* Only the in-transit row is flagged — a settled payout is the
                     default state and needs no badge (same idiom as the session
@@ -116,7 +103,7 @@ export function PayoutStats({
       </FramedCard>
 
       <div className="px-1">
-        <Button variant="plain" onClick={onOpenStripe} className="px-0">
+        <Button variant="link" onClick={onOpenStripe} className="px-0">
           Se kvitteringer og detaljer på Stripe
           <ExternalLink className="size-4" aria-hidden />
         </Button>
