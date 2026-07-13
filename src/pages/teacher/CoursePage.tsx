@@ -835,6 +835,11 @@ const CoursePage = () => {
     setSettingsDropInPrice(courseData.dropInPrice);
     // Drop-in is instant-commit, so it's intentionally NOT reset by Forkast —
     // any drop-in change has already been persisted independently.
+    setSettingsInstructor(
+      courseData.instructorId && courseData.instructorName
+        ? { id: courseData.instructorId, name: courseData.instructorName }
+        : null,
+    );
     if (courseData.startDate) setSettingsDate(parseLocalDate(courseData.startDate));
     if (sessionsStartTime) setSettingsTime(sessionsStartTime);
     // Reset per-day session editor from the loaded sessions (single format).
