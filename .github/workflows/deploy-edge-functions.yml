@@ -1,0 +1,70 @@
+name: Deploy edge functions
+
+# Keeps the remote project's edge functions in lockstep with `main`. Same
+# philosophy as the migration rule in CLAUDE.md: a function is only "done"
+# when it's committed to main — this makes reaching main the deploy trigger,
+# so hand-deploys can't drift from the repo.
+#
+# Deploys ALL functions (not just changed ones) on purpose: many functions
+# import supabase/functions/_shared/*, so a shared-module edit must redeploy
+# every dependent. A full deploy also self-heals any prior drift.
+#
+# verify_jwt per function comes from supabase/config.toml — the webhook/cron
+# functions are declared verify_jwt=false there, so a full deploy preserves
+# their unauthenticated posture. Do NOT deploy functions any other way that
+# bypasses config.toml.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - 'supabase/config.toml'
+      - '.github/workflows/deploy-edge-functions.yml'
+  # Manual trigger — for a first full deploy, or to reconcile drift on demand.
+  workflow_dispatch:
+
+# Never let two deploys race; queue them instead of cancelling a live one.
+concurrency:
+  group: deploy-edge-functions
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      # Project this app runs against (from VITE_SUPABASE_URL).
+      SUPABASE_PROJECT_REF: nollnnkksgicsvuthnjq
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pinned, not `latest`: a surprise CLI release must not change deploy
+      # behavior with no repo change. Bump deliberately (matches local dev CLI).
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.105.0
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # Mirror the edge-function test job: the repo-root package.json puts Deno
+      # in bring-your-own-node_modules mode, and jsr:@supabase/supabase-js
+      # resolves npm deps from node_modules — install so tests + bundling resolve.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Test gate: ci.yml only runs on pull_request, so a direct push to main
+      # would otherwise deploy with zero checks. Never ship untested functions.
+      - name: Edge function tests
+        run: deno test --allow-env supabase/functions/
+
+      # No function name = deploy every function under supabase/functions/,
+      # applying each one's verify_jwt from supabase/config.toml.
+      - name: Deploy all edge functions
+        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"

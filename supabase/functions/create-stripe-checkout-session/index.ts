@@ -5,6 +5,7 @@ import {
   errorResponse,
   successResponse,
   verifyAuthAndOrgMembership,
+  isAllowedOrigin,
 } from '../_shared/auth.ts'
 import {
   createStripeCheckoutSession,
@@ -14,7 +15,6 @@ import {
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:5173'
 
 interface RequestBody {
   sellerId: string
@@ -117,12 +117,20 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // Return the owner to the app origin they started from (validated against the
+    // allowlist), falling back to SITE_URL. Using the caller's origin makes a
+    // non-5173 dev port + staging work, not just the single SITE_URL value.
+    const origin = req.headers.get('origin')
+    const baseUrl = isAllowedOrigin(origin)
+      ? (origin as string)
+      : (Deno.env.get('SITE_URL') || 'http://localhost:5173')
+
     const session = await createStripeCheckoutSession({
       customerId,
       priceId,
       sellerId: seller.id,
-      successUrl: `${siteUrl}/settings/billing?stripe=success`,
-      cancelUrl: `${siteUrl}/settings/billing?stripe=cancelled`,
+      successUrl: `${baseUrl}/settings/billing?stripe=success`,
+      cancelUrl: `${baseUrl}/settings/billing?stripe=cancelled`,
     })
 
     return successResponse({ url: session.url }, 200, req)
