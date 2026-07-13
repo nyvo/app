@@ -79,6 +79,7 @@ const BillingPreview = lazy(() => import('./pages/dev/BillingPreview'));
 const StudioPreview = lazy(() => import('./pages/dev/StudioPreview'));
 const EmbedCodePreview = lazy(() => import('./pages/dev/EmbedCodePreview'));
 // Buyer / public
+const BuyerDashboardPreview = lazy(() => import('./pages/dev/BuyerDashboardPreview'));
 const StorefrontPreview = lazy(() => import('./pages/dev/StorefrontPreview'));
 const DetailT1Preview = lazy(() => import('./pages/dev/DetailT1Preview'));
 const CheckoutT1Preview = lazy(() => import('./pages/dev/CheckoutT1Preview'));
@@ -234,6 +235,7 @@ const router = createBrowserRouter(
             <Route path="/dev/studio-preview" element={<StudioPreview />} />
             <Route path="/dev/embed-code-preview" element={<EmbedCodePreview />} />
             {/* Buyer / public */}
+            <Route path="/dev/buyer-dashboard-preview" element={<BuyerDashboardPreview />} />
             <Route path="/dev/storefront" element={<StorefrontPreview />} />
             <Route path="/dev/detail-t1-preview" element={<DetailT1Preview />} />
             <Route path="/dev/checkout-t1-preview" element={<CheckoutT1Preview />} />
