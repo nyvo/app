@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { ErrorState } from '@/components/ui/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,7 +9,7 @@ import {
   PayoutSetupCard,
   PayoutFaqSection,
   type PayoutSetupViewModel,
-  type MarkerTone,
+  type PayoutStepViewModel,
 } from '@/components/teacher/PayoutSetupCard';
 import { PayoutStats, type PayoutRow } from '@/components/teacher/PayoutStats';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +17,7 @@ import {
   startStripeConnectOnboarding,
   refreshStripeConnectStatus,
   getStripeSettlements,
+  type ConnectStatusResult,
   type StripeSettlementsResult,
 } from '@/services/stripe-connect';
 import { COMPANY } from '@/lib/company';
@@ -36,14 +35,20 @@ const STEP_3_TITLE = 'Motta utbetalinger';
  * and its marker tone. The Card matches the other Settings pages (billing,
  * get-started) on the dampened canvas. The content is driven by the
  * seller's Stripe Connect onboarding state (every tier — integrated payments
- * are not gated on plan):
+ * are not gated on plan). The copy tracks what Stripe's flags actually mean:
  *
- *   • not started         → step 1 current, "Kom i gang" (hosted Stripe onboarding)
- *   • started, !connected → step 2 current, "Fortsett oppsettet" (+ restricted/rejected sub-cases)
- *   • connected           → step 3 current, "Se oversikt" (Stripe Express dashboard)
- *     — if charges are enabled but payouts are still blocked (unverified bank, risk
- *       hold), a warning callout sits above the card. Surfaced only — never gates
- *       checkout/publish, which key off stripe_onboarding_complete alone.
+ *   • not started            → step 1 current, "Kom i gang" (hosted Stripe onboarding)
+ *   • pending                → step 1 STILL current — details_submitted is false, i.e.
+ *       the seller left Stripe's form before finishing. Nothing is under review;
+ *       the copy sends them back ("Fortsett der du slapp"), never "we're checking".
+ *   • restricted             → step 2 current — details ARE submitted. Whether the
+ *       seller must wait (requirements.pending_verification: Stripe says "no action
+ *       needed") or act (currently_due/past_due non-empty) is fetched live from
+ *       check-stripe-connect-status (requirements_due) and picks the copy + tone.
+ *   • rejected               → step 2 danger, contact support
+ *   • connected, payouts off → step 3 current with warning — charges work but Stripe
+ *       still blocks the bank transfer (unverified bank, risk hold). Surfaced only —
+ *       never gates checkout/publish, which key off stripe_onboarding_complete alone.
  *
  * Once payouts flow, the stepper is replaced by the PayoutStats overview (key
  * figures + recent payouts from the settlements edge function); the raw
@@ -155,6 +160,20 @@ const PaymentsPage = () => {
     },
   });
 
+  // 'restricted' covers two opposite situations — Stripe is verifying (wait) vs
+  // Stripe needs more info (act). Only requirements_due can tell them apart, so
+  // fetch it live; the call also re-syncs the persisted status server-side.
+  const requirementsQuery = useQuery({
+    queryKey: ['stripe-connect-requirements', currentSeller?.id],
+    enabled: !!currentSeller?.id && stripeStarted && !stripeConnected && stripeStatus === 'restricted',
+    staleTime: 60_000,
+    queryFn: async (): Promise<ConnectStatusResult> => {
+      const { data, error } = await refreshStripeConnectStatus(currentSeller!.id);
+      if (error || !data) throw error ?? new Error('Status utilgjengelig');
+      return data;
+    },
+  });
+
   const handleStartStripe = useCallback(async () => {
     if (!currentSeller?.id) return;
     setStripeLoading(true);
@@ -172,10 +191,18 @@ const PaymentsPage = () => {
 
   // Return from Stripe: force a server-side status sync, pull the persisted row,
   // then let the effect below toast from that row (not the check response).
+  const queryClient = useQueryClient();
+  const returnRequirementsDue = useRef<string[] | null>(null);
   const handleReturnFromStripe = useCallback(async () => {
     if (!currentSeller?.id) return;
     setCheckingReturn(true);
-    const { error } = await refreshStripeConnectStatus(currentSeller.id);
+    const { data, error } = await refreshStripeConnectStatus(currentSeller.id);
+    if (data) {
+      // Seed the restricted-state query so the card doesn't re-fetch what the
+      // return check just learned, and keep requirements_due for the toast.
+      queryClient.setQueryData(['stripe-connect-requirements', currentSeller.id], data);
+      returnRequirementsDue.current = data.requirements_due ?? null;
+    }
     await refreshSellers();
     setCheckingReturn(false);
     if (error) {
@@ -183,7 +210,7 @@ const PaymentsPage = () => {
       return;
     }
     returnToastPending.current = true;
-  }, [currentSeller?.id, refreshSellers]);
+  }, [currentSeller?.id, refreshSellers, queryClient]);
 
   // Fire the return toast only once the refreshed seller row is in state, so the
   // message matches what the timeline shows.
@@ -191,9 +218,14 @@ const PaymentsPage = () => {
     if (!returnToastPending.current || checkingReturn) return;
     returnToastPending.current = false;
     if (stripeConnected) {
-      toast.success('Utbetalinger er klare');
+      toast.success('Utbetalingene er klare.');
     } else if (stripeStatus === 'rejected') {
-      toast.error(`Søknaden ble avslått. Ta gjerne kontakt på ${COMPANY.email}.`);
+      // One terse sentence — the card behind the toast carries the contact CTA.
+      toast.error('Søknaden ble avslått.');
+    } else if (stripeStatus === 'restricted' && returnRequirementsDue.current?.length === 0) {
+      // Everything submitted, Stripe is verifying — the seller finished their
+      // part, so don't tell them the setup is unfinished.
+      toast.success('Opplysningene er sendt inn.');
     } else {
       toast('Oppsettet er ikke fullført ennå.');
     }
@@ -241,10 +273,19 @@ const PaymentsPage = () => {
   }, [currentSeller?.id, searchParams, setSearchParams, handleReturnFromStripe, handleStartStripe]);
 
   // ─── One view-model per onboarding state, rendered by PayoutSetupCard ───
+  // (State → Stripe mapping in the header comment.)
+  const continueButton = (
+    <Button
+      onClick={handleStartStripe}
+      loading={stripeLoading || checkingReturn}
+      loadingText={checkingReturn ? 'Sjekker status' : 'Åpner'}
+    >
+      Fortsett oppsettet
+    </Button>
+  );
+
   let h2: string;
-  let step2Tone: MarkerTone = 'neutral';
-  let step2Desc: string;
-  let step2Action: ReactNode;
+  let h2Tone: PayoutSetupViewModel['h2Tone'];
   let steps: PayoutSetupViewModel['steps'];
 
   if (!stripeStarted && !stripeConnected) {
@@ -270,60 +311,111 @@ const PaymentsPage = () => {
   } else if (stripeStarted && !stripeConnected) {
     if (stripeStatus === 'rejected') {
       h2 = 'Søknaden ble avslått';
-      step2Tone = 'danger';
-      step2Desc = `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg.`;
-      step2Action = (
-        <Button asChild>
-          <a href={`mailto:${COMPANY.email}`}>Kontakt oss</a>
-        </Button>
-      );
-    } else {
-      if (stripeStatus === 'restricted') {
+      h2Tone = 'danger';
+      steps = [
+        { title: STEP_1_TITLE, status: 'done' },
+        {
+          title: STEP_2_TITLE,
+          status: 'current',
+          tone: 'danger',
+          statusLabel: 'Avslått',
+          description: `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg.`,
+          action: (
+            <Button asChild>
+              <a href={`mailto:${COMPANY.email}`}>Kontakt oss</a>
+            </Button>
+          ),
+        },
+        { title: STEP_3_TITLE, status: 'upcoming' },
+      ];
+    } else if (stripeStatus === 'restricted') {
+      // 'restricted' means details_submitted is true — step 1 is genuinely
+      // done. Whether step 2 is "wait" or "act" comes from requirements_due.
+      const due = requirementsQuery.data?.requirements_due;
+      let step2: PayoutStepViewModel;
+      if (due && due.length > 0) {
         h2 = 'Vi mangler litt informasjon';
-        step2Tone = 'warning';
-        step2Desc = 'Fyll inn det som mangler, så aktiverer vi utbetalinger.';
+        h2Tone = 'warning';
+        step2 = {
+          title: STEP_2_TITLE,
+          status: 'current',
+          tone: 'warning',
+          statusLabel: 'Krever handling',
+          description: 'Fyll inn det som mangler, så aktiverer vi utbetalinger.',
+          action: continueButton,
+        };
+      } else if (requirementsQuery.isError) {
+        // Couldn't ask Stripe what (if anything) is missing — neutral copy
+        // that neither promises "nothing to do" nor demands action, with the
+        // button as an escape hatch.
+        h2 = 'Vi kontrollerer opplysningene';
+        step2 = {
+          title: STEP_2_TITLE,
+          status: 'current',
+          description: 'Vi aktiverer utbetalinger så snart alt er godkjent.',
+          action: continueButton,
+        };
       } else {
-        h2 = 'Fullfør oppsettet';
-        step2Desc = 'Vi aktiverer utbetalinger så snart alt er godkjent.';
+        // Nothing due (or the check is still loading): Stripe is verifying —
+        // per their docs "no action needed", so no CTA to a form with nothing
+        // to fill in. The webhook flips the status when verification lands.
+        h2 = 'Vi kontrollerer opplysningene';
+        h2Tone = 'info';
+        step2 = {
+          title: STEP_2_TITLE,
+          status: 'current',
+          tone: 'info',
+          statusLabel: 'Pågår',
+          description: 'Stripe kontrollerer opplysningene dine. Du trenger ikke gjøre noe nå.',
+        };
       }
-      step2Action = (
-        <Button
-          onClick={handleStartStripe}
-          loading={stripeLoading || checkingReturn}
-          loadingText={checkingReturn ? 'Sjekker status' : 'Åpner'}
-        >
-          Fortsett oppsettet
-        </Button>
-      );
+      steps = [{ title: STEP_1_TITLE, status: 'done' }, step2, { title: STEP_3_TITLE, status: 'upcoming' }];
+    } else {
+      // 'pending' — the seller left Stripe's form before submitting it.
+      // Nothing is under review, so step 1 is still theirs to finish; never
+      // show it as done or imply we're waiting on Stripe.
+      h2 = 'Fullfør oppsettet';
+      steps = [
+        {
+          title: STEP_1_TITLE,
+          status: 'current',
+          statusLabel: 'Påbegynt',
+          description: 'Du er ikke helt ferdig hos Stripe. Fortsett der du slapp.',
+          action: continueButton,
+        },
+        { title: STEP_2_TITLE, status: 'upcoming' },
+        { title: STEP_3_TITLE, status: 'upcoming' },
+      ];
     }
-    steps = [
-      { title: STEP_1_TITLE, status: 'done' },
-      { title: STEP_2_TITLE, status: 'current', tone: step2Tone, description: step2Desc, action: step2Action },
-      { title: STEP_3_TITLE, status: 'upcoming' },
-    ];
   } else {
-    h2 = 'Utbetalingene er klare';
+    // Connected. When payouts also flow, showStats swaps the stepper for the
+    // PayoutStats overview — so this card only ever renders while Stripe still
+    // blocks the bank transfer (unverified bank, risk hold). Step 3 is in
+    // progress with a warning, not "done": the page must not say payouts are
+    // ready when they aren't.
+    h2 = 'Utbetalinger er ikke aktive ennå';
+    h2Tone = 'warning';
     steps = [
       { title: STEP_1_TITLE, status: 'done' },
       { title: STEP_2_TITLE, status: 'done' },
       {
         title: STEP_3_TITLE,
         status: 'current',
-        tone: 'success',
-        description: 'Pengene overføres automatisk til kontoen din.',
-        action: <Button onClick={handleOpenStripeDashboard}>Se oversikt</Button>,
+        tone: 'warning',
+        statusLabel: 'Krever handling',
+        description: 'Kortbetalinger virker, men Stripe trenger noe mer før pengene kan overføres til deg.',
+        action: <Button onClick={handleOpenStripeDashboard}>Åpne Stripe</Button>,
       },
     ];
   }
 
-  const viewModel: PayoutSetupViewModel = { h2, steps };
+  const viewModel: PayoutSetupViewModel = { h2, h2Tone, steps };
 
-  // Centered single column like the other money page (billing) — this is a
-  // status surface, not a settings form, so no label-column SettingsRows.
+  // Full-width shell like the other dashboard pages — this is a status
+  // surface, not a settings form, so no label-column SettingsRows.
   return (
     <PageShell
       title="Utbetalingskonto"
-      narrow="centered"
       description={showStats ? undefined : 'Slik får du betalt for kursene dine.'}
     >
       {currentSellerHydrateFailed ? (
@@ -352,21 +444,7 @@ const PaymentsPage = () => {
           />
         )
       ) : (
-        <div className="space-y-6">
-          {stripePayoutsBlocked && (
-            <Alert variant="warning">
-              <AlertTitle className="text-base">Utbetalinger er ikke aktive ennå</AlertTitle>
-              <AlertDescription className="text-base text-foreground">
-                Stripe mangler noe informasjon før pengene kan utbetales til deg. Åpne
-                Stripe-dashbordet for å fullføre.
-              </AlertDescription>
-              <div className="mt-3">
-                <Button onClick={handleOpenStripeDashboard}>Åpne Stripe</Button>
-              </div>
-            </Alert>
-          )}
-          <PayoutSetupCard viewModel={viewModel} />
-        </div>
+        <PayoutSetupCard viewModel={viewModel} />
       )}
       <PayoutFaqSection />
     </PageShell>

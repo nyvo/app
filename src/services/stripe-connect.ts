@@ -9,7 +9,7 @@ interface StartOnboardingResult {
   url: string
 }
 
-interface ConnectStatusResult {
+export interface ConnectStatusResult {
   status: string
   onboarding_complete: boolean
   requirements_due?: string[]

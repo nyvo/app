@@ -1,4 +1,3 @@
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   PayoutSetupCard,
@@ -14,11 +13,11 @@ import { DevPage, PreviewSection } from './_kit';
 /**
  * /dev/payout-preview — auth-free preview of the payouts settings page.
  * Production lives at src/pages/teacher/PaymentsPage.tsx + route
- * /settings/payouts. Renders the four onboarding timeline states, the
- * payouts-blocked warning, the onboarded PayoutStats view (data / tom /
- * laster / feil), the FAQ row and the hydrate-failed error state, with no-op
- * handlers so the design can be reviewed without a real Stripe Connect
- * account.
+ * /settings/payouts. Renders every onboarding timeline state (including the
+ * two 'restricted' variants and the payouts-blocked step 3), the onboarded
+ * PayoutStats view (data / tom / laster / feil), the FAQ row and the
+ * hydrate-failed error state, with no-op handlers so the design can be
+ * reviewed without a real Stripe Connect account.
  */
 
 const STEP_1_TITLE = 'Bekreft virksomheten';
@@ -50,10 +49,73 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
   },
   {
     id: 'pending',
-    label: '2 — Venter',
-    description: 'Startet hos Stripe, venter på at kontrollen fullføres.',
+    label: '2 — Påbegynt, ikke fullført',
+    description:
+      'Selgeren forlot Stripe-skjemaet før alt var sendt inn (details_submitted = false). Ingenting er til kontroll, så steg 1 står fortsatt som deres — aldri «vi kontrollerer».',
     viewModel: {
       h2: 'Fullfør oppsettet',
+      steps: [
+        {
+          title: STEP_1_TITLE,
+          status: 'current',
+          statusLabel: 'Påbegynt',
+          description: 'Du er ikke helt ferdig hos Stripe. Fortsett der du slapp.',
+          action: <Button onClick={noop}>Fortsett oppsettet</Button>,
+        },
+        { title: STEP_2_TITLE, status: 'upcoming' },
+        { title: STEP_3_TITLE, status: 'upcoming' },
+      ],
+    },
+  },
+  {
+    id: 'restricted-verifying',
+    label: '3 — Under kontroll',
+    description:
+      'restricted med tom requirements_due — alt er sendt inn og Stripe kontrollerer. Ingen handling kreves, derfor ingen knapp.',
+    viewModel: {
+      h2: 'Vi kontrollerer opplysningene',
+      h2Tone: 'info',
+      steps: [
+        { title: STEP_1_TITLE, status: 'done' },
+        {
+          title: STEP_2_TITLE,
+          status: 'current',
+          tone: 'info',
+          statusLabel: 'Pågår',
+          description: 'Stripe kontrollerer opplysningene dine. Du trenger ikke gjøre noe nå.',
+        },
+        { title: STEP_3_TITLE, status: 'upcoming' },
+      ],
+    },
+  },
+  {
+    id: 'restricted-due',
+    label: '4 — Mangler informasjon',
+    description: 'restricted med requirements_due — Stripe trenger mer fra selgeren før kontoen kan aktiveres.',
+    viewModel: {
+      h2: 'Vi mangler litt informasjon',
+      h2Tone: 'warning',
+      steps: [
+        { title: STEP_1_TITLE, status: 'done' },
+        {
+          title: STEP_2_TITLE,
+          status: 'current',
+          tone: 'warning',
+          statusLabel: 'Krever handling',
+          description: 'Fyll inn det som mangler, så aktiverer vi utbetalinger.',
+          action: <Button onClick={noop}>Fortsett oppsettet</Button>,
+        },
+        { title: STEP_3_TITLE, status: 'upcoming' },
+      ],
+    },
+  },
+  {
+    id: 'restricted-unknown',
+    label: '4b — Mangler informasjon? (statussjekk feilet)',
+    description:
+      'restricted, men requirements-sjekken mot Stripe feilet — nøytral tekst som verken lover «ingenting å gjøre» eller krever handling, med knappen som fluktrute.',
+    viewModel: {
+      h2: 'Vi kontrollerer opplysningene',
       steps: [
         { title: STEP_1_TITLE, status: 'done' },
         {
@@ -67,36 +129,19 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
     },
   },
   {
-    id: 'restricted',
-    label: '3 — Mangler informasjon',
-    description: 'Stripe trenger mer informasjon før kontoen kan aktiveres.',
-    viewModel: {
-      h2: 'Vi mangler litt informasjon',
-      steps: [
-        { title: STEP_1_TITLE, status: 'done' },
-        {
-          title: STEP_2_TITLE,
-          status: 'current',
-          tone: 'warning',
-          description: 'Fyll inn det som mangler, så aktiverer vi utbetalinger.',
-          action: <Button onClick={noop}>Fortsett oppsettet</Button>,
-        },
-        { title: STEP_3_TITLE, status: 'upcoming' },
-      ],
-    },
-  },
-  {
     id: 'rejected',
-    label: '4 — Avslått',
+    label: '5 — Avslått',
     description: 'Stripe avslo søknaden om en betalingskonto.',
     viewModel: {
       h2: 'Søknaden ble avslått',
+      h2Tone: 'danger',
       steps: [
         { title: STEP_1_TITLE, status: 'done' },
         {
           title: STEP_2_TITLE,
           status: 'current',
           tone: 'danger',
+          statusLabel: 'Avslått',
           description: `Ta gjerne kontakt på ${COMPANY.email}, så hjelper vi deg.`,
           action: (
             <Button asChild>
@@ -110,20 +155,23 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
   },
 ];
 
-// "Utbetalingene er klare" — live renders this card only in the blocked state
-// (stripeConnected && stripePayoutsBlocked), always under the warning Alert.
-// Once payouts actually flow, PayoutStats replaces the stepper entirely.
-const ENABLED_VIEW_MODEL: PayoutSetupViewModel = {
-  h2: 'Utbetalingene er klare',
+// Payouts-blocked — the only state where the connected seller still sees the
+// stepper (once payouts actually flow, PayoutStats replaces it entirely).
+// Step 3 is in progress with a warning, never a green "Fullført": the page
+// must not say payouts are ready while Stripe still blocks the transfer.
+const BLOCKED_VIEW_MODEL: PayoutSetupViewModel = {
+  h2: 'Utbetalinger er ikke aktive ennå',
+  h2Tone: 'warning',
   steps: [
     { title: STEP_1_TITLE, status: 'done' },
     { title: STEP_2_TITLE, status: 'done' },
     {
       title: STEP_3_TITLE,
       status: 'current',
-      tone: 'success',
-      description: 'Pengene overføres automatisk til kontoen din.',
-      action: <Button onClick={noop}>Se oversikt</Button>,
+      tone: 'warning',
+      statusLabel: 'Krever handling',
+      description: 'Kortbetalinger virker, men Stripe trenger noe mer før pengene kan overføres til deg.',
+      action: <Button onClick={noop}>Åpne Stripe</Button>,
     },
   ],
 };
@@ -140,7 +188,7 @@ const PayoutPreview = () => {
   return (
     <DevPage
       title="Utbetalingskonto"
-      description="Alle tilstander for /settings/payouts (PaymentsPage): de fire onboardingstegene, blokkert-varselet, statistikk-visningen (data/tom/laster/feil), FAQ-seksjonen og feiltilstanden."
+      description="Alle tilstander for /settings/payouts (PaymentsPage): onboardingstegene (inkl. begge restricted-variantene), det blokkerte steg 3, statistikk-visningen (data/tom/laster/feil), FAQ-seksjonen og feiltilstanden."
     >
       {STATES.map((s) => (
         <PreviewSection key={s.id} label={s.label} description={s.description}>
@@ -149,23 +197,10 @@ const PayoutPreview = () => {
       ))}
 
       <PreviewSection
-        label="5 — Aktiv, men utbetalinger holdes igjen"
-        description="stripePayoutsBlocked — kortbetalinger virker, men Stripe holder igjen bankoverføringen. Varselet står over kortet; dette er den eneste tilstanden der «Utbetalingene er klare»-kortet vises."
+        label="6 — Aktiv, men utbetalinger holdes igjen"
+        description="stripePayoutsBlocked — kortbetalinger virker, men Stripe holder igjen bankoverføringen. Steg 3 står som pågående med advarselstone; det tidligere varselet over kortet er foldet inn i kortet."
       >
-        {/* space-y-6 mirrors the wrapper the live Alert + card pair sits in. */}
-        <div className="space-y-6">
-          <Alert variant="warning">
-            <AlertTitle className="text-base">Utbetalinger er ikke aktive ennå</AlertTitle>
-            <AlertDescription className="text-base text-foreground">
-              Stripe mangler noe informasjon før pengene kan utbetales til deg. Åpne
-              Stripe-dashbordet for å fullføre.
-            </AlertDescription>
-            <div className="mt-3">
-              <Button onClick={noop}>Åpne Stripe</Button>
-            </div>
-          </Alert>
-          <PayoutSetupCard viewModel={ENABLED_VIEW_MODEL} />
-        </div>
+        <PayoutSetupCard viewModel={BLOCKED_VIEW_MODEL} />
       </PreviewSection>
 
       <PreviewSection
