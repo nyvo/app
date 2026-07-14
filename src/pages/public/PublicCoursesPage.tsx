@@ -151,7 +151,7 @@ const PublicCoursesPage = () => {
   // The one control row between masthead and agenda (mockup Q1): filters
   // only — the date headers in the list are the navigation.
   const filters = hasFilters ? (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {typeOptions.length > 1 && (
         <StudioFilterPill
           value={typeFilter}

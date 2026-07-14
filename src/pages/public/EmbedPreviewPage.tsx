@@ -15,7 +15,7 @@ const EmbedPreviewPage = () => {
   useDocumentTitle('Forhåndsvisning av kurskalender');
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       {/* max-w-4xl, not 3xl: the calendar's side-by-side layout needs a
           ≥672px container INSIDE the iframe (its @2xl container query), and
           a 3xl column left it 2px short — stacking it into mobile layout. */}
@@ -40,7 +40,7 @@ const EmbedPreviewPage = () => {
             src={`/embed/${slug}`}
             title="Kurskalender"
             loading="lazy"
-            className="h-[640px] w-full"
+            className="h-[640px] max-h-[75dvh] w-full"
           />
         )}
       </div>

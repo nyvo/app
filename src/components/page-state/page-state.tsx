@@ -100,7 +100,7 @@ export function PageState({
   const resolvedAction = action === undefined ? cfg.action : action;
 
   return (
-    <Root className="min-h-[60vh] flex flex-col items-center justify-center text-center px-6 py-12">
+    <Root className="min-h-[60dvh] flex flex-col items-center justify-center text-center px-6 py-12">
       {illustration ? <div className="mb-8">{illustration}</div> : null}
       <h1 className="text-2xl font-medium text-foreground max-w-md">
         {resolvedTitle}

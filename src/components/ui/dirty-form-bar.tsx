@@ -112,10 +112,14 @@ export function DirtyFormBar({
           // of the measured content column, capped to its width.
           style={{ left: box.left + box.width / 2, maxWidth: box.width }}
           className={cn(
-            "fixed bottom-6 z-40 w-fit -translate-x-1/2",
+            // bottom clears the iOS home-indicator gesture area, same convention
+            // as BookingBar / SheetFooter (env() needs viewport-fit=cover).
+            "fixed bottom-[max(1.5rem,calc(env(safe-area-inset-bottom)+0.75rem))] z-40 w-fit -translate-x-1/2",
             // Surface chrome — light floating pill. Matches dialog's surface +
             // border convention (overlays are bordered, not lifted — 2026-07-11).
-            "flex items-center gap-4 rounded-2xl border border-border bg-surface py-2 pr-2 pl-5",
+            // flex-wrap: on narrow columns the button pair drops under the label
+            // instead of clipping at the pill's maxWidth.
+            "flex flex-wrap items-center justify-end gap-x-4 gap-y-2 rounded-2xl border border-border bg-surface py-2 pr-2 pl-5",
             "text-foreground",
             // Interruptible transition (not a keyframe animation) so it can
             // reverse mid-flight. Matches toast motion (slide-up + fade);

@@ -43,7 +43,6 @@ function BackLink({ onClick, disabled }: { onClick: () => void; disabled?: boole
     <Button
       type="button"
       variant="ghost"
-      size="sm"
       onClick={onClick}
       disabled={disabled}
       className="mb-8 -ml-2.5 gap-1.5 text-foreground-muted"
@@ -131,7 +130,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground flex flex-col">
+    <main className="min-h-dvh bg-background text-foreground flex flex-col">
       <header className="flex justify-center px-4 sm:px-6 py-8">
         <Link to="/" className="flex select-none items-center">
           <span className="text-base font-medium text-foreground">Openspot</span>

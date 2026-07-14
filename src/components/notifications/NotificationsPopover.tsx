@@ -133,7 +133,7 @@ export function NotificationsPopover() {
         <NotificationLiveRegion notifications={notifications} enabled={!open} />
         <Drawer open={open} onOpenChange={handleOpenChange}>
           <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
-          <DrawerContent className="max-h-[85vh]">
+          <DrawerContent className="max-h-[85dvh]">
             {panelInner(
               <DrawerTitle className="text-sm font-medium">Varsler</DrawerTitle>,
             )}

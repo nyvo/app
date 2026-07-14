@@ -3,12 +3,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { ArrowLeft, ChevronRight } from '@/lib/icons';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -156,9 +156,9 @@ export function SessionsModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg" showCloseButton={view === 'list'}>
-        <DialogHeader
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-lg" showCloseButton={view === 'list'}>
+        <ResponsiveDialogHeader
           className={cn(
             // Step 2 reads as a proper header bar: back + title on one line,
             // divider underneath, spanning the full dialog width.
@@ -176,19 +176,19 @@ export function SessionsModal({
               >
                 <ArrowLeft className="size-4" />
               </Button>
-              <DialogTitle>
+              <ResponsiveDialogTitle>
                 {editing ? `Endre time – ${dayMonth(editing.session_date)}` : 'Endre time'}
-              </DialogTitle>
+              </ResponsiveDialogTitle>
             </div>
           ) : (
-            <DialogTitle>Alle timer</DialogTitle>
+            <ResponsiveDialogTitle>Alle timer</ResponsiveDialogTitle>
           )}
-          <DialogDescription className="sr-only">
+          <ResponsiveDialogDescription className="sr-only">
             {view === 'reschedule'
               ? 'Endre dato og tid for denne timen.'
               : 'Oversikt over kursets timer. Velg en time for å endre dato eller tid.'}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <AnimatePresence mode="wait" custom={direction} initial={false}>
           <motion.div
@@ -283,7 +283,7 @@ export function SessionsModal({
             )}
           </motion.div>
         </AnimatePresence>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

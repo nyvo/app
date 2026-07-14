@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog';
 import { RichTextContent } from '@/components/ui/rich-text-content';
 import { LocationCard } from '@/components/public/course-details/LocationCard';
 import {
@@ -171,7 +171,7 @@ function TimeplanStrip({
     : null;
 
   return (
-    <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1">
+    <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1 snap-x">
       {visible.map((s, i) => (
         <SessionCard key={s.id} session={s} index={i} duration={duration} isNext={s.id === nextId} />
       ))}
@@ -179,7 +179,7 @@ function TimeplanStrip({
         <button
           type="button"
           onClick={onOpenSchedule}
-          className="flex min-w-[104px] shrink-0 items-center justify-center rounded-xl border border-dashed border-border-subtle px-3 py-3 text-sm text-foreground-muted hover:text-foreground hover:border-border transition-colors"
+          className="flex min-w-[104px] shrink-0 snap-start items-center justify-center rounded-xl border border-dashed border-border-subtle px-3 py-3 text-sm text-foreground-muted hover:text-foreground hover:border-border transition-colors"
         >
           + {hiddenCount} {hiddenCount === 1 ? 'økt' : 'økter'}
         </button>
@@ -209,7 +209,7 @@ function SessionCard({
   return (
     <div
       className={cn(
-        'min-w-[104px] shrink-0 rounded-xl border border-border-subtle px-3 py-3',
+        'min-w-[104px] shrink-0 snap-start rounded-xl border border-border-subtle px-3 py-3',
         (isPast || isCancelled) && 'opacity-55',
       )}
     >
@@ -251,11 +251,11 @@ function ScheduleDialog({
   duration: number | null;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Kurskalender</DialogTitle>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-lg">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Kurskalender</ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
         <ul className="space-y-2.5">
           {sessions.map((s) => {
             const isPast = hasSessionFinished(s, duration);
@@ -305,7 +305,7 @@ function ScheduleDialog({
             );
           })}
         </ul>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

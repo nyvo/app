@@ -513,6 +513,7 @@ function AccountTypeSection({
           ]}
           ariaLabel="Kontotype"
           role="radiogroup"
+          stretch="sm"
         />
         <p className="mt-3 text-sm text-foreground-muted">
           {current === 'solo'

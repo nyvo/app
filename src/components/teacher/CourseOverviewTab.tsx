@@ -223,9 +223,9 @@ function StatRow({ stats }: { stats: [string, string][] }) {
           <Fragment key={label}>
             {/* Short inset divider — subtle, not a full-height border. */}
             {i > 0 && <div className="my-auto h-12 w-px shrink-0 bg-border-subtle" />}
-            <div className="flex-1 px-5 py-5 text-center">
+            <div className="flex-1 px-3 py-4 text-center sm:px-5 sm:py-5">
               <p className="text-sm text-foreground-muted">{label}</p>
-              <p className="mt-1.5 text-2xl font-medium tabular-nums text-foreground">{value}</p>
+              <p className="mt-1.5 text-xl font-medium whitespace-nowrap tabular-nums text-foreground sm:text-2xl">{value}</p>
             </div>
           </Fragment>
         ))}
@@ -609,7 +609,10 @@ function StedSection({ course }: { course: MappedCourse }) {
           variant="neutral"
           shape="pill"
           size="md"
-          className="pointer-events-none absolute right-3 top-3 z-10 border-border-subtle bg-surface"
+          // max-w caps the pill so a long address truncates instead of
+          // overflowing the tile; truncate adds text-overflow (the base
+          // badge already has overflow-hidden + whitespace-nowrap).
+          className="pointer-events-none absolute right-3 top-3 z-10 max-w-[calc(100%-1.5rem)] truncate border-border-subtle bg-surface"
         >
           {course.location || 'Ikke lagt til ennå'}
         </Badge>

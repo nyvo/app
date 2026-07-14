@@ -92,7 +92,11 @@ export function PageTab({
       tabIndex={active ? 0 : -1}
       onClick={onClick}
       className={cn(
-        'group/tab inline-flex items-center py-1.5 -mb-px text-sm border-b-2 transition-colors outline-none focus-visible:text-foreground',
+        'group/tab relative inline-flex items-center py-1.5 -mb-px text-sm border-b-2 transition-colors outline-none focus-visible:text-foreground',
+        // Touch-only hit-area expansion (mirrors NotificationRow's after:-inset
+        // trick) — widens the tap target vertically without affecting the
+        // visual tab strip on mouse/trackpad.
+        '[@media(pointer:coarse)]:after:absolute [@media(pointer:coarse)]:after:inset-x-0 [@media(pointer:coarse)]:after:-inset-y-2',
         active
           ? 'font-medium text-foreground border-foreground'
           : 'font-normal text-foreground-muted hover:text-foreground border-transparent',

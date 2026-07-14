@@ -183,8 +183,8 @@ export function BookingBar({
 
         <div className="flex shrink-0 items-center gap-3">
           {stateLabel ? (
-            <Button size="cta" disabled>
-              {stateLabel}
+            <Button size="cta" disabled className="min-w-0 max-sm:max-w-[60%]">
+              <span className="truncate">{stateLabel}</span>
             </Button>
           ) : (
             <Button asChild size="cta">

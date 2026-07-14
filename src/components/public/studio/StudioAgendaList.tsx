@@ -154,7 +154,7 @@ function AgendaRow({
 
   const body = (
     <>
-      <span className="w-14 shrink-0 flex flex-col gap-0.5">
+      <span className="w-12 sm:w-14 shrink-0 flex flex-col gap-0.5">
         <span className="text-base font-medium tabular-nums text-foreground">{time || '—'}</span>
         {duration && (
           <span className="text-sm text-foreground-muted whitespace-nowrap">{duration}</span>
@@ -209,13 +209,13 @@ function AgendaRow({
       )}
     >
       {isCancelled ? (
-        <div className="flex items-center gap-4 py-4 opacity-55">{body}</div>
+        <div className="flex items-center gap-3 sm:gap-4 py-4 opacity-55">{body}</div>
       ) : (
         <Link
           to={`/${linkSlug}/${course.slug}`}
           state={{ fromSlug, fromName }}
           className={cn(
-            'group flex items-center gap-4 py-4 -mx-3 px-3 rounded-xl transition-colors hover:bg-hover',
+            'group flex items-center gap-3 sm:gap-4 py-4 -mx-3 px-3 rounded-xl transition-colors hover:bg-hover',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           )}
         >

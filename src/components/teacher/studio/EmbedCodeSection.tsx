@@ -43,7 +43,7 @@ export function EmbedCodeSection({ slug }: { slug: string }) {
           aria-label={copied ? 'Kopiert' : 'Kopier kode'}
           // Opaque chip (white + hairline) so horizontally-scrolling code
           // can't render through it — GitHub's copy-chip anatomy.
-          className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-lg border border-border-subtle bg-surface text-foreground-muted transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="absolute right-2 top-2 flex size-10 items-center justify-center rounded-lg border border-border-subtle bg-surface text-foreground-muted transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {copied ? (
             <Check className="size-4" aria-hidden="true" />

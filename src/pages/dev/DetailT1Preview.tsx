@@ -115,7 +115,7 @@ function DevBar({ variant, onVariantChange }: { variant: Variant; onVariantChang
         <select
           value={variant}
           onChange={(e) => onVariantChange(e.target.value as Variant)}
-          className="text-sm border border-border rounded-md px-2 py-1 bg-background"
+          className="max-w-full text-sm border border-border rounded-md px-2 py-1 bg-background"
         >
           {(Object.keys(VARIANT_LABELS) as Variant[]).map((v) => (
             <option key={v} value={v}>{VARIANT_LABELS[v]}</option>

@@ -155,7 +155,7 @@ export function IncomeChart({
           app-wide is a plain label, and the SegmentedTabs muted track would
           vanish against the muted shell. */}
       <FramedCardPanel className="px-4 py-5 sm:py-6">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             {isLoading ? (
               <Skeleton className="h-9 w-40" />
