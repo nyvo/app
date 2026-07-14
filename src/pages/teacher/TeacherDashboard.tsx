@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
 import { PageShell } from '@/components/teacher/PageShell';
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
-import { ChevronRight, CircleAlert } from '@/lib/icons';
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
 // Lazy: IncomeChart is the only recharts consumer in product code, and
 // recharts alone is a ~350 KB chunk — keep it out of the dashboard's own
@@ -285,7 +284,9 @@ const TeacherDashboard = () => {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {/* Row gap only applies when stacked — on lg the sections meet at
+                  the vertical hairline RecentSignupsSection carries. */}
+              <div className="grid grid-cols-1 gap-y-6 lg:grid-cols-2 lg:gap-y-0">
                 <UpcomingCoursesSection courses={dashboardCourses} isLoading={isLoading} />
                 <RecentSignupsSection
                   signups={recentSignupsRaw}
@@ -314,19 +315,18 @@ const TeacherDashboard = () => {
 
 /**
  * Suspense fallback while the IncomeChart chunk (recharts) loads — mirrors the
- * real FramedCard shell and the chart's actual height so the chunk-load swap
- * doesn't jump the layout. The action skeleton stands in for the h-9 (md)
- * SegmentedTabs range control (~180px wide) so the header row keeps its
- * real height too.
+ * real card anatomy (plain grey header; total + h-9 SegmentedTabs range
+ * control on one row INSIDE the panel; then the plot) so the chunk-load swap
+ * doesn't jump the layout or teleport the range control between surfaces.
  */
 function IncomeChartFallback() {
   return (
-    <FramedCard
-      title="Inntekt"
-      action={<Skeleton className="h-9 w-44 rounded-full" />}
-    >
-      <FramedCardPanel className="p-5 sm:p-6">
-        <Skeleton className="h-9 w-40" />
+    <FramedCard title="Inntekt">
+      <FramedCardPanel className="px-4 py-5 sm:py-6">
+        <div className="flex items-center justify-between gap-3">
+          <Skeleton className="h-9 w-40" />
+          <Skeleton className="h-9 w-44 rounded-xl" />
+        </div>
         <Skeleton className="mt-6 h-[220px] w-full rounded-lg sm:h-[260px]" />
       </FramedCardPanel>
     </FramedCard>
@@ -334,20 +334,24 @@ function IncomeChartFallback() {
 }
 
 /**
- * The free tier's upgrade surface: this month's platform take next to the Pro
- * price, so the crossover math is the seller's own numbers — no salesmanship.
+ * The free tier's upgrade surface: this month's platform take as the lead
+ * line, so the crossover math is the seller's own numbers — no salesmanship.
+ * Two-tier text (medium lead carries the container, muted value line under)
+ * + solid default button, per 2026-07-14 decision: the all-muted one-liner
+ * with a secondary CTA read as a footnote.
  * Exported so /dev/dashboard-preview can render it without auth.
  */
 export function PlatformFeeHint({ feeNok }: { feeNok: number }) {
   const month = new Intl.DateTimeFormat('nb-NO', { month: 'long' }).format(new Date());
-  // Filled panel container, text left + action right (the Rox billing / Kajabi
-  // upgrade-prompt shape) — not a floating line under the chart.
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-panel px-5 py-4 sm:flex-row sm:items-center">
-      <p className="min-w-0 flex-1 text-sm text-foreground-muted">
-        Du har betalt {formatKroner(feeNok)} i plattformgebyr i {month}. Med Pro: {formatKroner(0)}.
-      </p>
-      <Button asChild variant="secondary" className="w-full shrink-0 sm:w-auto">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-foreground">
+          {formatKroner(feeNok)} i plattformgebyr så langt i {month}
+        </p>
+        <p className="text-sm text-foreground-muted">Med Pro beholder du alt</p>
+      </div>
+      <Button asChild className="w-full shrink-0 sm:w-auto">
         <Link to={routes.settingsBilling}>Se Pro</Link>
       </Button>
     </div>
@@ -355,6 +359,11 @@ export function PlatformFeeHint({ feeNok }: { feeNok: number }) {
 }
 
 // ─── Neste kurs ───────────────────────────────────────────────────────────
+//
+// Card-stack lists (2026-07-14): FramedCard here read as a form fieldset and
+// its min-height locked the sections to a three-row look. Per-item bg-panel
+// cards restore the hover affordance FramedCard rows deliberately lack, and
+// the stack shrinks honestly to N items. FramedCard stays for the chart.
 
 export function UpcomingCoursesSection({
   courses,
@@ -367,34 +376,37 @@ export function UpcomingCoursesSection({
   const showSkeleton = isLoading && courses === null;
 
   return (
-    <FramedCard title="Neste kurs" className="min-h-56 flex-1">
-      {showSkeleton ? (
-        <DelayedFallback>
-          <RowsSkeleton variant="course" />
-        </DelayedFallback>
-      ) : items.length === 0 ? (
-        <FramedCardPanel className="items-center justify-center">
-          <EmptyState
-            variant="compact"
-            title="Ingen kommende kurs"
-            description="Opprett et kurs for å fylle timeplanen."
-          />
-        </FramedCardPanel>
-      ) : (
-        <FramedCardPanel className="divide-y divide-border-subtle">
-          {items.map((course) => (
-            <UpcomingCourseRow
-              key={`${course.id}-${course.date}-${course.time}`}
-              course={course}
+    <section className="lg:pr-10">
+      <h2 className="text-lg font-semibold text-foreground">Neste kurs</h2>
+      <div className="mt-3.5">
+        {showSkeleton ? (
+          <DelayedFallback>
+            <RowsSkeleton variant="course" />
+          </DelayedFallback>
+        ) : items.length === 0 ? (
+          <div className="rounded-xl bg-panel">
+            <EmptyState
+              variant="compact"
+              title="Ingen kommende kurs"
+              description="Opprett et kurs for å fylle timeplanen."
             />
-          ))}
-        </FramedCardPanel>
-      )}
-    </FramedCard>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2.5">
+            {items.map((course) => (
+              <UpcomingCourseCard
+                key={`${course.id}-${course.date}-${course.time}`}
+                course={course}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
-function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
+function UpcomingCourseCard({ course }: { course: DashboardCourse }) {
   const day = dayLabel(course.date);
   const time = course.time;
   const when = [day, time && `kl. ${time}`].filter(Boolean).join(' ');
@@ -403,25 +415,18 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="group flex items-center gap-3 px-4 py-4 no-underline outline-none focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="flex items-center gap-3.5 rounded-xl bg-panel px-4 py-3.5 no-underline outline-none transition-colors hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-foreground">{course.title}</p>
-        <p className="truncate text-base text-foreground-muted">{when || '—'}</p>
+        <p className="truncate text-sm text-foreground-muted">{when || '—'}</p>
       </div>
-      {/* Trailing slot: meta stays put, chevron fades in beside it on hover
-          (150ms ease-out, transform+opacity only). Chevron is always laid
-          out (just invisible at rest) so its space is reserved and nothing
-          shifts when it appears. */}
-      <span className="flex shrink-0 items-center gap-1">
-        {hasCapacity && (
-          <span className="text-sm tabular-nums text-foreground-muted">
-            {course.signups} / {course.capacity}
-          </span>
-        )}
-        <ChevronRight className="size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
-      </span>
+      {hasCapacity && (
+        <span className="shrink-0 text-sm tabular-nums text-foreground-muted">
+          {course.signups} / {course.capacity}
+        </span>
+      )}
     </Link>
   );
 }
@@ -441,31 +446,36 @@ export function RecentSignupsSection({
   const showSkeleton = isLoading && signups === null;
 
   return (
-    <FramedCard title="Siste påmeldinger" className="min-h-56 flex-1">
-      {showSkeleton ? (
-        <DelayedFallback>
-          <RowsSkeleton variant="signup" />
-        </DelayedFallback>
-      ) : items.length === 0 ? (
-        <FramedCardPanel className="items-center justify-center">
-          <EmptyState
-            variant="compact"
-            title="Ingen påmeldinger ennå"
-            description="Nye påmeldinger vises her."
-          />
-        </FramedCardPanel>
-      ) : (
-        <FramedCardPanel className="divide-y divide-border-subtle">
-          {items.map((signup) => (
-            <SignupRow key={signup.id} signup={signup} onSelect={onSelect} />
-          ))}
-        </FramedCardPanel>
-      )}
-    </FramedCard>
+    // Root carries the between-sections divider (top hairline stacked, left
+    // hairline on lg) so the dev preview reuses the real layout and can't drift.
+    <section className="border-t border-border-subtle pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
+      <h2 className="text-lg font-semibold text-foreground">Siste påmeldinger</h2>
+      <div className="mt-3.5">
+        {showSkeleton ? (
+          <DelayedFallback>
+            <RowsSkeleton variant="signup" />
+          </DelayedFallback>
+        ) : items.length === 0 ? (
+          <div className="rounded-xl bg-panel">
+            <EmptyState
+              variant="compact"
+              title="Ingen påmeldinger ennå"
+              description="Nye påmeldinger vises her."
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2.5">
+            {items.map((signup) => (
+              <SignupCard key={signup.id} signup={signup} onSelect={onSelect} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
-function SignupRow({
+function SignupCard({
   signup,
   onSelect,
 }: {
@@ -475,44 +485,23 @@ function SignupRow({
   const name = signup.profile?.name || signup.participant_name || 'Ukjent deltaker';
   const courseTitle = signup.course?.title;
   const when = signup.created_at ? formatRelativeTimePast(signup.created_at) : '';
-  // Actionable-only indicator: pending/failed call for attention. Settled
-  // states (paid, refunded, external) stay silent here — this card is a
-  // pulse, not a ledger. A full badge is too loud for these compact rows;
-  // a small red alert glyph flags the row and the drawer carries the detail.
-  const paymentAlert =
-    signup.payment_status === 'pending' || signup.payment_status === 'failed'
-      ? signup.payment_status === 'failed'
-        ? 'Betaling feilet'
-        : 'Venter på betaling'
-      : null;
+  // No payment-state marker here (removed 2026-07-14): this list is a pulse,
+  // not a worklist — pending/failed detail lives in the participant drawer.
 
   return (
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="group flex w-full items-center gap-3 px-4 py-4 text-left outline-none cursor-pointer focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="flex w-full items-center gap-3.5 rounded-xl bg-panel px-4 py-3.5 text-left outline-none cursor-pointer transition-colors hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-foreground">{name}</p>
-        <p className="truncate text-base text-foreground-muted">
+        <p className="truncate text-sm text-foreground-muted">
           {courseTitle ?? 'Ny påmelding'}
         </p>
       </div>
-      {paymentAlert && (
-        <span className="shrink-0" role="img" aria-label={paymentAlert} title={paymentAlert}>
-          <CircleAlert className="size-4 text-danger" aria-hidden="true" />
-        </span>
-      )}
-      {/* Trailing slot: timestamp stays put, chevron fades in beside it on
-          hover (150ms ease-out, transform+opacity only) — reserved space so
-          nothing shifts. */}
-      <span className="flex shrink-0 items-center gap-1">
-        <span className="text-sm tabular-nums text-foreground-muted">
-          {when}
-        </span>
-        <ChevronRight className="size-4 -translate-x-1 text-foreground-subtle opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100" />
-      </span>
+      <span className="shrink-0 text-sm tabular-nums text-foreground-muted">{when}</span>
     </button>
   );
 }
@@ -520,40 +509,22 @@ function SignupRow({
 // ─── Loading skeleton ─────────────────────────────────────────────────────
 
 function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
-  // Mirrors the real row anatomy (leading 40px block + two 24px text lines +
-  // trailing meta) so the list doesn't jump in height when data lands — and
-  // the real container recipe (divided rows inside the white inset) so
-  // loading never flashes the wrong shape.
-  if (variant === 'course') {
-    return (
-      <FramedCardPanel className="divide-y divide-border-subtle">
-        {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 px-4 py-4">
-            <Skeleton className="size-10 rounded-lg" />
-            <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
-              <Skeleton className="h-3.5 w-32" />
-              <Skeleton className="h-3.5 w-24" />
-            </div>
-            <Skeleton className="h-3.5 w-8 shrink-0" />
-          </div>
-        ))}
-      </FramedCardPanel>
-    );
-  }
-
+  // Mirrors the real card anatomy (leading 40px block + title/sub lines +
+  // trailing meta, one bg-panel card per item) so the stack doesn't jump in
+  // height or shape when data lands.
   return (
-    <FramedCardPanel className="divide-y divide-border-subtle">
+    <div className="flex flex-col gap-2.5">
       {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 px-4 py-4">
-          <Skeleton className="size-10 rounded-full" />
-          <div className="flex h-12 min-w-0 flex-1 flex-col justify-center gap-2">
+        <div key={i} className="flex items-center gap-3.5 rounded-xl bg-panel px-4 py-3.5">
+          <Skeleton className={variant === 'course' ? 'size-10 rounded-lg' : 'size-10 rounded-full'} />
+          <div className="flex h-11 min-w-0 flex-1 flex-col justify-center gap-2">
             <Skeleton className="h-3.5 w-32" />
             <Skeleton className="h-3.5 w-24" />
           </div>
           <Skeleton className="h-3.5 w-8 shrink-0" />
         </div>
       ))}
-    </FramedCardPanel>
+    </div>
   );
 }
 

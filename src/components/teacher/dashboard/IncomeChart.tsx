@@ -150,8 +150,10 @@ export function IncomeChart({
   return (
     <FramedCard title="Inntekt">
       {/* px-4 keeps the total aligned with the FramedCard title above. The range
-          toggle sits on the white surface beside the total it controls, so the
-          grey header stays a plain "Inntekt" label like the other cards. */}
+          toggle stays on the white surface beside the total (re-ratified
+          2026-07-14 against a header placement): every FramedCard header
+          app-wide is a plain label, and the SegmentedTabs muted track would
+          vanish against the muted shell. */}
       <FramedCardPanel className="px-4 py-5 sm:py-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
