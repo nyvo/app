@@ -10,6 +10,7 @@ import { FieldError } from '@/components/ui/field-error';
 import { PageState } from '@/components/page-state/page-state';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { FloatingField } from '@/components/public/FloatingField';
+import { useAuth } from '@/contexts/AuthContext';
 import { StorefrontHeader } from '@/components/public/StorefrontHeader';
 import { Elements, PaymentElement, useStripe as useStripeHook, useElements } from '@stripe/react-stripe-js';
 import type { Stripe } from '@stripe/stripe-js';
@@ -82,7 +83,12 @@ function tokenToHex(varName: string, fallback: string): string {
   if (!ctx) return fallback;
   ctx.fillStyle = fallback; // seed with a known-valid color
   ctx.fillStyle = raw; // an invalid/unsupported value leaves the seed in place
-  return String(ctx.fillStyle);
+  // Chromium with CSS Color 4 canvas support round-trips `oklch(...)` in
+  // fillStyle as-is (Stripe rejects it and falls back to its default theme),
+  // so serialize via a painted pixel — getImageData always yields sRGB bytes.
+  ctx.fillRect(0, 0, 1, 1);
+  const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+  return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
 }
 
 // Stripe Elements appearance for the deferred-intent Payment Element.
@@ -157,6 +163,19 @@ const CheckoutPage = () => {
 
   const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({ name: '', email: '', phone: '', note: '', terms: false });
+  // Checkout stays guest-first, but a signed-in buyer shouldn't retype what
+  // the account already knows. The profile loads async — fill on arrival,
+  // never overwriting a field the buyer has already typed in.
+  const { profile } = useAuth();
+  useEffect(() => {
+    if (!profile) return;
+    setForm((f) => ({
+      ...f,
+      name: f.name || profile.name || '',
+      email: f.email || profile.email || '',
+      phone: f.phone || profile.phone || '',
+    }));
+  }, [profile]);
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
   const [attempted, setAttempted] = useState(false);
@@ -1031,6 +1050,11 @@ function PaidCheckoutForm({
       setSubmitting(false);
       return;
     }
+
+    // Step 2b: the PaymentIntent was created on_behalf_of the studio's
+    // connected account (C7). Deferred-intent Elements must declare the same
+    // account, or confirmPayment is rejected with an on_behalf_of mismatch.
+    await elements.update({ onBehalfOf: data.stripeAccountId });
 
     // Step 3: confirm against the just-created PaymentIntent. With manual
     // capture the authorization redirects as redirect_status=succeeded —

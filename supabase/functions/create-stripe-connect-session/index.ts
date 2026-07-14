@@ -306,6 +306,27 @@ Deno.serve(async (req: Request) => {
         if (sessionCount >= course.max_participants) {
           return errorResponse(isDropIn ? 'Timen er full' : 'Kurset er fullt', 400, req)
         }
+      } else if (!isDropIn) {
+        // No upcoming session to proxy capacity through. If the course has no
+        // sessions AT ALL, the per-session model has nothing to guard — fall
+        // back to course-wide confirmed occupancy (exact: drop-ins require a
+        // session, so on a sessionless course every signup holds a full seat).
+        // Mirrors the hard guard's fallback in create_signup_if_available
+        // (migration 20260714130000).
+        const { count: sessionsTotal } = await supabase
+          .from('course_sessions')
+          .select('id', { count: 'exact', head: true })
+          .eq('course_id', courseId)
+        if ((sessionsTotal ?? 0) === 0) {
+          const { count: confirmedCount } = await supabase
+            .from('signups')
+            .select('id', { count: 'exact', head: true })
+            .eq('course_id', courseId)
+            .eq('status', 'confirmed')
+          if ((confirmedCount ?? 0) >= course.max_participants) {
+            return errorResponse('Kurset er fullt', 400, req)
+          }
+        }
       }
     }
 
@@ -380,6 +401,10 @@ Deno.serve(async (req: Request) => {
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
         attemptId: merchantReference,
+        // The PI is created with on_behalf_of (C7); Stripe's deferred-intent
+        // flow rejects confirmPayment unless the Elements group declares the
+        // same account, so the client needs it back.
+        stripeAccountId,
       },
       200,
       req,

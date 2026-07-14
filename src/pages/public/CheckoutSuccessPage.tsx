@@ -27,11 +27,12 @@ function formatBookingDate(d: Date): string {
   return `${d.getDate()}. ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-// Short reference derived from the signup UUID — first 8 hex chars uppercase
-// with a dash for readability ("A3F4-C2D8"). Stable for support lookups.
+// Short reference derived from the signup UUID — last 6 hex chars uppercase
+// ("E7F9C2"), the SAME derivation the confirmation/receipt emails use
+// (shortBookingId in supabase/functions/_shared/format.ts), so the page and
+// the email always quote one identical reference for support lookups.
 function shortRef(id: string): string {
-  const hex = id.replace(/-/g, '').toUpperCase();
-  return `${hex.slice(0, 4)}-${hex.slice(4, 8)}`;
+  return id.replace(/-/g, '').slice(-6).toUpperCase();
 }
 
 interface SignupDetails {
