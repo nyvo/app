@@ -8,14 +8,12 @@ not strict dependency.
 
 ## 2026-07-13 infra pass (dev/prod split, CI deploys, ops-alert fix)
 
-- **Vercel blocker ESCALATED** — the `vite.config.ts` guard (c9fba8e, Jul 11)
-  hard-fails any build without `VITE_STRIPE_PUBLISHABLE_KEY`, and Vercel's env
-  still lacks it, so **every Vercel deploy (preview + production) now fails**.
-  openspot.no is frozen at the last pre-guard deploy; merges since — incl.
-  PR #128 (billing UI fixes) and #129 — are NOT live. Setting the key in the
-  Vercel dashboard unfreezes everything; it is now the single gate on prod
-  frontend deploys. (GitHub CI got the key as a repo *variable* the same day —
-  CI is green again; that does not touch Vercel.)
+- **Vercel blocker — RESOLVED 2026-07-14.** `VITE_STRIPE_PUBLISHABLE_KEY` was
+  added to Vercel Production + Preview; production redeployed and aliased, and
+  subsequent merges (#141, #142) deployed successfully. openspot.no runs
+  latest `main` again. (Historical note: the c9fba8e guard had hard-failed
+  every Vercel build while the key was missing, freezing prod at the last
+  pre-guard deploy.)
 - **Ops monitoring was silently offline — fixed.** `ops-health-alert` was
   deployed with `verify_jwt=true` against config.toml's `false`, so the daily
   06:00 cron (x-cron-secret, no JWT) was 401'd at the gateway. Redeployed
@@ -26,16 +24,18 @@ not strict dependency.
   set; maiden run shipped all 23 functions. Hand-deploy drift is closed.
 - **Stripe checkout/portal return URLs** now echo the caller's allowed origin
   (PR #129) — `SITE_URL` is fallback only; non-5173 dev ports + staging work.
-- **Dev/prod split live.** New project `openspot-dev` (`pwwqrrbhusjmstdyqddj`,
-  same org/region): full migration history, all functions, secrets copied
-  (test-mode Stripe; `SITE_URL=localhost:5173`; no `OPS_ALERT_EMAIL`), auth
-  redirects → localhost, seeded with a copy of Kristoffer Studio (courses,
-  tiers, sessions, owner login, same test-mode Connect acct). All
-  `.env.local`s now point at dev; prod keys exist only in Vercel, GitHub
-  Actions, and Supabase itself. Consequences for this list:
-  - Future test-mode smoke runs target **dev**, and need a test-mode Stripe
-    webhook endpoint for dev (or `stripe listen --forward-to`) first.
-  - The live-mode cutover (item in the 2026-07-06 list) must also **recreate
+- **Dev/prod split — DECOMMISSIONED 2026-07-14.** The `openspot-dev` project
+  (`pwwqrrbhusjmstdyqddj`) was deleted one day in: the three-way sync cost
+  (migrations + functions + secrets) outweighed the benefit pre-launch — it
+  was already 3 migrations and several function versions behind `main`.
+  Nothing unique was lost (verified before deletion: every applied migration
+  paired 1:1 with a file on `origin/main`; data was a seeded copy). All
+  `.env.local`s repointed back to the shared project; `supabase/.temp`'s
+  checked-in link defaults flipped back to prod in the same commit.
+  **Revisit separation AFTER launch**: once prod functions hold live Stripe
+  keys, local-dev-against-prod becomes genuinely dangerous — recreate a dev
+  project then (or use Supabase preview branches).
+  - Still true from the cutover planning: the live-mode flip must **recreate
     webhook endpoints in live mode** — live `whsec_…` values differ from test.
 
 ---
