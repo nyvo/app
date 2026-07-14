@@ -387,11 +387,20 @@ const CoursePage = () => {
     for (const p of participants) {
       if (p.status === 'confirmed') confirmed++;
       else if (p.status === 'cancelled' || p.status === 'course_cancelled') cancelled++;
-      // Net to the studio: buyer total minus the buyer-paid tjenestegebyr and
-      // the Start-tier platform take — mirrors seller_income_series so the
-      // course KPI and the dashboard income card always agree.
-      if (p.payment_status === 'paid' && p.amount_paid != null) {
-        revenue += p.amount_paid - (p.service_fee_nok ?? 0) - (p.platform_fee_nok ?? 0);
+      // Net to the studio, mirroring seller_income_series EXACTLY so the course
+      // KPI and the dashboard income card never disagree: buyer total minus the
+      // tjenestegebyr, the Start-tier platform take and any refund, floored at
+      // 0 per row. 'refunded' rows count too — a partial refund keeps the
+      // signup confirmed with net still positive; dropping them (paid-only)
+      // would understate a course with any partial refund.
+      if (
+        (p.payment_status === 'paid' || p.payment_status === 'refunded') &&
+        p.amount_paid != null
+      ) {
+        revenue += Math.max(
+          0,
+          p.amount_paid - (p.service_fee_nok ?? 0) - (p.platform_fee_nok ?? 0) - (p.refund_amount ?? 0),
+        );
       }
     }
     return { confirmed, cancelled, revenue };
