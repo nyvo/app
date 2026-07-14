@@ -12,13 +12,14 @@ vi.mock('@/services/places', () => ({
 const mockedSearchPlaces = vi.mocked(searchPlaces)
 const mockedGetPlaceDetails = vi.mocked(getPlaceDetails)
 
-function ControlledAutocomplete() {
+function ControlledAutocomplete({ onSearchError }: { onSearchError?: (failed: boolean) => void }) {
   const [value, setValue] = useState('')
   return (
     <PlacesAutocomplete
       value={value}
       onChange={setValue}
       onSelect={() => {}}
+      onSearchError={onSearchError}
     />
   )
 }
@@ -53,5 +54,33 @@ describe('PlacesAutocomplete — search failure', () => {
 
     await waitFor(() => expect(getByText('Storgata 1')).toBeInTheDocument())
     expect(queryByText('Stedsøket er utilgjengelig. Skriv inn adressen manuelt.')).not.toBeInTheDocument()
+  })
+
+  it('reports failure through onSearchError so forms can accept manual entry', async () => {
+    mockedSearchPlaces.mockResolvedValue({ data: [], error: new Error('Søket feilet') })
+    const onSearchError = vi.fn()
+
+    const { container } = render(<ControlledAutocomplete onSearchError={onSearchError} />)
+    const input = container.querySelector('input') as HTMLInputElement
+    fireEvent.change(input, { target: { value: 'Storgata 1' } })
+
+    await waitFor(() => expect(onSearchError).toHaveBeenCalledWith(true))
+  })
+
+  it('reports recovery through onSearchError once a search succeeds again', async () => {
+    mockedSearchPlaces.mockResolvedValueOnce({ data: [], error: new Error('Søket feilet') })
+    mockedSearchPlaces.mockResolvedValue({
+      data: [{ placeId: '1', primary: 'Storgata 1', secondary: 'Oslo' }],
+      error: null,
+    })
+    const onSearchError = vi.fn()
+
+    const { container } = render(<ControlledAutocomplete onSearchError={onSearchError} />)
+    const input = container.querySelector('input') as HTMLInputElement
+    fireEvent.change(input, { target: { value: 'Storgata 1' } })
+    await waitFor(() => expect(onSearchError).toHaveBeenCalledWith(true))
+
+    fireEvent.change(input, { target: { value: 'Storgata 12' } })
+    await waitFor(() => expect(onSearchError).toHaveBeenCalledWith(false))
   })
 })

@@ -240,6 +240,9 @@ const CoursePage = () => {
   const [settingsLocationCoords, setSettingsLocationCoords] = useState<
     { lat: number | null; lon: number | null; placeId: string | null } | null
   >(null);
+  // Places search is failing (key/edge outage) — the picker told the user to
+  // type the address manually, so the save check must accept free text too.
+  const [placesUnavailable, setPlacesUnavailable] = useState(false);
   const [settingsImageUrl, setSettingsImageUrl] = useState<string | null>(null);
   const [isSavingImage, setIsSavingImage] = useState(false);
   const [settingsTime, setSettingsTime] = useState('09:00');
@@ -436,9 +439,10 @@ const CoursePage = () => {
     setTitleError(null);
     // Same rule as the builder: a location must come from the Google search so
     // buyers get coords/map, not bare text. Only enforced when it changed, so
-    // untouched legacy pin-less locations don't block unrelated edits.
+    // untouched legacy pin-less locations don't block unrelated edits — and
+    // relaxed while Places is down, where manual entry is the sanctioned fallback.
     const locationChanged = settingsLocation.trim() !== (courseData.location || '');
-    if (locationChanged && settingsLocation.trim() && !settingsLocationCoords?.placeId) {
+    if (locationChanged && settingsLocation.trim() && !settingsLocationCoords?.placeId && !placesUnavailable) {
       setLocationError('Velg et sted fra listen.');
       return;
     }
@@ -1066,6 +1070,10 @@ const CoursePage = () => {
               onLocationCoordsChange={(coords) => {
                 setSettingsLocationCoords(coords);
                 if (locationError && coords?.placeId) setLocationError(null);
+              }}
+              onLocationSearchError={(failed) => {
+                setPlacesUnavailable(failed);
+                if (locationError && failed) setLocationError(null);
               }}
               locationError={locationError}
               settingsImageUrl={settingsImageUrl}

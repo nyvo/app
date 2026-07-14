@@ -18,6 +18,12 @@ interface LocationFieldProps {
   address?: string | null
   /** Fires on every change: free-typed (coords null) or a picked place (coords set). */
   onChange: (next: { name: string; address: string; coords: LocationCoords | null }) => void
+  /**
+   * Places availability signal from the autocomplete: true while search is
+   * failing, false once it works again. Forms use it to accept manual entry
+   * only when the service is down.
+   */
+  onSearchError?: (failed: boolean) => void
   disabled?: boolean
   id?: string
   placeholder?: string
@@ -35,6 +41,7 @@ export function LocationField({
   coords,
   address,
   onChange,
+  onSearchError,
   disabled,
   id,
   placeholder = 'Søk etter studio eller adresse',
@@ -52,6 +59,7 @@ export function LocationField({
         aria-invalid={ariaInvalid}
         aria-describedby={ariaDescribedBy}
         onChange={(v) => onChange({ name: v, address: '', coords: null })}
+        onSearchError={onSearchError}
         onSelect={(p: PlaceDetails) =>
           onChange({
             name: p.name || p.address,

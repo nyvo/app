@@ -136,6 +136,9 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
   const [sessionDays, setSessionDays] = useState<SessionDay[]>(() => [newSessionDay()]);
   const [location, setLocation] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
+  // Places search is failing (key/edge outage) — the picker told the user to
+  // type the address manually, so validation must accept free text too.
+  const [placesUnavailable, setPlacesUnavailable] = useState(false);
   const [locationCoords, setLocationCoords] = useState<{
     lat: number | null;
     lon: number | null;
@@ -177,9 +180,10 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
     // Studio courses carry a named instructor — the picker has no "none" choice.
     if (isStudio && !instructor) e.instructor = 'Velg en instruktør';
 
-    // Location must resolve to a real Google place (coords), not free text.
+    // Location must resolve to a real Google place (coords), not free text —
+    // except while Places is down, where manual entry is the sanctioned fallback.
     if (!location.trim()) e.location = 'Velg et sted';
-    else if (!locationCoords?.placeId) e.location = 'Velg et sted fra listen.';
+    else if (!locationCoords?.placeId && !placesUnavailable) e.location = 'Velg et sted fra listen.';
 
     if (format === 'series') {
       if (!startDate) e.startDate = 'Velg dato';
@@ -220,7 +224,7 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
       if (isNaN(pri) || pri < 0) e.price = 'Må være 0 eller mer';
     }
     return e;
-  }, [title, description, isStudio, instructor, location, locationCoords, startDate, startTime, endTime, format, weeks, sessionDays, capacity, price]);
+  }, [title, description, isStudio, instructor, location, locationCoords, placesUnavailable, startDate, startTime, endTime, format, weeks, sessionDays, capacity, price]);
 
   const isValid = Object.keys(errors).length === 0;
   const showError = (field: keyof FormErrors) => submitAttempted && !!errors[field];
@@ -665,6 +669,7 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
                         setLocationAddress(address);
                         setLocationCoords(coords);
                       }}
+                      onSearchError={setPlacesUnavailable}
                     />
                   )}
                 </Field>

@@ -20,6 +20,13 @@ interface PlacesAutocompleteProps {
   'aria-describedby'?: string;
   /** Forwarded for keys we don't handle (e.g. the form's Enter-to-save). */
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  /**
+   * Places availability signal: true after a search/details lookup fails,
+   * false once one succeeds again. Lets forms relax the pick-from-list
+   * requirement while the service is down, so the "skriv inn adressen
+   * manuelt" fallback is actually accepted.
+   */
+  onSearchError?: (failed: boolean) => void;
   /** Optional leading icon, forwarded to the inner input. */
   icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
 }
@@ -40,6 +47,7 @@ export function PlacesAutocomplete({
   id,
   onKeyDown,
   icon,
+  onSearchError,
   ...aria
 }: PlacesAutocompleteProps) {
   const [open, setOpen] = useState(false);
@@ -69,6 +77,12 @@ export function PlacesAutocomplete({
   // Per-session response cache so backspacing/retyping re-renders instantly
   // instead of re-querying. Cleared with the session token after a selection.
   const cache = useRef(new Map<string, PlaceSuggestion[]>());
+  // Ref so the search effect can report availability without re-firing when
+  // the parent passes a new callback identity each render.
+  const onSearchErrorRef = useRef(onSearchError);
+  useEffect(() => {
+    onSearchErrorRef.current = onSearchError;
+  });
 
   const debounced = useDebounce(value, 150);
 
@@ -101,6 +115,7 @@ export function PlacesAutocomplete({
         setActiveIndex(-1);
         setSearchError(true);
         setOpen(true);
+        onSearchErrorRef.current?.(true);
         return;
       }
       cache.current.set(q, data);
@@ -110,6 +125,7 @@ export function PlacesAutocomplete({
       setActiveIndex(data.length > 0 ? 0 : -1);
       setSearchError(false);
       setOpen(data.length > 0);
+      onSearchErrorRef.current?.(false);
     });
   }, [debounced]);
 
@@ -124,12 +140,14 @@ export function PlacesAutocomplete({
     lastTyped.current = null;
     if (data) {
       setSearchError(false);
+      onSearchErrorRef.current?.(false);
       onSelect(data);
     } else if (error) {
       // Keep the typed text (we never call onChange here) and surface the
       // fallback message instead of silently doing nothing.
       setSearchError(true);
       setOpen(true);
+      onSearchErrorRef.current?.(true);
     }
   };
 
