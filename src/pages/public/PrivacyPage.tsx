@@ -53,7 +53,8 @@ const PrivacyPage = () => {
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi bruker ikke informasjonskapsler til sporing eller analyse – bare de som
-                trengs for innlogging.
+                trengs for innlogging. Kurssider viser kart fra Google Maps, og Google kan
+                sette egne informasjonskapsler når kartet lastes.
               </p>
             </section>
 
