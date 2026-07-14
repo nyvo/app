@@ -7,14 +7,20 @@ import type { MappedCourse } from '@/hooks/use-course-detail'
 import type { CourseSession } from '@/types/database'
 
 /**
- * Dev-only review of the course Oversikt across its lifecycle (Phase 8).
+ * Dev-only review of the course Oversikt across its lifecycle.
  * Renders the real CourseOverviewTab so the publish/readiness architecture and
- * the course-plan card can be reviewed end-to-end:
- *  - Draft: Påmeldte tab + dead 0/0 KPI spine hidden; readiness shows one card
- *    per step, then a publish CTA card at 100%.
- *  - Course plan: schedule card for every format — single one-day, multi-day
- *    single, and weekly series.
- *  - Live/finished: KPI spine + Påmeldte tab return.
+ * the session-feed layout can be reviewed end-to-end:
+ *  - Draft: Påmeldte tab + dead 0/0 KPI spine hidden; readiness card on top.
+ *  - Kursplan feed: date rail + grey session cards for every format — one-day
+ *    (course name as title, no rail), multi-day (Dag x/n), weekly series
+ *    (Uke x/n, cancelled session, overflow tail entry).
+ *  - Sted tile with the place pill; series settings below it.
+ *  - Live/finished: KPI spine + Påmeldte tab return; finished feeds collapse
+ *    to "Ingen kommende timer".
+ *
+ * NOTE: session dates are hardcoded around mid-July 2026 — the feed hides
+ * past sessions, so scenarios assume "today" is between 2026-07-08 and
+ * 2026-07-20 to show the intended mix of past/next/upcoming.
  */
 
 // Only the fields CourseOverviewTab reads — double-cast keeps the mocks lean.
@@ -25,6 +31,10 @@ function course(overrides: Partial<MappedCourse>): MappedCourse {
     status: 'draft',
     format: 'single',
     location: 'Flow Studio',
+    // Real coords so the autoloading Sted map renders in the preview
+    // (courses can't exist without a place — creation requires a placeId).
+    locationLat: 60.3913,
+    locationLon: 5.3221,
     enrolled: 0,
     capacity: 12,
     price: 350,
@@ -41,18 +51,29 @@ function sess(date: string, start: string, end: string, status: 'upcoming' | 'ca
   return { id: `${date}-${start}`, session_date: date, start_time: start, end_time: end, status } as unknown as CourseSession
 }
 
-const ONE_DAY = [sess('2026-07-08', '06:00', '07:00')]
-const TWO_DAY = [
-  sess('2026-07-08', '06:15', '06:45'),
-  sess('2026-07-09', '06:15', '06:45'),
-]
+const ONE_DAY = [sess('2026-07-25', '10:00', '14:00')]
 const MULTI_DAY = [
-  sess('2026-07-08', '06:00', '07:00'),
-  sess('2026-07-09', '08:00', '09:30'),
-  sess('2026-07-10', '17:00', '18:00'),
+  sess('2026-07-24', '10:00', '14:00'),
+  sess('2026-07-25', '10:00', '14:00'),
+  sess('2026-07-26', '10:00', '13:00'),
 ]
-const WEEKLY = ['07-07', '07-14', '07-21', '07-28', '08-04', '08-11', '08-18', '08-25'].map((md) =>
-  sess(`2026-${md}`, '06:00', '07:00'),
+// 10-week series straddling "today" (~2026-07-14): three past, one cancelled,
+// enough upcoming to trigger the overflow tail.
+const WEEKLY = [
+  sess('2026-06-23', '18:00', '19:30'),
+  sess('2026-06-30', '18:00', '19:30'),
+  sess('2026-07-07', '18:00', '19:30'),
+  sess('2026-07-14', '18:00', '19:30'),
+  sess('2026-07-21', '18:00', '19:30'),
+  sess('2026-07-28', '18:00', '19:30', 'cancelled'),
+  sess('2026-08-04', '18:00', '19:30'),
+  sess('2026-08-11', '18:00', '19:30'),
+  sess('2026-08-18', '18:00', '19:30'),
+  sess('2026-08-25', '18:00', '19:30'),
+]
+// Entirely in the past — the feed collapses to "Ingen kommende timer".
+const FINISHED = ['05-05', '05-12', '05-19', '05-26', '06-02', '06-09', '06-16', '06-23'].map(
+  (md) => sess(`2026-${md}`, '18:00', '19:30'),
 )
 
 const noop = () => {}
@@ -66,9 +87,13 @@ interface StateProps {
   paymentSetupStatus?: string | null
   enrolledCount?: number
   revenue?: number
-  /** Sessions query failed — real CourseOverviewTab prop; the Timeplan card
+  allowsDropIn?: boolean
+  dropInPrice?: number
+  acceptsLateSignups?: boolean
+  /** Sessions query failed — real CourseOverviewTab prop; the Kursplan feed
    *  shows an inline error while the rest of the page renders normally. */
   sessionsError?: boolean
+  sessionsLoading?: boolean
 }
 
 function State({
@@ -80,7 +105,11 @@ function State({
   paymentSetupStatus = null,
   enrolledCount = 0,
   revenue = 0,
+  allowsDropIn = false,
+  dropInPrice = 0,
+  acceptsLateSignups = false,
   sessionsError = false,
+  sessionsLoading = false,
 }: StateProps) {
   const isDraft = course.status === 'draft'
   return (
@@ -111,11 +140,11 @@ function State({
             paymentSetupStatus={paymentSetupStatus}
             paymentSetupComplete={paymentSetupComplete}
             paymentSetupRequired={paymentSetupRequired}
-            allowsDropIn={false}
+            allowsDropIn={allowsDropIn}
             onAllowsDropInChange={noop}
-            dropInPrice={0}
+            dropInPrice={dropInPrice}
             onDropInPriceChange={noop}
-            acceptsLateSignups={false}
+            acceptsLateSignups={acceptsLateSignups}
             onAcceptsLateSignupsChange={noop}
             onOpenKursplan={noop}
             onEditSession={noop}
@@ -124,6 +153,7 @@ function State({
             publishing={false}
             sessions={sessions}
             sessionsError={sessionsError}
+            sessionsLoading={sessionsLoading}
           />
         </PageShell>
       </div>
@@ -135,8 +165,41 @@ export default function DraftExperiencePreview() {
   return (
     <DevPage title="Kursoversikt (Oversikt-fane)">
       <State
-        label="Utkast (kursrekke) — stepper + detaljer + kursplan-strip"
-        course={course({ status: 'draft', format: 'series', totalWeeks: 8, imageUrl: null, description: '', location: null })}
+        label="Ukentlig serie, i gang — neste-prikk (azure), avlyst time, hale «x timer til»"
+        course={course({ status: 'active', format: 'series', totalWeeks: 10, endDate: '2026-08-25' })}
+        sessions={WEEKLY}
+        paymentSetupRequired
+        paymentSetupComplete
+        enrolledCount={12}
+        revenue={16800}
+        allowsDropIn
+        dropInPrice={750}
+        acceptsLateSignups
+      />
+
+      <State
+        label="Enkeltkurs, én dag — kursnavn som korttittel, ingen rail"
+        course={course({ status: 'upcoming', title: 'Workshop: Yin og pust', price: 590 })}
+        sessions={ONE_DAY}
+        paymentSetupRequired
+        paymentSetupComplete
+        enrolledCount={8}
+        revenue={4720}
+      />
+
+      <State
+        label="Enkeltkurs, tre dager — Dag x/x, full rail, ingen hale"
+        course={course({ status: 'upcoming', endDate: '2026-07-26' })}
+        sessions={MULTI_DAY}
+        paymentSetupRequired
+        paymentSetupComplete
+        enrolledCount={5}
+        revenue={1750}
+      />
+
+      <State
+        label="Utkast (kursrekke) — readiness-kort + feed, sted mangler"
+        course={course({ status: 'draft', format: 'series', totalWeeks: 10, imageUrl: null, description: '', location: null, locationLat: null, locationLon: null })}
         sessions={WEEKLY}
         paymentSetupRequired
       />
@@ -149,7 +212,7 @@ export default function DraftExperiencePreview() {
       />
 
       <State
-        label="Utkast — klart til publisering (CTA-kort, ingen knapp i header)"
+        label="Utkast — klart til publisering"
         course={course({ status: 'draft' })}
         paymentSetupRequired
         paymentSetupComplete
@@ -157,49 +220,9 @@ export default function DraftExperiencePreview() {
       />
 
       <State
-        label="Enkeltkurs, én dag — ingen kursplan (dato i header + detaljer)"
-        course={course({ status: 'upcoming' })}
-        sessions={ONE_DAY}
-        paymentSetupRequired
-        paymentSetupComplete
-        enrolledCount={5}
-        revenue={1750}
-      />
-
-      <State
-        label="Kursplan — to dager (strukket til halve)"
-        course={course({ status: 'upcoming', endDate: '2026-07-09' })}
-        sessions={TWO_DAY}
-        paymentSetupRequired
-        paymentSetupComplete
-        enrolledCount={5}
-        revenue={1750}
-      />
-
-      <State
-        label="Kursplan — tre dager (3 kort på rad)"
-        course={course({ status: 'upcoming', endDate: '2026-07-10' })}
-        sessions={MULTI_DAY}
-        paymentSetupRequired
-        paymentSetupComplete
-        enrolledCount={5}
-        revenue={1750}
-      />
-
-      <State
-        label="Kursplan — ukentlig kursrekke (8 uker)"
-        course={course({ status: 'upcoming', format: 'series', totalWeeks: 8, endDate: '2026-08-25' })}
-        sessions={WEEKLY}
-        paymentSetupRequired
-        paymentSetupComplete
-        enrolledCount={9}
-        revenue={25200}
-      />
-
-      <State
-        label="Ferdig — KPI-spine + plan (ingen sluttilstand-boks)"
-        course={course({ status: 'completed', format: 'series', totalWeeks: 8, enrolled: 8, endDate: '2026-06-17' })}
-        sessions={WEEKLY}
+        label="Ferdig — KPI-spine, «Ingen kommende timer» + Se alle timer"
+        course={course({ status: 'completed', format: 'series', totalWeeks: 8, enrolled: 8, endDate: '2026-06-23' })}
+        sessions={FINISHED}
         paymentSetupRequired
         paymentSetupComplete
         enrolledCount={8}
@@ -207,9 +230,9 @@ export default function DraftExperiencePreview() {
       />
 
       <State
-        label="Avlyst — KPI-spine + plan (ingen avlyst-boks)"
+        label="Avlyst kurs — avlyst-pille på kommende time"
         course={course({ status: 'cancelled' })}
-        sessions={[sess('2026-07-08', '06:00', '07:00', 'cancelled')]}
+        sessions={[sess('2026-07-25', '10:00', '14:00', 'cancelled')]}
         paymentSetupRequired
         paymentSetupComplete
         enrolledCount={3}
@@ -217,7 +240,18 @@ export default function DraftExperiencePreview() {
       />
 
       <State
-        label="Feil"
+        label="Laster timer — skeleton-feed"
+        course={course({ status: 'upcoming' })}
+        sessions={[]}
+        sessionsLoading
+        paymentSetupRequired
+        paymentSetupComplete
+        enrolledCount={5}
+        revenue={1750}
+      />
+
+      <State
+        label="Feil — inline-feil i feeden"
         course={course({ status: 'upcoming' })}
         sessions={ONE_DAY}
         sessionsError

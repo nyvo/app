@@ -9,9 +9,9 @@ import { MapEmbed } from '@/components/ui/map-embed';
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
 import { cn, formatKroner } from '@/lib/utils';
 import { osloTodayKey } from '@/utils/dateUtils';
-import { MapPin, ChevronRight } from '@/lib/icons';
+import { MapPin, Pencil } from '@/lib/icons';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
-import { WEEKDAYS_LONG, MONTHS_LONG } from '@/lib/calendar-nb';
+import { WEEKDAYS_LONG, MONTHS_LONG, MONTHS_SHORT } from '@/lib/calendar-nb';
 import type { MappedCourse } from '@/hooks/use-course-detail';
 import type { CourseSession } from '@/types/database';
 
@@ -41,7 +41,7 @@ interface CourseOverviewTabProps {
   /** Opens the full "Se alle timer" modal (session list). */
   onOpenKursplan: () => void;
   /** Opens the sessions modal straight into reschedule for one session (the
-   *  per-row pencil). */
+   *  per-card pencil). */
   onEditSession: (sessionId: string) => void;
   /** Routes to /settings/payouts. Used by the payout readiness nudge. */
   onSetupPaymentsClick: () => void;
@@ -49,12 +49,12 @@ interface CourseOverviewTabProps {
   onPublish: () => void;
   /** Publish request in flight — drives the CTA button's loading state. */
   publishing: boolean;
-  /** All session rows (date + time per occurrence). Renders the Timeplan card
+  /** All session rows (date + time per occurrence). Drives the Kursplan feed
    *  for every format: single one-day, multi-day single, and weekly series. */
   sessions: CourseSession[];
-  /** Sessions query still loading — the Timeplan card shows a skeleton. */
+  /** Sessions query still loading — the Kursplan feed shows skeletons. */
   sessionsLoading?: boolean;
-  /** Sessions query failed — the Timeplan card shows an inline error, never a
+  /** Sessions query failed — the Kursplan feed shows an inline error, never a
    *  false "no dates yet". */
   sessionsError?: boolean;
   /** Participant-derived stats (Påmeldte/Inntekt) couldn't load — render `–`
@@ -63,6 +63,10 @@ interface CourseOverviewTabProps {
 }
 
 const WAITING_STATUSES = new Set(['pending', 'restricted']);
+
+/** Feed cap — matched to the right column's height (Sted tile + settings).
+ *  At the cap, the overflow collapses into the "x timer til" tail entry. */
+const MAX_VISIBLE_SESSIONS = 4;
 
 /** Parse a YYYY-MM-DD key as a *local* date (avoids the UTC off-by-one that
  *  `new Date('2026-07-07')` causes in negative-offset timezones). */
@@ -80,8 +84,10 @@ function dayMonth(date: string): string {
   return `${d.getDate()}. ${MONTHS_LONG[d.getMonth()]}`;
 }
 
-function cap(s: string): string {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+/** Compact feed-rail form: "14. jul". */
+function dayMonthShort(date: string): string {
+  const d = localDate(date);
+  return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
 }
 
 function shortTime(t: string | null | undefined): string {
@@ -94,28 +100,6 @@ function sessionTimeRange(s: CourseSession): string {
   if (!start) return '';
   const end = shortTime(s.end_time);
   return end ? `${start}–${end}` : start;
-}
-
-/** Timeplan card header status, right-aligned next to the title: the start
- *  date before the first session, "Uke x/x" (series) or "Dag x/x" (multi-day
- *  enkeltkurs) once it's underway (x = number of sessions whose date has
- *  arrived, out of the total). Assumes `sessions` is already sorted ascending
- *  by date (the caller's `ordered`). */
-function timeplanHeaderStatus(
-  sessions: CourseSession[],
-  today: string,
-  unit: 'Uke' | 'Dag',
-): string | null {
-  if (sessions.length === 0) return null;
-  const total = sessions.length;
-  if (sessions[0].session_date > today) {
-    return `Kurset starter ${dayMonth(sessions[0].session_date)}`;
-  }
-  // A single day has no progress to track — "Dag 1/1" is noise, so drop it
-  // once the course is underway (the pre-start "Kurset starter" still shows).
-  if (total === 1) return null;
-  const current = sessions.filter((s) => s.session_date <= today).length;
-  return `${unit} ${current}/${total}`;
 }
 
 export function CourseOverviewTab({
@@ -174,11 +158,11 @@ export function CourseOverviewTab({
 
   // Drop-in and late-signups are both series-only concepts (the RPC ignores
   // them for single courses), so the whole section is hidden on enkeltkurs.
-  const showTogglesCard =
+  const showToggles =
     isSeries && (status === 'draft' || status === 'upcoming' || status === 'active');
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {status === 'draft' ? (
         <ReadinessCard
           paymentSetupRequired={paymentSetupRequired}
@@ -192,40 +176,42 @@ export function CourseOverviewTab({
         <StatRow stats={stats} />
       )}
 
-      {/* Tid og sted — two equal-height cards inside one rhythm. A shared
-          min-height (the tallest Timeplan state — full list + "Se alle timer")
-          keeps the Sted map from being squished when Timeplan is short. */}
-      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-h-[302px]">
-        <TimeplanCard
+      {/* Kursplan feed left, Sted (+ series settings) right. Both columns open
+          with the same section-heading row, so the map tile's top edge aligns
+          with the first session card in every scenario. */}
+      <div className="grid items-start gap-6 lg:grid-cols-[1.55fr_1fr]">
+        <KursplanSection
+          course={course}
           sessions={ordered}
           loading={sessionsLoading}
           error={sessionsError}
-          progressUnit={isSeries ? 'Uke' : 'Dag'}
           onEditSession={onEditSession}
           onOpenAll={onOpenKursplan}
         />
-        <StedCard course={course} />
+        <div className="grid gap-6">
+          <StedSection course={course} />
+          {showToggles && (
+            <SettingsSection
+              isFree={isFree}
+              allowsDropIn={allowsDropIn}
+              onAllowsDropInChange={onAllowsDropInChange}
+              dropInPrice={dropInPrice}
+              onDropInPriceChange={onDropInPriceChange}
+              onDropInPriceBlur={onDropInPriceBlur}
+              acceptsLateSignups={acceptsLateSignups}
+              onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
+            />
+          )}
+        </div>
       </div>
-
-      {showTogglesCard && (
-        <SettingsCard
-          isFree={isFree}
-          allowsDropIn={allowsDropIn}
-          onAllowsDropInChange={onAllowsDropInChange}
-          dropInPrice={dropInPrice}
-          onDropInPriceChange={onDropInPriceChange}
-          onDropInPriceBlur={onDropInPriceBlur}
-          acceptsLateSignups={acceptsLateSignups}
-          onAcceptsLateSignupsChange={onAcceptsLateSignupsChange}
-        />
-      )}
     </div>
   );
 }
 
-// FramedCard is the shared grouped-content container (see
-// components/teacher/FramedCard.tsx) — same setup here and on the
-// dashboard home.
+/** Shared section heading — one style opens every zone in both columns. */
+function SectionHeading({ children }: { children: string }) {
+  return <h2 className="mb-3 text-sm font-medium text-foreground">{children}</h2>;
+}
 
 // ─── KPI spine (Nøkkeltall) ───────────────────────────────────────────────
 
@@ -319,273 +305,318 @@ function ReadinessCard({
   );
 }
 
-// ─── Timeplan ─────────────────────────────────────────────────────────────
+// ─── Kursplan — the session feed ──────────────────────────────────────────
 //
-// Single-day → a centered "when" block (so it fills next to the Sted map
-// instead of leaving a lone row). Multi-day/series → the first sessions as
-// accent-line rows + a "Se alle timer" link into the modal.
+// Upcoming sessions hang on a date rail as grey cards (Luma-style feed,
+// re-skinned): date + weekday on the canvas left, dot + hairline rail, then a
+// two-line card — identity as the title (Uke x/n for series, Dag x/n for
+// multi-day, the course name for one-day), time range as metadata. History is
+// never shown here (the "Se alle timer" modal owns the full list), and beyond
+// MAX_VISIBLE_SESSIONS the remainder collapses into a tail entry that closes
+// the rail with its own dot. A single entry drops the rail entirely but keeps
+// the same three-column grid, so cards start at the same x in every format.
 
-function TimeplanCard({
+function KursplanSection({
+  course,
   sessions,
-  loading = false,
-  error = false,
-  progressUnit,
+  loading,
+  error,
   onEditSession,
   onOpenAll,
 }: {
+  course: MappedCourse;
   sessions: CourseSession[];
-  loading?: boolean;
-  error?: boolean;
-  progressUnit: 'Uke' | 'Dag';
+  loading: boolean;
+  error: boolean;
   onEditSession: (id: string) => void;
   onOpenAll: () => void;
 }) {
   const today = osloTodayKey();
 
-  // Sessions failed to load — an inline error (not a false "no dates yet"), so
-  // the editor state is never mistaken for the authoritative schedule.
+  let body: React.ReactNode;
+
   if (error) {
-    return (
-      <FramedCard title="Timeplan">
-        <FramedCardPanel className="items-center justify-center p-5">
-          <ErrorState
-            variant="inline"
-            title="Kunne ikke laste timene."
-            message="Last siden på nytt."
-          />
-        </FramedCardPanel>
-      </FramedCard>
+    // Sessions failed to load — an inline error (not a false "no dates yet"),
+    // so the editor state is never mistaken for the authoritative schedule.
+    body = (
+      <div className="rounded-xl bg-muted p-5">
+        <ErrorState variant="inline" title="Kunne ikke laste timene." message="Last siden på nytt." />
+      </div>
+    );
+  } else if (loading) {
+    body = (
+      <div className="space-y-3" role="status" aria-label="Laster timer">
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+      </div>
+    );
+  } else if (sessions.length === 0) {
+    body = (
+      <div className="rounded-xl bg-muted px-4 py-3">
+        <p className="text-base text-foreground">Ingen dato lagt til ennå</p>
+      </div>
+    );
+  } else {
+    body = (
+      <SessionFeed
+        course={course}
+        sessions={sessions}
+        today={today}
+        onEditSession={onEditSession}
+        onOpenAll={onOpenAll}
+      />
     );
   }
 
-  if (loading) {
-    return (
-      <FramedCard title="Timeplan">
-        <FramedCardPanel className="gap-3 p-5">
-          <div className="space-y-3" role="status" aria-label="Laster timer">
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-5 w-36" />
-          </div>
-        </FramedCardPanel>
-      </FramedCard>
-    );
-  }
-
-  const statusLabel = timeplanHeaderStatus(sessions, today, progressUnit);
-
-  if (sessions.length <= 1) {
-    const s = sessions[0];
-    // A single date — a centered "when" block (read-only; its time is edited
-    // from Rediger). Fills the card next to the Sted map.
-    return (
-      <FramedCard title="Timeplan" action={statusLabel}>
-        <FramedCardPanel className="items-center justify-center p-5 text-center">
-          {s ? (
-            <>
-              <p className="text-base capitalize text-foreground-muted">{weekdayLong(s.session_date)}</p>
-              <p className="mt-0.5 text-xl font-medium text-foreground">{dayMonth(s.session_date)}</p>
-              <p className="mt-1 text-base tabular-nums text-foreground-muted">{sessionTimeRange(s)}</p>
-            </>
-          ) : (
-            <p className="text-base text-foreground-muted">Ingen dato lagt til ennå</p>
-          )}
-        </FramedCardPanel>
-      </FramedCard>
-    );
-  }
-
-  // With more than 3 sessions there are always upcoming ones to fill the three
-  // preview slots, so show those. With only 2–3, keep finished rows (dimmed +
-  // a "Fullført" badge) so the card stays filled instead of going sparse.
-  const upcoming = sessions.filter((s) => s.session_date >= today);
-  const preview =
-    sessions.length > 3 && upcoming.length > 0 ? upcoming.slice(0, 3) : sessions.slice(0, 3);
-  // The next one actually being taught — first upcoming, non-cancelled (a
-  // future date that's been called off isn't "next"). `sessions` is already
-  // sorted ascending, so the first match is the earliest.
-  const nextId = sessions.find((s) => s.session_date >= today && s.status !== 'cancelled')?.id;
-  // When every session is shown (2–3 days, no "Se alle timer"), stretch the
-  // rows to split the panel evenly so the card isn't empty at the bottom. With
-  // a "Se alle timer" link (>3 sessions) the rows keep their natural height and
-  // the link trails below.
-  const showAll = sessions.length > preview.length;
   return (
-    <FramedCard title="Timeplan" action={statusLabel}>
-      <FramedCardPanel>
-        {/* Dividers only between the session rows — the trailing "Se alle
-            timer" is a plain link at the bottom, not a fourth list row. */}
-        <div
-          className={cn(
-            'divide-y divide-border-subtle',
-            !showAll && 'flex flex-1 flex-col',
-          )}
-        >
-          {preview.map((s) => (
-            <SessionRow
-              key={s.id}
-              session={s}
-              today={today}
-              isNext={s.id === nextId}
-              onEdit={() => onEditSession(s.id)}
-              fill={!showAll}
-            />
-          ))}
-        </div>
-        {showAll && (
-          <button
-            type="button"
-            onClick={onOpenAll}
-            className="mx-4 mb-3 mt-1 w-fit rounded text-left text-sm font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            Se alle timer
-          </button>
-        )}
-      </FramedCardPanel>
-    </FramedCard>
+    <section>
+      <SectionHeading>Kursplan</SectionHeading>
+      {body}
+    </section>
   );
 }
 
-function SessionRow({
-  session,
+function SessionFeed({
+  course,
+  sessions,
   today,
-  isNext,
-  onEdit,
-  fill,
+  onEditSession,
+  onOpenAll,
 }: {
-  session: CourseSession;
+  course: MappedCourse;
+  sessions: CourseSession[];
   today: string;
-  isNext: boolean;
-  onEdit: () => void;
-  /** Grow to split the panel evenly (2–3 day cards with no "Se alle timer"). */
-  fill?: boolean;
+  onEditSession: (id: string) => void;
+  onOpenAll: () => void;
 }) {
-  const cancelled = session.status === 'cancelled';
-  const past = session.session_date < today;
-  const editable = !cancelled && !past;
-  const label = `${cap(weekdayLong(session.session_date))} ${dayMonth(session.session_date)}`;
+  const isSeries = course.format === 'series';
+  const total = sessions.length;
+  const upcoming = sessions.filter((s) => s.session_date >= today);
 
-  // Date/time. Finished/cancelled rows dim; the "Avlyst" badge
-  // (cancelled only) stays full-opacity so it reads clearly.
-  const left = (
-    <div className={cn('flex min-w-0 flex-1 items-stretch gap-4', !editable && 'opacity-50')}>
-      {/* No accent bar — user decision 2026-07-08: plain rows, the "Neste" badge carries emphasis */}
-      <div className="min-w-0">
-        <p className="flex items-center gap-2 text-base font-medium text-foreground">
-          <span>{label}</span>
-          {isNext && (
-            <Badge variant="neutral" shape="pill" size="sm">
-              Neste
-            </Badge>
-          )}
-        </p>
-        <p className="mt-0.5 text-sm tabular-nums text-foreground-muted">
-          {sessionTimeRange(session)}
-        </p>
-      </div>
-    </div>
-  );
-
-  // Sessions are divided rows inside the white inset. Hover never changes
-  // the fill — affordance is the cursor, the chevron nudge and the focus ring.
-  // `fill` rows grow evenly and centre their content so a sparse card reads as
-  // deliberate rather than empty at the bottom.
-  const layout = cn(
-    'flex w-full items-stretch gap-4 px-4 py-3',
-    fill && 'flex-1 items-center',
-  );
-
-  // Editable (upcoming) rows are the tap target — chevron nudge, open the
-  // reschedule modal.
-  if (editable) {
+  // Everything is in the past (finished/cancelled course) — one honest line,
+  // the modal keeps the history.
+  if (upcoming.length === 0) {
     return (
-      <button
-        type="button"
-        onClick={onEdit}
-        aria-label={`Endre ${label}`}
-        className={cn(layout, 'group text-left')}
-      >
-        {left}
-        <ChevronRight className="size-5 shrink-0 self-center text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
-      </button>
-    );
-  }
-
-  // Completed (not cancelled) — the header status ("Uke x/x") already says
-  // the series is done, so repeating "Fullført" on every row is noise.
-  // Same silhouette as an editable row (chevron included), just dimmed.
-  if (!cancelled) {
-    return (
-      <div className={layout}>
-        {left}
-        <ChevronRight className="size-5 shrink-0 self-center text-foreground-subtle opacity-50" />
+      <div className="flex items-center gap-3 py-1">
+        <p className="text-sm text-foreground-muted">Ingen kommende timer</p>
+        <SeeAllLink onClick={onOpenAll} />
       </div>
     );
   }
 
-  // Cancelled is the exception worth flagging per-row, so it keeps its badge.
+  const overflow = upcoming.length > MAX_VISIBLE_SESSIONS;
+  const visible = overflow ? upcoming.slice(0, MAX_VISIBLE_SESSIONS - 1) : upcoming;
+  const remaining = upcoming.length - visible.length;
+  const lastDate = upcoming[upcoming.length - 1].session_date;
+  // The next session actually being taught — first upcoming, non-cancelled.
+  const nextId = upcoming.find((s) => s.status !== 'cancelled')?.id;
+  const entryCount = visible.length + (overflow ? 1 : 0);
+  // A lone entry needs no timeline — the rail only earns its place between
+  // entries. The grid columns stay, so the card's x-position never moves.
+  const showRail = entryCount > 1;
+
+  /** Card title = the session's identity within its format. */
+  function labelFor(session: CourseSession): string {
+    if (total === 1) return course.title;
+    const index = sessions.indexOf(session) + 1;
+    return isSeries ? `Uke ${index}/${total}` : `Dag ${index}/${total}`;
+  }
+
   return (
-    <div className={layout}>
-      {left}
-      <Badge variant="warning" shape="pill" size="sm" className="shrink-0 self-center">
-        Avlyst
-      </Badge>
+    <div>
+      {visible.map((s, i) => {
+        const cancelled = s.status === 'cancelled';
+        const label = labelFor(s);
+        return (
+          <FeedEntry
+            key={s.id}
+            date={s.session_date}
+            rail={showRail}
+            next={s.id === nextId}
+            lineAbove={i > 0}
+            lineBelow={i < entryCount - 1}
+            isLast={i === entryCount - 1}
+          >
+            <div className="rounded-xl bg-muted px-4 py-3">
+              <div className="flex items-center gap-2.5">
+                <p
+                  className={cn(
+                    'min-w-0 truncate text-base font-medium tabular-nums',
+                    cancelled ? 'text-foreground-muted line-through' : 'text-foreground',
+                  )}
+                >
+                  {label}
+                </p>
+                <span className="min-w-0 flex-1" />
+                {/* The right slot is always the row's status/action: the edit
+                    button normally, the Avlyst pill when cancelled. */}
+                {cancelled ? (
+                  <Badge variant="warning" shape="pill" size="sm" className="shrink-0">
+                    Avlyst
+                  </Badge>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onEditSession(s.id)}
+                    aria-label={`Endre ${label}, ${dayMonth(s.session_date)}`}
+                    className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-surface text-foreground-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <Pencil className="size-3.5" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+              <p
+                className={cn(
+                  'mt-0.5 text-sm tabular-nums',
+                  cancelled ? 'text-foreground-muted' : 'text-foreground',
+                )}
+              >
+                {sessionTimeRange(s)}
+              </p>
+            </div>
+          </FeedEntry>
+        );
+      })}
+
+      {overflow && (
+        <FeedEntry rail lineAbove lineBelow={false} isLast>
+          <div className="flex items-center gap-3 pt-3 text-sm tabular-nums text-foreground-muted">
+            <span>
+              {remaining === 1 ? '1 time til' : `${remaining} timer til`}, frem til{' '}
+              {dayMonth(lastDate)}
+            </span>
+            <SeeAllLink onClick={onOpenAll} />
+          </div>
+        </FeedEntry>
+      )}
     </div>
   );
 }
 
-// ─── Sted — name + map fill ───────────────────────────────────────────────
+/** One row of the feed grid: [date | rail | content]. The rail draws hairline
+ *  segments above/below its dot so the line reads continuous across rows but
+ *  starts at the first dot and closes at the last. */
+function FeedEntry({
+  date,
+  rail,
+  next = false,
+  lineAbove = false,
+  lineBelow = false,
+  isLast = false,
+  children,
+}: {
+  date?: string;
+  rail: boolean;
+  next?: boolean;
+  lineAbove?: boolean;
+  lineBelow?: boolean;
+  isLast?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="grid grid-cols-[56px_18px_1fr] gap-x-2.5">
+      <div className="pt-3 text-right">
+        {date && (
+          <>
+            <p className="text-sm font-medium tabular-nums text-foreground">
+              {dayMonthShort(date)}
+            </p>
+            <p className="text-xs text-foreground-muted">{weekdayLong(date)}</p>
+          </>
+        )}
+      </div>
+      <div className="relative flex justify-center">
+        {rail && (
+          <>
+            {lineAbove && (
+              <span aria-hidden="true" className="absolute top-0 h-[17px] w-px bg-border-subtle" />
+            )}
+            {lineBelow && (
+              <span
+                aria-hidden="true"
+                className="absolute bottom-0 top-[25px] w-px bg-border-subtle"
+              />
+            )}
+            <span
+              aria-hidden="true"
+              className={cn(
+                'mt-[17px] size-2 shrink-0 rounded-full',
+                // Azure = the one semantic emphasis on the rail: "this is the
+                // next session". Everything else stays neutral.
+                next ? 'bg-primary ring-[3px] ring-primary/15' : 'bg-border-strong',
+              )}
+            />
+          </>
+        )}
+      </div>
+      <div className={cn('min-w-0', !isLast && 'pb-3')}>{children}</div>
+    </div>
+  );
+}
 
-function StedCard({ course }: { course: MappedCourse }) {
+function SeeAllLink({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded text-sm font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      Se alle timer
+    </button>
+  );
+}
+
+// ─── Sted — map tile with the place pill ──────────────────────────────────
+
+function StedSection({ course }: { course: MappedCourse }) {
   const hasCoords =
     !!course.locationPlaceId ||
     (course.locationLat != null && course.locationLon != null);
 
   return (
-    <FramedCard title="Sted">
-      <FramedCardPanel>
-      <div className="p-5">
-        {course.location ? (
-          <>
-            <p className="text-base font-medium text-foreground">{course.location}</p>
-            {course.locationAddress && course.locationAddress !== course.location && (
-              <p className="mt-0.5 text-sm text-foreground-muted">{course.locationAddress}</p>
-            )}
-          </>
-        ) : (
-          <p className="text-base text-foreground-muted">Ikke lagt til ennå</p>
-        )}
-      </div>
-      <div className="relative flex min-h-36 flex-1 items-center justify-center border-t border-border-subtle bg-muted">
+    <section>
+      <SectionHeading>Sted</SectionHeading>
+      {/* White tile surface: MapEmbed's click-to-load consent facade (and the
+          defensive no-coords branch — unreachable in product, creation
+          requires a placeId) would otherwise sit muted-on-muted under the
+          muted pill. On the loaded map the pill reads against imagery. */}
+      <div className="relative h-[222px] overflow-hidden rounded-xl border border-border-subtle bg-surface">
         {hasCoords ? (
           <MapEmbed
             placeId={course.locationPlaceId}
             lat={course.locationLat}
             lon={course.locationLon}
-            className="absolute inset-0 h-full w-full"
+            // Teacher-only surface — loads without the consent click.
+            autoload
+            className="absolute inset-0 h-full w-full rounded-none border-0 bg-transparent"
           />
         ) : (
-          <MapPin className="size-7 text-foreground-subtle" />
+          <div className="flex h-full items-center justify-center">
+            <MapPin className="size-7 text-foreground-subtle" aria-hidden="true" />
+          </div>
         )}
+        {/* The pill is the tile's only label — the full address lives in
+            Rediger. Non-interactive so the map stays clickable underneath. */}
+        {/* Top-right: Google's place-embed draws its own info card top-left,
+            so that corner is taken on the loaded map. White fill + hairline —
+            the muted fill is invisible over pale map imagery; an overlay chip
+            needs an opaque surface and an edge to read. */}
+        <Badge
+          variant="neutral"
+          shape="pill"
+          size="md"
+          className="pointer-events-none absolute right-3 top-3 z-10 border-border-subtle bg-surface"
+        >
+          {course.location || 'Ikke lagt til ennå'}
+        </Badge>
       </div>
-      </FramedCardPanel>
-    </FramedCard>
+    </section>
   );
 }
 
 // ─── Kursinnstillinger (series only) ──────────────────────────────────────
 
-function SettingsCard(props: TogglesSectionProps) {
-  return (
-    <FramedCard title="Kursinnstillinger">
-      <TogglesSection {...props} />
-    </FramedCard>
-  );
-}
-
-// ─── Toggles (drop-in + late signups) ─────────────────────────────────────
-
-interface TogglesSectionProps {
+interface SettingsSectionProps {
   isFree: boolean;
   allowsDropIn: boolean;
   onAllowsDropInChange: (next: boolean) => void;
@@ -596,7 +627,7 @@ interface TogglesSectionProps {
   onAcceptsLateSignupsChange: (next: boolean) => void;
 }
 
-function TogglesSection({
+function SettingsSection({
   isFree,
   allowsDropIn,
   onAllowsDropInChange,
@@ -605,27 +636,32 @@ function TogglesSection({
   onDropInPriceBlur,
   acceptsLateSignups,
   onAcceptsLateSignupsChange,
-}: TogglesSectionProps) {
+}: SettingsSectionProps) {
   return (
-    <FramedCardPanel className="divide-y divide-border-subtle px-4">
-      <DropInToggleRow
-        checked={allowsDropIn}
-        onChange={onAllowsDropInChange}
-        price={dropInPrice}
-        onPriceChange={onDropInPriceChange}
-        onPriceBlur={onDropInPriceBlur}
-      />
-      <ToggleRow
-        label="Tillat påmelding etter oppstart"
-        info={
-          isFree
-            ? 'Deltakere kan melde seg på selv om kurset er i gang.'
-            : 'Deltakere kan melde seg på selv om kurset er i gang. Prisen justeres automatisk etter hvor mange uker som er igjen.'
-        }
-        checked={acceptsLateSignups}
-        onChange={onAcceptsLateSignupsChange}
-      />
-    </FramedCardPanel>
+    <section>
+      <SectionHeading>Kursinnstillinger</SectionHeading>
+      {/* Outlined, not filled — mirrors the Sted tile's hairline edge so the
+          right column reads as one family; the grey fill stays on the feed. */}
+      <div className="divide-y divide-border-subtle rounded-xl border border-border-subtle bg-surface px-4">
+        <DropInToggleRow
+          checked={allowsDropIn}
+          onChange={onAllowsDropInChange}
+          price={dropInPrice}
+          onPriceChange={onDropInPriceChange}
+          onPriceBlur={onDropInPriceBlur}
+        />
+        <ToggleRow
+          label="Tillat påmelding etter oppstart"
+          info={
+            isFree
+              ? 'Deltakere kan melde seg på selv om kurset er i gang.'
+              : 'Deltakere kan melde seg på selv om kurset er i gang. Prisen justeres automatisk etter hvor mange uker som er igjen.'
+          }
+          checked={acceptsLateSignups}
+          onChange={onAcceptsLateSignupsChange}
+        />
+      </div>
+    </section>
   );
 }
 
@@ -639,14 +675,11 @@ interface ToggleRowProps {
 }
 
 function ToggleRow({ label, info, checked, onChange, children }: ToggleRowProps) {
-  // Rows keep their own vertical padding (no first/last stripping) — the old
-  // first:pt-0/last:pb-0 left the content flush against the panel's top and
-  // bottom edges while px-4 padded the sides.
   return (
     <div className="flex items-start justify-between gap-6 py-4">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1">
-          <p className="text-base font-medium text-foreground">{label}</p>
+          <p className="text-sm font-medium text-foreground">{label}</p>
           {info && <InfoTooltip content={info} />}
         </div>
         {children}
@@ -700,7 +733,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
     <div className="flex items-start justify-between gap-6 py-4">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1">
-          <p className="text-base font-medium text-foreground">Tillat drop-in</p>
+          <p className="text-sm font-medium text-foreground">Tillat drop-in</p>
           <InfoTooltip content="Deltakere kan betale for én enkelt time i stedet for hele kurset." />
         </div>
         <div className="mt-2.5 flex items-center gap-2.5">
@@ -721,7 +754,7 @@ function DropInToggleRow({ checked, onChange, price, onPriceChange, onPriceBlur 
               }}
               onBlur={handleBlur}
               aria-invalid={priceError || undefined}
-              className="h-8 w-[120px] pr-9 tabular-nums"
+              className="h-8 w-[120px] pr-9 text-sm tabular-nums"
             />
             <span className="pointer-events-none absolute right-3 select-none text-sm text-foreground-muted">
               kr

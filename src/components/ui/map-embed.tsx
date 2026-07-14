@@ -30,10 +30,14 @@ interface MapEmbedProps {
   lon?: number | null;
   className?: string;
   title?: string;
+  /** Skip the click-to-load consent facade and load the iframe immediately.
+   *  ONLY for authenticated dashboard surfaces (the teacher viewing their own
+   *  course) — public pages keep the facade per the privacy-page promise. */
+  autoload?: boolean;
 }
 
-export function MapEmbed({ placeId, lat, lon, className, title = 'Kart' }: MapEmbedProps) {
-  const [showMap, setShowMap] = useState(hasSessionConsent);
+export function MapEmbed({ placeId, lat, lon, className, title = 'Kart', autoload = false }: MapEmbedProps) {
+  const [showMap, setShowMap] = useState(() => autoload || hasSessionConsent());
 
   if (!EMBED_KEY) return null;
 
