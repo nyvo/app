@@ -53,12 +53,12 @@ test.describe('D1 public routes render', () => {
 
   test('D1 terms page renders', async ({ page }) => {
     await page.goto('/terms');
-    await expect(page.getByRole('heading', { name: 'Vilkår for påmelding' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Vilkår', exact: true })).toBeVisible();
   });
 
   test('D1 privacy page renders', async ({ page }) => {
     await page.goto('/personvern');
-    await expect(page.getByRole('heading', { name: 'Personvernerklæring' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Personvern', exact: true })).toBeVisible();
   });
 
   test('D1 about page renders', async ({ page }) => {

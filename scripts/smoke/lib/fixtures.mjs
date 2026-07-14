@@ -14,7 +14,7 @@
 // Nothing here executes on import.
 
 import { readVar } from './env.mjs'
-import { getAnonClient } from './db.mjs'
+import { createAuthClient } from './db.mjs'
 
 export class FixtureError extends Error {
   constructor(message) {
@@ -94,7 +94,9 @@ export async function sellerOwnerAuthHeader() {
   if (cachedSession) return { Authorization: `Bearer ${cachedSession.access_token}` }
   const email = fixtures.sellerOwnerEmail()
   const password = fixtures.sellerOwnerPassword()
-  const { data, error } = await getAnonClient().auth.signInWithPassword({ email, password })
+  // Dedicated client — signing in on the shared getAnonClient() would turn
+  // every later "anon" read into an authenticated one (broke F3).
+  const { data, error } = await createAuthClient().auth.signInWithPassword({ email, password })
   if (error || !data.session) {
     throw new FixtureError(
       `Could not sign in as SMOKE_SELLER_OWNER_EMAIL (${email}): ${error?.message ?? 'no session returned'}`,

@@ -35,6 +35,22 @@ export function getServiceClient() {
   return serviceClient
 }
 
+/**
+ * Fresh, NON-cached anon-key client for flows that sign in a user (e.g.
+ * fixtures.sellerOwnerAuthHeader). Signing in on the shared getAnonClient()
+ * attaches that user's JWT to every later "anon" read — which made F3 report
+ * the seller's own signups as an anon RLS leak. Auth flows must use their own
+ * client so the shared one stays genuinely anonymous.
+ */
+export function createAuthClient() {
+  if (!env.VITE_SUPABASE_URL || !env.VITE_SUPABASE_ANON_KEY) {
+    throw new Error('VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY not set in .env.local')
+  }
+  return createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+}
+
 /** Anon client — subject to RLS. Used for F3 spot-checks and guest-flow reads. */
 export function getAnonClient() {
   if (anonClient) return anonClient
