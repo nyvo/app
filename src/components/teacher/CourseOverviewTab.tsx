@@ -397,9 +397,9 @@ function SessionFeed({
   // the modal keeps the history.
   if (upcoming.length === 0) {
     return (
-      <div className="flex items-center gap-3 py-1">
+      <div className="flex flex-col items-start gap-1.5 py-1">
         <p className="text-sm text-foreground-muted">Ingen kommende timer</p>
-        <SeeAllLink onClick={onOpenAll} />
+        <SeeAllLink onClick={onOpenAll}>Se fullførte timer</SeeAllLink>
       </div>
     );
   }
@@ -554,14 +554,20 @@ function FeedEntry({
   );
 }
 
-function SeeAllLink({ onClick }: { onClick: () => void }) {
+function SeeAllLink({
+  onClick,
+  children = 'Se alle timer',
+}: {
+  onClick: () => void;
+  children?: React.ReactNode;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       className="rounded text-sm font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
     >
-      Se alle timer
+      {children}
     </button>
   );
 }
