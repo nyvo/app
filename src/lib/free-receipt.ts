@@ -32,8 +32,8 @@ export interface FreeReceipt {
   /** Optional (added 2026-07-11 for the white-label receipt header) — older
    *  stored receipts won't have it, so the header falls back to initials. */
   sellerLogoUrl?: string | null;
-  /** Already masked (k•••@example.com) — the full address is never stored. */
-  participantEmailMasked: string;
+  /** Full address — sessionStorage (never the URL) is what keeps it private. */
+  participantEmail: string;
   createdAt: string;
 }
 
@@ -57,7 +57,7 @@ const REQUIRED_STRING_FIELDS = [
   'signupId',
   'courseTitle',
   'sellerSlug',
-  'participantEmailMasked',
+  'participantEmail',
   'createdAt',
 ] as const;
 
@@ -76,13 +76,4 @@ export function readFreeReceipt(signupId: string | null): FreeReceipt | null {
   } catch {
     return null;
   }
-}
-
-/**
- * Mirrors the server-side masking used by `get_signup_by_stripe_id` /
- * `get_signup_by_dintero_id` (`regexp_replace(email, '^(.)[^@]*@', '\1•••@')`)
- * so the free-path receipt reads identically to the paid path's masked email.
- */
-export function maskEmail(email: string): string {
-  return email.replace(/^(.)[^@]*@/, '$1•••@');
 }
