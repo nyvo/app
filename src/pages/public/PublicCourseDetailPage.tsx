@@ -11,6 +11,7 @@ import { StorefrontHeader } from '@/components/public/StorefrontHeader';
 import { fetchPublicCourseBySlug, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug } from '@/services/sellers';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import type { AvailableTicketType, CourseSession } from '@/types/database';
 
@@ -23,6 +24,7 @@ export default function PublicCourseDetailPage() {
   const { slug, courseSlug } = useParams<{ slug: string; courseSlug: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const navState = (location.state ?? null) as DetailNavState | null;
 
   // One query owns the whole load. Redirect decisions are returned as data
@@ -105,6 +107,30 @@ export default function PublicCourseDetailPage() {
   const course = detailQuery.data?.kind === 'ok' ? detailQuery.data.course : null;
   const sessions = detailQuery.data?.kind === 'ok' ? detailQuery.data.sessions : [];
   const tiers = detailQuery.data?.kind === 'ok' ? detailQuery.data.tiers : [];
+
+  // "Already enrolled": a signed-in buyer with a confirmed signup gets a
+  // confirmation state in the booking bar instead of a CTA that would only
+  // run into the checkout's duplicate guard. Guest bookings not yet claimed
+  // by an account have no buyer_id — they keep the normal CTA (fail open:
+  // any read hiccup must never block booking).
+  const enrolledQuery = useQuery({
+    queryKey: ['own-course-signup', course?.id, user?.id],
+    enabled: !!user?.id && !!course?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('signups')
+        .select('participant_email')
+        .eq('course_id', course!.id)
+        .eq('buyer_id', user!.id)
+        .eq('status', 'confirmed')
+        .limit(1)
+        .maybeSingle();
+      return data ?? null;
+    },
+  });
+  const enrolled = enrolledQuery.data
+    ? { email: enrolledQuery.data.participant_email }
+    : null;
   const loading = detailQuery.isPending || detailQuery.data?.kind === 'redirect';
   // Transient query failures get the retryable server-error; only a resolved
   // null row is the terminal "finnes ikke".
@@ -164,6 +190,7 @@ export default function PublicCourseDetailPage() {
               closed={closed}
               paymentNotReady={paymentNotReady}
               checkoutHref={checkoutHref}
+              enrolled={enrolled}
             />
           </>
         )}
