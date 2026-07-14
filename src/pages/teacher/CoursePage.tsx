@@ -387,7 +387,12 @@ const CoursePage = () => {
     for (const p of participants) {
       if (p.status === 'confirmed') confirmed++;
       else if (p.status === 'cancelled' || p.status === 'course_cancelled') cancelled++;
-      if (p.payment_status === 'paid' && p.amount_paid != null) revenue += p.amount_paid;
+      // Net to the studio: buyer total minus the buyer-paid tjenestegebyr and
+      // the Start-tier platform take — mirrors seller_income_series so the
+      // course KPI and the dashboard income card always agree.
+      if (p.payment_status === 'paid' && p.amount_paid != null) {
+        revenue += p.amount_paid - (p.service_fee_nok ?? 0) - (p.platform_fee_nok ?? 0);
+      }
     }
     return { confirmed, cancelled, revenue };
   }, [participants]);

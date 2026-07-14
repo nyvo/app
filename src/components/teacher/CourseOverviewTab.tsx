@@ -20,7 +20,7 @@ interface CourseOverviewTabProps {
   /** Confirmed signups on the course — drives the "Påmeldte" KPI (matches the
    *  Påmeldte tab count). */
   enrolledCount: number;
-  /** Actual paid revenue (sum of amount_paid on paid signups) — "Inntekt" KPI. */
+  /** Net paid revenue (amount_paid minus buyer service fee and platform take) — "Inntekt" KPI. */
   revenue: number;
   /** Raw Stripe account status (pending | restricted | rejected | enabled | null) */
   paymentSetupStatus: string | null;

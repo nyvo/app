@@ -208,6 +208,7 @@ export async function handleStripeConnectWebhook(req: Request): Promise<Response
           p_participant_phone: attempt.participant_phone,
           p_amount_paid: amountNok,
           p_platform_fee_nok: attempt.platform_fee_nok ?? 0,
+          p_service_fee_nok: attempt.service_fee_nok ?? 0,
           p_course_session_id: attempt.course_session_id,
           p_note: attempt.note ?? null,
           p_payment_product: 'stripe',

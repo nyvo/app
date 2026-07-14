@@ -851,6 +851,7 @@ export type Database = {
           payment_product: string | null
           payment_status: Database["public"]["Enums"]["payment_status"] | null
           platform_fee_nok: number
+          service_fee_nok: number
           refund_amount: number | null
           refunded_at: string | null
           seller_id: string
@@ -880,6 +881,7 @@ export type Database = {
           payment_product?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           platform_fee_nok?: number
+          service_fee_nok?: number
           refund_amount?: number | null
           refunded_at?: string | null
           seller_id: string
@@ -909,6 +911,7 @@ export type Database = {
           payment_product?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           platform_fee_nok?: number
+          service_fee_nok?: number
           refund_amount?: number | null
           refunded_at?: string | null
           seller_id?: string
@@ -1115,6 +1118,7 @@ export type Database = {
           p_payment_product?: string
           p_payment_status?: string
           p_platform_fee_nok?: number
+          p_service_fee_nok?: number
           p_seller_id: string
           p_stripe_payment_intent_id?: string
           p_ticket_type_id: string
