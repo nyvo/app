@@ -50,6 +50,14 @@ This is THE switch. Until you do this, all payments are pretend; after, they're 
 
 ## Phase 2 — small switches (👤, ~10 min)
 
+6a. **⚠️ Activate Connect in LIVE mode (blocks all bookings + payouts).** Stripe → live mode →
+   **Connect** → complete the platform setup/activation it prompts (platform profile, Connect
+   branding: name/icon/color shown on seller onboarding pages, support contact, accept Connect
+   terms). Until this is done, `create-stripe-connect-account` returns 500 and **no seller can
+   onboard and no course can be paid for** (course payments are Connect destination charges).
+   Verified needed 2026-07-14. Independent of Pro billing (that's already working).
+
+
 6. **Leaked-password protection** → Supabase dashboard → Authentication → Providers →
    Email → enable "Prevent use of leaked passwords". (One toggle; clears the standing security warning.)
 7. **Real organisasjonsnummer** → your seller profile still has the placeholder `999999999`,
