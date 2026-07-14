@@ -582,18 +582,16 @@ function StedSection({ course }: { course: MappedCourse }) {
   return (
     <section>
       <SectionHeading>Sted</SectionHeading>
-      {/* White tile surface: MapEmbed's click-to-load consent facade (and the
-          defensive no-coords branch — unreachable in product, creation
-          requires a placeId) would otherwise sit muted-on-muted under the
-          muted pill. On the loaded map the pill reads against imagery. */}
+      {/* White tile surface: the defensive no-coords branch — unreachable in
+          product, creation requires a placeId — would otherwise sit
+          muted-on-muted under the muted pill. On the loaded map the pill
+          reads against imagery. */}
       <div className="relative h-[222px] overflow-hidden rounded-xl border border-border-subtle bg-surface">
         {hasCoords ? (
           <MapEmbed
             placeId={course.locationPlaceId}
             lat={course.locationLat}
             lon={course.locationLon}
-            // Teacher-only surface — loads without the consent click.
-            autoload
             className="absolute inset-0 h-full w-full rounded-none border-0 bg-transparent"
           />
         ) : (
