@@ -110,7 +110,9 @@ function mockSignup(
 
 const RECENT_SIGNUPS: SignupWithDetails[] = [
   mockSignup('1', 'Olav Hansen', 'Morning Flow', 2),
-  // Pending payment — exercises the exception-only PaymentBadge in the row.
+  // Pending payment — the card shows NO marker for it (removed 2026-07-14;
+  // payment state lives in the participant drawer). Kept in the mock so a
+  // regression that re-adds a row marker is visible here.
   mockSignup('2', 'Mari Eriksen', 'Vinyasa Flow — vårsemester', 5, 'pending'),
   mockSignup('3', 'Anne Sørensen', 'Yin Yoga', 26),
 ];
@@ -143,7 +145,7 @@ export default function DashboardPreview() {
             range={range}
             onRangeChange={setRange}
           />
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-y-6 lg:grid-cols-2 lg:gap-y-0">
             <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
             <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />
           </div>
@@ -161,7 +163,7 @@ export default function DashboardPreview() {
             />
             <PlatformFeeHint feeNok={312} />
           </div>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-y-6 lg:grid-cols-2 lg:gap-y-0">
             <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
             <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />
           </div>
@@ -176,7 +178,7 @@ export default function DashboardPreview() {
             range={range}
             onRangeChange={setRange}
           />
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-y-6 lg:grid-cols-2 lg:gap-y-0">
             <UpcomingCoursesSection courses={[]} isLoading={false} />
             <RecentSignupsSection signups={[]} isLoading={false} onSelect={noop} />
           </div>
@@ -191,7 +193,7 @@ export default function DashboardPreview() {
             range={range}
             onRangeChange={setRange}
           />
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-y-6 lg:grid-cols-2 lg:gap-y-0">
             <UpcomingCoursesSection courses={null} isLoading />
             <RecentSignupsSection signups={null} isLoading onSelect={noop} />
           </div>
