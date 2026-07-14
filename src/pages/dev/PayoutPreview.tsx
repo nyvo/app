@@ -74,7 +74,6 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
       'restricted med tom requirements_due — alt er sendt inn og Stripe kontrollerer. Ingen handling kreves, derfor ingen knapp.',
     viewModel: {
       h2: 'Vi kontrollerer opplysningene',
-      h2Tone: 'info',
       steps: [
         { title: STEP_1_TITLE, status: 'done' },
         {
@@ -94,7 +93,6 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
     description: 'restricted med requirements_due — Stripe trenger mer fra selgeren før kontoen kan aktiveres.',
     viewModel: {
       h2: 'Vi mangler litt informasjon',
-      h2Tone: 'warning',
       steps: [
         { title: STEP_1_TITLE, status: 'done' },
         {
@@ -134,7 +132,6 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
     description: 'Stripe avslo søknaden om en betalingskonto.',
     viewModel: {
       h2: 'Søknaden ble avslått',
-      h2Tone: 'danger',
       steps: [
         { title: STEP_1_TITLE, status: 'done' },
         {
@@ -161,7 +158,6 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
 // must not say payouts are ready while Stripe still blocks the transfer.
 const BLOCKED_VIEW_MODEL: PayoutSetupViewModel = {
   h2: 'Utbetalinger er ikke aktive ennå',
-  h2Tone: 'warning',
   steps: [
     { title: STEP_1_TITLE, status: 'done' },
     { title: STEP_2_TITLE, status: 'done' },
