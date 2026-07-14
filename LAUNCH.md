@@ -101,3 +101,10 @@ This is THE switch. Until you do this, all payments are pretend; after, they're 
 - DMARC: tighten `p=none` → `p=quarantine` once real mail has flowed for a few weeks.
 - Recreate a dev environment (or use Supabase preview branches) before heavy post-launch
   development — see PRELAUNCH.md 2026-07-13 section for the how.
+- **Tidy the `ALLOWED_ORIGIN` edge-function secret.** As of 2026-07-14 its first entry is
+  `http://localhost:5173`, which makes a dev origin the CORS fallback for unmatched requests.
+  Harmless (a non-whitelisted origin gets an ACAO its own browser rejects, so it's still
+  blocked) — but reorder so a prod origin (`https://openspot.no`) is first and drop the
+  localhost entry from the *production* secret. Verified prod-safe already: `openspot.no` +
+  `www.openspot.no` are allowed for every browser-called function (checkout, google-places,
+  free-signup, …), with correct Allow-Headers/Methods.
