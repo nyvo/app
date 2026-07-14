@@ -65,6 +65,11 @@ interface CourseSettingsTabProps {
   onLocationCoordsChange: (
     coords: { lat: number | null; lon: number | null; placeId: string | null } | null,
   ) => void;
+  /**
+   * Places availability from the picker: true while search is failing. The
+   * parent relaxes the pick-from-list save requirement while it's down.
+   */
+  onLocationSearchError?: (failed: boolean) => void;
   /** Inline error under the location field — set by the parent when a save is
    *  blocked (typed text without picking a place). */
   locationError?: string | null;
@@ -144,6 +149,7 @@ export const CourseSettingsTab = ({
   onLocationChange,
   onLocationAddressChange,
   onLocationCoordsChange,
+  onLocationSearchError,
   locationError,
   settingsDate,
   onDateChange,
@@ -362,6 +368,7 @@ export const CourseSettingsTab = ({
               address={settingsLocationAddress}
               coords={settingsLocationCoords}
               onChange={handleLocationChange}
+              onSearchError={onLocationSearchError}
             />
             {locationError && (
               <FieldError id="settings-location-error">
