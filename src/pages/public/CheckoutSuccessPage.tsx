@@ -38,9 +38,9 @@ interface SignupDetails {
   id: string;
   payment_status?: string | null;
   status?: string | null;
-  // Masked (k•••@example.com) — the anon receipt lookup never returns the
-  // full address.
-  participant_email_masked: string;
+  // Full address — the receipt URL's unguessable payment-intent id is the
+  // effective access token (see 20260714123000_receipt_full_email).
+  participant_email: string;
   amount_paid: number;
   created_at?: string | null;
   course: {
@@ -68,7 +68,7 @@ interface SignupDetails {
 // block instead of two near-duplicate render paths.
 interface DisplaySignup {
   id: string;
-  participantEmailMasked: string;
+  participantEmail: string;
   amountPaid: number;
   createdAt: string | null;
   course: {
@@ -283,7 +283,7 @@ const CheckoutSuccessPage = () => {
     const isLongWait = attemptCount > 8;
 
     return (
-      <div className="min-h-screen w-full bg-background flex items-center justify-center">
+      <div className="min-h-screen w-full bg-surface flex items-center justify-center">
         <div className="text-center max-w-md px-4" role="status" aria-live="polite" aria-atomic="true">
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
             <Spinner size="lg" className="text-foreground" />
@@ -301,7 +301,7 @@ const CheckoutSuccessPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen w-full bg-background">
+      <div className="min-h-screen w-full bg-surface">
         <StorefrontHeader />
         <div>
           <PageState variant="server-error" description={error} />
@@ -315,7 +315,7 @@ const CheckoutSuccessPage = () => {
   const displaySignup: DisplaySignup | null = signup
     ? {
         id: signup.id,
-        participantEmailMasked: signup.participant_email_masked,
+        participantEmail: signup.participant_email,
         amountPaid: signup.amount_paid,
         createdAt: signup.created_at ?? null,
         course: {
@@ -336,7 +336,7 @@ const CheckoutSuccessPage = () => {
     : freeReceipt
       ? {
           id: freeReceipt.signupId,
-          participantEmailMasked: freeReceipt.participantEmailMasked,
+          participantEmail: freeReceipt.participantEmail,
           amountPaid: 0,
           createdAt: freeReceipt.createdAt,
           course: {
@@ -362,7 +362,7 @@ const CheckoutSuccessPage = () => {
     const failedStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
+      <div className="min-h-screen w-full bg-surface flex items-center justify-center px-4">
         <div className="flex flex-col items-center text-center max-w-md">
           <div
             aria-hidden="true"
@@ -392,7 +392,7 @@ const CheckoutSuccessPage = () => {
     const failedStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
+      <div className="min-h-screen w-full bg-surface flex items-center justify-center px-4">
         <div className="flex flex-col items-center text-center max-w-md">
           <div
             aria-hidden="true"
@@ -419,7 +419,7 @@ const CheckoutSuccessPage = () => {
     const failedStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
+      <div className="min-h-screen w-full bg-surface flex items-center justify-center px-4">
         <div className="flex flex-col items-center text-center max-w-md">
           <div
             aria-hidden="true"
@@ -452,7 +452,7 @@ const CheckoutSuccessPage = () => {
     const fallbackStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
+      <div className="min-h-screen w-full bg-surface flex items-center justify-center px-4">
         <div className="flex flex-col items-center text-center max-w-md">
           <div
             aria-hidden="true"
@@ -558,14 +558,14 @@ const CheckoutSuccessPage = () => {
                   <div className="flex flex-col items-center text-center">
                     <div
                       aria-hidden="true"
-                      className="flex size-12 items-center justify-center rounded-full bg-success text-success-foreground animate-in fade-in-0 zoom-in-95 duration-300"
+                      className="flex size-12 items-center justify-center rounded-full bg-success-subtle text-success animate-in fade-in-0 zoom-in-95 duration-300"
                     >
                       <Check className="size-6" strokeWidth={2.5} />
                     </div>
                     <h1 className="mt-4 text-3xl font-medium text-foreground animate-in fade-in-0 slide-in-from-bottom-1 duration-300 delay-80 fill-mode-backwards">Du er påmeldt</h1>
                     <p className="mt-2 text-base text-foreground-muted animate-in fade-in-0 slide-in-from-bottom-1 duration-300 delay-80 fill-mode-backwards">
                       {displaySignup
-                        ? `Vi har sendt en bekreftelse til ${displaySignup.participantEmailMasked}.`
+                        ? `Vi har sendt en bekreftelse til ${displaySignup.participantEmail}.`
                         : 'Vi har sendt en bekreftelse til e-posten din.'}
                     </p>
                   </div>
@@ -573,15 +573,15 @@ const CheckoutSuccessPage = () => {
                   {displaySignup && (
                     <>
                       {/* Course pane — image + title + date/time. */}
-                      <div className="mt-8 flex items-center gap-4 rounded-2xl border border-card bg-surface shadow-soft p-5 animate-in fade-in-0 slide-in-from-bottom-1 duration-300 delay-160 fill-mode-backwards">
+                      <div className="mt-8 flex items-center gap-4 rounded-2xl bg-muted p-5 animate-in fade-in-0 slide-in-from-bottom-1 duration-300 delay-160 fill-mode-backwards">
                         <CourseThumb src={courseImage} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-base font-medium text-foreground">{displaySignup.course.title}</p>
                           {whenLine && (
-                            <p className="mt-0.5 text-sm text-foreground-muted tabular-nums">{whenLine}</p>
+                            <p className="mt-0.5 text-sm text-foreground tabular-nums">{whenLine}</p>
                           )}
                           {displaySignup.course.location && (
-                            <p className="mt-0.5 text-sm text-foreground-muted truncate">{displaySignup.course.location}</p>
+                            <p className="mt-0.5 text-sm text-foreground truncate">{displaySignup.course.location}</p>
                           )}
                         </div>
                       </div>

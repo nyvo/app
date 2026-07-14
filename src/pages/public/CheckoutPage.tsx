@@ -22,7 +22,7 @@ import { friendlyError } from '@/lib/error-messages';
 import { fetchPublicCourseBySlug, resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { createStripeSession } from '@/services/checkout';
 import { createFreeSignup } from '@/services/signups';
-import { saveFreeReceipt, maskEmail } from '@/lib/free-receipt';
+import { saveFreeReceipt } from '@/lib/free-receipt';
 import { supabase } from '@/lib/supabase';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { osloNowKey } from '@/utils/dateUtils';
@@ -428,7 +428,7 @@ const CheckoutPage = () => {
       sellerName: course.seller?.name ?? '',
       sellerSlug: course.seller?.slug ?? slug,
       sellerLogoUrl: course.seller?.logo_url ?? null,
-      participantEmailMasked: maskEmail(form.email.trim()),
+      participantEmail: form.email.trim(),
       createdAt: new Date().toISOString(),
     });
 
