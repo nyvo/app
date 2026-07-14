@@ -424,6 +424,13 @@
     @apply font-sans;
   }
 
+  /* Tailwind v4 preflight sets `cursor: default` on buttons (v3 used pointer).
+     Restore the pointer affordance for every enabled button — covers Radix
+     primitives (Checkbox, Switch, SelectTrigger, …) and raw <button>s alike. */
+  button:not(:disabled):not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
   /* Default lucide icon stroke — 1.75 pairs visually with Geist at weight 400–500
      and stays crisp at small sizes (size-3.5 / size-4). Override with `stroke-[2]`
      when pairing with a `font-semibold` heading; only drop to `stroke-[1.5]`

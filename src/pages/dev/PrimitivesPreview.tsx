@@ -233,26 +233,26 @@ function TogglesSection() {
     >
       <div className="space-y-8">
         <div className="flex flex-wrap items-center gap-8">
-          <label className="flex items-center gap-3 text-sm text-foreground">
+          <label className="flex items-center gap-3 text-sm text-foreground cursor-pointer">
             <Switch checked={switchOn} onCheckedChange={setSwitchOn} />
             Switch — {switchOn ? 'på' : 'av'}
           </label>
-          <label className="flex items-center gap-3 text-sm text-foreground">
+          <label className="flex items-center gap-3 text-sm text-foreground cursor-pointer">
             <Switch size="sm" checked={switchSmOn} onCheckedChange={setSwitchSmOn} />
             Switch sm — {switchSmOn ? 'på' : 'av'}
           </label>
-          <label className="flex items-center gap-3 text-sm text-foreground">
+          <label className="flex items-center gap-3 text-sm text-foreground cursor-pointer">
             <Checkbox checked={checked} onCheckedChange={(v) => setChecked(v === true)} />
             Checkbox
           </label>
         </div>
 
         <RadioGroup value={radio} onValueChange={setRadio} className="flex w-auto gap-6">
-          <label className="flex items-center gap-3 text-sm text-foreground">
+          <label className="flex items-center gap-3 text-sm text-foreground cursor-pointer">
             <RadioGroupItem value="a" />
             Alternativ A
           </label>
-          <label className="flex items-center gap-3 text-sm text-foreground">
+          <label className="flex items-center gap-3 text-sm text-foreground cursor-pointer">
             <RadioGroupItem value="b" />
             Alternativ B
           </label>
