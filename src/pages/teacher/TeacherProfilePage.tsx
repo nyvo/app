@@ -16,25 +16,31 @@ import { extractEdgeError } from '@/lib/edge-errors';
 import { toast } from 'sonner';
 
 const TeacherProfilePage = () => {
-  const { profile, refreshSellers } = useAuth();
+  const { profile, sellers, refreshSellers } = useAuth();
+  const isSeller = sellers.length > 0;
 
   // State for form fields - initialized from auth context. E-post is the
   // auth identity and is shown read-only — changing it would have to go
   // through supabase.auth.updateUser's confirmation flow, which we don't
   // support yet.
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
 
   useEffect(() => {
     if (profile) {
       setName(resolveDisplayName(profile.name, profile.email));
+      setPhone(profile.phone ?? '');
     }
   }, [profile]);
 
   // Dirty state tracking
   const isDirty = useMemo(() => {
     if (!profile) return false;
-    return name !== resolveDisplayName(profile.name, profile.email);
-  }, [profile, name]);
+    return (
+      name !== resolveDisplayName(profile.name, profile.email)
+      || phone !== (profile.phone ?? '')
+    );
+  }, [profile, name, phone]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -43,6 +49,7 @@ const TeacherProfilePage = () => {
   const handleCancel = () => {
     if (profile) {
       setName(resolveDisplayName(profile.name, profile.email));
+      setPhone(profile.phone ?? '');
     }
     setSaveError(null);
   };
@@ -55,8 +62,9 @@ const TeacherProfilePage = () => {
     // seeds it from Google's display name on signup, but the user can wipe it.
     if (profile?.id) {
       const trimmed = name.trim();
+      const trimmedPhone = phone.trim();
       const { error: profileError } = await supabase.from('profiles')
-        .update({ name: trimmed || null })
+        .update({ name: trimmed || null, phone: trimmedPhone || null })
         .eq('id', profile.id);
 
       if (profileError) {
@@ -69,6 +77,7 @@ const TeacherProfilePage = () => {
       // (and thus isDirty) is correct even if refreshSellers doesn't refresh
       // the profile — an empty input falls back to the resolved display name.
       setName(trimmed || resolveDisplayName(null, profile.email));
+      setPhone(trimmedPhone);
     }
 
     await refreshSellers();
@@ -132,8 +141,22 @@ const TeacherProfilePage = () => {
                   aria-describedby="profile-name-hint"
                 />
                 <p id="profile-name-hint" className="text-sm text-foreground-muted">
-                  Brukes bare på kontoen din. Den offentlige siden viser studionavnet.
+                  {isSeller
+                    ? 'Brukes bare på kontoen din. Den offentlige siden viser studionavnet.'
+                    : 'Brukes bare på kontoen din.'}
                 </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="profile-phone">Telefon</Label>
+                <Input
+                  id="profile-phone"
+                  type="tel"
+                  autoComplete="tel"
+                  value={phone}
+                  placeholder="Telefonnummer"
+                  onChange={(e) => setPhone(e.target.value)}
+                />
               </div>
 
               <div className="grid gap-2">
