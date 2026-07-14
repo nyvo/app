@@ -34,11 +34,6 @@ export interface PayoutStepViewModel {
 
 export interface PayoutSetupViewModel {
   h2: string;
-  /**
-   * Tones the card's left status accent bar so the card states read apart at
-   * a glance; omitted on to-do states (they're tasks, not statuses).
-   */
-  h2Tone?: 'info' | 'warning' | 'danger' | 'success';
   steps: PayoutStepViewModel[];
 }
 
@@ -164,18 +159,8 @@ function StepStatusLabel({ status, tone, statusLabel }: Pick<PayoutStepViewModel
   return <p className={`mt-0.5 text-xs ${ink}`}>{statusLabel}</p>;
 }
 
-// Card status accent — a rounded bar floating inside the card's left padding
-// (not flush with the edge), in the vivid `-accent` solids (step-9), not the
-// darker text-grade inks. Decorative only; the h2/description carry the words.
-const toneBarClass: Record<'info' | 'warning' | 'danger' | 'success', string> = {
-  info: 'bg-info-accent',
-  warning: 'bg-warning-accent',
-  danger: 'bg-danger-accent',
-  success: 'bg-success-accent',
-};
-
 export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel }) {
-  const { h2, h2Tone, steps } = viewModel;
+  const { h2, steps } = viewModel;
   const current = steps.find((step) => step.status === 'current');
 
   return (
@@ -214,18 +199,10 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
       </ol>
 
       <div className="min-w-0 flex-1">
-        <Card className="relative h-full">
-          {h2Tone && (
-            <span
-              aria-hidden="true"
-              className={`absolute inset-y-5 left-3 w-1 rounded-full ${toneBarClass[h2Tone]}`}
-            />
-          )}
-          {/* Toned cards indent the content one step (pl-8) so the accent bar
-              gets a full 16px gap to the text instead of hugging it. flex-col
-              + mt-auto pins the action to the card's bottom edge, so the
-              button sits in the same spot whatever the rail height is. */}
-          <CardContent className={`flex flex-1 flex-col ${h2Tone ? 'pl-8' : ''}`}>
+        <Card className="h-full">
+          {/* flex-col + mt-auto pins the action to the card's bottom edge, so
+              the button sits in the same spot whatever the rail height is. */}
+          <CardContent className="flex flex-1 flex-col">
             {/* The card describes the current situation; the rail on the left
                 carries the process position, so no step counter is repeated here. */}
             <h2 className="mb-2 text-base font-medium text-foreground">{h2}</h2>

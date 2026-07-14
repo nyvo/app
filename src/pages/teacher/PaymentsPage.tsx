@@ -285,7 +285,6 @@ const PaymentsPage = () => {
   );
 
   let h2: string;
-  let h2Tone: PayoutSetupViewModel['h2Tone'];
   let steps: PayoutSetupViewModel['steps'];
 
   if (!stripeStarted && !stripeConnected) {
@@ -311,7 +310,6 @@ const PaymentsPage = () => {
   } else if (stripeStarted && !stripeConnected) {
     if (stripeStatus === 'rejected') {
       h2 = 'Søknaden ble avslått';
-      h2Tone = 'danger';
       steps = [
         { title: STEP_1_TITLE, status: 'done' },
         {
@@ -335,7 +333,6 @@ const PaymentsPage = () => {
       let step2: PayoutStepViewModel;
       if (due && due.length > 0) {
         h2 = 'Vi mangler litt informasjon';
-        h2Tone = 'warning';
         step2 = {
           title: STEP_2_TITLE,
           status: 'current',
@@ -360,7 +357,6 @@ const PaymentsPage = () => {
         // per their docs "no action needed", so no CTA to a form with nothing
         // to fill in. The webhook flips the status when verification lands.
         h2 = 'Vi kontrollerer opplysningene';
-        h2Tone = 'info';
         step2 = {
           title: STEP_2_TITLE,
           status: 'current',
@@ -394,7 +390,6 @@ const PaymentsPage = () => {
     // progress with a warning, not "done": the page must not say payouts are
     // ready when they aren't.
     h2 = 'Utbetalinger er ikke aktive ennå';
-    h2Tone = 'warning';
     steps = [
       { title: STEP_1_TITLE, status: 'done' },
       { title: STEP_2_TITLE, status: 'done' },
@@ -409,7 +404,7 @@ const PaymentsPage = () => {
     ];
   }
 
-  const viewModel: PayoutSetupViewModel = { h2, h2Tone, steps };
+  const viewModel: PayoutSetupViewModel = { h2, steps };
 
   // Full-width shell like the other dashboard pages — this is a status
   // surface, not a settings form, so no label-column SettingsRows.
