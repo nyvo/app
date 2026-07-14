@@ -9,6 +9,19 @@ Legend: 👤 = you do this · 🤖 = ask an agent ("run the launch data sweep" e
 
 ---
 
+> **Progress — updated 2026-07-15 (live cutover in progress)**
+>
+> **Done + verified live:** Stripe live secret key; Pro monthly **and** yearly prices
+> (yearly had a wrong test-mode ID — caught & fixed); all 3 live webhooks registered
+> with correct events; Google Places + login keys rotated. LAUNCH.md on main.
+>
+> **Doing now (you):** activating Stripe **Connect** in the live dashboard —
+> onboarding = *Hosted by Stripe*, management = *Express Dashboard*, model = *Platform*.
+> This gates all seller onboarding + course payments until complete.
+>
+> **Left:** connect Stripe for your seller + publish a course → data sweep (ask an agent)
+> → delete `VITE_PRELAUNCH` + Vercel redeploy → one real booking + refund on the live site.
+
 ## ✅ Already done — nothing to do here
 
 These are verified working, listed so you don't re-check them:
