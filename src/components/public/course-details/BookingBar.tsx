@@ -22,6 +22,14 @@ interface BookingBarProps {
   checkoutHref: string;
   /** CTA label. Defaults to "Meld deg på". */
   ctaLabel?: string;
+  /**
+   * Signed-in buyer already holds a confirmed signup on this course — the bar
+   * swaps price + CTA for a confirmation state (Luma/Nike "You're in"
+   * pattern; plain text, no status dot per the approved 2026-07-14 design).
+   * Wins over every other state: an enrolled buyer's seat is secured, so
+   * sold-out/closed messaging is noise for them.
+   */
+  enrolled?: { email: string } | null;
 }
 
 /**
@@ -52,6 +60,7 @@ export function BookingBar({
   dropInPrice,
   checkoutHref,
   ctaLabel = 'Meld deg på',
+  enrolled = null,
 }: BookingBarProps) {
   const mainTile = tiles.find((t) => t.id === 'main') ?? null;
   const dropInTile = tiles.find((t) => t.id === 'drop-in') ?? null;
@@ -65,6 +74,30 @@ export function BookingBar({
       : paymentNotReady
         ? 'Påmelding åpner snart'
         : null;
+
+  // Enrolled state keeps the bar's exact two-zone geometry: the two-line
+  // text block takes the price stack's place, the CTA slot holds a secondary
+  // pill to Min side (self-cancel is deliberately not offered — buyers reach
+  // the seller via the booking, see BuyerDashboard).
+  if (enrolled) {
+    return (
+      <div className="pointer-events-none fixed bottom-0 inset-x-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
+        <div className="pointer-events-auto mx-auto flex w-full max-w-[640px] items-center justify-between gap-4 rounded-full border border-border-subtle bg-background py-2 pl-6 pr-2 shadow-soft animate-in slide-in-from-bottom-4 fade-in-0 duration-[250ms] ease-out">
+          <div className="min-w-0">
+            <p className="text-base font-medium text-foreground truncate">Du er påmeldt</p>
+            <p className="truncate text-sm text-foreground-muted">
+              Bekreftelse er sendt til {enrolled.email}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-3">
+            <Button asChild size="cta" variant="outline">
+              <Link to="/overview">Se påmelding</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pointer-events-none fixed bottom-0 inset-x-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">

@@ -21,6 +21,13 @@ interface StripeSessionResult {
   paymentIntentId: string
   /** payment_attempts id (= metadata.attempt_id) — carried to the success page as ref. */
   attemptId: string
+  /**
+   * Connected (studio) Stripe account the PaymentIntent was created
+   * on_behalf_of. The Elements group must declare the same account before
+   * confirmPayment, or Stripe rejects the confirm with an on_behalf_of
+   * mismatch.
+   */
+  stripeAccountId: string
 }
 
 /**

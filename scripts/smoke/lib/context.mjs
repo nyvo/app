@@ -17,6 +17,14 @@ export function buildContext({ runLabel }) {
   // or Date.now() (per the harness spec — counters come from the manifest).
   let mailosaurCounter = listEntries().length
 
+  // Cross-RUN uniqueness: after cleanup the manifest is empty, so a later run
+  // re-allocates the same counters and mints the SAME addresses — which still
+  // hold the previous run's emails in Mailosaur (this broke A7's
+  // exactly-one-email assertion on a same-day re-run). Suffix a nonce derived
+  // from this run's label: addresses stay greppable by test label, but no two
+  // runs ever share an inbox.
+  const runNonce = String(runLabel).toLowerCase().replace(/[^a-z0-9]+/g, '').slice(-6)
+
   return {
     env,
     runLabel,
@@ -30,7 +38,7 @@ export function buildContext({ runLabel }) {
       record: (type, id, stripeId) => appendEntry({ type, id, stripeId, runLabel }),
     },
     mailosaur: {
-      mint: (label) => mintAddress(label, ++mailosaurCounter),
+      mint: (label) => mintAddress(`${label}-${runNonce}`, ++mailosaurCounter),
       waitForMessage,
       countMessages,
     },
