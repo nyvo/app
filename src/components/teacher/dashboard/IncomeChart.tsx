@@ -3,6 +3,14 @@ import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts'
 import { ChartContainer } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { ChevronDown } from '@/lib/icons'
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard'
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs'
 import { cn, formatKroner } from '@/lib/utils'
@@ -28,6 +36,50 @@ const RANGE_TABS: { key: IncomeRange; label: string }[] = [
   { key: 'month', label: 'Måned' },
   { key: 'year', label: 'År' },
 ]
+
+/**
+ * Mobile range control — a quiet text dropdown in the FramedCard header
+ * (user-directed 2026-07-15). The header ban on SegmentedTabs was about the
+ * muted track vanishing against the muted shell; a plain text trigger has no
+ * track, so the header placement works — and below sm it frees the panel row
+ * so the total stands alone. Desktop keeps the in-panel tabs.
+ */
+function RangeDropdown({
+  value,
+  onChange,
+}: {
+  value: IncomeRange
+  onChange: (range: IncomeRange) => void
+}) {
+  const label = RANGE_TABS.find((t) => t.key === value)?.label
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label="Velg tidsrom"
+        // after:-inset-2 lifts the ~20px text control to a ~36px touch target.
+        className="group relative inline-flex items-center gap-1 rounded-md text-sm font-medium text-foreground outline-none after:absolute after:-inset-2 focus-visible:ring-2 focus-visible:ring-ring-subtle sm:hidden"
+      >
+        {label}
+        <ChevronDown
+          aria-hidden="true"
+          className="size-4 text-foreground-muted transition-transform duration-150 ease-out group-data-[state=open]:rotate-180"
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuRadioGroup
+          value={value}
+          onValueChange={(v) => onChange(v as IncomeRange)}
+        >
+          {RANGE_TABS.map((t) => (
+            <DropdownMenuRadioItem key={t.key} value={t.key}>
+              {t.label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 /* Series ink stays azure (--primary) — ratified exception to the
    --category-* chart-hue rule (design-language.md §Charts); user-reverted
@@ -148,14 +200,17 @@ export function IncomeChart({
   const domainMax = Math.max(dataMax, EMPTY_DOMAIN_MAX)
 
   return (
-    <FramedCard title="Inntekt">
-      {/* px-4 keeps the total aligned with the FramedCard title above. The range
-          toggle stays on the white surface beside the total (re-ratified
-          2026-07-14 against a header placement): every FramedCard header
-          app-wide is a plain label, and the SegmentedTabs muted track would
-          vanish against the muted shell. */}
+    <FramedCard
+      title="Inntekt"
+      action={<RangeDropdown value={range} onChange={onRangeChange} />}
+    >
+      {/* px-4 keeps the total aligned with the FramedCard title above. The
+          SegmentedTabs stay on the white surface beside the total on sm+
+          (re-ratified 2026-07-14 against a header placement — the muted track
+          vanishes on the muted shell). Below sm the range control is the text
+          RangeDropdown in the header instead, so the total owns this row. */}
       <FramedCardPanel className="px-4 py-5 sm:py-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             {isLoading ? (
               <Skeleton className="h-9 w-40" />
@@ -182,6 +237,7 @@ export function IncomeChart({
             tabs={RANGE_TABS}
             ariaLabel="Velg tidsrom"
             size="md"
+            className="max-sm:hidden"
           />
         </div>
 
