@@ -16,6 +16,8 @@ interface LocationFieldProps {
   coords: LocationCoords | null
   /** Optional address line shown under the field. */
   address?: string | null
+  /** Whether to show the selected address and embedded map below the input. */
+  showSelectionDetails?: boolean
   /** Fires on every change: free-typed (coords null) or a picked place (coords set). */
   onChange: (next: { name: string; address: string; coords: LocationCoords | null }) => void
   /**
@@ -40,6 +42,7 @@ export function LocationField({
   value,
   coords,
   address,
+  showSelectionDetails = true,
   onChange,
   onSearchError,
   disabled,
@@ -69,8 +72,10 @@ export function LocationField({
         }
         placeholder={placeholder}
       />
-      {address && <p className="text-sm text-foreground-muted">{address}</p>}
-      {showMap && (
+      {showSelectionDetails && address && (
+        <p className="text-sm text-foreground-muted">{address}</p>
+      )}
+      {showSelectionDetails && showMap && (
         <MapEmbed
           placeId={coords?.placeId}
           lat={coords?.lat}
