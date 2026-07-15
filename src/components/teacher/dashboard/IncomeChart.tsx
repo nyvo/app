@@ -56,16 +56,16 @@ function RangeDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Velg tidsrom"
-        // Pill chrome mirrors a SegmentedTabs md segment (h-7 rounded-lg
-        // hairline on white) so the control is anchored, not floating text;
-        // ink stays muted — secondary to the FramedCard title.
+        // Borderless white pill (SegmentedTabs-segment size, no hairline) so
+        // the control is anchored, not floating text; primary ink marks it as
+        // the header's one action (user-directed 2026-07-15).
         // after:-inset-y-2 lifts the 28px pill to a ~44px touch target.
-        className="group relative inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-surface px-2.5 text-sm font-medium text-foreground-muted outline-none after:absolute after:inset-x-0 after:-inset-y-2 focus-visible:ring-2 focus-visible:ring-ring-subtle sm:hidden"
+        className="group relative inline-flex h-7 items-center gap-1 rounded-lg bg-surface px-2.5 text-sm font-medium text-primary outline-none after:absolute after:inset-x-0 after:-inset-y-2 focus-visible:ring-2 focus-visible:ring-ring-subtle sm:hidden"
       >
         {label}
         <ChevronDown
           aria-hidden="true"
-          className="size-4 text-foreground-muted transition-transform duration-150 ease-out group-data-[state=open]:rotate-180"
+          className="size-4 transition-transform duration-150 ease-out group-data-[state=open]:rotate-180"
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
