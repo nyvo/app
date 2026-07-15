@@ -118,7 +118,7 @@ export async function deliverBookingConfirmations(
       .is('seller_notified_at', null)
   } else {
     await notifyBookingCreated(supabase, signupId, attempt)
-    await sendSellerBookingEmail(supabase, signupId, attempt, amountLabel)
+    await sendSellerBookingEmail(supabase, signupId, attempt)
   }
   await sendOrderConfirmEmail(supabase, signupId, attempt, isManual ? null : amountLabel)
 }
@@ -155,16 +155,26 @@ async function sendSellerBookingEmail(
   supabase: SupabaseClient,
   signupId: string,
   attempt: BookingAttempt,
-  amountLabel: string,
 ): Promise<void> {
   if (!attempt.participant_name) return
 
   const { data: existing } = await supabase
     .from('signups')
-    .select('seller_notified_at')
+    .select('seller_notified_at, amount_paid, service_fee_nok, platform_fee_nok')
     .eq('id', signupId)
     .maybeSingle()
   if (existing?.seller_notified_at) return
+
+  // Seller-facing money: the studio's payout (course price minus the platform
+  // fee) and the platform fee itself. The buyer's service fee is deliberately
+  // omitted — it's the buyer's line, not the studio's, and showing the gross
+  // made "Beløp" read higher than what the studio actually earns.
+  const amountPaid = Number(existing?.amount_paid ?? 0)
+  const serviceFee = Number(existing?.service_fee_nok ?? 0)
+  const platformFee = Number(existing?.platform_fee_nok ?? 0)
+  const payoutNok = Math.max(0, amountPaid - serviceFee - platformFee)
+  const payoutLabel = payoutNok > 0 ? formatKroner(payoutNok) : 'Gratis'
+  const platformFeeLabel = platformFee > 0 ? formatKroner(platformFee) : undefined
 
   const [{ data: course }, { data: owners }] = await Promise.all([
     supabase
@@ -206,7 +216,8 @@ async function sendSellerBookingEmail(
         buyerName: attempt.participant_name,
         courseTitle: course.title,
         courseStart: formatCourseStart(course.start_date, course.time_schedule),
-        amount: amountLabel,
+        payout: payoutLabel,
+        platformFee: platformFeeLabel,
         // Present only for honor-discount claims — the seller is responsible
         // for verifying eligibility, so the signup ping must flag the claim.
         discount: discountClaimLabel(attempt.ticket_label_snapshot),

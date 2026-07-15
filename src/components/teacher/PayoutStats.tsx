@@ -72,7 +72,7 @@ export function PayoutStats({
             <EmptyState
               variant="compact"
               title="Ingen utbetalinger ennå"
-              description="Den første utbetalingen vises her når et kurs er betalt."
+              description="Den vises her så snart Stripe overfører pengene til kontoen din."
             />
           </FramedCardPanel>
         ) : (

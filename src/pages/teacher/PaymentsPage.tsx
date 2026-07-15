@@ -19,6 +19,7 @@ import {
   getStripeSettlements,
   type ConnectStatusResult,
   type StripeSettlementsResult,
+  type StripeSettlementMoney,
 } from '@/services/stripe-connect';
 import { COMPANY } from '@/lib/company';
 import { toast } from 'sonner';
@@ -59,7 +60,9 @@ const STEP_3_TITLE = 'Motta utbetalinger';
  */
 
 // Stripe amounts are øre; the app displays kroner (mirrors CheckoutPage's amountOre).
-const oreToKroner = (ore: number): number => Math.round(ore / 100);
+// Exact kroner (no whole-krone rounding) so a small payout like 9,50 kr shows as
+// "9,5 kr" instead of rounding up to "10 kr" and overstating what's owed.
+const oreToKroner = (ore: number): number => ore / 100;
 
 // A payout that has left Stripe but not yet landed in the seller's bank.
 const IN_TRANSIT_STATUSES = new Set(['pending', 'in_transit']);
@@ -84,11 +87,25 @@ function derivePayoutStats(data: StripeSettlementsResult): {
   payouts: PayoutRow[];
 } {
   const currentYear = new Date().getFullYear();
-  const { payouts } = data;
+  const { payouts, balance } = data;
 
-  const inTransitOre = payouts
-    .filter((p) => IN_TRANSIT_STATUSES.has(p.status))
-    .reduce((sum, p) => sum + p.amount, 0);
+  // "På vei til deg" is everything owed to the studio that hasn't reached their
+  // bank yet: money still settling in Stripe (pending balance), money settled
+  // but not yet swept into a payout (available balance), plus payouts already
+  // in flight. Without the balance a fresh sale shows nothing here — Stripe only
+  // creates a payout object once it batches the transfer, so the funds sit in
+  // the balance (invisible to a payouts-only view) for a day or two after a sale.
+  const nokOnly = (m: StripeSettlementMoney): boolean =>
+    (m.currency ?? '').toLowerCase() === 'nok';
+  const sumMoney = (money: StripeSettlementMoney[]): number =>
+    money.filter(nokOnly).reduce((sum, m) => sum + m.amount, 0);
+
+  const inTransitOre =
+    sumMoney(balance.pending) +
+    sumMoney(balance.available) +
+    payouts
+      .filter((p) => IN_TRANSIT_STATUSES.has(p.status))
+      .reduce((sum, p) => sum + p.amount, 0);
 
   const paidYtdOre = payouts
     .filter((p) => p.status === 'paid' && payoutDate(p.arrival_date).getFullYear() === currentYear)

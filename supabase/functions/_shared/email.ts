@@ -84,8 +84,13 @@ export interface BookingNotificationEmailProps {
   courseTitle: string
   /** Pre-formatted Norwegian date/time, e.g. "onsdag 28. mai kl. 18:00" */
   courseStart: string
-  /** Pre-formatted via formatKroner, e.g. "1 200 kr" — or "Gratis" for free signups */
-  amount: string
+  /** The studio's payout, net of the platform fee. Pre-formatted via
+   * formatKroner, e.g. "1 200 kr" — or "Gratis" for free signups. The buyer's
+   * service fee is intentionally not shown to the seller. */
+  payout: string
+  /** Platform fee deducted from the payout, pre-formatted (e.g. "0,5 kr").
+   * Set only for free-tier studios; omitted for Pro. */
+  platformFee?: string
   /** Honor-discount claim, e.g. "Student (−20 %)" — set only when the buyer claimed one */
   discount?: string
   bookingId: string
