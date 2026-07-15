@@ -8,6 +8,10 @@ export interface BookingNotificationProps {
   courseStart: string
   /** Pre-formatted via formatKroner, e.g. "1 200 kr" — or "Gratis" for free signups */
   amount: string
+  /** Honor-discount claim, e.g. "Student (−20 %)" — set only when the buyer
+   * claimed one. Verification is the seller's responsibility, so the row
+   * doubles as the "check ID at the door" flag. */
+  discount?: string
   bookingId: string
   buyerEmail?: string
 }
@@ -17,6 +21,7 @@ export const BookingNotification = ({
   courseTitle,
   courseStart,
   amount,
+  discount,
   bookingId,
   buyerEmail,
 }: BookingNotificationProps) => (
@@ -34,6 +39,7 @@ export const BookingNotification = ({
       <DetailRow label="Kurs" value={courseTitle} />
       <DetailRow label="Tid" value={courseStart} />
       <DetailRow label="Referanse" value={bookingId} />
+      {discount ? <DetailRow label="Rabatt" value={discount} /> : null}
       <DetailRow label="Beløp" value={amount} emphasis last />
     </DetailBlock>
 
@@ -48,6 +54,7 @@ BookingNotification.PreviewProps = {
   courseTitle: 'Vinyasa Flow — onsdager',
   courseStart: 'onsdag 28. mai kl. 18:00',
   amount: '1 200 kr',
+  discount: 'Student (−20 %)',
   bookingId: 'LY-2829',
   buyerEmail: 'marte@example.no',
 } satisfies BookingNotificationProps

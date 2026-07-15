@@ -86,6 +86,8 @@ export interface BookingNotificationEmailProps {
   courseStart: string
   /** Pre-formatted via formatKroner, e.g. "1 200 kr" — or "Gratis" for free signups */
   amount: string
+  /** Honor-discount claim, e.g. "Student (−20 %)" — set only when the buyer claimed one */
+  discount?: string
   bookingId: string
   buyerEmail?: string
 }
