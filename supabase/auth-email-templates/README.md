@@ -21,7 +21,8 @@ product templates (`send-email/templates/_layout.tsx`): white card on the
 app's `neutral-2` canvas (#f9f9f9), pure-neutral ramp from `src/index.css`
 (#1f1f1f foreground, #717171 muted, #8e8e8e subtle), Openspot wordmark, 22px
 heading, 32px monospace code block, centered support footer below the card.
-Synced with the live config 2026-07-06.
+Reference copies reviewed 2026-07-16. Changes in this directory still need to
+be copied to the live Auth config separately.
 
 | File | Auth config fields | Subject |
 | --- | --- | --- |

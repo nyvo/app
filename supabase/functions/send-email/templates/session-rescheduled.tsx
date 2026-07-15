@@ -29,10 +29,11 @@ export const SessionRescheduled = ({
 }: SessionRescheduledProps) => (
   <EmailLayout preview={`Ny tid for ${courseTitle} — ${newDate} kl. ${newTime}`}>
     <Heading as="h1" style={styles.h1}>
-      En time har fått ny tid
+      Ny tid for en kursøkt
     </Heading>
     <Text style={styles.paragraph}>
-      Hei {buyerName}, vi har flyttet en time i {courseTitle} hos {studioName}.
+      Hei{buyerName ? ` ${buyerName}` : ''}, {studioName} har flyttet en kursøkt i{' '}
+      {courseTitle}.
     </Text>
 
     <DetailBlock>

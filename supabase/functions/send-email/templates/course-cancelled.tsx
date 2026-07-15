@@ -1,6 +1,12 @@
 import { Heading, Text } from '@react-email/components'
 import * as React from 'react'
-import { DetailBlock, DetailRow, EmailLayout, styles } from './_layout.tsx'
+import {
+  ArrangorContact,
+  DetailBlock,
+  DetailRow,
+  EmailLayout,
+  styles,
+} from './_layout.tsx'
 
 export interface CourseCancelledProps {
   buyerName: string
@@ -12,7 +18,7 @@ export interface CourseCancelledProps {
    * caller (cancel-course) — the template stays dumb about payment state.
    */
   refundNote?: string
-  /** Set when the email's replyTo routes to the arrangør. */
+  /** Arrangør address shown as the participant's contact route. */
   arrangorEmail?: string
 }
 
@@ -40,9 +46,11 @@ export const CourseCancelled = ({
     </DetailBlock>
 
     {arrangorEmail ? (
-      <Text style={styles.paragraphMuted}>
-        Har du spørsmål? Svar på denne e-posten, så når du arrangøren direkte.
-      </Text>
+      <ArrangorContact
+        question="Har du spørsmål om avlysningen eller tilbakebetalingen?"
+        studioName={studioName}
+        email={arrangorEmail}
+      />
     ) : null}
   </EmailLayout>
 )

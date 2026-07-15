@@ -30,8 +30,8 @@ export interface OrderConfirmEmailProps {
   /** Pre-formatted via formatOrgNumber, e.g. "987 654 321". The arrangør's
    * legal identity anchor — the receipt is where it lives, not the UI. */
   arrangorOrgNumber?: string
-  /** When set, the email's replyTo routes to the arrangør and the template
-   * renders the "svar på denne e-posten" contact line. */
+  /** Arrangør address shown as the participant's contact route. Callers also
+   * pass the same value as replyTo. */
   arrangorEmail?: string
 }
 
@@ -46,7 +46,7 @@ export interface RefundReceiptEmailProps {
   bookingId: string
   /** Pre-formatted via formatOrgNumber, e.g. "987 654 321" */
   arrangorOrgNumber?: string
-  /** When set, replyTo routes to the arrangør; renders the contact line. */
+  /** Arrangør address shown in the contact line and also used as replyTo. */
   arrangorEmail?: string
 }
 
@@ -85,9 +85,11 @@ export interface BookingNotificationEmailProps {
   /** Pre-formatted Norwegian date/time, e.g. "onsdag 28. mai kl. 18:00" */
   courseStart: string
   /** The studio's payout, net of the platform fee. Pre-formatted via
-   * formatKroner, e.g. "1 200 kr" — or "Gratis" for free signups. The buyer's
+   * formatKroner, e.g. "1 200 kr". Ignored for free signups. The buyer's
    * service fee is intentionally not shown to the seller. */
   payout: string
+  /** Free signups show "Pris: Gratis" and omit payout/accounting rows. */
+  isFree?: boolean
   /** Platform fee deducted from the payout, pre-formatted (e.g. "0,5 kr").
    * Set only for free-tier studios; omitted for Pro. */
   platformFee?: string
@@ -103,7 +105,7 @@ export interface CourseCancelledEmailProps {
   courseTitle: string
   /** Optional pre-formatted money line for this participant's situation. */
   refundNote?: string
-  /** When set, replyTo routes to the arrangør; renders the contact line. */
+  /** Arrangør address shown in the contact line and also used as replyTo. */
   arrangorEmail?: string
 }
 
@@ -115,7 +117,7 @@ export interface SignupCancelledEmailProps {
   courseStart?: string
   /** Optional pre-formatted money line for this participant's situation. */
   paymentNote?: string
-  /** When set, replyTo routes to the arrangør; renders the contact line. */
+  /** Arrangør address shown in the contact line and also used as replyTo. */
   arrangorEmail?: string
 }
 

@@ -92,7 +92,7 @@ Deno.serve(async (req: Request) => {
       template: 'course-message',
       to: s.participant_email,
       props: {
-        buyerName: s.participant_name || 'Hei',
+        buyerName: s.participant_name || '',
         studioName,
         courseTitle: course.title,
         // No teacher-authored subject — the email's H1 and Resend subject
