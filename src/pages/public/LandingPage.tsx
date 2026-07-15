@@ -93,7 +93,7 @@ const LandingPage = () => {
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                   className="text-4xl font-semibold text-foreground md:text-5xl"
                 >
-                  Kurs, påmelding og betaling – samlet.
+                  Opprett kurs. Ta imot påmeldinger. Få betalt.
                 </motion.h1>
                 <motion.p
                   initial={{ opacity: 0, y: 8 }}
@@ -101,7 +101,7 @@ const LandingPage = () => {
                   transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
                   className="mt-4 text-base text-foreground-muted"
                 >
-                  Opprett kurs, ta imot påmeldinger og få betalt fra samme sted.
+                  Openspot samler kurs, påmeldinger, deltakere og betaling.
                 </motion.p>
               </div>
               <motion.div
@@ -131,7 +131,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 className="text-4xl font-semibold text-foreground md:text-5xl"
               >
-                Kurs, påmelding og betaling – samlet.
+                Opprett kurs. Ta imot påmeldinger. Få betalt.
               </motion.h1>
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
@@ -139,7 +139,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
                 className="mt-4 text-base text-foreground-muted"
               >
-                Opprett kurs, ta imot påmeldinger og få betalt fra samme sted.
+                Openspot samler kurs, påmeldinger, deltakere og betaling.
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -197,7 +197,7 @@ const LandingPage = () => {
                 En side for kursene dine.
               </h2>
               <p className="mt-4 text-base text-foreground-muted">
-                Vis kursene dine og ta imot påmeldinger fra én lenke du kan dele hvor du vil.
+                Vis kursene dine og ta imot påmeldinger på din egen studioside.
               </p>
             </motion.div>
             <motion.div
@@ -242,7 +242,7 @@ const LandingPage = () => {
               Fra påmelding til utbetaling.
             </h2>
             <p className="mt-4 text-base text-foreground-muted">
-              Deltakerne melder seg på og betaler selv. Du har oversikten underveis.
+              Deltakerne melder seg på og betaler selv. Du ser alt på ett sted.
             </p>
           </motion.div>
 
@@ -255,18 +255,18 @@ const LandingPage = () => {
           >
             <PremiumCard
               icon={CreditCardIcon}
-              title="Betaling til kontoen din"
-              body="Deltakerne betaler når de melder seg på. Utbetalingene går til bankkontoen din."
+              title="Betaling"
+              body="Deltakerne betaler ved påmelding. Du får utbetalingen til bankkontoen din."
             />
             <PremiumCard
               icon={UserMultiple02Icon}
-              title="Påmeldinger uten manuelt arbeid"
+              title="Påmeldinger"
               body="Deltakerne melder seg på selv, og deltakerlisten oppdateres automatisk."
             />
             <PremiumCard
               icon={ChartBarIncreasingIcon}
-              title="Se hva som skjer"
-              body="Følg inntekter, påmeldinger og deltakere for hvert kurs."
+              title="Kursoversikt"
+              body="Se inntekter, påmeldinger og deltakere for hvert kurs."
             />
           </motion.div>
         </div>
