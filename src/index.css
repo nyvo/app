@@ -89,6 +89,7 @@
 
   /* Status — solid (alert dialog, toast, button) + subtle (pill, banner) */
   --color-success: var(--success);
+  --color-success-bright: var(--success-bright);
   --color-success-foreground: var(--success-foreground);
   --color-success-subtle: var(--success-subtle);
   --color-warning: var(--warning);
@@ -227,6 +228,7 @@
   /* Status — jade (success) / amber (warning) / red (danger) / blue (info) */
   --jade-3:   oklch(0.953 0.034 158);
   --jade-11:  oklch(0.516 0.081 165);
+  --green-bright: oklch(0.723 0.219 149.579);
   --amber-3:  oklch(0.972 0.067 100);
   --amber-11: oklch(0.557 0.131 65);
   --red-3:    oklch(0.946 0.024 17);
@@ -282,6 +284,9 @@
      replaces the `bg-success/10` opacity hack with a proper opaque token.
      `-foreground` is the contrast color used on top of the solid bg. */
   --success: var(--jade-11);
+  /* High-chroma success accent for tiny markers and glyphs. Unlike
+     --success, this is not intended for text or large filled surfaces. */
+  --success-bright: var(--green-bright);
   --success-foreground: var(--neutral-1);
   --success-subtle: var(--jade-3);
   --warning: var(--amber-11);
