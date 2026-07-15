@@ -42,7 +42,8 @@ export interface ConfirmDialogProps {
   body: React.ReactNode
   /** Button label for the confirming action. */
   actionLabel: React.ReactNode
-  /** Safe/cancel button label. Use "Behold" when the action itself says Avbryt/Avbestill. */
+  /** Safe/cancel button label. Defaults to "Avbryt"; override only when the
+   *  safe outcome is clearer in context, for example "Bli på siden". */
   cancelLabel?: React.ReactNode
   /** Render the confirm button with the destructive (danger) token instead of primary. */
   destructive?: boolean

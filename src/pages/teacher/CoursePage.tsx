@@ -364,9 +364,21 @@ const CoursePage = () => {
   const { blocker, bypass } = useUnsavedChanges(isSettingsDirty);
 
   const refundPreview = useMemo(() => {
-    const paidSignups = participants.filter((p) => p.payment_status === 'paid');
-    const totalRefund = paidSignups.reduce((sum, p) => sum + (p.amount_paid || 0), 0);
-    return { participants: paidSignups, totalAmount: totalRefund, count: paidSignups.length };
+    // The buyer receives the full charge, but this seller-facing preview only
+    // shows what Stripe reverses from the studio after buyer/platform fees.
+    const refunds = participants
+      .filter((signup) => signup.payment_status === 'paid')
+      .map((signup) => ({
+        signup,
+        sellerAmount: Math.max(
+          0,
+          (signup.amount_paid ?? 0) -
+            (signup.service_fee_nok ?? 0) -
+            (signup.platform_fee_nok ?? 0),
+        ),
+      }));
+    const totalSellerAmount = refunds.reduce((sum, refund) => sum + refund.sellerAmount, 0);
+    return { refunds, totalSellerAmount, count: refunds.length };
   }, [participants]);
 
   // Sort confirmed rows first, cancelled (including course-cancelled) at the
@@ -1380,9 +1392,10 @@ const CoursePage = () => {
         body={
           refundPreview.count > 0 ? (
             <>
-              <strong>{courseData.title}</strong> avlyses – {refundPreview.count} deltaker
-              {refundPreview.count !== 1 ? 'e' : ''} refunderes{' '}
-              <strong>{formatKroner(refundPreview.totalAmount)}</strong> og varsles.
+              <strong>{courseData.title}</strong> avlyses. {refundPreview.count}{' '}
+              {refundPreview.count === 1 ? 'deltaker refunderes og varsles' : 'deltakere refunderes og varsles'}.{' '}
+              <strong>{formatKroner(refundPreview.totalSellerAmount)}</strong> trekkes fra
+              oppgjøret ditt.
             </>
           ) : (
             <><strong>{courseData.title}</strong> avlyses uten refusjoner.</>
@@ -1390,11 +1403,11 @@ const CoursePage = () => {
         }
         scopeList={
           refundPreview.count > 0
-            ? refundPreview.participants.map((p) => ({
-                id: p.id,
-                name: p.participant_name || p.participant_email,
-                meta: p.participant_email,
-                trailing: formatKroner(p.amount_paid),
+            ? refundPreview.refunds.map(({ signup, sellerAmount }) => ({
+                id: signup.id,
+                name: signup.participant_name || signup.participant_email,
+                meta: signup.participant_email,
+                trailing: formatKroner(sellerAmount),
               }))
             : undefined
         }
