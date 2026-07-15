@@ -6,7 +6,6 @@ import CreateCourseDrawer from './CreateCourseDrawer';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageShell } from '@/components/teacher/PageShell';
-import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { CourseListView, CourseListSkeleton, type SortKey, type SortDir } from '@/components/teacher/CourseListView';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { SearchInput } from '@/components/ui/search-input';
@@ -248,8 +247,6 @@ const CoursesPage = () => {
       });
   }, [allRows, viewTab, searchQuery, sortKey, sortDir]);
 
-  const showCoursesEmptyState = !isLoading && courses.length === 0 && !error;
-
   // When the user switches tab, reset sort to that tab's most useful default.
   useEffect(() => {
     const { key, dir } = DEFAULT_SORT_FOR_TAB[viewTab];
@@ -291,87 +288,85 @@ const CoursesPage = () => {
         <PageShell
           title="Mine kurs"
           action={
-            !showCoursesEmptyState && (
-              <Button onClick={() => navigate(routes.coursesNew)}>
-                <CalendarPlus data-icon="inline-start" />
-                Opprett kurs
-              </Button>
-            )
+            <Button onClick={() => navigate(routes.coursesNew)}>
+              <CalendarPlus data-icon="inline-start" />
+              Opprett kurs
+            </Button>
           }
           tabs={
-            !showCoursesEmptyState && (
-              <div className="flex flex-col gap-3 border-b border-border md:flex-row md:items-end md:justify-between">
-                <PageTabs ariaLabel="Filtrer kurs" className="border-b-0">
-                  {(['active', 'past'] as const).map((key) => (
-                    <PageTab
-                      key={key}
-                      active={viewTab === key}
-                      onClick={() => setViewTab(key)}
-                    >
-                      {key === 'active' ? 'Aktive' : 'Fullførte'}
-                    </PageTab>
-                  ))}
-                </PageTabs>
-                <div className="flex w-full items-center gap-2 pb-2 md:w-auto">
-                  <SearchInput
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                    placeholder="Søk etter kurs…"
-                    aria-label="Søk etter kurs"
-                    className="flex-1 md:max-w-xs"
-                  />
-                </div>
+            <div className="flex flex-col gap-3 border-b border-border md:flex-row md:items-end md:justify-between">
+              <PageTabs ariaLabel="Filtrer kurs" className="border-b-0">
+                {(['active', 'past'] as const).map((key) => (
+                  <PageTab
+                    key={key}
+                    active={viewTab === key}
+                    onClick={() => setViewTab(key)}
+                  >
+                    {key === 'active' ? 'Aktive' : 'Fullførte'}
+                  </PageTab>
+                ))}
+              </PageTabs>
+              <div className="flex w-full items-center gap-2 pb-2 md:w-auto">
+                <SearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Søk etter kurs…"
+                  aria-label="Søk etter kurs"
+                  className="flex-1 md:max-w-xs"
+                />
               </div>
-            )
+            </div>
           }
         >
-          {showCoursesEmptyState ? (
-            <CoursesEmptyState />
+          {/* List — each card is its own bordered surface; no outer frame */}
+          {isLoading ? (
+            <DelayedFallback>
+              <div role="status" aria-live="polite" aria-label="Laster kurs">
+                <span className="sr-only">Laster kurs</span>
+                <CourseListSkeleton />
+              </div>
+            </DelayedFallback>
+          ) : error ? (
+            <ErrorState
+              title="Kunne ikke hente kurs"
+              message={error}
+              onRetry={loadData}
+            />
+          ) : courses.length === 0 ? (
+            // First-use / no courses — a bare empty state in the body, keeping
+            // the header + tabs above it (the shared layout used across the
+            // dashboard, e.g. /schedule). The "Opprett kurs" affordance lives
+            // in the header action, so no in-card CTA here.
+            <EmptyState
+              title={emptyTitle}
+              description={emptyDescription}
+            />
           ) : (
-            <>
-              {/* List — each card is its own bordered surface; no outer frame */}
-              {isLoading ? (
-                <DelayedFallback>
-                  <div role="status" aria-live="polite" aria-label="Laster kurs">
-                    <span className="sr-only">Laster kurs</span>
-                    <CourseListSkeleton />
-                  </div>
-                </DelayedFallback>
-              ) : error ? (
-                <ErrorState
-                  title="Kunne ikke hente kurs"
-                  message={error}
-                  onRetry={loadData}
-                />
-              ) : (
-                <CourseListView
-                  courses={visibleRows}
-                  sortKey={sortKey}
-                  sortDir={sortDir}
-                  onSort={handleSort}
-                  countsUnavailable={countsFailed}
-                  emptyState={
-                    searchQuery ? (
-                      <EmptyState
-                        title={`Fant ingen kurs for «${searchQuery}»`}
-                        description="Prøv et annet søkeord."
-                        action={
-                          <Button variant="secondary" onClick={() => setSearchQuery('')}>
-                            Tøm søk
-                          </Button>
-                        }
-                      />
-                    ) : (
-                      <EmptyState
-                        title={emptyTitle}
-                        description={emptyDescription}
-                      />
-                    )
-                  }
-                />
-              )}
-
-            </>
+            <CourseListView
+              courses={visibleRows}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={handleSort}
+              countsUnavailable={countsFailed}
+              emptyState={
+                searchQuery ? (
+                  <EmptyState
+                    title={`Fant ingen kurs for «${searchQuery}»`}
+                    description="Prøv et annet søkeord."
+                    action={
+                      <Button variant="secondary" onClick={() => setSearchQuery('')}>
+                        Tøm søk
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <EmptyState
+                    title={emptyTitle}
+                    description={emptyDescription}
+                  />
+                )
+              }
+            />
           )}
         </PageShell>
       {isNewRoute && <CreateCourseDrawer onClose={() => navigate(routes.courses)} />}
