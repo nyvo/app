@@ -64,7 +64,7 @@ export default function TeacherLayout() {
           ) : (
             <>
               <MobileTeacherHeader />
-              <div className="flex-1 min-h-full overflow-y-auto bg-canvas">
+              <div className="min-h-0 flex-1 overflow-y-auto bg-canvas">
                 <Outlet />
               </div>
             </>

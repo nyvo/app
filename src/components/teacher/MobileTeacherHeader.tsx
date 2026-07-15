@@ -13,18 +13,16 @@ import { useSidebar } from '@/components/ui/sidebar';
 export const MOBILE_HEADER_HEIGHT = 57;
 
 /**
- * Mobile-only top bar (hidden ≥md, where the persistent sidebar rail shows).
- * Renders only a labeled "Meny" trigger on the left — the page title is shown
- * in-content by PageShell / page-state, so repeating it here would just
- * duplicate the h1. The trigger sits on the left to match the left-opening
- * drawer (tap origin = drawer origin).
+ * Compact-screen top bar (hidden ≥xl, where the persistent sidebar rail shows).
+ * Renders only an icon trigger on the left — the page title is shown in-content
+ * by PageShell / page-state, so repeating it here would just duplicate the h1.
+ * The trigger sits on the left to match the left-opening drawer (tap origin =
+ * drawer origin).
  *
- * Why `fixed` (not `sticky`): each teacher page is its own `overflow-y-auto`
- * container but grows with content (`min-h-full`), so in practice the window
- * scrolls and the page's scroll container never scrolls internally — which
- * defeats `position: sticky`. `fixed` pins to the viewport regardless, keeping
- * the menu reachable at any scroll position. The sibling spacer preserves the
- * bar's space in normal flow (its height mirrors the bar: safe-area inset +
+ * Why `fixed` (not `sticky`): the teacher shell owns an internal scroll
+ * container, so `fixed` pins the menu to the viewport regardless of which
+ * element is scrolling. The sibling spacer preserves the bar's space in
+ * normal flow (its height mirrors the bar: safe-area inset +
  * `MOBILE_HEADER_HEIGHT`).
  */
 export const MobileTeacherHeader: React.FC = () => {
@@ -33,23 +31,24 @@ export const MobileTeacherHeader: React.FC = () => {
   return (
     <>
       <div
-        className="fixed inset-x-0 top-0 z-30 flex md:hidden items-center border-b border-sidebar-border bg-sidebar px-2 py-2 safe-area-top"
+        className="fixed inset-x-0 top-0 z-30 flex xl:hidden items-center border-b border-sidebar-border bg-sidebar px-2 py-2 safe-area-top"
         style={{
           minHeight: `calc(env(safe-area-inset-top, 0px) + ${MOBILE_HEADER_HEIGHT}px)`,
         }}
       >
         <Button
           variant="ghost"
+          size="icon"
           onClick={toggleSidebar}
-          className="gap-2 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
         >
           <PanelLeft />
-          Meny
+          <span className="sr-only">Vis sidemeny</span>
         </Button>
       </div>
       <div
         aria-hidden
-        className="md:hidden shrink-0"
+        className="xl:hidden shrink-0"
         style={{
           height: `calc(env(safe-area-inset-top, 0px) + ${MOBILE_HEADER_HEIGHT}px)`,
         }}

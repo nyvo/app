@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { ChevronsUpDown } from '@/lib/icons';
+import { X } from 'lucide-react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   DashboardSquare02Icon,
@@ -110,13 +111,25 @@ export const TeacherSidebar = () => {
 
   return (
     <Sidebar aria-label="Instruktørnavigasjon">
-      <SidebarHeader>
+      <SidebarHeader className="flex-row items-center justify-between">
         <Link
           to={routes.dashboard}
           className="flex h-12 items-center rounded-md px-3 text-base font-medium text-sidebar-foreground outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
           Openspot
         </Link>
+        {isMobile && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-11 shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            onClick={() => setOpenMobile(false)}
+          >
+            <X />
+            <span className="sr-only">Lukk sidemeny</span>
+          </Button>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
