@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { Outlet, useMatches, useSearchParams } from 'react-router-dom';
-import { SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CourseDrawer } from '@/components/teacher/CourseDrawer';
@@ -50,22 +50,6 @@ function GlobalCourseDrawer() {
   );
 }
 
-/** The header's close button moves off-screen with a collapsed sidebar, so
- * keep an always-reachable reopen control in the page canvas. */
-function CollapsedSidebarTrigger() {
-  const { state } = useSidebar();
-
-  if (state !== 'collapsed') return null;
-
-  return (
-    <SidebarTrigger
-      aria-label="Vis sidemeny"
-      variant="outline"
-      className="fixed top-2 left-2 z-30 hidden shadow-sm lg:inline-flex"
-    />
-  );
-}
-
 export default function TeacherLayout() {
   const matches = useMatches();
   const fullBleed = matches.some((match) => (match.handle as TeacherRouteHandle | undefined)?.fullBleed);
@@ -86,7 +70,6 @@ export default function TeacherLayout() {
             </>
           )}
         </SidebarInset>
-        <CollapsedSidebarTrigger />
         <GlobalCourseDrawer />
       </SidebarProvider>
     </ProtectedRoute>

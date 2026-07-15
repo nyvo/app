@@ -31,6 +31,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { SidebarSetupCard } from '@/components/teacher/SidebarSetupCard';
@@ -82,7 +83,7 @@ export const TeacherSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile, currentSeller, sellers, sellersLoadFailed } = useAuth();
-  const { isMobile, setOpen, setOpenMobile } = useSidebar();
+  const { isMobile, state, setOpenMobile } = useSidebar();
   // Seller authority = presence of a seller_members row (same test as
   // RoleRoute), not the profiles.role UX hint — a seller whose role hint lags
   // still gets the seller nav, setup card and upsell. When the memberships
@@ -110,11 +111,11 @@ export const TeacherSidebar = () => {
   };
 
   return (
-    <Sidebar aria-label="Instruktørnavigasjon">
-      <SidebarHeader className="flex-row items-center justify-between">
+    <Sidebar collapsible="icon" aria-label="Instruktørnavigasjon">
+      <SidebarHeader className="flex-row items-center justify-between group-data-[collapsible=icon]:px-1">
         <Link
           to={routes.dashboard}
-          className="flex h-12 items-center rounded-md px-3 text-base font-medium text-sidebar-foreground outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+          className="flex h-12 items-center rounded-md px-3 text-base font-medium text-sidebar-foreground outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:hidden"
         >
           Openspot
         </Link>
@@ -131,16 +132,10 @@ export const TeacherSidebar = () => {
           </Button>
         )}
         {!isMobile && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-10 shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
-            onClick={() => setOpen(false)}
-          >
-            <X />
-            <span className="sr-only">Skjul sidemeny</span>
-          </Button>
+          <SidebarTrigger
+            aria-label={state === 'expanded' ? 'Skjul sidemeny' : 'Vis sidemeny'}
+            className="shrink-0"
+          />
         )}
       </SidebarHeader>
 
@@ -190,7 +185,7 @@ export const TeacherSidebar = () => {
         {/* Free sellers get the upsell card; Pro folds plan + billing into the
             account menu below (no standalone card → no doubled bottom cards). */}
         {isSeller && !isPro && (
-          <div className="rounded-lg bg-muted px-3 py-2.5">
+          <div className="rounded-lg bg-muted px-3 py-2.5 group-data-[collapsible=icon]:hidden">
             <div className="text-sm font-medium text-sidebar-foreground">Start</div>
             <p className="mt-1 text-sm text-sidebar-foreground">
               Med Pro betaler du {formatKroner(0)} i plattformgebyr.
@@ -204,12 +199,16 @@ export const TeacherSidebar = () => {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="h-auto py-1.5 text-sidebar-foreground-muted hover:bg-sidebar-accent hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-foreground">
-                  <div className="grid flex-1 min-w-0 text-left leading-tight">
+                <SidebarMenuButton
+                  tooltip={displayName || 'Konto'}
+                  className="h-auto py-1.5 text-sidebar-foreground-muted hover:bg-sidebar-accent hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-foreground"
+                >
+                  <HugeiconsIcon icon={UserCircleIcon} strokeWidth={1.75} />
+                  <div className="grid min-w-0 flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
                     <span className="truncate text-sidebar-foreground">{displayName || 'Konto'}</span>
                     {isPro && <span className="text-xs">Pro</span>}
                   </div>
-                  <ChevronsUpDown className="ml-auto size-4 shrink-0" />
+                  <ChevronsUpDown className="ml-auto size-4 shrink-0 group-data-[collapsible=icon]:hidden" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
