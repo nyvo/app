@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import type { Profile, Seller, SellerMemberRole, UserRole } from '@/types/database'
 import { logger } from '@/lib/logger'
 import { isTransientAuthError } from '@/lib/auth-errors'
-import { AUTH_ROUTES } from '@/lib/auth-routes'
+import { AUTH_ROUTES, OAUTH_PROVIDER_STORAGE_KEY, OAUTH_RETRIED_STORAGE_KEY } from '@/lib/auth-routes'
 import { fetchSellerOperational } from '@/services/sellers'
 import { claimMySignups } from '@/services/signups'
 
@@ -36,7 +36,7 @@ export interface AuthContextType {
   currentSellerHydrateFailed: boolean
 
   // Auth methods
-  signInWithGoogle: (redirectTo?: string) => Promise<{ error: Error | null }>
+  signInWithGoogle: (redirectTo?: string, opts?: { isRetry?: boolean }) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   sendMagicLink: (
     email: string,
@@ -462,7 +462,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   // Sign in with Google OAuth
-  const signInWithGoogle = useCallback(async (redirectTo?: string) => {
+  const signInWithGoogle = useCallback(async (redirectTo?: string, opts?: { isRetry?: boolean }) => {
+    // Arm the callback page's silent retry (see OAUTH_*_STORAGE_KEY in
+    // auth-routes): mark this tab as running a Google flow, and give a fresh
+    // human-initiated attempt a new retry budget. The retry path passes
+    // isRetry so its own latch isn't erased.
+    try {
+      sessionStorage.setItem(OAUTH_PROVIDER_STORAGE_KEY, 'google')
+      if (!opts?.isRetry) sessionStorage.removeItem(OAUTH_RETRIED_STORAGE_KEY)
+    } catch {
+      // sessionStorage unavailable — the flow still works, retry just won't arm
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

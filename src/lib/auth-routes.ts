@@ -9,6 +9,18 @@ export const AUTH_ROUTES = {
   onboarding: '/onboarding',
 } as const
 
+// SessionStorage handshake between signInWithGoogle and AuthCallbackPage.
+// The PKCE code-verifier lives in localStorage, which is shared across tabs —
+// and auth-js DELETES it whenever any tab's dead session fails a getUser()
+// check. A background tab with a revoked session can therefore destroy an
+// in-flight login's verifier while the user is on Google's consent screen,
+// leaving the returned ?code= unredeemable (no exchange, no error params).
+// These keys let the callback page recognize that case and silently restart
+// the flow once instead of showing a dead-link error. Session-scoped on
+// purpose: the OAuth redirect returns to the same tab that set them.
+export const OAUTH_PROVIDER_STORAGE_KEY = 'os-oauth-provider'
+export const OAUTH_RETRIED_STORAGE_KEY = 'os-oauth-retried'
+
 // Entry-context role intent (§ 21.3a). Carried as `?intent=` from the door
 // the user walked in through (landing "Kom i gang" → seller, invite link →
 // seller, public booking surfaces → buyer) so onboarding can skip the role
