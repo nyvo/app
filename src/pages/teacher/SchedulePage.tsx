@@ -336,9 +336,9 @@ const SchedulePage = () => {
                   primary={label.primary}
                   secondary={label.secondary}
                   rail={groups.length > 1}
-                  // Azure marks the day of the actual next session — sessions
+                  // Success green marks the day of the actual next session — sessions
                   // are date-ascending on the active tab, so it's the first
-                  // loaded row (a month filter can hide it; then no azure).
+                  // loaded row (a month filter can hide it; then no highlight).
                   next={rangeFilter === 'active' && date === sessions[0]?.sessionDate}
                   lineAbove={idx > 0}
                   lineBelow={idx < groups.length - 1}
@@ -377,7 +377,7 @@ export function TimelineDay({
   /** A lone day group needs no timeline — the rail only earns its place
    *  between groups. The grid stays, so labels/cards never shift x. */
   rail?: boolean;
-  /** Azure dot — the day of the next upcoming session. */
+  /** Success-green dot — the day of the next upcoming session. */
   next?: boolean;
   lineAbove?: boolean;
   lineBelow?: boolean;
@@ -386,8 +386,6 @@ export function TimelineDay({
 }) {
   return (
     <TimelineEntry
-      // Wider date column than the Kursplan feed — "22. september" must fit.
-      className="grid-cols-[92px_18px_1fr]"
       rail={rail}
       next={next}
       lineAbove={lineAbove}
@@ -399,7 +397,7 @@ export function TimelineDay({
       date={
         <>
           <p className="text-sm font-medium leading-tight text-foreground">{primary}</p>
-          <p className="mt-0.5 text-xs text-foreground-muted">{secondary}</p>
+          <p className="mt-0.5 text-sm leading-tight text-foreground-muted">{secondary}</p>
         </>
       }
     >

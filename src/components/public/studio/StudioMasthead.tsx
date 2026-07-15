@@ -45,29 +45,40 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
           {organization.name}
         </h1>
 
-        {location && (
-          // Two quiet lines: the place name, then the street address (when
-          // set) with a standalone «Få veibeskrivelse» link — gap-separated,
-          // no joining punctuation.
-          <div className="mt-1 text-sm text-foreground-muted">
-            <p className="truncate">{location.label || location.address}</p>
-            <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
-              {location.label && location.address && (
-                <span className="min-w-0 truncate">{location.address}</span>
-              )}
-              <a
-                href={directionsUrl(location)}
-                target="_blank"
-                rel="noreferrer"
-                className="shrink-0 text-primary underline underline-offset-2 hover:decoration-2"
-              >
-                Få veibeskrivelse
-              </a>
-            </p>
-          </div>
-        )}
+        {location && <LocationIdentity location={location} />}
       </div>
     </header>
+  );
+}
+
+/** Google uses the street portion as `displayName` for address results. Only
+ * treat the label as a separate venue name when it differs from that portion. */
+function hasDistinctPlaceName(location: StudioLocation): boolean {
+  if (!location.label || !location.address) return false;
+  const label = location.label.trim().toLocaleLowerCase('nb-NO');
+  const addressLead = location.address.split(',')[0]?.trim().toLocaleLowerCase('nb-NO');
+  return label !== addressLead;
+}
+
+function LocationIdentity({ location }: { location: StudioLocation }) {
+  const showPlaceName = hasDistinctPlaceName(location);
+  const address = location.address || location.label;
+
+  return (
+    <div className="mt-1 text-sm text-foreground-muted">
+      {showPlaceName && <p className="truncate">{location.label}</p>}
+      <p className={cn('flex flex-wrap items-baseline gap-x-2', showPlaceName && 'mt-0.5')}>
+        <span className="min-w-0 truncate">{address}</span>
+        <a
+          href={directionsUrl(location)}
+          target="_blank"
+          rel="noreferrer"
+          className="shrink-0 text-primary underline underline-offset-2 hover:decoration-2"
+        >
+          Få veibeskrivelse
+        </a>
+      </p>
+    </div>
   );
 }
 

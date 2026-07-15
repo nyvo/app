@@ -265,13 +265,13 @@ function CourseThumb({ course }: { course: PublicCourseWithDetails }) {
   const [failed, setFailed] = useState(false);
 
   if (!src || failed) {
-    return <div aria-hidden className="size-12 shrink-0 rounded-lg bg-muted" />;
+    return <div aria-hidden className="size-16 shrink-0 rounded-lg bg-muted" />;
   }
   return (
     <img
       src={src}
       alt=""
-      className="size-12 shrink-0 rounded-lg object-cover"
+      className="size-16 shrink-0 rounded-lg object-cover"
       onError={() => setFailed(true)}
     />
   );

@@ -516,7 +516,7 @@ function FeedDateLabel({ date }: { date: string }) {
   return (
     <>
       <p className="text-sm font-medium tabular-nums text-foreground">{dayMonthShort(date)}</p>
-      <p className="text-xs text-foreground-muted">{weekdayLong(date)}</p>
+      <p className="mt-0.5 text-sm leading-tight text-foreground-muted">{weekdayLong(date)}</p>
     </>
   );
 }
