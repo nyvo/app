@@ -7,6 +7,8 @@ import { AuthLayout } from '@/components/auth/AuthLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   AUTH_ROUTES,
+  OAUTH_PROVIDER_STORAGE_KEY,
+  OAUTH_RETRIED_STORAGE_KEY,
   parseAuthIntent,
   resolvePostAuthDestination,
   sanitizeNextPath,
@@ -38,7 +40,7 @@ const LINK_ERROR_GRACE_MS = 5000
 const AuthCallbackPage = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { user, profile, isInitialized } = useAuth()
+  const { user, profile, isInitialized, signInWithGoogle } = useAuth()
   const [error, setError] = useState<{ title: string; description: string | null } | null>(null)
 
   // Parse the error on mount — Supabase appends `error`/`error_description`
@@ -88,13 +90,54 @@ const AuthCallbackPage = () => {
   useEffect(() => {
     if (!isInitialized) return
     if (user && profile) {
+      try {
+        sessionStorage.removeItem(OAUTH_PROVIDER_STORAGE_KEY)
+        sessionStorage.removeItem(OAUTH_RETRIED_STORAGE_KEY)
+      } catch { /* ignore */ }
       navigate(resolvePostAuthDestination(profile, next, intent), { replace: true })
       return
     }
     if (error || user) return // error already shown, or profile still loading
-    const timer = window.setTimeout(() => setError(LINK_ERROR), LINK_ERROR_GRACE_MS)
+
+    // No session after the grace window. If this is a Google return whose
+    // ?code= never got exchanged (a background tab with a revoked session
+    // deleted the shared PKCE verifier while the user was on Google's page),
+    // the code is unredeemable — restart the flow once instead of showing a
+    // dead-link error. Google re-approves instantly, so the user just sees a
+    // slightly longer spinner.
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        let retryArmed = false
+        try {
+          const canRetry =
+            new URLSearchParams(window.location.search).has('code') &&
+            sessionStorage.getItem(OAUTH_PROVIDER_STORAGE_KEY) === 'google' &&
+            !sessionStorage.getItem(OAUTH_RETRIED_STORAGE_KEY)
+          if (canRetry) {
+            // Persist the latch BEFORE arming, so a failed setItem can never
+            // arm a retry that would loop (the next pass would re-read no latch).
+            sessionStorage.setItem(OAUTH_RETRIED_STORAGE_KEY, '1')
+            retryArmed = true
+          }
+        } catch {
+          // sessionStorage unavailable / write failed — fall through to error.
+        }
+        if (retryArmed) {
+          const params = new URLSearchParams()
+          const nextParam = searchParams.get('next')
+          const intentParam = searchParams.get('intent')
+          if (nextParam) params.set('next', nextParam)
+          if (intentParam) params.set('intent', intentParam)
+          const query = params.toString()
+          const redirectTo = `${window.location.origin}${AUTH_ROUTES.callback}${query ? `?${query}` : ''}`
+          const { error: retryError } = await signInWithGoogle(redirectTo, { isRetry: true })
+          if (!retryError) return // browser is redirecting to Google
+        }
+        setError(LINK_ERROR)
+      })()
+    }, LINK_ERROR_GRACE_MS)
     return () => window.clearTimeout(timer)
-  }, [isInitialized, user, profile, next, intent, error, navigate])
+  }, [isInitialized, user, profile, next, intent, error, navigate, searchParams, signInWithGoogle])
 
   if (error) {
     return (
