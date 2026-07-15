@@ -34,7 +34,7 @@ const SIZE_CLASSES: Record<DateBadgeSize, {
 
 /**
  * Calendar-page style date display.
- * Colored month strip on top, day number below.
+ * Month abbreviation on top, day number below, on a plain white tile.
  */
 export function DateBadge({
   dateStr,
@@ -67,13 +67,13 @@ export function DateBadge({
       role="img"
       aria-label={fullDateLabel}
       className={cn(
-        'flex shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background',
+        'flex shrink-0 flex-col overflow-hidden rounded-lg bg-background',
         sizes.container,
         className,
       )}
     >
-      <div aria-hidden="true" className={cn('flex items-center justify-center bg-muted', sizes.strip)}>
-        <span className={cn('font-medium leading-none text-foreground', sizes.monthText)}>
+      <div aria-hidden="true" className={cn('flex items-center justify-center', sizes.strip)}>
+        <span className={cn('font-medium leading-none text-foreground-muted', sizes.monthText)}>
           {month}
         </span>
       </div>
