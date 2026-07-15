@@ -43,3 +43,13 @@ export function calculatePlatformFee(price: number | null): number {
   if (!price || price <= 0) return 0
   return Math.round(price * 100 * PLATFORM_TAKE_RATE) / 100
 }
+
+/**
+ * Ticket price after the honor-system student/pensjonist discount — display
+ * mirror of applyHonorDiscount in supabase/functions/_shared/pricing.ts
+ * (whole-krone rounding; both sides MUST agree or the pay button shows a
+ * different amount than the PaymentIntent charges).
+ */
+export function calculateDiscountedPrice(price: number, percent: number): number {
+  return Math.max(0, Math.round((price * (100 - percent)) / 100))
+}

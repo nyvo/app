@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { NotificationRow } from './NotificationRow'
 import { Skeleton } from '@/components/ui/skeleton'
-import { EmptyState } from '@/components/ui/empty-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { DelayedFallback } from '@/components/ui/delayed-fallback'
 import type { Notification } from '@/types/database'
@@ -93,8 +92,10 @@ export function NotificationFeed({
   }
 
   if (notifications.length === 0) {
+    // One quiet muted line — the EmptyState title (base/medium/foreground)
+    // reads too loud inside this small panel.
     return (
-      <EmptyState variant="compact" title="Ingen nye varsler" />
+      <p className="px-4 py-8 text-center text-sm text-foreground-muted">Ingen nye varsler</p>
     )
   }
 

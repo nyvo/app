@@ -6,6 +6,7 @@ import {
   Outlet,
   Route,
   RouterProvider,
+  ScrollRestoration,
   useLocation,
   useParams,
 } from 'react-router-dom';
@@ -149,6 +150,10 @@ function RootChrome() {
     <>
       <SkipLink />
       <Toaster />
+      {/* Keyed by pathname, not location.key: a new page starts at the top and
+          browser-back restores the old position, while search-param-only
+          navigations (drawers/modals via `?kurs=…`) never move the scroll. */}
+      <ScrollRestoration getKey={(loc) => loc.pathname} />
       {/* resetKeys by pathname: after a crash, navigating (incl. browser-back)
           clears the error state so the user isn't stuck on the error page. */}
       <ErrorBoundary resetKeys={[location.pathname]}>

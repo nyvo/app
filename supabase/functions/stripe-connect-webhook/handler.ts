@@ -213,6 +213,9 @@ export async function handleStripeConnectWebhook(req: Request): Promise<Response
           p_note: attempt.note ?? null,
           p_payment_product: 'stripe',
           p_stripe_payment_intent_id: pi.id,
+          // Charge-time label from the attempt — carries the student/
+          // pensjonist-discount mark onto the roster's signup row.
+          p_ticket_label_override: attempt.ticket_label_snapshot ?? null,
         })
 
         if (signupRpcError) {

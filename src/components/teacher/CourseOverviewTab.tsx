@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { MapEmbed } from '@/components/ui/map-embed';
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
+import { TimelineEntry } from '@/components/teacher/TimelineEntry';
 import { cn, formatKroner } from '@/lib/utils';
 import { osloTodayKey } from '@/utils/dateUtils';
 import { MapPin, Pencil } from '@/lib/icons';
@@ -289,8 +290,8 @@ function ReadinessCard({
     <FramedCard title="Publisering">
       <FramedCardPanel className="flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-md">
-          <p className="text-lg font-medium text-foreground">{heading}</p>
-          <p className="mt-1.5 text-base text-foreground-muted">{sub}</p>
+          <p className="text-base font-medium text-foreground">{heading}</p>
+          <p className="mt-1 text-sm text-foreground-muted">{sub}</p>
         </div>
         <Button
           onClick={onClick}
@@ -428,16 +429,28 @@ function SessionFeed({
         const cancelled = s.status === 'cancelled';
         const label = labelFor(s);
         return (
-          <FeedEntry
+          <TimelineEntry
             key={s.id}
-            date={s.session_date}
+            date={<FeedDateLabel date={s.session_date} />}
             rail={showRail}
             next={s.id === nextId}
             lineAbove={i > 0}
             lineBelow={i < entryCount - 1}
             isLast={i === entryCount - 1}
           >
-            <div className="rounded-xl bg-muted px-4 py-3">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={onOpenAll}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onOpenAll();
+                }
+              }}
+              aria-label={`Se alle timer – ${label}`}
+              className="cursor-pointer rounded-xl bg-muted px-4 py-3 outline-none transition-colors hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring"
+            >
               <div className="flex items-center gap-2.5">
                 <p
                   className={cn(
@@ -457,7 +470,12 @@ function SessionFeed({
                 ) : (
                   <button
                     type="button"
-                    onClick={() => onEditSession(s.id)}
+                    onClick={(e) => {
+                      // The whole card opens the modal — the pencil targets
+                      // reschedule for this session, so it must not bubble.
+                      e.stopPropagation();
+                      onEditSession(s.id);
+                    }}
                     aria-label={`Endre ${label}, ${dayMonth(s.session_date)}`}
                     className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-surface text-foreground-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                   >
@@ -474,12 +492,12 @@ function SessionFeed({
                 {sessionTimeRange(s)}
               </p>
             </div>
-          </FeedEntry>
+          </TimelineEntry>
         );
       })}
 
       {overflow && (
-        <FeedEntry rail lineAbove lineBelow={false} isLast>
+        <TimelineEntry rail lineAbove lineBelow={false} isLast>
           <div className="flex items-center gap-3 pt-3 text-sm tabular-nums text-foreground-muted">
             <span>
               {remaining === 1 ? '1 time til' : `${remaining} timer til`}, frem til{' '}
@@ -487,70 +505,19 @@ function SessionFeed({
             </span>
             <SeeAllLink onClick={onOpenAll} />
           </div>
-        </FeedEntry>
+        </TimelineEntry>
       )}
     </div>
   );
 }
 
-/** One row of the feed grid: [date | rail | content]. The rail draws hairline
- *  segments above/below its dot so the line reads continuous across rows but
- *  starts at the first dot and closes at the last. */
-function FeedEntry({
-  date,
-  rail,
-  next = false,
-  lineAbove = false,
-  lineBelow = false,
-  isLast = false,
-  children,
-}: {
-  date?: string;
-  rail: boolean;
-  next?: boolean;
-  lineAbove?: boolean;
-  lineBelow?: boolean;
-  isLast?: boolean;
-  children: React.ReactNode;
-}) {
+/** Date-column lines for a feed row: "14. jul" over the weekday. */
+function FeedDateLabel({ date }: { date: string }) {
   return (
-    <div className="grid grid-cols-[56px_18px_1fr] gap-x-2.5">
-      <div className="pt-3 text-right">
-        {date && (
-          <>
-            <p className="text-sm font-medium tabular-nums text-foreground">
-              {dayMonthShort(date)}
-            </p>
-            <p className="text-xs text-foreground-muted">{weekdayLong(date)}</p>
-          </>
-        )}
-      </div>
-      <div className="relative flex justify-center">
-        {rail && (
-          <>
-            {lineAbove && (
-              <span aria-hidden="true" className="absolute top-0 h-[17px] w-px bg-border-subtle" />
-            )}
-            {lineBelow && (
-              <span
-                aria-hidden="true"
-                className="absolute bottom-0 top-[25px] w-px bg-border-subtle"
-              />
-            )}
-            <span
-              aria-hidden="true"
-              className={cn(
-                'mt-[17px] size-2 shrink-0 rounded-full',
-                // Azure = the one semantic emphasis on the rail: "this is the
-                // next session". Everything else stays neutral.
-                next ? 'bg-primary ring-[3px] ring-primary/15' : 'bg-border-strong',
-              )}
-            />
-          </>
-        )}
-      </div>
-      <div className={cn('min-w-0', !isLast && 'pb-3')}>{children}</div>
-    </div>
+    <>
+      <p className="text-sm font-medium tabular-nums text-foreground">{dayMonthShort(date)}</p>
+      <p className="text-xs text-foreground-muted">{weekdayLong(date)}</p>
+    </>
   );
 }
 

@@ -23,6 +23,15 @@ export const SERVICE_FEE_MIN_NOK = 9
 export const SERVICE_FEE_MAX_NOK = 149
 
 /**
+ * Ticket price after the honor-system student/pensjonist discount (whole-krone
+ * rounding). Source of truth for the charge; src/lib/pricing.ts
+ * calculateDiscountedPrice is the display mirror — keep them identical.
+ */
+export function applyHonorDiscount(price: number, percent: number): number {
+  return Math.max(0, Math.round((price * (100 - percent)) / 100))
+}
+
+/**
  * Calculate pricing breakdown for a given base price.
  * Returns all values in both NOK and øre (Stripe's smallest unit).
  *

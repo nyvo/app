@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { calculateServiceFee, calculateTotalPrice, calculatePlatformFee } from './pricing'
+import {
+  calculateServiceFee,
+  calculateTotalPrice,
+  calculatePlatformFee,
+  calculateDiscountedPrice,
+} from './pricing'
 import {
   calculatePricing,
+  applyHonorDiscount,
   SERVICE_FEE_MIN_NOK,
   SERVICE_FEE_MAX_NOK,
   PLATFORM_TAKE_RATE,
@@ -112,5 +118,28 @@ describe('frontend/backend parity', () => {
     }
     expect(calculatePlatformFee(null)).toBe(0)
     expect(calculatePlatformFee(0)).toBe(0)
+  })
+})
+
+describe('student/pensjonist discount', () => {
+  it('rounds to whole kroner', () => {
+    expect(applyHonorDiscount(500, 20)).toBe(400)
+    expect(applyHonorDiscount(333, 15)).toBe(283) // 283.05 → 283
+    expect(applyHonorDiscount(999, 10)).toBe(899) // 899.1 → 899
+  })
+
+  it('never goes negative and keeps a price for the allowed 5–90 range', () => {
+    for (let percent = 5; percent <= 90; percent += 5) {
+      expect(applyHonorDiscount(1, percent)).toBeGreaterThanOrEqual(0)
+      expect(applyHonorDiscount(100, percent)).toBeGreaterThan(0)
+    }
+  })
+
+  it('frontend mirror matches the backend charge for all price/percent points', () => {
+    for (let base = 1; base <= 4000; base += 13) {
+      for (let percent = 5; percent <= 90; percent += 5) {
+        expect(calculateDiscountedPrice(base, percent)).toBe(applyHonorDiscount(base, percent))
+      }
+    }
   })
 })

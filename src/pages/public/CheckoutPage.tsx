@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { RadioGroup, RadioGroupCardItem } from '@/components/ui/radio-group';
 import { FieldError } from '@/components/ui/field-error';
 import { PageState } from '@/components/page-state/page-state';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
@@ -18,7 +20,7 @@ import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { withTimeout } from '@/lib/with-timeout';
 import { ChevronLeft, Lock, Plus } from '@/lib/icons';
 import { formatKroner, formatPersonName, isValidEmail, isValidPhone, cn } from '@/lib/utils';
-import { calculateServiceFee } from '@/lib/pricing';
+import { calculateDiscountedPrice, calculateServiceFee } from '@/lib/pricing';
 import { friendlyError } from '@/lib/error-messages';
 import { fetchPublicCourseBySlug, resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { createStripeSession } from '@/services/checkout';
@@ -91,12 +93,32 @@ function tokenToHex(varName: string, fallback: string): string {
   return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
 }
 
+/** `#rrggbb` → `rgba(...)` — for translucent mirrors of opaque tokens
+ *  (tokenToHex's canvas round-trip can't carry alpha). */
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 // Stripe Elements appearance for the deferred-intent Payment Element.
 // Resolved lazily (and once) so the tokens are read after index.css is live.
-let stripeAppearance: { theme: 'stripe'; variables: Record<string, string> } | null = null;
+let stripeAppearance: {
+  theme: 'stripe';
+  labels: 'floating';
+  variables: Record<string, string>;
+  rules: Record<string, Record<string, string>>;
+} | null = null;
 function getStripeAppearance() {
+  const foreground = tokenToHex('--foreground', '#111314');
+  const muted = tokenToHex('--foreground-muted', '#5f6771');
   stripeAppearance ??= {
     theme: 'stripe',
+    // No static titles above the card fields — labels float inside the
+    // inputs, matching the page's own FloatingField grammar. (Appearance API
+    // has no way to remove labels; floating is the sanctioned mode.)
+    labels: 'floating',
     variables: {
       // Stripe loads its PaymentElement in a cross-origin iframe, so it can't
       // inherit the page's @font-face — 'Geist Variable' is self-hosted with
@@ -104,11 +126,46 @@ function getStripeAppearance() {
       // to system-ui in every browser.
       fontFamily: "'Geist Variable', system-ui, sans-serif",
       colorPrimary: tokenToHex('--primary', '#0074bf'),
-      colorText: tokenToHex('--foreground', '#111314'),
+      colorText: foreground,
       colorDanger: tokenToHex('--danger', '#bd3838'),
-      // Match the page's own FloatingField inputs (rounded-xl) so the Stripe
-      // fields read as part of the same form.
-      borderRadius: '12px',
+      // FloatingField's resting label/value size.
+      fontSizeBase: '16px',
+      // Match the page's own FloatingField inputs (rounded-xl = 10px) so the
+      // Stripe fields read as part of the same form.
+      borderRadius: '10px',
+    },
+    // Mirror FloatingField's geometry (src/components/public/FloatingField.tsx):
+    // 52px shell = pt-24 + 24px text line + pb-4, px-4, border-input hairline,
+    // 11px muted floated caption, neutral (foreground) focus border.
+    rules: {
+      // No explicit padding: the floating-labels layout reserves caption
+      // head-room inside the input itself, so forcing FloatingField's
+      // 24/4 padding double-counts the top and gives the field a "forehead".
+      // Stripe owns the vertical geometry; we match ink, edge and size.
+      '.Input': {
+        border: `1px solid ${tokenToHex('--input', '#c9cdd3')}`,
+        boxShadow: 'none',
+        fontSize: '16px',
+      },
+      '.Input:focus': {
+        borderColor: foreground,
+        // ring-2 ring-ring-subtle = foreground ink at 15% alpha.
+        boxShadow: `0 0 0 2px ${hexToRgba(foreground, 0.15)}`,
+      },
+      '.Label': {
+        color: muted,
+        fontSize: '16px',
+      },
+      '.Label--floating': {
+        color: muted,
+        fontSize: '11px',
+        lineHeight: '11px',
+      },
+      // fontSizeBase is 16px for the field grammar — pull messages back down
+      // to the page's error size (FieldError is text-sm).
+      '.Error': {
+        fontSize: '14px',
+      },
     },
   };
   return stripeAppearance;
@@ -267,8 +324,24 @@ const CheckoutPage = () => {
 
   // ── Pricing ─────────────────────────────────────────────────────────────
   const tierPrice = selectedTier?.price ?? course?.price ?? 0;
-  const fee = calculateServiceFee(tierPrice);
-  const total = tierPrice + fee;
+
+  // Honor-system discounts — student and honnør are separately priced (the
+  // rates routinely differ), each offered per seller and claimed with a quiet
+  // toggle below the payment fields. Trust-based by design (no verification);
+  // the edge function re-applies the same percent server-side.
+  const discountOffers: DiscountOffer[] = [
+    { audience: 'student' as const, label: 'student', percent: course?.seller?.student_discount_percent },
+    { audience: 'senior' as const, label: 'pensjonist', percent: course?.seller?.senior_discount_percent },
+  ].filter((o): o is DiscountOffer => o.percent != null);
+  const [claimedAudience, setClaimedAudience] = useState<'student' | 'senior' | null>(null);
+  const claimedOffer = discountOffers.find((o) => o.audience === claimedAudience) ?? null;
+  const discountApplied = claimedOffer != null && tierPrice > 0;
+  const discountedPrice = discountApplied
+    ? calculateDiscountedPrice(tierPrice, claimedOffer.percent)
+    : tierPrice;
+
+  const fee = calculateServiceFee(discountedPrice);
+  const total = discountedPrice + fee;
 
   // Strict semantics (see deriveIsFree): both the selected tier AND the course
   // itself must be free before this page can route to the no-payment flow.
@@ -621,6 +694,11 @@ const CheckoutPage = () => {
                   tierPrice={tierPrice}
                   fee={fee}
                   total={total}
+                  discountOffers={discountOffers}
+                  claimedAudience={claimedAudience}
+                  setClaimedAudience={setClaimedAudience}
+                  claimedOffer={claimedOffer}
+                  discountAmount={discountApplied ? tierPrice - discountedPrice : 0}
                   isDropInSelected={isDropInSelected}
                   dropInSessionId={dropInSessionId}
                   dropInResolving={dropInResolving}
@@ -825,6 +903,104 @@ export function ContactFields({
  * "Ingen mva. kommer i tillegg." / "Påmeldingen er hos X." lines that used
  * to live near the total are dropped entirely.
  */
+/** «Studentrabatt» / «Pensjonistrabatt» — compound noun for summaries. */
+function discountNoun(offer: DiscountOffer): string {
+  return `${offer.label.charAt(0).toUpperCase()}${offer.label.slice(1)}rabatt`;
+}
+
+/**
+ * Honor-system discount — progressive disclosure in Stripe Checkout's
+ * promo-code grammar: a collapsed one-line trigger (the form's own «+ Legg
+ * til melding» pattern) → the offered rates as radio cards (structure from
+ * Mobbin: Turo's protection-plan rows; label left, resulting price right) →
+ * a compact applied row with «Fjern». The form's resting length is one line
+ * in every state, and no discount is the untouched default. Trust-based, so
+ * there is deliberately no verification step.
+ */
+export function DiscountSection({
+  offers,
+  tierPrice,
+  claimed,
+  onChange,
+  disabled,
+}: {
+  offers: DiscountOffer[];
+  tierPrice: number;
+  claimed: 'student' | 'senior' | null;
+  onChange: (next: 'student' | 'senior' | null) => void;
+  disabled: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const claimedOffer = offers.find((o) => o.audience === claimed) ?? null;
+
+  // Applied — one summary line: what's active, and the way out.
+  if (claimedOffer) {
+    return (
+      <div className="flex items-center gap-3 text-sm">
+        <span className="text-foreground">
+          {discountNoun(claimedOffer)}{' '}
+          <span className="text-foreground-muted">−{claimedOffer.percent} %</span>
+        </span>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            onChange(null);
+            setOpen(false);
+          }}
+          className="focus-ring rounded text-sm font-medium text-primary underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Fjern
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={open}
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        className="focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded text-sm text-foreground-muted transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <Plus
+          className={cn('size-4 transition-transform duration-150 ease-out', open && 'rotate-45')}
+          strokeWidth={1.75}
+        />
+        Student- eller pensjonistrabatt
+      </button>
+      {open && (
+        <RadioGroup
+          value=""
+          onValueChange={(v) => {
+            onChange(v as 'student' | 'senior');
+            setOpen(false);
+          }}
+          disabled={disabled}
+          aria-label="Rabatt"
+          className="mt-2.5 gap-2 animate-in fade-in-0 duration-150"
+        >
+          {offers.map((offer) => (
+            <RadioGroupCardItem
+              key={offer.audience}
+              value={offer.audience}
+              title={`${offer.label.charAt(0).toUpperCase()}${offer.label.slice(1)}`}
+              description={`${offer.percent} % rabatt`}
+              trailing={
+                <span className="tabular-nums">
+                  {formatKroner(calculateDiscountedPrice(tierPrice, offer.percent))}
+                </span>
+              }
+            />
+          ))}
+        </RadioGroup>
+      )}
+    </div>
+  );
+}
+
 export function TermsField({
   form,
   setForm,
@@ -939,6 +1115,14 @@ function PaidCheckoutSkeleton() {
   );
 }
 
+/** One offered honor-system discount, shaped for the checkout toggle row. */
+export interface DiscountOffer {
+  audience: 'student' | 'senior';
+  /** Lowercase Norwegian noun for the claim sentence ("student"/"pensjonist"). */
+  label: string;
+  percent: number;
+}
+
 interface PaidCheckoutFormProps {
   course: PublicCourseWithDetails;
   slug: string;
@@ -946,6 +1130,14 @@ interface PaidCheckoutFormProps {
   tierPrice: number;
   fee: number;
   total: number;
+  /** Seller's offered honor-system discounts; empty = none. */
+  discountOffers: DiscountOffer[];
+  claimedAudience: 'student' | 'senior' | null;
+  setClaimedAudience: React.Dispatch<React.SetStateAction<'student' | 'senior' | null>>;
+  /** The claimed offer, resolved; null when nothing is claimed. */
+  claimedOffer: DiscountOffer | null;
+  /** Kroner taken off the tier price when the claim is active, else 0. */
+  discountAmount: number;
   isDropInSelected: boolean;
   dropInSessionId: string | null | undefined;
   dropInResolving: boolean;
@@ -986,6 +1178,11 @@ function PaidCheckoutForm({
   tierPrice,
   fee,
   total,
+  discountOffers,
+  claimedAudience,
+  setClaimedAudience,
+  claimedOffer,
+  discountAmount,
   isDropInSelected,
   dropInSessionId,
   dropInResolving,
@@ -1051,6 +1248,7 @@ function PaidCheckoutForm({
       customerName: formatPersonName(form.name),
       customerPhone: form.phone.trim() || undefined,
       customerNote: form.note.trim() || undefined,
+      discountAudience: claimedOffer?.audience,
     });
     if (payErr || !data) {
       // 4xx errors from the edge function are already user-friendly Norwegian.
@@ -1106,6 +1304,19 @@ function PaidCheckoutForm({
 
       <TermsField form={form} setForm={setForm} error={termsError} />
 
+      {/* Discount lives with the order summary it modifies — Stripe
+          Checkout's promo-code position — collapsed to one line by default
+          so the form never grows for buyers it doesn't apply to. */}
+      {discountOffers.length > 0 && (
+        <DiscountSection
+          offers={discountOffers}
+          tierPrice={tierPrice}
+          claimed={claimedAudience}
+          onChange={setClaimedAudience}
+          disabled={submitting}
+        />
+      )}
+
       <CheckoutReceipt
         course={course}
         selectedTier={selectedTier}
@@ -1113,6 +1324,11 @@ function PaidCheckoutForm({
         fee={fee}
         total={total}
         isFree={false}
+        discount={
+          claimedOffer && discountAmount > 0
+            ? { label: claimedOffer.label, percent: claimedOffer.percent, amount: discountAmount }
+            : null
+        }
       />
 
       <PayButtonDock>
@@ -1181,7 +1397,9 @@ function ReceiptRow({
   amountClassName,
 }: {
   label: string;
-  amount: string;
+  /** Usually a formatted kroner string; the proration deduction passes a
+   *  success Badge instead. */
+  amount: React.ReactNode;
   amountClassName?: string;
 }) {
   return (
@@ -1205,6 +1423,7 @@ export function CheckoutReceipt({
   fee,
   total,
   isFree,
+  discount = null,
 }: {
   course: PublicCourseWithDetails;
   selectedTier: AvailableTicketType | null;
@@ -1212,6 +1431,8 @@ export function CheckoutReceipt({
   fee: number;
   total: number;
   isFree: boolean;
+  /** Claimed honor-system discount — renders its own deduction row. */
+  discount?: { label: string; percent: number; amount: number } | null;
 }) {
   if (!selectedTier) return null;
 
@@ -1235,12 +1456,28 @@ export function CheckoutReceipt({
               <ReceiptRow label={`${selectedTier.label}, ordinær pris`} amount={formatKroner(course.price ?? 0)} />
               <ReceiptRow
                 label={`Fratrekk for ${heldCount} holdte ${heldCount === 1 ? 'økt' : 'økter'}`}
-                amount={`−${formatKroner(deduction)}`}
-                amountClassName="text-success"
+                amount={
+                  // The one tinted element in the receipt — the status-pill
+                  // grammar (subtle fill + matching ink), rect like table
+                  // status badges, so the saving reads as a highlight.
+                  <Badge variant="success" shape="rect" size="sm" className="tabular-nums">
+                    −{formatKroner(deduction)}
+                  </Badge>
+                }
               />
             </>
           ) : (
             <ReceiptRow label={selectedTier.label} amount={formatKroner(subtotal)} />
+          )}
+          {discount && (
+            <ReceiptRow
+              label={`${discount.label.charAt(0).toUpperCase()}${discount.label.slice(1)}rabatt (−${discount.percent} %)`}
+              amount={
+                <Badge variant="success" shape="rect" size="sm" className="tabular-nums">
+                  −{formatKroner(discount.amount)}
+                </Badge>
+              }
+            />
           )}
           <ReceiptRow label="Tjenestegebyr" amount={formatKroner(fee)} amountClassName="text-foreground-muted" />
         </>

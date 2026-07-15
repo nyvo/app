@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Calendar, Clock } from '@/lib/icons';
@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/sheet';
 import { LocationField } from '@/components/ui/location-field';
 import { InstructorField, type InstructorRef } from '@/components/teacher/InstructorField';
+import { fetchStudioAddress } from '@/services/sellers';
 import { useAuth } from '@/contexts/AuthContext';
 import { createCourse, updateCourse, publishCourse } from '@/services/courses';
 import { publishNeedsPaymentSetup } from '@/lib/payments';
@@ -144,6 +145,27 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
     lon: number | null;
     placeId: string | null;
   } | null>(null);
+  // The studio's saved address (Studio → Adresse) prefills the location as a
+  // suggestion. It never overwrites typing (touched ref) and never counts as
+  // unsaved work on its own (isDirty compares against this baseline).
+  const [prefilledLocation, setPrefilledLocation] = useState('');
+  const locationTouchedRef = useRef(false);
+  useEffect(() => {
+    const sellerId = currentSeller?.id;
+    if (!sellerId) return;
+    let cancelled = false;
+    void (async () => {
+      const { data } = await fetchStudioAddress(sellerId);
+      if (cancelled || !data || locationTouchedRef.current) return;
+      setLocation(data.name);
+      setLocationAddress(data.address ?? '');
+      setLocationCoords({ lat: data.lat, lon: data.lon, placeId: data.placeId });
+      setPrefilledLocation(data.name);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentSeller?.id]);
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
 
@@ -266,7 +288,7 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
     () =>
       title.trim() !== '' ||
       description.replace(/<[^>]*>/g, '').trim() !== '' ||
-      location.trim() !== '' ||
+      location.trim() !== prefilledLocation ||
       capacity !== '' ||
       price !== '' ||
       weeks !== '' ||
@@ -276,7 +298,7 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
       imageFile != null ||
       instructor != null ||
       sessionDays.some((d) => d.date != null || d.startTime !== '' || d.endTime !== ''),
-    [title, description, location, capacity, price, weeks, startDate, startTime, endTime, imageFile, instructor, sessionDays],
+    [title, description, location, prefilledLocation, capacity, price, weeks, startDate, startTime, endTime, imageFile, instructor, sessionDays],
   );
   const { blocker, bypass } = useUnsavedChanges(isDirty);
 
@@ -665,6 +687,7 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
                       aria-invalid={showError('location')}
                       aria-describedby={errorId}
                       onChange={({ name, address, coords }) => {
+                        locationTouchedRef.current = true;
                         setLocation(name);
                         setLocationAddress(address);
                         setLocationCoords(coords);

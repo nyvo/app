@@ -164,6 +164,8 @@ export function makeMockCourse(variant: Variant): PublicCourseWithDetails {
       logo_url: null,
       stripe_onboarding_complete: true,
       default_course_image_url: null,
+      student_discount_percent: null,
+      senior_discount_percent: null,
     },
     instructor: { id: 'mock-course:primary-instructor', name: 'Ingrid Larsen', role: 'primary', display_order: 0 },
     instructors: [{ id: 'mock-course:primary-instructor', name: 'Ingrid Larsen', role: 'primary', display_order: 0 }],

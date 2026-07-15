@@ -44,11 +44,14 @@ function RadioGroupCardItem({
   icon: Icon,
   title,
   description,
+  trailing,
   ...props
 }: React.ComponentProps<typeof RadioGroupPrimitive.Item> & {
   icon?: React.ComponentType<{ className?: string }>
   title: string
   description?: string
+  /** Right-aligned meta before the check square (e.g. a price). */
+  trailing?: React.ReactNode
 }) {
   return (
     <RadioGroupPrimitive.Item
@@ -79,6 +82,9 @@ function RadioGroupCardItem({
           <p className="mt-0.5 text-sm text-foreground-muted">{description}</p>
         )}
       </div>
+      {trailing && (
+        <span className="mt-0.5 shrink-0 text-sm text-foreground">{trailing}</span>
+      )}
       {/* Row fill stays neutral (2026-07-08 decision) — only the check square
           carries the azure checked state, matching Checkbox. */}
       <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm border-2 border-border text-transparent transition-colors group-data-checked/radio-card:border-primary group-data-checked/radio-card:bg-primary group-data-checked/radio-card:text-primary-foreground">
