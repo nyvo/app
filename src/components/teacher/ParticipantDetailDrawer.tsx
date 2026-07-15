@@ -248,9 +248,24 @@ export function ParticipantDetailDrawer({
   const hasActions = !isCancelled || canRefund;
 
   // Manual adds settle off-platform — we don't know what actually changed
-  // hands, so showing the tier price as "Beløp" would claim a transaction
-  // the platform never processed. The Metode row carries the story instead.
+  // hands, so showing a payout for a transaction the platform never processed
+  // would claim money that never moved. The Metode row carries the story instead.
   const isManual = signup.payment_product === 'manual';
+  const isPaidOnPlatform =
+    !isManual && signup.amount_paid != null && signup.amount_paid > 0;
+  // Seller-facing money only: the studio's payout (what actually lands in their
+  // account) and the platform fee deducted from it. The buyer's service fee is
+  // the buyer's line — deliberately never shown to the seller here, so "Beløp"
+  // can't read higher than what the studio earns.
+  const platformFee = signup.platform_fee_nok ?? 0;
+  const sellerPayout = isPaidOnPlatform
+    ? Math.max(
+        0,
+        (signup.amount_paid ?? 0) - (signup.service_fee_nok ?? 0) - platformFee,
+      )
+    : null;
+  // Pending/failed rows have no cleared payout yet — fall back to the tier
+  // price as the expected charge (unchanged behavior).
   const expectedPrice = isManual
     ? null
     : signup.amount_paid != null ? signup.amount_paid : signup.ticket_type?.price ?? null;
@@ -345,22 +360,43 @@ export function ParticipantDetailDrawer({
                     signup.ticket_label_snapshot,
                   )}
                 />
-                {expectedPrice != null && (
+                {isPaidOnPlatform ? (
+                  <>
+                    <Row
+                      label="Din utbetaling"
+                      value={
+                        <span
+                          className={cn(
+                            'tabular-nums',
+                            priceStrike &&
+                              'text-foreground-muted line-through decoration-foreground-muted/60',
+                          )}
+                        >
+                          {formatKroner(sellerPayout ?? 0)}
+                        </span>
+                      }
+                    />
+                    {platformFee > 0 && (
+                      <Row
+                        label="Plattformgebyr"
+                        value={
+                          <span className="tabular-nums text-foreground-muted">
+                            −{formatKroner(platformFee)}
+                          </span>
+                        }
+                      />
+                    )}
+                  </>
+                ) : expectedPrice != null ? (
                   <Row
                     label="Beløp"
                     value={
-                      <span
-                        className={cn(
-                          'tabular-nums',
-                          priceStrike &&
-                            'text-foreground-muted line-through decoration-foreground-muted/60',
-                        )}
-                      >
+                      <span className="tabular-nums">
                         {expectedPrice > 0 ? formatKroner(expectedPrice) : 'Gratis'}
                       </span>
                     }
                   />
-                )}
+                ) : null}
                 {paymentMethod && <Row label="Metode" value={paymentMethod} />}
                 {signup.refund_amount != null && signup.refund_amount > 0 && (
                   <Row
