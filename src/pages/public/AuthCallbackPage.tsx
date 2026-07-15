@@ -18,6 +18,12 @@ import { COMPANY } from '@/lib/company'
 // case handled separately below.
 const LINK_ERROR = { title: 'Lenken virker ikke', description: 'Den er utløpt eller allerede brukt.' } as const
 
+// How long a session may take to materialize after auth init reports "no
+// user" before we declare the link dead. The PKCE exchange normally lands
+// well under a second; this only delays the error screen for genuinely
+// dead links, never the happy path.
+const LINK_ERROR_GRACE_MS = 5000
+
 /**
  * Magic-link / OAuth callback handler.
  *
@@ -71,16 +77,23 @@ const AuthCallbackPage = () => {
   const intent = parseAuthIntent(searchParams.get('intent'))
 
   // Once auth has initialized, resolve the right destination from the
-  // profile state.
+  // profile state. A momentary "initialized but no user" reading is NOT
+  // proof of a dead link: on a PKCE callback the code exchange, the
+  // SIGNED_IN event and this context state race on a fresh page load
+  // (prod logs showed exchanges succeeding server-side while this page
+  // declared failure). So: navigate the moment a session + profile exist —
+  // even over an already-rendered error — and only conclude failure after
+  // a grace window with no session. Explicit provider errors (effect above)
+  // still render immediately.
   useEffect(() => {
-    if (error) return
     if (!isInitialized) return
-    if (user) {
+    if (user && profile) {
       navigate(resolvePostAuthDestination(profile, next, intent), { replace: true })
-    } else {
-      // Initialized but no user — token failed silently or wasn't present.
-      setError(LINK_ERROR)
+      return
     }
+    if (error || user) return // error already shown, or profile still loading
+    const timer = window.setTimeout(() => setError(LINK_ERROR), LINK_ERROR_GRACE_MS)
+    return () => window.clearTimeout(timer)
   }, [isInitialized, user, profile, next, intent, error, navigate])
 
   if (error) {
