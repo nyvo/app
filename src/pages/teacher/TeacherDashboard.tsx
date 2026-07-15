@@ -40,7 +40,7 @@ import { toast } from 'sonner';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { formatRelativeTimePast } from '@/utils/dateFormatting';
 import { useMultiTableSubscription } from '@/hooks/use-realtime-subscription';
-import { isProSeller } from '@/lib/payments';
+import { isProSeller, shouldShowPlatformFeeUpsell } from '@/lib/payments';
 import type {
   Course as DashboardCourse,
   CourseStyleType as DashboardCourseType,
@@ -279,7 +279,7 @@ const TeacherDashboard = () => {
                     </Suspense>
                   )}
                 </ErrorBoundary>
-                {!isPro && monthPlatformFee > 0 && (
+                {shouldShowPlatformFeeUpsell(monthPlatformFee, isPro) && (
                   <PlatformFeeHint feeNok={monthPlatformFee} />
                 )}
               </div>

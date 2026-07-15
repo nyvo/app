@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { isProSeller, publishNeedsPaymentSetup } from './payments'
+import {
+  isProSeller,
+  publishNeedsPaymentSetup,
+  shouldShowPlatformFeeUpsell,
+  PRO_MONTHLY_PRICE_NOK,
+} from './payments'
 
 const onboarded = { stripe_onboarding_complete: true }
 const notOnboarded = { stripe_onboarding_complete: false }
@@ -27,5 +32,25 @@ describe('isProSeller', () => {
     expect(isProSeller({ subscription_plan: 'pro' })).toBe(true)
     expect(isProSeller({ subscription_plan: 'free' })).toBe(false)
     expect(isProSeller(null)).toBe(false)
+  })
+})
+
+describe('shouldShowPlatformFeeUpsell', () => {
+  it('never shows for Pro sellers, regardless of measured fees', () => {
+    expect(shouldShowPlatformFeeUpsell(0, true)).toBe(false)
+    expect(shouldShowPlatformFeeUpsell(PRO_MONTHLY_PRICE_NOK, true)).toBe(false)
+    expect(shouldShowPlatformFeeUpsell(10_000, true)).toBe(false)
+  })
+
+  it('hides below the Pro price so it never implies false savings', () => {
+    expect(shouldShowPlatformFeeUpsell(0, false)).toBe(false)
+    expect(shouldShowPlatformFeeUpsell(1, false)).toBe(false)
+    expect(shouldShowPlatformFeeUpsell(PRO_MONTHLY_PRICE_NOK - 1, false)).toBe(false)
+  })
+
+  it('shows at or above the Pro price for Start sellers', () => {
+    expect(PRO_MONTHLY_PRICE_NOK).toBe(499)
+    expect(shouldShowPlatformFeeUpsell(PRO_MONTHLY_PRICE_NOK, false)).toBe(true)
+    expect(shouldShowPlatformFeeUpsell(PRO_MONTHLY_PRICE_NOK + 100, false)).toBe(true)
   })
 })
