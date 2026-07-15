@@ -22,7 +22,8 @@ export const ClassReminder = ({
       Snart er det kurs
     </Heading>
     <Text style={styles.paragraph}>
-      Hei {buyerName}, en liten påminnelse om {courseTitle} hos {studioName}.
+      Hei{buyerName ? ` ${buyerName}` : ''}, en liten påminnelse om {courseTitle} hos{' '}
+      {studioName}.
     </Text>
 
     <DetailBlock>

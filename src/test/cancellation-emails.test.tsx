@@ -4,8 +4,8 @@
 // normally rendered by the send-email edge function (Deno). They're plain
 // React Email components, so we render them here with @react-email/render and
 // pin the participant-facing copy: the money line must match what actually
-// happened to the payment, and the contact line must only appear when replies
-// actually reach the arrangør.
+// happened to the payment, and the contact line must only appear when an
+// arrangør address is available.
 //
 // Copy assertions run against the plain-text render — the HTML render breaks
 // text across JSX expression boundaries with `<!-- -->` markers, which would
@@ -45,14 +45,15 @@ describe('course-cancelled template', () => {
     expect(text).toContain('kurset er avlyst');
     expect(text).toContain('hei marte hansen, lys yoga har dessverre avlyst');
     expect(text).toContain('du får 1 200 kr tilbake');
-    expect(text).toContain('svar på denne e-posten');
+    expect(text).toContain('kontakt lys yoga på hei@lysyoga.no');
+    expect(text).not.toContain('svar på denne e-posten');
   });
 
   it('omits refund note and contact line when not provided (free signup, no replyTo)', async () => {
     const text = await renderText(CourseCancelled({ ...base }));
     expect(text).toContain('kurset er avlyst');
     expect(text).not.toContain('tilbake til kortet');
-    expect(text).not.toContain('svar på denne e-posten');
+    expect(text).not.toContain('kontakt lys yoga på');
   });
 
   it('degrades gracefully without a participant name', async () => {
@@ -77,7 +78,8 @@ describe('signup-cancelled template', () => {
     expect(text).toContain('hei marte hansen, lys yoga har meldt deg av');
     expect(text).toContain('onsdag 28. mai kl. 18:00');
     expect(text).toContain('betalt direkte til lys yoga');
-    expect(text).toContain('svar på denne e-posten');
+    expect(text).toContain('kontakt lys yoga på hei@lysyoga.no');
+    expect(text).not.toContain('svar på denne e-posten');
   });
 
   it('omits payment note, start row and contact line when not provided', async () => {
@@ -85,6 +87,6 @@ describe('signup-cancelled template', () => {
     expect(text).toContain('du er avmeldt');
     expect(text).not.toContain('betalt direkte');
     expect(text).not.toMatch(/\bstart\b/);
-    expect(text).not.toContain('svar på denne e-posten');
+    expect(text).not.toContain('kontakt lys yoga på');
   });
 });

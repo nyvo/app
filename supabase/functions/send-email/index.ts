@@ -57,7 +57,7 @@ interface SendEmailRequest {
     | SignupCancelledProps
   /** Optional override for the auto-generated subject line */
   subject?: string
-  /** Optional reply-to address, used for support messages. */
+  /** Optional reply-to address passed through to Resend. */
   replyTo?: string
 }
 
@@ -66,7 +66,7 @@ function defaultSubject(template: EmailTemplate, props: SendEmailRequest['props'
     case 'order-confirm':
       return `Påmelding bekreftet — ${(props as OrderConfirmProps).courseTitle}`
     case 'refund-receipt':
-      return `Refusjon utbetalt — ${(props as RefundReceiptProps).amount}`
+      return `Refusjon bekreftet — ${(props as RefundReceiptProps).amount}`
     case 'class-reminder':
       return `Påminnelse: ${(props as ClassReminderProps).courseTitle}`
     case 'support-message':

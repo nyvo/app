@@ -7,10 +7,12 @@ export interface BookingNotificationProps {
   courseTitle: string
   courseStart: string
   /** The studio's payout — what actually lands in their account, net of the
-   * platform fee. Pre-formatted via formatKroner, e.g. "1 200 kr" — or
-   * "Gratis" for free signups. The buyer's service fee is intentionally not
-   * shown to the seller (it's the buyer's line, not the studio's). */
+   * platform fee. Pre-formatted via formatKroner, e.g. "1 200 kr". Ignored
+   * for free signups. The buyer's service fee is intentionally not shown to
+   * the seller (it's the buyer's line, not the studio's). */
   payout: string
+  /** Free signups show "Pris: Gratis" and omit payout/accounting rows. */
+  isFree?: boolean
   /** Platform fee deducted from the payout, pre-formatted (e.g. "0,5 kr").
    * Set only for free-tier studios that actually paid one; omitted for Pro. */
   platformFee?: string
@@ -27,6 +29,7 @@ export const BookingNotification = ({
   courseTitle,
   courseStart,
   payout,
+  isFree,
   platformFee,
   discount,
   bookingId,
@@ -47,8 +50,14 @@ export const BookingNotification = ({
       <DetailRow label="Tid" value={courseStart} />
       <DetailRow label="Referanse" value={bookingId} />
       {discount ? <DetailRow label="Rabatt" value={discount} /> : null}
-      {platformFee ? <DetailRow label="Plattformgebyr" value={`−${platformFee}`} /> : null}
-      <DetailRow label="Din utbetaling" value={payout} emphasis last />
+      {isFree ? (
+        <DetailRow label="Pris" value="Gratis" emphasis last />
+      ) : (
+        <>
+          {platformFee ? <DetailRow label="Plattformgebyr" value={`−${platformFee}`} /> : null}
+          <DetailRow label="Din utbetaling" value={payout} emphasis last />
+        </>
+      )}
     </DetailBlock>
 
     <Text style={styles.paragraphMuted}>

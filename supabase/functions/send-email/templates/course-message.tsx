@@ -32,7 +32,7 @@ export const CourseMessage = ({
       {subject}
     </Heading>
     <Text style={bodyText}>
-      {`Hei ${buyerName},\n\n${body}`}
+      {`Hei${buyerName ? ` ${buyerName}` : ''},\n\n${body}`}
     </Text>
   </EmailLayout>
 )

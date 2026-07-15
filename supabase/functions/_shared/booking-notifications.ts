@@ -173,7 +173,8 @@ async function sendSellerBookingEmail(
   const serviceFee = Number(existing?.service_fee_nok ?? 0)
   const platformFee = Number(existing?.platform_fee_nok ?? 0)
   const payoutNok = Math.max(0, amountPaid - serviceFee - platformFee)
-  const payoutLabel = payoutNok > 0 ? formatKroner(payoutNok) : 'Gratis'
+  const isFree = amountPaid <= 0
+  const payoutLabel = formatKroner(payoutNok)
   const platformFeeLabel = platformFee > 0 ? formatKroner(platformFee) : undefined
 
   const [{ data: course }, { data: owners }] = await Promise.all([
@@ -217,6 +218,7 @@ async function sendSellerBookingEmail(
         courseTitle: course.title,
         courseStart: formatCourseStart(course.start_date, course.time_schedule),
         payout: payoutLabel,
+        isFree,
         platformFee: platformFeeLabel,
         // Present only for honor-discount claims — the seller is responsible
         // for verifying eligibility, so the signup ping must flag the claim.

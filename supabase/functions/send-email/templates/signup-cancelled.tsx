@@ -1,6 +1,12 @@
 import { Heading, Text } from '@react-email/components'
 import * as React from 'react'
-import { DetailBlock, DetailRow, EmailLayout, styles } from './_layout.tsx'
+import {
+  ArrangorContact,
+  DetailBlock,
+  DetailRow,
+  EmailLayout,
+  styles,
+} from './_layout.tsx'
 
 export interface SignupCancelledProps {
   buyerName: string
@@ -14,7 +20,7 @@ export interface SignupCancelledProps {
    * dumb about payment state.
    */
   paymentNote?: string
-  /** Set when the email's replyTo routes to the arrangør. */
+  /** Arrangør address shown as the participant's contact route. */
   arrangorEmail?: string
 }
 
@@ -43,10 +49,11 @@ export const SignupCancelled = ({
     </DetailBlock>
 
     {arrangorEmail ? (
-      <Text style={styles.paragraphMuted}>
-        Mener du dette er feil, eller har du spørsmål? Svar på denne e-posten,
-        så når du arrangøren direkte.
-      </Text>
+      <ArrangorContact
+        question="Mener du dette er feil, eller har du spørsmål?"
+        studioName={studioName}
+        email={arrangorEmail}
+      />
     ) : null}
   </EmailLayout>
 )
