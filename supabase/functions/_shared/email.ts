@@ -20,8 +20,12 @@ export interface OrderConfirmEmailProps {
   /** Pre-formatted Norwegian date/time, e.g. "onsdag 28. mai kl. 18:00" */
   courseStart: string
   courseLocation?: string
-  /** Pre-formatted via formatKroner, e.g. "1 200 kr" */
-  amount: string
+  /** Pre-formatted via formatKroner, e.g. "1 200 kr". Omitted for manual
+   * adds — payment settles off-platform, so there's no truthful amount. */
+  amount?: string
+  /** The teacher registered this participant manually — the intro says the
+   * studio signed them up instead of thanking them for booking. */
+  registeredByStudio?: boolean
   bookingId: string
   /** Pre-formatted via formatOrgNumber, e.g. "987 654 321". The arrangør's
    * legal identity anchor — the receipt is where it lives, not the UI. */

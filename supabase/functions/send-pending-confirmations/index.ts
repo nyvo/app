@@ -63,7 +63,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: pending, error } = await supabase
       .from('signups')
-      .select('id, seller_id, course_id, participant_name, participant_email, amount_paid')
+      .select('id, seller_id, course_id, participant_name, participant_email, amount_paid, payment_product')
       .eq('payment_status', 'paid')
       .or('confirmation_sent_at.is.null,seller_notified_at.is.null')
       .lt('created_at', graceCutoff)
@@ -89,6 +89,7 @@ Deno.serve(async (req: Request) => {
             course_id: row.course_id,
             participant_name: row.participant_name,
             participant_email: row.participant_email,
+            payment_product: row.payment_product,
           },
           Number(row.amount_paid) || 0,
         )

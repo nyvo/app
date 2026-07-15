@@ -60,11 +60,13 @@ function formatNorwegianShort(input: string | null | undefined): string {
 }
 
 // Map `payment_product` slug to a display label. Stripe sets 'stripe';
+// 'manual' is the teacher-added path (payment settled off-platform);
 // unknown products fall back to a humanised tail segment.
 function paymentMethodLabel(product: string | null | undefined): string | null {
   if (!product) return null;
   const map: Record<string, string> = {
     'stripe': 'Kort',
+    'manual': 'Utenfor plattformen',
   };
   if (map[product]) return map[product];
   const tail = product.split('.').pop() ?? product;
@@ -137,11 +139,15 @@ function buildActivity(signup: SignupWithProfile): ActivityEvent[] {
   const paymentUnsettled =
     signup.payment_status === 'pending' || signup.payment_status === 'failed';
 
+  // Teacher-added rows never went through checkout — "Påmeldt" would imply
+  // the participant signed themselves up.
+  const isManual = signup.payment_product === 'manual';
+
   if (signup.created_at) {
     events.push({
       icon: paidAtomically ? CreditCard : UserCheck,
       tone: paymentUnsettled ? 'neutral' : 'success',
-      label: paidAtomically ? 'Påmeldt og betalt' : 'Påmeldt',
+      label: isManual ? 'Lagt til manuelt' : paidAtomically ? 'Påmeldt og betalt' : 'Påmeldt',
       timestamp: formatNorwegianShort(signup.created_at),
     });
   }
@@ -234,8 +240,13 @@ export function ParticipantDetailDrawer({
   // cancel action; a cancelled one only when there's still money to refund.
   const hasActions = !isCancelled || canRefund;
 
-  const expectedPrice =
-    signup.amount_paid != null ? signup.amount_paid : signup.ticket_type?.price ?? null;
+  // Manual adds settle off-platform — we don't know what actually changed
+  // hands, so showing the tier price as "Beløp" would claim a transaction
+  // the platform never processed. The Metode row carries the story instead.
+  const isManual = signup.payment_product === 'manual';
+  const expectedPrice = isManual
+    ? null
+    : signup.amount_paid != null ? signup.amount_paid : signup.ticket_type?.price ?? null;
   // Partially refunded bookings stay confirmed and keep their spot — don't
   // strike the price or present them as fully refunded.
   const isPartialRefund = paymentStatus === 'refunded' && isPartiallyRefunded(signup);
@@ -375,7 +386,8 @@ export function ParticipantDetailDrawer({
             )}
 
             {signup.note && (
-              <DetailGroup title="Notat fra deltakeren">
+              // On manual adds the note is the teacher's own, not the participant's.
+              <DetailGroup title={isManual ? 'Notat' : 'Notat fra deltakeren'}>
                 <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
                   {signup.note}
                 </p>
