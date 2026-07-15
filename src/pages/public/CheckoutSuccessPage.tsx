@@ -284,7 +284,7 @@ const CheckoutSuccessPage = () => {
     const isLongWait = attemptCount > 8;
 
     return (
-      <div className="min-h-screen w-full bg-surface flex items-center justify-center">
+      <div className="min-h-dvh w-full bg-surface flex items-center justify-center">
         <div className="text-center max-w-md px-4" role="status" aria-live="polite" aria-atomic="true">
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
             <Spinner size="lg" className="text-foreground" />
@@ -302,7 +302,7 @@ const CheckoutSuccessPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen w-full bg-surface">
+      <div className="min-h-dvh w-full bg-surface">
         <StorefrontHeader />
         <div>
           <PageState variant="server-error" description={error} />
@@ -363,7 +363,7 @@ const CheckoutSuccessPage = () => {
     const failedStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-screen w-full bg-surface flex items-center justify-center px-4">
+      <div className="min-h-dvh w-full bg-surface flex items-center justify-center px-4">
         <div className="flex flex-col items-center text-center max-w-md">
           <div
             aria-hidden="true"
@@ -393,7 +393,7 @@ const CheckoutSuccessPage = () => {
     const failedStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-screen w-full bg-surface flex items-center justify-center px-4">
+      <div className="min-h-dvh w-full bg-surface flex items-center justify-center px-4">
         <div className="flex flex-col items-center text-center max-w-md">
           <div
             aria-hidden="true"
@@ -420,7 +420,7 @@ const CheckoutSuccessPage = () => {
     const failedStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-screen w-full bg-surface flex items-center justify-center px-4">
+      <div className="min-h-dvh w-full bg-surface flex items-center justify-center px-4">
         <div className="flex flex-col items-center text-center max-w-md">
           <div
             aria-hidden="true"
@@ -453,7 +453,7 @@ const CheckoutSuccessPage = () => {
     const fallbackStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-screen w-full bg-surface flex items-center justify-center px-4">
+      <div className="min-h-dvh w-full bg-surface flex items-center justify-center px-4">
         <div className="flex flex-col items-center text-center max-w-md">
           <div
             aria-hidden="true"
@@ -483,7 +483,7 @@ const CheckoutSuccessPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
+    <div className="flex min-h-dvh w-full flex-col bg-background">
       <StorefrontHeader
         name={displaySignup?.course.sellerName}
         slug={displaySignup?.course.sellerSlug ?? orgSlugFromUrl}

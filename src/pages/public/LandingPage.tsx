@@ -53,7 +53,7 @@ const LandingPage = () => {
           <div className="flex items-center gap-6">
             <a
               href="#pricing"
-              className="hidden text-sm font-medium text-foreground-muted transition-colors hover:text-foreground md:block"
+              className="text-sm font-medium text-foreground-muted transition-colors hover:text-foreground"
             >
               Pris
             </a>
@@ -558,7 +558,7 @@ function PricingTier({ tier }: { tier: Tier }) {
     <motion.div
       variants={scrollVariants}
       transition={scrollTransition}
-      className="flex flex-col rounded-xl bg-panel p-8"
+      className="flex flex-col rounded-xl bg-panel p-6 sm:p-8"
     >
       <div className="mb-6">
         <h3 className="text-base font-medium text-foreground">

@@ -51,7 +51,7 @@ function DrawerContent({
       <DrawerPrimitive.Content
         data-slot="drawer-content"
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 mt-24 flex flex-col rounded-t-xl bg-surface text-foreground outline-none",
+          "fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[92dvh] flex-col rounded-t-xl bg-surface text-foreground outline-none",
           className
         )}
         {...props}
@@ -77,7 +77,7 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="drawer-footer"
-      className={cn("mt-auto flex flex-col gap-2 border-t border-border bg-background px-6 py-4", className)}
+      className={cn("mt-auto flex flex-col gap-2 border-t border-border bg-background px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]", className)}
       {...props}
     />
   )

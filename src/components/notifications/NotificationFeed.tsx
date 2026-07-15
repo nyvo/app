@@ -107,7 +107,7 @@ export function NotificationFeed({
   )
 
   return (
-    <div className="overflow-y-auto">
+    <div className="overflow-y-auto pb-[env(safe-area-inset-bottom)]">
       <AnimatePresence initial={false}>
         {ordered.map((n) => (
           <NotificationRow

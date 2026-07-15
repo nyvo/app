@@ -268,7 +268,7 @@ const SchedulePage = () => {
             </PageTabs>
 
             <Select value={monthFilter} onValueChange={setMonthFilter}>
-              <SelectTrigger className="w-48 mb-2">
+              <SelectTrigger className="w-48 max-sm:w-auto max-sm:min-w-36 mb-2">
                 <SelectValue placeholder="Alle måneder" />
               </SelectTrigger>
               <SelectContent>
@@ -290,7 +290,13 @@ const SchedulePage = () => {
               {/* Mirrors the timeline anatomy: rail (day + date lines) left,
                   cards (title + one meta line) right. */}
               {[1, 2].map((i) => (
-                <div key={i} className={cn('grid grid-cols-[132px_1fr] gap-x-2', i > 1 && 'mt-2')}>
+                <div
+                  key={i}
+                  className={cn(
+                    'grid grid-cols-1 gap-y-2 sm:grid-cols-[132px_1fr] sm:gap-x-2 sm:gap-y-0',
+                    i > 1 && 'mt-2',
+                  )}
+                >
                   <div className="space-y-1.5 pl-5 pt-1">
                     <Skeleton className="h-4 w-16" />
                     <Skeleton className="h-4 w-12" />
@@ -365,14 +371,24 @@ export function TimelineDay({
 }) {
   return (
     // Rail width fits the longest date at text-base ("22. september" ≈ 107px
-    // + 20px rail padding) so long month names never wrap or cramp.
-    <div className={cn('grid grid-cols-[132px_1fr] gap-x-2', !first && 'mt-2')}>
+    // + 20px rail padding) so long month names never wrap or cramp. Below sm
+    // the rail stacks above its cards (own grid row), so the dot/spine — sized
+    // to span the two-column row's full height — can't reach the cards below;
+    // hide that decoration and keep just the day/date text.
+    <div
+      className={cn(
+        'grid grid-cols-1 gap-y-2 sm:grid-cols-[132px_1fr] sm:gap-x-2 sm:gap-y-0',
+        !first && 'mt-2',
+      )}
+    >
       <div className="relative pt-1">
-        <span className="absolute left-[3px] top-[9px] size-2 rounded-full bg-border" />
-        <span className="absolute bottom-0 left-[6px] top-[22px] w-px border-l border-dotted border-border" />
+        <span className="absolute left-[3px] top-[9px] hidden size-2 rounded-full bg-border sm:block" />
+        <span className="absolute bottom-0 left-[6px] top-[22px] hidden w-px border-l border-dotted border-border sm:block" />
         {/* Both lines share one token size — hierarchy comes from weight +
-            color only (day medium ink, date regular muted). */}
-        <div className="pl-5">
+            color only (day medium ink, date regular muted). Below sm the pair
+            sits inline and flush left (no rail to indent past); at sm+ it
+            stacks back into the rail column. */}
+        <div className="flex items-baseline gap-x-1.5 sm:block sm:pl-5">
           <p className="text-base font-medium leading-tight text-foreground">{primary}</p>
           <p className="text-base text-foreground-muted">{secondary}</p>
         </div>

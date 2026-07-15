@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Info } from '@/lib/icons'
 import {
   TooltipProvider,
@@ -23,12 +24,17 @@ export function InfoTooltip({
   iconClassName,
   side = 'top'
 }: InfoTooltipProps) {
+  // Radix tooltips are hover/focus-only, so on touch screens the content is
+  // otherwise unreachable — a tap toggles the controlled state instead. With a
+  // mouse the click is a no-op in practice (hover has already opened it).
+  const [open, setOpen] = useState(false)
   return (
     <TooltipProvider>
-      <Tooltip>
+      <Tooltip open={open} onOpenChange={setOpen}>
         <TooltipTrigger asChild>
           <button
             type="button"
+            onClick={() => setOpen((o) => !o)}
             className={cn(
               // after:-inset-2 extends the ~22px visual control to a ~38px touch target
               'relative inline-flex items-center justify-center rounded-full p-1 text-foreground-muted transition-colors duration-150 ease-out after:absolute after:-inset-2 hover:text-foreground focus:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle',

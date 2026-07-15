@@ -63,7 +63,7 @@ export type SortDir = 'asc' | 'desc';
 // Header and rows share pl-3/pr-8 so their grid tracks stay aligned: pl-3
 // mirrors the -mx-3 table bleed (content sits back on the page edge), pr-8
 // keeps a gutter between the numeric columns and the hover chevron.
-const COLS = 'grid grid-cols-[minmax(0,1fr)_100px_80px] items-center gap-6 pl-3 pr-8 md:grid-cols-[minmax(0,1fr)_120px_120px_120px]';
+const COLS = 'grid grid-cols-[minmax(0,1fr)_100px_80px] items-center gap-3 sm:gap-6 pl-3 pr-4 sm:pr-8 md:grid-cols-[minmax(0,1fr)_120px_120px_120px]';
 
 interface TableHeaderProps {
   sortKey: SortKey;

@@ -427,14 +427,15 @@ const AuthPage = () => {
           onChange={setCode}
           disabled={isVerifying}
           autoFocus
+          className="text-base"
           aria-invalid={!!verifyError || undefined}
         >
-          <InputOTPGroup className="gap-2">
+          <InputOTPGroup className="gap-1.5 sm:gap-2">
             {[0, 1, 2, 3, 4, 5].map((i) => (
               <InputOTPSlot
                 key={i}
                 index={i}
-                className="size-12 rounded-xl"
+                className="size-11 sm:size-12 rounded-xl"
                 aria-invalid={!!verifyError || undefined}
               />
             ))}

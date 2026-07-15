@@ -484,7 +484,7 @@ const CheckoutPage = () => {
   const amountOre = Math.round(total * 100);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-dvh bg-background text-foreground flex flex-col">
       <StorefrontHeader
         name={course.seller?.name}
         slug={slug}
@@ -870,6 +870,20 @@ export function TermsField({
  * Extracted presentationally (markup unchanged) so the dev preview can render
  * the payment step's action row without a live Stripe intent.
  */
+/**
+ * Docks the pay button (and its inline errors) to the viewport bottom on
+ * phones while the form scrolls; in-flow and unchanged on ≥sm. Flat
+ * background + hairline only — checkout is zero-expression chrome. Shared
+ * with the dev preview so both render the pinned state identically.
+ */
+export function PayButtonDock({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="space-y-2 max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:-mx-4 max-sm:px-4 max-sm:bg-background max-sm:pt-3 max-sm:pb-[max(1rem,env(safe-area-inset-bottom))] max-sm:border-t max-sm:border-border-subtle">
+      {children}
+    </div>
+  );
+}
+
 export function PayButtonRow({
   total,
   submitting,
@@ -1101,7 +1115,7 @@ function PaidCheckoutForm({
         isFree={false}
       />
 
-      <div className="space-y-2">
+      <PayButtonDock>
         <PayButtonRow
           total={total}
           submitting={submitting || dropInResolving}
@@ -1114,7 +1128,7 @@ function PaidCheckoutForm({
         {showNoUpcomingDropIn && (
           <p className="text-sm text-danger text-center">Ingen kommende timer for drop-in.</p>
         )}
-      </div>
+      </PayButtonDock>
     </form>
   );
 }
@@ -1326,7 +1340,7 @@ function MetaLine({ text }: { text: string }) {
 
 function CheckoutSkeleton() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <StorefrontHeader />
       <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">
         <div className="mx-auto max-w-[520px] space-y-6">

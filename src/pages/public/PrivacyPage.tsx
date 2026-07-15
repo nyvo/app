@@ -8,7 +8,7 @@ import { COMPANY } from '@/lib/company';
 const PrivacyPage = () => {
   useDocumentTitle('Personvern');
   return (
-    <div className="min-h-screen w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
+    <div className="min-h-dvh w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
         <Link to="/" className="flex select-none items-center">
           <span className="text-base font-medium text-foreground">Openspot</span>

@@ -385,8 +385,9 @@ function SidebarFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sidebar-footer"
       data-sidebar="footer"
-      // px-4 matches SidebarGroup so footer content shares the nav items' left edge
-      className={cn("flex flex-col gap-2 px-4 py-2", className)}
+      // px-4 matches SidebarGroup so footer content shares the nav items' left edge;
+      // pb clears the home indicator inside the full-height mobile drawer (env()=0 on desktop)
+      className={cn("flex flex-col gap-2 px-4 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]", className)}
       {...props}
     />
   )

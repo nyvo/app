@@ -276,7 +276,9 @@ export function ImageField({
                 variant="plain"
                 onClick={handleRemove}
                 disabled={isDisabled}
-                className="text-foreground-muted hover:text-danger"
+                // relative + after:-inset-2 pads the hit area out to ~44px
+                // without growing the visible text (PasswordRow pattern).
+                className="relative text-foreground-muted after:absolute after:-inset-2 hover:text-danger"
               >
                 {removeLabel}
               </Button>
@@ -308,6 +310,9 @@ export function ImageField({
             variant="plain"
             onClick={openPicker}
             disabled={isDisabled}
+            // relative + after:-inset-2 pads the hit area out to ~44px
+            // without growing the visible text (PasswordRow pattern).
+            className="relative after:absolute after:-inset-2"
           >
             {changeLabel}
           </Button>
@@ -316,7 +321,7 @@ export function ImageField({
             variant="plain"
             onClick={handleRemove}
             disabled={isDisabled}
-            className="hover:text-danger"
+            className="relative after:absolute after:-inset-2 hover:text-danger"
           >
             {removeLabel}
           </Button>

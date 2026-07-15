@@ -1170,6 +1170,7 @@ const CoursePage = () => {
                         variant="secondary"
                         onClick={handleMessageAllParticipants}
                         disabled={participantEmails.length === 0}
+                        className="max-sm:flex-1"
                       >
                         Send melding
                       </Button>
@@ -1177,6 +1178,7 @@ const CoursePage = () => {
                         variant="secondary"
                         onClick={() => setIsAddParticipantOpen(true)}
                         disabled={isFull}
+                        className="max-sm:flex-1"
                       >
                         Legg til deltaker
                       </Button>

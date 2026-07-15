@@ -45,14 +45,16 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
         </h1>
 
         {location && (
-          <p className="mt-1 text-sm text-foreground-muted truncate">
-            {location.address || location.label}
-            {', '}
+          <p className="mt-1 flex items-baseline gap-1.5 text-sm text-foreground-muted">
+            <span className="truncate min-w-0">
+              {location.address || location.label}
+              {', '}
+            </span>
             <a
               href={directionsUrl(location)}
               target="_blank"
               rel="noreferrer"
-              className="text-primary underline underline-offset-2 hover:decoration-2"
+              className="shrink-0 text-primary underline underline-offset-2 hover:decoration-2"
             >
               Få veibeskrivelse
             </a>

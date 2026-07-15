@@ -57,9 +57,9 @@ export function PayoutStats({
           {stats.map(([label, value], i) => (
             <Fragment key={label}>
               {i > 0 && <div className="my-auto h-12 w-px shrink-0 bg-border-subtle" />}
-              <div className="flex-1 px-5 py-5 text-center">
+              <div className="flex-1 px-3 py-4 text-center sm:px-5 sm:py-5">
                 <p className="text-sm text-foreground-muted">{label}</p>
-                <p className="mt-1.5 text-2xl font-medium tabular-nums text-foreground">{value}</p>
+                <p className="mt-1.5 text-xl font-medium whitespace-nowrap tabular-nums text-foreground sm:text-2xl">{value}</p>
               </div>
             </Fragment>
           ))}

@@ -149,9 +149,17 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
       <h1 className="sr-only">{sellerName ? `Kalender – ${sellerName}` : 'Kalender'}</h1>
       <div className="flex flex-col @2xl:flex-row">
         {/* ── Calendar pane ─────────────────────────────────────────── */}
-        {/* Width = 7×36px cells + 6×6px gaps (288px grid) + 2×20px p-5 = 328px. */}
+        {/* Below @2xl the grid is fluid: cells are aspect-square and split
+            whatever width the iframe gives us into 7 equal columns, so day
+            buttons stay tappable no matter how narrow the embed is. At @2xl
+            it locks back to the fixed pixel grid this comment used to
+            describe: 7×36px cells + 6×6px gaps (288px grid) + 2×20px p-5 =
+            328px. */}
         <section className="shrink-0 p-5 @2xl:w-[328px]">
-          <div className="mx-auto w-fit @2xl:mx-0">
+          {/* max-w-72 = the old fixed grid width (7×36px + 6×6px gaps = 288px),
+              so wider embeds render exactly as before; only genuinely narrow
+              ones shrink the cells. */}
+          <div className="mx-auto w-full max-w-72 @2xl:mx-0 @2xl:w-fit @2xl:max-w-none">
             <header className="mb-4 flex items-center justify-between gap-2">
               <h2 className="text-sm font-medium tabular-nums first-letter:uppercase text-foreground">
                 {monthLabel}
@@ -160,7 +168,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
                 <Button
                   type="button"
                   variant="outline"
-                  size="icon-sm"
+                  size="icon"
                   onClick={() => goMonth(-1)}
                   className="text-foreground-muted"
                   aria-label="Forrige måned"
@@ -170,7 +178,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
                 <Button
                   type="button"
                   variant="outline"
-                  size="icon-sm"
+                  size="icon"
                   onClick={() => goMonth(1)}
                   className="text-foreground-muted"
                   aria-label="Neste måned"
@@ -201,7 +209,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
                 // Out-of-month days are blanks — pure whitespace reads calmer
                 // than dimmed numbers in a compact picker.
                 if (!inMonth) {
-                  return <div key={key} className="size-9" aria-hidden />;
+                  return <div key={key} className="aspect-square w-full @2xl:size-9" aria-hidden />;
                 }
 
                 // In-month days without classes aren't targets: plain faint
@@ -211,7 +219,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
                   return (
                     <div
                       key={key}
-                      className="flex size-9 items-center justify-center text-sm tabular-nums text-foreground-disabled"
+                      className="flex aspect-square w-full items-center justify-center text-sm tabular-nums text-foreground-disabled @2xl:size-9"
                     >
                       <span className="leading-none">{cell.getDate()}</span>
                     </div>
@@ -219,14 +227,14 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
                 }
 
                 return (
-                  <div key={key} className="flex items-center justify-center">
+                  <div key={key} className="flex aspect-square w-full items-center justify-center @2xl:size-9">
                     <button
                       type="button"
                       onClick={() => setSelectedKey(key)}
                       aria-pressed={isSelected}
                       aria-label={`${cell.getDate()}. ${MONTHS_NB[cell.getMonth()]}${hasClasses ? ', har kurs' : ''}`}
                       className={cn(
-                        'flex size-9 items-center justify-center rounded-full text-sm tabular-nums transition-colors',
+                        'flex size-full items-center justify-center rounded-full text-sm tabular-nums transition-colors',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                         isSelected
                           ? 'bg-primary font-medium text-primary-foreground'
@@ -321,7 +329,7 @@ function EmbedClassRow({
 
   const body = (
     <>
-      <span className="w-24 shrink-0 text-sm font-normal leading-5 tabular-nums text-foreground">
+      <span className="w-16 shrink-0 text-sm font-normal leading-5 tabular-nums text-foreground @md:w-24">
         {timeRange || '—'}
       </span>
 
@@ -361,7 +369,7 @@ function EmbedClassRow({
   return (
     <li>
       {isCancelled ? (
-        <div className="flex items-start gap-4 rounded-xl bg-hover p-4">
+        <div className="flex items-start gap-3 rounded-xl bg-hover p-4 @md:gap-4">
           {body}
         </div>
       ) : (
@@ -369,7 +377,7 @@ function EmbedClassRow({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex items-start gap-4 rounded-xl bg-hover p-4 transition-colors hover:bg-pressed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="group flex items-start gap-3 rounded-xl bg-hover p-4 transition-colors hover:bg-pressed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background @md:gap-4"
         >
           {body}
         </a>

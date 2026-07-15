@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
+  ResponsiveDialog, ResponsiveDialogContent, ResponsiveDialogDescription, ResponsiveDialogFooter, ResponsiveDialogHeader, ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog';
 import {
   Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -110,12 +110,12 @@ export function InstructorField({
         </SelectContent>
       </Select>
 
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Ny instruktør</DialogTitle>
-            <DialogDescription>Navnet vises på kurssiden og i timeplanen.</DialogDescription>
-          </DialogHeader>
+      <ResponsiveDialog open={addOpen} onOpenChange={setAddOpen}>
+        <ResponsiveDialogContent className="max-w-sm">
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>Ny instruktør</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>Navnet vises på kurssiden og i timeplanen.</ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
           <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
@@ -124,14 +124,14 @@ export function InstructorField({
             autoFocus
             onKeyDown={(e) => { if (e.key === 'Enter') void handleAdd(); }}
           />
-          <DialogFooter>
+          <ResponsiveDialogFooter>
             <Button variant="secondary" onClick={() => setAddOpen(false)}>Avbryt</Button>
             <Button onClick={() => void handleAdd()} loading={saving} disabled={!newName.trim()}>
               Lagre
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
 
       <ManageInstructorsDialog
         open={manageOpen}
@@ -191,12 +191,12 @@ function ManageInstructorsDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Administrer instruktører</DialogTitle>
-          <DialogDescription>Navnene vises på kurssiden og i timeplanen.</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="max-w-sm">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Administrer instruktører</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>Navnene vises på kurssiden og i timeplanen.</ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <div className="divide-y divide-border-subtle">
           {instructors.map((i) => (
             <div key={i.id} className="flex items-center gap-2 py-2">
@@ -235,7 +235,7 @@ function ManageInstructorsDialog({
         <p className="text-xs text-foreground-muted">
           Sletting fjerner ikke navnet fra eksisterende kurs.
         </p>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

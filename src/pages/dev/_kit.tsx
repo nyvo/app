@@ -64,7 +64,9 @@ export function PreviewSection({
   return (
     <section className="space-y-4">
       <div className="space-y-1">
-        <Badge variant="neutral" size="sm">
+        {/* max-w + truncate: long scenario captions must not widen the page
+            past narrow preview viewports (Badge is whitespace-nowrap). */}
+        <Badge variant="neutral" size="sm" className="max-w-full truncate">
           {label}
         </Badge>
         {description ? (
