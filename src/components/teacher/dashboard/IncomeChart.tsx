@@ -57,10 +57,10 @@ function RangeDropdown({
       <DropdownMenuTrigger
         aria-label="Velg tidsrom"
         // Borderless white pill (SegmentedTabs-segment size, no hairline) so
-        // the control is anchored, not floating text; primary ink marks it as
-        // the header's one action (user-directed 2026-07-15).
+        // the control is anchored, not floating text; monochrome foreground
+        // ink — matches the active-segment look (user-directed 2026-07-15).
         // after:-inset-y-2 lifts the 28px pill to a ~44px touch target.
-        className="group relative inline-flex h-7 items-center gap-1 rounded-lg bg-surface px-2.5 text-sm font-medium text-primary outline-none after:absolute after:inset-x-0 after:-inset-y-2 focus-visible:ring-2 focus-visible:ring-ring-subtle sm:hidden"
+        className="group relative inline-flex h-7 items-center gap-1 rounded-lg bg-surface px-2.5 text-sm font-medium text-foreground outline-none after:absolute after:inset-x-0 after:-inset-y-2 focus-visible:ring-2 focus-visible:ring-ring-subtle sm:hidden"
       >
         {label}
         <ChevronDown
