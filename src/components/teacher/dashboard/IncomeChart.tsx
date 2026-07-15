@@ -57,7 +57,9 @@ function RangeDropdown({
       <DropdownMenuTrigger
         aria-label="Velg tidsrom"
         // after:-inset-2 lifts the ~20px text control to a ~36px touch target.
-        className="group relative inline-flex items-center gap-1 rounded-md text-sm font-medium text-foreground outline-none after:absolute after:-inset-2 focus-visible:ring-2 focus-visible:ring-ring-subtle sm:hidden"
+        // Muted + normal weight: secondary to the FramedCard title, one tier
+        // down (surface → border → muted-text → foreground).
+        className="group relative inline-flex items-center gap-1 rounded-md text-sm text-foreground-muted outline-none after:absolute after:-inset-2 focus-visible:ring-2 focus-visible:ring-ring-subtle sm:hidden"
       >
         {label}
         <ChevronDown
