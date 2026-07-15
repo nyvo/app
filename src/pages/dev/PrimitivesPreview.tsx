@@ -339,7 +339,7 @@ function DialogsSection() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Behold</AlertDialogCancel>
+              <AlertDialogCancel>Avbryt</AlertDialogCancel>
               <AlertDialogAction
                 variant="destructive"
                 onClick={() => {
@@ -366,7 +366,6 @@ function DialogsSection() {
             </>
           }
           actionLabel="Avbestill"
-          cancelLabel="Behold"
           onConfirm={() => {
             setSimpleConfirmOpen(false);
             toast.success('Påmeldingen er avbestilt');
