@@ -43,7 +43,6 @@ const TeacherProfilePage = () => {
   }, [profile, name, phone]);
 
   const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const { blocker, bypass } = useUnsavedChanges(isDirty);
 
   const handleCancel = () => {
@@ -51,12 +50,10 @@ const TeacherProfilePage = () => {
       setName(resolveDisplayName(profile.name, profile.email));
       setPhone(profile.phone ?? '');
     }
-    setSaveError(null);
   };
 
   const handleSave = async () => {
     setIsSaving(true);
-    setSaveError(null);
 
     // Save profile name. Empty input clears the column (NULL) — the trigger
     // seeds it from Google's display name on signup, but the user can wipe it.
@@ -68,7 +65,7 @@ const TeacherProfilePage = () => {
         .eq('id', profile.id);
 
       if (profileError) {
-        setSaveError(friendlyError(profileError, 'Kunne ikke lagre endringene.'));
+        toast.error(friendlyError(profileError, 'Kunne ikke lagre endringene.'));
         setIsSaving(false);
         return;
       }
@@ -242,8 +239,7 @@ const TeacherProfilePage = () => {
           </SettingsRows>
 
           <DirtyFormBar
-            visible={isDirty || !!saveError}
-            error={saveError}
+            visible={isDirty}
             isSaving={isSaving}
             onSave={handleSave}
             onCancel={handleCancel}

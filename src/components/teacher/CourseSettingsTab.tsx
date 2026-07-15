@@ -111,7 +111,6 @@ interface CourseSettingsTabProps {
 
   // Actions
   isDirty: boolean;
-  saveError: string | null;
   onSave: () => void;
   onCancel: () => void;
 
@@ -168,7 +167,6 @@ export const CourseSettingsTab = ({
   price,
   onPriceChange,
   isDirty,
-  saveError,
   onSave,
   onCancel,
   courseStatus,
@@ -584,8 +582,7 @@ export const CourseSettingsTab = ({
       })()}
 
       <DirtyFormBar
-        visible={isDirty || !!saveError}
-        error={saveError}
+        visible={isDirty}
         isSaving={isSaving || isImageSaving}
         onSave={() => {
           commitParticipantsInput();

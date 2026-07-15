@@ -1,13 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { Info } from "@/lib/icons"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface DirtyFormBarProps {
-  /** Show the bar when true. Pass `isDirty || !!saveError`. */
+  /** Show the bar when true. Pass the form's `isDirty`. */
   visible: boolean
-  /** Optional save error; takes precedence over the dirty hint. */
-  error?: string | null
   isSaving: boolean
   onSave: () => void
   onCancel: () => void
@@ -23,6 +20,12 @@ interface DirtyFormBarProps {
   className?: string
 }
 
+// Below this column width the single-row pill (hint + both buttons) no longer
+// fits, so the hint text is dropped instead of wrapping under the label.
+// Sized to the default labels with headroom; measured against the content
+// column (not the viewport) so an open sidebar counts.
+const COMPACT_COLUMN_WIDTH = 480
+
 /**
  * Floating "unsaved changes" pill for multi-field forms. Pinned to the bottom
  * of the viewport (overlay — always reachable without scrolling), but centered
@@ -37,13 +40,21 @@ interface DirtyFormBarProps {
  * one-click optimistic actions (publish/unpublish/cancel) use the sonner
  * toast + `Angre` pattern instead.
  *
+ * Save failures are NOT shown in the bar — the caller fires a `toast.error`
+ * instead (the failed save leaves the form dirty, so the bar simply stays up
+ * for a retry). This keeps the bar a fixed-shape action pill, never a surface
+ * that grows to fit an error string.
+ *
  * Visual model follows Vercel / Cal.com's floating pill — discoverable
  * chrome that signals "I'm separate from your content" without sprawling
  * across the page.
+ *
+ * Responsive: on columns too narrow for the single row the hint text is
+ * dropped (buttons-only pill — never a mid-pill wrap); the region's
+ * aria-label still announces it.
  */
 export function DirtyFormBar({
   visible,
-  error,
   isSaving,
   onSave,
   onCancel,
@@ -98,6 +109,11 @@ export function DirtyFormBar({
     return () => clearTimeout(timeout)
   }, [visible])
 
+  // On narrow columns the row can't hold hint + buttons, so the hint text is
+  // dropped: a floating pill with Lagre/Avbryt is self-explanatory, and the
+  // region's aria-label still announces it.
+  const compact = box !== null && box.width < COMPACT_COLUMN_WIDTH
+
   return (
     <>
       {/* display:none anchor — out of flow (no layout slot), used only to read
@@ -114,13 +130,15 @@ export function DirtyFormBar({
           className={cn(
             // bottom clears the iOS home-indicator gesture area, same convention
             // as BookingBar / SheetFooter (env() needs viewport-fit=cover).
-            "fixed bottom-[max(1.5rem,calc(env(safe-area-inset-bottom)+0.75rem))] z-40 w-fit -translate-x-1/2",
-            // Surface chrome — light floating pill. Matches dialog's surface +
-            // border convention (overlays are bordered, not lifted — 2026-07-11).
-            // flex-wrap: on narrow columns the button pair drops under the label
-            // instead of clipping at the pill's maxWidth.
-            "flex flex-wrap items-center justify-end gap-x-4 gap-y-2 rounded-2xl border border-border bg-surface py-2 pr-2 pl-5",
-            "text-foreground",
+            "fixed bottom-[max(1.5rem,calc(env(safe-area-inset-bottom)+0.75rem))] z-40 w-fit -translate-x-1/2 text-foreground",
+            // Capsule: rounded-full is concentric with the pill buttons inside
+            // (20px button radius + 8px padding = half the bar's height), not a
+            // near-miss card radius next to round buttons. Surface chrome is
+            // bordered, not lifted (overlays are bordered — 2026-07-11).
+            "flex items-center rounded-full border border-border bg-surface",
+            // Never flex-wrap: an accidental wrap reads as broken (label top,
+            // buttons bottom-right). The narrow column drops the hint instead.
+            compact ? "p-2" : "gap-4 py-2 pr-2 pl-5",
             // Interruptible transition (not a keyframe animation) so it can
             // reverse mid-flight. Matches toast motion (slide-up + fade);
             // exit is faster than enter, matching the rest of the app.
@@ -129,21 +147,13 @@ export function DirtyFormBar({
             className,
           )}
         >
-          <div className="min-w-0">
-            {error ? (
-              <span
-                role="alert"
-                className="inline-flex items-center gap-2 text-sm font-medium text-danger"
-              >
-                <Info className="size-4 shrink-0" aria-hidden="true" />
-                {error}
-              </span>
-            ) : (
+          {!compact && (
+            <div className="min-w-0">
               <span className="text-sm font-medium text-foreground">
                 {dirtyLabel}
               </span>
-            )}
-          </div>
+            </div>
+          )}
           <div className="flex shrink-0 items-center gap-1">
             <Button variant="secondary" onClick={onCancel} disabled={isSaving}>
               {cancelLabel}

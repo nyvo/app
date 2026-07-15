@@ -169,9 +169,6 @@ function StudioPublicSettings({
   const seniorDiscount = useDiscountField(seller.senior_discount_percent ?? null);
 
   const [isSaving, setIsSaving] = useState(false);
-  // Generic save failure (thrown/network) — field-specific errors go to the
-  // inline FieldErrors instead; this feeds the DirtyFormBar's error slot.
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   const discountDirty = studentDiscount.dirty || seniorDiscount.dirty;
 
@@ -194,12 +191,10 @@ function StudioPublicSettings({
     setNameError(null);
     setSlugError(null);
     setAddressError(null);
-    setSaveError(null);
   };
 
   const handleSave = async () => {
     if (isSaving) return;
-    setSaveError(null);
 
     const trimmedName = name.trim();
     const trimmedSlug = slug.trim();
@@ -326,7 +321,7 @@ function StudioPublicSettings({
           senior_discount_percent: seniorDiscount.next,
         });
         if (error) {
-          setSaveError(friendlyError(error, 'Kunne ikke lagre rabatten.'));
+          toast.error(friendlyError(error, 'Kunne ikke lagre rabatten.'));
           if (persistedAny) await onSaved();
           return;
         }
@@ -336,7 +331,7 @@ function StudioPublicSettings({
       await onSaved();
       toast.success('Endringer lagret');
     } catch (err) {
-      setSaveError(friendlyError(err, 'Kunne ikke lagre endringene.'));
+      toast.error(friendlyError(err, 'Kunne ikke lagre endringene.'));
       if (persistedAny) await onSaved();
     } finally {
       setIsSaving(false);
@@ -614,8 +609,7 @@ function StudioPublicSettings({
         // strand unsaved changes. Save still works from any tab (it operates
         // on this page's state, not the visible panel); the hint just points
         // back to the tab where the changed field lives.
-        visible={isDirty || !!saveError}
-        error={saveError}
+        visible={isDirty}
         isSaving={isSaving}
         onSave={handleSave}
         onCancel={handleCancel}

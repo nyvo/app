@@ -26,6 +26,7 @@ const GROUPS: PreviewGroup[] = [
       { label: 'Primitiver', to: '/dev/primitives', blurb: 'Knapper, merker, dialoger, ConfirmDialog, paneler og toasts — ekte komponenter.' },
       { label: 'Tilstander', to: '/dev/states', blurb: 'PageState, EmptyState, ErrorState og Skeleton — alle delte tomme/feil/laste-byggeklosser.' },
       { label: 'Innstillinger-rader', to: '/dev/settings-rows-preview', blurb: 'SettingsRows-layoutmønsteret som innstillingssidene bygger på.' },
+      { label: 'DirtyFormBar', to: '/dev/dirty-bar-preview', blurb: 'Flytende «ulagrede endringer»-pill — bred rad og kun knapper; feil vises som toast.' },
     ],
   },
   {

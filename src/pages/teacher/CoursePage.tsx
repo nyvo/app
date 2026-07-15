@@ -260,7 +260,6 @@ const CoursePage = () => {
   const [settingsPrice, setSettingsPrice] = useState(0);
   const [settingsInstructor, setSettingsInstructor] = useState<InstructorRef | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [instructorError, setInstructorError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -473,7 +472,6 @@ const CoursePage = () => {
     }
     setInstructorError(null);
     setIsSaving(true);
-    setSaveError(null);
     try {
       // Rebuild the denormalized schedule label in the same shape createDraft
       // wrote it: singles from the earliest day ("Lørdag, 10:00–16:00"),
@@ -550,7 +548,7 @@ const CoursePage = () => {
         sessions: desiredSessions,
       });
       if (saveErr || !result?.success) {
-        setSaveError(friendlyError(saveErr, 'Kunne ikke lagre endringer. Prøv igjen.'));
+        toast.error(friendlyError(saveErr, 'Kunne ikke lagre endringer. Prøv igjen.'));
         return;
       }
 
@@ -617,7 +615,7 @@ const CoursePage = () => {
         toast.success('Endringer lagret');
       }
     } catch {
-      setSaveError(GENERIC_ERROR);
+      toast.error(GENERIC_ERROR);
     } finally {
       setIsSaving(false);
     }
@@ -628,7 +626,6 @@ const CoursePage = () => {
 
     const previousUrl = courseData.imageUrl;
     setIsSavingImage(true);
-    setSaveError(null);
 
     try {
       const { url, error: uploadError } = await uploadCourseImage(courseId, file);
@@ -664,7 +661,6 @@ const CoursePage = () => {
 
     const previousUrl = courseData.imageUrl;
     setIsSavingImage(true);
-    setSaveError(null);
 
     try {
       const { error: updateError } = await updateCourse(courseId, { image_url: null });
@@ -797,9 +793,8 @@ const CoursePage = () => {
         notify_participants: true,
       });
       if (cancelError) {
-        // Cancellation failure is its own concern — surface it as a toast, not
-        // in the DirtyFormBar's saveError (which sits next to unrelated
-        // save/discard buttons).
+        // Cancellation failure is its own concern — its own toast, separate
+        // from the save flow's toasts and the DirtyFormBar's save/discard.
         toast.error(friendlyError(cancelError, 'Kunne ikke avlyse kurset.'));
         setShowCancelPreview(false);
         return;
@@ -888,7 +883,6 @@ const CoursePage = () => {
     if (courseData.format === 'single' && sessions.length > 0) {
       setSessionDays(buildSessionDays(sessions));
     }
-    setSaveError(null);
     setTitleError(null);
     setLocationError(null);
     setInstructorError(null);
@@ -1118,7 +1112,6 @@ const CoursePage = () => {
               instructorSellerId={currentSeller?.operating_model === 'studio' ? currentSeller.id : null}
               instructorError={instructorError}
               isDirty={isSettingsDirty}
-              saveError={saveError}
               onSave={handleSave}
               onCancel={handleDiscard}
               courseStatus={courseData.status}

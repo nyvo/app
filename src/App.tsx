@@ -66,6 +66,7 @@ const TokensPreview = lazy(() => import('./pages/dev/TokensPreview'));
 const PrimitivesPreview = lazy(() => import('./pages/dev/PrimitivesPreview'));
 const StatesPreview = lazy(() => import('./pages/dev/StatesPreview'));
 const SettingsRowsPreview = lazy(() => import('./pages/dev/SettingsRowsPreview'));
+const DirtyBarPreview = lazy(() => import('./pages/dev/DirtyBarPreview'));
 // Seller — dashboard & daily
 const DashboardPreview = lazy(() => import('./pages/dev/DashboardPreview'));
 const LandingShotPreview = lazy(() => import('./pages/dev/LandingShotPreview'));
@@ -231,6 +232,7 @@ const router = createBrowserRouter(
             <Route path="/dev/primitives" element={<PrimitivesPreview />} />
             <Route path="/dev/states" element={<StatesPreview />} />
             <Route path="/dev/settings-rows-preview" element={<SettingsRowsPreview />} />
+            <Route path="/dev/dirty-bar-preview" element={<DirtyBarPreview />} />
             {/* Seller — dashboard & daily */}
             <Route path="/dev/dashboard-preview" element={<DashboardPreview />} />
             <Route path="/dev/landing-shot" element={<LandingShotPreview />} />
