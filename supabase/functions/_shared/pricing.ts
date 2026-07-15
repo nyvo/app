@@ -3,24 +3,35 @@
  * Change these values here to update all payment flows at once.
  */
 
-/** Service fee rate charged to the student on top of the course price */
+/** Service fee rate charged to the student on top of the course price. */
 export const SERVICE_FEE_RATE = 0.05 // 5%
 
 /**
  * Platform take on free-tier ("Start") sellers, deducted from the seller's
- * payout via the Stripe application fee. Pro sellers pay 0%. Flat rate — no
- * floor/cap: 0 kr when the seller earns 0 kr, and the Pro crossover math
- * stays a one-liner (5% × 10 000 kr/mnd ≈ 499 kr).
+ * payout via the Stripe application fee. Pro sellers pay 0%. Rounded to a whole
+ * krone (half-up) so the payout never carries øre.
  */
 export const PLATFORM_TAKE_RATE = 0.05 // 5%
 
 /**
- * Bounds for the student service fee (NOK).
- * Floor covers the flat per-payout cost on cheap drop-ins; cap keeps the fee
- * from getting punitive on expensive course series.
+ * Bounds for the student service fee (NOK). The 5% is rounded UP to a whole
+ * krone, then clamped: the floor covers the flat per-payout cost on cheap
+ * drop-ins, the cap keeps the fee from getting punitive on expensive series.
  */
-export const SERVICE_FEE_MIN_NOK = 9
+export const SERVICE_FEE_MIN_NOK = 4
 export const SERVICE_FEE_MAX_NOK = 149
+
+/**
+ * Integer-øre division helpers — all fee math avoids floating-point rates so
+ * amounts land on whole kroner exactly. Both take non-negative integer operands.
+ * `ceilDivInt` rounds up; `roundHalfUpDivInt` rounds to nearest, halves up.
+ */
+function ceilDivInt(numerator: number, denominator: number): number {
+  return Math.floor((numerator + denominator - 1) / denominator)
+}
+function roundHalfUpDivInt(numerator: number, denominator: number): number {
+  return Math.floor((numerator + Math.floor(denominator / 2)) / denominator)
+}
 
 /**
  * Ticket price after the honor-system student/pensjonist discount (whole-krone
@@ -40,17 +51,25 @@ export function applyHonorDiscount(price: number, percent: number): number {
  * from the seller's payout.
  */
 export function calculatePricing(basePrice: number, opts?: { platformTake?: boolean }) {
+  const basePriceInOre = Math.round(basePrice * 100)
+  // 5% of the price in whole kroner = basePriceInOre * 5 / 10000 (÷100 for the
+  // rate, ÷100 for øre→krone). Numerator stays an integer; the div helpers round.
+  const fivePercentNumerator = basePriceInOre * 5
+
+  // Buyer service fee: 5% rounded UP to a whole krone, clamped to [min, max].
   const serviceFeeNok =
     basePrice > 0
-      ? Math.min(SERVICE_FEE_MAX_NOK, Math.max(SERVICE_FEE_MIN_NOK, Math.round(basePrice * SERVICE_FEE_RATE)))
+      ? Math.min(SERVICE_FEE_MAX_NOK, Math.max(SERVICE_FEE_MIN_NOK, ceilDivInt(fivePercentNumerator, 10000)))
       : 0
+
+  // Seller platform take: 5% rounded half-up to a whole krone; free tier only.
+  const platformFeeNok =
+    opts?.platformTake && basePrice > 0 ? roundHalfUpDivInt(fivePercentNumerator, 10000) : 0
+
+  const serviceFeeInOre = serviceFeeNok * 100
+  const platformFeeInOre = platformFeeNok * 100
+  const priceInOre = basePriceInOre + serviceFeeInOre
   const totalPrice = basePrice + serviceFeeNok
-  const priceInOre = Math.round(totalPrice * 100)
-  const basePriceInOre = Math.round(basePrice * 100)
-  const serviceFeeInOre = Math.round(serviceFeeNok * 100)
-  const platformFeeInOre =
-    opts?.platformTake && basePrice > 0 ? Math.round(basePriceInOre * PLATFORM_TAKE_RATE) : 0
-  const platformFeeNok = platformFeeInOre / 100
 
   return {
     serviceFeeNok,

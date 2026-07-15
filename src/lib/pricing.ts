@@ -7,22 +7,30 @@
  * source of truth (supabase/functions/_shared/pricing.ts).
  */
 
-const SERVICE_FEE_RATE = 0.05 // 5%
-
 // Bounds for the service fee (NOK) — must match the backend.
-const SERVICE_FEE_MIN_NOK = 9
+const SERVICE_FEE_MIN_NOK = 4
 const SERVICE_FEE_MAX_NOK = 149
 
-/** Free-tier platform take on the seller's payout — flat, no floor/cap. */
+/** Free-tier platform take on the seller's payout — 5%, whole-krone (half-up). */
 export const PLATFORM_TAKE_RATE = 0.05 // 5%
 
+// Integer-øre division helpers — mirror supabase/functions/_shared/pricing.ts
+// so fee amounts land on whole kroner without floating-point rates.
+function ceilDivInt(numerator: number, denominator: number): number {
+  return Math.floor((numerator + denominator - 1) / denominator)
+}
+function roundHalfUpDivInt(numerator: number, denominator: number): number {
+  return Math.floor((numerator + Math.floor(denominator / 2)) / denominator)
+}
+
 /**
- * Calculate the service fee for a given course price.
- * Clamped to [min, max]; returns 0 for free courses.
+ * Calculate the service fee for a given course price: 5% rounded UP to a whole
+ * krone, clamped to [min, max]. Returns 0 for free courses.
  */
 export function calculateServiceFee(price: number | null): number {
   if (!price || price <= 0) return 0
-  return Math.min(SERVICE_FEE_MAX_NOK, Math.max(SERVICE_FEE_MIN_NOK, Math.round(price * SERVICE_FEE_RATE)))
+  const fivePercentNumerator = Math.round(price * 100) * 5
+  return Math.min(SERVICE_FEE_MAX_NOK, Math.max(SERVICE_FEE_MIN_NOK, ceilDivInt(fivePercentNumerator, 10000)))
 }
 
 /**
@@ -41,7 +49,8 @@ export function calculateTotalPrice(price: number | null): number {
  */
 export function calculatePlatformFee(price: number | null): number {
   if (!price || price <= 0) return 0
-  return Math.round(price * 100 * PLATFORM_TAKE_RATE) / 100
+  const fivePercentNumerator = Math.round(price * 100) * 5
+  return roundHalfUpDivInt(fivePercentNumerator, 10000)
 }
 
 /**

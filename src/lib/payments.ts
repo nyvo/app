@@ -17,6 +17,25 @@ export function isProSeller(
 }
 
 /**
+ * Monthly Pro subscription price (NOK). Also the break-even for the free-tier
+ * platform-fee upsell: below this a Start seller's monthly platform fees are
+ * smaller than the subscription, so upgrading wouldn't save money.
+ */
+export const PRO_MONTHLY_PRICE_NOK = 499
+
+/**
+ * Whether to show the prominent "switch to Pro" platform-fee banner. Only for
+ * Start sellers whose measured platform fees this month are at least the Pro
+ * price — so the banner never implies Pro saves money when it wouldn't.
+ */
+export function shouldShowPlatformFeeUpsell(
+  monthPlatformFeeNok: number,
+  isPro: boolean,
+): boolean {
+  return !isPro && monthPlatformFeeNok >= PRO_MONTHLY_PRICE_NOK
+}
+
+/**
  * True when publishing this course is blocked until Stripe onboarding
  * completes. The DB trigger is the authoritative gate; this keeps sellers out
  * of a guaranteed-to-fail request.
