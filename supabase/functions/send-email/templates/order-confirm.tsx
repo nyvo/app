@@ -8,7 +8,11 @@ export interface OrderConfirmProps {
   courseTitle: string
   courseStart: string
   courseLocation?: string
-  amount: string
+  /** Omitted for manual adds — payment settled off-platform, no amount row. */
+  amount?: string
+  /** Teacher registered the participant manually — intro says the studio
+   * signed them up instead of thanking them for booking. */
+  registeredByStudio?: boolean
   bookingId: string
   /** Pre-formatted org number, e.g. "987 654 321". The receipt is the one
    * surface that identifies the legal seller — name + org.nr together. */
@@ -24,6 +28,7 @@ export const OrderConfirm = ({
   courseStart,
   courseLocation,
   amount,
+  registeredByStudio,
   bookingId,
   arrangorOrgNumber,
   arrangorEmail,
@@ -33,7 +38,9 @@ export const OrderConfirm = ({
       Du er påmeldt
     </Heading>
     <Text style={styles.paragraph}>
-      Hei {buyerName}, takk for påmeldingen til {courseTitle} hos {studioName}.
+      {registeredByStudio
+        ? `Hei ${buyerName}, ${studioName} har meldt deg på ${courseTitle}.`
+        : `Hei ${buyerName}, takk for påmeldingen til ${courseTitle} hos ${studioName}.`}
     </Text>
 
     <DetailBlock>
@@ -46,8 +53,8 @@ export const OrderConfirm = ({
           arrangorOrgNumber ? `${studioName}, org.nr ${arrangorOrgNumber}` : studioName
         }
       />
-      <DetailRow label="Referanse" value={bookingId} />
-      <DetailRow label="Beløp" value={amount} emphasis last />
+      <DetailRow label="Referanse" value={bookingId} last={!amount} />
+      {amount ? <DetailRow label="Beløp" value={amount} emphasis last /> : null}
     </DetailBlock>
 
     {arrangorEmail ? (

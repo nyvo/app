@@ -73,6 +73,9 @@ type BookingAttempt = {
   course_id: string
   participant_name: string | null
   participant_email: string | null
+  /** signups.payment_product — 'manual' means the teacher added the
+   * participant themselves and settles payment off-platform. */
+  payment_product?: string | null
 }
 
 export async function deliverBookingConfirmations(
@@ -85,11 +88,27 @@ export async function deliverBookingConfirmations(
   // class is a real booking the buyer + studio want to know about.
   if (!attempt.participant_name) return
 
+  // Manual adds: the teacher performed the action, so the seller-side
+  // notification + email are noise about their own click — skip them, but
+  // stamp seller_notified_at so the sweep doesn't retry the row forever.
+  // The buyer still gets a confirmation, just without an amount: the money
+  // moved outside the platform (Vipps/cash/invoice), so any amount we print
+  // ("Gratis" for the NULL amount_paid) would be wrong.
+  const isManual = attempt.payment_product === 'manual'
+
   const amountLabel = amountNok > 0 ? formatKroner(amountNok) : 'Gratis'
 
-  await notifyBookingCreated(supabase, signupId, attempt)
-  await sendSellerBookingEmail(supabase, signupId, attempt, amountLabel)
-  await sendOrderConfirmEmail(supabase, signupId, attempt, amountLabel)
+  if (isManual) {
+    await supabase
+      .from('signups')
+      .update({ seller_notified_at: new Date().toISOString() })
+      .eq('id', signupId)
+      .is('seller_notified_at', null)
+  } else {
+    await notifyBookingCreated(supabase, signupId, attempt)
+    await sendSellerBookingEmail(supabase, signupId, attempt, amountLabel)
+  }
+  await sendOrderConfirmEmail(supabase, signupId, attempt, isManual ? null : amountLabel)
 }
 
 async function notifyBookingCreated(
@@ -199,11 +218,13 @@ async function sendSellerBookingEmail(
   }
 }
 
+/** `amountLabel: null` = manual add — the confirmation renders without an
+ * amount row and says the studio registered the participant. */
 async function sendOrderConfirmEmail(
   supabase: SupabaseClient,
   signupId: string,
   attempt: BookingAttempt,
-  amountLabel: string,
+  amountLabel: string | null,
 ): Promise<void> {
   if (!attempt.participant_email || !attempt.participant_name) return
 
@@ -239,7 +260,8 @@ async function sendOrderConfirmEmail(
       courseTitle: course.title,
       courseStart: formatCourseStart(course.start_date, course.time_schedule),
       courseLocation: course.location ?? undefined,
-      amount: amountLabel,
+      amount: amountLabel ?? undefined,
+      registeredByStudio: amountLabel === null ? true : undefined,
       bookingId: shortBookingId(signupId),
       arrangorOrgNumber: arrangor.orgNumber ?? undefined,
       arrangorEmail: arrangor.contactEmail ?? undefined,

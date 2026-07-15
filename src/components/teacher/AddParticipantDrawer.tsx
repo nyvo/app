@@ -202,6 +202,9 @@ export function AddParticipantDrawer({
       // handles the transaction outside the system (Vipps, cash, invoice).
       // Always recorded as 'paid' here; if the money never actually arrives,
       // the teacher can cancel/refund from the row action menu later.
+      // payment_product 'manual' marks the off-platform origin — it drives
+      // the amount-less confirmation email and the drawer's manual-add
+      // presentation (no platform-processed price to show).
       const { error } = await createSignup({
         seller_id: organizationId,
         course_id: courseId,
@@ -211,6 +214,7 @@ export function AddParticipantDrawer({
         note: formData.note.trim() || null,
         status: 'confirmed',
         payment_status: 'paid',
+        payment_product: 'manual',
       });
 
       if (error) {
@@ -262,7 +266,7 @@ export function AddParticipantDrawer({
                 payment flow. Shown as an info callout so the teacher clearly
                 registers that they handle payment themselves. */}
             <Alert variant="info" size="sm">
-              Manuelle påmeldinger registreres som betalt – du håndterer betalingen selv (Vipps, kontant, faktura).
+              Manuelle påmeldinger registreres som betalt – du håndterer betalingen selv (Vipps, kontant, faktura). Deltakeren får en bekreftelse på e-post.
             </Alert>
 
             {/* Info banner if full */}
