@@ -494,7 +494,7 @@ function SignupCard({
       onClick={() => onSelect(signup.id)}
       className="flex w-full items-center gap-3.5 rounded-xl bg-panel px-4 py-3.5 text-left outline-none cursor-pointer transition-colors hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
-      <UserAvatar name={name} size="lg" />
+      <UserAvatar name={name} size="lg" className="bg-background" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-foreground">{name}</p>
         <p className="truncate text-sm text-foreground-muted">
