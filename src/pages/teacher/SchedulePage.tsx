@@ -293,8 +293,8 @@ const SchedulePage = () => {
               {[1, 2].map((i) => (
                 <div key={i} className="grid grid-cols-[92px_18px_1fr] gap-x-2.5">
                   <div className="space-y-1.5 pt-3">
-                    <Skeleton className="ml-auto h-4 w-14" />
-                    <Skeleton className="ml-auto h-3 w-16" />
+                    <Skeleton className="h-4 w-14" />
+                    <Skeleton className="h-3 w-16" />
                   </div>
                   <div />
                   <div className="space-y-3 pb-6">
@@ -336,7 +336,7 @@ const SchedulePage = () => {
                   primary={label.primary}
                   secondary={label.secondary}
                   rail={groups.length > 1}
-                  // Success green marks the day of the actual next session — sessions
+                  // Bright success green marks the day of the actual next session — sessions
                   // are date-ascending on the active tab, so it's the first
                   // loaded row (a month filter can hide it; then no highlight).
                   next={rangeFilter === 'active' && date === sessions[0]?.sessionDate}
@@ -377,7 +377,7 @@ export function TimelineDay({
   /** A lone day group needs no timeline — the rail only earns its place
    *  between groups. The grid stays, so labels/cards never shift x. */
   rail?: boolean;
-  /** Success-green dot — the day of the next upcoming session. */
+  /** Bright-success dot — the day of the next upcoming session. */
   next?: boolean;
   lineAbove?: boolean;
   lineBelow?: boolean;
@@ -386,6 +386,8 @@ export function TimelineDay({
 }) {
   return (
     <TimelineEntry
+      // Wider date column than the Kursplan feed — "22. september" must fit.
+      className="grid-cols-[92px_18px_1fr]"
       rail={rail}
       next={next}
       lineAbove={lineAbove}
