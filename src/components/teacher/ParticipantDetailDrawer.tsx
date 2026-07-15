@@ -535,7 +535,6 @@ export function ParticipantDetailDrawer({
             : <><strong>{name}</strong> avbestilles og plassen frigjøres.</>
         }
         actionLabel="Avbestill"
-        cancelLabel="Behold"
         destructive
         loading={loading}
         loadingText="Avbestiller"
@@ -546,9 +545,13 @@ export function ParticipantDetailDrawer({
         open={confirmKind === 'cancel-with-refund'}
         onOpenChange={(o) => !o && !loading && setConfirmKind(null)}
         title="Avbestill og refunder"
-        body={<><strong>{name}</strong> avbestilles og refunderes <strong>{formatKroner(signup.amount_paid ?? 0)}</strong>.</>}
+        body={
+          <>
+            <strong>{name}</strong> avbestilles.{' '}
+            <strong>{formatKroner(sellerPayout ?? 0)}</strong> trekkes fra oppgjøret ditt.
+          </>
+        }
         actionLabel="Avbestill og refunder"
-        cancelLabel="Behold"
         destructive
         loading={loading}
         loadingText="Refunderer"
@@ -559,7 +562,12 @@ export function ParticipantDetailDrawer({
         open={confirmKind === 'refund-only'}
         onOpenChange={(o) => !o && !loading && setConfirmKind(null)}
         title="Refunder beløp"
-        body={<><strong>{name}</strong> refunderes <strong>{formatKroner(signup.amount_paid ?? 0)}</strong>.</>}
+        body={
+          <>
+            Påmeldingen til <strong>{name}</strong> refunderes.{' '}
+            <strong>{formatKroner(sellerPayout ?? 0)}</strong> trekkes fra oppgjøret ditt.
+          </>
+        }
         actionLabel="Refunder"
         destructive
         loading={loading}

@@ -159,7 +159,6 @@ export function SendCourseMessageDrawer({
         title="Forkast meldingen?"
         body="Meldingen forsvinner og blir ikke sendt."
         actionLabel="Forkast"
-        cancelLabel="Behold"
         destructive
         onConfirm={() => {
           setShowDiscardConfirm(false);
