@@ -283,7 +283,7 @@ function StudioPageSkeleton() {
                     <Skeleton className="h-4 w-11" />
                     <Skeleton className="h-3.5 w-12" />
                   </div>
-                  <Skeleton className="size-12 shrink-0 rounded-lg" />
+                  <Skeleton className="size-16 shrink-0 rounded-lg" />
                   <div className="min-w-0 flex-1 space-y-2">
                     <Skeleton className="h-4 w-48 max-w-full" />
                     <Skeleton className="h-3.5 w-64 max-w-full" />

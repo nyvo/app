@@ -908,7 +908,6 @@ const CoursePage = () => {
     return (
       <PageShell
         title={<Skeleton className="h-7 w-64" />}
-        badgePlacement="below"
         badge={<Skeleton className="h-4 w-32" />}
         tabs={<Skeleton className="h-10 w-full max-w-md" />}
       >
@@ -967,7 +966,6 @@ const CoursePage = () => {
     <>
       <PageShell
         title={courseData.title}
-        badgePlacement="below"
         badge={<StatusBadge status={courseData.status} />}
         action={
           // Drafts publish from the Oversikt readiness card — no header button.

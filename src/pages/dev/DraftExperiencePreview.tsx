@@ -119,7 +119,6 @@ function State({
           animate={false}
           className="px-0 pb-0 pt-0 sm:px-0 lg:px-0 lg:pt-0 md:pb-0"
           title={course.title}
-          badgePlacement="below"
           badge={<StatusBadge status={course.status} />}
           tabs={
             <PageTabs ariaLabel="Kursseksjoner">

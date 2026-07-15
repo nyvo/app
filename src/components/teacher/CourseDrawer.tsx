@@ -143,19 +143,14 @@ function DrawerHeader({
 
   return (
     <SheetHeader>
-      {/* Title owns its row (Cron/Notion Calendar event-panel model); state
-          moves to its own row below the meta so nothing competes with it.
-          StatusBadge centralizes all status treatments incl. Avlyst. */}
-      <SheetTitle className="leading-tight">{title}</SheetTitle>
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <SheetTitle className="leading-tight">{title}</SheetTitle>
+        {showBadge && <StatusBadge status={status as CourseStatus} />}
+      </div>
       {description && (
         <SheetDescription asChild>
           <div className="mt-1.5">{description}</div>
         </SheetDescription>
-      )}
-      {showBadge && (
-        <div className="mt-2.5">
-          <StatusBadge status={status as CourseStatus} />
-        </div>
       )}
     </SheetHeader>
   );

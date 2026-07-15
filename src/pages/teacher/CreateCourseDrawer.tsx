@@ -684,6 +684,7 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
                       value={location}
                       coords={locationCoords}
                       address={locationAddress}
+                      showSelectionDetails={false}
                       aria-invalid={showError('location')}
                       aria-describedby={errorId}
                       onChange={({ name, address, coords }) => {
