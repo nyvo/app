@@ -1,6 +1,12 @@
 import { Heading, Text } from '@react-email/components'
 import * as React from 'react'
-import { DetailBlock, DetailRow, EmailLayout, styles } from './_layout.tsx'
+import {
+  ArrangorContact,
+  DetailBlock,
+  DetailRow,
+  EmailLayout,
+  styles,
+} from './_layout.tsx'
 
 export interface OrderConfirmProps {
   buyerName: string
@@ -17,7 +23,7 @@ export interface OrderConfirmProps {
   /** Pre-formatted org number, e.g. "987 654 321". The receipt is the one
    * surface that identifies the legal seller — name + org.nr together. */
   arrangorOrgNumber?: string
-  /** Set when the email's replyTo routes to the arrangør. */
+  /** Arrangør address shown as the participant's contact route. */
   arrangorEmail?: string
 }
 
@@ -39,8 +45,8 @@ export const OrderConfirm = ({
     </Heading>
     <Text style={styles.paragraph}>
       {registeredByStudio
-        ? `Hei ${buyerName}, ${studioName} har meldt deg på ${courseTitle}.`
-        : `Hei ${buyerName}, takk for påmeldingen til ${courseTitle} hos ${studioName}.`}
+        ? `Hei${buyerName ? ` ${buyerName}` : ''}, ${studioName} har meldt deg på ${courseTitle}.`
+        : `Hei${buyerName ? ` ${buyerName}` : ''}, takk for påmeldingen til ${courseTitle} hos ${studioName}.`}
     </Text>
 
     <DetailBlock>
@@ -58,13 +64,14 @@ export const OrderConfirm = ({
     </DetailBlock>
 
     {arrangorEmail ? (
-      <Text style={styles.paragraphMuted}>
-        Spørsmål om kurset, avlysning eller refusjon? Svar på denne e-posten,
-        så når du arrangøren direkte.
-      </Text>
+      <ArrangorContact
+        question="Spørsmål om kurset, avlysning eller refusjon?"
+        studioName={studioName}
+        email={arrangorEmail}
+      />
     ) : null}
     <Text style={styles.paragraphMuted}>
-      Vi sender en påminnelse dagen før kurset starter.
+      Vi sender en påminnelse før hver kursøkt.
     </Text>
   </EmailLayout>
 )

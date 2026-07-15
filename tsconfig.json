@@ -31,11 +31,14 @@
     "noUncheckedSideEffectImports": true
   },
   "include": ["src"],
-  // The email-template render test imports Deno-targeted React Email
+  // The email-template render tests import Deno-targeted React Email
   // templates from supabase/functions/send-email/templates/, which use the
   // classic JSX transform (`import * as React`) and would fail this
   // tsconfig's react-jsx + noUnusedLocals. Vitest still runs it (vitest
   // include covers src/**); tsc just doesn't pull the Deno files into the
   // app program.
-  "exclude": ["src/test/cancellation-emails.test.tsx"]
+  "exclude": [
+    "src/test/cancellation-emails.test.tsx",
+    "src/test/email-templates.test.tsx"
+  ]
 }

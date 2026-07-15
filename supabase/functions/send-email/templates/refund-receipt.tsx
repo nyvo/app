@@ -1,6 +1,12 @@
 import { Heading, Text } from '@react-email/components'
 import * as React from 'react'
-import { DetailBlock, DetailRow, EmailLayout, styles } from './_layout.tsx'
+import {
+  ArrangorContact,
+  DetailBlock,
+  DetailRow,
+  EmailLayout,
+  styles,
+} from './_layout.tsx'
 
 export interface RefundReceiptProps {
   buyerName: string
@@ -11,7 +17,7 @@ export interface RefundReceiptProps {
   bookingId: string
   /** Pre-formatted org number, e.g. "987 654 321". */
   arrangorOrgNumber?: string
-  /** Set when the email's replyTo routes to the arrangør. */
+  /** Arrangør address shown as the participant's contact route. */
   arrangorEmail?: string
 }
 
@@ -25,15 +31,16 @@ export const RefundReceipt = ({
   arrangorOrgNumber,
   arrangorEmail,
 }: RefundReceiptProps) => (
-  <EmailLayout preview={`Refusjon utbetalt — ${amount}`}>
+  <EmailLayout preview={`Refusjon bekreftet — ${amount}`}>
     <Heading as="h1" style={styles.h1}>
-      Refusjon utbetalt
+      Refusjon bekreftet
     </Heading>
     <Text style={styles.paragraph}>
-      Hei {buyerName}, vi har refundert {amount} for {courseTitle}.
+      Hei{buyerName ? ` ${buyerName}` : ''}, refusjonen på {amount} for {courseTitle} er
+      behandlet.
     </Text>
     <Text style={styles.paragraph}>
-      Pengene er på vei tilbake til samme betalingsmetode du brukte. Det tar
+      Pengene er på vei tilbake til samme betalingsmåte du brukte. Det tar
       normalt 3–5 virkedager før det vises på kontoen din.
     </Text>
 
@@ -51,10 +58,11 @@ export const RefundReceipt = ({
     </DetailBlock>
 
     {arrangorEmail ? (
-      <Text style={styles.paragraphMuted}>
-        Spørsmål om refusjonen? Svar på denne e-posten, så når du arrangøren
-        direkte.
-      </Text>
+      <ArrangorContact
+        question="Spørsmål om refusjonen?"
+        studioName={studioName}
+        email={arrangorEmail}
+      />
     ) : null}
   </EmailLayout>
 )

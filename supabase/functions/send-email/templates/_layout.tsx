@@ -80,7 +80,7 @@ export const EmailLayout = ({ preview, children }: EmailLayoutProps) => (
           {children}
         </Section>
         <Text style={footer}>
-          Spørsmål? Skriv til{' '}
+          Trenger du hjelp med Openspot? Skriv til{' '}
           <Link href="mailto:hei@framio.no" style={footerLink}>
             hei@framio.no
           </Link>
@@ -125,6 +125,33 @@ export const styles = {
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
   },
 } as const
+
+const contentLink = {
+  color: '#717171',
+  textDecoration: 'underline',
+  textUnderlineOffset: '2px',
+}
+
+interface ArrangorContactProps {
+  question: string
+  studioName: string
+  email: string
+}
+
+/** Shows the actual contact route instead of relying on email-client reply behavior. */
+export const ArrangorContact = ({
+  question,
+  studioName,
+  email,
+}: ArrangorContactProps) => (
+  <Text style={styles.paragraphMuted}>
+    {question} Kontakt {studioName} på{' '}
+    <Link href={`mailto:${email}`} style={contentLink}>
+      {email}
+    </Link>
+    .
+  </Text>
+)
 
 // ————— Detail rows —————
 // Two-column key/value rows (label left, value right-aligned), separated
