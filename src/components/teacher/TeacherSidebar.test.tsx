@@ -1,0 +1,64 @@
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { TeacherSidebar } from './TeacherSidebar';
+
+const signOut = vi.fn(async () => undefined);
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    signOut,
+    profile: { name: 'Kari Nordmann', email: 'kari@example.no', role: 'buyer' },
+    currentSeller: null,
+    sellers: [],
+    sellersLoadFailed: false,
+  }),
+}));
+
+function renderSidebar() {
+  return render(
+    <MemoryRouter initialEntries={['/overview']}>
+      <TooltipProvider>
+        <SidebarProvider defaultOpen>
+          <TeacherSidebar />
+          <main />
+        </SidebarProvider>
+      </TooltipProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe('TeacherSidebar desktop collapse', () => {
+  beforeEach(() => {
+    window.innerWidth = 1280;
+    signOut.mockClear();
+  });
+
+  it('collapses to an icon rail and keeps the same sidebar icon in the header', () => {
+    const { container } = renderSidebar();
+    const sidebar = container.querySelector<HTMLElement>('[data-slot="sidebar"][data-state]');
+    const header = container.querySelector<HTMLElement>('[data-sidebar="header"]');
+
+    expect(sidebar).toHaveAttribute('data-state', 'expanded');
+    expect(header).not.toBeNull();
+
+    const toggle = within(header!).getByRole('button', { name: 'Skjul sidemeny' });
+    expect(toggle).toHaveAttribute('data-sidebar', 'trigger');
+    expect(toggle.querySelector('.lucide-panel-left')).toBeInTheDocument();
+    expect(toggle.querySelector('.lucide-x')).not.toBeInTheDocument();
+
+    fireEvent.click(toggle);
+
+    expect(sidebar).toHaveAttribute('data-state', 'collapsed');
+    expect(sidebar).toHaveAttribute('data-collapsible', 'icon');
+
+    const collapsedToggle = within(header!).getByRole('button', { name: 'Vis sidemeny' });
+    expect(collapsedToggle).toBe(toggle);
+    expect(collapsedToggle.querySelector('.lucide-panel-left')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Openspot' })).toHaveClass(
+      'group-data-[collapsible=icon]:hidden',
+    );
+  });
+});
