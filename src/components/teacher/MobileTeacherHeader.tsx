@@ -13,7 +13,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 export const MOBILE_HEADER_HEIGHT = 57;
 
 /**
- * Compact-screen top bar (hidden ≥xl, where the persistent sidebar rail shows).
+ * Compact-screen top bar (hidden ≥lg, where the persistent sidebar shows).
  * Renders only an icon trigger on the left — the page title is shown in-content
  * by PageShell / page-state, so repeating it here would just duplicate the h1.
  * The trigger sits on the left to match the left-opening drawer (tap origin =
@@ -31,7 +31,7 @@ export const MobileTeacherHeader: React.FC = () => {
   return (
     <>
       <div
-        className="fixed inset-x-0 top-0 z-30 flex xl:hidden items-center border-b border-sidebar-border bg-sidebar px-2 py-2 safe-area-top"
+        className="fixed inset-x-0 top-0 z-30 flex items-center border-b border-sidebar-border bg-sidebar px-2 py-2 safe-area-top lg:hidden"
         style={{
           minHeight: `calc(env(safe-area-inset-top, 0px) + ${MOBILE_HEADER_HEIGHT}px)`,
         }}
@@ -48,7 +48,7 @@ export const MobileTeacherHeader: React.FC = () => {
       </div>
       <div
         aria-hidden
-        className="xl:hidden shrink-0"
+        className="shrink-0 lg:hidden"
         style={{
           height: `calc(env(safe-area-inset-top, 0px) + ${MOBILE_HEADER_HEIGHT}px)`,
         }}

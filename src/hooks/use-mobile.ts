@@ -3,9 +3,9 @@ import * as React from "react"
 const MOBILE_BREAKPOINT = 768
 
 /**
- * Reports whether the viewport is narrower than `breakpoint`. Components that
- * use a tablet-specific layout can supply their own breakpoint without
- * changing the phone-only behavior of dialogs, sheets, and notifications.
+ * Reports whether the viewport is narrower than `breakpoint`. Components with
+ * their own responsive layout can supply a threshold without changing the
+ * phone-only behavior of dialogs, sheets, and notifications.
  */
 export function useIsMobile(breakpoint = MOBILE_BREAKPOINT) {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)

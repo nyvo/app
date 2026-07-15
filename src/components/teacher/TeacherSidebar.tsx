@@ -82,7 +82,7 @@ export const TeacherSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile, currentSeller, sellers, sellersLoadFailed } = useAuth();
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { isMobile, setOpen, setOpenMobile } = useSidebar();
   // Seller authority = presence of a seller_members row (same test as
   // RoleRoute), not the profiles.role UX hint — a seller whose role hint lags
   // still gets the seller nav, setup card and upsell. When the memberships
@@ -128,6 +128,18 @@ export const TeacherSidebar = () => {
           >
             <X />
             <span className="sr-only">Lukk sidemeny</span>
+          </Button>
+        )}
+        {!isMobile && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-10 shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            onClick={() => setOpen(false)}
+          >
+            <X />
+            <span className="sr-only">Skjul sidemeny</span>
           </Button>
         )}
       </SidebarHeader>

@@ -22,7 +22,7 @@ const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
-const SIDEBAR_DRAWER_BREAKPOINT = 1280
+const SIDEBAR_DRAWER_BREAKPOINT = 1024
 
 type SidebarContextProps = {
   state: "expanded" | "collapsed"
@@ -85,8 +85,9 @@ function SidebarProvider({
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }) {
-  // Use the drawer for tablets too. Other responsive components retain the
-  // hook's phone breakpoint, so this does not turn tablet dialogs into sheets.
+  // Below lg the 16rem sidebar would leave too little room for dashboard
+  // content, so compact screens keep the drawer. At lg and above (including
+  // iPad Pro landscape), it becomes a persistent, user-collapsible sidebar.
   const isMobile = useIsMobile(SIDEBAR_DRAWER_BREAKPOINT)
   const [openMobile, setOpenMobile] = React.useState(false)
 
@@ -249,7 +250,7 @@ function Sidebar({
 
   return (
     <div
-      className="group peer hidden text-foreground-muted xl:block"
+      className="group peer hidden text-foreground-muted lg:block"
       data-state={state}
       data-collapsible={state === "collapsed" ? collapsible : ""}
       data-variant={variant}
@@ -272,7 +273,7 @@ function Sidebar({
         data-slot="sidebar-container"
         data-side={side}
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] xl:flex",
+          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] lg:flex",
           // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
@@ -349,7 +350,7 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
     <main
       data-slot="sidebar-inset"
       className={cn(
-        "relative flex min-h-0 w-full flex-1 flex-col bg-canvas xl:peer-data-[variant=inset]:mt-3 xl:peer-data-[variant=inset]:rounded-t-xl xl:peer-data-[variant=inset]:border-l xl:peer-data-[variant=inset]:border-t xl:peer-data-[variant=inset]:border-border",
+        "relative flex min-h-0 w-full flex-1 flex-col bg-canvas lg:peer-data-[variant=inset]:mt-3 lg:peer-data-[variant=inset]:rounded-t-xl lg:peer-data-[variant=inset]:border-l lg:peer-data-[variant=inset]:border-t lg:peer-data-[variant=inset]:border-border",
         className
       )}
       {...props}
@@ -467,7 +468,7 @@ function SidebarGroupAction({
       data-slot="sidebar-group-action"
       data-sidebar="group-action"
       className={cn(
-        "absolute top-3.5 right-3 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-foreground-muted outline-hidden transition-transform group-data-[collapsible=icon]:hidden after:absolute after:-inset-2 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring xl:after:hidden [&>svg]:size-4 [&>svg]:shrink-0",
+        "absolute top-3.5 right-3 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-foreground-muted outline-hidden transition-transform group-data-[collapsible=icon]:hidden after:absolute after:-inset-2 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring lg:after:hidden [&>svg]:size-4 [&>svg]:shrink-0",
         className
       )}
       {...props}
@@ -603,9 +604,9 @@ function SidebarMenuAction({
       data-slot="sidebar-menu-action"
       data-sidebar="menu-action"
       className={cn(
-        "absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-foreground-muted outline-hidden transition-transform group-data-[collapsible=icon]:hidden peer-hover/menu-button:text-foreground peer-data-[size=default]/menu-button:top-1.5 peer-data-[size=lg]/menu-button:top-2.5 peer-data-[size=sm]/menu-button:top-1 after:absolute after:-inset-2 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring xl:after:hidden [&>svg]:size-4 [&>svg]:shrink-0",
+        "absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-foreground-muted outline-hidden transition-transform group-data-[collapsible=icon]:hidden peer-hover/menu-button:text-foreground peer-data-[size=default]/menu-button:top-1.5 peer-data-[size=lg]/menu-button:top-2.5 peer-data-[size=sm]/menu-button:top-1 after:absolute after:-inset-2 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring lg:after:hidden [&>svg]:size-4 [&>svg]:shrink-0",
         showOnHover &&
-          "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 peer-data-active/menu-button:text-foreground aria-expanded:opacity-100 xl:opacity-0",
+          "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 peer-data-active/menu-button:text-foreground aria-expanded:opacity-100 lg:opacity-0",
         className
       )}
       {...props}
