@@ -10,14 +10,12 @@ export const AUTH_ROUTES = {
 } as const
 
 // SessionStorage handshake between signInWithGoogle and AuthCallbackPage.
-// The PKCE code-verifier lives in localStorage, which is shared across tabs —
-// and auth-js DELETES it whenever any tab's dead session fails a getUser()
-// check. A background tab with a revoked session can therefore destroy an
-// in-flight login's verifier while the user is on Google's consent screen,
-// leaving the returned ?code= unredeemable (no exchange, no error params).
-// These keys let the callback page recognize that case and silently restart
-// the flow once instead of showing a dead-link error. Session-scoped on
-// purpose: the OAuth redirect returns to the same tab that set them.
+// createAuthStorage isolates PKCE verifier ownership per tab, preventing the
+// known cross-tab deletion race. These keys remain a second line of defence:
+// if a verifier is unavailable for another reason, the callback recognizes a
+// Google return and silently restarts the flow once instead of showing a
+// dead-link error. Session-scoped on purpose: the OAuth redirect returns to
+// the same tab that set them.
 export const OAUTH_PROVIDER_STORAGE_KEY = 'os-oauth-provider'
 export const OAUTH_RETRIED_STORAGE_KEY = 'os-oauth-retried'
 

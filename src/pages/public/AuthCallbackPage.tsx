@@ -100,11 +100,10 @@ const AuthCallbackPage = () => {
     if (error || user) return // error already shown, or profile still loading
 
     // No session after the grace window. If this is a Google return whose
-    // ?code= never got exchanged (a background tab with a revoked session
-    // deleted the shared PKCE verifier while the user was on Google's page),
-    // the code is unredeemable — restart the flow once instead of showing a
-    // dead-link error. Google re-approves instantly, so the user just sees a
-    // slightly longer spinner.
+    // ?code= never got exchanged (for example because browser storage was
+    // cleared while the user was on Google's page), the code is unredeemable —
+    // restart the flow once instead of showing a dead-link error. Google
+    // re-approves instantly, so the user just sees a slightly longer spinner.
     const timer = window.setTimeout(() => {
       void (async () => {
         let retryArmed = false
