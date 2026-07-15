@@ -190,7 +190,7 @@ export function ImageField({
       aria-invalid={displayError ? true : undefined}
       aria-describedby={describedBy}
       className={cn(
-        'group relative shrink-0 cursor-pointer overflow-hidden transition-[color,background-color,transform] duration-150 ease-out outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle active:translate-y-px disabled:cursor-not-allowed',
+        'group relative shrink-0 cursor-pointer overflow-hidden transition-[color,background-color,transform] duration-150 [transition-timing-function:var(--ease-out)] outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle active:translate-y-px disabled:cursor-not-allowed',
         isAvatar ? 'size-24 rounded-full' : 'aspect-[16/10] w-full rounded-xl',
         displayUrl
           ? 'border border-border bg-muted'

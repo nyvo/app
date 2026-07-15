@@ -115,7 +115,6 @@ function BillingPagePreview({
 
   return (
     <PageShell
-      animate={false}
       narrow="centered"
       className="px-0 pb-0 pt-0 sm:px-0 lg:px-0 lg:pt-0 md:pb-0"
       title="Abonnement"

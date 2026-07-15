@@ -142,7 +142,7 @@ export function DirtyFormBar({
             // Interruptible transition (not a keyframe animation) so it can
             // reverse mid-flight. Matches toast motion (slide-up + fade);
             // exit is faster than enter, matching the rest of the app.
-            "opacity-0 translate-y-2 transition-[opacity,transform] duration-200 ease-out data-[state=closed]:duration-150",
+            "opacity-0 translate-y-2 transition-[opacity,transform] duration-200 [transition-timing-function:var(--ease-out)] data-[state=closed]:duration-150",
             "data-[state=open]:opacity-100 data-[state=open]:translate-y-0",
             className,
           )}

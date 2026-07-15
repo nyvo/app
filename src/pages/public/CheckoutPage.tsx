@@ -1566,7 +1566,7 @@ function MetaLine({ text }: { text: string }) {
   return (
     <p
       className={cn(
-        'mt-px truncate text-xs text-foreground-muted transition-[opacity,filter] duration-150 ease-out motion-reduce:transition-none motion-reduce:opacity-100 motion-reduce:blur-none',
+        'mt-px truncate text-xs text-foreground-muted transition-[opacity,filter] duration-150 [transition-timing-function:var(--ease-out)] motion-reduce:transition-none motion-reduce:opacity-100 motion-reduce:blur-none',
         swapping && 'opacity-0 blur-[2px]',
       )}
     >

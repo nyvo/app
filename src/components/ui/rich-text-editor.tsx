@@ -40,7 +40,7 @@ function ToolbarButton({ onClick, isActive, disabled, label, children }: Toolbar
           aria-pressed={isActive}
           aria-label={label}
           className={cn(
-            'inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground-muted transition-[color,background-color,transform] duration-150 ease-out',
+            'motion-press inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground-muted',
             'hover:bg-muted hover:text-foreground',
             'focus-visible:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle',
             'active:translate-y-px',
@@ -186,7 +186,7 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-xl border border-border bg-surface transition-[color,border-color,box-shadow] duration-150 ease-out',
+        'motion-color overflow-hidden rounded-xl border border-border bg-surface',
         'focus-within:border-foreground focus-within:ring-2 focus-within:ring-ring-subtle',
         className,
       )}

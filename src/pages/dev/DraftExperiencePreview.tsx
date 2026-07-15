@@ -116,7 +116,6 @@ function State({
     <PreviewSection label={label}>
       <div className="bg-canvas pb-12">
         <PageShell
-          animate={false}
           className="px-0 pb-0 pt-0 sm:px-0 lg:px-0 lg:pt-0 md:pb-0"
           title={course.title}
           badge={<StatusBadge status={course.status} />}

@@ -60,5 +60,10 @@ describe('TeacherSidebar desktop collapse', () => {
     expect(screen.getByRole('link', { name: 'Openspot' })).toHaveClass(
       'group-data-[collapsible=icon]:hidden',
     );
+    const overview = screen.getByRole('link', { name: 'Oversikt' });
+    expect(overview).toHaveClass('transition-colors', 'duration-150', 'ease');
+    expect(overview.className).not.toContain('width');
+    expect(overview.className).not.toContain('height');
+    expect(overview.className).not.toContain('padding');
   });
 });

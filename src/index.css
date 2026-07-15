@@ -200,6 +200,11 @@
 }
 
 :root {
+  /* Motion — canonical curves shared with src/lib/motion.ts. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
   /* ── LAYER 1 · PRIMITIVES (Radix scales in OKLCH) ──
      Don't consume directly in components. Reference via semantic
      tokens below. Adding a new color = define here first.
@@ -467,17 +472,38 @@
     scrollbar-color: var(--foreground) transparent;
   }
 
-  /* Reduced motion — covers CSS animations/transitions (tw-animate-css,
-     animate-in/out in popover, dropdown, sheet, …). framer-motion variants
-     are handled separately in lib/motion.ts. */
+  /* Reduced motion — suppress movement while preserving short color/opacity
+     feedback. Framer Motion handles transform/layout motion separately via
+     MotionConfig in App.tsx. */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
+      transition-property: color, background-color, border-color, opacity, box-shadow !important;
       scroll-behavior: auto !important;
+    }
+
+    /* tw-animate-css combines fades with translate/scale/rotate/filter in one
+       keyframe. Keep its useful opacity bridge, but neutralize vestibular
+       properties and delays. Other keyframes (accordion, caret, etc.) remain
+       suppressed by the universal 0.01ms rule above. */
+    [class*='animate-in'],
+    [class*='animate-out'] {
+      --tw-enter-blur: 0 !important;
+      --tw-enter-rotate: 0 !important;
+      --tw-enter-scale: 1 !important;
+      --tw-enter-translate-x: 0 !important;
+      --tw-enter-translate-y: 0 !important;
+      --tw-exit-blur: 0 !important;
+      --tw-exit-rotate: 0 !important;
+      --tw-exit-scale: 1 !important;
+      --tw-exit-translate-x: 0 !important;
+      --tw-exit-translate-y: 0 !important;
+      --tw-animation-delay: 0s !important;
+      animation-delay: 0s !important;
+      animation-duration: 150ms !important;
     }
   }
 
@@ -503,6 +529,22 @@
 @layer components {
   /* ── App utilities — not part of the preset, reused across the app ── */
 
+  .motion-color {
+    transition-property: color, background-color, border-color, box-shadow;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+  }
+
+  .motion-press {
+    transition-property: color, background-color, border-color, transform, translate, scale;
+    transition-duration: 100ms;
+    transition-timing-function: ease, ease, ease, var(--ease-out), var(--ease-out), var(--ease-out);
+  }
+
+  .motion-press:active {
+    transition-duration: 150ms;
+  }
+
   /* Focus Ring — opt-in helper for custom clickable surfaces.
      2px neutral ring, same weight as the `focus-visible:ring-2 ring-ring`
      pattern used across components. */
@@ -515,12 +557,12 @@
     box-shadow: var(--tw-ring-shadow);
   }
 
-  /* iOS-style easing for inputs & interactive controls */
+  /* Legacy booking-control utility; color feedback follows the shared timing. */
   .ios-ease {
-    transition: border-color 0.3s cubic-bezier(0.25, 1, 0.5, 1),
-                box-shadow 0.3s cubic-bezier(0.25, 1, 0.5, 1),
-                background-color 0.3s cubic-bezier(0.25, 1, 0.5, 1),
-                color 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: border-color 150ms ease,
+                box-shadow 150ms ease,
+                background-color 150ms ease,
+                color 150ms ease;
   }
 
   /* Soft elevation — the system is otherwise flat (white-on-white + border).
