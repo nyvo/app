@@ -3,6 +3,7 @@ import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import type { Profile, Seller, SellerMemberRole, UserRole } from '@/types/database'
 import { logger } from '@/lib/logger'
+import { isTransientAuthError } from '@/lib/auth-errors'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
 import { fetchSellerOperational } from '@/services/sellers'
 import { claimMySignups } from '@/services/signups'
@@ -210,17 +211,6 @@ async function hydrateSellerOperational(
   }
 }
 
-// Classify an auth error from getUser(). Only clearly transient transport
-// failures (offline fetch, 5xx, no-status/no-code) keep the session alive; a
-// definitive verdict (401/403, deleted user → auth code + 4xx) signs out. Kept
-// conservative on purpose: a genuinely deleted user must never stay signed in.
-function isTransientAuthError(error: { name?: string; status?: number; code?: string }): boolean {
-  if (error.name === 'AuthRetryableFetchError') return true
-  const { status, code } = error
-  if (typeof status === 'number' && status >= 500) return true
-  if (status === 0) return true
-  return status === undefined && !code
-}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -253,18 +243,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // only a definitive verdict (deleted user, revoked/absent session) signs
     // out. On a transient error we keep the session and proceed with the cached
     // user; a downstream profile-fetch failure is surfaced by the route guards.
+    // All automatic cleanups here use scope 'local': the default 'global'
+    // revokes every session the user has, so a tab booting with a stale
+    // session would kill the fresh session just created in another tab —
+    // leaving that tab rendering (JWT still signature-valid for RLS) while
+    // every edge function 401s on its session_not_found getUser check.
     const { data: { user: verifiedUser }, error: userError } = await supabase.auth.getUser()
     if (userError) {
       if (!isTransientAuthError(userError)) {
         logger.error('User no longer exists server-side, signing out')
-        await supabase.auth.signOut()
+        await supabase.auth.signOut({ scope: 'local' })
         return false
       }
       logger.warn('getUser failed transiently; keeping session and using cached user', userError)
     } else if (!verifiedUser) {
       // Succeeded with no user — the session is genuinely invalid.
       logger.error('User no longer exists server-side, signing out')
-      await supabase.auth.signOut()
+      await supabase.auth.signOut({ scope: 'local' })
       return false
     }
 
@@ -282,13 +277,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error: healError } = await supabase.rpc('ensure_own_profile')
       if (healError) {
         logger.error('Failed to self-heal missing profile, signing out:', healError)
-        await supabase.auth.signOut()
+        await supabase.auth.signOut({ scope: 'local' })
         return false
       }
       userProfile = await fetchProfileData(userId)
       if (!userProfile) {
         logger.error('Profile still missing after self-heal, signing out')
-        await supabase.auth.signOut()
+        await supabase.auth.signOut({ scope: 'local' })
         return false
       }
     }

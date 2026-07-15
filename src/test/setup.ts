@@ -34,6 +34,9 @@ vi.mock('@/lib/supabase', () => ({
     from: vi.fn(mockQueryBuilder),
     auth: {
       getUser: vi.fn(),
+      // Null session by default so the dead-session recovery in
+      // extractEdgeError no-ops for tests that simulate edge 401s.
+      getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
       signInWithPassword: vi.fn(),
       signUp: vi.fn(),
       signOut: vi.fn(),
