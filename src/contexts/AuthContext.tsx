@@ -120,7 +120,9 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
         cover_image_url,
         default_course_image_url,
         created_at,
-        stripe_onboarding_complete
+        stripe_onboarding_complete,
+        student_discount_percent,
+        senior_discount_percent
       )
     `)
     .eq('user_id', userId)
@@ -151,6 +153,8 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
       stripe_account_status: null,
       stripe_onboarding_complete: (s.stripe_onboarding_complete ?? false) as boolean,
       stripe_payouts_enabled: false,
+      student_discount_percent: (s.student_discount_percent ?? null) as number | null,
+      senior_discount_percent: (s.senior_discount_percent ?? null) as number | null,
       operating_model: 'solo',
       organization_number: null,
       subscription_plan: 'free',
@@ -592,6 +596,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       stripe_account_status: null,
       stripe_onboarding_complete: false,
       stripe_payouts_enabled: false,
+      student_discount_percent: null,
+      senior_discount_percent: null,
       operating_model: operatingModel,
       organization_number: null,
       subscription_plan: 'free',

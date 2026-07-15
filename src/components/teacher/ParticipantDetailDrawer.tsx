@@ -76,12 +76,18 @@ function paymentMethodLabel(product: string | null | undefined): string | null {
 function ticketLabel(
   kind: SignupWithProfile['ticket_kind_snapshot'],
   audience: SignupWithProfile['ticket_audience_snapshot'],
+  labelSnapshot?: string | null,
 ): string {
-  if (kind === 'drop_in') return 'Drop-in';
-  if (audience && audience !== 'standard') {
-    return `Hele kurset – ${AUDIENCE_LABEL[audience].toLowerCase()}`;
-  }
-  return 'Hele kurset';
+  const base =
+    kind === 'drop_in'
+      ? 'Drop-in'
+      : audience && audience !== 'standard'
+        ? `Hele kurset – ${AUDIENCE_LABEL[audience].toLowerCase()}`
+        : 'Hele kurset';
+  // Honor-system discount claim, marked on the label snapshot at charge time
+  // (create-stripe-connect-session) — the seller's only trace of the claim.
+  const discountMark = labelSnapshot?.match(/– (?:student|pensjonist) \(−\d+ %\)/)?.[0];
+  return discountMark ? `${base} ${discountMark}` : base;
 }
 
 type ActivityTone = 'success' | 'danger' | 'warning' | 'neutral';
@@ -332,7 +338,11 @@ export function ParticipantDetailDrawer({
                 )}
                 <Row
                   label="Billett"
-                  value={ticketLabel(signup.ticket_kind_snapshot, signup.ticket_audience_snapshot)}
+                  value={ticketLabel(
+                    signup.ticket_kind_snapshot,
+                    signup.ticket_audience_snapshot,
+                    signup.ticket_label_snapshot,
+                  )}
                 />
                 {expectedPrice != null && (
                   <Row

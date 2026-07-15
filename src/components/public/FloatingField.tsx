@@ -26,9 +26,9 @@ export const FloatingField = React.forwardRef<HTMLInputElement, FloatingFieldPro
           id={id}
           placeholder=" "
           className={cn(
-            // 52px shell: pt-22 + pb-6 + text-base line-height 24 = 52 exactly.
+            // 52px shell: pt-24 + text-base line-height 24 + pb-4 = 52 exactly.
             // The arbitrary paddings encode the float geometry, not spacing drift.
-            'peer h-[52px] w-full min-w-0 rounded-xl border border-input bg-surface px-4 pt-[22px] pb-[6px] text-base text-foreground outline-none transition-colors duration-150 ease-out placeholder:text-transparent',
+            'peer h-[52px] w-full min-w-0 rounded-xl border border-input bg-surface px-4 pt-[24px] pb-[4px] text-base text-foreground outline-none transition-colors duration-150 ease-out placeholder:text-transparent',
             'focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle',
             'aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20',
             'disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50',
@@ -39,9 +39,14 @@ export const FloatingField = React.forwardRef<HTMLInputElement, FloatingFieldPro
         <label
           htmlFor={id}
           className={cn(
-            'pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base text-foreground-muted transition-[top,transform,font-size,color] duration-150 ease-out',
-            'peer-focus:top-[13px] peer-focus:translate-y-0 peer-focus:text-[11px]',
-            'peer-[:not(:placeholder-shown)]:top-[13px] peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px]',
+            // leading-none keeps the floated caption's line box at its 11px
+            // font height — with text-base's inherited 24px line-height the
+            // caption's box overlapped the value text below it. Caption spans
+            // y 8–19, value starts at 24 → a real 5px gap. Rest-state
+            // centering (top-1/2 + translate) is line-height-independent.
+            'pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base leading-none text-foreground-muted transition-[top,transform,font-size,color] duration-150 ease-out',
+            'peer-focus:top-[8px] peer-focus:translate-y-0 peer-focus:text-[11px]',
+            'peer-[:not(:placeholder-shown)]:top-[8px] peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px]',
           )}
         >
           {label}

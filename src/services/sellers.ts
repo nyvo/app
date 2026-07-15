@@ -68,11 +68,101 @@ export async function fetchSellerBySlug(
   return { data: aliasedSeller as unknown as PublicSeller, error: null }
 }
 
-// The old `fetchStudioLocation` (RPC `public_studio_location` over
-// `teacher_locations`) was removed 2026-07-11 with the Studio "Sted" tab —
-// the table never got data, so the storefront's display location is derived
-// from course locations alone (deriveStudioFacts). The RPC/table still exist
-// in the DB; re-add a read here if the saved-locations feature returns.
+// ── Studio address (teacher_locations) ──────────────────────────────────
+//
+// The single canonical studio address (2026-07-15). The parked saved-locations
+// feature left the table + `public_studio_location` RPC in the DB with owner
+// CRUD via RLS; this uses them as a one-row-per-seller address. Both reads
+// treat the earliest row as canonical — the same row the RPC picks.
+
+/** The studio's display address, shaped for LocationField / StudioLocation. */
+export interface StudioAddress {
+  name: string
+  address: string | null
+  lat: number | null
+  lon: number | null
+  placeId: string | null
+}
+
+/** Settings read — the seller's canonical (earliest) address row, if any. */
+export async function fetchStudioAddress(
+  sellerId: string
+): Promise<{ data: StudioAddress | null; error: Error | null }> {
+  const { data, error } = await supabase
+    .from('teacher_locations')
+    .select('name, address, lat, lon, google_place_id')
+    .eq('seller_id', sellerId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) return { data: null, error: error as Error }
+  if (!data) return { data: null, error: null }
+  return {
+    data: {
+      name: data.name,
+      address: data.address,
+      lat: data.lat,
+      lon: data.lon,
+      placeId: data.google_place_id,
+    },
+    error: null,
+  }
+}
+
+/** Saves the studio address as the seller's single row; null clears it. */
+export async function saveStudioAddress(
+  sellerId: string,
+  input: StudioAddress | null
+): Promise<{ error: Error | null }> {
+  if (input === null) {
+    const { error } = await supabase.from('teacher_locations').delete().eq('seller_id', sellerId)
+    return { error: (error as Error | null) ?? null }
+  }
+
+  const row = {
+    name: input.name,
+    address: input.address,
+    lat: input.lat,
+    lon: input.lon,
+    google_place_id: input.placeId,
+  }
+
+  const { data: existing, error: readError } = await supabase
+    .from('teacher_locations')
+    .select('id')
+    .eq('seller_id', sellerId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  if (readError) return { error: readError as Error }
+
+  const { error } = existing
+    ? await supabase.from('teacher_locations').update(row).eq('id', existing.id)
+    : await supabase.from('teacher_locations').insert({ ...row, seller_id: sellerId })
+  return { error: (error as Error | null) ?? null }
+}
+
+/** Public storefront read — the studio's address for a storefront slug
+ *  (SECURITY DEFINER RPC, anon-safe). Null when the studio hasn't set one. */
+export async function fetchPublicStudioLocation(
+  slug: string
+): Promise<{ data: StudioAddress | null; error: Error | null }> {
+  const { data, error } = await supabase.rpc('public_studio_location', { p_slug: slug })
+  if (error) return { data: null, error: error as Error }
+  const row = data?.[0]
+  if (!row) return { data: null, error: null }
+  return {
+    data: {
+      name: row.name,
+      address: row.address,
+      lat: row.lat,
+      lon: row.lon,
+      placeId: row.google_place_id,
+    },
+    error: null,
+  }
+}
 
 /**
  * Browser-side seller update. Deliberately narrowed to the columns the
@@ -81,12 +171,15 @@ export async function fetchSellerBySlug(
  */
 export async function updateSeller(
   id: string,
-  updates: Pick<SellerUpdate, 'name' | 'logo_url' | 'cover_image_url'>
+  updates: Pick<
+    SellerUpdate,
+    'name' | 'logo_url' | 'cover_image_url' | 'student_discount_percent' | 'senior_discount_percent'
+  >
 ): Promise<{ data: Seller | null; error: Error | null }> {
   const { data, error } = await supabase.from('sellers')
     .update(updates)
     .eq('id', id)
-    .select('id, name, logo_url, slug, cover_image_url, default_course_image_url, stripe_onboarding_complete, created_at')
+    .select('id, name, logo_url, slug, cover_image_url, default_course_image_url, stripe_onboarding_complete, student_discount_percent, senior_discount_percent, created_at')
     .single()
 
   if (error) {
@@ -95,7 +188,7 @@ export async function updateSeller(
 
   const row = data as Pick<
     Seller,
-    'id' | 'name' | 'logo_url' | 'slug' | 'cover_image_url' | 'default_course_image_url' | 'stripe_onboarding_complete' | 'created_at'
+    'id' | 'name' | 'logo_url' | 'slug' | 'cover_image_url' | 'default_course_image_url' | 'stripe_onboarding_complete' | 'student_discount_percent' | 'senior_discount_percent' | 'created_at'
   >
 
   const { data: operational } = await fetchSellerOperational(id)

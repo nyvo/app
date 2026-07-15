@@ -575,7 +575,7 @@ const AuthPage = () => {
             )}
           </div>
 
-          <Button type="submit" loading={isSubmitting} size="lg" className="w-full">
+          <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
             {isSignup ? 'Opprett konto' : 'Logg inn'}
           </Button>
         </form>
@@ -634,7 +634,7 @@ const AuthPage = () => {
           )}
         </div>
 
-        <Button type="submit" loading={isSubmitting} size="lg" className="w-full">
+        <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
           Fortsett
         </Button>
       </form>

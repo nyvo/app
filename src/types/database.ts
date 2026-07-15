@@ -769,6 +769,8 @@ export type Database = {
           stripe_account_status: string | null
           stripe_onboarding_complete: boolean
           stripe_payouts_enabled: boolean
+          senior_discount_percent: number | null
+          student_discount_percent: number | null
           subscription_cancel_at_period_end: boolean
           subscription_current_period_end: string | null
           subscription_customer_id: string | null
@@ -795,6 +797,8 @@ export type Database = {
           stripe_account_status?: string | null
           stripe_onboarding_complete?: boolean
           stripe_payouts_enabled?: boolean
+          senior_discount_percent?: number | null
+          student_discount_percent?: number | null
           subscription_cancel_at_period_end?: boolean
           subscription_current_period_end?: string | null
           subscription_customer_id?: string | null
@@ -821,6 +825,8 @@ export type Database = {
           stripe_account_status?: string | null
           stripe_onboarding_complete?: boolean
           stripe_payouts_enabled?: boolean
+          senior_discount_percent?: number | null
+          student_discount_percent?: number | null
           subscription_cancel_at_period_end?: boolean
           subscription_current_period_end?: string | null
           subscription_customer_id?: string | null
@@ -1121,6 +1127,7 @@ export type Database = {
           p_service_fee_nok?: number
           p_seller_id: string
           p_stripe_payment_intent_id?: string
+          p_ticket_label_override?: string
           p_ticket_type_id: string
         }
         Returns: Json

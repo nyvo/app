@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { PageState } from '@/components/page-state/page-state';
 import { ChevronLeft } from '@/lib/icons';
-import { calculateServiceFee } from '@/lib/pricing';
+import { calculateDiscountedPrice, calculateServiceFee } from '@/lib/pricing';
 import {
   BillettSection,
   CheckoutCourseContext,
@@ -11,6 +11,7 @@ import {
   CheckoutReceipt,
   CheckoutTitle,
   ContactFields,
+  DiscountSection,
   PayButtonDock,
   PayButtonRow,
   TermsField,
@@ -68,6 +69,7 @@ function PreviewBody({ variant }: { variant: Variant }) {
   // rest of the render, never a hook call, so this stays rules-of-hooks safe
   // even though `key={variant}` already remounts this component per variant.
   const [metaResolving, setMetaResolving] = useState(false);
+  const [claimedAudience, setClaimedAudience] = useState<'student' | 'senior' | null>(null);
   const [selectedKind, setSelectedKind] = useState<TicketId>(
     variant === 'drop-in' ? 'drop-in' : 'main',
   );
@@ -97,8 +99,20 @@ function PreviewBody({ variant }: { variant: Variant }) {
   const selectedTier =
     selectedKind === 'drop-in' && dropInTier ? dropInTier : mainTier;
   const subtotal = selectedTier?.price ?? 0;
-  const fee = calculateServiceFee(subtotal);
-  const total = subtotal + fee;
+
+  // Honor-system discounts — mirrors the real page's wiring with mock offers.
+  const discountOffers = isFree
+    ? []
+    : [
+        { audience: 'student' as const, label: 'student', percent: 20 },
+        { audience: 'senior' as const, label: 'pensjonist', percent: 10 },
+      ];
+  const claimedOffer = discountOffers.find((o) => o.audience === claimedAudience) ?? null;
+  const discountedSubtotal = claimedOffer
+    ? calculateDiscountedPrice(subtotal, claimedOffer.percent)
+    : subtotal;
+  const fee = calculateServiceFee(discountedSubtotal);
+  const total = discountedSubtotal + fee;
 
   // Drop-in selected → the context row's meta swaps to the session being
   // bought (same slot-update behavior as the real page).
@@ -178,6 +192,16 @@ function PreviewBody({ variant }: { variant: Variant }) {
 
             <TermsField form={form} setForm={setForm} error={null} />
 
+            {discountOffers.length > 0 && (
+              <DiscountSection
+                offers={discountOffers}
+                tierPrice={subtotal}
+                claimed={claimedAudience}
+                onChange={setClaimedAudience}
+                disabled={false}
+              />
+            )}
+
             <CheckoutReceipt
               course={course}
               selectedTier={selectedTier}
@@ -185,6 +209,15 @@ function PreviewBody({ variant }: { variant: Variant }) {
               fee={fee}
               total={total}
               isFree={isFree}
+              discount={
+                claimedOffer
+                  ? {
+                      label: claimedOffer.label,
+                      percent: claimedOffer.percent,
+                      amount: subtotal - discountedSubtotal,
+                    }
+                  : null
+              }
             />
 
             {isFree ? (
@@ -270,6 +303,8 @@ function makeMockCourse(variant: Variant): PublicCourseWithDetails {
       logo_url: null,
       stripe_onboarding_complete: true,
       default_course_image_url: null,
+      student_discount_percent: null,
+      senior_discount_percent: null,
     },
     instructor: { id: 'mock-course:primary-instructor', name: 'Ingrid Larsen', role: 'primary', display_order: 0 },
     instructors: [{ id: 'mock-course:primary-instructor', name: 'Ingrid Larsen', role: 'primary', display_order: 0 }],

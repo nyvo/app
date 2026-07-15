@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, MapPin, Monitor, Users } from '@/lib/icons';
 import { PageShell } from '@/components/teacher/PageShell';
+import { TimelineEntry } from '@/components/teacher/TimelineEntry';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
@@ -287,20 +288,15 @@ const SchedulePage = () => {
         {loading ? (
           <DelayedFallback>
             <div role="status" aria-label="Laster…">
-              {/* Mirrors the timeline anatomy: rail (day + date lines) left,
+              {/* Mirrors the timeline anatomy: date lines left, rail gutter,
                   cards (title + one meta line) right. */}
               {[1, 2].map((i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    'grid grid-cols-1 gap-y-2 sm:grid-cols-[132px_1fr] sm:gap-x-2 sm:gap-y-0',
-                    i > 1 && 'mt-2',
-                  )}
-                >
-                  <div className="space-y-1.5 pl-5 pt-1">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-4 w-12" />
+                <div key={i} className="grid grid-cols-[92px_18px_1fr] gap-x-2.5">
+                  <div className="space-y-1.5 pt-3">
+                    <Skeleton className="ml-auto h-4 w-14" />
+                    <Skeleton className="ml-auto h-3 w-16" />
                   </div>
+                  <div />
                   <div className="space-y-3 pb-6">
                     {[1, 2].map((j) => (
                       <div key={j} className="rounded-xl bg-panel px-5 py-4">
@@ -339,7 +335,14 @@ const SchedulePage = () => {
                   key={date}
                   primary={label.primary}
                   secondary={label.secondary}
-                  first={idx === 0}
+                  rail={groups.length > 1}
+                  // Azure marks the day of the actual next session — sessions
+                  // are date-ascending on the active tab, so it's the first
+                  // loaded row (a month filter can hide it; then no azure).
+                  next={rangeFilter === 'active' && date === sessions[0]?.sessionDate}
+                  lineAbove={idx > 0}
+                  lineBelow={idx < groups.length - 1}
+                  isLast={idx === groups.length - 1}
                 >
                   {daySessions.map((s) => (
                     <SessionCard key={s.id} session={s} />
@@ -354,49 +357,55 @@ const SchedulePage = () => {
 };
 
 /**
- * Luma-style day group — a date rail (node dot + dotted spine, day label over
- * date) with the day's cards in the right column. Exported so the
+ * One day group on the shared timeline grammar (TimelineEntry — the same
+ * rail as the course Kursplan feed): day + date labels left, dot + hairline
+ * rail, the day's cards in the right column. Exported so the
  * /dev/schedule-preview sign-off surface renders the real component.
  */
 export function TimelineDay({
   primary,
   secondary,
-  first = false,
+  rail = true,
+  next = false,
+  lineAbove = false,
+  lineBelow = false,
+  isLast = false,
   children,
 }: {
   primary: string;
   secondary: string;
-  first?: boolean;
+  /** A lone day group needs no timeline — the rail only earns its place
+   *  between groups. The grid stays, so labels/cards never shift x. */
+  rail?: boolean;
+  /** Azure dot — the day of the next upcoming session. */
+  next?: boolean;
+  lineAbove?: boolean;
+  lineBelow?: boolean;
+  isLast?: boolean;
   children: ReactNode;
 }) {
   return (
-    // Rail width fits the longest date at text-base ("22. september" ≈ 107px
-    // + 20px rail padding) so long month names never wrap or cramp. Below sm
-    // the rail stacks above its cards (own grid row), so the dot/spine — sized
-    // to span the two-column row's full height — can't reach the cards below;
-    // hide that decoration and keep just the day/date text.
-    <div
-      className={cn(
-        'grid grid-cols-1 gap-y-2 sm:grid-cols-[132px_1fr] sm:gap-x-2 sm:gap-y-0',
-        !first && 'mt-2',
-      )}
+    <TimelineEntry
+      // Wider date column than the Kursplan feed — "22. september" must fit.
+      className="grid-cols-[92px_18px_1fr]"
+      rail={rail}
+      next={next}
+      lineAbove={lineAbove}
+      lineBelow={lineBelow}
+      isLast={isLast}
+      // Deeper padding between day groups (vs pb-3 between feed rows) — the
+      // rail runs through it, so the spine stays continuous across the gap.
+      contentClassName={!isLast ? 'pb-6' : undefined}
+      date={
+        <>
+          <p className="text-sm font-medium leading-tight text-foreground">{primary}</p>
+          <p className="mt-0.5 text-xs text-foreground-muted">{secondary}</p>
+        </>
+      }
     >
-      <div className="relative pt-1">
-        <span className="absolute left-[3px] top-[9px] hidden size-2 rounded-full bg-border sm:block" />
-        <span className="absolute bottom-0 left-[6px] top-[22px] hidden w-px border-l border-dotted border-border sm:block" />
-        {/* Both lines share one token size — hierarchy comes from weight +
-            color only (day medium ink, date regular muted). Below sm the pair
-            sits inline and flush left (no rail to indent past); at sm+ it
-            stacks back into the rail column. */}
-        <div className="flex items-baseline gap-x-1.5 sm:block sm:pl-5">
-          <p className="text-base font-medium leading-tight text-foreground">{primary}</p>
-          <p className="text-base text-foreground-muted">{secondary}</p>
-        </div>
-      </div>
-      {/* Day-group separation is deliberately split: pb-6 here keeps the dotted
-          spine running through the gap; the next group's mt-2 tops it up to 32px. */}
-      <div className="space-y-3 pb-6">{children}</div>
-    </div>
+      <div className="space-y-3">{children}</div>
+    </TimelineEntry>
+
   );
 }
 

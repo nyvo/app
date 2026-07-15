@@ -6,20 +6,20 @@ const noop = () => {};
 
 /**
  * Auth-free preview of the schedule agenda — the sign-off surface for the
- * ported Luma-style timeline (date rail + agenda cards). Renders the real
- * TimelineDay + SessionCard exports, so what you see here is production.
+ * shared timeline grammar (TimelineEntry rail + agenda cards). Renders the
+ * real TimelineDay + SessionCard exports, so what you see here is production.
  */
 const SchedulePreview = () => {
   return (
     <DevPage title="Timeplan">
       <PreviewSection label="Med data">
         <div>
-          <TimelineDay primary="I dag" secondary="3. juli" first>
+          <TimelineDay primary="I dag" secondary="3. juli" next lineBelow>
             {MOCK_SESSIONS.slice(0, 3).map((s) => (
               <SessionCard key={s.id} session={s} />
             ))}
           </TimelineDay>
-          <TimelineDay primary="I morgen" secondary="4. juli">
+          <TimelineDay primary="I morgen" secondary="4. juli" lineAbove isLast>
             {MOCK_SESSIONS.slice(3).map((s) => (
               <SessionCard key={s.id} session={s} />
             ))}

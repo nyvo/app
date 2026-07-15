@@ -20,6 +20,11 @@ interface PublicCourseSeller {
    *  completed Stripe onboarding — every tier sells through Stripe. */
   stripe_onboarding_complete: boolean
   default_course_image_url: string | null
+  /** Honor-system discounts in percent (5–90); null = not offered. Each
+   *  renders a quiet claim-toggle in checkout — independent values because
+   *  student and honnør rates routinely differ. */
+  student_discount_percent: number | null
+  senior_discount_percent: number | null
 }
 
 interface SellerJoinRow {
@@ -29,6 +34,8 @@ interface SellerJoinRow {
   slug: string
   default_course_image_url: string | null
   stripe_onboarding_complete: boolean
+  student_discount_percent: number | null
+  senior_discount_percent: number | null
 }
 
 interface CourseQueryResult {
@@ -260,7 +267,7 @@ export async function fetchPublicCourses(
       instructor_name,
       accepts_late_signups,
       seller_id,
-      seller:sellers(id, name, logo_url, slug, default_course_image_url, stripe_onboarding_complete)
+      seller:sellers(id, name, logo_url, slug, default_course_image_url, stripe_onboarding_complete, student_discount_percent, senior_discount_percent)
     `, { count: filters?.limit ? 'exact' : undefined })
     .in('status', ['active', 'upcoming', 'cancelled'])
     .order('start_date', { ascending: true })
@@ -418,6 +425,8 @@ export async function fetchPublicCourses(
           logo_url: course.seller.logo_url,
           stripe_onboarding_complete: course.seller.stripe_onboarding_complete,
           default_course_image_url: course.seller.default_course_image_url ?? null,
+          student_discount_percent: course.seller.student_discount_percent ?? null,
+          senior_discount_percent: course.seller.senior_discount_percent ?? null,
         }
       : null
 
@@ -496,7 +505,7 @@ export async function fetchPublicCourseBySlug(
       instructor_name,
       accepts_late_signups,
       seller_id,
-      seller:sellers(id, name, logo_url, slug, default_course_image_url, stripe_onboarding_complete)
+      seller:sellers(id, name, logo_url, slug, default_course_image_url, stripe_onboarding_complete, student_discount_percent, senior_discount_percent)
     `)
     .eq('slug', courseSlug)
     // Cancelled courses are excluded here, so a cancelled deep link resolves to
@@ -569,6 +578,8 @@ export async function fetchPublicCourseBySlug(
         logo_url: typedCourse.seller.logo_url,
         stripe_onboarding_complete: typedCourse.seller.stripe_onboarding_complete,
         default_course_image_url: typedCourse.seller.default_course_image_url ?? null,
+        student_discount_percent: typedCourse.seller.student_discount_percent ?? null,
+        senior_discount_percent: typedCourse.seller.senior_discount_percent ?? null,
       }
     : null
 

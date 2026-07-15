@@ -18,7 +18,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { handleCors, errorResponse, successResponse, getClientIp } from '../_shared/auth.ts'
-import { calculatePricing } from '../_shared/pricing.ts'
+import { calculatePricing, applyHonorDiscount } from '../_shared/pricing.ts'
 import { isCourseEnded } from '../_shared/course-status.ts'
 import { createPaymentIntent } from '../_shared/stripe.ts'
 
@@ -36,6 +36,10 @@ interface SessionRequestBody {
   customerNote?: string
   /** Required only when the ticket's kind is 'drop_in'. */
   sessionId?: string
+  /** Buyer claims one of the honor-system discounts ('student' | 'senior').
+   *  Only honored when the seller offers that discount — the percent itself
+   *  always comes from the seller row, never the client. */
+  discountAudience?: 'student' | 'senior'
 }
 
 type TicketKind = 'package' | 'drop_in' | 'pass'
@@ -69,7 +73,16 @@ Deno.serve(async (req: Request) => {
       customerPhone,
       customerNote,
       sessionId,
+      discountAudience,
     } = body
+
+    if (
+      discountAudience !== undefined &&
+      discountAudience !== 'student' &&
+      discountAudience !== 'senior'
+    ) {
+      return errorResponse('Ugyldig rabattype.', 400, req)
+    }
 
     if (!courseId || !organizationSlug || !ticketTypeId || !customerEmail || !customerName) {
       return errorResponse('Noen felt mangler.', 400, req)
@@ -142,7 +155,9 @@ Deno.serve(async (req: Request) => {
           stripe_account_id,
           stripe_onboarding_complete,
           subscription_plan,
-          subscription_status
+          subscription_status,
+          student_discount_percent,
+          senior_discount_percent
         )
       `)
       .eq('id', courseId)
@@ -160,6 +175,8 @@ Deno.serve(async (req: Request) => {
       stripe_onboarding_complete: boolean
       subscription_plan: string | null
       subscription_status: string | null
+      student_discount_percent: number | null
+      senior_discount_percent: number | null
     } | null
 
     if (!seller || seller.slug !== organizationSlug) {
@@ -330,8 +347,30 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // Honor-system discount (student / honnør) — the claim names an audience,
+    // the percent always comes from the seller row. A claim the seller no
+    // longer offers is a hard 400 (not a silent full-price charge: the
+    // buyer's UI showed a discounted total, so charging more would mismatch
+    // the pay button).
+    const discountPercent =
+      discountAudience === 'student'
+        ? seller.student_discount_percent
+        : discountAudience === 'senior'
+          ? seller.senior_discount_percent
+          : null
+    if (discountAudience && !discountPercent) {
+      return errorResponse('Rabatten er ikke lenger tilgjengelig. Last siden på nytt.', 400, req)
+    }
+    const discountApplied = !!discountAudience && !!discountPercent
+    const effectivePrice = discountApplied
+      ? applyHonorDiscount(typedTier.price, discountPercent!)
+      : typedTier.price
+    if (effectivePrice <= 0) {
+      return errorResponse('Kurset mangler gyldig pris.', 400, req)
+    }
+
     const { serviceFeeNok, totalPrice, priceInOre, serviceFeeInOre, platformFeeInOre, platformFeeNok } =
-      calculatePricing(typedTier.price, { platformTake })
+      calculatePricing(effectivePrice, { platformTake })
 
     // Persist the attempt. Its id becomes metadata.attempt_id on the PaymentIntent (C4) and the
     // ticket-type snapshot fields are write-once context for refund/recovery paths.
@@ -346,10 +385,16 @@ Deno.serve(async (req: Request) => {
         note: customerNote?.trim() || null,
         course_session_id: courseSession?.id ?? null,
         ticket_type_id: typedTier.id,
-        ticket_label_snapshot: typedTier.label,
+        // The label snapshot carries the claim to the roster/receipts — the
+        // seller sees who booked at the student/honnør price.
+        ticket_label_snapshot: discountApplied
+          ? `${typedTier.label} – ${discountAudience === 'student' ? 'student' : 'pensjonist'} (−${discountPercent} %)`
+          : typedTier.label,
         ticket_audience_snapshot: typedTier.audience,
         ticket_kind_snapshot: typedTier.ticket_kind,
-        base_price_nok: typedTier.price,
+        // The discounted price is the charge basis — refunds and net-income
+        // math key off what was actually paid.
+        base_price_nok: effectivePrice,
         service_fee_nok: serviceFeeNok,
         platform_fee_nok: platformFeeNok,
         total_price_nok: totalPrice,

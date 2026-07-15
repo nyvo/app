@@ -14,8 +14,9 @@ interface StudioMastheadProps {
  * Profile masthead (Time2book profile pattern, mockup Q2A): the page opens
  * with a cover header band — the seller's cover image when set, a quiet
  * muted fill when not — with the logo overlapping the band's bottom edge on
- * its own line, and the name + identity line stacked under it. The identity
- * line is quiet plain text — «adresse · Veibeskrivelse» — no icons.
+ * its own line, and the name + identity lines stacked under it. The identity
+ * block is quiet plain text — place name on its own line, street address +
+ * a standalone «Få veibeskrivelse» link under it — no icons.
  */
 export function StudioMasthead({ organization, location }: StudioMastheadProps) {
   const [coverFailed, setCoverFailed] = useState(false);
@@ -45,20 +46,25 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
         </h1>
 
         {location && (
-          <p className="mt-1 flex items-baseline gap-1.5 text-sm text-foreground-muted">
-            <span className="truncate min-w-0">
-              {location.address || location.label}
-              {', '}
-            </span>
-            <a
-              href={directionsUrl(location)}
-              target="_blank"
-              rel="noreferrer"
-              className="shrink-0 text-primary underline underline-offset-2 hover:decoration-2"
-            >
-              Få veibeskrivelse
-            </a>
-          </p>
+          // Two quiet lines: the place name, then the street address (when
+          // set) with a standalone «Få veibeskrivelse» link — gap-separated,
+          // no joining punctuation.
+          <div className="mt-1 text-sm text-foreground-muted">
+            <p className="truncate">{location.label || location.address}</p>
+            <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
+              {location.label && location.address && (
+                <span className="min-w-0 truncate">{location.address}</span>
+              )}
+              <a
+                href={directionsUrl(location)}
+                target="_blank"
+                rel="noreferrer"
+                className="shrink-0 text-primary underline underline-offset-2 hover:decoration-2"
+              >
+                Få veibeskrivelse
+              </a>
+            </p>
+          </div>
         )}
       </div>
     </header>

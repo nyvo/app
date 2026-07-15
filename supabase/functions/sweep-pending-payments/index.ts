@@ -88,7 +88,7 @@ Deno.serve(async (req: Request) => {
     const abandonCutoffMs = Date.now() - ABANDON_HOURS * 60 * 60 * 1000
     const { data: stripeOrphans, error: stripeErr } = await supabase
       .from('payment_attempts')
-      .select('id, status, created_at, stripe_payment_intent_id, seller_id, course_id, ticket_type_id, participant_name, participant_email, participant_phone, note, course_session_id, platform_fee_nok, service_fee_nok')
+      .select('id, status, created_at, stripe_payment_intent_id, seller_id, course_id, ticket_type_id, ticket_label_snapshot, participant_name, participant_email, participant_phone, note, course_session_id, platform_fee_nok, service_fee_nok')
       .in('status', ['pending', 'authorized'])
       .not('stripe_payment_intent_id', 'is', null)
       .lt('created_at', graceCutoff)
@@ -156,6 +156,9 @@ Deno.serve(async (req: Request) => {
             p_note: attempt.note ?? null,
             p_payment_product: 'stripe',
             p_stripe_payment_intent_id: piId,
+            // Charge-time label from the attempt — carries the student/
+            // pensjonist-discount mark onto the roster's signup row.
+            p_ticket_label_override: attempt.ticket_label_snapshot ?? null,
           })
           if (rpcErr) { summary.errors++; continue } // transient — retry next sweep
 

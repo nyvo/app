@@ -13,6 +13,9 @@ interface CreateSessionParams {
   customerNote?: string
   /** Required only when the picked ticket type is a drop-in. */
   sessionId?: string
+  /** Buyer claims one of the honor-system discounts. The percent itself is
+   *  read from the seller row server-side — this is only the ask. */
+  discountAudience?: 'student' | 'senior'
 }
 
 interface StripeSessionResult {

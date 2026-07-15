@@ -12,8 +12,10 @@ import { ErrorState } from '@/components/ui/error-state';
 import { ImageField } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { LocationField, type LocationCoords } from '@/components/ui/location-field';
 import { PageShell } from '@/components/teacher/PageShell';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
+import { Switch } from '@/components/ui/switch';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
 import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
 import { EmbedCodeSection } from '@/components/teacher/studio/EmbedCodeSection';
@@ -22,7 +24,13 @@ import { friendlyError } from '@/lib/error-messages';
 import { extractEdgeError } from '@/lib/edge-errors';
 import { supabase } from '@/lib/supabase';
 import { fetchGuestHost, type GuestHost } from '@/services/affiliations';
-import { renameSellerSlug, updateSeller } from '@/services/sellers';
+import {
+  fetchStudioAddress,
+  renameSellerSlug,
+  saveStudioAddress,
+  updateSeller,
+  type StudioAddress,
+} from '@/services/sellers';
 import { deleteSellerLogo, uploadSellerLogo } from '@/services/storage';
 import type { Seller } from '@/types/database';
 
@@ -92,7 +100,7 @@ function StudioPublicSettings({
   const showSamarbeid =
     !hydrateFailed && (isStudio || hasHost || (host === 'error' && hash === '#samarbeid'));
 
-  const [tab, setTab] = useState<'profil' | 'samarbeid'>('profil');
+  const [tab, setTab] = useState<'profil' | 'rabatter' | 'samarbeid'>('profil');
   // Joining a studio lands at /studio#samarbeid — open that tab once it renders.
   useEffect(() => {
     if (hash === '#samarbeid' && showSamarbeid) setTab('samarbeid');
@@ -121,20 +129,71 @@ function StudioPublicSettings({
     setSlug(seller.slug);
   }, [seller.slug]);
 
+  // Studio address — the seller's single teacher_locations row. `savedAddress`
+  // is the dirty/cancel baseline; undefined until the fetch settles so a slow
+  // load can't flag a false dirty state (the field is disabled meanwhile).
+  const [savedAddress, setSavedAddress] = useState<StudioAddress | null | undefined>(undefined);
+  const [addressName, setAddressName] = useState('');
+  const [addressLine, setAddressLine] = useState('');
+  const [addressCoords, setAddressCoords] = useState<LocationCoords | null>(null);
+  const [addressError, setAddressError] = useState<string | null>(null);
+  // Places search is failing — accept free text, same fallback as the builder.
+  const [placesUnavailable, setPlacesUnavailable] = useState(false);
+
+  const applyAddress = useCallback((a: StudioAddress | null) => {
+    setAddressName(a?.name ?? '');
+    setAddressLine(a?.address ?? '');
+    setAddressCoords(a ? { lat: a.lat, lon: a.lon, placeId: a.placeId } : null);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const { data } = await fetchStudioAddress(seller.id);
+      if (cancelled) return;
+      // A failed read degrades to "no address yet" — saving then writes the
+      // canonical row either way (update-or-insert), so nothing is orphaned.
+      setSavedAddress(data);
+      applyAddress(data);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [seller.id, applyAddress]);
+
+  // Honor-system discounts — student and honnør/pensjonist are separately
+  // priced (the rates routinely differ), each a nullable percent on the
+  // seller row (null = off). Toggle + percent are one value on save: off ⇒
+  // null, on ⇒ the validated percent.
+  const studentDiscount = useDiscountField(seller.student_discount_percent ?? null);
+  const seniorDiscount = useDiscountField(seller.senior_discount_percent ?? null);
+
   const [isSaving, setIsSaving] = useState(false);
   // Generic save failure (thrown/network) — field-specific errors go to the
   // inline FieldErrors instead; this feeds the DirtyFormBar's error slot.
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const isDirty = name.trim() !== seller.name || slug.trim() !== seller.slug;
+  const discountDirty = studentDiscount.dirty || seniorDiscount.dirty;
+
+  const addressDirty =
+    savedAddress !== undefined &&
+    (addressName.trim() !== (savedAddress?.name ?? '') ||
+      (addressCoords?.placeId ?? null) !== (savedAddress?.placeId ?? null));
+
+  const profilDirty = name.trim() !== seller.name || slug.trim() !== seller.slug || addressDirty;
+  const isDirty = profilDirty || discountDirty;
 
   const { blocker } = useUnsavedChanges(isDirty);
 
   const handleCancel = () => {
     setName(seller.name);
     setSlug(seller.slug);
+    if (savedAddress !== undefined) applyAddress(savedAddress);
+    studentDiscount.reset();
+    seniorDiscount.reset();
     setNameError(null);
     setSlugError(null);
+    setAddressError(null);
     setSaveError(null);
   };
 
@@ -162,12 +221,46 @@ function StudioPublicSettings({
       setSlugError(null);
     }
 
+    // The address must resolve to a real Google place (coords) so the
+    // storefront map/directions and the course-builder prefill work — same
+    // rule as the builder, with the same manual fallback while Places is
+    // down. Empty is valid: it clears the address.
+    const trimmedAddressName = addressName.trim();
+    const addressInvalid =
+      addressDirty && !!trimmedAddressName && !addressCoords?.placeId && !placesUnavailable;
+    if (addressInvalid) {
+      setAddressError('Velg et sted fra listen.');
+      blocked = true;
+    } else {
+      setAddressError(null);
+    }
+
+    // Discount on ⇒ the percent must be a real 5–90 value (the DB CHECK
+    // enforces the same range).
+    for (const field of [studentDiscount, seniorDiscount]) {
+      if (field.invalid) {
+        field.setError('Velg en rabatt mellom 5 og 90 prosent.');
+        blocked = true;
+      } else {
+        field.setError(null);
+      }
+    }
+
     if (blocked) {
       // Surface the offending field by jumping to its tab, then focus it once
       // the panel has rendered — a tab switch alone leaves keyboard/AT users
       // without a cue for which field needs attention.
-      setTab('profil');
-      const focusId = nameInvalid ? 'studio-name' : 'studio-slug';
+      const profilInvalid = nameInvalid || slugInvalid || addressInvalid;
+      setTab(profilInvalid ? 'profil' : 'rabatter');
+      const focusId = nameInvalid
+        ? 'studio-name'
+        : slugInvalid
+          ? 'studio-slug'
+          : addressInvalid
+            ? 'studio-address'
+            : studentDiscount.invalid
+              ? 'studio-discount-student'
+              : 'studio-discount-senior';
       requestAnimationFrame(() => {
         document.getElementById(focusId)?.focus();
       });
@@ -204,6 +297,40 @@ function StudioPublicSettings({
         }
         persistedAny = true;
         setSlug(nextSlug);
+      }
+
+      if (addressDirty) {
+        const next: StudioAddress | null = trimmedAddressName
+          ? {
+              name: trimmedAddressName,
+              address: addressLine.trim() || null,
+              lat: addressCoords?.lat ?? null,
+              lon: addressCoords?.lon ?? null,
+              placeId: addressCoords?.placeId ?? null,
+            }
+          : null;
+        const { error } = await saveStudioAddress(seller.id, next);
+        if (error) {
+          setAddressError(friendlyError(error, 'Kunne ikke lagre adressen.'));
+          if (persistedAny) await onSaved();
+          return;
+        }
+        persistedAny = true;
+        setSavedAddress(next);
+        applyAddress(next);
+      }
+
+      if (discountDirty) {
+        const { error } = await updateSeller(seller.id, {
+          student_discount_percent: studentDiscount.next,
+          senior_discount_percent: seniorDiscount.next,
+        });
+        if (error) {
+          setSaveError(friendlyError(error, 'Kunne ikke lagre rabatten.'));
+          if (persistedAny) await onSaved();
+          return;
+        }
+        persistedAny = true;
       }
 
       await onSaved();
@@ -287,6 +414,14 @@ function StudioPublicSettings({
         >
           Profil
         </PageTab>
+        <PageTab
+          active={tab === 'rabatter'}
+          onClick={() => setTab('rabatter')}
+          id="studio-tab-rabatter"
+          ariaControls="studio-panel-rabatter"
+        >
+          Rabatter
+        </PageTab>
         {showSamarbeid && (
           <PageTab
             active={tab === 'samarbeid'}
@@ -363,6 +498,35 @@ function StudioPublicSettings({
               </div>
             </SettingsRow>
 
+            <SettingsRow
+              title="Adresse"
+              description="Vises på studiosiden og foreslås når du oppretter kurs."
+            >
+              <div className="grid gap-2">
+                <LocationField
+                  id="studio-address"
+                  value={addressName}
+                  coords={addressCoords}
+                  address={addressLine || null}
+                  disabled={isSaving || savedAddress === undefined}
+                  aria-invalid={!!addressError || undefined}
+                  aria-describedby={addressError ? 'studio-address-error' : undefined}
+                  onChange={(next) => {
+                    setAddressName(next.name);
+                    setAddressLine(next.address);
+                    setAddressCoords(next.coords);
+                    if (addressError) setAddressError(null);
+                  }}
+                  onSearchError={setPlacesUnavailable}
+                />
+                {addressError && (
+                  <FieldError id="studio-address-error" className="mt-0">
+                    {addressError}
+                  </FieldError>
+                )}
+              </div>
+            </SettingsRow>
+
             <AccountTypeSection
               seller={seller}
               onChanged={onSaved}
@@ -375,6 +539,46 @@ function StudioPublicSettings({
                 the embed URL is built from. Needs a live slug to render. */}
             {!!seller.slug && <EmbedCodeSection slug={seller.slug} />}
           </SettingsRows>
+        </div>
+      )}
+
+      {tab === 'rabatter' && (
+        <div
+          role="tabpanel"
+          id="studio-panel-rabatter"
+          aria-labelledby="studio-tab-rabatter"
+        >
+          {/* Same title/description grammar as the SettingsRow headers on the
+              Profil tab. The description carries the facts the cards can't:
+              who checks eligibility (the studio, not Openspot) and where the
+              claims are visible. */}
+          <div className="max-w-xl">
+            <h2 className="text-base font-medium text-foreground">
+              Student- og pensjonistrabatt
+            </h2>
+            <p className="mt-1 max-w-prose text-pretty text-sm text-foreground-muted">
+              Deltakeren velger rabatten selv i kassen. Openspot sjekker ikke om deltakeren
+              faktisk er student eller pensjonist — det ansvaret ligger hos deg. Du ser hvem som
+              har valgt rabatt i deltakerlisten.
+            </p>
+          </div>
+          {/* Card grammar from the Timeplan agenda cards (rounded-xl bg-panel
+              px-5 py-4, base/medium title) — one card per discount, the
+              switch as the row's trailing control. */}
+          <div className="mt-5 max-w-xl space-y-3">
+            <DiscountCard
+              title="Studentrabatt"
+              id="studio-discount-student"
+              field={studentDiscount}
+              disabled={isSaving}
+            />
+            <DiscountCard
+              title="Pensjonistrabatt"
+              id="studio-discount-senior"
+              field={seniorDiscount}
+              disabled={isSaving}
+            />
+          </div>
         </div>
       )}
 
@@ -406,20 +610,138 @@ function StudioPublicSettings({
       )}
 
       <DirtyFormBar
-        // Stays visible on Samarbeid too — hiding it on tab switch would
-        // silently strand unsaved Profil changes. Save still works from any
-        // tab (it operates on this page's state, not the visible panel); the
-        // hint just points back to where the changed field lives.
+        // Stays visible on every tab — hiding it on tab switch would silently
+        // strand unsaved changes. Save still works from any tab (it operates
+        // on this page's state, not the visible panel); the hint just points
+        // back to the tab where the changed field lives.
         visible={isDirty || !!saveError}
         error={saveError}
         isSaving={isSaving}
         onSave={handleSave}
         onCancel={handleCancel}
         dirtyLabel={
-          tab === 'samarbeid' ? 'Endringene ligger på Profil-fanen' : undefined
+          profilDirty && tab !== 'profil'
+            ? 'Endringene ligger på Profil-fanen'
+            : discountDirty && !profilDirty && tab !== 'rabatter'
+              ? 'Endringene ligger på Rabatter-fanen'
+              : undefined
         }
       />
       <UnsavedChangesDialog blocker={blocker} />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Honor-system discount field — toggle + percent as one nullable value.
+// ---------------------------------------------------------------------------
+
+interface DiscountFieldState {
+  enabled: boolean;
+  setEnabled: (next: boolean) => void;
+  percent: string;
+  setPercent: (next: string) => void;
+  error: string | null;
+  setError: (next: string | null) => void;
+  /** The value to persist: null when off (or unparseable), else the percent. */
+  next: number | null;
+  dirty: boolean;
+  /** On, but the percent isn't a real 5–90 value. */
+  invalid: boolean;
+  reset: () => void;
+}
+
+export function useDiscountField(saved: number | null): DiscountFieldState {
+  const [enabled, setEnabled] = useState(saved != null);
+  const [percent, setPercent] = useState(saved?.toString() ?? '');
+  const [error, setError] = useState<string | null>(null);
+  // Re-baseline when the seller row refreshes (post-save / seller switch).
+  useEffect(() => {
+    setEnabled(saved != null);
+    setPercent(saved?.toString() ?? '');
+  }, [saved]);
+
+  const parsed = parseInt(percent, 10);
+  const next = enabled && Number.isFinite(parsed) ? parsed : null;
+  return {
+    enabled,
+    setEnabled,
+    percent,
+    setPercent,
+    error,
+    setError,
+    next,
+    dirty: enabled !== (saved != null) || (enabled && next !== saved),
+    invalid: enabled && (!Number.isFinite(parsed) || parsed < 5 || parsed > 90),
+    reset: () => {
+      setEnabled(saved != null);
+      setPercent(saved?.toString() ?? '');
+      setError(null);
+    },
+  };
+}
+
+/** One discount as an agenda-style card (Timeplan card shell): title +
+ *  switch on the top line, the percent input below when enabled. */
+export function DiscountCard({
+  title,
+  id,
+  field,
+  disabled,
+}: {
+  title: string;
+  id: string;
+  field: DiscountFieldState;
+  disabled: boolean;
+}) {
+  return (
+    <div className="rounded-xl bg-panel px-5 py-4">
+      <div className="flex items-center justify-between gap-6">
+        <p className="text-base font-medium text-foreground">{title}</p>
+        <Switch
+          checked={field.enabled}
+          disabled={disabled}
+          onCheckedChange={(next) => {
+            field.setEnabled(next);
+            if (!next) field.setError(null);
+          }}
+          aria-label={title}
+        />
+      </div>
+      {field.enabled && (
+        <div className="mt-3 flex items-center gap-2.5">
+          <label htmlFor={id} className="text-sm text-foreground-muted">
+            Rabatt
+          </label>
+          <div className="relative inline-flex items-center">
+            <Input
+              id={id}
+              type="number"
+              inputMode="numeric"
+              min={5}
+              max={90}
+              step={5}
+              value={field.percent}
+              onChange={(e) => {
+                field.setPercent(e.target.value);
+                if (field.error) field.setError(null);
+              }}
+              disabled={disabled}
+              aria-invalid={!!field.error || undefined}
+              aria-describedby={field.error ? `${id}-error` : undefined}
+              className="h-8 w-[100px] pr-8 text-sm tabular-nums"
+            />
+            <span className="pointer-events-none absolute right-3 select-none text-sm text-foreground-muted">
+              %
+            </span>
+          </div>
+        </div>
+      )}
+      {field.error && (
+        <FieldError id={`${id}-error`} className="mt-2">
+          {field.error}
+        </FieldError>
+      )}
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
   InviteLinkView,
 } from '@/components/teacher/studio/AffiliationsSection';
 import { EmbedCodeSection } from '@/components/teacher/studio/EmbedCodeSection';
+import { DiscountCard, useDiscountField } from '@/pages/teacher/StudioPage';
 import type { GuestHost, HostAffiliate } from '@/services/affiliations';
 import type { Seller } from '@/types/database';
 import { DevPage, PreviewSection } from './_kit';
@@ -60,6 +61,8 @@ function mockSeller(overrides: Partial<Seller> = {}): Seller {
     stripe_account_status: null,
     stripe_onboarding_complete: false,
     stripe_payouts_enabled: false,
+    student_discount_percent: null,
+    senior_discount_percent: null,
     subscription_cancel_at_period_end: false,
     subscription_current_period_end: null,
     subscription_customer_id: null,
@@ -90,12 +93,42 @@ const MOCK_AFFILIATES: HostAffiliate[] = [
   { guest_seller_id: 'g3', guest: { id: 'g3', name: 'Sofie Aas', logo_url: null } },
 ];
 
+/** The real DiscountCard + useDiscountField from StudioPage's Rabatter tab —
+ *  one enabled (student, 20 %), one off, same intro line as the tab. */
+function RabatterDemo() {
+  const student = useDiscountField(20);
+  const senior = useDiscountField(null);
+  return (
+    <div>
+      <div className="max-w-xl">
+        <h2 className="text-base font-medium text-foreground">Student- og pensjonistrabatt</h2>
+        <p className="mt-1 max-w-prose text-pretty text-sm text-foreground-muted">
+          Deltakeren velger rabatten selv i kassen. Openspot sjekker ikke om deltakeren faktisk
+          er student eller pensjonist — det ansvaret ligger hos deg. Du ser hvem som har valgt
+          rabatt i deltakerlisten.
+        </p>
+      </div>
+      <div className="mt-5 max-w-xl space-y-3">
+        <DiscountCard title="Studentrabatt" id="preview-discount-student" field={student} disabled={false} />
+        <DiscountCard title="Pensjonistrabatt" id="preview-discount-senior" field={senior} disabled={false} />
+      </div>
+    </div>
+  );
+}
+
 export default function StudioPreview() {
   return (
     <DevPage
       title="Studio"
       description="De ekte seksjonskomponentene fra /studio — AffiliationsSection og settingsrad-mønsteret — matet med mock-, tomt-, laster- og feil-props. Hele StudioPage er hook/context-drevet og lar seg ikke montere direkte; se den i appen på /studio."
     >
+      <PreviewSection
+        label="Rabatter — kort"
+        description="Rabatter-fanens kort (ekte DiscountCard fra StudioPage): agendakort-grammatikken fra Timeplan, bryter + prosentfelt."
+      >
+        <RabatterDemo />
+      </PreviewSection>
+
       <PreviewSection
         label="Samarbeid — med data"
         description="Solo-instruktør tilknyttet et studio. Ekte AffiliationsSection, guest-grenen (IndividualView), host satt til en aktiv tilkobling."
