@@ -93,7 +93,7 @@ const LandingPage = () => {
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                   className="text-4xl font-semibold text-foreground md:text-5xl"
                 >
-                  Driv ditt yogastudio enklere.
+                  Kurs, påmelding og betaling – samlet.
                 </motion.h1>
                 <motion.p
                   initial={{ opacity: 0, y: 8 }}
@@ -101,7 +101,7 @@ const LandingPage = () => {
                   transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
                   className="mt-4 text-base text-foreground-muted"
                 >
-                  Hold orden på kurs, påmeldinger, betaling og deltakere på ett sted.
+                  Opprett kurs, ta imot påmeldinger og få betalt fra samme sted.
                 </motion.p>
               </div>
               <motion.div
@@ -131,7 +131,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 className="text-4xl font-semibold text-foreground md:text-5xl"
               >
-                Driv ditt yogastudio enklere.
+                Kurs, påmelding og betaling – samlet.
               </motion.h1>
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
@@ -139,7 +139,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
                 className="mt-4 text-base text-foreground-muted"
               >
-                Hold orden på kurs, påmeldinger, betaling og deltakere på ett sted.
+                Opprett kurs, ta imot påmeldinger og få betalt fra samme sted.
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -148,7 +148,7 @@ const LandingPage = () => {
                 className="mt-8"
               >
                 <Button asChild size="cta">
-                  <Link to="/auth?intent=seller">Kom i gang</Link>
+                  <Link to="/auth?intent=seller">Opprett konto</Link>
                 </Button>
               </motion.div>
             </div>
@@ -194,10 +194,10 @@ const LandingPage = () => {
               className="lg:col-span-5"
             >
               <h2 className="text-3xl font-semibold text-foreground md:text-4xl">
-                Din egen studioside.
+                En side for kursene dine.
               </h2>
               <p className="mt-4 text-base text-foreground-muted">
-                En ferdig side med kursene dine – del den med én lenke.
+                Vis kursene dine og ta imot påmeldinger fra én lenke du kan dele hvor du vil.
               </p>
             </motion.div>
             <motion.div
@@ -239,10 +239,10 @@ const LandingPage = () => {
             className="mb-12 max-w-2xl md:mb-16"
           >
             <h2 className="text-3xl font-semibold text-foreground md:text-4xl">
-              Det tunge er bygget inn.
+              Fra påmelding til utbetaling.
             </h2>
             <p className="mt-4 text-base text-foreground-muted">
-              Betaling, påmeldinger og oversikt – uten ekstra verktøy.
+              Deltakerne melder seg på og betaler selv. Du har oversikten underveis.
             </p>
           </motion.div>
 
@@ -255,18 +255,18 @@ const LandingPage = () => {
           >
             <PremiumCard
               icon={CreditCardIcon}
-              title="Betaling rett til konto"
-              body="Deltakerne betaler ved påmelding. Pengene går rett inn på bankkontoen din."
+              title="Betaling til kontoen din"
+              body="Deltakerne betaler når de melder seg på. Utbetalingene går til bankkontoen din."
             />
             <PremiumCard
               icon={UserMultiple02Icon}
-              title="Påmeldinger"
-              body="Deltakerne melder seg på selv – du ser alt med en gang."
+              title="Påmeldinger uten manuelt arbeid"
+              body="Deltakerne melder seg på selv, og deltakerlisten oppdateres automatisk."
             />
             <PremiumCard
               icon={ChartBarIncreasingIcon}
-              title="Full oversikt"
-              body="Inntekter, påmeldinger og deltakere, samlet på ett sted."
+              title="Se hva som skjer"
+              body="Følg inntekter, påmeldinger og deltakere for hvert kurs."
             />
           </motion.div>
         </div>
@@ -286,7 +286,7 @@ const LandingPage = () => {
             className="mx-auto mb-12 max-w-2xl text-center"
           >
             <h2 className="text-3xl font-semibold text-foreground md:text-4xl">
-              Enkel og forutsigbar pris.
+              En pris som er enkel å forstå.
             </h2>
             <p className="mt-4 text-base text-foreground-muted">
               Start gratis. Bytt til Pro når du trenger mer.
@@ -303,7 +303,7 @@ const LandingPage = () => {
             <PricingTier
               tier={{
                 name: 'Start',
-                description: 'Alt du trenger for å ta imot påmeldinger og betaling.',
+                description: 'For deg som vil publisere kurs og ta imot betaling.',
                 price: 'Gratis',
                 features: [
                   'Ubegrenset antall kurs og deltakere',
@@ -315,7 +315,7 @@ const LandingPage = () => {
             <PricingTier
               tier={{
                 name: 'Pro',
-                description: 'Behold hele kursprisen – uansett hvor mye du selger.',
+                description: 'Fast månedspris. Ingen plattformgebyr.',
                 price: formatKroner(499),
                 priceSub: '/ mnd eks. mva.',
                 features: [
@@ -347,7 +347,7 @@ const LandingPage = () => {
                 product's chrome. */}
             <Grain opacity={0.4} baseFrequency={0.7} blend="soft-light" />
             <h2 className="relative text-3xl font-semibold text-chrome-foreground md:text-4xl">
-              {PRELAUNCH ? 'Bli med fra start.' : 'Klar?'}
+              {PRELAUNCH ? 'Snakk med oss.' : 'Start med neste kurs.'}
             </h2>
             <div className="relative">
               {PRELAUNCH ? (
@@ -356,7 +356,7 @@ const LandingPage = () => {
                 </Button>
               ) : (
                 <Button asChild size="cta">
-                  <Link to="/auth?intent=seller">Kom i gang</Link>
+                  <Link to="/auth?intent=seller">Opprett konto</Link>
                 </Button>
               )}
             </div>
