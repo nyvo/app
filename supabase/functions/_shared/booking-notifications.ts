@@ -76,6 +76,18 @@ type BookingAttempt = {
   /** signups.payment_product — 'manual' means the teacher added the
    * participant themselves and settles payment off-platform. */
   payment_product?: string | null
+  /** Charge-time ticket label; carries the honor-discount mark
+   * ("… – student (−20 %)") when the buyer claimed one. */
+  ticket_label_snapshot?: string | null
+}
+
+/** Honor-discount claim off the label snapshot, formatted for the seller
+ * email ("Student (−20 %)") — mirrors parseDiscountClaim in src/lib/pricing.ts;
+ * the mark is written by create-stripe-connect-session. */
+function discountClaimLabel(labelSnapshot: string | null | undefined): string | undefined {
+  const match = labelSnapshot?.match(/– (student|pensjonist) \(−(\d+) %\)/)
+  if (!match) return undefined
+  return `${match[1] === 'student' ? 'Student' : 'Pensjonist'} (−${match[2]} %)`
 }
 
 export async function deliverBookingConfirmations(
@@ -195,6 +207,9 @@ async function sendSellerBookingEmail(
         courseTitle: course.title,
         courseStart: formatCourseStart(course.start_date, course.time_schedule),
         amount: amountLabel,
+        // Present only for honor-discount claims — the seller is responsible
+        // for verifying eligibility, so the signup ping must flag the claim.
+        discount: discountClaimLabel(attempt.ticket_label_snapshot),
         bookingId: shortBookingId(signupId),
         buyerEmail: attempt.participant_email ?? undefined,
       },

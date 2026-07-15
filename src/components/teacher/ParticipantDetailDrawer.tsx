@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatKroner, cn } from '@/lib/utils';
+import { parseDiscountClaim } from '@/lib/pricing';
 import { toast } from 'sonner';
 import {
   CalendarX,
@@ -85,9 +86,9 @@ function ticketLabel(
         ? `Hele kurset – ${AUDIENCE_LABEL[audience].toLowerCase()}`
         : 'Hele kurset';
   // Honor-system discount claim, marked on the label snapshot at charge time
-  // (create-stripe-connect-session) — the seller's only trace of the claim.
-  const discountMark = labelSnapshot?.match(/– (?:student|pensjonist) \(−\d+ %\)/)?.[0];
-  return discountMark ? `${base} ${discountMark}` : base;
+  // (create-stripe-connect-session).
+  const claim = parseDiscountClaim(labelSnapshot);
+  return claim ? `${base} ${claim.mark}` : base;
 }
 
 type ActivityTone = 'success' | 'danger' | 'warning' | 'neutral';

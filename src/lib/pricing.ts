@@ -53,3 +53,21 @@ export function calculatePlatformFee(price: number | null): number {
 export function calculateDiscountedPrice(price: number, percent: number): number {
   return Math.max(0, Math.round((price * (100 - percent)) / 100))
 }
+
+/**
+ * Parse the honor-discount claim off a charge-time ticket label snapshot,
+ * e.g. "Drop-in – student (−20 %)". The mark format is written by
+ * create-stripe-connect-session — keep the pattern in sync with it.
+ * Returns null for full-price labels (and legacy rows without a snapshot).
+ */
+export interface DiscountClaim {
+  audience: 'student' | 'pensjonist'
+  /** The full mark as stamped on the label, e.g. "– student (−20 %)" */
+  mark: string
+}
+
+export function parseDiscountClaim(labelSnapshot: string | null | undefined): DiscountClaim | null {
+  const match = labelSnapshot?.match(/– (student|pensjonist) \(−\d+ %\)/)
+  if (!match) return null
+  return { audience: match[1] as DiscountClaim['audience'], mark: match[0] }
+}

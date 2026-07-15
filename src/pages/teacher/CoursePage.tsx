@@ -53,6 +53,8 @@ import { runWithRevert } from '@/lib/undo';
 import { publishNeedsPaymentSetup } from '@/lib/payments';
 import { routes } from '@/lib/routes';
 import { cn, formatKroner } from '@/lib/utils';
+import { parseDiscountClaim } from '@/lib/pricing';
+import { Badge } from '@/components/ui/badge';
 import type {
   CourseSession,
   PaymentStatus,
@@ -1250,6 +1252,15 @@ const CoursePage = () => {
                             const noteFlag = p.note && (
                               <FileText className="size-4 shrink-0" aria-label="Har notat" />
                             );
+                            // Honor-discount claim — surfaced on the row so the
+                            // teacher knows who to ask for ID at the door, not
+                            // just one click deep in the drawer.
+                            const discountClaim = parseDiscountClaim(p.ticket_label_snapshot);
+                            const discountBadge = discountClaim && (
+                              <Badge variant="neutral" shape="pill" size="sm">
+                                {discountClaim.audience === 'student' ? 'Student' : 'Pensjonist'}
+                              </Badge>
+                            );
                             return (
                               <button
                                 key={p.id}
@@ -1275,14 +1286,17 @@ const CoursePage = () => {
                                 <div role="cell" className="flex items-center gap-3 min-w-0">
                                   <UserAvatar name={name} email={email} size="sm" />
                                   <div className="min-w-0">
-                                    <p
-                                      className={cn(
-                                        'text-base font-medium truncate',
-                                        isCancelled ? 'text-foreground-muted' : 'text-foreground',
-                                      )}
-                                    >
-                                      {name}
-                                    </p>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <p
+                                        className={cn(
+                                          'text-base font-medium truncate',
+                                          isCancelled ? 'text-foreground-muted' : 'text-foreground',
+                                        )}
+                                      >
+                                        {name}
+                                      </p>
+                                      {discountBadge}
+                                    </div>
                                     <p className="text-sm text-foreground-muted truncate mt-0.5">{email}</p>
                                     {(statusBadge || noteFlag) && (
                                       <div className="mt-1.5 flex items-center gap-2 md:hidden">
