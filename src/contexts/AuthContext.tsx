@@ -253,18 +253,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // only a definitive verdict (deleted user, revoked/absent session) signs
     // out. On a transient error we keep the session and proceed with the cached
     // user; a downstream profile-fetch failure is surfaced by the route guards.
+    // All automatic cleanups here use scope 'local': the default 'global'
+    // revokes every session the user has, so a tab booting with a stale
+    // session would kill the fresh session just created in another tab —
+    // leaving that tab rendering (JWT still signature-valid for RLS) while
+    // every edge function 401s on its session_not_found getUser check.
     const { data: { user: verifiedUser }, error: userError } = await supabase.auth.getUser()
     if (userError) {
       if (!isTransientAuthError(userError)) {
         logger.error('User no longer exists server-side, signing out')
-        await supabase.auth.signOut()
+        await supabase.auth.signOut({ scope: 'local' })
         return false
       }
       logger.warn('getUser failed transiently; keeping session and using cached user', userError)
     } else if (!verifiedUser) {
       // Succeeded with no user — the session is genuinely invalid.
       logger.error('User no longer exists server-side, signing out')
-      await supabase.auth.signOut()
+      await supabase.auth.signOut({ scope: 'local' })
       return false
     }
 
@@ -282,13 +287,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error: healError } = await supabase.rpc('ensure_own_profile')
       if (healError) {
         logger.error('Failed to self-heal missing profile, signing out:', healError)
-        await supabase.auth.signOut()
+        await supabase.auth.signOut({ scope: 'local' })
         return false
       }
       userProfile = await fetchProfileData(userId)
       if (!userProfile) {
         logger.error('Profile still missing after self-heal, signing out')
-        await supabase.auth.signOut()
+        await supabase.auth.signOut({ scope: 'local' })
         return false
       }
     }
