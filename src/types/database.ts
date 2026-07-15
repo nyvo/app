@@ -1499,6 +1499,7 @@ export type NotificationType =
   | "payment.failed"
   | "refund.completed"
   | "payout.sent"
+  | "account.action_required"
   | "team.invite_accepted"
   | "affiliation.joined"
 

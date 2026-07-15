@@ -4,6 +4,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CourseDrawer } from '@/components/teacher/CourseDrawer';
+import { AccountStatusBanner } from '@/components/teacher/AccountStatusBanner';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 /**
@@ -65,6 +66,7 @@ export default function TeacherLayout() {
             <>
               <MobileTeacherHeader />
               <div className="min-h-0 flex-1 overflow-y-auto bg-canvas">
+                <AccountStatusBanner />
                 <Outlet />
               </div>
             </>
