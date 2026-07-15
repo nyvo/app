@@ -385,8 +385,10 @@ export function TimelineDay({
         <span className="absolute left-[3px] top-[9px] hidden size-2 rounded-full bg-border sm:block" />
         <span className="absolute bottom-0 left-[6px] top-[22px] hidden w-px border-l border-dotted border-border sm:block" />
         {/* Both lines share one token size — hierarchy comes from weight +
-            color only (day medium ink, date regular muted). */}
-        <div className="pl-5">
+            color only (day medium ink, date regular muted). Below sm the pair
+            sits inline and flush left (no rail to indent past); at sm+ it
+            stacks back into the rail column. */}
+        <div className="flex items-baseline gap-x-1.5 sm:block sm:pl-5">
           <p className="text-base font-medium leading-tight text-foreground">{primary}</p>
           <p className="text-base text-foreground-muted">{secondary}</p>
         </div>

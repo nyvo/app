@@ -56,10 +56,11 @@ function RangeDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Velg tidsrom"
-        // after:-inset-2 lifts the ~20px text control to a ~36px touch target.
-        // Muted + normal weight: secondary to the FramedCard title, one tier
-        // down (surface → border → muted-text → foreground).
-        className="group relative inline-flex items-center gap-1 rounded-md text-sm text-foreground-muted outline-none after:absolute after:-inset-2 focus-visible:ring-2 focus-visible:ring-ring-subtle sm:hidden"
+        // Pill chrome mirrors a SegmentedTabs md segment (h-7 rounded-lg
+        // hairline on white) so the control is anchored, not floating text;
+        // ink stays muted — secondary to the FramedCard title.
+        // after:-inset-y-2 lifts the 28px pill to a ~44px touch target.
+        className="group relative inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-surface px-2.5 text-sm font-medium text-foreground-muted outline-none after:absolute after:inset-x-0 after:-inset-y-2 focus-visible:ring-2 focus-visible:ring-ring-subtle sm:hidden"
       >
         {label}
         <ChevronDown
