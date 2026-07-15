@@ -26,7 +26,7 @@ function dayLabel(d: Date): string {
   return `${DAY_ABBR_NB[d.getDay()]} ${d.getDate()}. ${MONTH_ABBR_NB[d.getMonth()]}`;
 }
 
-function buildMockIncome(range: IncomeRange): IncomeSeries {
+export function buildMockIncome(range: IncomeRange): IncomeSeries {
   const now = new Date();
   const span = range === 'year' ? 12 : range === 'week' ? 7 : 30;
   const points: IncomePoint[] = Array.from({ length: span }, (_, i) => {
@@ -45,7 +45,7 @@ function buildMockIncome(range: IncomeRange): IncomeSeries {
   return { range, points, total, previousTotal: Math.round(total * 0.84) };
 }
 
-function isoDateOffset(days: number): string {
+export function isoDateOffset(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() + days);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -90,7 +90,7 @@ function hoursAgo(hours: number): string {
 
 // Only the fields the SignupRow + drawer-less preview reads; the full
 // SignupWithDetails row shape comes from the DB and is irrelevant here.
-function mockSignup(
+export function mockSignup(
   id: string,
   name: string,
   courseTitle: string,

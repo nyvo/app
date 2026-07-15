@@ -7,7 +7,6 @@ import { initMonitoring } from '@/lib/monitoring'
 // (not via CSS @import) so Vite's asset pipeline emits the woff2 files.
 import '@fontsource-variable/geist/index.css'
 import '@fontsource-variable/geist-mono/index.css'
-import '@fontsource-variable/eb-garamond/index.css'
 import './index.css'
 
 // Wire error monitoring before the first render so early errors are captured.

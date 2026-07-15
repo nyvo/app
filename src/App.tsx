@@ -67,6 +67,8 @@ const StatesPreview = lazy(() => import('./pages/dev/StatesPreview'));
 const SettingsRowsPreview = lazy(() => import('./pages/dev/SettingsRowsPreview'));
 // Seller — dashboard & daily
 const DashboardPreview = lazy(() => import('./pages/dev/DashboardPreview'));
+const LandingShotPreview = lazy(() => import('./pages/dev/LandingShotPreview'));
+const LandingShotStorefrontPreview = lazy(() => import('./pages/dev/LandingShotStorefrontPreview'));
 const IncomeChartPreview = lazy(() => import('./pages/dev/IncomeChartPreview'));
 const CoursesListPreview = lazy(() => import('./pages/dev/CoursesListPreview'));
 const CourseBuilderLivePreview = lazy(() => import('./pages/dev/CourseBuilderLivePreview'));
@@ -229,6 +231,8 @@ const router = createBrowserRouter(
             <Route path="/dev/settings-rows-preview" element={<SettingsRowsPreview />} />
             {/* Seller — dashboard & daily */}
             <Route path="/dev/dashboard-preview" element={<DashboardPreview />} />
+            <Route path="/dev/landing-shot" element={<LandingShotPreview />} />
+            <Route path="/dev/landing-shot-storefront" element={<LandingShotStorefrontPreview />} />
             <Route path="/dev/income-chart-preview" element={<IncomeChartPreview />} />
             <Route path="/dev/courses-list-preview" element={<CoursesListPreview />} />
             <Route path="/dev/course-builder-live" element={<CourseBuilderLivePreview />} />

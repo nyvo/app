@@ -13,7 +13,7 @@ interface SellerMembership {
   seller: Seller
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null
   profile: Profile | null
   session: Session | null
@@ -64,7 +64,9 @@ interface AuthContextType {
   markOnboardingComplete: () => Promise<{ error: Error | null }>
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+// Exported ONLY so /dev previews can inject a staged value (see
+// pages/dev/LandingShotPreview). App code must consume via useAuth().
+export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const LEGACY_CURRENT_SELLER_KEY = 'currentSellerId'
 
