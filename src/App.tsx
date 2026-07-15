@@ -19,6 +19,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { DelayedFallback } from './components/ui/delayed-fallback';
 import { PageSkeleton } from './components/ui/page-skeleton';
 import { RESERVED_SLUGS } from '@/lib/reservedSlugs';
+import { DEV_PREVIEWS_ENABLED } from '@/lib/devPreviews';
 import { useAuth } from '@/contexts/AuthContext';
 
 import { RoleRoute } from './components/RoleRoute';
@@ -217,11 +218,12 @@ const router = createBrowserRouter(
           </Route>
         </Route>
 
-        {/* Dev preview gallery (no auth, direct-URL only). DEV-only:
-            tree-shaken out of production builds so it never ships or gets
-            indexed. Index hub at /dev; every preview renders REAL components
-            in their default / empty / error / loading states. */}
-        {import.meta.env.DEV && (
+        {/* Dev preview gallery (no auth, direct-URL only). Tree-shaken out of
+            production builds so it never ships or gets indexed, AND gated off
+            by default in local dev — set VITE_DEV_PREVIEWS=true in .env.local
+            to reach it (see src/lib/devPreviews.ts). Index hub at /dev; every
+            preview renders REAL components in default/empty/error/loading. */}
+        {DEV_PREVIEWS_ENABLED && (
           <>
             <Route path="/dev" element={<DevIndex />} />
             {/* Foundations */}

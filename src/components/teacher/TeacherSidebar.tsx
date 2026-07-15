@@ -17,6 +17,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { isProSeller } from '@/lib/payments';
 import { routes } from '@/lib/routes';
+import { DEV_PREVIEWS_ENABLED } from '@/lib/devPreviews';
 import { accountDisplayName, formatKroner } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -136,9 +137,11 @@ export const TeacherSidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {/* Local-dev only: the /dev preview index. import.meta.env.DEV is
-                  statically false in production builds, so this never ships. */}
-              {import.meta.env.DEV && (
+              {/* /dev preview index. Off in production (import.meta.env.DEV is
+                  statically false there) AND hidden by default in local dev —
+                  set VITE_DEV_PREVIEWS=true in .env.local to show it. See
+                  src/lib/devPreviews.ts. */}
+              {DEV_PREVIEWS_ENABLED && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
