@@ -60,7 +60,8 @@ const MOCK_SELLER_EMBED = {
     senior_discount_percent: null,
 };
 
-const MOCK_COURSES: PublicCourseWithDetails[] = [
+// Exported for the landing-page storefront shot (LandingShotStorefrontPreview).
+export const MOCK_COURSES: PublicCourseWithDetails[] = [
   // Series with a cheaper drop-in tier — shows the "fra <pris>" price row.
   {
     id: 'mock-yoga-series',

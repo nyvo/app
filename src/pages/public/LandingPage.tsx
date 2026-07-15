@@ -1,5 +1,11 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  ChartBarIncreasingIcon,
+  CreditCardIcon,
+  UserMultiple02Icon,
+} from '@hugeicons/core-free-icons';
 import { Check } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Grain } from '@/components/public/Grain';
@@ -15,9 +21,8 @@ import {
 const PRELAUNCH = import.meta.env.VITE_PRELAUNCH === 'true';
 
 // =============================================================================
-// ProductFrame — the "card within a card" pattern. A muted neutral panel
-// holds a screenshot floating inside it. Monochrome, palette-aligned,
-// textured via grain (not gradient).
+// ProductFrame — the "card within a card" pattern. A subtle azure panel
+// holds a screenshot floating inside it. Textured via grain (not gradient).
 // =============================================================================
 function ProductFrame({
   children,
@@ -28,7 +33,7 @@ function ProductFrame({
 }) {
   const padding = tight ? 'p-1.5 sm:p-3 md:p-4' : 'p-3 sm:p-6 md:p-8';
   return (
-    <div className={`relative isolate overflow-hidden rounded-2xl bg-muted ${padding}`}>
+    <div className={`relative isolate overflow-hidden rounded-2xl bg-primary-subtle ${padding}`}>
       <Grain opacity={0.6} baseFrequency={0.7} />
       <div className="relative overflow-hidden rounded-lg border border-card bg-background shadow-soft">
         {children}
@@ -78,7 +83,7 @@ const LandingPage = () => {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  className="mb-3 text-xs font-medium text-foreground-muted"
+                  className="mb-3 text-xs font-medium text-primary"
                 >
                   Bygget i Norge
                 </motion.p>
@@ -86,7 +91,7 @@ const LandingPage = () => {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  className="font-serif text-4xl font-medium text-foreground md:text-5xl"
+                  className="text-4xl font-semibold text-foreground md:text-5xl"
                 >
                   Driv ditt yogastudio enklere.
                 </motion.h1>
@@ -116,7 +121,7 @@ const LandingPage = () => {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="mb-3 text-xs font-medium text-foreground-muted"
+                className="mb-3 text-xs font-medium text-primary"
               >
                 Bygget i Norge
               </motion.p>
@@ -124,7 +129,7 @@ const LandingPage = () => {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="font-serif text-4xl font-medium text-foreground md:text-5xl"
+                className="text-4xl font-semibold text-foreground md:text-5xl"
               >
                 Driv ditt yogastudio enklere.
               </motion.h1>
@@ -149,17 +154,17 @@ const LandingPage = () => {
             </div>
           )}
 
-          {/* Hero — product on gradient frame. Plain div (not motion.div): this
-              image is the LCP element and fetchPriority="high" — holding it at
-              opacity:0 for a framer-motion fade delays LCP since Chrome won't
-              count an opacity:0 element as painted. */}
+          {/* Hero — product on subtle azure frame. Plain div (not motion.div):
+              this image is the LCP element and fetchPriority="high" — holding
+              it at opacity:0 for a framer-motion fade delays LCP since Chrome
+              won't count an opacity:0 element as painted. */}
           <div className="mx-auto mt-16 max-w-5xl md:mt-20">
             <ProductFrame>
               <img
                 src="/landing-dashboard.webp"
                 alt="Openspot – oversikt over inntekter og kommende kurs"
                 width={2400}
-                height={1659}
+                height={1660}
                 fetchPriority="high"
                 className="block w-full h-auto"
                 style={{ imageRendering: '-webkit-optimize-contrast' }}
@@ -170,75 +175,105 @@ const LandingPage = () => {
       </section>
 
       {/* ============================================================ */}
-      {/* 2. SPLIT — Public studio page (text left / product right) */}
+      {/* 2. STOREFRONT — split: text left, staged product shot right.
+          The shot comes from /dev/landing-shot-storefront (Flyt Studio)
+          via scripts/capture-landing-hero.mjs --shot storefront. */}
       {/* ============================================================ */}
-      <FeatureSplit
-        eyebrow="Synlighet"
-        title="Deltakerne finner deg."
-        description="Del kursene dine med én lenke."
-        align="left"
-        frameTight
-      >
-        <img
-          src="/landing-storefront.webp"
-          alt="Offentlig studioside i Openspot"
-          width={1600}
-          height={1357}
-          loading="lazy"
-          decoding="async"
-          className="block w-full h-auto"
-          style={{ imageRendering: '-webkit-optimize-contrast' }}
-        />
-      </FeatureSplit>
+      <section className="bg-background py-20 md:py-28">
+        <div className="mx-auto max-w-6xl px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-100px' }}
+            variants={scrollStaggerVariants}
+            className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-16"
+          >
+            <motion.div
+              variants={scrollVariants}
+              transition={scrollTransition}
+              className="lg:col-span-5"
+            >
+              <h2 className="text-3xl font-semibold text-foreground md:text-4xl">
+                Din egen studioside.
+              </h2>
+              <p className="mt-4 text-base text-foreground-muted">
+                En ferdig side med kursene dine – del den med én lenke.
+              </p>
+            </motion.div>
+            <motion.div
+              variants={scrollVariants}
+              transition={scrollTransition}
+              className="lg:col-span-7"
+            >
+              <ProductFrame tight>
+                <img
+                  src="/landing-storefront.webp"
+                  alt="Offentlig studioside i Openspot – Flyt Studio med timeplan og påmelding"
+                  width={1600}
+                  height={1356}
+                  loading="lazy"
+                  decoding="async"
+                  className="block w-full h-auto"
+                  style={{ imageRendering: '-webkit-optimize-contrast' }}
+                />
+              </ProductFrame>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
 
       {/* ============================================================ */}
-      {/* 3. SPLIT — Booking + Stripe (product left / text right) */}
+      {/* 3. PREMIUM — near-black square cards on the white page. Card
+          skeleton from Vizcom's "See measurable impact" dark cards
+          (Mobbin): small icon top-left, text pinned to the bottom,
+          no CTA inside the card. Icon scale stays small on purpose. */}
       {/* ============================================================ */}
-      <FeatureSplit
-        eyebrow="Påmelding og betaling"
-        title="Enkel påmelding."
-        description="Deltakeren velger time og betaler – alt på én side."
-        bullets={[
-          'Sikker kortbetaling',
-          'Automatisk kvittering på e-post',
-          'Enkel refusjon',
-        ]}
-        align="right"
-        frameTight
-      >
-        <img
-          src="/landing-payments.webp"
-          alt="Påmelding og betaling i Openspot"
-          width={1600}
-          height={1746}
-          loading="lazy"
-          decoding="async"
-          className="block w-full h-auto"
-          style={{ imageRendering: '-webkit-optimize-contrast' }}
-        />
-      </FeatureSplit>
+      <section className="bg-background py-20 md:py-28">
+        <div className="mx-auto max-w-6xl px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-100px' }}
+            variants={scrollVariants}
+            transition={scrollTransition}
+            className="mb-12 max-w-2xl md:mb-16"
+          >
+            <h2 className="text-3xl font-semibold text-foreground md:text-4xl">
+              Det tunge er bygget inn.
+            </h2>
+            <p className="mt-4 text-base text-foreground-muted">
+              Betaling, påmeldinger og oversikt – uten ekstra verktøy.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-50px' }}
+            variants={scrollStaggerVariants}
+            className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6"
+          >
+            <PremiumCard
+              icon={CreditCardIcon}
+              title="Betaling rett til konto"
+              body="Deltakerne betaler ved påmelding. Pengene går rett inn på bankkontoen din."
+            />
+            <PremiumCard
+              icon={UserMultiple02Icon}
+              title="Påmeldinger"
+              body="Deltakerne melder seg på selv – du ser alt med en gang."
+            />
+            <PremiumCard
+              icon={ChartBarIncreasingIcon}
+              title="Full oversikt"
+              body="Inntekter, påmeldinger og deltakere, samlet på ett sted."
+            />
+          </motion.div>
+        </div>
+      </section>
 
       {/* ============================================================ */}
-      {/* 5. WIDE — Teacher dashboard (centered text + full-width product) */}
-      {/* ============================================================ */}
-      <FeatureWide
-        eyebrow="Oversikt"
-        title="Inntekter og påmeldinger på ett sted."
-      >
-        <img
-          src="/landing-courses.webp"
-          alt="Openspot – kursoversikt"
-          width={1600}
-          height={838}
-          loading="lazy"
-          decoding="async"
-          className="block w-full h-auto"
-          style={{ imageRendering: '-webkit-optimize-contrast' }}
-        />
-      </FeatureWide>
-
-      {/* ============================================================ */}
-      {/* 7. PRICING — transparent, Stripe mentioned */}
+      {/* 4. PRICING — transparent, Stripe mentioned */}
       {/* ============================================================ */}
       <section id="pricing" className="bg-background py-20 md:py-28">
         <div className="mx-auto max-w-6xl px-6">
@@ -250,8 +285,7 @@ const LandingPage = () => {
             transition={scrollTransition}
             className="mx-auto mb-12 max-w-2xl text-center"
           >
-            <p className="mb-3 text-xs font-medium text-foreground-muted">Pris</p>
-            <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
+            <h2 className="text-3xl font-semibold text-foreground md:text-4xl">
               Enkel og forutsigbar pris.
             </h2>
             <p className="mt-4 text-base text-foreground-muted">
@@ -273,33 +307,22 @@ const LandingPage = () => {
                 price: 'Gratis',
                 features: [
                   'Ubegrenset antall kurs og deltakere',
-                  'Egen studioside',
-                  'Påmeldinger rett inn i oversikten',
                   'Kortbetaling og automatiske utbetalinger',
                   '5 % plattformgebyr per betaling',
                 ],
-                cta: PRELAUNCH
-                  ? { label: 'Ta kontakt', to: '#varsle' }
-                  : { label: 'Start gratis', to: '/auth?intent=seller' },
-                caption: PRELAUNCH ? 'Kommer snart.' : 'Du trenger ikke kort.',
               }}
             />
             <PricingTier
               tier={{
                 name: 'Pro',
-                recommended: true,
                 description: 'Behold hele kursprisen – uansett hvor mye du selger.',
                 price: formatKroner(499),
                 priceSub: '/ mnd eks. mva.',
                 features: [
                   'Alt i Start',
                   '0 % plattformgebyr',
-                  'Månedlig eller årlig betaling',
+                  'Ingen bindingstid',
                 ],
-                cta: PRELAUNCH
-                  ? { label: 'Ta kontakt', to: '#varsle' }
-                  : { label: 'Velg Pro', to: '/auth?intent=seller' },
-                caption: PRELAUNCH ? 'Kommer snart.' : 'Ingen bindingstid.',
               }}
             />
           </motion.div>
@@ -307,7 +330,7 @@ const LandingPage = () => {
       </section>
 
       {/* ============================================================ */}
-      {/* 8. FINAL CTA */}
+      {/* 5. FINAL CTA */}
       {/* ============================================================ */}
       <section id="varsle" className="scroll-mt-16 bg-background py-12 md:py-16">
         <div className="mx-auto max-w-6xl px-6">
@@ -319,10 +342,11 @@ const LandingPage = () => {
             transition={scrollTransition}
             className="relative isolate flex flex-col items-center justify-between gap-8 overflow-hidden rounded-3xl bg-chrome px-8 py-16 md:flex-row md:gap-12 md:px-16 md:py-20"
           >
-            {/* Dark chrome band — the same surface as the app's sidebar/toasts,
-                so the landing page literally previews the product's chrome. */}
+            {/* Dark chrome band — the same surface as the premium cards and
+                the app's toasts, so the landing page literally previews the
+                product's chrome. */}
             <Grain opacity={0.4} baseFrequency={0.7} blend="soft-light" />
-            <h2 className="relative font-serif text-3xl font-medium text-chrome-foreground md:text-4xl">
+            <h2 className="relative text-3xl font-semibold text-chrome-foreground md:text-4xl">
               {PRELAUNCH ? 'Bli med fra start.' : 'Klar?'}
             </h2>
             <div className="relative">
@@ -341,7 +365,7 @@ const LandingPage = () => {
       </section>
 
       {/* ============================================================ */}
-      {/* 9. FOOTER — Framio AS, org.nr */}
+      {/* 6. FOOTER — Framio AS, org.nr */}
       {/* ============================================================ */}
       <footer className="bg-background pt-20 pb-12">
         <div className="mx-auto max-w-6xl px-6">
@@ -415,126 +439,40 @@ const LandingPage = () => {
 };
 
 // =============================================================================
-// FeatureSplit — text on one side, product preview on the other. The
-// 50/50 row alternates align="left" / align="right" between features so
-// the page rhythm shifts. Inside ProductFrame is half-width, so use a
-// portrait-ish aspect (4:3 or 5:4) on the ScreenshotSlot inside.
+// PremiumCard — square near-black card. Small icon top-left, text pinned to
+// the bottom, generous air in between. Surface = --chrome (same family as
+// the CTA band and the app's toasts) + soft-light grain. Icons are the
+// app's Hugeicons stroke set for now — swap for real 3D renders when a pack
+// is chosen (Shapefest et al.).
 // =============================================================================
-function FeatureSplit({
-  eyebrow,
-  title,
-  description,
-  bullets,
-  align = 'left',
-  frame = true,
-  frameTight = false,
-  children,
-}: {
-  eyebrow?: string;
-  title: string;
-  description: string;
-  bullets?: string[];
-  align?: 'left' | 'right';
-  frame?: boolean;
-  frameTight?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="bg-background py-20 md:py-28">
-      <div className="mx-auto max-w-6xl px-6">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-100px' }}
-          variants={scrollStaggerVariants}
-          className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-16"
-        >
-          <motion.div
-            variants={scrollVariants}
-            transition={scrollTransition}
-            className={`lg:col-span-5 ${align === 'right' ? 'lg:order-2' : ''}`}
-          >
-            {eyebrow && (
-              <p className="mb-3 text-xs font-medium text-foreground-muted">{eyebrow}</p>
-            )}
-            <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
-              {title}
-            </h2>
-            <p className="mt-4 text-base text-foreground-muted">{description}</p>
-            {bullets && bullets.length > 0 && (
-              <ul className="mt-6 space-y-2.5">
-                {bullets.map((bullet) => (
-                  <li
-                    key={bullet}
-                    className="flex items-start gap-2.5 text-base text-foreground-muted"
-                  >
-                    <Check className="mt-1 size-4 flex-shrink-0 text-foreground-muted" />
-                    <span>{bullet}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </motion.div>
-          <motion.div
-            variants={scrollVariants}
-            transition={scrollTransition}
-            className={`lg:col-span-7 ${align === 'right' ? 'lg:order-1' : ''}`}
-          >
-            {frame ? <ProductFrame tight={frameTight}>{children}</ProductFrame> : children}
-          </motion.div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-// =============================================================================
-// FeatureWide — centered text above a full-width gradient-framed product
-// preview. The "hero echo" shape — use sparingly for the one feature that
-// visually deserves to be big (here: the dashboard).
-// =============================================================================
-function FeatureWide({
-  eyebrow,
+function PremiumCard({
+  icon,
   title,
   body,
-  children,
 }: {
-  eyebrow?: string;
+  icon: React.ComponentProps<typeof HugeiconsIcon>['icon'];
   title: string;
-  body?: string;
-  children: React.ReactNode;
+  body: string;
 }) {
   return (
-    <section className="bg-background py-20 md:py-28">
-      <div className="mx-auto max-w-6xl px-6">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-100px' }}
-          variants={scrollVariants}
-          transition={scrollTransition}
-          className="mx-auto mb-12 max-w-xl text-center"
-        >
-          {eyebrow && (
-            <p className="mb-3 text-xs font-medium text-foreground-muted">{eyebrow}</p>
-          )}
-          <h2 className="font-serif text-3xl font-medium text-foreground md:text-4xl">
-            {title}
-          </h2>
-          {body && <p className="mt-4 text-base text-foreground-muted">{body}</p>}
-        </motion.div>
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
-          variants={scrollVariants}
-          transition={scrollTransition}
-          className="mx-auto max-w-5xl"
-        >
-          <ProductFrame>{children}</ProductFrame>
-        </motion.div>
+    <motion.div
+      variants={scrollVariants}
+      transition={scrollTransition}
+      className="relative isolate flex flex-col overflow-hidden rounded-2xl bg-chrome p-6 sm:p-7 md:aspect-square"
+    >
+      <Grain opacity={0.4} baseFrequency={0.7} blend="soft-light" />
+      <HugeiconsIcon
+        icon={icon}
+        size={32}
+        strokeWidth={1.5}
+        className="relative text-chrome-foreground"
+        aria-hidden="true"
+      />
+      <div className="relative mt-14 md:mt-auto">
+        <h3 className="text-lg font-medium text-chrome-foreground">{title}</h3>
+        <p className="mt-2 text-sm leading-relaxed text-chrome-foreground-muted">{body}</p>
       </div>
-    </section>
+    </motion.div>
   );
 }
 
@@ -547,10 +485,6 @@ type Tier = {
   price: string;
   priceSub?: string;
   features: string[];
-  cta: { label: string; to: string };
-  caption?: string;
-  /** The emphasized tier: its CTA stays primary, others render secondary. */
-  recommended?: boolean;
 };
 
 function PricingTier({ tier }: { tier: Tier }) {
@@ -569,7 +503,7 @@ function PricingTier({ tier }: { tier: Tier }) {
 
       <div className="mb-8 border-b border-border pb-8">
         <div className="flex items-baseline gap-2">
-          <span className="font-serif text-4xl font-medium text-foreground">
+          <span className="text-4xl font-semibold text-foreground">
             {tier.price}
           </span>
           {tier.priceSub && (
@@ -578,39 +512,19 @@ function PricingTier({ tier }: { tier: Tier }) {
         </div>
       </div>
 
-      <ul className="mb-8 flex-1 space-y-3">
+      <ul className="flex-1 space-y-3">
         {tier.features.map((feature) => (
           <li
             key={feature}
             className="flex items-start gap-3 text-base text-foreground-muted"
           >
-            <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-muted">
-              <Check className="size-3.5 text-foreground" />
+            <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-primary-subtle">
+              <Check className="size-3.5 text-primary" />
             </div>
             <span>{feature}</span>
           </li>
         ))}
       </ul>
-
-      <Button
-        asChild
-        variant={tier.recommended ? 'default' : 'secondary'}
-        size="cta"
-        className="mt-auto w-full"
-      >
-        {/* In-page anchors (PRELAUNCH '#varsle') need a native <a> — router
-            Link updates the hash without the native fragment scroll. */}
-        {tier.cta.to.startsWith('#') ? (
-          <a href={tier.cta.to}>{tier.cta.label}</a>
-        ) : (
-          <Link to={tier.cta.to}>{tier.cta.label}</Link>
-        )}
-      </Button>
-      {tier.caption && (
-        <p className="mt-4 text-center text-base text-foreground-muted">
-          {tier.caption}
-        </p>
-      )}
     </motion.div>
   );
 }
