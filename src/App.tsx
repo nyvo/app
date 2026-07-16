@@ -308,8 +308,8 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {/* reducedMotion="user": framer-motion transforms are JS-driven, so the
-            CSS prefers-reduced-motion guard in index.css can't reach them. */}
+        {/* Framer removes transform/layout motion for reduced-motion users while
+            preserving useful opacity feedback. */}
         <MotionConfig reducedMotion="user">
           <RouterProvider router={router} />
         </MotionConfig>

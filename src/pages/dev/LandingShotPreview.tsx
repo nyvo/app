@@ -107,9 +107,7 @@ export default function LandingShotPreview() {
         <TeacherSidebar />
         <SidebarInset>
           <div className="flex-1 min-h-full overflow-y-auto bg-canvas">
-            {/* animate={false}: the capture script screenshots right after
-                load — the page-enter fade must not race it. */}
-            <PageShell title="Oversikt" action={<NotificationsPopover />} animate={false}>
+            <PageShell title="Oversikt" action={<NotificationsPopover />}>
               <div className="space-y-12">
                 <IncomeChart
                   series={incomeSeries}

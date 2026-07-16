@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { X } from '@/lib/icons'
 import { formatRelativeTime } from '@/lib/format-relative-time'
+import { EASE_OUT } from '@/lib/motion'
 import { formatNotificationBody } from './format-body'
 import { getNotificationIcon } from './notification-icons'
 import type { Notification } from '@/types/database'
@@ -90,12 +91,12 @@ export function NotificationRow({
   // Strong ease-out (Emil's UI curve); exit only — remaining rows glide up as
   // the collapsing height pulls them into place.
   const exit = shouldReduceMotion
-    ? { opacity: 0, transition: { duration: 0.15, ease: [0.23, 1, 0.32, 1] as const } }
+    ? { opacity: 0, transition: { duration: 0.15, ease: EASE_OUT } }
     : {
         opacity: 0,
         x: 12,
         height: 0,
-        transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] as const },
+        transition: { duration: 0.2, ease: EASE_OUT },
       }
 
   // Opacity-only entrance for realtime-arrived rows (see `enteredAsNew`).
@@ -103,8 +104,8 @@ export function NotificationRow({
     ? {
         opacity: 1,
         transition: {
-          duration: shouldReduceMotion ? 0 : 0.15,
-          ease: [0.23, 1, 0.32, 1] as const,
+          duration: 0.15,
+          ease: EASE_OUT,
         },
       }
     : undefined
@@ -124,7 +125,7 @@ export function NotificationRow({
       >
         <div
           className={cn(
-            'flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors duration-150 ease-out',
+            'motion-color flex size-8 shrink-0 items-center justify-center rounded-lg',
             !dimmed && notification.action_required
               ? 'bg-foreground text-background'
               : 'bg-muted text-foreground-muted',
