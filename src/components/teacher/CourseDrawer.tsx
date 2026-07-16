@@ -180,9 +180,14 @@ interface CourseDrawerProps {
  */
 export function CourseDrawer({ courseId, origin, sessionId, onClose }: CourseDrawerProps) {
   const isOpen = !!courseId;
+  const [nestedOverlayCourseId, setNestedOverlayCourseId] = useState<string>();
+  const nestedOverlayOpen = nestedOverlayCourseId === courseId;
 
   return (
-    <Sheet open={isOpen} onOpenChange={(next) => !next && onClose()}>
+    <Sheet
+      open={isOpen && !nestedOverlayOpen}
+      onOpenChange={(next) => !next && !nestedOverlayOpen && onClose()}
+    >
       <SheetContent
         side="right"
         className="flex flex-col gap-0 sm:max-w-[480px] w-full p-0"
@@ -195,14 +200,28 @@ export function CourseDrawer({ courseId, origin, sessionId, onClose }: CourseDra
               onClose={onClose}
             />
           ) : (
-            <ViewMode courseId={courseId} onClose={onClose} />
+            <ViewMode
+              courseId={courseId}
+              onClose={onClose}
+              onNestedOverlayOpenChange={(open) => {
+                setNestedOverlayCourseId(open ? courseId : undefined);
+              }}
+            />
           ))}
       </SheetContent>
     </Sheet>
   );
 }
 
-function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void }) {
+function ViewMode({
+  courseId,
+  onClose,
+  onNestedOverlayOpenChange,
+}: {
+  courseId: string;
+  onClose: () => void;
+  onNestedOverlayOpenChange: (open: boolean) => void;
+}) {
   const navigate = useNavigate();
   const { currentSeller } = useAuth();
   const {
@@ -235,6 +254,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
     if (!courseId) return;
     if (publishNeedsPaymentSetup(currentSeller, courseHasPaidTier)) {
       setShowPublishDialog(true);
+      onNestedOverlayOpenChange(true);
       return;
     }
     setIsPublishing(true);
@@ -490,7 +510,10 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
       {currentSeller?.id && (
         <PublishCourseDialog
           open={showPublishDialog}
-          onOpenChange={setShowPublishDialog}
+          onOpenChange={(open) => {
+            setShowPublishDialog(open);
+            onNestedOverlayOpenChange(open);
+          }}
           courseTitle={courseData.title}
         />
       )}

@@ -108,7 +108,7 @@ export function NotificationsPopover() {
             variant="ghost"
             size="sm"
             onClick={archiveAll}
-            className="h-auto px-2 py-1 text-xs text-foreground-muted"
+            className="relative h-auto px-2 py-1 text-xs text-foreground-muted after:absolute after:inset-x-0 after:-inset-y-2.5"
           >
             Fjern alle
           </Button>
@@ -154,10 +154,7 @@ export function NotificationsPopover() {
             sideOffset={8}
             aria-label="Varsler"
             className={cn(
-              'z-50 flex max-h-[520px] w-[380px] origin-(--radix-popover-content-transform-origin) flex-col overflow-hidden rounded-xl border border-border bg-surface text-sm text-foreground outline-hidden duration-100',
-              'data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95',
-              'data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
-              'data-[side=bottom]:slide-in-from-top-2',
+              'floating-motion z-50 flex max-h-[520px] w-[380px] origin-(--radix-popover-content-transform-origin) flex-col overflow-hidden rounded-xl border border-border bg-surface text-sm text-foreground outline-hidden',
             )}
           >
             {panelInner(<h2 className="text-sm font-medium">Varsler</h2>)}

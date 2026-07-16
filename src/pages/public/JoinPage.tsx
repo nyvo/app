@@ -70,7 +70,7 @@ function Cover({ url }: { url: string | null }) {
         <img
           src={url}
           alt=""
-          className="size-full object-cover"
+          className="media-outline size-full object-cover"
           onError={() => setFailed(true)}
         />
       </div>

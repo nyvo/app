@@ -439,7 +439,10 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
 
   return (
     <>
-      <Sheet open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <Sheet
+        open={!showPublishDialog && blocker.state !== 'blocked'}
+        onOpenChange={(o) => { if (!o && !showPublishDialog && blocker.state !== 'blocked') onClose(); }}
+      >
         <SheetContent side="right" className="w-full gap-0">
           <SheetHeader>
             <SheetTitle>Nytt kurs</SheetTitle>

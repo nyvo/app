@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { MapPin } from '@/lib/icons';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
@@ -50,6 +51,7 @@ export function PlacesAutocomplete({
   onSearchError,
   ...aria
 }: PlacesAutocompleteProps) {
+  const shouldReduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<PlaceSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -216,37 +218,47 @@ export function PlacesAutocomplete({
           </p>
         </div>
       )}
-      {open && !searchError && results.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full origin-top animate-in overflow-hidden rounded-lg border border-border bg-surface fade-in-0 zoom-in-95 duration-150">
-          <ul id={listboxId} role="listbox" className="max-h-60 overflow-y-auto p-1">
-            {results.map((r, i) => (
-              <li key={r.placeId} role="presentation">
-                <button
-                  type="button"
-                  id={getOptionId(r.placeId)}
-                  role="option"
-                  aria-selected={i === activeIndex}
-                  // Prevent the input's blur from firing before the click.
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => void handleSelect(r.placeId)}
-                  className={cn(
-                    'flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-sm outline-none hover:bg-accent',
-                    i === activeIndex && 'bg-accent',
-                  )}
-                >
-                  <MapPin className="mt-0.5 size-4 shrink-0 text-foreground-muted" />
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium text-foreground">{r.primary}</span>
-                    {r.secondary && (
-                      <span className="block truncate text-foreground-muted">{r.secondary}</span>
+      <AnimatePresence initial={false}>
+        {open && !searchError && results.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={shouldReduceMotion
+              ? { duration: 0 }
+              : { duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
+            className="absolute z-50 mt-1 w-full origin-top overflow-hidden rounded-lg border border-border bg-surface"
+          >
+            <ul id={listboxId} role="listbox" className="max-h-60 overflow-y-auto p-1">
+              {results.map((r, i) => (
+                <li key={r.placeId} role="presentation">
+                  <button
+                    type="button"
+                    id={getOptionId(r.placeId)}
+                    role="option"
+                    aria-selected={i === activeIndex}
+                    // Prevent the input's blur from firing before the click.
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => void handleSelect(r.placeId)}
+                    className={cn(
+                      'flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-sm outline-none hover:bg-accent',
+                      i === activeIndex && 'bg-accent',
                     )}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+                  >
+                    <MapPin className="mt-0.5 size-4 shrink-0 text-foreground-muted" />
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium text-foreground">{r.primary}</span>
+                      {r.secondary && (
+                        <span className="block truncate text-foreground-muted">{r.secondary}</span>
+                      )}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

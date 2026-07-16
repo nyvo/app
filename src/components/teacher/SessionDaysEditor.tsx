@@ -88,7 +88,12 @@ export function SessionDaysEditor({ value, onChange, readOnly = false }: Session
             <motion.div
               layout
               key={day.id}
-              exit={{ opacity: 0, height: 0 }}
+              exit={{
+                opacity: 0,
+                height: 0,
+                y: -12,
+                transition: { duration: 0.15, ease: [0.23, 1, 0.32, 1] },
+              }}
               transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
               className="overflow-hidden"
             >

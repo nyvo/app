@@ -30,7 +30,7 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
           <img
             src={coverUrl}
             alt=""
-            className="size-full object-cover"
+            className="media-outline size-full object-cover"
             onError={() => setCoverFailed(true)}
           />
         )}
@@ -106,7 +106,7 @@ function LogoTile({ organization }: { organization: PublicSeller }) {
         <img
           src={logoUrl}
           alt={`${organization.name}-logo`}
-          className="size-full object-cover"
+          className="media-outline size-full object-cover"
           onError={() => setLogoFailed(true)}
         />
       </div>

@@ -602,7 +602,7 @@ const CheckoutPage = () => {
             metaLoading={isDropInSelected && dropInResolving}
             trailing={
               !closed && !showBillett && billettLowStock ? (
-                <span className="ml-auto whitespace-nowrap text-xs text-warning">
+                <span className="ml-auto whitespace-nowrap text-xs tabular-nums text-warning">
                   {billettSpotsLeft} {billettSpotsLeft === 1 ? 'plass' : 'plasser'} igjen
                 </span>
               ) : undefined
@@ -1376,7 +1376,7 @@ export function CheckoutCourseContext({
   return (
     <div className="mt-[18px] flex items-center gap-3">
       <div className="size-11 shrink-0 overflow-hidden rounded-xl bg-muted">
-        {img && <img src={img} alt="" className="size-full object-cover" />}
+        {img && <img src={img} alt="" className="media-outline size-full object-cover" />}
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14.5px] font-medium text-foreground">{course.title}</p>
@@ -1523,7 +1523,7 @@ export function BillettSection({
       <p className={FLAB_CLASS}>
         Billett
         {lowStock && (
-          <span className="ml-2.5 font-normal text-warning">
+          <span className="ml-2.5 font-normal tabular-nums text-warning">
             {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
           </span>
         )}

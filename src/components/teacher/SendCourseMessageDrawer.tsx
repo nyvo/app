@@ -96,7 +96,13 @@ export function SendCourseMessageDrawer({
 
   return (
     <>
-      <Sheet open={open} onOpenChange={handleOpenChange}>
+      <Sheet
+        open={open && !showDiscardConfirm}
+        onOpenChange={(next) => {
+          if (!next && showDiscardConfirm) return;
+          handleOpenChange(next);
+        }}
+      >
         <SheetContent side="right" className="sm:max-w-[480px] p-0 gap-0">
           <SheetHeader>
             <SheetTitle>Send melding</SheetTitle>

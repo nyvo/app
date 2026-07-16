@@ -36,7 +36,7 @@ export function StorefrontHeader({ name, slug, logoUrl }: StorefrontHeaderProps)
           <img
             src={logoUrl}
             alt=""
-            className="size-full object-cover"
+            className="media-outline size-full object-cover"
             onError={() => setLogoFailed(true)}
           />
         ) : (

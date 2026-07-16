@@ -680,7 +680,7 @@ function CourseThumb({ src }: { src: string | null }) {
         <img
           src={src}
           alt=""
-          className="absolute inset-0 size-full object-cover"
+          className="media-outline absolute inset-0 size-full object-cover"
           onError={() => setFailed(true)}
         />
       ) : (

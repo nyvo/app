@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Check, Copy } from '@/lib/icons';
 import { Button, type ButtonProps } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { ContextualSwap } from '@/components/ui/contextual-swap';
 
 const COPY_REVERT_MS = 1500;
 
@@ -64,32 +64,22 @@ export function CopyButton({
 
   return (
     <Button type={type} variant={variant} size={size} onClick={() => void copy(value)} {...props}>
-      {/* Both states are stacked in the same grid cell so the wider label
-          ("Kopiert") sets the button's width — no layout shift on swap.
-          Opacity crossfades: entering "copied" is snappy (120ms), reverting
-          back is gentler (200ms). */}
-      <span className="grid">
-        <span
-          aria-hidden={copied || undefined}
-          className={cn(
-            'inline-flex items-center gap-1.5 [grid-area:1/1] transition-opacity ease-out',
-            copied ? 'pointer-events-none opacity-0 duration-[120ms]' : 'opacity-100 duration-200'
-          )}
-        >
-          <Copy data-icon="inline-start" />
-          {label}
-        </span>
-        <span
-          aria-hidden={!copied || undefined}
-          className={cn(
-            'inline-flex items-center gap-1.5 [grid-area:1/1] transition-opacity ease-out',
-            copied ? 'opacity-100 duration-[120ms]' : 'pointer-events-none opacity-0 duration-200'
-          )}
-        >
-          <Check data-icon="inline-start" />
-          {copiedLabel}
-        </span>
-      </span>
+      <ContextualSwap
+        active={copied}
+        contentClassName="gap-1.5"
+        activeContent={
+          <>
+            <Check data-icon="inline-start" />
+            {copiedLabel}
+          </>
+        }
+        inactiveContent={
+          <>
+            <Copy data-icon="inline-start" />
+            {label}
+          </>
+        }
+      />
     </Button>
   );
 }

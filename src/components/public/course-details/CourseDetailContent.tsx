@@ -122,7 +122,7 @@ function CourseImage({ course }: { course: PublicCourseWithDetails }) {
       <img
         src={img}
         alt=""
-        className="size-full object-cover"
+        className="media-outline size-full object-cover"
         onError={() => setFailed(true)}
       />
     </div>

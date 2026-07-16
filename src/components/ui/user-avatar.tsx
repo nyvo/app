@@ -64,7 +64,7 @@ export function UserAvatar({
         alt={ariaLabel}
         onError={handleError}
         className={cn(
-          'rounded-full object-cover shrink-0',
+          'media-outline rounded-full object-cover shrink-0',
           config.container,
           ringClassName,
           className,

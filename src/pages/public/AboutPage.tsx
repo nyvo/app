@@ -14,11 +14,11 @@ const AboutPage = () => {
 
       <main className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-3xl space-y-10">
-          <h1 className="text-3xl font-medium text-foreground">
+          <h1 className="text-balance text-3xl font-medium text-foreground">
             Om Openspot
           </h1>
 
-          <div className="space-y-8">
+          <div className="space-y-8 [&_h2]:text-balance [&_p]:text-pretty">
             <section className="space-y-4">
               <h2 className="text-lg font-medium text-foreground">Hva vi lager</h2>
               <p className="text-base text-foreground-muted leading-relaxed">

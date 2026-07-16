@@ -190,7 +190,7 @@ export function ImageField({
       aria-invalid={displayError ? true : undefined}
       aria-describedby={describedBy}
       className={cn(
-        'group relative shrink-0 cursor-pointer overflow-hidden transition-[color,background-color,transform] duration-150 ease-out outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle active:translate-y-px disabled:cursor-not-allowed',
+        'group relative shrink-0 cursor-pointer overflow-hidden transition-[color,background-color] duration-150 ease-out outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:cursor-not-allowed',
         isAvatar ? 'size-24 rounded-full' : 'aspect-[16/10] w-full rounded-xl',
         displayUrl
           ? 'border border-border bg-muted'
@@ -203,7 +203,7 @@ export function ImageField({
     >
       {displayUrl ? (
         <>
-          <img src={displayUrl} alt="" className="size-full object-cover animate-in fade-in-0 zoom-in-95 duration-200" />
+          <img src={displayUrl} alt="" className="media-outline size-full object-cover animate-in fade-in-0 zoom-in-95 duration-200" />
           <span className="absolute inset-0 bg-transparent transition-colors group-hover:bg-hover" />
         </>
       ) : (
@@ -254,7 +254,7 @@ export function ImageField({
             )}
           >
             {displayUrl ? (
-              <img src={displayUrl} alt="" className="size-full object-cover" />
+              <img src={displayUrl} alt="" className="media-outline size-full object-cover" />
             ) : (
               <span className="flex size-full items-center justify-center text-foreground-muted">
                 <Upload className="size-5" aria-hidden="true" />
@@ -276,9 +276,8 @@ export function ImageField({
                 variant="plain"
                 onClick={handleRemove}
                 disabled={isDisabled}
-                // relative + after:-inset-2 pads the hit area out to ~44px
-                // without growing the visible text (PasswordRow pattern).
-                className="relative text-foreground-muted after:absolute after:-inset-2 hover:text-danger"
+                // Expand vertically to 44px without changing visible geometry.
+                className="relative text-foreground-muted after:absolute after:inset-x-0 after:-inset-y-3 hover:text-danger"
               >
                 {removeLabel}
               </Button>
@@ -310,9 +309,8 @@ export function ImageField({
             variant="plain"
             onClick={openPicker}
             disabled={isDisabled}
-            // relative + after:-inset-2 pads the hit area out to ~44px
-            // without growing the visible text (PasswordRow pattern).
-            className="relative after:absolute after:-inset-2"
+            // Expand vertically to 44px without overlapping the adjacent action.
+            className="relative after:absolute after:inset-x-0 after:-inset-y-3"
           >
             {changeLabel}
           </Button>
@@ -321,7 +319,7 @@ export function ImageField({
             variant="plain"
             onClick={handleRemove}
             disabled={isDisabled}
-            className="relative after:absolute after:-inset-2 hover:text-danger"
+            className="relative after:absolute after:inset-x-0 after:-inset-y-3 hover:text-danger"
           >
             {removeLabel}
           </Button>

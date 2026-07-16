@@ -37,7 +37,7 @@ function AlertDialogOverlay({
       data-slot="alert-dialog-overlay"
       className={cn(
         // Nested over an open sheet, scrims compound — lighten so combined dim stays ≈40%.
-        "fixed inset-0 z-50 bg-foreground/40 duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 [body:has([data-slot=sheet-overlay])_&]:bg-foreground/15",
+        "overlay-motion fixed inset-0 z-50 bg-foreground/40 [body:has([data-slot=sheet-overlay])_&]:bg-foreground/15",
         className
       )}
       {...props}
@@ -59,7 +59,7 @@ function AlertDialogContent({
         data-slot="alert-dialog-content"
         data-size={size}
         className={cn(
-          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-[calc(100vw-2rem)] max-h-[calc(100dvh-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 overflow-y-auto rounded-xl border border-border bg-surface p-6 text-foreground outline-none data-[size=default]:sm:max-w-lg data-[size=sm]:sm:max-w-sm data-open:duration-200 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:duration-150 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "dialog-motion group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-[calc(100vw-2rem)] max-h-[calc(100dvh-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 overflow-y-auto rounded-xl border border-border bg-surface p-6 text-foreground outline-none data-[size=default]:sm:max-w-lg data-[size=sm]:sm:max-w-sm",
           className
         )}
         {...props}
@@ -124,7 +124,7 @@ function AlertDialogTitle({
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
       className={cn(
-        "text-lg font-medium text-foreground sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
+        "text-balance text-lg font-medium text-foreground sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
         className
       )}
       {...props}
@@ -140,7 +140,7 @@ function AlertDialogDescription({
     <AlertDialogPrimitive.Description
       data-slot="alert-dialog-description"
       className={cn(
-        "text-sm text-balance text-foreground-muted md:text-pretty *:[a]:text-primary *:[a]:underline *:[a]:underline-offset-2 *:[a]:hover:decoration-2",
+        "text-pretty text-sm text-foreground-muted *:[a]:text-primary *:[a]:underline *:[a]:underline-offset-2 *:[a]:hover:decoration-2",
         className
       )}
       {...props}

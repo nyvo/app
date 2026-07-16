@@ -306,7 +306,13 @@ export function ParticipantDetailDrawer({
 
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
+      <Sheet
+        open={open && confirmKind === null}
+        onOpenChange={(next) => {
+          if (!next && confirmKind !== null) return;
+          onOpenChange(next);
+        }}
+      >
         <SheetContent
           side="right"
           className="p-0 gap-0 bg-background"

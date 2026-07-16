@@ -17,10 +17,10 @@ const PrivacyPage = () => {
 
       <main className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-2xl">
-          <h1 className="text-2xl font-medium text-foreground">Personvern</h1>
+          <h1 className="text-balance text-2xl font-medium text-foreground">Personvern</h1>
           <p className="mt-2 text-sm text-foreground-muted">Sist oppdatert 11. juli 2026</p>
 
-          <div className="mt-12 space-y-8">
+          <div className="mt-12 space-y-8 [&_h2]:text-balance [&_p]:text-pretty">
             <section className="space-y-4">
               <p className="text-base text-foreground-muted leading-relaxed">
                 Openspot leveres av {COMPANY.legalName}, org.nr. {COMPANY.organizationNumber},

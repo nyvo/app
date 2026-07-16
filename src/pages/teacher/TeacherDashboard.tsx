@@ -346,7 +346,7 @@ export function PlatformFeeHint({ feeNok }: { feeNok: number }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-panel px-5 py-4 sm:flex-row sm:items-center">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-foreground">
+        <p className="text-sm font-medium tabular-nums text-foreground">
           {formatKroner(feeNok)} i plattformgebyr så langt i {month}
         </p>
         <p className="text-sm text-foreground-muted">Med Pro beholder du alt</p>
@@ -377,8 +377,8 @@ export function UpcomingCoursesSection({
 
   return (
     <section className="lg:pr-10">
-      <h2 className="text-lg font-semibold text-foreground">Neste kurs</h2>
-      <div className="mt-3.5">
+      <h2 className="text-lg font-medium text-foreground">Neste kurs</h2>
+      <div className="mt-3">
         {showSkeleton ? (
           <DelayedFallback>
             <RowsSkeleton variant="course" />
@@ -415,7 +415,7 @@ function UpcomingCourseCard({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="flex items-center gap-3.5 rounded-xl bg-panel px-4 py-3.5 no-underline outline-none transition-colors hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="flex items-center gap-3 rounded-xl bg-panel px-4 py-4 no-underline outline-none transition-colors hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
@@ -449,8 +449,8 @@ export function RecentSignupsSection({
     // Root carries the between-sections divider (top hairline stacked, left
     // hairline on lg) so the dev preview reuses the real layout and can't drift.
     <section className="border-t border-border-subtle pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
-      <h2 className="text-lg font-semibold text-foreground">Siste påmeldinger</h2>
-      <div className="mt-3.5">
+      <h2 className="text-lg font-medium text-foreground">Siste påmeldinger</h2>
+      <div className="mt-3">
         {showSkeleton ? (
           <DelayedFallback>
             <RowsSkeleton variant="signup" />
@@ -492,7 +492,7 @@ function SignupCard({
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="flex w-full items-center gap-3.5 rounded-xl bg-panel px-4 py-3.5 text-left outline-none cursor-pointer transition-colors hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="flex w-full items-center gap-3 rounded-xl bg-panel px-4 py-4 text-left outline-none cursor-pointer transition-colors hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
     >
       <UserAvatar name={name} size="lg" className="bg-background" />
       <div className="min-w-0 flex-1">
@@ -515,7 +515,7 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
   return (
     <div className="flex flex-col gap-2.5">
       {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3.5 rounded-xl bg-panel px-4 py-3.5">
+        <div key={i} className="flex items-center gap-3 rounded-xl bg-panel px-4 py-4">
           <Skeleton className={variant === 'course' ? 'size-10 rounded-lg' : 'size-10 rounded-full'} />
           <div className="flex h-11 min-w-0 flex-1 flex-col justify-center gap-2">
             <Skeleton className="h-3.5 w-32" />

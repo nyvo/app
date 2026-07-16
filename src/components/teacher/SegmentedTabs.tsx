@@ -118,7 +118,7 @@ export function SegmentedTabs<T extends string>({
             className={cn(
               'inline-flex min-w-0 items-center justify-center gap-2 rounded-lg border text-sm font-medium transition-[color,background-color,border-color,transform] duration-150 ease-out',
               size === 'lg' ? 'h-9 px-4' : 'h-7 px-3',
-              'outline-none focus-visible:ring-2 focus-visible:ring-ring active:translate-y-px',
+              'outline-none focus-visible:ring-2 focus-visible:ring-ring',
               disabled && 'cursor-not-allowed',
               stretch === true && 'flex-1',
               stretch === 'sm' && 'flex-1 sm:flex-none',

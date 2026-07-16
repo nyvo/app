@@ -2,6 +2,7 @@ import { Link, Navigate, useLocation, useSearchParams, type Location } from 'rea
 import { useState, useEffect, useRef } from 'react'
 import { Eye, EyeOff, ChevronLeft } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
+import { ContextualSwap } from '@/components/ui/contextual-swap'
 import { Input } from '@/components/ui/input'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { FieldError } from '@/components/ui/field-error'
@@ -413,10 +414,10 @@ const AuthPage = () => {
     return (
       <AuthLayout title="" customContent>
         <div className="mb-8 space-y-2 text-center">
-          <h1 className="text-2xl font-medium text-foreground">
+          <h1 className="text-balance text-2xl font-medium text-foreground">
             {isConfirm ? 'Bekreft e-posten din' : 'Logg inn med kode'}
           </h1>
-          <p className="text-base text-foreground-muted">
+          <p className="text-pretty text-base text-foreground-muted">
             Vi sendte en kode til {email}.
           </p>
         </div>
@@ -526,7 +527,7 @@ const AuthPage = () => {
           <ChevronLeft className="size-5" />
         </Button>
         <div className="mb-8 space-y-2 text-center">
-          <h1 className="text-2xl font-medium text-foreground">
+          <h1 className="text-balance text-2xl font-medium text-foreground">
             {isSignup ? 'Lag et passord' : 'Skriv inn passordet'}
           </h1>
           {/* Echo the address so a typo is caught here — not after a
@@ -556,12 +557,15 @@ const AuthPage = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  // relative + after:-inset-2 pads the hit area out to ~44px
-                  // without inflating the visible glyph.
-                  className="relative rounded p-1 text-foreground-muted outline-none transition-colors after:absolute after:-inset-2 hover:text-foreground focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle"
+                  // The pseudo-element reaches 44px without changing the glyph.
+                  className="relative rounded p-1 text-foreground-muted outline-none transition-colors after:absolute after:-inset-2.5 hover:text-foreground focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle"
                   aria-label={showPassword ? 'Skjul passord' : 'Vis passord'}
                 >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  <ContextualSwap
+                    active={showPassword}
+                    activeContent={<EyeOff className="size-4" />}
+                    inactiveContent={<Eye className="size-4" />}
+                  />
                 </button>
               </span>
             </div>
@@ -602,7 +606,7 @@ const AuthPage = () => {
   return (
     <AuthLayout title="" customContent>
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-medium text-foreground">Logg inn eller opprett konto</h1>
+        <h1 className="text-balance text-2xl font-medium text-foreground">Logg inn eller opprett konto</h1>
       </div>
 
       <GoogleAuthButton redirectTo={callbackUrl} variant="secondary" />
@@ -639,7 +643,7 @@ const AuthPage = () => {
         </Button>
       </form>
 
-      <p className="mt-12 max-w-xs text-center text-sm text-foreground-muted">
+      <p className="mt-12 max-w-xs text-pretty text-center text-sm text-foreground-muted">
         Ved å fortsette godtar du{' '}
         <Link to="/terms" className="text-primary underline underline-offset-2 hover:decoration-2">
           vilkårene

@@ -128,7 +128,7 @@ function ConfirmContent({
   const actionDisabled = disabled || !typeGateOpen
 
   const bodyText = (
-    <p className="text-sm leading-relaxed text-foreground-muted [&_strong]:font-medium [&_strong]:text-foreground">
+    <p className="text-pretty text-sm leading-relaxed text-foreground-muted [&_strong]:font-medium [&_strong]:text-foreground">
       {body}
     </p>
   )

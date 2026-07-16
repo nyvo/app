@@ -91,7 +91,7 @@ const LandingPage = () => {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-4xl font-semibold text-foreground md:text-5xl"
+                  className="text-balance text-4xl font-semibold text-foreground md:text-5xl"
                 >
                   Opprett kurs. Ta imot påmeldinger. Få betalt.
                 </motion.h1>
@@ -99,7 +99,7 @@ const LandingPage = () => {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                  className="mt-4 text-base text-foreground-muted"
+                  className="mt-4 text-pretty text-base text-foreground-muted"
                 >
                   Openspot samler kurs, påmeldinger, deltakere og betaling.
                 </motion.p>
@@ -129,7 +129,7 @@ const LandingPage = () => {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="text-4xl font-semibold text-foreground md:text-5xl"
+                className="text-balance text-4xl font-semibold text-foreground md:text-5xl"
               >
                 Opprett kurs. Ta imot påmeldinger. Få betalt.
               </motion.h1>
@@ -137,7 +137,7 @@ const LandingPage = () => {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-4 text-base text-foreground-muted"
+                className="mt-4 text-pretty text-base text-foreground-muted"
               >
                 Openspot samler kurs, påmeldinger, deltakere og betaling.
               </motion.p>
@@ -193,10 +193,10 @@ const LandingPage = () => {
               transition={scrollTransition}
               className="lg:col-span-5"
             >
-              <h2 className="text-3xl font-semibold text-foreground md:text-4xl">
+              <h2 className="text-balance text-3xl font-semibold text-foreground md:text-4xl">
                 En side for kursene dine.
               </h2>
-              <p className="mt-4 text-base text-foreground-muted">
+              <p className="mt-4 text-pretty text-base text-foreground-muted">
                 Vis kursene dine og ta imot påmeldinger på din egen studioside.
               </p>
             </motion.div>
@@ -238,10 +238,10 @@ const LandingPage = () => {
             transition={scrollTransition}
             className="mb-12 max-w-2xl md:mb-16"
           >
-            <h2 className="text-3xl font-semibold text-foreground md:text-4xl">
+            <h2 className="text-balance text-3xl font-semibold text-foreground md:text-4xl">
               Fra påmelding til utbetaling.
             </h2>
-            <p className="mt-4 text-base text-foreground-muted">
+            <p className="mt-4 text-pretty text-base text-foreground-muted">
               Deltakerne melder seg på og betaler selv. Du ser alt på ett sted.
             </p>
           </motion.div>
@@ -285,10 +285,10 @@ const LandingPage = () => {
             transition={scrollTransition}
             className="mx-auto mb-12 max-w-2xl text-center"
           >
-            <h2 className="text-3xl font-semibold text-foreground md:text-4xl">
+            <h2 className="text-balance text-3xl font-semibold text-foreground md:text-4xl">
               En pris som er enkel å forstå.
             </h2>
-            <p className="mt-4 text-base text-foreground-muted">
+            <p className="mt-4 text-pretty text-base text-foreground-muted">
               Start gratis. Bytt til Pro når du trenger mer.
             </p>
           </motion.div>
@@ -346,7 +346,7 @@ const LandingPage = () => {
                 the app's toasts, so the landing page literally previews the
                 product's chrome. */}
             <Grain opacity={0.4} baseFrequency={0.7} blend="soft-light" />
-            <h2 className="relative text-3xl font-semibold text-chrome-foreground md:text-4xl">
+            <h2 className="relative text-balance text-3xl font-semibold text-chrome-foreground md:text-4xl">
               {PRELAUNCH ? 'Snakk med oss.' : 'Start med neste kurs.'}
             </h2>
             <div className="relative">
@@ -372,7 +372,7 @@ const LandingPage = () => {
           <div className="mb-16 grid grid-cols-1 gap-12 md:grid-cols-12">
             <div className="md:col-span-5">
               <span className="text-xl font-medium text-foreground">Openspot</span>
-              <p className="mt-6 max-w-sm text-base leading-relaxed text-foreground-muted">
+              <p className="mt-6 max-w-sm text-pretty text-base leading-relaxed text-foreground-muted">
                 Påmelding, betaling og kursoversikt for yogastudioer.
                 <br />
                 Bygget i Norge.
@@ -469,8 +469,8 @@ function PremiumCard({
         aria-hidden="true"
       />
       <div className="relative mt-14 md:mt-auto">
-        <h3 className="text-lg font-medium text-chrome-foreground">{title}</h3>
-        <p className="mt-2 text-sm leading-relaxed text-chrome-foreground-muted">{body}</p>
+        <h3 className="text-balance text-lg font-medium text-chrome-foreground">{title}</h3>
+        <p className="mt-2 text-pretty text-sm leading-relaxed text-chrome-foreground-muted">{body}</p>
       </div>
     </motion.div>
   );
@@ -495,10 +495,10 @@ function PricingTier({ tier }: { tier: Tier }) {
       className="flex flex-col rounded-xl bg-panel p-6 sm:p-8"
     >
       <div className="mb-6">
-        <h3 className="text-base font-medium text-foreground">
+        <h3 className="text-balance text-base font-medium text-foreground">
           {tier.name}
         </h3>
-        <p className="mt-3 text-base text-foreground-muted">{tier.description}</p>
+        <p className="mt-3 text-pretty text-base text-foreground-muted">{tier.description}</p>
       </div>
 
       <div className="mb-8 border-b border-border pb-8">

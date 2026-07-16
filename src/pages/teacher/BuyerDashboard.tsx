@@ -54,7 +54,7 @@ function SignupRow({ signup }: { signup: BuyerSignup }) {
     <li className="flex items-start gap-4 p-4 sm:items-center">
       <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted">
         {course?.image_url ? (
-          <img src={course.image_url} alt="" className="absolute inset-0 size-full object-cover" />
+          <img src={course.image_url} alt="" className="media-outline absolute inset-0 size-full object-cover" />
         ) : (
           <div className="flex size-full items-center justify-center text-foreground-muted">
             <ImageIcon className="size-5" />

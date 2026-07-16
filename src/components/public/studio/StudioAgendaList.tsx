@@ -271,7 +271,7 @@ function CourseThumb({ course }: { course: PublicCourseWithDetails }) {
     <img
       src={src}
       alt=""
-      className="size-16 shrink-0 rounded-lg object-cover"
+      className="media-outline size-16 shrink-0 rounded-lg object-cover"
       onError={() => setFailed(true)}
     />
   );

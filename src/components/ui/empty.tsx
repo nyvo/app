@@ -75,7 +75,7 @@ function EmptyDescription({ className, ...props }: React.ComponentProps<"p">) {
     <div
       data-slot="empty-description"
       className={cn(
-        "text-sm/relaxed text-foreground-muted [&>a]:text-primary [&>a]:underline [&>a]:underline-offset-2 [&>a:hover]:decoration-2",
+        "text-pretty text-sm/relaxed text-foreground-muted [&>a]:text-primary [&>a]:underline [&>a]:underline-offset-2 [&>a:hover]:decoration-2",
         className
       )}
       {...props}

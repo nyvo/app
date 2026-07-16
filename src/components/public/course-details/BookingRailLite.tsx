@@ -102,7 +102,7 @@ export function BookingRailLite({
               <span aria-hidden />
             )}
             {lowStock && (
-              <Badge variant="warning" shape="pill" size="sm">
+              <Badge variant="warning" shape="pill" size="sm" className="tabular-nums">
                 {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
               </Badge>
             )}

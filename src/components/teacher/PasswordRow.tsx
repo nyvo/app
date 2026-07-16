@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Eye, EyeOff } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
+import { ContextualSwap } from '@/components/ui/contextual-swap'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FieldError } from '@/components/ui/field-error'
@@ -260,12 +261,15 @@ export function PasswordRow() {
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  // relative + after:-inset-2 pads the hit area out to ~44px
-                  // without inflating the visible glyph.
-                  className="relative rounded p-1 text-foreground-muted outline-none transition-colors after:absolute after:-inset-2 hover:text-foreground focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle"
+                  // The pseudo-element reaches 44px without changing the glyph.
+                  className="relative rounded p-1 text-foreground-muted outline-none transition-colors after:absolute after:-inset-2.5 hover:text-foreground focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle"
                   aria-label={showNewPassword ? 'Skjul passord' : 'Vis passord'}
                 >
-                  {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  <ContextualSwap
+                    active={showNewPassword}
+                    activeContent={<EyeOff className="size-4" />}
+                    inactiveContent={<Eye className="size-4" />}
+                  />
                 </button>
               </span>
             </div>

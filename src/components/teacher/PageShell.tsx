@@ -99,7 +99,7 @@ export function PageShell({
         <header className={description ? 'mb-10' : 'mb-8'}>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3 flex-wrap min-w-0">
-              <h1 className="text-2xl font-medium text-foreground">
+              <h1 className="text-balance text-2xl font-medium text-foreground">
                 {title}
               </h1>
               {badge && badgePlacement === 'inline' && <span className="shrink-0">{badge}</span>}
@@ -108,7 +108,7 @@ export function PageShell({
           </div>
           {badge && badgePlacement === 'below' && <div className="mt-2">{badge}</div>}
           {description && (
-            <div className="mt-2 text-base text-foreground-muted">{description}</div>
+            <div className="mt-2 text-pretty text-base text-foreground-muted">{description}</div>
           )}
         </header>
 

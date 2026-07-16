@@ -90,7 +90,7 @@ function DrawerTitle({
   return (
     <DrawerPrimitive.Title
       data-slot="drawer-title"
-      className={cn("text-lg font-medium text-foreground", className)}
+      className={cn("text-balance text-lg font-medium text-foreground", className)}
       {...props}
     />
   )
@@ -103,7 +103,7 @@ function DrawerDescription({
   return (
     <DrawerPrimitive.Description
       data-slot="drawer-description"
-      className={cn("text-sm text-foreground-muted", className)}
+      className={cn("text-pretty text-sm text-foreground-muted", className)}
       {...props}
     />
   )

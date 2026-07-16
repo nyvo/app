@@ -43,7 +43,6 @@ function ToolbarButton({ onClick, isActive, disabled, label, children }: Toolbar
             'inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground-muted transition-[color,background-color,transform] duration-150 ease-out',
             'hover:bg-muted hover:text-foreground',
             'focus-visible:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle',
-            'active:translate-y-px',
             'disabled:pointer-events-none disabled:opacity-40',
             'aria-pressed:bg-muted aria-pressed:text-foreground',
             '[&_svg]:size-4',
