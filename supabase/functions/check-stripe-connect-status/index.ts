@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
 
     const { data: seller, error: sellerError } = await supabase
       .from('sellers')
-      .select('id, stripe_account_id, stripe_onboarding_complete, stripe_account_status, stripe_payouts_enabled')
+      .select('id, stripe_account_id, stripe_onboarding_complete, stripe_account_status, stripe_payouts_enabled, stripe_requirements_due')
       .eq('id', body.sellerId)
       .single()
 
@@ -79,13 +79,15 @@ Deno.serve(async (req) => {
       ...(account.requirements?.currently_due ?? []),
       ...(account.requirements?.past_due ?? []),
     ]
+    const requirementsDueFlag = requirementsDue.length > 0
 
     // Persist only when changed — the stripe_* columns are write-protected, so
     // this must go through the SERVICE-ROLE client.
     if (
       seller.stripe_account_status !== status ||
       seller.stripe_onboarding_complete !== onboardingComplete ||
-      seller.stripe_payouts_enabled !== payoutsEnabled
+      seller.stripe_payouts_enabled !== payoutsEnabled ||
+      seller.stripe_requirements_due !== requirementsDueFlag
     ) {
       const { error: updateError } = await supabase
         .from('sellers')
@@ -93,6 +95,7 @@ Deno.serve(async (req) => {
           stripe_account_status: status,
           stripe_onboarding_complete: onboardingComplete,
           stripe_payouts_enabled: payoutsEnabled,
+          stripe_requirements_due: requirementsDueFlag,
         })
         .eq('id', body.sellerId)
 

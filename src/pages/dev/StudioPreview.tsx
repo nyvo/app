@@ -61,6 +61,7 @@ function mockSeller(overrides: Partial<Seller> = {}): Seller {
     stripe_account_status: null,
     stripe_onboarding_complete: false,
     stripe_payouts_enabled: false,
+    stripe_requirements_due: false,
     student_discount_percent: null,
     senior_discount_percent: null,
     subscription_cancel_at_period_end: false,
