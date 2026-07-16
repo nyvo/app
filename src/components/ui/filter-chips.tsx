@@ -43,7 +43,7 @@ export function FilterChips<T extends string>({
             aria-pressed={active}
             className={cn(
               'inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-medium',
-              'transition-[color,background-color,border-color,transform] duration-150 outline-none active:scale-[0.96] motion-reduce:active:scale-100',
+              'motion-press outline-none active:scale-[0.96] motion-reduce:active:scale-100',
               'focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle',
               active
                 ? 'bg-foreground text-background border-foreground'

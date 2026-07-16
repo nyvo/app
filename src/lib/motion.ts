@@ -2,25 +2,9 @@ import type { Variants, Transition } from 'framer-motion';
 
 // Strong ease-out (Emil's UI curve) — decelerates hard into rest, reads as
 // intentional rather than CSS's default `ease`, which is too weak here.
-const ease: [number, number, number, number] = [0.23, 1, 0.32, 1];
-
-const prefersReducedMotion =
-  typeof window !== 'undefined'
-    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    : false;
-
-const dur = (ms: number) => (prefersReducedMotion ? 0 : ms / 1000);
-
-export const pageVariants: Variants = {
-  initial: { opacity: 0, y: 4 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -4 },
-};
-
-export const pageTransition: Transition = {
-  duration: dur(180),
-  ease,
-};
+export const EASE_OUT: [number, number, number, number] = [0.23, 1, 0.32, 1];
+export const EASE_IN_OUT: [number, number, number, number] = [0.77, 0, 0.175, 1];
+export const EASE_DRAWER: [number, number, number, number] = [0.32, 0.72, 0, 1];
 
 export const scrollVariants: Variants = {
   hidden: { opacity: 0, y: 6 },
@@ -38,8 +22,8 @@ export const scrollStaggerVariants: Variants = {
 };
 
 export const scrollTransition: Transition = {
-  duration: dur(600),
-  ease,
+  duration: 0.6,
+  ease: EASE_OUT,
 };
 
 // Onboarding step transition — direction-aware horizontal slide + crossfade.
@@ -47,8 +31,6 @@ export const scrollTransition: Transition = {
 // evenly without the snap-and-settle feel of stronger ease-outs. Subtle 16px
 // offset keeps it elegant. Exit is faster than enter (Emil's asymmetric
 // principle) — system responds fast, new content settles in.
-const stepEase: [number, number, number, number] = [0.32, 0.72, 0, 1];
-
 export const stepVariants: Variants = {
   enter: (direction: number) => ({
     opacity: 0,
@@ -57,11 +39,11 @@ export const stepVariants: Variants = {
   center: {
     opacity: 1,
     x: 0,
-    transition: { duration: dur(220), ease: stepEase },
+    transition: { duration: 0.22, ease: EASE_DRAWER },
   },
   exit: (direction: number) => ({
     opacity: 0,
     x: -16 * direction,
-    transition: { duration: dur(160), ease: stepEase },
+    transition: { duration: 0.16, ease: EASE_DRAWER },
   }),
 };

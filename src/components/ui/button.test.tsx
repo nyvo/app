@@ -1,8 +1,16 @@
 import { render, screen } from '@testing-library/react'
 
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 
 describe('Button press feedback', () => {
+  it('uses the shared press timing without translating the control', () => {
+    const classes = buttonVariants()
+
+    expect(classes).toContain('motion-press')
+    expect(classes).not.toContain('translate-y-px')
+    expect(classes).not.toContain('duration-150 ease-out')
+  })
+
   it('adds press scale by default without changing the button dimensions', () => {
     render(<Button>Fortsett</Button>)
 

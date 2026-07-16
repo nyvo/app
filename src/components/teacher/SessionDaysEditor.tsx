@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { EASE_OUT } from '@/lib/motion'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -92,9 +93,9 @@ export function SessionDaysEditor({ value, onChange, readOnly = false }: Session
                 opacity: 0,
                 height: 0,
                 y: -12,
-                transition: { duration: 0.15, ease: [0.23, 1, 0.32, 1] },
+                transition: { duration: 0.15, ease: EASE_OUT },
               }}
-              transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+              transition={{ duration: 0.2, ease: EASE_OUT }}
               className="overflow-hidden"
             >
               <div

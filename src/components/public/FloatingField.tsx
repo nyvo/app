@@ -28,7 +28,7 @@ export const FloatingField = React.forwardRef<HTMLInputElement, FloatingFieldPro
           className={cn(
             // 52px shell: pt-24 + text-base line-height 24 + pb-4 = 52 exactly.
             // The arbitrary paddings encode the float geometry, not spacing drift.
-            'peer h-[52px] w-full min-w-0 rounded-xl border border-input bg-surface px-4 pt-[24px] pb-[4px] text-base text-foreground outline-none transition-colors duration-150 ease-out placeholder:text-transparent',
+            'motion-color peer h-[52px] w-full min-w-0 rounded-xl border border-input bg-surface px-4 pt-[24px] pb-[4px] text-base text-foreground outline-none placeholder:text-transparent',
             'focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle',
             'aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20',
             'disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50',
@@ -43,10 +43,12 @@ export const FloatingField = React.forwardRef<HTMLInputElement, FloatingFieldPro
             // font height — with text-base's inherited 24px line-height the
             // caption's box overlapped the value text below it. Caption spans
             // y 8–19, value starts at 24 → a real 5px gap. Rest-state
-            // centering (top-1/2 + translate) is line-height-independent.
-            'pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base leading-none text-foreground-muted transition-[top,transform,font-size,color] duration-150 ease-out',
-            'peer-focus:top-[8px] peer-focus:translate-y-0 peer-focus:text-[11px]',
-            'peer-[:not(:placeholder-shown)]:top-[8px] peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-[11px]',
+            // geometry uses the final 11px line box; the rest state scales it
+            // to the visual equivalent of 16px without animating layout.
+            'pointer-events-none absolute left-4 top-[8px] origin-top-left text-[11px] leading-none text-foreground-muted',
+            'translate-y-[10px] scale-[1.4545] transition-[translate,scale,color] duration-150 [transition-timing-function:var(--ease-out)] motion-reduce:transition-colors',
+            'peer-focus:translate-y-0 peer-focus:scale-100',
+            'peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:scale-100',
           )}
         >
           {label}

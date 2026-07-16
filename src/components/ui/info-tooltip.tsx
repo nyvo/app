@@ -37,7 +37,7 @@ export function InfoTooltip({
             onClick={() => setOpen((o) => !o)}
             className={cn(
               // The pseudo-element reaches 44px without changing the icon.
-              'relative inline-flex items-center justify-center rounded-full p-1 text-foreground-muted transition-colors duration-150 ease-out after:absolute after:-inset-[11px] hover:text-foreground focus:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle',
+              'motion-color relative inline-flex items-center justify-center rounded-full p-1 text-foreground-muted after:absolute after:-inset-[11px] hover:text-foreground focus:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring-subtle',
               className
             )}
             aria-label="Mer informasjon"

@@ -116,7 +116,7 @@ export function SegmentedTabs<T extends string>({
             tabIndex={active ? 0 : -1}
             onClick={() => { if (!disabled) onChange(t.key); }}
             className={cn(
-              'inline-flex min-w-0 items-center justify-center gap-2 rounded-lg border text-sm font-medium transition-[color,background-color,border-color,transform] duration-150 ease-out',
+              'motion-press inline-flex min-w-0 items-center justify-center gap-2 rounded-lg border text-sm font-medium',
               size === 'lg' ? 'h-9 px-4' : 'h-7 px-3',
               'outline-none focus-visible:ring-2 focus-visible:ring-ring',
               disabled && 'cursor-not-allowed',

@@ -1,6 +1,4 @@
-import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
-import { pageTransition, pageVariants } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
 /**
@@ -52,8 +50,6 @@ interface PageShellProps {
    *  - 'left'    → narrow content adjacent to tabs/preview/context
    */
   narrow?: 'centered' | 'left' | 'form';
-  /** Set to false to skip motion wrapper (rare). */
-  animate?: boolean;
   /** Override outer className if a page needs custom bottom padding etc. */
   className?: string;
   children: ReactNode;
@@ -73,23 +69,11 @@ export function PageShell({
   action,
   tabs,
   narrow,
-  animate = true,
   className,
   children,
 }: PageShellProps) {
-  const Container = animate ? motion.div : 'div';
-  const motionProps = animate
-    ? {
-        variants: pageVariants,
-        initial: 'initial' as const,
-        animate: 'animate' as const,
-        transition: pageTransition,
-      }
-    : {};
-
   return (
-    <Container
-      {...motionProps}
+    <div
       className={cn(
         'mx-auto w-full max-w-6xl px-4 pb-24 pt-6 sm:px-6 md:pb-12 lg:px-8 lg:pt-12',
         className,
@@ -116,6 +100,6 @@ export function PageShell({
 
         {children}
       </div>
-    </Container>
+    </div>
   );
 }

@@ -190,7 +190,7 @@ export function ImageField({
       aria-invalid={displayError ? true : undefined}
       aria-describedby={describedBy}
       className={cn(
-        'group relative shrink-0 cursor-pointer overflow-hidden transition-[color,background-color] duration-150 ease-out outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:cursor-not-allowed',
+        'motion-color group relative shrink-0 cursor-pointer overflow-hidden outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring-subtle disabled:cursor-not-allowed',
         isAvatar ? 'size-24 rounded-full' : 'aspect-[16/10] w-full rounded-xl',
         displayUrl
           ? 'border border-border bg-muted'
