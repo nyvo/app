@@ -9,6 +9,16 @@
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
+## Ship flow (do this without being asked)
+
+When a task that changed code is complete and verified (build passes, relevant checks green):
+
+1. **Commit** with a conventional message and **push** the branch: `git push -u origin HEAD`.
+2. **Open a PR** to `main` (`gh pr create --base main`) with a summary and test plan, or push to the existing PR if one is open.
+3. **Do not merge on your own.** Merging deploys — CI ships `main` straight to production (openspot.no). When the user clearly approves ("merge", "ship it", "send it", or an unambiguous yes to merging), merge immediately with `gh pr merge --squash --delete-branch` — no re-asking.
+
+Exploratory work, QA sessions, and question-answering produce no commits — this flow applies only when code changed.
+
 ## Design references (Mobbin)
 
 Before building or restyling any UI from external references, follow `docs/mobbin-reference-rule.md` exactly — query with intent, write the Reference Extraction block before any code, borrow structure only, re-skin in our system, and run the counterfactual self-check. Where that rule says `STYLE.md` and `PATTERNS.md`, this repo's files are `docs/design-language.md` and `docs/ui-patterns.md`.
