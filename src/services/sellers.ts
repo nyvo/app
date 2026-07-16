@@ -202,6 +202,7 @@ export async function updateSeller(
       stripe_account_status: operational?.stripe_account_status ?? null,
       stripe_onboarding_complete: operational?.stripe_onboarding_complete ?? false,
       stripe_payouts_enabled: operational?.stripe_payouts_enabled ?? false,
+      stripe_requirements_due: operational?.stripe_requirements_due ?? false,
       operating_model: operational?.operating_model ?? 'solo',
       organization_number: null,
       subscription_plan: operational?.subscription_plan ?? 'free',
@@ -254,6 +255,7 @@ export interface SellerOperational {
   stripe_account_status: string | null
   stripe_onboarding_complete: boolean
   stripe_payouts_enabled: boolean
+  stripe_requirements_due: boolean
   operating_model: string
   subscription_plan: SubscriptionPlan
   subscription_status: SubscriptionStatus

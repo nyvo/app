@@ -29,6 +29,11 @@ function accountActionReason(seller: Seller): AccountActionReason | null {
   // No account yet → this is the "get started" case, not a restriction.
   if (!seller.stripe_account_id) return null
   if (seller.stripe_account_status === 'rejected') return 'rejected'
+  // restricted / payouts-off only warrant the banner when Stripe actually has
+  // requirements outstanding. Without them the account is merely under review
+  // (e.g. the brief window right after onboarding) — nothing for the seller to
+  // do, so stay silent rather than raise a false "handling kreves" alarm.
+  if (!seller.stripe_requirements_due) return null
   if (seller.stripe_account_status === 'restricted') return 'restricted'
   if (seller.stripe_onboarding_complete && !seller.stripe_payouts_enabled) return 'payouts_paused'
   return null

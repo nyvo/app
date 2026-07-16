@@ -50,18 +50,21 @@ function mapAccountStatus(account: StripeConnectedAccount): AccountStatus {
   return 'restricted'
 }
 
-// Which action-needed state a seller is in (null = healthy). Mirrors the
-// frontend AccountStatusBanner: rejected/restricted = charges paused; a still-
-// enabled account with payouts off = payouts paused (money accrues, can't
-// settle). Severity order matches the notification copy map.
+// Which action-needed state a seller is in (null = healthy OR "Stripe is still
+// reviewing, nothing for the seller to do"). Mirrors the frontend
+// AccountStatusBanner. rejected always needs attention. restricted / payouts-off
+// only count as action-needed when Stripe actually has requirements outstanding
+// (requirementsDue) — a restricted account with no requirements due is just
+// verification-in-progress, so we stay silent rather than false-alarm.
 function actionNeededReason(
   status: AccountStatus,
   onboardingComplete: boolean,
   payoutsEnabled: boolean,
+  requirementsDue: boolean,
 ): AccountActionReason | null {
   if (status === 'rejected') return 'rejected'
-  if (status === 'restricted') return 'restricted'
-  if (onboardingComplete && !payoutsEnabled) return 'payouts_paused'
+  if (status === 'restricted') return requirementsDue ? 'restricted' : null
+  if (onboardingComplete && !payoutsEnabled) return requirementsDue ? 'payouts_paused' : null
   return null
 }
 
@@ -119,7 +122,7 @@ Deno.serve(async (req: Request) => {
         // Read from the same row we're about to update.
         const { data: prevSeller } = await supabase
           .from('sellers')
-          .select('id, stripe_account_status, stripe_onboarding_complete, stripe_payouts_enabled')
+          .select('id, stripe_account_status, stripe_onboarding_complete, stripe_payouts_enabled, stripe_requirements_due')
           .eq('stripe_account_id', accountId)
           .maybeSingle()
 
@@ -130,6 +133,11 @@ Deno.serve(async (req: Request) => {
         const status = mapAccountStatus(account)
         const onboardingComplete = account.charges_enabled === true
         const payoutsEnabled = account.payouts_enabled === true
+        // currently_due ∪ past_due — the requirements the seller must supply (vs. Stripe
+        // merely verifying). Same derivation as check-stripe-connect-status.
+        const requirementsDue =
+          ((account.requirements?.currently_due ?? []).length +
+            (account.requirements?.past_due ?? []).length) > 0
 
         const { error } = await supabase
           .from('sellers')
@@ -137,6 +145,7 @@ Deno.serve(async (req: Request) => {
             stripe_account_status: status,
             stripe_onboarding_complete: onboardingComplete,
             stripe_payouts_enabled: payoutsEnabled,
+            stripe_requirements_due: requirementsDue,
           })
           .eq('stripe_account_id', accountId)
         // Throw on write failure so Stripe retries rather than leaving the status stale.
@@ -156,8 +165,9 @@ Deno.serve(async (req: Request) => {
             (prevSeller.stripe_account_status as AccountStatus) ?? 'pending',
             prevSeller.stripe_onboarding_complete === true,
             prevSeller.stripe_payouts_enabled === true,
+            prevSeller.stripe_requirements_due === true,
           )
-          const nextReason = actionNeededReason(status, onboardingComplete, payoutsEnabled)
+          const nextReason = actionNeededReason(status, onboardingComplete, payoutsEnabled, requirementsDue)
           const wasLive = prevSeller.stripe_account_status === 'enabled'
 
           try {

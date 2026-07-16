@@ -769,6 +769,7 @@ export type Database = {
           stripe_account_status: string | null
           stripe_onboarding_complete: boolean
           stripe_payouts_enabled: boolean
+          stripe_requirements_due: boolean
           senior_discount_percent: number | null
           student_discount_percent: number | null
           subscription_cancel_at_period_end: boolean
@@ -797,6 +798,7 @@ export type Database = {
           stripe_account_status?: string | null
           stripe_onboarding_complete?: boolean
           stripe_payouts_enabled?: boolean
+          stripe_requirements_due?: boolean
           senior_discount_percent?: number | null
           student_discount_percent?: number | null
           subscription_cancel_at_period_end?: boolean
@@ -825,6 +827,7 @@ export type Database = {
           stripe_account_status?: string | null
           stripe_onboarding_complete?: boolean
           stripe_payouts_enabled?: boolean
+          stripe_requirements_due?: boolean
           senior_discount_percent?: number | null
           student_discount_percent?: number | null
           subscription_cancel_at_period_end?: boolean
@@ -1163,6 +1166,7 @@ export type Database = {
           stripe_account_status: string
           stripe_onboarding_complete: boolean
           stripe_payouts_enabled: boolean
+          stripe_requirements_due: boolean
           subscription_cancel_at_period_end: boolean
           subscription_current_period_end: string
           subscription_customer_id: string
