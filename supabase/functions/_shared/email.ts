@@ -138,6 +138,14 @@ export interface SupportMessageEmailProps {
   message: string
 }
 
+export interface AccountActionRequiredEmailProps {
+  studioName: string
+  /** Mirrors AccountActionReason in _shared/notifications.ts. */
+  reason: 'rejected' | 'restricted' | 'payouts_paused'
+  /** Absolute link to /settings/payouts. */
+  actionUrl: string
+}
+
 export type SendEmailInput =
   | { template: 'order-confirm'; to: string; props: OrderConfirmEmailProps; subject?: string; replyTo?: string }
   | { template: 'refund-receipt'; to: string; props: RefundReceiptEmailProps; subject?: string; replyTo?: string }
@@ -148,6 +156,7 @@ export type SendEmailInput =
   | { template: 'booking-notification'; to: string; props: BookingNotificationEmailProps; subject?: string; replyTo?: string }
   | { template: 'course-cancelled'; to: string; props: CourseCancelledEmailProps; subject?: string; replyTo?: string }
   | { template: 'signup-cancelled'; to: string; props: SignupCancelledEmailProps; subject?: string; replyTo?: string }
+  | { template: 'account-action-required'; to: string; props: AccountActionRequiredEmailProps; subject?: string; replyTo?: string }
 
 export interface SendEmailResult {
   id?: string

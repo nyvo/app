@@ -77,6 +77,37 @@ export type NotificationInput =
       bankSuffix?: string | null
       triggeredBy?: string | null
     }
+  | {
+      // Stripe restricted the connected account after onboarding — charges or
+      // payouts are paused until the studio completes new verification. Fired
+      // by the account.updated webhook only on a healthy → action-needed
+      // transition (never mid-onboarding). eventId keys the dedupe so a later
+      // restriction episode notifies again, while webhook retries don't.
+      type: 'account.action_required'
+      sellerId: string
+      reason: AccountActionReason
+      eventId: string
+      triggeredBy?: string | null
+    }
+
+// The three action-needed states, most-to-least severe. Kept in sync with the
+// frontend AccountStatusBanner and the account-action-required email template.
+export type AccountActionReason = 'rejected' | 'restricted' | 'payouts_paused'
+
+const ACCOUNT_ACTION_COPY: Record<AccountActionReason, { title: string; body: string }> = {
+  rejected: {
+    title: 'Kontoen ble avvist',
+    body: 'Stripe kan ikke aktivere betalinger for studioet. Ta kontakt, så hjelper vi deg videre.',
+  },
+  restricted: {
+    title: 'Betalinger er satt på pause',
+    body: 'Stripe trenger mer informasjon før studioet kan ta imot påmeldinger igjen.',
+  },
+  payouts_paused: {
+    title: 'Utbetalinger er satt på pause',
+    body: 'Kortbetalinger virker, men Stripe trenger mer før pengene kan overføres til deg.',
+  },
+}
 
 // ---------- Rendered row shape (recipient_id filled per fan-out) ----------
 
@@ -174,6 +205,23 @@ function renderNotification(input: NotificationInput): RenderedNotification {
           bank_suffix: input.bankSuffix ?? null,
         },
       }
+
+    case 'account.action_required': {
+      const copy = ACCOUNT_ACTION_COPY[input.reason]
+      return {
+        ...base,
+        type: input.type,
+        // action_required → amber bell dot until resolved_at is set (cleared by
+        // the webhook when the account recovers). action_url routes to the
+        // payouts page, which shows the precise sub-state + the Stripe CTA.
+        action_required: true,
+        dedupe_key: `account.action_required:${input.sellerId}:${input.eventId}`,
+        title: copy.title,
+        body: copy.body,
+        action_url: '/settings/payouts',
+        metadata: { reason: input.reason },
+      }
+    }
   }
 }
 

@@ -1,4 +1,5 @@
 import {
+  GlyphCardAlert,
   GlyphCardFailed,
   GlyphCardSent,
   GlyphRefund,
@@ -20,6 +21,7 @@ const ICON_MAP: Partial<Record<NotificationType, NotificationGlyph>> = {
   'payment.failed': GlyphCardFailed,
   'refund.completed': GlyphRefund,
   'payout.sent': GlyphCardSent,
+  'account.action_required': GlyphCardAlert,
   'team.invite_accepted': GlyphUsers,
   'affiliation.joined': GlyphUsers,
 }

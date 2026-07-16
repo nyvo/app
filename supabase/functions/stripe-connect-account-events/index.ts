@@ -16,12 +16,18 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { verifyStripeSignature, retrieveAccount, type StripeConnectedAccount } from '../_shared/stripe.ts'
-import { enqueueNotification } from '../_shared/notifications.ts'
+import { enqueueNotification, type AccountActionReason } from '../_shared/notifications.ts'
+import { resolveArrangorIdentity } from '../_shared/booking-notifications.ts'
+import { sendEmail } from '../_shared/email.ts'
 import { claimEvent, markEventResult, releaseEventClaim } from '../_shared/webhook-claims.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 const webhookSecret = Deno.env.get('STRIPE_CONNECT_ACCOUNTS_WEBHOOK_SECRET') || ''
+// Absolute base for the email CTA. Stripe calls this webhook with no Origin
+// header, so (unlike the interactive account-link functions) we can only use
+// the configured SITE_URL, not the caller origin.
+const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:5173'
 
 // Connected-account events carry a top-level `account` (the connected account id) in addition to
 // the usual data.object. StripeEvent doesn't model it, so use a local shape.
@@ -42,6 +48,24 @@ function mapAccountStatus(account: StripeConnectedAccount): AccountStatus {
   if (account.requirements?.disabled_reason?.startsWith('rejected')) return 'rejected'
   if (account.charges_enabled === true) return 'enabled'
   return 'restricted'
+}
+
+// Which action-needed state a seller is in (null = healthy OR "Stripe is still
+// reviewing, nothing for the seller to do"). Mirrors the frontend
+// AccountStatusBanner. rejected always needs attention. restricted / payouts-off
+// only count as action-needed when Stripe actually has requirements outstanding
+// (requirementsDue) — a restricted account with no requirements due is just
+// verification-in-progress, so we stay silent rather than false-alarm.
+function actionNeededReason(
+  status: AccountStatus,
+  onboardingComplete: boolean,
+  payoutsEnabled: boolean,
+  requirementsDue: boolean,
+): AccountActionReason | null {
+  if (status === 'rejected') return 'rejected'
+  if (status === 'restricted') return requirementsDue ? 'restricted' : null
+  if (onboardingComplete && !payoutsEnabled) return requirementsDue ? 'payouts_paused' : null
+  return null
 }
 
 Deno.serve(async (req: Request) => {
@@ -93,6 +117,15 @@ Deno.serve(async (req: Request) => {
           return new Response('OK', { status: 200 })
         }
 
+        // Snapshot the PRIOR status before writing the new one — the transition
+        // (healthy → action-needed, or recovery) is what drives the notification.
+        // Read from the same row we're about to update.
+        const { data: prevSeller } = await supabase
+          .from('sellers')
+          .select('id, stripe_account_status, stripe_onboarding_complete, stripe_payouts_enabled, stripe_requirements_due')
+          .eq('stripe_account_id', accountId)
+          .maybeSingle()
+
         // Re-derive from the LIVE account (order-safe: out-of-order account.updated events can't
         // write a stale status) using the same mapping as the manual refresh. The stripe_* columns
         // are write-protected — this MUST be the service-role client (the trigger exempts it).
@@ -100,6 +133,11 @@ Deno.serve(async (req: Request) => {
         const status = mapAccountStatus(account)
         const onboardingComplete = account.charges_enabled === true
         const payoutsEnabled = account.payouts_enabled === true
+        // currently_due ∪ past_due — the requirements the seller must supply (vs. Stripe
+        // merely verifying). Same derivation as check-stripe-connect-status.
+        const requirementsDue =
+          ((account.requirements?.currently_due ?? []).length +
+            (account.requirements?.past_due ?? []).length) > 0
 
         const { error } = await supabase
           .from('sellers')
@@ -107,11 +145,67 @@ Deno.serve(async (req: Request) => {
             stripe_account_status: status,
             stripe_onboarding_complete: onboardingComplete,
             stripe_payouts_enabled: payoutsEnabled,
+            stripe_requirements_due: requirementsDue,
           })
           .eq('stripe_account_id', accountId)
         // Throw on write failure so Stripe retries rather than leaving the status stale.
         if (error) {
           throw new Error(`account.updated seller write failed: ${error.message}`)
+        }
+
+        // Notify the studio when a previously-LIVE account newly needs attention.
+        // Gating on `wasLive` (prior status 'enabled') filters out the normal
+        // pending → restricted churn during initial onboarding: Stripe only
+        // disables a live account's charges/payouts when a requirement actually
+        // came due, so this transition is genuinely actionable. Best-effort —
+        // the dashboard banner (driven by the row we just wrote) is the
+        // authoritative surface, so a failed nudge never blocks the status sync.
+        if (prevSeller?.id) {
+          const prevReason = actionNeededReason(
+            (prevSeller.stripe_account_status as AccountStatus) ?? 'pending',
+            prevSeller.stripe_onboarding_complete === true,
+            prevSeller.stripe_payouts_enabled === true,
+            prevSeller.stripe_requirements_due === true,
+          )
+          const nextReason = actionNeededReason(status, onboardingComplete, payoutsEnabled, requirementsDue)
+          const wasLive = prevSeller.stripe_account_status === 'enabled'
+
+          try {
+            if (wasLive && prevReason === null && nextReason !== null) {
+              await enqueueNotification(supabase, {
+                type: 'account.action_required',
+                sellerId: prevSeller.id,
+                reason: nextReason,
+                eventId: event.id,
+              })
+
+              const identity = await resolveArrangorIdentity(supabase, prevSeller.id)
+              if (identity?.contactEmail) {
+                await sendEmail({
+                  template: 'account-action-required',
+                  to: identity.contactEmail,
+                  props: {
+                    studioName: identity.name,
+                    reason: nextReason,
+                    actionUrl: `${siteUrl}/settings/payouts`,
+                  },
+                })
+              }
+            } else if (prevReason !== null && nextReason === null) {
+              // Recovered — clear the amber bell dot on any outstanding rows.
+              await supabase
+                .from('notifications')
+                .update({ resolved_at: new Date().toISOString() })
+                .eq('seller_id', prevSeller.id)
+                .eq('type', 'account.action_required')
+                .is('resolved_at', null)
+            }
+          } catch (notifyErr) {
+            console.error('[account.updated] action-required notify failed', {
+              account: accountId,
+              error: notifyErr instanceof Error ? notifyErr.message : 'unknown',
+            })
+          }
         }
 
         await markEventResult(supabase, eventKey, {

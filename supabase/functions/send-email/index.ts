@@ -24,6 +24,7 @@ import CourseMessage, { type CourseMessageProps } from './templates/course-messa
 import BookingNotification, { type BookingNotificationProps } from './templates/booking-notification.tsx'
 import CourseCancelled, { type CourseCancelledProps } from './templates/course-cancelled.tsx'
 import SignupCancelled, { type SignupCancelledProps } from './templates/signup-cancelled.tsx'
+import AccountActionRequired, { type AccountActionRequiredProps } from './templates/account-action-required.tsx'
 
 const resendApiKey = Deno.env.get('RESEND_API_KEY') || ''
 const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || ''
@@ -41,6 +42,7 @@ type EmailTemplate =
   | 'booking-notification'
   | 'course-cancelled'
   | 'signup-cancelled'
+  | 'account-action-required'
 
 interface SendEmailRequest {
   template: EmailTemplate
@@ -55,6 +57,7 @@ interface SendEmailRequest {
     | BookingNotificationProps
     | CourseCancelledProps
     | SignupCancelledProps
+    | AccountActionRequiredProps
   /** Optional override for the auto-generated subject line */
   subject?: string
   /** Optional reply-to address passed through to Resend. */
@@ -83,6 +86,10 @@ function defaultSubject(template: EmailTemplate, props: SendEmailRequest['props'
       return `Avlyst: ${(props as CourseCancelledProps).courseTitle}`
     case 'signup-cancelled':
       return `Avmeldt: ${(props as SignupCancelledProps).courseTitle}`
+    case 'account-action-required':
+      return (props as AccountActionRequiredProps).reason === 'payouts_paused'
+        ? 'Utbetalinger er satt på pause'
+        : 'Handling kreves for å ta imot betalinger'
   }
 }
 
@@ -106,6 +113,8 @@ function renderTemplate(template: EmailTemplate, props: SendEmailRequest['props'
       return CourseCancelled(props as CourseCancelledProps)
     case 'signup-cancelled':
       return SignupCancelled(props as SignupCancelledProps)
+    case 'account-action-required':
+      return AccountActionRequired(props as AccountActionRequiredProps)
   }
 }
 
@@ -140,7 +149,7 @@ Deno.serve(async (req: Request) => {
     return errorResponse('Missing required fields: template, to, props', 400, req)
   }
 
-  if (!['order-confirm', 'refund-receipt', 'class-reminder', 'support-message', 'session-rescheduled', 'course-message', 'booking-notification', 'course-cancelled', 'signup-cancelled'].includes(template)) {
+  if (!['order-confirm', 'refund-receipt', 'class-reminder', 'support-message', 'session-rescheduled', 'course-message', 'booking-notification', 'course-cancelled', 'signup-cancelled', 'account-action-required'].includes(template)) {
     return errorResponse(`Unknown template: ${template}`, 400, req)
   }
 
