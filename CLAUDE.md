@@ -17,6 +17,10 @@ Before building or restyling any UI from external references, follow `docs/mobbi
 
 Whenever you implement — or plan/discuss implementing — new or restyled UI, actively invoke the `emil-design-eng` skill together with the `ux-ui-pro` gate, and apply its craft bar throughout the build (component behavior, polish, animation decisions, invisible details), not as a one-time read. For motion/gesture-heavy work also load `apple-design`; run `review-animations` on new animation code before commit.
 
+## Loading skeletons track layout
+
+Any change to a screen's layout or structure (rows added/removed, spacing, reordered sections, new cards/columns) MUST update that screen's loading skeleton in the same change — the inline `<Skeleton>` block in the page/component and/or the shared `PageSkeleton` (`src/components/ui/page-skeleton.tsx`). Skeletons mirror the real layout's paddings and gaps exactly or the swap jumps (`docs/design-language.md` § Feedback states). Before finishing UI work, check whether the file (or its route) renders a skeleton and verify it still matches.
+
 ## Design tokens
 
 Source of truth is `src/index.css` — a 3-layer OKLCH system: primitives (`--neutral-*`, `--jade/amber/red/blue-*`) → semantic tokens (`--foreground`, `--primary`, `--success`…) → Tailwind `@theme` utilities. Consume semantic tokens in components, never primitives directly; build hierarchy through spacing + the tier gaps (surface → border → muted-text → foreground), not bold weights.
