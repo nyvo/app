@@ -153,7 +153,7 @@ export function SessionDaysEditor({ value, onChange, readOnly = false }: Session
                           className="w-full gap-2.5"
                           aria-label={`Dag ${idx + 1} Starttid`}
                         >
-                          <Clock className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
+                          <Clock className="size-4 shrink-0 text-foreground-subtle" />
                           <SelectValue placeholder="Start" />
                         </SelectTrigger>
                         <SelectContent className="max-h-60">
@@ -180,7 +180,7 @@ export function SessionDaysEditor({ value, onChange, readOnly = false }: Session
                           className="w-full gap-2.5"
                           aria-label={`Dag ${idx + 1} Sluttid`}
                         >
-                          <Clock className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
+                          <Clock className="size-4 shrink-0 text-foreground-subtle" />
                           <SelectValue placeholder="Slutt" />
                         </SelectTrigger>
                         <SelectContent className="max-h-60">

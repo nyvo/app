@@ -607,7 +607,7 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
                                   aria-invalid={showError('startTime') ? 'true' : undefined}
                                   aria-describedby={timeError ? timeErrorId : undefined}
                                 >
-                                  <Clock className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
+                                  <Clock className="size-4 shrink-0 text-foreground-subtle" />
                                   <SelectValue placeholder="Start" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-60">
@@ -632,7 +632,7 @@ export default function CreateCourseDrawer({ onClose }: CreateCourseDrawerProps)
                                   aria-invalid={showError('endTime') ? 'true' : undefined}
                                   aria-describedby={timeError ? timeErrorId : undefined}
                                 >
-                                  <Clock className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
+                                  <Clock className="size-4 shrink-0 text-foreground-subtle" />
                                   <SelectValue placeholder="Slutt" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-60">
