@@ -92,7 +92,10 @@ function StepStatusLabel({ status, tone, statusLabel }: Pick<PayoutStepViewModel
 // «Fullført» — bar + check say it; sr-only text keeps it audible.
 function DoneCheck() {
   return (
-    <span className="inline-flex size-[18px] shrink-0 items-center justify-center rounded-full bg-success-subtle text-success">
+    // Same green as the done bar (--success-bright), not the jade text ink —
+    // the tint is a 15% alpha of the same hue (TimelineEntry's dot-ring
+    // precedent) so bar, circle and check read as one colour.
+    <span className="inline-flex size-[18px] shrink-0 items-center justify-center rounded-full bg-success-bright/15 text-success-bright">
       <svg viewBox="0 0 12 12" width="10" height="10" fill="none" aria-hidden="true">
         <path
           d="M2.5 6.5L5 9l4.5-6"
