@@ -457,6 +457,13 @@
 .lnd .hl-row i { flex: none; width: 6px; height: 6px; border-radius: 2px; background: var(--primary); }
 .lnd .hl-row b { font-size: 9.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .lnd .hl-row em { font-style: normal; font-size: 8px; color: var(--muted-text); margin-left: 3px; }
+/* Live mode (hover-capable devices, set from LandingPage.tsx): elements
+   anchor at 0 and are driven by inline `translate` so pointer-tracking
+   stays compositor-only. Static % positions above remain the no-hover
+   fallback. */
+.lnd .chart-hl.is-live .hl-cursor { left: 0; }
+.lnd .chart-hl.is-live .hl-dot { left: 0; top: 0; }
+.lnd .chart-hl.is-live .hl-tip { right: auto; left: 0; }
 
 /* Scroll reveals */
 .lnd [data-reveal] {

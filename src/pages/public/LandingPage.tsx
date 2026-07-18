@@ -94,6 +94,110 @@ const LandingPage = () => {
     return () => observer.disconnect();
   }, []);
 
+  // Decorative pointer-tracking for the hero chart highlight (hover-capable
+  // devices only): cursor/dot/tooltip ride the drawn path with slight
+  // smoothing, values interpolate along the period, and the group eases back
+  // to its resting point on leave. Touch devices keep the static highlight.
+  useEffect(() => {
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    const wrap = rootRef.current?.querySelector<HTMLElement>('.chart-wrap');
+    const path = wrap?.querySelector<SVGPathElement>('.chart-line');
+    const hl = wrap?.querySelector<HTMLElement>('.chart-hl');
+    if (!wrap || !path || !hl) return;
+    const cursor = hl.querySelector<HTMLElement>('.hl-cursor');
+    const dot = hl.querySelector<HTMLElement>('.hl-dot');
+    const tip = hl.querySelector<HTMLElement>('.hl-tip');
+    const value = hl.querySelector<HTMLElement>('.hl-row b');
+    const date = hl.querySelector<HTMLElement>('.hl-row em');
+    if (!cursor || !dot || !tip || !value || !date) return;
+
+    // Sample the path once; y lookup by x works because the line is
+    // monotonic in x (viewBox units, 600×120).
+    const length = path.getTotalLength();
+    const samples = Array.from({ length: 121 }, (_, i) =>
+      path.getPointAtLength((length * i) / 120)
+    );
+    const yAt = (f: number) => {
+      const x = f * 600;
+      let nearest = samples[0];
+      for (const s of samples) {
+        if (Math.abs(s.x - x) < Math.abs(nearest.x - x)) nearest = s;
+      }
+      return nearest.y;
+    };
+
+    const REST = 2 / 3;
+    const TOTAL = 41745;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let width = wrap.clientWidth;
+    let height = wrap.clientHeight;
+    let target = REST;
+    let current = REST;
+    let raf = 0;
+
+    const render = () => {
+      const x = current * width;
+      const y = (yAt(current) / 120) * height;
+      cursor.style.translate = `${x}px 0`;
+      dot.style.translate = `calc(${x}px - 50%) calc(${y}px - 50%)`;
+      // Flip to the right of the cursor near the left edge (recharts-style).
+      tip.style.translate =
+        x > 130 ? `calc(${x}px - 100% - 12px) 0` : `calc(${x}px + 12px) 0`;
+      const day = Math.round(current * 30);
+      // Skip identical writes — a text change re-lays-out the tooltip.
+      const nextValue = formatKroner(Math.round(TOTAL * current));
+      if (value.textContent !== nextValue) value.textContent = nextValue;
+      const nextDate = day <= 15 ? `${15 + day}. jun` : `${day - 15}. jul`;
+      if (date.textContent !== nextDate) date.textContent = nextDate;
+    };
+
+    const tick = () => {
+      raf = 0;
+      // Reduced motion: 1:1 feedback, no trailing lag.
+      const factor = reduceMotion.matches ? 1 : 0.16;
+      current += (target - current) * factor;
+      if (Math.abs(target - current) < 0.0008) current = target;
+      render();
+      if (current !== target) raf = requestAnimationFrame(tick);
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+
+    hl.classList.add('is-live');
+    render();
+
+    // Rect cached per hover — pointermove can fire at up to 1000Hz and only
+    // left/width are used, which vertical scrolling never changes.
+    let rect: DOMRect | null = null;
+    const onEnter = () => {
+      // Respond instantly if the pointer arrives before the entrance beat.
+      hl.style.animation = 'none';
+      rect = wrap.getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!rect) rect = wrap.getBoundingClientRect();
+      target = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+      schedule();
+    };
+    const onLeave = () => {
+      target = REST;
+      schedule();
+    };
+
+    wrap.addEventListener('pointerenter', onEnter);
+    wrap.addEventListener('pointermove', onMove);
+    wrap.addEventListener('pointerleave', onLeave);
+    return () => {
+      cancelAnimationFrame(raf);
+      wrap.removeEventListener('pointerenter', onEnter);
+      wrap.removeEventListener('pointermove', onMove);
+      wrap.removeEventListener('pointerleave', onLeave);
+    };
+  }, []);
+
   return (
     <div className="lnd" ref={rootRef}>
       <header className="nav">
@@ -232,7 +336,7 @@ const LandingPage = () => {
                         <small>Sum hittil</small>
                         <span className="hl-row">
                           <i />
-                          <b>{formatKroner(34120)}</b>
+                          <b>{formatKroner(27830)}</b>
                           <em>5. jul</em>
                         </span>
                       </span>
