@@ -65,3 +65,4 @@ tasks/
 checkout-success-refs/
 *-preview.html
 .claude/scheduled_tasks.lock
+tsconfig.tsbuildinfo
