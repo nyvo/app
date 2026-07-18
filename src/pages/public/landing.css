@@ -168,7 +168,8 @@
 .lnd .seg { display: inline-flex; background: var(--muted); border-radius: 8px; padding: 2px; font-size: 10px; color: var(--muted-text); }
 .lnd .seg span { padding: 3px 9px; border-radius: 6px; }
 .lnd .seg .on { background: #FFFFFF; color: var(--foreground); font-weight: 500; box-shadow: 0 1px 2px oklch(0.3 0.02 250 / 0.10); }
-.lnd .chart { margin-top: 10px; width: 100%; height: 72px; }
+.lnd .chart-wrap { position: relative; margin-top: 10px; }
+.lnd .chart { width: 100%; height: 72px; }
 .lnd .chart-x { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted-text); margin-top: 4px; }
 
 .lnd .shot-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
@@ -430,6 +431,33 @@
 .lnd .chart-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lnd-draw 900ms var(--ease-out) 600ms forwards; }
 .lnd .chart-area { opacity: 0; animation: lnd-fade 500ms var(--ease-out) 1100ms forwards; }
 
+/* Hover-highlight mock — mirrors IncomeChart's cursor line, activeDot
+   (white fill, azure ring) and "Sum hittil" tooltip; fades in after the
+   line-draw finishes. Anchored at the path knot (400, 42) → 66.7% / 35%. */
+@keyframes lnd-rise-sm {
+  from { opacity: 0; translate: 0 4px; }
+}
+.lnd .chart-hl { position: absolute; inset: 0; pointer-events: none; animation: lnd-rise-sm 300ms var(--ease-out) 1700ms backwards; }
+.lnd .hl-cursor { position: absolute; left: 66.7%; top: 0; bottom: 0; width: 1px; background: var(--border); }
+.lnd .hl-dot {
+  position: absolute; left: 66.7%; top: 35%; translate: -50% -50%;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #FFFFFF; border: 2px solid var(--primary);
+}
+.lnd .hl-tip {
+  /* Left of the cursor — recharts flips the tooltip at the right edge, and
+     the mock point sits far enough right that mobile would clip it. */
+  position: absolute; right: calc(33.3% + 12px); top: -4px;
+  display: flex; flex-direction: column; gap: 3px;
+  background: #FFFFFF; border: 1px solid var(--border); border-radius: 8px;
+  padding: 5px 8px; white-space: nowrap;
+}
+.lnd .hl-tip small { font-size: 7.5px; font-weight: 500; color: var(--muted-text); line-height: 1; }
+.lnd .hl-row { display: flex; align-items: center; gap: 4px; line-height: 1; }
+.lnd .hl-row i { flex: none; width: 6px; height: 6px; border-radius: 2px; background: var(--primary); }
+.lnd .hl-row b { font-size: 9.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.lnd .hl-row em { font-style: normal; font-size: 8px; color: var(--muted-text); margin-left: 3px; }
+
 /* Scroll reveals */
 .lnd [data-reveal] {
   opacity: 0; translate: 0 16px;
@@ -481,6 +509,7 @@
   .lnd .hero-panel .shot { animation: lnd-fade 200ms ease both; }
   .lnd .chart-line { animation: none; stroke-dashoffset: 0; }
   .lnd .chart-area { animation: none; opacity: 1; }
+  .lnd .chart-hl { animation: none; }
   .lnd [data-reveal] { translate: none; transition: opacity 200ms ease; }
   .lnd .switch { background: var(--primary); transition: none; }
   .lnd .switch::after { translate: 12px 0; transition: none; }

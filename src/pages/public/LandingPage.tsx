@@ -197,7 +197,8 @@ const LandingPage = () => {
                         <span>År</span>
                       </span>
                     </div>
-                    <svg className="chart" viewBox="0 0 600 120" preserveAspectRatio="none" aria-hidden="true">
+                    <div className="chart-wrap" aria-hidden="true">
+                    <svg className="chart" viewBox="0 0 600 120" preserveAspectRatio="none">
                       <defs>
                         <linearGradient id="lnd-area" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="oklch(0.54 0.15 245)" stopOpacity="0.18" />
@@ -221,6 +222,22 @@ const LandingPage = () => {
                         strokeWidth="2"
                       />
                     </svg>
+                    {/* Mock of the live IncomeChart hover highlight (cursor +
+                        activeDot + "Sum hittil" tooltip) — appears once the
+                        line has finished drawing, like a mid-hover screenshot. */}
+                    <div className="chart-hl">
+                      <span className="hl-cursor" />
+                      <span className="hl-dot" />
+                      <span className="hl-tip">
+                        <small>Sum hittil</small>
+                        <span className="hl-row">
+                          <i />
+                          <b>{formatKroner(34120)}</b>
+                          <em>5. jul</em>
+                        </span>
+                      </span>
+                    </div>
+                    </div>
                     <div className="chart-x">
                       <span>15. jun</span>
                       <span>15. jul</span>
