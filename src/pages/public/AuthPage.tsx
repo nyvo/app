@@ -1,6 +1,7 @@
 import { Link, Navigate, useLocation, useSearchParams, type Location } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
-import { Eye, EyeOff, ChevronLeft } from '@/lib/icons'
+import { ChevronLeft } from '@/lib/icons'
+import { Eye, EyeOff } from '@/lib/input-icons'
 import { Button } from '@/components/ui/button'
 import { ContextualSwap } from '@/components/ui/contextual-swap'
 import { Input } from '@/components/ui/input'
