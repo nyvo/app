@@ -1,6 +1,12 @@
 # 003 — Snap keyboard sidebar collapse
 
-- **Status**: IMPLEMENTED
+- **Status**: SUPERSEDED (2026-07-18) — the user asked for the collapse to
+  animate again. The rail now transitions width/left at 200ms on the shared
+  `--ease-out` curve and menu buttons transition geometry at 150ms, all in
+  `src/components/ui/sidebar.tsx`. This plan's two real concerns are kept:
+  CSS transitions retarget mid-motion (rapid `⌘/Ctrl+B` never chases or
+  queues), and every collapse transition is gated with
+  `motion-reduce:transition-none` so reduced-motion users still get the snap.
 - **Commit**: b6f26d4b
 - **Severity**: HIGH
 - **Category**: Performance / Purpose & frequency

@@ -60,10 +60,13 @@ describe('TeacherSidebar desktop collapse', () => {
     expect(screen.getByRole('link', { name: 'Raden' })).toHaveClass(
       'group-data-[collapsible=icon]:hidden',
     );
+    // Collapse animates (plan 003's snap was superseded 2026-07-18): menu
+    // buttons transition their geometry alongside the rail, gated on
+    // motion-reduce so reduced-motion users still get an instant snap.
     const overview = screen.getByRole('link', { name: 'Oversikt' });
-    expect(overview).toHaveClass('transition-colors', 'duration-150', 'ease');
-    expect(overview.className).not.toContain('width');
-    expect(overview.className).not.toContain('height');
-    expect(overview.className).not.toContain('padding');
+    expect(overview).toHaveClass('duration-150', 'ease', 'motion-reduce:transition-none');
+    expect(overview.className).toContain(
+      'transition-[color,background-color,width,height,padding]',
+    );
   });
 });
