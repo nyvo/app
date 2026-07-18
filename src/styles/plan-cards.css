@@ -93,6 +93,18 @@
 .plan-cards .plan-price small { font-size: 14px; font-weight: 400; letter-spacing: 0; line-height: 1; }
 .plan-cards .plan-white .plan-price small { color: var(--pc-muted-text); }
 .plan-cards .plan-featured .plan-price small { color: oklch(1 0 0 / 0.60); }
+/* Pro price rolls between billing periods: both period lines share one grid
+   cell, and the hidden line waits offset toward "its" side (monthly above,
+   yearly below) so a toggle reads as one dial-turn — everything rolls up
+   into yearly, back down to monthly — with a light blur bridging the
+   crossfade. Transitions, not keyframes: rapid toggling retargets
+   mid-motion instead of restarting. */
+.plan-cards .plan-price-swap { display: grid; }
+.plan-cards .pp-layer { grid-area: 1 / 1; transition: opacity 200ms var(--pc-ease-out), translate 200ms var(--pc-ease-out), filter 200ms var(--pc-ease-out); }
+.plan-cards .plan-price-swap[data-yearly] .pp-monthly,
+.plan-cards .plan-price-swap:not([data-yearly]) .pp-yearly { opacity: 0; filter: blur(3px); }
+.plan-cards .plan-price-swap[data-yearly] .pp-monthly { translate: 0 -10px; }
+.plan-cards .plan-price-swap:not([data-yearly]) .pp-yearly { translate: 0 10px; }
 .plan-cards .plan-desc { margin: 10px 0 0; font-size: 14px; }
 .plan-cards .plan-white .plan-desc { color: var(--pc-muted-text); }
 .plan-cards .plan-featured .plan-desc { color: oklch(1 0 0 / 0.70); }
@@ -123,4 +135,7 @@
   /* Keep the color cue, drop the movement. */
   .plan-cards .pt-knob { transition: none; }
   .plan-cards .pt-switch { transition: none; }
+  /* Price swap: keep the opacity crossfade, drop movement and blur. */
+  .plan-cards .plan-price-swap[data-yearly] .pp-monthly,
+  .plan-cards .plan-price-swap:not([data-yearly]) .pp-yearly { translate: none; filter: none; }
 }
