@@ -230,11 +230,10 @@ const LandingPage = () => {
         {/* Hero — azure gradient panel, dashboard mock rising from the bottom */}
         <section className="hero container" aria-label="Introduksjon">
           <div className="hero-panel">
-            <span className="eyebrow">For kursholdere, studioer og arrangører</span>
-            <h1>Raden – påmelding og betaling for kurs.</h1>
+            <span className="eyebrow">Bygget i Norge</span>
+            <h1>Opprett kurs. Ta imot påmeldinger. Få{NBSP}betalt.</h1>
             <p className="hero-sub">
-              Opprett og publiser kurs, ta imot påmeldinger og betaling, og hold oversikt over
-              deltakerne på ett sted.
+              Du legger inn kurset og deler studiosiden. Deltakerne melder seg på og betaler selv.
             </p>
             <div className="hero-ctas">
               <SignupCta className="btn btn-white" label="Opprett konto" />

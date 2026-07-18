@@ -23,9 +23,12 @@ test.describe('D1 public routes render', () => {
     await page.goto('/');
 
     await expect(
-      page.getByRole('heading', { level: 1, name: 'Raden – påmelding og betaling for kurs.' }),
+      page.getByRole('heading', {
+        level: 1,
+        name: 'Opprett kurs. Ta imot påmeldinger. Få betalt.',
+      }),
     ).toBeVisible();
-    await expect(page.getByText(/hold oversikt over deltakerne på ett sted/i)).toBeVisible();
+    await expect(page.getByText(/Deltakerne melder seg på og betaler selv/i)).toBeVisible();
     await expect(page.getByText('Noe gikk galt')).not.toBeVisible();
     expect(pageErrors).toEqual([]);
   });
