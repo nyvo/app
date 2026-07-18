@@ -104,7 +104,7 @@ function RabatterDemo() {
       <div className="max-w-xl">
         <h2 className="text-base font-medium text-foreground">Student- og pensjonistrabatt</h2>
         <p className="mt-1 max-w-prose text-pretty text-sm text-foreground-muted">
-          Deltakeren velger rabatten selv i kassen. Openspot sjekker ikke om deltakeren faktisk
+          Deltakeren velger rabatten selv i kassen. Raden sjekker ikke om deltakeren faktisk
           er student eller pensjonist — det ansvaret ligger hos deg. Du ser hvem som har valgt
           rabatt i deltakerlisten.
         </p>
@@ -214,7 +214,7 @@ export default function StudioPreview() {
 
           <SettingsRow title="Nettadresse" description="Den offentlige adressen til studiosiden din.">
             <InputGroup>
-              <InputGroupAddon align="inline-start">openspot.no/</InputGroupAddon>
+              <InputGroupAddon align="inline-start">raden.no/</InputGroupAddon>
               <InputGroupInput defaultValue="flow-studio" aria-label="Nettadresse" />
             </InputGroup>
           </SettingsRow>

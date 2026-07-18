@@ -49,7 +49,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh w-full text-foreground antialiased flex flex-col bg-background selection:bg-muted selection:text-foreground">
       <header className="w-full px-4 py-8 sm:px-6 flex items-center justify-center max-w-6xl mx-auto">
         <Link to="/" className="flex items-center select-none">
-          <span className="text-base font-medium text-foreground">Openspot</span>
+          <span className="text-base font-medium text-foreground">Raden</span>
         </Link>
       </header>
       <main className="flex-1 flex items-center justify-center px-4 py-12 sm:px-6">

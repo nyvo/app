@@ -117,7 +117,7 @@ export const TeacherSidebar = () => {
           to={routes.dashboard}
           className="flex h-12 items-center rounded-md px-3 text-base font-medium text-sidebar-foreground outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:hidden"
         >
-          Openspot
+          Raden
         </Link>
         {isMobile && (
           <Button

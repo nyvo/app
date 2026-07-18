@@ -108,7 +108,7 @@ export async function verifyAuthAndOrgMembership(
 /**
  * Get CORS headers. Supports a whitelist of allowed origins — ALLOWED_ORIGIN
  * can be a comma-separated list, e.g.
- *   "https://www.openspot.no,https://app.openspot.no,http://localhost:5173"
+ *   "https://www.raden.no,https://app.raden.no,http://localhost:5173"
  *
  * When the request's Origin matches any entry in the list, it's echoed back
  * in Access-Control-Allow-Origin. Local dev origins (localhost + 127.0.0.1
@@ -117,7 +117,7 @@ export async function verifyAuthAndOrgMembership(
  * prod behavior.
  *
  * Fallback when no origin is provided or no match: the first entry in
- * ALLOWED_ORIGIN, or https://www.openspot.no.
+ * ALLOWED_ORIGIN, or https://www.raden.no.
  */
 const LOCAL_DEV_ORIGIN_PATTERN =
   /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/
@@ -125,6 +125,10 @@ const LOCAL_DEV_ORIGIN_PATTERN =
 // Built-in defaults so the function works sanely even when ALLOWED_ORIGIN
 // is unset or misconfigured. Covers prod + typical Vite dev ports.
 const DEFAULT_WHITELIST = [
+  'https://www.raden.no',
+  'https://raden.no',
+  // Legacy domain — redirects to raden.no; keep until the redirect has been
+  // live long enough that no cached clients still call from it.
   'https://www.openspot.no',
   'https://openspot.no',
 ]

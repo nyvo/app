@@ -15,7 +15,7 @@ When a task that changed code is complete and verified (build passes, relevant c
 
 1. **Commit** with a conventional message and **push** the branch: `git push -u origin HEAD`.
 2. **Open a PR** to `main` (`gh pr create --base main`) with a summary and test plan, or push to the existing PR if one is open.
-3. **Do not merge on your own.** Merging deploys — CI ships `main` straight to production (openspot.no). When the user clearly approves ("merge", "ship it", "send it", or an unambiguous yes to merging), merge immediately with `gh pr merge --squash --delete-branch` — no re-asking.
+3. **Do not merge on your own.** Merging deploys — CI ships `main` straight to production (raden.no). When the user clearly approves ("merge", "ship it", "send it", or an unambiguous yes to merging), merge immediately with `gh pr merge --squash --delete-branch` — no re-asking.
 
 Exploratory work, QA sessions, and question-answering produce no commits — this flow applies only when code changed.
 

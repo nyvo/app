@@ -253,7 +253,7 @@ Translation correctness isn't enough. Copy can be grammatically perfect Norwegia
 | **"Den smarte måten å X på"** | Calque of "The smart way to X". Empty boast | Just say what it does: `"Den smarte måten å fakturere på"` → `"Faktura med to klikk"` |
 | **"Designet for å..."** ("Designet for å hjelpe deg...") | "Designed to..." translation. Distancing — describes intent, not action | State what it does: `"Designet for å forenkle..."` → `"Forenkler..."` |
 | **"Drøm stort" / "Bygg større" / "Skap framtiden"** | Aspirational fluff that signals nothing | Cut. Show product, not slogans. |
-| **"Vi er stolte av å presentere..."** | Corporate-fluff opener | Open with the news: `"Vi er stolte av å presentere Openspot Pro"` → `"Openspot Pro er her."` |
+| **"Vi er stolte av å presentere..."** | Corporate-fluff opener | Open with the news: `"Vi er stolte av å presentere Raden Pro"` → `"Raden Pro er her."` |
 | **"Forbedre din opplevelse"** | "Improve your experience" — empty | Name the specific improvement. |
 | **"For deg som vil noe mer"** / **"For deg som tar X på alvor"** | Targeting via flattery. Reads as marketing-coach-spek | Describe the user concretely: `"For studioer i full drift"` (concrete tier-up signal) beats `"For deg som mener alvor"`. |
 | **Empty superlatives** ("Best", "Markedsledende", "Ledende") | Unverifiable claim — every SaaS says it | Cut. Replace with specifics: `"Brukt av 200+ studioer"` if true, otherwise nothing. |

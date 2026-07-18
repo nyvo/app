@@ -28,7 +28,7 @@ import AccountActionRequired, { type AccountActionRequiredProps } from './templa
 
 const resendApiKey = Deno.env.get('RESEND_API_KEY') || ''
 const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || ''
-const fromName = Deno.env.get('RESEND_FROM_NAME') || 'Openspot'
+const fromName = Deno.env.get('RESEND_FROM_NAME') || 'Raden'
 const fromAddress = fromEmail ? `${fromName} <${fromEmail}>` : ''
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 

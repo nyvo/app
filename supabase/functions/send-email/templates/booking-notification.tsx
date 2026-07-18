@@ -61,7 +61,7 @@ export const BookingNotification = ({
     </DetailBlock>
 
     <Text style={styles.paragraphMuted}>
-      Du finner deltakerlisten under kurset på Openspot.
+      Du finner deltakerlisten under kurset på Raden.
     </Text>
   </EmailLayout>
 )

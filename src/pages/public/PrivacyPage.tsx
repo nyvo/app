@@ -11,7 +11,7 @@ const PrivacyPage = () => {
     <div className="min-h-dvh w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
         <Link to="/" className="flex select-none items-center">
-          <span className="text-base font-medium text-foreground">Openspot</span>
+          <span className="text-base font-medium text-foreground">Raden</span>
         </Link>
       </header>
 
@@ -23,7 +23,7 @@ const PrivacyPage = () => {
           <div className="mt-12 space-y-8 [&_h2]:text-balance [&_p]:text-pretty">
             <section className="space-y-4">
               <p className="text-base text-foreground-muted leading-relaxed">
-                Openspot leveres av {COMPANY.legalName}, org.nr. {COMPANY.organizationNumber},
+                Raden leveres av {COMPANY.legalName}, org.nr. {COMPANY.organizationNumber},
                 som er behandlingsansvarlig for personopplysningene dine. Vi samler inn så lite
                 som mulig og lagrer det ikke lenger enn nødvendig.
               </p>
@@ -75,7 +75,7 @@ const PrivacyPage = () => {
               <h2 className="text-base font-medium text-foreground">Hvem vi deler med</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi selger aldri data. Vi deler kun med tjenestene vi trenger for å drive
-                Openspot:
+                Raden:
               </p>
               <ul className="space-y-2 text-base text-foreground-muted leading-relaxed list-disc pl-5">
                 <li>Supabase – database og innlogging, innenfor EU/EØS</li>
