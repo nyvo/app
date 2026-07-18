@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { DelayedFallback } from '@/components/ui/delayed-fallback'
 import { PageSkeleton } from '@/components/ui/page-skeleton'
 import { PageState } from '@/components/page-state/page-state'
+import { RadenLogo } from '@/components/ui/raden-logo'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/contexts/AuthContext'
 import { logger } from '@/lib/logger'
@@ -132,8 +133,8 @@ export default function OnboardingPage() {
   return (
     <main className="min-h-dvh bg-background text-foreground flex flex-col">
       <header className="flex justify-center px-4 sm:px-6 py-8">
-        <Link to="/" className="flex select-none items-center">
-          <span className="text-base font-medium text-foreground">Raden</span>
+        <Link to="/" aria-label="Raden" className="flex select-none items-center">
+          <RadenLogo />
         </Link>
       </header>
       <div className="flex-1 relative overflow-hidden">
