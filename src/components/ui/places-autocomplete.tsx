@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { MapPin } from '@/lib/icons';
+import { MapPin } from '@/lib/input-icons';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';

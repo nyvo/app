@@ -10,6 +10,9 @@
  * sites never churn when the kit changes. Do not introduce a second kit —
  * if Hugeicons free is missing an icon, add a wrapped custom SVG here.
  *
+ * One sanctioned exception: icons rendered INSIDE form fields come from
+ * lucide-react via `@/lib/input-icons` (see that module's doc comment).
+ *
  * All icons render at strokeWidth 1.75 (the sidebar convention) unless a
  * call site overrides it. Size defaults to 24px and is normally constrained
  * by Tailwind classes (`h-4 w-4`), which override the width/height attrs.

@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Calendar, Clock, Trash2 } from '@/lib/icons'
+import { Trash2 } from '@/lib/icons'
+import { Calendar, Clock } from '@/lib/input-icons'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'

@@ -1,4 +1,4 @@
-import { Search } from '@/lib/icons';
+import { Search } from '@/lib/input-icons';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 
 interface SearchInputProps {

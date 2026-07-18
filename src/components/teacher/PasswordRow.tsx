@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Eye, EyeOff } from '@/lib/icons'
+import { Eye, EyeOff } from '@/lib/input-icons'
 import { Button } from '@/components/ui/button'
 import { ContextualSwap } from '@/components/ui/contextual-swap'
 import { Input } from '@/components/ui/input'

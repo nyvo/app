@@ -1,4 +1,4 @@
-import { MapPin } from '@/lib/icons'
+import { MapPin } from '@/lib/input-icons'
 import { PlacesAutocomplete } from '@/components/ui/places-autocomplete'
 import { MapEmbed } from '@/components/ui/map-embed'
 import type { PlaceDetails } from '@/services/places'

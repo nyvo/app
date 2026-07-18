@@ -7,7 +7,6 @@ import {
   Folder01Icon,
   Home01Icon,
   CreditCardIcon,
-  UserCircleIcon,
   Settings01Icon,
   HelpCircleIcon,
   Logout03Icon,
@@ -21,6 +20,7 @@ import { DEV_PREVIEWS_ENABLED } from '@/lib/devPreviews';
 import { accountDisplayName, formatKroner } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { RadenLogo } from '@/components/ui/raden-logo';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import {
   Sidebar,
   SidebarContent,
@@ -204,7 +204,7 @@ export const TeacherSidebar = () => {
                   tooltip={displayName || 'Konto'}
                   className="h-auto py-1.5 text-sidebar-foreground-muted hover:bg-sidebar-accent hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-foreground"
                 >
-                  <HugeiconsIcon icon={UserCircleIcon} strokeWidth={1.75} />
+                  <UserAvatar name={displayName} size="xs" className="group-data-[collapsible=icon]:size-4" />
                   <div className="grid min-w-0 flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
                     <span className="truncate text-sidebar-foreground">{displayName || 'Konto'}</span>
                     {isPro && <span className="text-xs">Pro</span>}
@@ -220,12 +220,7 @@ export const TeacherSidebar = () => {
               >
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex items-start gap-2.5">
-                    <HugeiconsIcon
-                      icon={UserCircleIcon}
-                      size={18}
-                      strokeWidth={1.75}
-                      className="text-foreground-muted shrink-0 mt-px"
-                    />
+                    <UserAvatar name={displayName} size="sm" />
                     <div className="grid flex-1 leading-tight">
                       <span className="text-sm font-medium truncate text-foreground">
                         {displayName}

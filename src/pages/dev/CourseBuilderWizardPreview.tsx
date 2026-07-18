@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Clock } from '@/lib/icons';
+import { Calendar, Clock } from '@/lib/input-icons';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
