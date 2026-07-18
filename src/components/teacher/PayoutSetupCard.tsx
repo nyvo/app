@@ -205,7 +205,7 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
           <CardContent className="flex flex-1 flex-col">
             {/* The card describes the current situation; the rail on the left
                 carries the process position, so no step counter is repeated here. */}
-            <h2 className="mb-2 text-base font-medium text-foreground">{h2}</h2>
+            <h2 className="mb-2 text-base font-semibold text-foreground">{h2}</h2>
             {current?.description && (
               <p className="max-w-prose text-base text-foreground-muted">{current.description}</p>
             )}
@@ -257,7 +257,7 @@ export function PayoutFaqSection() {
     // mt-12 = THE page section gap; this component owns its distance from the
     // setup card / stats above it.
     <section className="mt-12">
-      <h2 className="text-sm font-medium text-foreground">Vanlige spørsmål</h2>
+      <h2 className="text-sm font-semibold text-foreground">Vanlige spørsmål</h2>
       <div className="mt-3">
         <PayoutFaq />
       </div>

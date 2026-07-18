@@ -238,7 +238,7 @@ function IndividualView({
       ) : (
         <Card>
           <CardContent>
-            <h3 className="text-base font-medium text-foreground">
+            <h3 className="text-base font-semibold text-foreground">
               Kursene dine vises på {host.name}
             </h3>
             <p className="mt-1 max-w-2xl text-base text-foreground-muted">

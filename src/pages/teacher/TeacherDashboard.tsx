@@ -7,6 +7,7 @@ import { NotificationsPopover } from '@/components/notifications/NotificationsPo
 import { PageShell } from '@/components/teacher/PageShell';
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
+import { WelcomeBand } from '@/components/teacher/dashboard/WelcomeBand';
 // Lazy: IncomeChart is the only recharts consumer in product code, and
 // recharts alone is a ~350 KB chunk — keep it out of the dashboard's own
 // chunk so the overview paints without waiting for chart internals.
@@ -235,6 +236,7 @@ const TeacherDashboard = () => {
             />
           ) : (
             <div className="space-y-12">
+              <WelcomeBand />
               {/* Chart-first is deliberate here (kept 2026-07-07 after an
                   audit proposed list-first per ui-patterns §2.5). */}
               <div className="space-y-3">
@@ -324,7 +326,8 @@ function IncomeChartFallback() {
     <FramedCard title="Inntekt">
       <FramedCardPanel className="px-4 py-5 sm:py-6">
         <div className="flex items-center justify-between gap-3">
-          <Skeleton className="h-9 w-40" />
+          {/* h-8 ≈ the text-3xl total's 33px line box (tightened 2026-07-18) */}
+          <Skeleton className="h-8 w-40" />
           <Skeleton className="h-9 w-44 rounded-xl" />
         </div>
         <Skeleton className="mt-6 h-[220px] w-full rounded-lg sm:h-[260px]" />
@@ -377,7 +380,7 @@ export function UpcomingCoursesSection({
 
   return (
     <section className="lg:pr-10">
-      <h2 className="text-lg font-medium text-foreground">Neste kurs</h2>
+      <h2 className="text-lg font-semibold text-foreground">Neste kurs</h2>
       <div className="mt-3">
         {showSkeleton ? (
           <DelayedFallback>
@@ -449,7 +452,7 @@ export function RecentSignupsSection({
     // Root carries the between-sections divider (top hairline stacked, left
     // hairline on lg) so the dev preview reuses the real layout and can't drift.
     <section className="border-t border-border-subtle pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
-      <h2 className="text-lg font-medium text-foreground">Siste påmeldinger</h2>
+      <h2 className="text-lg font-semibold text-foreground">Siste påmeldinger</h2>
       <div className="mt-3">
         {showSkeleton ? (
           <DelayedFallback>

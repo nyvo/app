@@ -161,7 +161,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
               ones shrink the cells. */}
           <div className="mx-auto w-full max-w-72 @2xl:mx-0 @2xl:w-fit @2xl:max-w-none">
             <header className="mb-4 flex items-center justify-between gap-2">
-              <h2 className="text-sm font-medium tabular-nums first-letter:uppercase text-foreground">
+              <h2 className="text-sm font-semibold tabular-nums first-letter:uppercase text-foreground">
                 {monthLabel}
               </h2>
               <div className="flex items-center gap-1">
@@ -255,7 +255,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
 
         {/* ── Classes pane ──────────────────────────────────────────── */}
         <section className="min-w-0 flex-1 border-t border-border-subtle p-5 @2xl:border-l @2xl:border-t-0">
-          <h3 className="mb-3 text-[0.9375rem] font-medium text-foreground">
+          <h3 className="mb-3 text-[0.9375rem] font-semibold text-foreground">
             {sentenceCase(formatLongDay(selectedDate))}
           </h3>
 
@@ -334,7 +334,7 @@ function EmbedClassRow({
       </span>
 
       <div className="min-w-0 flex-1">
-        <h4 className="text-sm font-medium leading-5 text-foreground">
+        <h4 className="text-sm font-semibold leading-5 text-foreground">
           {course.title}
         </h4>
         {(course.instructor_name || placeLabel) && (

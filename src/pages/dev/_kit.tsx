@@ -32,7 +32,7 @@ export function DevPage({
           >
             ← Alle previews
           </Link>
-          <h1 className="text-lg font-medium text-foreground">{title}</h1>
+          <h1 className="text-lg font-semibold text-foreground">{title}</h1>
           {description ? (
             <p className="max-w-2xl text-sm text-foreground-muted">{description}</p>
           ) : null}

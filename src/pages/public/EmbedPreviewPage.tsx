@@ -29,7 +29,7 @@ const EmbedPreviewPage = () => {
         </Link>
 
         <header className="mt-6 mb-8">
-          <h1 className="text-2xl font-medium text-foreground">Kurskalender</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Kurskalender</h1>
           <p className="mt-2 text-base text-foreground-muted">
             Slik ser kalenderen ut når den er lagt inn på nettstedet ditt.
           </p>

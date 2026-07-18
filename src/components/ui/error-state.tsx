@@ -40,7 +40,7 @@ export const ErrorState = React.memo(function ErrorState({
       className={cn(variantClasses[variant], className)}
       role="status"
     >
-      <p className="text-balance text-sm font-medium text-foreground">{title}</p>
+      <p className="text-balance text-sm font-semibold text-foreground">{title}</p>
       {message && (
         <p className="mt-1 max-w-sm text-pretty text-sm text-foreground-muted">{message}</p>
       )}

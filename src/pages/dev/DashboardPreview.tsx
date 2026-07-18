@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
+import { WelcomeBandCard } from '@/components/teacher/dashboard/WelcomeBand';
 import {
   PlatformFeeHint,
   RecentSignupsSection,
@@ -167,6 +168,18 @@ export default function DashboardPreview() {
             <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
             <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />
           </div>
+        </div>
+      </PreviewSection>
+
+      <PreviewSection label="Første gang (ny selger) – velkomstbånd over tomt dashboard">
+        <div className="space-y-12">
+          <WelcomeBandCard />
+          <IncomeChart
+            series={buildZeroIncome(range)}
+            isLoading={false}
+            range={range}
+            onRangeChange={setRange}
+          />
         </div>
       </PreviewSection>
 

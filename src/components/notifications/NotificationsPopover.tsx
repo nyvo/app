@@ -157,7 +157,7 @@ export function NotificationsPopover() {
               'floating-motion z-50 flex max-h-[520px] w-[380px] origin-(--radix-popover-content-transform-origin) flex-col overflow-hidden rounded-xl border border-border bg-surface text-sm text-foreground outline-hidden',
             )}
           >
-            {panelInner(<h2 className="text-sm font-medium">Varsler</h2>)}
+            {panelInner(<h2 className="text-sm font-semibold">Varsler</h2>)}
           </PopoverPrimitive.Content>
         </PopoverPrimitive.Portal>
       </PopoverPrimitive.Root>
