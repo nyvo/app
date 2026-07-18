@@ -119,26 +119,12 @@
   font-size: clamp(30px, 3vw, 42px);
   font-weight: 600; line-height: 1.05; letter-spacing: -0.035em;
 }
-.lnd .hero-lead {
-  max-width: 720px; margin: 10px auto 0;
-  font-size: clamp(22px, 2vw, 28px); font-weight: 500; line-height: 1.2;
-  letter-spacing: -0.02em;
-}
-.lnd .hero-sub { max-width: 680px; margin: 14px auto 0; font-size: 18px; }
+.lnd .hero-sub { max-width: 640px; margin: 14px auto 0; font-size: 19px; }
 .lnd .hero-ctas { display: flex; justify-content: center; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
-.lnd .hero-disclosure {
-  max-width: 760px; margin: 20px auto 0;
-  color: oklch(1 0 0 / 0.78); font-size: 13px; line-height: 1.55;
-}
-.lnd .hero-disclosure a {
-  color: #FFFFFF; font-weight: 500; text-decoration: underline;
-  text-decoration-color: oklch(1 0 0 / 0.55); text-underline-offset: 3px;
-}
-.lnd .hero-disclosure a:hover { text-decoration-color: #FFFFFF; }
 
 /* ---- Dashboard mock (real Oversikt, rebuilt in code) ---- */
 .lnd .shot {
-  max-width: 960px; margin: 32px auto -2px;
+  max-width: 960px; margin: 40px auto -2px;
   background: #FFFFFF; border-radius: 20px 20px 0 0;
   box-shadow: var(--sh-elevated);
   text-align: left; overflow: hidden;
@@ -453,14 +439,12 @@
   to { stroke-dashoffset: 0; }
 }
 
-/* Hero load stagger: identity → purpose → details → actions → disclosure → product */
+/* Hero load stagger: eyebrow → h1 → sub → CTAs → dashboard mock */
 .lnd .hero-panel .eyebrow { animation: lnd-rise 500ms var(--ease-out) backwards; }
 .lnd .hero-panel h1 { animation: lnd-rise 500ms var(--ease-out) 60ms backwards; }
-.lnd .hero-panel .hero-lead { animation: lnd-rise 500ms var(--ease-out) 100ms backwards; }
-.lnd .hero-panel .hero-sub { animation: lnd-rise 500ms var(--ease-out) 140ms backwards; }
+.lnd .hero-panel .hero-sub { animation: lnd-rise 500ms var(--ease-out) 120ms backwards; }
 .lnd .hero-panel .hero-ctas { animation: lnd-rise 500ms var(--ease-out) 180ms backwards; }
-.lnd .hero-panel .hero-disclosure { animation: lnd-rise 500ms var(--ease-out) 220ms backwards; }
-.lnd .hero-panel .shot { animation: lnd-rise-lg 700ms var(--ease-out) 260ms backwards; }
+.lnd .hero-panel .shot { animation: lnd-rise-lg 700ms var(--ease-out) 240ms backwards; }
 
 /* Chart in the hero mock draws itself once the shot has landed */
 .lnd .chart-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lnd-draw 900ms var(--ease-out) 600ms forwards; }
@@ -557,10 +541,8 @@
      movement, and render the chart + switches in their settled state. */
   .lnd .hero-panel .eyebrow,
   .lnd .hero-panel h1,
-  .lnd .hero-panel .hero-lead,
   .lnd .hero-panel .hero-sub,
   .lnd .hero-panel .hero-ctas,
-  .lnd .hero-panel .hero-disclosure,
   .lnd .hero-panel .shot { animation: lnd-fade 200ms ease both; }
   .lnd .chart-line { animation: none; stroke-dashoffset: 0; }
   .lnd .chart-area { animation: none; opacity: 1; }
