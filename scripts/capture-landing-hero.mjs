@@ -6,6 +6,7 @@
  * Shots (see src/pages/dev/LandingShot*.tsx for the staged sources):
  *   hero       → /dev/landing-shot            → public/landing-dashboard.webp  (2400×1660)
  *   storefront → /dev/landing-shot-storefront → public/landing-storefront.webp (1600×1356)
+ *   og         → /dev/og-card                 → public/og-brand.png            (1200×630)
  *
  * Re-run whenever the product UI changes so the landing page never shows a
  * stale product. Requires a running dev server. If output dimensions change,
@@ -53,6 +54,16 @@ const SHOTS = {
     out: 'public/landing-storefront.webp',
     groom: null,
   },
+  // Social share card. OG scrapers want a plain PNG at exactly 1200×630;
+  // captured at DPR 2 and downscaled for crisp type.
+  og: {
+    path: '/dev/og-card',
+    width: 1200,
+    height: 630,
+    out: 'public/og-brand.png',
+    groom: null,
+    png: true,
+  },
 };
 
 const names = which === 'all' ? Object.keys(SHOTS) : [which];
@@ -80,9 +91,11 @@ for (const name of names) {
   const png = await page.screenshot({ type: 'png' });
   await page.close();
 
-  const webp = await sharp(png).webp({ quality: 88 }).toBuffer();
-  const meta = await sharp(webp).metadata();
-  await sharp(webp).toFile(shot.out);
-  console.log(`wrote ${shot.out} (${meta.width}x${meta.height}, ${(webp.length / 1024).toFixed(0)} KB)`);
+  const out = shot.png
+    ? await sharp(png).resize(shot.width, shot.height).png().toBuffer()
+    : await sharp(png).webp({ quality: 88 }).toBuffer();
+  const meta = await sharp(out).metadata();
+  await sharp(out).toFile(shot.out);
+  console.log(`wrote ${shot.out} (${meta.width}x${meta.height}, ${(out.length / 1024).toFixed(0)} KB)`);
 }
 await browser.close();
