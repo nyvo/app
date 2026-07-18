@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatKroner } from '@/lib/utils';
 import { COMPANY } from '@/lib/company';
@@ -74,6 +74,10 @@ function SignupCta({ className, label }: { className: string; label: string }) {
 const LandingPage = () => {
   useDocumentTitle();
   const rootRef = useRef<HTMLDivElement>(null);
+  // Pricing billing period. Yearly = 4 990 kr vs 12 × 499 kr — the 998 kr
+  // difference is exactly two monthly payments, hence "2 måneder gratis"
+  // (same math + badge copy as the dashboard BillingPage).
+  const [yearly, setYearly] = useState(false);
 
   // Scroll reveals: flip data-reveal → data-revealed once per element.
   useEffect(() => {
@@ -643,6 +647,39 @@ const LandingPage = () => {
             <h2>En pris som er enkel å forstå.</h2>
             <p className="section-sub">Start gratis – bytt til Pro når salget vokser.</p>
           </div>
+          {/* Billing-period toggle — Maze pricing pattern (labels flank the
+              switch, discount badge OUTSIDE the control beside Årlig): the
+              incentive must be readable before the toggle is flipped — same
+              rule as the dashboard billing toggle. */}
+          <div className="price-toggle" data-reveal="">
+            <button
+              type="button"
+              className="pt-opt"
+              data-active={yearly ? undefined : ''}
+              onClick={() => setYearly(false)}
+            >
+              Månedlig
+            </button>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={yearly}
+              aria-label="Årlig betaling"
+              className="pt-switch"
+              onClick={() => setYearly((v) => !v)}
+            >
+              <span className="pt-knob" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="pt-opt"
+              data-active={yearly ? '' : undefined}
+              onClick={() => setYearly(true)}
+            >
+              Årlig
+            </button>
+            <span className="pt-save">2 måneder gratis</span>
+          </div>
           <div className="pricing-grid">
             <article className="plan plan-white" data-reveal="">
               <h3 className="plan-name">Start</h3>
@@ -669,10 +706,14 @@ const LandingPage = () => {
                 Pro <span className="plan-tag">Anbefalt</span>
               </h3>
               <p className="plan-price">
-                {formatKroner(499)}
-                <small> / mnd eks. mva.</small>
+                {yearly ? formatKroner(4990) : formatKroner(499)}
+                <small>{yearly ? ' / år eks. mva.' : ' / mnd eks. mva.'}</small>
               </p>
-              <p className="plan-desc">Fast månedspris – ingen plattformgebyr.</p>
+              <p className="plan-desc">
+                {yearly
+                  ? 'Fast årspris – ingen plattformgebyr.'
+                  : 'Fast månedspris – ingen plattformgebyr.'}
+              </p>
               <ul className="plan-list">
                 <li>
                   <CheckGlyph />
