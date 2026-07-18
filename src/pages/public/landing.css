@@ -163,7 +163,7 @@
 .lnd .inntekt-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .lnd .inntekt-label { font-size: 10.5px; color: var(--muted-text); }
 .lnd .inntekt-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
-.lnd .inntekt-sum { font-size: 21px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.lnd .inntekt-sum { font-size: 21px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .lnd .chip-up { background: var(--success-subtle); color: var(--success); border-radius: var(--r-pill); font-size: 9.5px; font-weight: 600; padding: 2px 7px; }
 .lnd .seg { display: inline-flex; background: var(--muted); border-radius: 8px; padding: 2px; font-size: 10px; color: var(--muted-text); }
 .lnd .seg span { padding: 3px 9px; border-radius: 6px; }
@@ -186,9 +186,28 @@
 .lnd .row-txt small { font-size: 9.5px; color: var(--muted-text); }
 .lnd .row-meta { margin-left: auto; font-size: 9.5px; color: var(--muted-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* ---- Proof strip ---- */
+/* ---- Proof strip ----
+   Desktop: one static centered row. ≤560px (where the row would wrap into a
+   stack): a marquee band — the track holds 3 copies of the group and slides
+   by exactly one group width (-100%/3), so the loop is seamless. Constant
+   motion = linear easing; copies 2-3 are aria-hidden in the markup. */
 .lnd .proof { padding: 40px 0 0; }
-.lnd .proof-inner { display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; font-size: 13.5px; font-weight: 500; color: var(--muted-text); }
+.lnd .proof-band { display: flex; justify-content: center; }
+.lnd .proof-track { display: flex; }
+.lnd .proof-group { display: flex; gap: 48px; font-size: 13.5px; font-weight: 500; color: var(--muted-text); white-space: nowrap; }
+.lnd .proof-group[aria-hidden] { display: none; }
+@keyframes lnd-marquee {
+  to { translate: calc(-100% / 3) 0; }
+}
+@media (max-width: 560px) {
+  .lnd .proof-band {
+    justify-content: flex-start; overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  }
+  .lnd .proof-track { width: max-content; animation: lnd-marquee 26s linear infinite; }
+  .lnd .proof-group, .lnd .proof-group[aria-hidden] { display: flex; gap: 40px; padding-right: 40px; }
+}
 
 /* ---- Sections ---- */
 .lnd .section { padding-top: var(--section); }
@@ -482,6 +501,15 @@
   .lnd { --section: 72px; }
   .lnd .nav-link { display: none; }
   .lnd .hero-panel, .lnd .cta-panel { padding-inline: 28px; }
+  /* Hero compression: the stacked mock is the page's tallest block on
+     mobile — tighten the panel's own air and crop the mock to the income
+     card + "Neste kurs" (the second list column doubles its height). */
+  .lnd .hero-panel { padding-top: 44px; }
+  .lnd .shot { margin-top: 28px; }
+  .lnd .shot-col:last-child { display: none; }
+  .lnd .shot-col .row + .row { display: none; }
+  .lnd .shot-main { padding: 14px 16px; }
+  .lnd .chart { height: 56px; }
   .lnd .split { grid-template-columns: 1fr; gap: 40px; }
   .lnd .pricing-grid { grid-template-columns: 1fr; }
   .lnd .plan-featured { padding: 36px 28px 32px; }
@@ -498,7 +526,9 @@
 }
 @media (max-width: 480px) {
   .lnd .container { width: calc(100% - 40px); }
-  .lnd .hero-panel { border-radius: 22px; padding: 60px 20px 0; }
+  .lnd .hero-panel { border-radius: 22px; padding: 44px 20px 0; }
+  .lnd .hero-sub { font-size: 17px; }
+  .lnd .section h2 { font-size: 28px; }
   .lnd .cta-panel { border-radius: 22px; padding-inline: 24px; }
   .lnd .hero-ctas .btn { width: 100%; }
   .lnd .footer-grid { grid-template-columns: 1fr; gap: 28px; }
@@ -518,6 +548,11 @@
   .lnd .chart-area { animation: none; opacity: 1; }
   .lnd [data-reveal] { translate: none; transition: opacity 200ms ease; }
   .lnd .hl-tip { scale: none; }
+  /* Marquee stops: back to a static wrapped row, loop copies hidden. */
+  .lnd .proof-band { justify-content: center; -webkit-mask-image: none; mask-image: none; }
+  .lnd .proof-track { animation: none; width: auto; }
+  .lnd .proof-group { flex-wrap: wrap; justify-content: center; white-space: normal; padding-right: 0; }
+  .lnd .proof-group[aria-hidden] { display: none; }
   .lnd .switch { background: var(--primary); transition: none; }
   .lnd .switch::after { translate: 12px 0; transition: none; }
 }
