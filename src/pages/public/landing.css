@@ -451,7 +451,14 @@
   display: flex; flex-direction: column; gap: 3px;
   background: #FFFFFF; border: 1px solid var(--border); border-radius: 8px;
   padding: 5px 8px; white-space: nowrap;
+  /* Like the real tooltip, the box only exists while hovering — the cursor
+     and dot are the resting cue. `.is-hovering` is set from LandingPage.tsx,
+     which also points transform-origin at the cursor-facing edge. */
+  opacity: 0;
+  scale: 0.97;
+  transition: opacity 150ms var(--ease-out), scale 150ms var(--ease-out);
 }
+.lnd .chart-hl.is-hovering .hl-tip { opacity: 1; scale: 1; }
 .lnd .hl-tip small { font-size: 7.5px; font-weight: 500; color: var(--muted-text); line-height: 1; }
 .lnd .hl-row { display: flex; align-items: center; gap: 4px; line-height: 1; }
 .lnd .hl-row i { flex: none; width: 6px; height: 6px; border-radius: 2px; background: var(--primary); }
@@ -518,6 +525,7 @@
   .lnd .chart-area { animation: none; opacity: 1; }
   .lnd .chart-hl { animation: none; }
   .lnd [data-reveal] { translate: none; transition: opacity 200ms ease; }
+  .lnd .hl-tip { scale: none; }
   .lnd .switch { background: var(--primary); transition: none; }
   .lnd .switch::after { translate: 12px 0; transition: none; }
 }

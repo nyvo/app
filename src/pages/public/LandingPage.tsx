@@ -140,9 +140,13 @@ const LandingPage = () => {
       const y = (yAt(current) / 120) * height;
       cursor.style.translate = `${x}px 0`;
       dot.style.translate = `calc(${x}px - 50%) calc(${y}px - 50%)`;
-      // Flip to the right of the cursor near the left edge (recharts-style).
-      tip.style.translate =
-        x > 130 ? `calc(${x}px - 100% - 12px) 0` : `calc(${x}px + 12px) 0`;
+      // Flip to the right of the cursor near the left edge (recharts-style);
+      // scale-in grows out of the cursor-facing edge.
+      const flipped = x > 130;
+      tip.style.translate = flipped
+        ? `calc(${x}px - 100% - 12px) 0`
+        : `calc(${x}px + 12px) 0`;
+      tip.style.transformOrigin = flipped ? '100% 50%' : '0% 50%';
       const day = Math.round(current * 30);
       // Skip identical writes — a text change re-lays-out the tooltip.
       const nextValue = formatKroner(Math.round(TOTAL * current));
@@ -173,6 +177,7 @@ const LandingPage = () => {
     const onEnter = () => {
       // Respond instantly if the pointer arrives before the entrance beat.
       hl.style.animation = 'none';
+      hl.classList.add('is-hovering');
       rect = wrap.getBoundingClientRect();
       width = rect.width;
       height = rect.height;
@@ -183,6 +188,7 @@ const LandingPage = () => {
       schedule();
     };
     const onLeave = () => {
+      hl.classList.remove('is-hovering');
       target = REST;
       schedule();
     };
