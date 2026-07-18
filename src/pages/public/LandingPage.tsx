@@ -94,10 +94,10 @@ const LandingPage = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Decorative pointer-tracking for the hero chart highlight (hover-capable
-  // devices only): cursor/dot/tooltip ride the drawn path with slight
-  // smoothing, values interpolate along the period, and the group eases back
-  // to its resting point on leave. Touch devices keep the static highlight.
+  // Pointer-tracking for the hero chart highlight (hover-capable devices
+  // only): the whole highlight exists only while hovering — cursor/dot/
+  // tooltip fade in together, ride the drawn path with slight smoothing,
+  // and values interpolate along the period. Touch devices never see it.
   useEffect(() => {
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     const wrap = rootRef.current?.querySelector<HTMLElement>('.chart-wrap');
@@ -168,15 +168,12 @@ const LandingPage = () => {
       if (!raf) raf = requestAnimationFrame(tick);
     };
 
-    hl.classList.add('is-live');
     render();
 
     // Rect cached per hover — pointermove can fire at up to 1000Hz and only
     // left/width are used, which vertical scrolling never changes.
     let rect: DOMRect | null = null;
     const onEnter = () => {
-      // Respond instantly if the pointer arrives before the entrance beat.
-      hl.style.animation = 'none';
       hl.classList.add('is-hovering');
       rect = wrap.getBoundingClientRect();
       width = rect.width;
@@ -332,9 +329,9 @@ const LandingPage = () => {
                         strokeWidth="2"
                       />
                     </svg>
-                    {/* Mock of the live IncomeChart hover highlight (cursor +
-                        activeDot + "Sum hittil" tooltip) — appears once the
-                        line has finished drawing, like a mid-hover screenshot. */}
+                    {/* The live IncomeChart hover highlight (cursor +
+                        activeDot + "Sum hittil" tooltip) — exists only while
+                        hovering, driven by the pointer-tracking effect. */}
                     <div className="chart-hl">
                       <span className="hl-cursor" />
                       <span className="hl-dot" />

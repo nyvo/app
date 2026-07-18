@@ -431,46 +431,39 @@
 .lnd .chart-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lnd-draw 900ms var(--ease-out) 600ms forwards; }
 .lnd .chart-area { opacity: 0; animation: lnd-fade 500ms var(--ease-out) 1100ms forwards; }
 
-/* Hover-highlight mock — mirrors IncomeChart's cursor line, activeDot
-   (white fill, azure ring) and "Sum hittil" tooltip; fades in after the
-   line-draw finishes. Anchored at the path knot (400, 42) → 66.7% / 35%. */
-@keyframes lnd-rise-sm {
-  from { opacity: 0; translate: 0 4px; }
+/* Hover-highlight — mirrors IncomeChart's cursor line, activeDot (white
+   fill, azure ring) and "Sum hittil" tooltip. Exists only while hovering,
+   exactly like the real chart: everything is hidden at rest, positioned by
+   inline `translate` from the pointer-tracking effect in LandingPage.tsx
+   (which sets `.is-hovering`), and never shown on touch devices. */
+.lnd .chart-hl {
+  position: absolute; inset: 0; pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms var(--ease-out);
 }
-.lnd .chart-hl { position: absolute; inset: 0; pointer-events: none; animation: lnd-rise-sm 300ms var(--ease-out) 1700ms backwards; }
-.lnd .hl-cursor { position: absolute; left: 66.7%; top: 0; bottom: 0; width: 1px; background: var(--border); }
+.lnd .chart-hl.is-hovering { opacity: 1; }
+.lnd .hl-cursor { position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: var(--border); }
 .lnd .hl-dot {
-  position: absolute; left: 66.7%; top: 35%; translate: -50% -50%;
+  position: absolute; left: 0; top: 0;
   width: 8px; height: 8px; border-radius: 50%;
   background: #FFFFFF; border: 2px solid var(--primary);
 }
 .lnd .hl-tip {
-  /* Left of the cursor — recharts flips the tooltip at the right edge, and
-     the mock point sits far enough right that mobile would clip it. */
-  position: absolute; right: calc(33.3% + 12px); top: -4px;
+  position: absolute; left: 0; top: -4px;
   display: flex; flex-direction: column; gap: 3px;
   background: #FFFFFF; border: 1px solid var(--border); border-radius: 8px;
   padding: 5px 8px; white-space: nowrap;
-  /* Like the real tooltip, the box only exists while hovering — the cursor
-     and dot are the resting cue. `.is-hovering` is set from LandingPage.tsx,
-     which also points transform-origin at the cursor-facing edge. */
-  opacity: 0;
+  /* Scale-in grows out of the cursor-facing edge (transform-origin follows
+     the recharts-style flip, set in LandingPage.tsx). */
   scale: 0.97;
-  transition: opacity 150ms var(--ease-out), scale 150ms var(--ease-out);
+  transition: scale 150ms var(--ease-out);
 }
-.lnd .chart-hl.is-hovering .hl-tip { opacity: 1; scale: 1; }
+.lnd .chart-hl.is-hovering .hl-tip { scale: 1; }
 .lnd .hl-tip small { font-size: 7.5px; font-weight: 500; color: var(--muted-text); line-height: 1; }
 .lnd .hl-row { display: flex; align-items: center; gap: 4px; line-height: 1; }
 .lnd .hl-row i { flex: none; width: 6px; height: 6px; border-radius: 2px; background: var(--primary); }
 .lnd .hl-row b { font-size: 9.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .lnd .hl-row em { font-style: normal; font-size: 8px; color: var(--muted-text); margin-left: 3px; }
-/* Live mode (hover-capable devices, set from LandingPage.tsx): elements
-   anchor at 0 and are driven by inline `translate` so pointer-tracking
-   stays compositor-only. Static % positions above remain the no-hover
-   fallback. */
-.lnd .chart-hl.is-live .hl-cursor { left: 0; }
-.lnd .chart-hl.is-live .hl-dot { left: 0; top: 0; }
-.lnd .chart-hl.is-live .hl-tip { right: auto; left: 0; }
 
 /* Scroll reveals */
 .lnd [data-reveal] {
@@ -523,7 +516,6 @@
   .lnd .hero-panel .shot { animation: lnd-fade 200ms ease both; }
   .lnd .chart-line { animation: none; stroke-dashoffset: 0; }
   .lnd .chart-area { animation: none; opacity: 1; }
-  .lnd .chart-hl { animation: none; }
   .lnd [data-reveal] { translate: none; transition: opacity 200ms ease; }
   .lnd .hl-tip { scale: none; }
   .lnd .switch { background: var(--primary); transition: none; }
