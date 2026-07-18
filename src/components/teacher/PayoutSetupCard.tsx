@@ -1,19 +1,24 @@
 import type { ReactNode } from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
 
 /**
- * Presentational progress tracker for the payouts settings page — a 3-step
+ * Presentational setup module for the payouts settings page — a 3-step
  * "Bekreft identiteten din → Vi sjekker opplysningene → Motta utbetalinger"
- * horizontal segmented bar. Pure view-model in, JSX out, so the real page
- * (auth + Stripe wiring) and the auth-free dev preview can share one
- * rendering without duplicating markup.
+ * tracker. Pure view-model in, JSX out, so the real page (auth + Stripe
+ * wiring) and the auth-free dev preview can share one rendering without
+ * duplicating markup.
  *
- * Structure copied from Airwallex's verification tracker (horizontal steps,
- * title + one-word status under each, detail card below) with the marker
- * circles swapped for equal-width bar segments (Relevance AI / Uxcel
- * onboarding bars) so the segment colour itself carries the step state.
+ * Composition: ONE FramedCard owns the whole module — the same container
+ * family as the PayoutStats modules that replace it once payouts flow, so
+ * the page keeps a single surface language across its lifecycle. Inside the
+ * white inset, state-first order copied from Docusign's setup panel
+ * (heading → support line → progress meter → detail) with the action inside
+ * the panel in a hairline-divided footer (Vercel's next-steps card); the
+ * footer disappears when a state has nothing to do. The tracker itself keeps
+ * Airwallex's per-step title + status word, drawn as equal-width bar
+ * segments whose colour carries the step state.
  */
 
 export type StepStatus = 'done' | 'current' | 'upcoming';
@@ -115,45 +120,51 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
   const current = steps.find((step) => step.status === 'current');
 
   return (
-    <div>
-      {/* Tracker on the canvas, detail card below (Airwallex's vertical order):
-          one equal-width bar segment per step with the title + status word
-          stacked under it. The bars are decorative (aria-hidden) — the visible
-          status words carry the state, colour never stands alone. */}
-      <ol className="grid grid-cols-3 gap-x-3">
-        {steps.map((step, index) => (
-          <li key={step.title + index} className="min-w-0">
-            <span
-              aria-hidden="true"
-              className={`block h-1 w-full rounded-full transition-colors duration-200 ${stepBarClass(step)}`}
-            />
-            {/* Non-active titles stay on the secondary text tier
-                (foreground-muted); only the current step is full ink. */}
-            <p
-              className={`mt-2.5 flex items-center gap-1.5 text-sm leading-snug ${
-                step.status === 'current' ? 'font-medium text-foreground' : 'font-normal text-foreground-muted'
-              }`}
-            >
-              {step.title}
-              {step.status === 'done' && <DoneCheck />}
-            </p>
-            <StepStatusLabel status={step.status} tone={step.tone} statusLabel={step.statusLabel} />
-          </li>
-        ))}
-      </ol>
-
-      <Card className="mt-6">
-        <CardContent>
-          {/* The card describes the current situation; the tracker above
-              carries the process position, so no step counter is repeated here. */}
-          <h2 className="mb-2 text-base font-medium text-foreground">{h2}</h2>
+    <FramedCard title="Oppsett">
+      <FramedCardPanel>
+        <div className="p-5 sm:p-6">
+          {/* State first (Docusign's setup panel): the heading answers "what's
+              happening / what do I do", the tracker below is the evidence —
+              so no step counter is repeated anywhere. */}
+          <h2 className="text-base font-medium text-foreground">{h2}</h2>
           {current?.description && (
-            <p className="max-w-prose text-base text-foreground-muted">{current.description}</p>
+            <p className="mt-1 max-w-prose text-sm text-foreground-muted">{current.description}</p>
           )}
-          {current?.action && <div className="pt-4">{current.action}</div>}
-        </CardContent>
-      </Card>
-    </div>
+
+          {/* One equal-width bar segment per step, title + status word under
+              it. The bars are decorative (aria-hidden) — the visible words
+              carry the state, colour never stands alone. */}
+          <ol className="mt-6 grid grid-cols-3 gap-x-3">
+            {steps.map((step, index) => (
+              <li key={step.title + index} className="min-w-0">
+                <span
+                  aria-hidden="true"
+                  className={`block h-1 w-full rounded-full transition-colors duration-200 ${stepBarClass(step)}`}
+                />
+                {/* Non-active titles stay on the secondary text tier
+                    (foreground-muted); only the current step is full ink. */}
+                <p
+                  className={`mt-2.5 flex items-center gap-1.5 text-sm leading-snug ${
+                    step.status === 'current' ? 'font-medium text-foreground' : 'font-normal text-foreground-muted'
+                  }`}
+                >
+                  {step.title}
+                  {step.status === 'done' && <DoneCheck />}
+                </p>
+                <StepStatusLabel status={step.status} tone={step.tone} statusLabel={step.statusLabel} />
+              </li>
+            ))}
+          </ol>
+
+          {/* Action inside the panel, divided off (Vercel's next-steps card).
+              Waiting states have no button and the footer collapses — no
+              empty zones. */}
+          {current?.action && (
+            <div className="mt-6 border-t border-border-subtle pt-4">{current.action}</div>
+          )}
+        </div>
+      </FramedCardPanel>
+    </FramedCard>
   );
 }
 
