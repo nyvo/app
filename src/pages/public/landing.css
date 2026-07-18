@@ -88,7 +88,7 @@
 .lnd .nav { padding: 20px 0; }
 .lnd .nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .lnd .wordmark { font-weight: 600; font-size: 17px; letter-spacing: -0.01em; text-decoration: none; }
-.lnd .nav-logo { display: inline-flex; border-radius: 14px; }
+.lnd .nav-logo { display: inline-flex; align-items: center; gap: 10px; border-radius: 14px; }
 .lnd .nav-logo .logo-tile { width: 38px; height: 38px; border-radius: 14px; }
 .lnd .nav-right { display: flex; align-items: center; gap: 24px; }
 .lnd .nav-link { text-decoration: none; font-size: 14.5px; color: var(--muted-text); transition: color 150ms ease; }
