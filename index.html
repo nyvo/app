@@ -3,15 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Raden – påmelding, betaling og kursoversikt</title>
+    <title>Raden – påmelding og betaling for kurs</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="description" content="Hold orden på kurs, påmeldinger, betaling og deltakere på ett sted." />
-    <meta property="og:title" content="Raden" />
-    <meta property="og:description" content="Hold orden på kurs, påmeldinger, betaling og deltakere på ett sted." />
+    <link rel="canonical" href="https://www.raden.no/" />
+    <meta name="application-name" content="Raden" />
+    <meta name="description" content="Raden er en norsk påmeldings- og betalingsplattform for kursholdere, studioer og arrangører. Opprett kurs, ta imot påmeldinger og hold oversikt over deltakerne på ett sted." />
+    <meta property="og:title" content="Raden – påmelding og betaling for kurs" />
+    <meta property="og:description" content="Raden er en norsk påmeldings- og betalingsplattform for kursholdere, studioer og arrangører." />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Raden" />
+    <meta property="og:url" content="https://www.raden.no/" />
     <!-- New filename on purpose: scrapers cache og images by URL for weeks.
          Regenerate via /dev/og-card + scripts/capture-landing-hero.mjs. -->
     <meta property="og:image" content="https://raden.no/og-brand.png" />
@@ -19,18 +22,61 @@
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://raden.no/og-brand.png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Raden",
+        "url": "https://www.raden.no/",
+        "description": "Raden er en norsk påmeldings- og betalingsplattform for kursholdere, studioer og arrangører.",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web"
+      }
+    </script>
+    <style>
+      .static-homepage {
+        box-sizing: border-box;
+        min-height: 100vh;
+        margin: 0;
+        padding: 2rem 1.5rem;
+        background: #f8fafc;
+        color: #111827;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .static-homepage * { box-sizing: border-box; }
+      .static-homepage__inner { width: min(64rem, 100%); margin: 0 auto; }
+      .static-homepage__brand { color: inherit; font-size: 1.125rem; font-weight: 700; text-decoration: none; }
+      .static-homepage__content { max-width: 44rem; padding: clamp(5rem, 12vw, 9rem) 0; }
+      .static-homepage__eyebrow { margin: 0 0 1rem; color: #475569; font-size: 0.875rem; font-weight: 600; }
+      .static-homepage h1 { margin: 0; font-size: clamp(2.25rem, 6vw, 4.5rem); line-height: 1.05; letter-spacing: -0.04em; }
+      .static-homepage__intro { margin: 1.5rem 0 0; color: #475569; font-size: clamp(1.125rem, 2vw, 1.375rem); line-height: 1.6; }
+      .static-homepage__links { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2rem; }
+      .static-homepage__links a { color: #075985; font-weight: 600; text-underline-offset: 0.2em; }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <!-- Static fallback: the app is client-rendered, so non-JS fetchers
-         (OAuth verification, some crawlers) otherwise see an empty body. -->
-    <noscript>
-      <main style="font-family: system-ui, sans-serif; max-width: 36rem; margin: 4rem auto; padding: 0 1.5rem">
-        <h1>Raden</h1>
-        <p>Raden samler kurs, påmeldinger, betaling og deltakere på ett sted – for studioer og arrangører. Tjenesten krever JavaScript.</p>
-        <p><a href="https://raden.no/personvern">Personvern</a> · <a href="https://raden.no/terms">Vilkår</a></p>
+    <!-- React replaces this content after startup. Until then, it gives OAuth
+         reviewers and non-JavaScript crawlers a complete, public description. -->
+    <div id="root">
+      <main class="static-homepage">
+        <div class="static-homepage__inner">
+          <a class="static-homepage__brand" href="/" aria-label="Raden, forside">Raden</a>
+          <div class="static-homepage__content">
+            <p class="static-homepage__eyebrow">For kursholdere, studioer og arrangører</p>
+            <h1>Raden – påmelding og betaling for kurs</h1>
+            <p class="static-homepage__intro">
+              Raden er en norsk påmeldings- og betalingsplattform. Opprett og publiser kurs,
+              ta imot påmeldinger og betaling, og hold oversikt over deltakerne på ett sted.
+            </p>
+            <nav class="static-homepage__links" aria-label="Informasjon om Raden">
+              <a href="/om-oss">Om Raden</a>
+              <a href="/personvern">Personvern</a>
+              <a href="/terms">Vilkår</a>
+            </nav>
+          </div>
+        </div>
       </main>
-    </noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
