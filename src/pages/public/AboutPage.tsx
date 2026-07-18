@@ -14,13 +14,13 @@ const AboutPage = () => {
 
       <main className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-3xl space-y-10">
-          <h1 className="text-balance text-3xl font-semibold text-foreground">
+          <h1 className="text-balance text-3xl font-medium text-foreground">
             Om Raden
           </h1>
 
           <div className="space-y-8 [&_h2]:text-balance [&_p]:text-pretty">
             <section className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">Hva vi lager</h2>
+              <h2 className="text-lg font-medium text-foreground">Hva vi lager</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Raden er en digital påmeldings- og betalingsplattform for kurs, timer og arrangementer.
                 Tjenesten brukes av studioer og arrangører som vil vise kurs, ta imot påmeldinger og håndtere betaling på ett sted.
@@ -28,7 +28,7 @@ const AboutPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">Selskap</h2>
+              <h2 className="text-lg font-medium text-foreground">Selskap</h2>
               <div className="space-y-1.5 text-base text-foreground-muted leading-relaxed">
                 <p>{COMPANY.legalName}</p>
                 <p>Org.nr. {COMPANY.organizationNumber}</p>
@@ -39,7 +39,7 @@ const AboutPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">Kontakt</h2>
+              <h2 className="text-lg font-medium text-foreground">Kontakt</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Spørsmål om Raden, betaling eller en påmelding kan sendes til{' '}
                 <a href={`mailto:${COMPANY.email}`} className="text-primary underline underline-offset-2 hover:decoration-2">

@@ -349,7 +349,7 @@ export function BillingPlanSections({
         // outer rhythm, so it reads as the section anchor instead of floating.
         <section>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-foreground">Velg plan</h2>
+            <h2 className="text-lg font-medium text-foreground">Velg plan</h2>
             {showInterval && (
               // The yearly nudge sits right beside the toggle's Årlig segment
               // and is always visible (Maze/Cycle pricing-toggle pattern:
@@ -425,7 +425,7 @@ function PlanOption({
       <CardContent className="flex h-full flex-col gap-5 px-7">
         <div>
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-base font-semibold text-foreground">{name}</h3>
+            <h3 className="text-base font-medium text-foreground">{name}</h3>
             {active && (
               <Badge variant="inverted" size="sm">
                 Aktiv plan

@@ -205,7 +205,7 @@ export function RoleChooser({ onAdvance }: { onAdvance: () => void }) {
   return (
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-2xl">
-        <h1 className="mb-8 text-2xl font-semibold text-foreground">
+        <h1 className="mb-8 text-2xl font-medium text-foreground">
           Hva vil du gjøre?
         </h1>
 
@@ -369,7 +369,7 @@ export function BuyerSetupForm({
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
         <BackLink onClick={() => { void handleBack() }} disabled={saving} />
-        <h1 className="mb-8 text-2xl font-semibold text-foreground">
+        <h1 className="mb-8 text-2xl font-medium text-foreground">
           Litt om deg
         </h1>
 
@@ -489,7 +489,7 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
         <BackLink onClick={() => { void handleBack() }} disabled={saving} />
-        <h1 className="mb-8 text-2xl font-semibold text-foreground">
+        <h1 className="mb-8 text-2xl font-medium text-foreground">
           Hva skal siden din hete?
         </h1>
 

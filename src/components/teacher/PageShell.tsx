@@ -83,7 +83,7 @@ export function PageShell({
         <header className={description ? 'mb-10' : 'mb-8'}>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3 flex-wrap min-w-0">
-              <h1 className="text-balance text-2xl font-semibold text-foreground">
+              <h1 className="text-balance text-2xl font-medium text-foreground">
                 {title}
               </h1>
               {badge && badgePlacement === 'inline' && <span className="shrink-0">{badge}</span>}

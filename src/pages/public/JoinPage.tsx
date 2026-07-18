@@ -250,7 +250,7 @@ export default function JoinPage() {
   if (lookup.status === 'not_found') {
     return (
       <Shell>
-        <h1 className="text-3xl font-semibold text-foreground mb-3">
+        <h1 className="text-3xl font-medium text-foreground mb-3">
           Lenken finnes ikke
         </h1>
         <p className="text-base text-foreground-muted">
@@ -263,7 +263,7 @@ export default function JoinPage() {
   if (lookup.status === 'error') {
     return (
       <Shell>
-        <h1 className="text-3xl font-semibold text-foreground mb-3">
+        <h1 className="text-3xl font-medium text-foreground mb-3">
           Noe gikk galt
         </h1>
         <p className="text-base text-foreground-muted mb-8">
@@ -279,7 +279,7 @@ export default function JoinPage() {
   if (lookup.status === 'expired') {
     return (
       <Shell>
-        <h1 className="text-3xl font-semibold text-foreground mb-3">
+        <h1 className="text-3xl font-medium text-foreground mb-3">
           Lenken er utløpt
         </h1>
         <p className="text-base text-foreground-muted">
@@ -296,7 +296,7 @@ export default function JoinPage() {
     return (
       <Shell>
         <Cover url={team.cover_image_url} />
-        <h1 className="text-3xl font-semibold text-foreground mb-3">
+        <h1 className="text-3xl font-medium text-foreground mb-3">
           Bli med i {team.name}
         </h1>
         <p className="text-base text-foreground-muted mb-8">
@@ -326,7 +326,7 @@ export default function JoinPage() {
     return (
       <Shell>
         <Cover url={team.cover_image_url} />
-        <h1 className="text-3xl font-semibold text-foreground mb-3">
+        <h1 className="text-3xl font-medium text-foreground mb-3">
           Denne lenken er for kursholdere
         </h1>
         <p className="text-base text-foreground-muted mb-8">
@@ -359,7 +359,7 @@ export default function JoinPage() {
     return (
       <Shell>
         <Cover url={team.cover_image_url} />
-        <h1 className="text-3xl font-semibold text-foreground mb-3">
+        <h1 className="text-3xl font-medium text-foreground mb-3">
           Du er allerede med
         </h1>
         <p className="text-base text-foreground-muted mb-8">
@@ -376,7 +376,7 @@ export default function JoinPage() {
   if (phase.kind === 'own_team') {
     return (
       <Shell>
-        <h1 className="text-3xl font-semibold text-foreground mb-3">
+        <h1 className="text-3xl font-medium text-foreground mb-3">
           Dette er ditt eget studio
         </h1>
         <p className="text-base text-foreground-muted mb-8">
@@ -395,7 +395,7 @@ export default function JoinPage() {
     return (
       <Shell>
         <Cover url={team.cover_image_url} />
-        <h1 className="text-3xl font-semibold text-foreground mb-3">
+        <h1 className="text-3xl font-medium text-foreground mb-3">
           Bli med i {team.name}
         </h1>
         <p className="text-base text-foreground-muted mb-6">
@@ -427,7 +427,7 @@ export default function JoinPage() {
   return (
     <Shell>
       <Cover url={team.cover_image_url} />
-      <h1 className="text-3xl font-semibold text-foreground mb-3">
+      <h1 className="text-3xl font-medium text-foreground mb-3">
         Bli med i {team.name}
       </h1>
       <p className="text-base text-foreground-muted mb-8">

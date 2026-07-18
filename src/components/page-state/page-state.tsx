@@ -102,7 +102,7 @@ export function PageState({
   return (
     <Root className="min-h-[60dvh] flex flex-col items-center justify-center text-center px-6 py-12">
       {illustration ? <div className="mb-8">{illustration}</div> : null}
-      <h1 className="max-w-md text-balance text-2xl font-semibold text-foreground">
+      <h1 className="max-w-md text-balance text-2xl font-medium text-foreground">
         {resolvedTitle}
       </h1>
       {resolvedDescription ? (

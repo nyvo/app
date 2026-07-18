@@ -44,7 +44,7 @@ export function AuthLayout({
           ) : (
             <div className="flex flex-col">
               <div className="mb-8 space-y-2 text-center">
-                <h1 className="text-2xl font-semibold text-foreground">
+                <h1 className="text-2xl font-medium text-foreground">
                   {title}
                 </h1>
                 {subtitle && (

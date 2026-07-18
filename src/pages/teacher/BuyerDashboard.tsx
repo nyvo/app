@@ -141,7 +141,7 @@ function SignupSection({ title, signups }: { title: string; signups: BuyerSignup
   if (signups.length === 0) return null
   return (
     <section>
-      <h2 className="mb-3 text-sm font-semibold text-foreground-muted">{title}</h2>
+      <h2 className="mb-3 text-sm font-medium text-foreground-muted">{title}</h2>
       <ul className="divide-y divide-border-subtle">
         {signups.map((s) => (
           <SignupRow key={s.id} signup={s} />

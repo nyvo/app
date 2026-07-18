@@ -548,7 +548,7 @@ function StudioPublicSettings({
               who checks eligibility (the studio, not Raden) and where the
               claims are visible. */}
           <div className="max-w-xl">
-            <h2 className="text-base font-semibold text-foreground">
+            <h2 className="text-base font-medium text-foreground">
               Student- og pensjonistrabatt
             </h2>
             <p className="mt-1 max-w-prose text-pretty text-sm text-foreground-muted">

@@ -736,7 +736,7 @@ const CheckoutPage = () => {
  * render together on one screen, so there's nothing left to count. */
 export function CheckoutTitle() {
   return (
-    <h1 className="mt-3 text-2xl font-semibold text-foreground">
+    <h1 className="mt-3 text-2xl font-medium text-foreground">
       Fullfør påmeldingen
     </h1>
   );

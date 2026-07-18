@@ -40,11 +40,11 @@ only. Categorical blues (`--category-*`) are identity markers only.
    not extend the gradient to nav, headers, upsell/Pro surfaces (Pro = chrome),
    or data surfaces.
 3. **Hierarchy through spacing and the tier gaps, not bold weights.** The tiers:
-   surface → border → muted text (`text-foreground-muted`) → foreground.
-   Two-tier weight system (2026-07-18 landing alignment): semantic headings
-   and titles (h1–h4, page/section/dialog/card titles) are `font-semibold`;
-   emphasized UI text (labels, nav, buttons, row titles, values) stays
-   `font-medium`; body is normal. `font-bold` is effectively banned in app UI.
+   surface → border → muted text (`text-foreground-muted`) → foreground. Weight
+   contrast is `font-medium` vs normal; `font-semibold` is rare (stat figures,
+   page titles), `font-bold` is effectively banned in app UI. (A semibold-
+   headings system shipped 2026-07-18 in PR #179 and was reverted same day —
+   don't reintroduce without a fresh decision.)
 4. **Soft-rounded surfaces, pill actions.** Surfaces (cards, panels, fields)
    use the 4–10px radius scale; ALL buttons are pills (`rounded-full`) — the
    pill is the action affordance, the soft rectangle is the surface/field
@@ -202,11 +202,10 @@ compile. Arbitrary sizes only below 12px (`text-[11px]` etc.) — never in the
 
 - App body: `text-base`. Meta/labels/controls: `text-sm`. Captions/chips: `text-xs`.
 - Page titles: `text-2xl`; dashboard hero: `text-3xl`. Public h1: `text-4xl`.
-- Weights (2026-07-18 landing alignment): normal (body), `font-medium`
-  (labels, nav, buttons, emphasis, row titles, stat figures), `font-semibold`
-  (semantic headings/titles only — h1–h4 and the shared title primitives).
-  The xl–5xl tokens carry the landing's tighter tracking/leading; `lg` keeps
-  its loose leading for lead paragraphs. `font-bold`: no.
+- Weights: normal (body) and `font-medium` (labels, nav, buttons, emphasis,
+  titles, stat figures). Medium is the working ceiling — the app ships zero
+  bold and near-zero semibold; reach for `font-semibold` only when a display
+  figure genuinely needs it and say why. `font-bold`: no.
 - Long-form prose (public/legal pages, descriptions) may add `leading-relaxed`;
   UI text keeps the token line-heights.
 - Three-tier rule: titles = medium/semibold + `text-foreground`; body = normal +

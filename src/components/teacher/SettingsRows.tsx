@@ -56,7 +56,7 @@ export function SettingsRow({ id, title, description, children }: SettingsRowPro
       className="grid gap-4 py-8 first:pt-0 last:pb-0 scroll-mt-24 md:grid-cols-[220px_minmax(0,42rem)] md:gap-12"
     >
       <div>
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        <h2 className="text-base font-medium text-foreground">{title}</h2>
         {description && <p className="mt-1 text-sm text-foreground-muted">{description}</p>}
       </div>
       <div className="min-w-0 space-y-6">{children}</div>

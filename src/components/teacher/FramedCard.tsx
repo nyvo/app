@@ -33,7 +33,7 @@ export function FramedCard({
     <div className={cn('flex flex-col rounded-2xl bg-muted p-2', className)}>
       {/* px-4 lines the title up with row/panel content below (shell p-2 + row px-4). */}
       <div className="flex items-center justify-between gap-3 px-4 py-2">
-        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+        <h2 className="text-sm font-medium text-foreground">{title}</h2>
         {action && <div className="text-sm text-foreground">{action}</div>}
       </div>
       <div className="flex flex-1 flex-col gap-1.5">{children}</div>

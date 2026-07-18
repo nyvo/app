@@ -17,12 +17,12 @@ const TermsPage = () => {
 
       <main className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-2xl">
-          <h1 className="text-balance text-2xl font-semibold text-foreground">Vilkår</h1>
+          <h1 className="text-balance text-2xl font-medium text-foreground">Vilkår</h1>
           <p className="mt-2 text-sm text-foreground-muted">Sist oppdatert 11. juli 2026</p>
 
           <div className="mt-12 space-y-8 [&_h2]:text-balance [&_p]:text-pretty">
             <section className="space-y-4">
-              <h2 className="text-base font-semibold text-foreground">Om tjenesten</h2>
+              <h2 className="text-base font-medium text-foreground">Om tjenesten</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Raden er en tjeneste for påmelding og betaling til kurs, timer og arrangementer.
                 Tjenesten leveres av {COMPANY.legalName}, org.nr. {COMPANY.organizationNumber}.
@@ -34,7 +34,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-base font-semibold text-foreground">Påmelding og betaling</h2>
+              <h2 className="text-base font-medium text-foreground">Påmelding og betaling</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Før du betaler ser du kursnavn, pris og totalbeløp. Prisene er totalpriser –
                 det kommer ikke mva. i tillegg.
@@ -50,7 +50,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-base font-semibold text-foreground">Angrerett og avbestilling</h2>
+              <h2 className="text-base font-medium text-foreground">Angrerett og avbestilling</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Kurs, timer og arrangementer skjer på et fastsatt tidspunkt og er derfor unntatt
                 angrerett etter angrerettloven § 22 bokstav m. Påmeldingen er bindende når
@@ -70,7 +70,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-base font-semibold text-foreground">Klager</h2>
+              <h2 className="text-base font-medium text-foreground">Klager</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Er noe feil med en betaling eller påmelding, send en e-post til{' '}
                 <a href={`mailto:${COMPANY.email}`} className="text-primary underline underline-offset-2 hover:decoration-2">
@@ -82,7 +82,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-base font-semibold text-foreground">Ansvar</h2>
+              <h2 className="text-base font-medium text-foreground">Ansvar</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Studioet eller arrangøren er ansvarlig for gjennomføringen og innholdet i kurset.
                 Deltakelse skjer på eget ansvar.
@@ -90,7 +90,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-base font-semibold text-foreground">Personvern</h2>
+              <h2 className="text-base font-medium text-foreground">Personvern</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Hvordan vi behandler personopplysninger står i{' '}
                 <Link to="/personvern" className="text-primary underline underline-offset-2 hover:decoration-2">
@@ -101,7 +101,7 @@ const TermsPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-base font-semibold text-foreground">Endringer</h2>
+              <h2 className="text-base font-medium text-foreground">Endringer</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi kan oppdatere vilkårene ved behov. Vesentlige endringer publiseres her eller
                 varsles på e-post.

@@ -99,14 +99,14 @@ function GroupHeading({
   tomorrowKey: string;
 }) {
   if (groupKey === UNDATED_KEY) {
-    return <h3 className="text-base font-semibold text-foreground">Dato kommer</h3>;
+    return <h3 className="text-base font-medium text-foreground">Dato kommer</h3>;
   }
 
   const longDay = formatLongDay(toLocalDate(groupKey));
   const relative = groupKey === todayKey ? 'I dag' : groupKey === tomorrowKey ? 'I morgen' : null;
 
   return (
-    <h3 className="text-base font-semibold text-foreground">
+    <h3 className="text-base font-medium text-foreground">
       {relative ? (
         <>
           {relative}
