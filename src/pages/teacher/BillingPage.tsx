@@ -322,7 +322,7 @@ export function BillingPlanSections({
   )
 
   return (
-    <div className="plan-cards space-y-8">
+    <div className="plan-cards plan-cards--compact space-y-8">
       {isPastDue && onManage && (
         <Alert variant="info">
           <AlertTitle>Betalingen gikk ikke gjennom</AlertTitle>
