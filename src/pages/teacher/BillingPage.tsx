@@ -280,9 +280,17 @@ export function BillingPlanSections({
         <h3 className="plan-name">
           Pro {!isPro && <span className="plan-tag">Anbefalt</span>}
         </h3>
-        <p className="plan-price">
-          {yearlySelected && yearly ? yearly.price : formatKroner(499)}
-          <small>{yearlySelected ? ' / år eks. mva.' : ' / mnd eks. mva.'}</small>
+        <p className="plan-price plan-price-swap" data-yearly={yearlySelected ? '' : undefined}>
+          <span className="pp-layer pp-monthly" aria-hidden={yearlySelected}>
+            {formatKroner(499)}
+            <small> / mnd eks. mva.</small>
+          </span>
+          {yearly && (
+            <span className="pp-layer pp-yearly" aria-hidden={!yearlySelected}>
+              {yearly.price}
+              <small> / år eks. mva.</small>
+            </span>
+          )}
         </p>
         <p className="plan-desc">
           {yearlySelected

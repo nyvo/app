@@ -705,9 +705,15 @@ const LandingPage = () => {
               <h3 className="plan-name">
                 Pro <span className="plan-tag">Anbefalt</span>
               </h3>
-              <p className="plan-price">
-                {yearly ? formatKroner(4990) : formatKroner(499)}
-                <small>{yearly ? ' / år eks. mva.' : ' / mnd eks. mva.'}</small>
+              <p className="plan-price plan-price-swap" data-yearly={yearly ? '' : undefined}>
+                <span className="pp-layer pp-monthly" aria-hidden={yearly}>
+                  {formatKroner(499)}
+                  <small> / mnd eks. mva.</small>
+                </span>
+                <span className="pp-layer pp-yearly" aria-hidden={!yearly}>
+                  {formatKroner(4990)}
+                  <small> / år eks. mva.</small>
+                </span>
               </p>
               <p className="plan-desc">
                 {yearly
