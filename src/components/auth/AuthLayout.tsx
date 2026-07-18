@@ -27,7 +27,7 @@ export function AuthLayout({
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
         <Link to="/" className="flex select-none items-center">
           <span className="text-base font-medium text-foreground">
-            Openspot
+            Raden
           </span>
         </Link>
       </header>

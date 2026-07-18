@@ -20,7 +20,7 @@ const cronSecret = Deno.env.get('CRON_SECRET') || ''
 const alertEmail = Deno.env.get('OPS_ALERT_EMAIL') || ''
 const resendApiKey = Deno.env.get('RESEND_API_KEY') || ''
 const resendFrom = Deno.env.get('RESEND_FROM_EMAIL') || ''
-const resendFromName = Deno.env.get('RESEND_FROM_NAME') || 'Openspot'
+const resendFromName = Deno.env.get('RESEND_FROM_NAME') || 'Raden'
 
 Deno.serve(async (req: Request) => {
   const auth = req.headers.get('authorization') || ''
@@ -69,7 +69,7 @@ async function sendAlert(
 
   const lines = failing.map(([name, count]) => `- ${name}: ${count}`).join('\n')
   const text =
-    'Ops health check found money-state anomalies in the Openspot database:\n\n' +
+    'Ops health check found money-state anomalies in the Raden database:\n\n' +
     `${lines}\n\n` +
     `Full result: ${JSON.stringify(checks)}\n\n` +
     'Investigate in Supabase (signups / payment_attempts) and reconcile against ' +
@@ -85,7 +85,7 @@ async function sendAlert(
       body: JSON.stringify({
         from: `${resendFromName} <${resendFrom}>`,
         to: [alertEmail],
-        subject: `Openspot ops: ${failing.length} payment anomaly type(s) detected`,
+        subject: `Raden ops: ${failing.length} payment anomaly type(s) detected`,
         text,
       }),
     })

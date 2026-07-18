@@ -143,7 +143,7 @@ function ButtonsSection() {
               Deaktivert (destructive)
             </Button>
             <Button variant="link" asChild>
-              <a href="https://openspot.no" target="_blank" rel="noreferrer">
+              <a href="https://raden.no" target="_blank" rel="noreferrer">
                 Åpne i ny fane
                 <ExternalLink className="ml-1 inline size-3.5" />
               </a>
@@ -422,7 +422,7 @@ function PanelsSection() {
               <DrawerDescription>Kopier lenken eller del direkte til sosiale medier.</DrawerDescription>
             </DrawerHeader>
             <div className="px-6 py-4 text-sm text-foreground-muted">
-              https://openspot.no/yoga-med-anne/yin-yoga
+              https://raden.no/yoga-med-anne/yin-yoga
             </div>
             <DrawerFooter>
               <DrawerClose asChild>

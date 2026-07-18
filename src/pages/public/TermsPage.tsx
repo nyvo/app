@@ -11,7 +11,7 @@ const TermsPage = () => {
     <div className="min-h-dvh w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
         <Link to="/" className="flex select-none items-center">
-          <span className="text-base font-medium text-foreground">Openspot</span>
+          <span className="text-base font-medium text-foreground">Raden</span>
         </Link>
       </header>
 
@@ -24,12 +24,12 @@ const TermsPage = () => {
             <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Om tjenesten</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Openspot er en tjeneste for påmelding og betaling til kurs, timer og arrangementer.
+                Raden er en tjeneste for påmelding og betaling til kurs, timer og arrangementer.
                 Tjenesten leveres av {COMPANY.legalName}, org.nr. {COMPANY.organizationNumber}.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Selve kurset leveres av studioet eller arrangøren som står på kurssiden.
-                Openspot leverer den tekniske løsningen for påmelding, betaling og kvittering.
+                Raden leverer den tekniske løsningen for påmelding, betaling og kvittering.
               </p>
             </section>
 

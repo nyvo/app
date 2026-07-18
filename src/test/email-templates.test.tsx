@@ -139,7 +139,7 @@ describe('transactional email copy', () => {
     expect(text).not.toContain('hei hei');
   });
 
-  it('labels the shared contact address as Openspot support', async () => {
+  it('labels the shared contact address as Raden support', async () => {
     const text = await renderText(
       ClassReminder({
         buyerName: 'Marte Hansen',
@@ -149,7 +149,7 @@ describe('transactional email copy', () => {
       }),
     );
 
-    expect(text).toContain('trenger du hjelp med openspot? skriv til hei@framio.no');
+    expect(text).toContain('trenger du hjelp med raden? skriv til hei@framio.no');
   });
 });
 
@@ -161,6 +161,6 @@ describe('auth email reference templates', () => {
     const template = readFileSync(`${templateDirectory}/${file}`, 'utf8');
 
     expect(template).toContain('mailto:hei@framio.no');
-    expect(template).not.toContain('mailto:hei@openspot.no');
+    expect(template).not.toContain('mailto:hei@raden.no');
   });
 });

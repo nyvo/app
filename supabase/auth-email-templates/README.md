@@ -19,7 +19,7 @@ Placeholders are Go template syntax filled by GoTrue: `{{ .Token }}` (OTP code),
 All six sendable templates share one design — the same shell as the Resend
 product templates (`send-email/templates/_layout.tsx`): white card on the
 app's `neutral-2` canvas (#f9f9f9), pure-neutral ramp from `src/index.css`
-(#1f1f1f foreground, #717171 muted, #8e8e8e subtle), Openspot wordmark, 22px
+(#1f1f1f foreground, #717171 muted, #8e8e8e subtle), Raden wordmark, 22px
 heading, 32px monospace code block, centered support footer below the card.
 Reference copies reviewed 2026-07-16. Changes in this directory still need to
 be copied to the live Auth config separately.
@@ -30,7 +30,7 @@ be copied to the live Auth config separately.
 | `magic-link.html` | `…_subjects_magic_link` / `…_templates_magic_link_content` | `{{ .Token }} er innloggingskoden din` |
 | `recovery.html` | `…_subjects_recovery` / `…_templates_recovery_content` | `{{ .Token }} er tilbakestillingskoden din` |
 | `email-change.html` | `…_subjects_email_change` / `…_templates_email_change_content` | `Bekreft ny e-postadresse` |
-| `invite.html` | `…_subjects_invite` / `…_templates_invite_content` | `Du er invitert til Openspot` |
+| `invite.html` | `…_subjects_invite` / `…_templates_invite_content` | `Du er invitert til Raden` |
 | `reauthentication.html` | `…_subjects_reauthentication` / `…_templates_reauthentication_content` | `{{ .Token }} er koden din` |
 
 The seven security-notification templates (password/email/phone changed, MFA,

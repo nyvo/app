@@ -57,7 +57,7 @@ describe('TeacherSidebar desktop collapse', () => {
     const collapsedToggle = within(header!).getByRole('button', { name: 'Vis sidemeny' });
     expect(collapsedToggle).toBe(toggle);
     expect(collapsedToggle.querySelector('.lucide-panel-left')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Openspot' })).toHaveClass(
+    expect(screen.getByRole('link', { name: 'Raden' })).toHaveClass(
       'group-data-[collapsible=icon]:hidden',
     );
     const overview = screen.getByRole('link', { name: 'Oversikt' });

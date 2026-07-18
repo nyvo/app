@@ -76,11 +76,11 @@ export const EmailLayout = ({ preview, children }: EmailLayoutProps) => (
     <Body style={main}>
       <Container style={container}>
         <Section style={card}>
-          <Text style={brand}>Openspot</Text>
+          <Text style={brand}>Raden</Text>
           {children}
         </Section>
         <Text style={footer}>
-          Trenger du hjelp med Openspot? Skriv til{' '}
+          Trenger du hjelp med Raden? Skriv til{' '}
           <Link href="mailto:hei@framio.no" style={footerLink}>
             hei@framio.no
           </Link>

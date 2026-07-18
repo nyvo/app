@@ -52,8 +52,8 @@ const LandingPage = () => {
         aria-label="Hovednavigasjon"
       >
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <Link to="/" className="flex items-center" aria-label="Openspot – til forsiden">
-            <span className="text-base font-medium text-foreground">Openspot</span>
+          <Link to="/" className="flex items-center" aria-label="Raden – til forsiden">
+            <span className="text-base font-medium text-foreground">Raden</span>
           </Link>
           <div className="flex items-center gap-6">
             <a
@@ -101,7 +101,7 @@ const LandingPage = () => {
                   transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
                   className="mt-4 text-pretty text-base text-foreground-muted"
                 >
-                  Openspot samler kurs, påmeldinger, deltakere og betaling.
+                  Raden samler kurs, påmeldinger, deltakere og betaling.
                 </motion.p>
               </div>
               <motion.div
@@ -139,7 +139,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
                 className="mt-4 text-pretty text-base text-foreground-muted"
               >
-                Openspot samler kurs, påmeldinger, deltakere og betaling.
+                Raden samler kurs, påmeldinger, deltakere og betaling.
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -162,7 +162,7 @@ const LandingPage = () => {
             <ProductFrame>
               <img
                 src="/landing-dashboard.webp"
-                alt="Openspot – oversikt over inntekter og kommende kurs"
+                alt="Raden – oversikt over inntekter og kommende kurs"
                 width={2400}
                 height={1660}
                 fetchPriority="high"
@@ -208,7 +208,7 @@ const LandingPage = () => {
               <ProductFrame tight>
                 <img
                   src="/landing-storefront.webp"
-                  alt="Offentlig studioside i Openspot – Flyt Studio med timeplan og påmelding"
+                  alt="Offentlig studioside i Raden – Flyt Studio med timeplan og påmelding"
                   width={1600}
                   height={1356}
                   loading="lazy"
@@ -371,7 +371,7 @@ const LandingPage = () => {
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-16 grid grid-cols-1 gap-12 md:grid-cols-12">
             <div className="md:col-span-5">
-              <span className="text-xl font-medium text-foreground">Openspot</span>
+              <span className="text-xl font-medium text-foreground">Raden</span>
               <p className="mt-6 max-w-sm text-pretty text-base leading-relaxed text-foreground-muted">
                 Påmelding, betaling og kursoversikt for yogastudioer.
                 <br />
@@ -429,7 +429,7 @@ const LandingPage = () => {
 
           <div className="flex flex-col items-center justify-between gap-6 border-t border-border pt-8 md:flex-row">
             <p className="text-base text-foreground-muted">
-              © {new Date().getFullYear()} Openspot. Laget av {COMPANY.legalName}.
+              © {new Date().getFullYear()} Raden. Laget av {COMPANY.legalName}.
             </p>
           </div>
         </div>

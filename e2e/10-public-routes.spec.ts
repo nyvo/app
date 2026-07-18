@@ -63,7 +63,7 @@ test.describe('D1 public routes render', () => {
 
   test('D1 about page renders', async ({ page }) => {
     await page.goto('/om-oss');
-    await expect(page.getByRole('heading', { name: 'Om Openspot' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Om Raden' })).toBeVisible();
   });
 
   test('D1 garbage path renders a clean 404', async ({ page }) => {
