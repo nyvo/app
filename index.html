@@ -35,6 +35,7 @@
     </script>
     <style>
       .static-homepage {
+        display: none;
         box-sizing: border-box;
         min-height: 100vh;
         margin: 0;
@@ -53,6 +54,9 @@
       .static-homepage__links { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2rem; }
       .static-homepage__links a { color: #075985; font-weight: 600; text-underline-offset: 0.2em; }
     </style>
+    <noscript>
+      <style>.static-homepage { display: block; }</style>
+    </noscript>
   </head>
   <body>
     <!-- React replaces this content after startup. Until then, it gives OAuth
