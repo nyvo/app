@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { formatKroner } from '@/lib/utils';
 import { COMPANY } from '@/lib/company';
@@ -70,8 +71,31 @@ function SignupCta({ className, label }: { className: string; label: string }) {
 
 const LandingPage = () => {
   useDocumentTitle();
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Scroll reveals: flip data-reveal → data-revealed once per element.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.setAttribute('data-revealed', '');
+            observer.unobserve(entry.target);
+          }
+        }
+      },
+      { rootMargin: '0px 0px -80px 0px' }
+    );
+    for (const el of root.querySelectorAll('[data-reveal]')) {
+      observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="lnd">
+    <div className="lnd" ref={rootRef}>
       <header className="nav">
         <div className="container nav-inner">
           <a className="nav-logo" href="#" aria-label="Raden">
@@ -184,10 +208,13 @@ const LandingPage = () => {
                       <line x1="0" y1="60" x2="600" y2="60" stroke="oklch(0.887 0.005 250)" strokeDasharray="3 5" strokeWidth="1" />
                       <line x1="0" y1="90" x2="600" y2="90" stroke="oklch(0.887 0.005 250)" strokeDasharray="3 5" strokeWidth="1" />
                       <path
+                        className="chart-area"
                         d="M0,95 C50,70 80,55 130,72 C180,90 220,100 270,78 C320,55 350,30 400,42 C450,55 480,48 530,38 C560,32 580,36 600,40 L600,120 L0,120 Z"
                         fill="url(#lnd-area)"
                       />
                       <path
+                        className="chart-line"
+                        pathLength={1}
                         d="M0,95 C50,70 80,55 130,72 C180,90 220,100 270,78 C320,55 350,30 400,42 C450,55 480,48 530,38 C560,32 580,36 600,40"
                         fill="none"
                         stroke="oklch(0.54 0.15 245)"
@@ -272,6 +299,7 @@ const LandingPage = () => {
             </div>
             <div
               className="frame"
+              data-reveal=""
               role="img"
               aria-label="Forhåndsvisning av studiosiden til Flyt Studio med timeplan og påmelding"
             >
@@ -346,11 +374,11 @@ const LandingPage = () => {
               <div>
                 <span className="step-num">1</span>
               </div>
-              <div className="step-text">
+              <div className="step-text" data-reveal="">
                 <h3>Påmelding</h3>
                 <p>Deltakerne melder seg på selv, og deltakerlisten oppdateres automatisk.</p>
               </div>
-              <div className="step-visual grey" aria-hidden="true">
+              <div className="step-visual grey" data-reveal="" aria-hidden="true">
                 <div className="mini mini-list">
                   <div className="p-row">
                     <AvatarGlyph />
@@ -380,11 +408,11 @@ const LandingPage = () => {
               <div>
                 <span className="step-num">2</span>
               </div>
-              <div className="step-text">
+              <div className="step-text" data-reveal="">
                 <h3>Betaling</h3>
                 <p>Deltakerne betaler ved påmelding. Du får utbetalingen til bankkontoen din.</p>
               </div>
-              <div className="step-visual grey" aria-hidden="true">
+              <div className="step-visual grey" data-reveal="" aria-hidden="true">
                 <div className="mini mini-pay">
                   <div className="pay-top">
                     <div>
@@ -403,11 +431,11 @@ const LandingPage = () => {
               <div>
                 <span className="step-num">3</span>
               </div>
-              <div className="step-text">
+              <div className="step-text" data-reveal="">
                 <h3>Oversikt</h3>
                 <p>Se inntekter, påmeldinger og deltakere for hvert kurs.</p>
               </div>
-              <div className="step-visual grey" aria-hidden="true">
+              <div className="step-visual grey" data-reveal="" aria-hidden="true">
                 <div className="mini mini-stats">
                   <div className="stat-head">
                     <b>Yoga for nybegynnere</b>
@@ -430,7 +458,7 @@ const LandingPage = () => {
               </div>
             </div>
           </div>
-          <div className="settings-card">
+          <div className="settings-card" data-reveal="">
             <div className="settings-text">
               <h3>Drop-in og påmelding etter oppstart</h3>
               <ul className="settings-list">
@@ -480,7 +508,7 @@ const LandingPage = () => {
             <p className="section-sub">Start gratis – bytt til Pro når salget vokser.</p>
           </div>
           <div className="pricing-grid">
-            <article className="plan plan-white">
+            <article className="plan plan-white" data-reveal="">
               <h3 className="plan-name">Start</h3>
               <p className="plan-price">Gratis</p>
               <p className="plan-desc">{`Du betaler 5${NBSP}% plattformgebyr per salg.`}</p>
@@ -500,7 +528,7 @@ const LandingPage = () => {
               </ul>
               <SignupCta className="btn btn-chrome btn-full" label="Kom i gang" />
             </article>
-            <article className="plan plan-featured">
+            <article className="plan plan-featured" data-reveal="">
               <h3 className="plan-name">
                 Pro <span className="plan-tag">Anbefalt</span>
               </h3>
@@ -533,7 +561,7 @@ const LandingPage = () => {
 
         {/* Final CTA band */}
         <section className="section container" aria-label="Kom i gang">
-          <div className="cta-panel">
+          <div className="cta-panel" data-reveal="">
             <h2>Start med neste kurs.</h2>
             <p>Opprett konto, legg inn kurset og del studiosiden din.</p>
             <div className="hero-ctas">

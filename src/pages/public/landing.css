@@ -34,6 +34,8 @@
   --r-hero: 32px;
   --r-card: 28px;
   --r-pill: 999px;
+  /* mirrors the app's shared motion vocabulary (src/index.css --ease-out) */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --sh-card: 0 12px 36px oklch(0.3 0.02 250 / 0.08);
   --sh-elevated: 0 20px 60px oklch(0.3 0.02 250 / 0.14);
   --section: 112px;
@@ -69,7 +71,9 @@
   text-decoration: none; cursor: pointer; white-space: nowrap;
   transition: translate 180ms ease, scale 180ms ease, background-color 180ms ease, color 180ms ease, opacity 180ms ease;
 }
-.lnd .btn:hover { translate: 0 -2px; }
+@media (hover: hover) and (pointer: fine) {
+  .lnd .btn:hover { translate: 0 -2px; }
+}
 .lnd .btn:active { translate: 0 0; scale: 0.98; transition-duration: 120ms; }
 .lnd .btn-chrome { background: var(--chrome); color: var(--chrome-fg); }
 .lnd .btn-chrome:hover { background: var(--chrome-hover); }
@@ -293,8 +297,22 @@
 .lnd .set-price small { display: inline; }
 .lnd .field { display: inline-flex; align-items: baseline; gap: 3px; border: 1px solid var(--border); border-radius: 7px; padding: 3px 8px; font-size: 10px; font-variant-numeric: tabular-nums; }
 .lnd .field em { font-style: normal; color: var(--muted-text); font-size: 9px; }
-.lnd .switch { flex: none; width: 28px; height: 16px; border-radius: var(--r-pill); background: var(--primary); position: relative; margin-top: 1px; }
-.lnd .switch::after { content: ""; position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #FFFFFF; }
+/* Switches rest "off" and flick on once the settings card has revealed —
+   a state-indication beat that shows the mock rows are toggles. */
+.lnd .switch {
+  flex: none; width: 28px; height: 16px; border-radius: var(--r-pill);
+  background: var(--border); position: relative; margin-top: 1px;
+  transition: background-color 240ms var(--ease-out) 600ms;
+}
+.lnd .switch::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px;
+  border-radius: 50%; background: #FFFFFF;
+  transition: translate 240ms var(--ease-out) 600ms;
+}
+.lnd .set-row + .set-row .switch,
+.lnd .set-row + .set-row .switch::after { transition-delay: 680ms; }
+.lnd [data-revealed] .switch { background: var(--primary); }
+.lnd [data-revealed] .switch::after { translate: 12px 0; }
 
 /* 4 · deltakerliste */
 .lnd .mini-list { padding: 3px 13px; }
@@ -378,9 +396,48 @@
 .lnd .footer-brand p { margin-top: 12px; font-size: 14px; max-width: 30ch; color: var(--muted-text); }
 .lnd .footer h3 { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted-text); }
 .lnd .footer ul { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.lnd .footer ul a { font-size: 14px; text-decoration: none; color: var(--muted-text); }
+.lnd .footer ul a { font-size: 14px; text-decoration: none; color: var(--muted-text); transition: color 150ms ease; }
 .lnd .footer ul a:hover { color: var(--foreground); }
 .lnd .footer-legal { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border-subtle); font-size: 12.5px; color: var(--muted-text); }
+
+/* ---- Motion ----
+   Entrance + scroll motion only; transform/opacity throughout (the chart
+   line-draw is the one stroke-dashoffset exception — it can't be done with
+   transforms). Reveals are driven by one IntersectionObserver in
+   LandingPage.tsx that flips `data-reveal` → `data-revealed` once. */
+@keyframes lnd-rise {
+  from { opacity: 0; translate: 0 12px; }
+}
+@keyframes lnd-rise-lg {
+  from { opacity: 0; translate: 0 16px; }
+}
+@keyframes lnd-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes lnd-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Hero load stagger: eyebrow → h1 → sub → CTAs → dashboard mock */
+.lnd .hero-panel .eyebrow { animation: lnd-rise 500ms var(--ease-out) backwards; }
+.lnd .hero-panel h1 { animation: lnd-rise 500ms var(--ease-out) 60ms backwards; }
+.lnd .hero-panel .hero-sub { animation: lnd-rise 500ms var(--ease-out) 120ms backwards; }
+.lnd .hero-panel .hero-ctas { animation: lnd-rise 500ms var(--ease-out) 180ms backwards; }
+.lnd .hero-panel .shot { animation: lnd-rise-lg 700ms var(--ease-out) 240ms backwards; }
+
+/* Chart in the hero mock draws itself once the shot has landed */
+.lnd .chart-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lnd-draw 900ms var(--ease-out) 600ms forwards; }
+.lnd .chart-area { opacity: 0; animation: lnd-fade 500ms var(--ease-out) 1100ms forwards; }
+
+/* Scroll reveals */
+.lnd [data-reveal] {
+  opacity: 0; translate: 0 16px;
+  transition: opacity 550ms var(--ease-out), translate 550ms var(--ease-out);
+}
+.lnd [data-reveal][data-revealed] { opacity: 1; translate: 0 0; }
+.lnd .step-visual[data-reveal] { transition-delay: 60ms; }
+.lnd .pricing-grid .plan + .plan[data-reveal] { transition-delay: 70ms; }
 
 /* ---- Responsive ---- */
 @media (max-width: 1024px) {
@@ -415,4 +472,16 @@
   .lnd .btn { transition: background-color 180ms ease, color 180ms ease, opacity 180ms ease; }
   .lnd .btn:hover { translate: none; }
   .lnd .btn:active { scale: none; }
+  /* Motion prefs: keep the opacity fades (they aid comprehension), drop all
+     movement, and render the chart + switches in their settled state. */
+  .lnd .hero-panel .eyebrow,
+  .lnd .hero-panel h1,
+  .lnd .hero-panel .hero-sub,
+  .lnd .hero-panel .hero-ctas,
+  .lnd .hero-panel .shot { animation: lnd-fade 200ms ease both; }
+  .lnd .chart-line { animation: none; stroke-dashoffset: 0; }
+  .lnd .chart-area { animation: none; opacity: 1; }
+  .lnd [data-reveal] { translate: none; transition: opacity 200ms ease; }
+  .lnd .switch { background: var(--primary); transition: none; }
+  .lnd .switch::after { translate: 12px 0; transition: none; }
 }
