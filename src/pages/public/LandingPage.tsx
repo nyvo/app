@@ -16,6 +16,8 @@ const PRELAUNCH = import.meta.env.VITE_PRELAUNCH === 'true';
 
 const NBSP = ' ';
 
+const PROOF_ITEMS = ['Gratis å starte', 'Automatiske utbetalinger', 'Ingen bindingstid'];
+
 /** R-monogram, white glyph on the chrome logo tile. */
 function RadenMark() {
   return (
@@ -402,12 +404,20 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* Proof strip */}
+        {/* Proof strip — static centered row on desktop; on narrow screens the
+            three items roll as a marquee band (copies 2–3 exist only for the
+            seamless loop and are hidden from assistive tech). */}
         <section className="proof" aria-label="Nøkkelpunkter">
-          <div className="container proof-inner">
-            <span>Gratis å starte</span>
-            <span>Automatiske utbetalinger</span>
-            <span>Ingen bindingstid</span>
+          <div className="proof-band">
+            <div className="proof-track">
+              {[0, 1, 2].map((copy) => (
+                <div className="proof-group" key={copy} aria-hidden={copy > 0 || undefined}>
+                  {PROOF_ITEMS.map((item) => (
+                    <span key={item}>{item}</span>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
