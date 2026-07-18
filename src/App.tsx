@@ -71,6 +71,7 @@ const DirtyBarPreview = lazy(() => import('./pages/dev/DirtyBarPreview'));
 const DashboardPreview = lazy(() => import('./pages/dev/DashboardPreview'));
 const LandingShotPreview = lazy(() => import('./pages/dev/LandingShotPreview'));
 const LandingShotStorefrontPreview = lazy(() => import('./pages/dev/LandingShotStorefrontPreview'));
+const OgCardPreview = lazy(() => import('./pages/dev/OgCardPreview'));
 const IncomeChartPreview = lazy(() => import('./pages/dev/IncomeChartPreview'));
 const CoursesListPreview = lazy(() => import('./pages/dev/CoursesListPreview'));
 const CourseBuilderLivePreview = lazy(() => import('./pages/dev/CourseBuilderLivePreview'));
@@ -237,6 +238,7 @@ const router = createBrowserRouter(
             <Route path="/dev/dashboard-preview" element={<DashboardPreview />} />
             <Route path="/dev/landing-shot" element={<LandingShotPreview />} />
             <Route path="/dev/landing-shot-storefront" element={<LandingShotStorefrontPreview />} />
+            <Route path="/dev/og-card" element={<OgCardPreview />} />
             <Route path="/dev/income-chart-preview" element={<IncomeChartPreview />} />
             <Route path="/dev/courses-list-preview" element={<CoursesListPreview />} />
             <Route path="/dev/course-builder-live" element={<CourseBuilderLivePreview />} />
