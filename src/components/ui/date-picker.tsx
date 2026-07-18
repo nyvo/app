@@ -67,7 +67,7 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(({
           {...buttonProps}
         >
           {Icon && (
-            <Icon className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
+            <Icon className="size-4 shrink-0 text-foreground-subtle" />
           )}
           <span className={cn('flex-1 text-left', !value && 'text-foreground-muted')}>
             {value ? formatDateNorwegian(value) : placeholder}

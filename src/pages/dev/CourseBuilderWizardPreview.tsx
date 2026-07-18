@@ -116,7 +116,7 @@ export default function CourseBuilderWizardPreview() {
                           }}
                         >
                           <SelectTrigger className="w-full gap-2.5" aria-label="Starttid">
-                            <Clock className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
+                            <Clock className="size-4 shrink-0 text-foreground-subtle" />
                             <SelectValue placeholder="Start" />
                           </SelectTrigger>
                           <SelectContent className="max-h-60">
@@ -132,7 +132,7 @@ export default function CourseBuilderWizardPreview() {
                         </span>
                         <Select value={endTime} onValueChange={setEndTime}>
                           <SelectTrigger className="w-full gap-2.5" aria-label="Sluttid">
-                            <Clock className="size-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
+                            <Clock className="size-4 shrink-0 text-foreground-subtle" />
                             <SelectValue placeholder="Slutt" />
                           </SelectTrigger>
                           <SelectContent className="max-h-60">
