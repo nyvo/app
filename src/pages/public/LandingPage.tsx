@@ -1,532 +1,598 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { HugeiconsIcon } from '@hugeicons/react';
-import {
-  ChartBarIncreasingIcon,
-  CreditCardIcon,
-  UserMultiple02Icon,
-} from '@hugeicons/core-free-icons';
-import { Check } from '@/lib/icons';
-import { Button } from '@/components/ui/button';
-import { Grain } from '@/components/public/Grain';
 import { formatKroner } from '@/lib/utils';
 import { COMPANY } from '@/lib/company';
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import {
-  scrollVariants,
-  scrollStaggerVariants,
-  scrollTransition,
-} from '@/lib/motion';
+import './landing.css';
 
 const PRELAUNCH = import.meta.env.VITE_PRELAUNCH === 'true';
 
 // =============================================================================
-// ProductFrame — the "card within a card" pattern. A subtle azure panel
-// holds a screenshot floating inside it. Textured via grain (not gradient).
+// Exact port of the ratified hybrid marketing page (openspot-marketing skill,
+// artifact 9da916b0). Structure, copy and mocks are locked by that skill —
+// change them there first, then mirror here. Styles live in ./landing.css
+// under the `.lnd` scope. "Raden" is the brand chosen for this page.
 // =============================================================================
-function ProductFrame({
-  children,
-  tight = false,
-}: {
-  children: React.ReactNode;
-  tight?: boolean;
-}) {
-  const padding = tight ? 'p-1.5 sm:p-3 md:p-4' : 'p-3 sm:p-6 md:p-8';
+
+const NBSP = ' ';
+
+/** R-monogram, white glyph on the chrome logo tile. */
+function RadenMark() {
   return (
-    <div className={`relative isolate overflow-hidden rounded-2xl bg-primary-subtle ${padding}`}>
-      <Grain opacity={0.6} baseFrequency={0.7} />
-      <div className="relative overflow-hidden rounded-lg border border-card bg-background shadow-soft">
-        {children}
-      </div>
-    </div>
+    <svg viewBox="549 547 950 950">
+      <path
+        className="lp-m"
+        d="M869.069 1349.05C868.739 1365.39 866.989 1378.56 861.024 1393.9C849.981 1422.69 827.683 1445.73 799.275 1457.71C771.234 1469.51 739.654 1469.68 711.488 1458.18C682.647 1446.35 659.678 1423.57 647.622 1394.82C635.181 1364.82 638.961 1309.41 638.986 1275.38L639.035 1120.63L639.018 981.163C638.992 957.041 637.929 929.434 639.413 905.733C642.758 852.347 692.445 804.244 745.593 801.392C770.093 800.077 787.437 803.688 810.59 794.144C838.669 782.546 858.961 757.515 864.501 727.645C869.621 700.061 864.199 693.621 877.548 662.477C892.314 628.936 919.9 602.707 954.142 589.65C966.729 584.693 979.963 581.572 993.438 580.384C1010.48 578.882 1035.82 579.533 1053.32 579.507L1152 579.375L1233.08 579.549C1248.65 579.562 1270.09 579.032 1285.11 580.585C1299.7 582.187 1313.95 586.077 1327.33 592.112C1361.44 607.395 1388.01 635.692 1401.12 670.69C1411.05 697.083 1409.59 728.96 1409.59 756.857L1409.56 832.245L1409.53 898.934C1409.5 929.156 1411.15 951.812 1398.34 980.045C1381.92 1017.2 1348.34 1043.96 1308.45 1051.66C1281.46 1056.87 1253.32 1053.94 1239.98 1085.74C1233.96 1100.01 1234.45 1116.2 1241.33 1130.08C1247.95 1143.46 1265.14 1158.89 1276.05 1169.73L1347.96 1240.98C1359.12 1252.06 1378.69 1270.55 1387.87 1282.44C1393.73 1290.07 1398.54 1298.45 1402.18 1307.36C1413.1 1334.15 1411.87 1366.26 1400.53 1392.71C1387.9 1422.45 1363.76 1445.8 1333.61 1457.42C1324.78 1460.88 1315.55 1463.2 1306.14 1464.31C1287.63 1466.34 1249.76 1465.38 1230.21 1465.29C1209.67 1465.19 1173.04 1466.41 1154.66 1464.07C1144.12 1462.73 1133.84 1459.8 1124.18 1455.37C1113.61 1450.58 1103.76 1444.33 1094.93 1436.81C1081.61 1425.44 1063.33 1406.14 1050.56 1393.37L980.204 1323.57L929.383 1273.06C901.61 1245.97 885.791 1235.3 871.527 1198.14C867.519 1205.01 872.151 1328.98 869.069 1349.05Z"
+      />
+      <path
+        className="lp-c"
+        d="M869.105 1031.7L868.962 957.61C868.94 937.647 867.536 910.094 872.152 891.353C876.489 873.593 885.559 857.341 898.398 844.325C933.095 809.631 971.98 814.389 1016.23 814.617L1085.09 814.688C1159.59 815.239 1206.88 861.718 1204.09 936.59C1202.92 967.872 1193.8 993.164 1170.47 1015.46C1137.74 1045.5 1110.65 1047.21 1069.67 1047.08L1013.42 1046.89C1002.02 1046.86 990.628 1046.7 979.244 1047.18C933.894 1049.1 888.885 1080.72 873.997 1124.16L870.923 1133.2L870.134 1136.25L869.307 1136.1C868.366 1124.45 868.892 1105.42 868.883 1093.28C868.868 1073.21 868.461 1051.68 869.105 1031.7Z"
+      />
+    </svg>
+  );
+}
+
+function CheckGlyph() {
+  return (
+    <span className="check">
+      <svg viewBox="0 0 12 12" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 6.5l2.6 2.6L10 3.5" />
+      </svg>
+    </span>
+  );
+}
+
+function AvatarGlyph() {
+  return (
+    <span className="row-ava">
+      <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round">
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M5 19c.8-3.4 3.6-5 7-5s6.2 1.6 7 5" />
+      </svg>
+    </span>
+  );
+}
+
+/** Signup CTA — mailto during prelaunch, auth link when open. */
+function SignupCta({ className, label }: { className: string; label: string }) {
+  if (PRELAUNCH) {
+    return (
+      <a className={className} href={`mailto:${COMPANY.email}`}>
+        Ta kontakt
+      </a>
+    );
+  }
+  return (
+    <Link className={className} to="/auth?intent=seller">
+      {label}
+    </Link>
   );
 }
 
 const LandingPage = () => {
-  useDocumentTitle()
+  useDocumentTitle();
   return (
-    <div className="overflow-x-hidden bg-background text-foreground antialiased">
-      {/* Nav */}
-      <nav
-        className="absolute top-0 z-50 w-full border-none bg-transparent"
-        aria-label="Hovednavigasjon"
-      >
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <Link to="/" className="flex items-center" aria-label="Raden – til forsiden">
-            <span className="text-base font-medium text-foreground">Raden</span>
-          </Link>
-          <div className="flex items-center gap-6">
-            <a
-              href="#pricing"
-              className="text-sm font-medium text-foreground-muted transition-colors hover:text-foreground"
-            >
+    <div className="lnd">
+      <header className="nav">
+        <div className="container nav-inner">
+          <a className="nav-logo" href="#" aria-label="Raden">
+            <span className="logo-tile" aria-hidden="true">
+              <RadenMark />
+            </span>
+          </a>
+          <nav aria-label="Hovednavigasjon" className="nav-right">
+            <a className="nav-link" href="#pricing">
               Pris
             </a>
             {!PRELAUNCH && (
-              <Button asChild variant="secondary">
-                <Link to="/auth">Logg inn</Link>
-              </Button>
+              <Link className="btn btn-secondary" to="/auth">
+                Logg inn
+              </Link>
             )}
-          </div>
+          </nav>
         </div>
-      </nav>
+      </header>
 
-      {/* ============================================================ */}
-      {/* 1. HERO */}
-      {/* ============================================================ */}
-      <section className="bg-background pt-32 pb-16 md:pt-40 md:pb-24">
-        <div className="mx-auto w-full max-w-6xl px-6">
-          {PRELAUNCH ? (
-            <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-12">
+      <main>
+        {/* Hero — azure gradient panel, dashboard mock rising from the bottom */}
+        <section className="hero container" aria-label="Introduksjon">
+          <div className="hero-panel">
+            <span className="eyebrow">Bygget i Norge</span>
+            <h1>Opprett kurs. Ta imot påmeldinger. Få{NBSP}betalt.</h1>
+            <p className="hero-sub">
+              Du legger inn kurset og deler studiosiden. Deltakerne melder seg på og betaler selv.
+            </p>
+            <div className="hero-ctas">
+              <SignupCta className="btn btn-white" label="Opprett konto" />
+              <a className="btn btn-glass-azure" href="#platforms">
+                Se hvordan det fungerer
+              </a>
+            </div>
+
+            <div
+              className="shot"
+              role="img"
+              aria-label="Forenklet forhåndsvisning av oversikten i Raden med inntekt, neste kurs og siste påmeldinger"
+            >
+              <div className="shot-bar">
+                <span className="shot-dot" />
+                <span className="shot-dot" />
+                <span className="shot-dot" />
+                <span className="shot-url">raden.no</span>
+              </div>
+              <div className="shot-body">
+                <aside className="shot-side">
+                  <span className="shot-logo">
+                    <span className="logo-tile" aria-hidden="true">
+                      <RadenMark />
+                    </span>
+                  </span>
+                  <div className="shot-nav">
+                    <span className="active">
+                      <i />
+                      Oversikt
+                    </span>
+                    <span>
+                      <i />
+                      Timeplan
+                    </span>
+                    <span>
+                      <i />
+                      Kurs
+                    </span>
+                    <span>
+                      <i />
+                      Studio
+                    </span>
+                    <span>
+                      <i />
+                      Utbetalingskonto
+                    </span>
+                  </div>
+                  <div className="shot-studio">
+                    <b>Flyt Studio</b>
+                    <small>Pro</small>
+                  </div>
+                </aside>
+                <div className="shot-main">
+                  <div className="shot-head">
+                    <h4>Oversikt</h4>
+                    <span className="shot-bell" />
+                  </div>
+                  <div className="shot-card">
+                    <div className="inntekt-top">
+                      <div>
+                        <span className="inntekt-label">Inntekt</span>
+                        <div className="inntekt-row">
+                          <span className="inntekt-sum">{formatKroner(41745)}</span>
+                          <span className="chip-up">{`+19${NBSP}%`}</span>
+                        </div>
+                      </div>
+                      <span className="seg">
+                        <span>Uke</span>
+                        <span className="on">Måned</span>
+                        <span>År</span>
+                      </span>
+                    </div>
+                    <svg className="chart" viewBox="0 0 600 120" preserveAspectRatio="none" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="lnd-area" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="oklch(0.54 0.15 245)" stopOpacity="0.18" />
+                          <stop offset="100%" stopColor="oklch(0.54 0.15 245)" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      <line x1="0" y1="30" x2="600" y2="30" stroke="oklch(0.887 0.005 250)" strokeDasharray="3 5" strokeWidth="1" />
+                      <line x1="0" y1="60" x2="600" y2="60" stroke="oklch(0.887 0.005 250)" strokeDasharray="3 5" strokeWidth="1" />
+                      <line x1="0" y1="90" x2="600" y2="90" stroke="oklch(0.887 0.005 250)" strokeDasharray="3 5" strokeWidth="1" />
+                      <path
+                        d="M0,95 C50,70 80,55 130,72 C180,90 220,100 270,78 C320,55 350,30 400,42 C450,55 480,48 530,38 C560,32 580,36 600,40 L600,120 L0,120 Z"
+                        fill="url(#lnd-area)"
+                      />
+                      <path
+                        d="M0,95 C50,70 80,55 130,72 C180,90 220,100 270,78 C320,55 350,30 400,42 C450,55 480,48 530,38 C560,32 580,36 600,40"
+                        fill="none"
+                        stroke="oklch(0.54 0.15 245)"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                    <div className="chart-x">
+                      <span>15. jun</span>
+                      <span>15. jul</span>
+                    </div>
+                  </div>
+                  <div className="shot-cols">
+                    <div className="shot-col">
+                      <h5>Neste kurs</h5>
+                      <div className="row">
+                        <span className="row-date">
+                          <small>jul</small>
+                          <b>15</b>
+                        </span>
+                        <span className="row-txt">
+                          <b>Morning Flow</b>
+                          <small>I dag kl. 09:00</small>
+                        </span>
+                        <span className="row-meta">{`8${NBSP}/${NBSP}10`}</span>
+                      </div>
+                      <div className="row">
+                        <span className="row-date">
+                          <small>jul</small>
+                          <b>16</b>
+                        </span>
+                        <span className="row-txt">
+                          <b>Vinyasa Flow</b>
+                          <small>I morgen kl. 18:00</small>
+                        </span>
+                        <span className="row-meta">{`12${NBSP}/${NBSP}14`}</span>
+                      </div>
+                    </div>
+                    <div className="shot-col">
+                      <h5>Siste påmeldinger</h5>
+                      <div className="row">
+                        <AvatarGlyph />
+                        <span className="row-txt">
+                          <b>Olav Hansen</b>
+                          <small>Morning Flow</small>
+                        </span>
+                        <span className="row-meta">2 timer siden</span>
+                      </div>
+                      <div className="row">
+                        <AvatarGlyph />
+                        <span className="row-txt">
+                          <b>Mari Eriksen</b>
+                          <small>Vinyasa Flow</small>
+                        </span>
+                        <span className="row-meta">5 timer siden</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Proof strip */}
+        <section className="proof" aria-label="Nøkkelpunkter">
+          <div className="container proof-inner">
+            <span>Gratis å starte</span>
+            <span>Automatiske utbetalinger</span>
+            <span>Ingen bindingstid</span>
+          </div>
+        </section>
+
+        {/* Storefront showcase */}
+        <section id="platforms" className="section container" aria-label="Studiosiden">
+          <div className="split">
+            <div className="section-head">
+              <h2>En side for kursene dine.</h2>
+              <p className="section-sub">
+                Timeplan, påmelding og betaling på én offentlig side. Deltakerne ser ledige plasser og melder seg på
+                direkte.
+              </p>
+            </div>
+            <div
+              className="frame"
+              role="img"
+              aria-label="Forhåndsvisning av studiosiden til Flyt Studio med timeplan og påmelding"
+            >
+              <div className="sf">
+                <div className="sf-head">
+                  <span className="sf-ava">≈</span>
+                  <div>
+                    <b>Flyt Studio</b>
+                    <small>Grünerløkka · Markveien 12, 0554 Oslo</small>
+                  </div>
+                  <span className="sf-filter">Alle kurstyper ▾</span>
+                </div>
+                <div className="sf-body">
+                  <p className="sf-date">Tirsdag 11. august</p>
+                  <div className="sf-row">
+                    <div className="sf-time">
+                      <b>18:00</b>
+                      <small>90 min</small>
+                    </div>
+                    <div className="sf-txt">
+                      <b>Yoga for nybegynnere</b>
+                      <small>8 økter · Ingrid Larsen</small>
+                    </div>
+                    <div className="sf-cta">
+                      <small>fra {formatKroner(250)}</small>
+                      <span className="sf-pill">Reserver</span>
+                    </div>
+                  </div>
+                  <div className="sf-row">
+                    <div className="sf-time">
+                      <b>19:45</b>
+                      <small>60 min</small>
+                    </div>
+                    <div className="sf-txt">
+                      <b>Yin Yoga</b>
+                      <small>6 økter · Kine Berg</small>
+                    </div>
+                    <div className="sf-cta">
+                      <small>fra {formatKroner(250)}</small>
+                      <span className="sf-pill">Reserver</span>
+                    </div>
+                  </div>
+                  <p className="sf-date">Onsdag 12. august</p>
+                  <div className="sf-row">
+                    <div className="sf-time">
+                      <b>07:00</b>
+                      <small>45 min</small>
+                    </div>
+                    <div className="sf-txt">
+                      <b>Morgenpilates</b>
+                      <small>Kine Berg</small>
+                    </div>
+                    <div className="sf-cta">
+                      <small>fra {formatKroner(99)}</small>
+                      <span className="sf-pill">Reserver</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Functionality flow — numbered steps + settings card */}
+        <section id="product" className="section container" aria-label="Funksjonalitet">
+          <div className="section-head centered">
+            <h2>Fra påmelding til utbetaling.</h2>
+            <p className="section-sub">Du slipper fakturaer, regneark og purringer.</p>
+          </div>
+          <div className="flow">
+            <div className="flow-step">
               <div>
-                <motion.p
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  className="mb-3 text-xs font-medium text-primary"
-                >
-                  Bygget i Norge
-                </motion.p>
-                <motion.h1
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-balance text-4xl font-semibold text-foreground md:text-5xl"
-                >
-                  Opprett kurs. Ta imot påmeldinger. Få betalt.
-                </motion.h1>
-                <motion.p
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                  className="mt-4 text-pretty text-base text-foreground-muted"
-                >
-                  Raden samler kurs, påmeldinger, deltakere og betaling.
-                </motion.p>
+                <span className="step-num">1</span>
               </div>
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <Button asChild size="cta">
-                  <a href={`mailto:${COMPANY.email}`}>Ta kontakt</a>
-                </Button>
-                <p className="mt-3 text-sm text-foreground-muted">Vi åpner snart.</p>
-              </motion.div>
+              <div className="step-text">
+                <h3>Påmelding</h3>
+                <p>Deltakerne melder seg på selv, og deltakerlisten oppdateres automatisk.</p>
+              </div>
+              <div className="step-visual grey" aria-hidden="true">
+                <div className="mini mini-list">
+                  <div className="p-row">
+                    <AvatarGlyph />
+                    <div>
+                      <b>Olav Hansen</b>
+                      <small>olav.hansen@gmail.com</small>
+                    </div>
+                  </div>
+                  <div className="p-row">
+                    <AvatarGlyph />
+                    <div>
+                      <b>Mari Eriksen</b>
+                      <small>mari.eriksen@gmail.com</small>
+                    </div>
+                  </div>
+                  <div className="p-row">
+                    <AvatarGlyph />
+                    <div>
+                      <b>Anne Sørensen</b>
+                      <small>anne.sorensen@gmail.com</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="mx-auto max-w-2xl text-center">
-              <motion.p
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="mb-3 text-xs font-medium text-primary"
-              >
-                Bygget i Norge
-              </motion.p>
-              <motion.h1
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="text-balance text-4xl font-semibold text-foreground md:text-5xl"
-              >
-                Opprett kurs. Ta imot påmeldinger. Få betalt.
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-4 text-pretty text-base text-foreground-muted"
-              >
-                Raden samler kurs, påmeldinger, deltakere og betaling.
-              </motion.p>
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-8"
-              >
-                <Button asChild size="cta">
-                  <Link to="/auth?intent=seller">Opprett konto</Link>
-                </Button>
-              </motion.div>
+            <div className="flow-step">
+              <div>
+                <span className="step-num">2</span>
+              </div>
+              <div className="step-text">
+                <h3>Betaling</h3>
+                <p>Deltakerne betaler ved påmelding. Du får utbetalingen til bankkontoen din.</p>
+              </div>
+              <div className="step-visual grey" aria-hidden="true">
+                <div className="mini mini-pay">
+                  <div className="pay-top">
+                    <div>
+                      <small>Utbetaling</small>
+                      <p className="pay-sum">{formatKroner(12480)}</p>
+                    </div>
+                    <span className="chip-paid">Sendt</span>
+                  </div>
+                  <div className="pay-sub">
+                    <small>{`Til konto ···${NBSP}4321 · 15. juli`}</small>
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
-
-          {/* Hero — product on subtle azure frame. Plain div (not motion.div):
-              this image is the LCP element and fetchPriority="high" — holding
-              it at opacity:0 for a framer-motion fade delays LCP since Chrome
-              won't count an opacity:0 element as painted. */}
-          <div className="mx-auto mt-16 max-w-5xl md:mt-20">
-            <ProductFrame>
-              <img
-                src="/landing-dashboard.webp"
-                alt="Raden – oversikt over inntekter og kommende kurs"
-                width={2400}
-                height={1660}
-                fetchPriority="high"
-                className="block w-full h-auto"
-                style={{ imageRendering: '-webkit-optimize-contrast' }}
-              />
-            </ProductFrame>
+            <div className="flow-step">
+              <div>
+                <span className="step-num">3</span>
+              </div>
+              <div className="step-text">
+                <h3>Oversikt</h3>
+                <p>Se inntekter, påmeldinger og deltakere for hvert kurs.</p>
+              </div>
+              <div className="step-visual grey" aria-hidden="true">
+                <div className="mini mini-stats">
+                  <div className="stat-head">
+                    <b>Yoga for nybegynnere</b>
+                  </div>
+                  <div className="stat-tiles">
+                    <div className="stat-tile">
+                      <small>Påmeldte</small>
+                      <b>{`12${NBSP}/${NBSP}14`}</b>
+                    </div>
+                    <div className="stat-tile">
+                      <small>Inntekt</small>
+                      <b>{formatKroner(18500)}</b>
+                    </div>
+                    <div className="stat-tile">
+                      <small>Pris</small>
+                      <b>{formatKroner(2400)}</b>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+          <div className="settings-card">
+            <div className="settings-text">
+              <h3>Drop-in og påmelding etter oppstart</h3>
+              <ul className="settings-list">
+                <li>
+                  <CheckGlyph />
+                  Åpne for påmelding etter oppstart
+                </li>
+                <li>
+                  <CheckGlyph />
+                  Prisen justeres automatisk
+                </li>
+              </ul>
+            </div>
+            <div aria-hidden="true">
+              <div className="mini mini-set">
+                <div className="set-row">
+                  <div>
+                    <span className="set-label">
+                      <b>Tillat drop-in</b>
+                      <i className="info-dot">i</i>
+                    </span>
+                    <div className="set-price">
+                      <small>Pris per time</small>
+                      <span className="field">
+                        250 <em>kr</em>
+                      </span>
+                    </div>
+                  </div>
+                  <span className="switch" />
+                </div>
+                <div className="set-row">
+                  <span className="set-label">
+                    <b>Tillat påmelding etter oppstart</b>
+                    <i className="info-dot">i</i>
+                  </span>
+                  <span className="switch" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      {/* ============================================================ */}
-      {/* 2. STOREFRONT — split: text left, staged product shot right.
-          The shot comes from /dev/landing-shot-storefront (Flyt Studio)
-          via scripts/capture-landing-hero.mjs --shot storefront. */}
-      {/* ============================================================ */}
-      <section className="bg-background py-20 md:py-28">
-        <div className="mx-auto max-w-6xl px-6">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
-            variants={scrollStaggerVariants}
-            className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-16"
-          >
-            <motion.div
-              variants={scrollVariants}
-              transition={scrollTransition}
-              className="lg:col-span-5"
-            >
-              <h2 className="text-balance text-3xl font-semibold text-foreground md:text-4xl">
-                En side for kursene dine.
-              </h2>
-              <p className="mt-4 text-pretty text-base text-foreground-muted">
-                Vis kursene dine og ta imot påmeldinger på din egen studioside.
+        {/* Pricing */}
+        <section id="pricing" className="section container" aria-label="Pris">
+          <div className="section-head centered">
+            <h2>En pris som er enkel å forstå.</h2>
+            <p className="section-sub">Start gratis – bytt til Pro når salget vokser.</p>
+          </div>
+          <div className="pricing-grid">
+            <article className="plan plan-white">
+              <h3 className="plan-name">Start</h3>
+              <p className="plan-price">Gratis</p>
+              <p className="plan-desc">{`Du betaler 5${NBSP}% plattformgebyr per salg.`}</p>
+              <ul className="plan-list">
+                <li>
+                  <CheckGlyph />
+                  Ubegrenset antall kurs og deltakere
+                </li>
+                <li>
+                  <CheckGlyph />
+                  Kortbetaling og automatiske utbetalinger
+                </li>
+                <li>
+                  <CheckGlyph />
+                  Egen studioside
+                </li>
+              </ul>
+              <SignupCta className="btn btn-chrome btn-full" label="Kom i gang" />
+            </article>
+            <article className="plan plan-featured">
+              <h3 className="plan-name">
+                Pro <span className="plan-tag">Anbefalt</span>
+              </h3>
+              <p className="plan-price">
+                {formatKroner(499)}
+                <small> / mnd eks. mva.</small>
               </p>
-            </motion.div>
-            <motion.div
-              variants={scrollVariants}
-              transition={scrollTransition}
-              className="lg:col-span-7"
-            >
-              <ProductFrame tight>
-                <img
-                  src="/landing-storefront.webp"
-                  alt="Offentlig studioside i Raden – Flyt Studio med timeplan og påmelding"
-                  width={1600}
-                  height={1356}
-                  loading="lazy"
-                  decoding="async"
-                  className="block w-full h-auto"
-                  style={{ imageRendering: '-webkit-optimize-contrast' }}
-                />
-              </ProductFrame>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
+              <p className="plan-desc">Fast månedspris – ingen plattformgebyr.</p>
+              <ul className="plan-list">
+                <li>
+                  <CheckGlyph />
+                  Alt i Start
+                </li>
+                <li>
+                  <CheckGlyph />
+                  {`0${NBSP}% plattformgebyr`}
+                </li>
+                <li>
+                  <CheckGlyph />
+                  Ingen bindingstid
+                </li>
+              </ul>
+              <p className="plan-note">
+                Selger du for mer enn {formatKroner(10000)} i måneden, lønner Pro seg.
+              </p>
+              <SignupCta className="btn btn-white btn-full" label="Velg Pro" />
+            </article>
+          </div>
+        </section>
 
-      {/* ============================================================ */}
-      {/* 3. PREMIUM — near-black square cards on the white page. Card
-          skeleton from Vizcom's "See measurable impact" dark cards
-          (Mobbin): small icon top-left, text pinned to the bottom,
-          no CTA inside the card. Icon scale stays small on purpose. */}
-      {/* ============================================================ */}
-      <section className="bg-background py-20 md:py-28">
-        <div className="mx-auto max-w-6xl px-6">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
-            variants={scrollVariants}
-            transition={scrollTransition}
-            className="mb-12 max-w-2xl md:mb-16"
-          >
-            <h2 className="text-balance text-3xl font-semibold text-foreground md:text-4xl">
-              Fra påmelding til utbetaling.
-            </h2>
-            <p className="mt-4 text-pretty text-base text-foreground-muted">
-              Deltakerne melder seg på og betaler selv. Du ser alt på ett sted.
-            </p>
-          </motion.div>
+        {/* Final CTA band */}
+        <section className="section container" aria-label="Kom i gang">
+          <div className="cta-panel">
+            <h2>Start med neste kurs.</h2>
+            <p>Opprett konto, legg inn kurset og del studiosiden din.</p>
+            <div className="hero-ctas">
+              <SignupCta className="btn btn-white" label="Opprett konto" />
+            </div>
+          </div>
+        </section>
+      </main>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            variants={scrollStaggerVariants}
-            className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6"
-          >
-            <PremiumCard
-              icon={CreditCardIcon}
-              title="Betaling"
-              body="Deltakerne betaler ved påmelding. Du får utbetalingen til bankkontoen din."
-            />
-            <PremiumCard
-              icon={UserMultiple02Icon}
-              title="Påmeldinger"
-              body="Deltakerne melder seg på selv, og deltakerlisten oppdateres automatisk."
-            />
-            <PremiumCard
-              icon={ChartBarIncreasingIcon}
-              title="Kursoversikt"
-              body="Se inntekter, påmeldinger og deltakere for hvert kurs."
-            />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ============================================================ */}
-      {/* 4. PRICING — transparent, Stripe mentioned */}
-      {/* ============================================================ */}
-      <section id="pricing" className="bg-background py-20 md:py-28">
-        <div className="mx-auto max-w-6xl px-6">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
-            variants={scrollVariants}
-            transition={scrollTransition}
-            className="mx-auto mb-12 max-w-2xl text-center"
-          >
-            <h2 className="text-balance text-3xl font-semibold text-foreground md:text-4xl">
-              En pris som er enkel å forstå.
-            </h2>
-            <p className="mt-4 text-pretty text-base text-foreground-muted">
-              Start gratis. Bytt til Pro når du trenger mer.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            variants={scrollStaggerVariants}
-            className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2"
-          >
-            <PricingTier
-              tier={{
-                name: 'Start',
-                description: 'For deg som vil publisere kurs og ta imot betaling.',
-                price: 'Gratis',
-                features: [
-                  'Ubegrenset antall kurs og deltakere',
-                  'Kortbetaling og automatiske utbetalinger',
-                  '5 % plattformgebyr per betaling',
-                ],
-              }}
-            />
-            <PricingTier
-              tier={{
-                name: 'Pro',
-                description: 'Fast månedspris. Ingen plattformgebyr.',
-                price: formatKroner(499),
-                priceSub: '/ mnd eks. mva.',
-                features: [
-                  'Alt i Start',
-                  '0 % plattformgebyr',
-                  'Ingen bindingstid',
-                ],
-              }}
-            />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ============================================================ */}
-      {/* 5. FINAL CTA */}
-      {/* ============================================================ */}
-      <section id="varsle" className="scroll-mt-16 bg-background py-12 md:py-16">
-        <div className="mx-auto max-w-6xl px-6">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
-            variants={scrollVariants}
-            transition={scrollTransition}
-            className="relative isolate flex flex-col items-center justify-between gap-8 overflow-hidden rounded-3xl bg-chrome px-8 py-16 md:flex-row md:gap-12 md:px-16 md:py-20"
-          >
-            {/* Dark chrome band — the same surface as the premium cards and
-                the app's toasts, so the landing page literally previews the
-                product's chrome. */}
-            <Grain opacity={0.4} baseFrequency={0.7} blend="soft-light" />
-            <h2 className="relative text-balance text-3xl font-semibold text-chrome-foreground md:text-4xl">
-              {PRELAUNCH ? 'Snakk med oss.' : 'Start med neste kurs.'}
-            </h2>
-            <div className="relative">
-              {PRELAUNCH ? (
-                <Button asChild size="cta">
-                  <a href={`mailto:${COMPANY.email}`}>Ta kontakt</a>
-                </Button>
-              ) : (
-                <Button asChild size="cta">
+      <footer className="footer container">
+        <div className="footer-grid">
+          <div className="footer-brand">
+            <a className="wordmark" href="#">
+              Raden
+            </a>
+            <p>Påmelding, betaling og kursoversikt for yogastudioer.</p>
+          </div>
+          <nav aria-label="Produktlenker">
+            <h3>Produkt</h3>
+            <ul>
+              <li>
+                <a href="#pricing">Pris</a>
+              </li>
+              <li>
+                <Link to="/om-oss">Om oss</Link>
+              </li>
+            </ul>
+          </nav>
+          <nav aria-label="Kontolenker">
+            <h3>Konto</h3>
+            <ul>
+              <li>
+                <Link to="/auth">Logg inn</Link>
+              </li>
+              {!PRELAUNCH && (
+                <li>
                   <Link to="/auth?intent=seller">Opprett konto</Link>
-                </Button>
+                </li>
               )}
-            </div>
-          </motion.div>
+            </ul>
+          </nav>
+          <nav aria-label="Juridiske lenker">
+            <h3>Juridisk</h3>
+            <ul>
+              <li>
+                <Link to="/terms">Vilkår</Link>
+              </li>
+              <li>
+                <Link to="/personvern">Personvern</Link>
+              </li>
+            </ul>
+          </nav>
         </div>
-      </section>
-
-      {/* ============================================================ */}
-      {/* 6. FOOTER — Framio AS, org.nr */}
-      {/* ============================================================ */}
-      <footer className="bg-background pt-20 pb-12">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="mb-16 grid grid-cols-1 gap-12 md:grid-cols-12">
-            <div className="md:col-span-5">
-              <span className="text-xl font-medium text-foreground">Raden</span>
-              <p className="mt-6 max-w-sm text-pretty text-base leading-relaxed text-foreground-muted">
-                Påmelding, betaling og kursoversikt for yogastudioer.
-                <br />
-                Bygget i Norge.
-              </p>
-              <div className="mt-6 space-y-1.5 text-base text-foreground-muted">
-                <p>
-                  <a href={`mailto:${COMPANY.email}`} className="hover:text-foreground">
-                    {COMPANY.email}
-                  </a>
-                </p>
-              </div>
-            </div>
-            <div className="md:col-span-2 md:col-start-7">
-              <h4 className="mb-6 text-base font-medium text-foreground">Produkt</h4>
-              <ul className="space-y-4 text-base text-foreground-muted">
-                <li>
-                  <a href="#pricing" className="transition-colors hover:text-foreground">
-                    Pris
-                  </a>
-                </li>
-                <li>
-                  <Link to="/om-oss" className="transition-colors hover:text-foreground">
-                    Om oss
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div className="md:col-span-2">
-              <h4 className="mb-6 text-base font-medium text-foreground">Konto</h4>
-              <ul className="space-y-4 text-base text-foreground-muted">
-                <li>
-                  <Link to="/auth" className="transition-colors hover:text-foreground">
-                    Logg inn
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div className="md:col-span-2">
-              <h4 className="mb-6 text-base font-medium text-foreground">Juridisk</h4>
-              <ul className="space-y-4 text-base text-foreground-muted">
-                <li>
-                  <Link to="/terms" className="transition-colors hover:text-foreground">
-                    Vilkår
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/personvern" className="transition-colors hover:text-foreground">
-                    Personvern
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center justify-between gap-6 border-t border-border pt-8 md:flex-row">
-            <p className="text-base text-foreground-muted">
-              © {new Date().getFullYear()} Raden. Laget av {COMPANY.legalName}.
-            </p>
-          </div>
+        <div className="footer-legal">
+          © {new Date().getFullYear()} Raden. Laget av {COMPANY.legalName}.
         </div>
       </footer>
     </div>
   );
 };
-
-// =============================================================================
-// PremiumCard — square near-black card. Small icon top-left, text pinned to
-// the bottom, generous air in between. Surface = --chrome (same family as
-// the CTA band and the app's toasts) + soft-light grain. Icons are the
-// app's Hugeicons stroke set for now — swap for real 3D renders when a pack
-// is chosen (Shapefest et al.).
-// =============================================================================
-function PremiumCard({
-  icon,
-  title,
-  body,
-}: {
-  icon: React.ComponentProps<typeof HugeiconsIcon>['icon'];
-  title: string;
-  body: string;
-}) {
-  return (
-    <motion.div
-      variants={scrollVariants}
-      transition={scrollTransition}
-      className="relative isolate flex flex-col overflow-hidden rounded-2xl bg-chrome p-6 sm:p-7 md:aspect-square"
-    >
-      <Grain opacity={0.4} baseFrequency={0.7} blend="soft-light" />
-      <HugeiconsIcon
-        icon={icon}
-        size={32}
-        strokeWidth={1.5}
-        className="relative text-chrome-foreground"
-        aria-hidden="true"
-      />
-      <div className="relative mt-14 md:mt-auto">
-        <h3 className="text-balance text-lg font-medium text-chrome-foreground">{title}</h3>
-        <p className="mt-2 text-pretty text-sm leading-relaxed text-chrome-foreground-muted">{body}</p>
-      </div>
-    </motion.div>
-  );
-}
-
-// =============================================================================
-// PricingTier
-// =============================================================================
-type Tier = {
-  name: string;
-  description: string;
-  price: string;
-  priceSub?: string;
-  features: string[];
-};
-
-function PricingTier({ tier }: { tier: Tier }) {
-  return (
-    <motion.div
-      variants={scrollVariants}
-      transition={scrollTransition}
-      className="flex flex-col rounded-xl bg-panel p-6 sm:p-8"
-    >
-      <div className="mb-6">
-        <h3 className="text-balance text-base font-medium text-foreground">
-          {tier.name}
-        </h3>
-        <p className="mt-3 text-pretty text-base text-foreground-muted">{tier.description}</p>
-      </div>
-
-      <div className="mb-8 border-b border-border pb-8">
-        <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-semibold text-foreground">
-            {tier.price}
-          </span>
-          {tier.priceSub && (
-            <span className="text-base text-foreground-muted">{tier.priceSub}</span>
-          )}
-        </div>
-      </div>
-
-      <ul className="flex-1 space-y-3">
-        {tier.features.map((feature) => (
-          <li
-            key={feature}
-            className="flex items-start gap-3 text-base text-foreground-muted"
-          >
-            <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-primary-subtle">
-              <Check className="size-3.5 text-primary" />
-            </div>
-            <span>{feature}</span>
-          </li>
-        ))}
-      </ul>
-    </motion.div>
-  );
-}
 
 export default LandingPage;
