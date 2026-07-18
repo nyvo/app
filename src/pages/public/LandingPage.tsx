@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { formatKroner } from '@/lib/utils';
 import { COMPANY } from '@/lib/company';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import '@/styles/plan-cards.css';
 import './landing.css';
 
 const PRELAUNCH = import.meta.env.VITE_PRELAUNCH === 'true';
@@ -641,7 +642,7 @@ const LandingPage = () => {
         </section>
 
         {/* Pricing */}
-        <section id="pricing" className="section container" aria-label="Pris">
+        <section id="pricing" className="section container plan-cards" aria-label="Pris">
           <div className="section-head centered">
             <h2>En pris som er enkel å forstå.</h2>
             <p className="section-sub">Start gratis – bytt til Pro når salget vokser.</p>

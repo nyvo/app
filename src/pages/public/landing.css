@@ -353,78 +353,13 @@
 .lnd .cta-panel p { margin: 16px auto 0; max-width: 480px; font-size: 17px; color: oklch(1 0 0 / 0.85); }
 .lnd .cta-panel .hero-ctas { margin-top: 28px; }
 
-/* ---- Pricing (equal cards; Pro = near-black chrome, azure rejected) ---- */
-/* Billing-period toggle (Maze pricing pattern): flanking text labels,
-   jade-subtle badge OUTSIDE the control beside Årlig. Standard switch
-   semantics — grey track for the monthly default, azure when yearly is
-   opted in — matching the settings-mock switch (--border → --primary)
-   and the app's checked-toggle convention. Always-azure was tried and
-   rejected 2026-07-18: filled-both-ways reads as a stuck on/off switch. */
-.lnd .price-toggle { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-.lnd .pt-opt { border: 0; background: none; padding: 0; font: inherit; font-size: 14px; font-weight: 500; color: var(--muted-text); cursor: pointer; transition: color 150ms ease; }
-.lnd .pt-opt[data-active] { color: var(--foreground); }
-.lnd .pt-switch { position: relative; flex-shrink: 0; width: 44px; height: 26px; border: 0; border-radius: var(--r-pill); background: var(--border); cursor: pointer; padding: 0; transition: transform 160ms var(--ease-out), background-color 180ms ease; }
-.lnd .pt-switch[aria-checked="true"] { background: var(--primary); }
-.lnd .pt-switch:active { transform: scale(0.95); }
-.lnd .pt-knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #FFFFFF; transition: translate 180ms var(--ease-out); }
-.lnd .pt-switch[aria-checked="true"] .pt-knob { translate: 18px 0; }
-.lnd .pt-save { font-size: 12.5px; font-weight: 500; color: var(--success); background: var(--success-subtle); border-radius: var(--r-pill); padding: 4px 10px; }
+/* ---- Pricing ----
+   Card + toggle component styles are shared with the dashboard billing
+   page: src/styles/plan-cards.css (scope class `plan-cards` on the
+   section). Only landing-specific positioning lives here. */
+.lnd .price-toggle { margin-top: 28px; }
 .lnd .price-toggle ~ .pricing-grid { margin-top: 36px; }
-.lnd .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 880px; margin: 44px auto 0; align-items: stretch; }
-.lnd .plan { border-radius: var(--r-card); padding: 32px; display: flex; flex-direction: column; }
-.lnd .plan-white { background: #FFFFFF; border: 1px solid var(--border-subtle); }
-/* Pro: near-black chrome ground (hue-locked 270), one step deeper than --chrome.
-   Radial top highlight + 1px white border + inset edge + grain — all sub-perceptual. */
-.lnd .plan-featured {
-  position: relative;
-  padding: 32px;
-  background:
-    radial-gradient(120% 90% at 50% -10%, oklch(1 0 0 / 0.07), transparent 62%),
-    oklch(0.232 0.006 270);
-  color: #FFFFFF;
-  border: 1px solid oklch(1 0 0 / 0.10);
-  box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.09),
-    0 1px 2px oklch(0.15 0.01 270 / 0.30),
-    0 24px 48px -16px oklch(0.22 0.015 265 / 0.35);
-}
-.lnd .plan-featured::after {
-  content: "";
-  position: absolute; inset: 0;
-  border-radius: inherit;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 160px 160px;
-  opacity: 0.018;
-  pointer-events: none;
-}
-.lnd .plan-name { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 28px; font-size: 15px; font-weight: 600; }
-.lnd .plan-tag { font-size: 11.5px; font-weight: 500; letter-spacing: 0.01em; background: oklch(1 0 0 / 0.09); border: 1px solid oklch(1 0 0 / 0.14); border-radius: var(--r-pill); padding: 4px 12px; }
-.lnd .plan-price { margin-top: 14px; font-size: 38px; font-weight: 600; letter-spacing: -0.03em; line-height: 44px; font-variant-numeric: tabular-nums; }
-.lnd .plan-featured .plan-price { font-size: 44px; letter-spacing: -0.035em; }
-.lnd .plan-price small { font-size: 14px; font-weight: 400; letter-spacing: 0; line-height: 1; }
-.lnd .plan-white .plan-price small { color: var(--muted-text); }
-.lnd .plan-featured .plan-price small { color: oklch(1 0 0 / 0.60); }
-.lnd .plan-desc { margin-top: 10px; font-size: 14px; }
-.lnd .plan-white .plan-desc { color: var(--muted-text); }
-.lnd .plan-featured .plan-desc { color: oklch(1 0 0 / 0.70); }
-.lnd .plan-list { list-style: none; margin: 24px 0 28px; padding: 24px 0 0; border-top: 1px solid var(--border-subtle); flex-grow: 1; display: flex; flex-direction: column; gap: 12px; font-size: 14px; }
-.lnd .plan-featured .plan-list { margin: 24px 0 20px; padding-top: 24px; border-top-color: oklch(1 0 0 / 0.10); color: oklch(1 0 0 / 0.88); }
-.lnd .plan-note {
-  margin: 0 0 24px; padding: 12px 16px;
-  border-radius: 14px;
-  background: oklch(1 0 0 / 0.06);
-  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.08);
-  font-size: 13px; line-height: 1.5;
-  color: oklch(1 0 0 / 0.78);
-  font-variant-numeric: tabular-nums;
-}
-.lnd .plan-list li { display: flex; align-items: center; gap: 10px; }
-.lnd .check { flex: none; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
-.lnd .plan-white .check { background: var(--primary-subtle); }
-.lnd .plan-featured .check { background: oklch(1 0 0 / 0.10); box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.08); }
-.lnd .check svg { width: 10px; height: 10px; }
-.lnd .plan-white .check svg { stroke: var(--primary); }
-.lnd .plan-featured .check svg { stroke: oklch(1 0 0 / 0.95); }
+.lnd .pricing-grid { max-width: 880px; margin: 44px auto 0; }
 
 /* ---- Footer (editorial, white) ---- */
 .lnd .footer { padding: var(--section) 0 40px; }
@@ -528,7 +463,6 @@
   .lnd .chart { height: 56px; }
   .lnd .split { grid-template-columns: 1fr; gap: 40px; }
   .lnd .pricing-grid { grid-template-columns: 1fr; }
-  .lnd .plan-featured { padding: 36px 28px 32px; }
   .lnd .flow-step { grid-template-columns: 1fr; gap: 14px; padding: 22px 0; }
   .lnd .flow-step::before { display: none; }
   .lnd .step-num { margin-inline: 0; outline: none; }
@@ -571,7 +505,4 @@
   .lnd .proof-group[aria-hidden] { display: none; }
   .lnd .switch { background: var(--primary); transition: none; }
   .lnd .switch::after { translate: 12px 0; transition: none; }
-  /* Pricing toggle: keep the color cue, drop the movement. */
-  .lnd .pt-knob { transition: none; }
-  .lnd .pt-switch { transition: none; }
 }

@@ -1,0 +1,126 @@
+/* ============================================================================
+   Shared pricing cards + billing-period toggle.
+
+   One visual system for the Start/Pro plan cards and the Månedlig/Årlig
+   switch, used by BOTH the landing pricing section (`LandingPage`, wrapped
+   in `.lnd`) and the dashboard billing page (`BillingPlanSections`). The
+   values are the light-locked marketing tokens — defined here on the scope
+   class so the dashboard's dark mode can never re-theme the cards (the
+   white card stays white, the featured card stays chrome).
+
+   Layout (grid margins, max-width, toggle placement) is deliberately NOT
+   in here — each surface positions the components itself.
+   ========================================================================== */
+
+.plan-cards {
+  --pc-foreground: oklch(0.185 0.004 250);
+  --pc-muted-text: oklch(0.550 0.010 250);
+  --pc-border: oklch(0.853 0.006 250);
+  --pc-border-subtle: oklch(0.887 0.005 250);
+  --pc-primary: oklch(0.540 0.150 245);
+  --pc-primary-subtle: oklch(0.973 0.008 242);
+  --pc-success: oklch(0.516 0.081 165);
+  --pc-success-subtle: oklch(0.953 0.034 158);
+  --pc-pill: 999px;
+  --pc-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* ---- Billing-period toggle (Maze pricing pattern): flanking text labels,
+   jade-subtle badge OUTSIDE the control beside Årlig. Standard switch
+   semantics — grey track for the monthly default, azure when yearly is
+   opted in. Always-azure was tried and rejected 2026-07-18: filled both
+   ways reads as a stuck on/off switch. ---- */
+.plan-cards .price-toggle { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; }
+.plan-cards .pt-opt { border: 0; background: none; padding: 0; font: inherit; font-size: 14px; font-weight: 500; line-height: 1.55; color: var(--pc-muted-text); cursor: pointer; transition: color 150ms ease; }
+.plan-cards .pt-opt[data-active] { color: var(--pc-foreground); }
+.plan-cards .pt-switch { position: relative; flex-shrink: 0; width: 44px; height: 26px; border: 0; border-radius: var(--pc-pill); background: var(--pc-border); cursor: pointer; padding: 0; transition: transform 160ms var(--pc-ease-out), background-color 180ms ease; }
+.plan-cards .pt-switch[aria-checked="true"] { background: var(--pc-primary); }
+.plan-cards .pt-switch:active { transform: scale(0.95); }
+.plan-cards .pt-knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #FFFFFF; transition: translate 180ms var(--pc-ease-out); }
+.plan-cards .pt-switch[aria-checked="true"] .pt-knob { translate: 18px 0; }
+.plan-cards .pt-save { font-size: 12.5px; font-weight: 500; line-height: 1.55; color: var(--pc-success); background: var(--pc-success-subtle); border-radius: var(--pc-pill); padding: 4px 10px; }
+.plan-cards :is(.pt-opt, .pt-switch, .pc-btn):focus-visible { outline: 3px solid oklch(0.185 0.004 250 / 0.30); outline-offset: 3px; border-radius: var(--pc-pill); }
+
+/* ---- Card CTAs. Mirrors the landing .btn look (pill, 40px, hover lift)
+   as plain buttons so the dashboard can wire loading/disabled states.
+   pc-btn-current = the active plan stating itself (Nåværende plan). ---- */
+.plan-cards .pc-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 40px; padding: 0 20px; border: 0; border-radius: var(--pc-pill); font: inherit; font-size: 14px; font-weight: 500; line-height: 1; white-space: nowrap; cursor: pointer; transition: translate 180ms ease, scale 180ms ease, background-color 180ms ease, opacity 180ms ease; }
+@media (hover: hover) and (pointer: fine) {
+  .plan-cards .pc-btn:not(:disabled):hover { translate: 0 -2px; }
+}
+.plan-cards .pc-btn:not(:disabled):active { translate: 0 0; scale: 0.98; transition-duration: 120ms; }
+.plan-cards .pc-btn:disabled { cursor: default; }
+.plan-cards .pc-btn-chrome { background: oklch(0.255 0.006 270); color: oklch(0.985 0 0); }
+.plan-cards .pc-btn-chrome:not(:disabled):hover { background: oklch(0.315 0.008 270); }
+.plan-cards .pc-btn-white { background: #FFFFFF; color: var(--pc-foreground); box-shadow: 0 6px 18px oklch(0.35 0.05 250 / 0.18); }
+.plan-cards .pc-btn-current { background: oklch(0.967 0.0015 250); color: var(--pc-muted-text); }
+.plan-cards .plan-featured .pc-btn-current { background: oklch(1 0 0 / 0.10); color: oklch(1 0 0 / 0.70); box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.08); }
+
+/* ---- Cards. Both cards share one structural rhythm (32px padding, 28px
+   name row, 44px price line box, identical list margins) so dividers and
+   check rows land on the same y — Pro's prominence comes from the chrome
+   surface and larger price type, never from padding drift. ---- */
+.plan-cards .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: stretch; }
+.plan-cards .plan { border-radius: 28px; padding: 32px; display: flex; flex-direction: column; color: var(--pc-foreground); font-size: 16px; line-height: 1.55; }
+.plan-cards .plan-white { background: #FFFFFF; border: 1px solid var(--pc-border-subtle); }
+/* Pro: near-black chrome ground (hue-locked 270). Radial top highlight +
+   1px white border + inset edge + grain — all sub-perceptual. */
+.plan-cards .plan-featured {
+  position: relative;
+  background:
+    radial-gradient(120% 90% at 50% -10%, oklch(1 0 0 / 0.07), transparent 62%),
+    oklch(0.232 0.006 270);
+  color: #FFFFFF;
+  border: 1px solid oklch(1 0 0 / 0.10);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.09),
+    0 1px 2px oklch(0.15 0.01 270 / 0.30),
+    0 24px 48px -16px oklch(0.22 0.015 265 / 0.35);
+}
+.plan-cards .plan-featured::after {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  opacity: 0.018;
+  pointer-events: none;
+}
+.plan-cards .plan-name { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 28px; font-size: 15px; font-weight: 600; }
+.plan-cards .plan-tag { font-size: 11.5px; font-weight: 500; letter-spacing: 0.01em; background: oklch(1 0 0 / 0.09); border: 1px solid oklch(1 0 0 / 0.14); border-radius: var(--pc-pill); padding: 4px 12px; }
+.plan-cards .plan-price { margin: 14px 0 0; font-size: 38px; font-weight: 600; letter-spacing: -0.03em; line-height: 44px; font-variant-numeric: tabular-nums; }
+.plan-cards .plan-featured .plan-price { font-size: 44px; letter-spacing: -0.035em; }
+.plan-cards .plan-price small { font-size: 14px; font-weight: 400; letter-spacing: 0; line-height: 1; }
+.plan-cards .plan-white .plan-price small { color: var(--pc-muted-text); }
+.plan-cards .plan-featured .plan-price small { color: oklch(1 0 0 / 0.60); }
+.plan-cards .plan-desc { margin: 10px 0 0; font-size: 14px; }
+.plan-cards .plan-white .plan-desc { color: var(--pc-muted-text); }
+.plan-cards .plan-featured .plan-desc { color: oklch(1 0 0 / 0.70); }
+.plan-cards .plan-list { list-style: none; margin: 24px 0 28px; padding: 24px 0 0; border-top: 1px solid var(--pc-border-subtle); flex-grow: 1; display: flex; flex-direction: column; gap: 12px; font-size: 14px; }
+.plan-cards .plan-featured .plan-list { margin-bottom: 20px; border-top-color: oklch(1 0 0 / 0.10); color: oklch(1 0 0 / 0.88); }
+.plan-cards .plan-note {
+  margin: 0 0 24px; padding: 12px 16px;
+  border-radius: 14px;
+  background: oklch(1 0 0 / 0.06);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.08);
+  font-size: 13px; line-height: 1.5;
+  color: oklch(1 0 0 / 0.78);
+  font-variant-numeric: tabular-nums;
+}
+.plan-cards .plan-list li { display: flex; align-items: center; gap: 10px; }
+.plan-cards .check { flex: none; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+.plan-cards .plan-white .check { background: var(--pc-primary-subtle); }
+.plan-cards .plan-featured .check { background: oklch(1 0 0 / 0.10); box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.08); }
+.plan-cards .check svg { display: block; width: 10px; height: 10px; }
+.plan-cards .plan-white .check svg { stroke: var(--pc-primary); }
+.plan-cards .plan-featured .check svg { stroke: oklch(1 0 0 / 0.95); }
+
+@media (max-width: 768px) {
+  .plan-cards .pricing-grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Keep the color cue, drop the movement. */
+  .plan-cards .pt-knob { transition: none; }
+  .plan-cards .pt-switch { transition: none; }
+}
