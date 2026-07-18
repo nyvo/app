@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 
+import { RadenLogo } from '@/components/ui/raden-logo'
+
 interface AuthLayoutProps {
   title: string
   subtitle?: string
@@ -13,7 +15,7 @@ interface AuthLayoutProps {
 /**
  * Auth surface shell — centered single-column form at max-w-md.
  * Per studio-design § 21.3: no card chrome around the form, no sidebar,
- * logo top, title left-aligned, single column.
+ * logo mark directly above the form (not a page header), single column.
  */
 export function AuthLayout({
   title,
@@ -24,16 +26,13 @@ export function AuthLayout({
 }: AuthLayoutProps) {
   return (
     <div className="flex min-h-dvh w-full flex-col bg-background text-foreground antialiased selection:bg-muted selection:text-foreground">
-      <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
-        <Link to="/" className="flex select-none items-center">
-          <span className="text-base font-medium text-foreground">
-            Raden
-          </span>
-        </Link>
-      </header>
-
       <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
         <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="mb-6 flex justify-center">
+            <Link to="/" aria-label="Raden">
+              <RadenLogo />
+            </Link>
+          </div>
           {customContent ? (
             // min-height keeps multi-step flows (identify → password → code) from
             // re-centering as content height changes; `relative` anchors a step's

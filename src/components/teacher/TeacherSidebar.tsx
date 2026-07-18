@@ -21,6 +21,7 @@ import { routes } from '@/lib/routes';
 import { DEV_PREVIEWS_ENABLED } from '@/lib/devPreviews';
 import { accountDisplayName, formatKroner } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { RadenLogo } from '@/components/ui/raden-logo';
 import {
   Sidebar,
   SidebarContent,
@@ -115,9 +116,10 @@ export const TeacherSidebar = () => {
       <SidebarHeader className="flex-row items-center justify-between group-data-[collapsible=icon]:px-1">
         <Link
           to={routes.dashboard}
-          className="flex h-12 items-center rounded-md px-3 text-base font-medium text-sidebar-foreground outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:hidden"
+          aria-label="Raden"
+          className="flex h-12 items-center rounded-md px-3 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:hidden"
         >
-          Raden
+          <RadenLogo size="sm" />
         </Link>
         {isMobile && (
           <Button
