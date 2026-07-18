@@ -29,9 +29,10 @@ const STEP_2_TITLE = 'Vi kontrollerer opplysningene';
 const STEP_3_TITLE = 'Motta utbetalinger';
 
 /**
- * Payments page — a single "payout account" surface: a Card holding a 3-step
- * vertical timeline (Bekreft virksomheten → Vi kontrollerer opplysningene →
- * Motta utbetalinger), plus a FAQ accordion below. No status badge next to
+ * Payments page — a single "payout account" surface: a 3-step horizontal
+ * segmented progress bar (Bekreft virksomheten → Vi kontrollerer opplysningene
+ * → Motta utbetalinger) with the current step's detail card below, plus a FAQ
+ * accordion underneath. No status badge next to
  * the page title — progress is entirely conveyed by which step is current
  * and its marker tone. The Card matches the other Settings pages (billing,
  * get-started) on the dampened canvas. The content is driven by the

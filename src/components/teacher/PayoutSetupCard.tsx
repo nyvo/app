@@ -3,27 +3,34 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Card, CardContent } from '@/components/ui/card';
 
 /**
- * Presentational timeline for the payouts settings page — a 3-step "Bekreft
- * virksomheten → Vi kontrollerer opplysningene → Motta utbetalinger" ladder.
- * Pure view-model in, JSX out, so the real page (auth + Stripe wiring) and the
- * auth-free dev preview can share one rendering without duplicating markup.
+ * Presentational progress tracker for the payouts settings page — a 3-step
+ * "Bekreft virksomheten → Vi kontrollerer opplysningene → Motta utbetalinger"
+ * horizontal segmented bar. Pure view-model in, JSX out, so the real page
+ * (auth + Stripe wiring) and the auth-free dev preview can share one
+ * rendering without duplicating markup.
+ *
+ * Structure copied from Airwallex's verification tracker (horizontal steps,
+ * title + one-word status under each, detail card below) with the marker
+ * circles swapped for equal-width bar segments (Relevance AI / Uxcel
+ * onboarding bars) so the segment colour itself carries the step state.
  */
 
 export type StepStatus = 'done' | 'current' | 'upcoming';
 
-export type MarkerTone = 'neutral' | 'info' | 'warning' | 'danger' | 'success';
+export type StepTone = 'neutral' | 'info' | 'warning' | 'danger' | 'success';
 
 export interface PayoutStepViewModel {
   /** Stable step title (may be overridden per-state, e.g. rejected/restricted copy). */
   title: string;
   status: StepStatus;
-  /** Only meaningful when status === 'current'; tones the marker + status sub-label. */
-  tone?: MarkerTone;
+  /** Only meaningful when status === 'current'; tones the bar segment + status sub-label. */
+  tone?: StepTone;
   /**
    * One-word state under the current step's title («Pågår», «Krever handling»,
-   * «Avslått») — the rail's visible status, adopted from Mercury's application
-   * timeline / Airwallex's verification stepper (every step carries its state
-   * in words, not just a 12px glyph). Done steps auto-label «Fullført».
+   * «Avslått») — the tracker's visible status, adopted from Mercury's
+   * application timeline / Airwallex's verification stepper (every step
+   * carries its state in words — colour never stands alone). Done steps
+   * auto-label «Fullført».
    */
   statusLabel?: string;
   /** Only rendered on the current step. */
@@ -37,110 +44,27 @@ export interface PayoutSetupViewModel {
   steps: PayoutStepViewModel[];
 }
 
-// These three 12×12 glyphs are hand-drawn on purpose, not missing-lucide
-// drift: at 12px inside the step circles, lucide's Check/AlertTriangle/X at
-// the app's 1.75 stroke render thin and mushy — the custom paths carry a
-// heavier 1.8 stroke tuned for this size. Don't swap them for size-3 lucide.
-function CheckGlyph() {
-  return (
-    <svg viewBox="0 0 12 12" width="12" height="12" fill="none" aria-hidden="true">
-      <path
-        d="M2.5 6.5L5 9l4.5-6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function ExclamationGlyph() {
-  return (
-    <svg viewBox="0 0 12 12" width="12" height="12" fill="none" aria-hidden="true">
-      <path d="M6 2.5v4.2M6 9.4v.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function CrossGlyph() {
-  return (
-    <svg viewBox="0 0 12 12" width="12" height="12" fill="none" aria-hidden="true">
-      <path d="M3.5 3.5l5 5M8.5 3.5l-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-// Toned markers (done + current info/warning/danger) use the same subtle
-// coloured pill as our status badges — a light tint with the coloured
-// glyph/numeral — rather than a grey circle, so completed and attention
-// states read in colour. Markers are decorative (aria-hidden): the visible
-// status sub-label next to them carries the state for screen readers.
-const toneMarkerClass: Record<'info' | 'warning' | 'danger' | 'success', string> = {
-  info: 'bg-info-subtle text-info',
-  warning: 'bg-warning-subtle text-warning',
-  danger: 'bg-danger-subtle text-danger',
-  success: 'bg-success-subtle text-success',
+// Solid thin bars, same treatment as the old rail's solid-jade travelled
+// line — a line of colour, not a saturated fill behind a glyph, so the
+// "status = light tint" rule doesn't apply. Neutral current is ink («your
+// move», not a status), upcoming is the empty grey track.
+const toneBarClass: Record<'info' | 'warning' | 'danger' | 'success', string> = {
+  info: 'bg-info',
+  warning: 'bg-warning',
+  danger: 'bg-danger',
+  success: 'bg-success',
 };
 
-function StepMarker({ index, status, tone }: { index: number; status: StepStatus; tone?: MarkerTone }) {
-  if (status === 'done') {
-    return (
-      <span
-        aria-hidden="true"
-        className="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-success-subtle text-success text-xs font-medium tabular-nums"
-      >
-        <CheckGlyph />
-      </span>
-    );
+function stepBarClass({ status, tone }: Pick<PayoutStepViewModel, 'status' | 'tone'>): string {
+  if (status === 'done') return 'bg-success';
+  if (status === 'current') {
+    return tone && tone !== 'neutral' ? toneBarClass[tone] : 'bg-foreground';
   }
-
-  if (status === 'current' && tone && tone !== 'neutral') {
-    // 'info' = verification in progress — no check/!/× glyph fits, so the
-    // numeral itself sits in the blue tint instead.
-    const glyph =
-      tone === 'info' ? (
-        index + 1
-      ) : tone === 'warning' ? (
-        <ExclamationGlyph />
-      ) : tone === 'danger' ? (
-        <CrossGlyph />
-      ) : (
-        <CheckGlyph />
-      );
-    return (
-      <span
-        aria-hidden="true"
-        className={`flex size-[26px] shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums ${toneMarkerClass[tone]}`}
-      >
-        {glyph}
-      </span>
-    );
-  }
-
-  const numeralClass = status === 'current' ? 'bg-muted text-foreground' : 'bg-muted text-foreground-muted';
-  return (
-    <span
-      aria-hidden="true"
-      className={`flex size-[26px] shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums ${numeralClass}`}
-    >
-      {index + 1}
-    </span>
-  );
+  return 'bg-muted';
 }
 
-function StepTitle({ status, title }: { status: StepStatus; title: string }) {
-  if (status === 'done') {
-    return <p className="text-base font-normal text-foreground-muted leading-normal">{title}</p>;
-  }
-  if (status === 'upcoming') {
-    return <p className="text-base font-normal text-foreground-muted leading-normal">{title}</p>;
-  }
-  return <p className="text-base font-medium text-foreground leading-normal">{title}</p>;
-}
-
-// The sub-label's ink matches the marker tint (warning ! + warning text) so
-// marker + word read as one status unit; neutral states stay muted.
+// The sub-label's ink matches the bar (amber bar + amber word) so segment +
+// word read as one status unit; neutral states stay muted.
 const toneLabelClass: Record<'info' | 'warning' | 'danger' | 'success', string> = {
   info: 'text-info',
   warning: 'text-warning',
@@ -149,7 +73,7 @@ const toneLabelClass: Record<'info' | 'warning' | 'danger' | 'success', string> 
 };
 
 function StepStatusLabel({ status, tone, statusLabel }: Pick<PayoutStepViewModel, 'status' | 'tone' | 'statusLabel'>) {
-  // Done steps always read «Fullført» — the state in words, not just a glyph
+  // Done steps always read «Fullført» — the state in words, not just colour
   // (Mercury/Airwallex label every resolved step).
   if (status === 'done') {
     return <p className="mt-0.5 text-xs text-foreground-muted">Fullført</p>;
@@ -164,55 +88,41 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
   const current = steps.find((step) => step.status === 'current');
 
   return (
-    // The 1-2-3 progress rail sits on the canvas to the left; the active step's
-    // detail lives in the card on the right. Completed steps turn green so the
-    // ladder reads as genuinely done, not mid-process. Stacks on narrow widths.
-    // No items-start: the columns stretch so the card matches the rail's height.
-    <div className="flex flex-col gap-6 sm:flex-row sm:gap-10">
-      <ol className="shrink-0 sm:w-56 sm:pt-1">
-        {steps.map((step, index) => {
-          const isLast = index === steps.length - 1;
-          return (
-            <li key={step.title + index} className="grid grid-cols-[26px_1fr] gap-x-3">
-              <div className="flex flex-col items-center">
-                <StepMarker index={index} status={step.status} tone={step.tone} />
-                {!isLast && (
-                  // Travelled segments are solid jade; the road ahead is dashed
-                  // (Hims' timeline) so done vs upcoming reads in the line itself.
-                  <span
-                    aria-hidden="true"
-                    className={`my-1 flex-1 ${
-                      step.status === 'done'
-                        ? 'w-px bg-success'
-                        : 'w-0 border-l border-dashed border-border-subtle'
-                    }`}
-                  />
-                )}
-              </div>
-              <div className={`min-w-0 pt-[3px] ${isLast ? 'pb-0.5' : 'pb-5'}`}>
-                <StepTitle status={step.status} title={step.title} />
-                <StepStatusLabel status={step.status} tone={step.tone} statusLabel={step.statusLabel} />
-              </div>
-            </li>
-          );
-        })}
+    <div>
+      {/* Tracker on the canvas, detail card below (Airwallex's vertical order):
+          one equal-width bar segment per step with the title + status word
+          stacked under it. The bars are decorative (aria-hidden) — the visible
+          status words carry the state, colour never stands alone. */}
+      <ol className="grid grid-cols-3 gap-x-3">
+        {steps.map((step, index) => (
+          <li key={step.title + index} className="min-w-0">
+            <span
+              aria-hidden="true"
+              className={`block h-1 w-full rounded-full transition-colors duration-200 ${stepBarClass(step)}`}
+            />
+            <p
+              className={`mt-2.5 text-sm leading-snug ${
+                step.status === 'current' ? 'font-medium text-foreground' : 'font-normal text-foreground-muted'
+              }`}
+            >
+              {step.title}
+            </p>
+            <StepStatusLabel status={step.status} tone={step.tone} statusLabel={step.statusLabel} />
+          </li>
+        ))}
       </ol>
 
-      <div className="min-w-0 flex-1">
-        <Card className="h-full">
-          {/* flex-col + mt-auto pins the action to the card's bottom edge, so
-              the button sits in the same spot whatever the rail height is. */}
-          <CardContent className="flex flex-1 flex-col">
-            {/* The card describes the current situation; the rail on the left
-                carries the process position, so no step counter is repeated here. */}
-            <h2 className="mb-2 text-base font-medium text-foreground">{h2}</h2>
-            {current?.description && (
-              <p className="max-w-prose text-base text-foreground-muted">{current.description}</p>
-            )}
-            {current?.action && <div className="mt-auto pt-4">{current.action}</div>}
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="mt-6">
+        <CardContent>
+          {/* The card describes the current situation; the tracker above
+              carries the process position, so no step counter is repeated here. */}
+          <h2 className="mb-2 text-base font-medium text-foreground">{h2}</h2>
+          {current?.description && (
+            <p className="max-w-prose text-base text-foreground-muted">{current.description}</p>
+          )}
+          {current?.action && <div className="pt-4">{current.action}</div>}
+        </CardContent>
+      </Card>
     </div>
   );
 }

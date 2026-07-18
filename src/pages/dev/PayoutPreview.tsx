@@ -245,14 +245,14 @@ const PayoutPreview = () => {
 
       <PreviewSection
         label="FAQ"
-        description="PayoutFaqSection — vises under tidslinjen/statistikken i alle tilstander."
+        description="PayoutFaqSection — vises under stegene/statistikken i alle tilstander."
       >
         <PayoutFaqSection />
       </PreviewSection>
 
       <PreviewSection
         label="Feil"
-        description="currentSellerHydrateFailed — samme ErrorState som PaymentsPage viser i stedet for tidslinjen når kontoinformasjonen ikke kan hentes."
+        description="currentSellerHydrateFailed — samme ErrorState som PaymentsPage viser i stedet for stegene når kontoinformasjonen ikke kan hentes."
       >
         <ErrorState
           title="Kunne ikke hente kontoinformasjon"
