@@ -25,10 +25,10 @@ test.describe('D1 public routes render', () => {
     await expect(
       page.getByRole('heading', {
         level: 1,
-        name: 'Opprett kurs. Ta imot påmeldinger. Få betalt.',
+        name: 'Mindre administrasjon. Mer tid til kurset.',
       }),
     ).toBeVisible();
-    await expect(page.getByText(/Deltakerne melder seg på og betaler selv/i)).toBeVisible();
+    await expect(page.getByText(/Påmeldinger, betalinger og deltakere/i)).toBeVisible();
     await expect(page.getByText('Noe gikk galt')).not.toBeVisible();
     expect(pageErrors).toEqual([]);
   });

@@ -236,9 +236,9 @@ const LandingPage = () => {
         <section className="hero container" aria-label="Introduksjon">
           <div className="hero-panel">
             <span className="eyebrow">Bygget i Norge</span>
-            <h1>Opprett kurs. Ta imot påmeldinger. Få{NBSP}betalt.</h1>
+            <h1>Mindre administrasjon. Mer tid til kurset.</h1>
             <p className="hero-sub">
-              Du legger inn kurset og deler studiosiden. Deltakerne melder seg på og betaler selv.
+              Påmeldinger, betalinger og deltakere – samlet på ett sted.
             </p>
             <div className="hero-ctas">
               <SignupCta className="btn btn-white" label="Opprett konto" />
