@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
-import { ChevronsUpDown } from '@/lib/icons';
-import { X } from 'lucide-react';
+import { ChevronsUpDown, X } from '@/lib/icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   DashboardSquare02Icon,

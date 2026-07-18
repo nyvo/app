@@ -1,5 +1,5 @@
 import React from 'react';
-import { PanelLeft } from 'lucide-react';
+import { PanelLeft } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
 
