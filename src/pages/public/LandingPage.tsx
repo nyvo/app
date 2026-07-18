@@ -207,10 +207,11 @@ const LandingPage = () => {
     <div className="lnd" ref={rootRef}>
       <header className="nav">
         <div className="container nav-inner">
-          <a className="nav-logo" href="#" aria-label="Raden">
+          <a className="nav-logo" href="#">
             <span className="logo-tile" aria-hidden="true">
               <RadenMark />
             </span>
+            <span className="wordmark">Raden</span>
           </a>
           <nav aria-label="Hovednavigasjon" className="nav-right">
             <a className="nav-link" href="#pricing">
