@@ -161,7 +161,7 @@ function TableRow({ course, countsUnavailable }: { course: SessionScheduleRow; c
       )}
     >
       <div role="cell" className="min-w-0">
-        <h3 className="truncate text-base font-medium text-foreground">{course.courseTitle}</h3>
+        <h3 className="truncate text-base font-semibold text-foreground">{course.courseTitle}</h3>
         <p className="mt-1 truncate text-sm text-foreground-muted">
           {typeLabel(course.courseFormat, course.deliveryMode)}
         </p>

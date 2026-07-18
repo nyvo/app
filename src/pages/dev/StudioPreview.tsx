@@ -102,7 +102,7 @@ function RabatterDemo() {
   return (
     <div>
       <div className="max-w-xl">
-        <h2 className="text-base font-medium text-foreground">Student- og pensjonistrabatt</h2>
+        <h2 className="text-base font-semibold text-foreground">Student- og pensjonistrabatt</h2>
         <p className="mt-1 max-w-prose text-pretty text-sm text-foreground-muted">
           Deltakeren velger rabatten selv i kassen. Raden sjekker ikke om deltakeren faktisk
           er student eller pensjonist — det ansvaret ligger hos deg. Du ser hvem som har valgt

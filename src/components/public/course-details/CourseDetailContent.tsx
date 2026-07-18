@@ -54,7 +54,7 @@ export function CourseDetailContent({ course, sessions, backHref }: CourseDetail
 
       <CourseImage course={course} />
 
-      <h1 className="mt-8 text-4xl font-medium text-foreground">
+      <h1 className="mt-8 text-4xl font-semibold text-foreground">
         {course.title}
       </h1>
 
@@ -62,7 +62,7 @@ export function CourseDetailContent({ course, sessions, backHref }: CourseDetail
 
       {course.description && (
         <section className="mt-8">
-          <h2 className="text-base font-medium text-foreground">Om kurset</h2>
+          <h2 className="text-base font-semibold text-foreground">Om kurset</h2>
           <RichTextContent
             html={course.description}
             className="mt-3 text-base leading-relaxed text-foreground"
@@ -75,7 +75,7 @@ export function CourseDetailContent({ course, sessions, backHref }: CourseDetail
           or multi-day workshops) still list their økter. */}
       {sessions.length > 1 && (
         <section className="mt-8">
-          <h2 className="text-base font-medium text-foreground">Timeplan</h2>
+          <h2 className="text-base font-semibold text-foreground">Timeplan</h2>
           <TimeplanStrip
             sessions={sessions}
             duration={course.duration}
@@ -86,7 +86,7 @@ export function CourseDetailContent({ course, sessions, backHref }: CourseDetail
 
       {course.location && (
         <section className="mt-8">
-          <h2 className="text-base font-medium text-foreground">Sted</h2>
+          <h2 className="text-base font-semibold text-foreground">Sted</h2>
           <div className="mt-3">
             <LocationCard
               location={course.location}
@@ -274,7 +274,7 @@ function ScheduleDialog({
                 <div className="flex items-baseline justify-between gap-4">
                   <h3
                     className={cn(
-                      'text-base font-medium text-foreground capitalize',
+                      'text-base font-semibold text-foreground capitalize',
                       isCancelled && 'line-through text-foreground-muted',
                     )}
                   >

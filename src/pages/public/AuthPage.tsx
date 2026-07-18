@@ -414,7 +414,7 @@ const AuthPage = () => {
     return (
       <AuthLayout title="" customContent>
         <div className="mb-8 space-y-2 text-center">
-          <h1 className="text-balance text-2xl font-medium text-foreground">
+          <h1 className="text-balance text-2xl font-semibold text-foreground">
             {isConfirm ? 'Bekreft e-posten din' : 'Logg inn med kode'}
           </h1>
           <p className="text-pretty text-base text-foreground-muted">
@@ -527,7 +527,7 @@ const AuthPage = () => {
           <ChevronLeft className="size-5" />
         </Button>
         <div className="mb-8 space-y-2 text-center">
-          <h1 className="text-balance text-2xl font-medium text-foreground">
+          <h1 className="text-balance text-2xl font-semibold text-foreground">
             {isSignup ? 'Lag et passord' : 'Skriv inn passordet'}
           </h1>
           {/* Echo the address so a typo is caught here — not after a
@@ -606,7 +606,7 @@ const AuthPage = () => {
   return (
     <AuthLayout title="" customContent>
       <div className="mb-8 text-center">
-        <h1 className="text-balance text-2xl font-medium text-foreground">Logg inn eller opprett konto</h1>
+        <h1 className="text-balance text-2xl font-semibold text-foreground">Logg inn eller opprett konto</h1>
       </div>
 
       <GoogleAuthButton redirectTo={callbackUrl} variant="secondary" />

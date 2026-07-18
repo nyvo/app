@@ -32,7 +32,7 @@ export const FORMAT_TABS: { key: FormatType; label: string }[] = [
 export function SectionHeader({ title, description }: { title: string; description?: string }) {
   return (
     <div className="space-y-1">
-      <h2 className="text-base font-medium text-foreground">{title}</h2>
+      <h2 className="text-base font-semibold text-foreground">{title}</h2>
       {description && <p className="text-sm text-foreground-muted">{description}</p>}
     </div>
   );

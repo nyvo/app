@@ -17,7 +17,7 @@ const PrivacyPage = () => {
 
       <main className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-2xl">
-          <h1 className="text-balance text-2xl font-medium text-foreground">Personvern</h1>
+          <h1 className="text-balance text-2xl font-semibold text-foreground">Personvern</h1>
           <p className="mt-2 text-sm text-foreground-muted">Sist oppdatert 11. juli 2026</p>
 
           <div className="mt-12 space-y-8 [&_h2]:text-balance [&_p]:text-pretty">
@@ -37,7 +37,7 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-base font-medium text-foreground">Hva vi lagrer</h2>
+              <h2 className="text-base font-semibold text-foreground">Hva vi lagrer</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Når du oppretter konto eller melder deg på et kurs, lagrer vi navn,
                 e-postadresse, telefonnummer og hvilke kurs du har meldt deg på.
@@ -59,7 +59,7 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-base font-medium text-foreground">Hvorfor vi lagrer det</h2>
+              <h2 className="text-base font-semibold text-foreground">Hvorfor vi lagrer det</h2>
               <ul className="space-y-2 text-base text-foreground-muted leading-relaxed list-disc pl-5">
                 <li>For å gi deg tilgang til kontoen din og kursene du har meldt deg på</li>
                 <li>For å sende bekreftelser, kvitteringer og påminnelser</li>
@@ -72,7 +72,7 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-base font-medium text-foreground">Hvem vi deler med</h2>
+              <h2 className="text-base font-semibold text-foreground">Hvem vi deler med</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi selger aldri data. Vi deler kun med tjenestene vi trenger for å drive
                 Raden:
@@ -88,7 +88,7 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-base font-medium text-foreground">Hvor lenge vi lagrer</h2>
+              <h2 className="text-base font-semibold text-foreground">Hvor lenge vi lagrer</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Sletter du kontoen din, sletter vi innloggingen og profilen din. Dokumentasjon
                 om påmeldinger og betalinger beholder vi bare så lenge loven krever, eller så
@@ -98,7 +98,7 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-base font-medium text-foreground">Rettighetene dine</h2>
+              <h2 className="text-base font-semibold text-foreground">Rettighetene dine</h2>
               <p className="text-base text-foreground-muted leading-relaxed">Du kan når som helst:</p>
               <ul className="space-y-2 text-base text-foreground-muted leading-relaxed list-disc pl-5">
                 <li>Slette kontoen din fra innstillingene</li>
@@ -122,7 +122,7 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-base font-medium text-foreground">Sikkerhet</h2>
+              <h2 className="text-base font-semibold text-foreground">Sikkerhet</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 All data er kryptert i bevegelse og i ro. Skulle et datainnbrudd oppstå,
                 varsler vi deg og Datatilsynet innen 72 timer, slik loven krever.
@@ -130,7 +130,7 @@ const PrivacyPage = () => {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-base font-medium text-foreground">Endringer</h2>
+              <h2 className="text-base font-semibold text-foreground">Endringer</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi kan oppdatere denne erklæringen. Større endringer varsler vi om på e-post.
               </p>
