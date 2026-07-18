@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Raden</title>
+    <title>Raden – påmelding, betaling og kursoversikt</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -22,6 +22,15 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Static fallback: the app is client-rendered, so non-JS fetchers
+         (OAuth verification, some crawlers) otherwise see an empty body. -->
+    <noscript>
+      <main style="font-family: system-ui, sans-serif; max-width: 36rem; margin: 4rem auto; padding: 0 1.5rem">
+        <h1>Raden</h1>
+        <p>Raden samler kurs, påmeldinger, betaling og deltakere på ett sted – for studioer og arrangører. Tjenesten krever JavaScript.</p>
+        <p><a href="https://raden.no/personvern">Personvern</a> · <a href="https://raden.no/terms">Vilkår</a></p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
