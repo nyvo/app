@@ -186,7 +186,7 @@ export const TeacherSidebar = () => {
         {/* Free sellers get the upsell card; Pro folds plan + billing into the
             account menu below (no standalone card → no doubled bottom cards). */}
         {isSeller && !isPro && (
-          <div className="rounded-lg bg-muted px-3 py-2.5 group-data-[collapsible=icon]:hidden">
+          <div className="rounded-3xl bg-muted px-3 py-2.5 group-data-[collapsible=icon]:hidden">
             <div className="text-sm font-medium text-sidebar-foreground">Start</div>
             <p className="mt-1 text-sm text-sidebar-foreground">
               Med Pro betaler du {formatKroner(0)} i plattformgebyr.
