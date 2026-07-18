@@ -354,14 +354,17 @@
 .lnd .cta-panel .hero-ctas { margin-top: 28px; }
 
 /* ---- Pricing (equal cards; Pro = near-black chrome, azure rejected) ---- */
-/* Billing-period toggle (Maze pricing pattern): flanking text labels + azure
-   switch (azure = "the choice" job), jade-subtle badge OUTSIDE the control
-   beside Årlig. The track stays azure in both positions — this is a
-   side-selector between two valid choices, not an on/off state. */
+/* Billing-period toggle (Maze pricing pattern): flanking text labels,
+   jade-subtle badge OUTSIDE the control beside Årlig. Standard switch
+   semantics — grey track for the monthly default, azure when yearly is
+   opted in — matching the settings-mock switch (--border → --primary)
+   and the app's checked-toggle convention. Always-azure was tried and
+   rejected 2026-07-18: filled-both-ways reads as a stuck on/off switch. */
 .lnd .price-toggle { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
 .lnd .pt-opt { border: 0; background: none; padding: 0; font: inherit; font-size: 14px; font-weight: 500; color: var(--muted-text); cursor: pointer; transition: color 150ms ease; }
 .lnd .pt-opt[data-active] { color: var(--foreground); }
-.lnd .pt-switch { position: relative; flex-shrink: 0; width: 44px; height: 26px; border: 0; border-radius: var(--r-pill); background: var(--primary); cursor: pointer; padding: 0; transition: transform 160ms var(--ease-out); }
+.lnd .pt-switch { position: relative; flex-shrink: 0; width: 44px; height: 26px; border: 0; border-radius: var(--r-pill); background: var(--border); cursor: pointer; padding: 0; transition: transform 160ms var(--ease-out), background-color 180ms ease; }
+.lnd .pt-switch[aria-checked="true"] { background: var(--primary); }
 .lnd .pt-switch:active { transform: scale(0.95); }
 .lnd .pt-knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #FFFFFF; transition: translate 180ms var(--ease-out); }
 .lnd .pt-switch[aria-checked="true"] .pt-knob { translate: 18px 0; }
