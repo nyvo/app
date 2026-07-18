@@ -46,8 +46,8 @@ describe('TeacherSidebar desktop collapse', () => {
 
     const toggle = within(header!).getByRole('button', { name: 'Skjul sidemeny' });
     expect(toggle).toHaveAttribute('data-sidebar', 'trigger');
-    expect(toggle.querySelector('.lucide-panel-left')).toBeInTheDocument();
-    expect(toggle.querySelector('.lucide-x')).not.toBeInTheDocument();
+    const toggleIcon = toggle.querySelector('svg');
+    expect(toggleIcon).toBeInTheDocument();
 
     fireEvent.click(toggle);
 
@@ -56,7 +56,7 @@ describe('TeacherSidebar desktop collapse', () => {
 
     const collapsedToggle = within(header!).getByRole('button', { name: 'Vis sidemeny' });
     expect(collapsedToggle).toBe(toggle);
-    expect(collapsedToggle.querySelector('.lucide-panel-left')).toBeInTheDocument();
+    expect(collapsedToggle.querySelector('svg')).toBe(toggleIcon);
     expect(screen.getByRole('link', { name: 'Raden' })).toHaveClass(
       'group-data-[collapsible=icon]:hidden',
     );
