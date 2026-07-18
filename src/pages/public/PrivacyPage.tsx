@@ -19,7 +19,7 @@ const PrivacyPage = () => {
       <main className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-2xl">
           <h1 className="text-balance text-2xl font-medium text-foreground">Personvern</h1>
-          <p className="mt-2 text-sm text-foreground-muted">Sist oppdatert 11. juli 2026</p>
+          <p className="mt-2 text-sm text-foreground-muted">Sist oppdatert 18. juli 2026</p>
 
           <div className="mt-12 space-y-8 [&_h2]:text-balance [&_p]:text-pretty">
             <section className="space-y-4">
@@ -56,6 +56,20 @@ const PrivacyPage = () => {
                 Vi bruker ikke informasjonskapsler til sporing eller analyse – bare de som
                 trengs for innlogging. Kurssider viser kart fra Google Maps, og Google kan
                 sette egne informasjonskapsler når kartet lastes.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-base font-medium text-foreground">Innlogging med Google</h2>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Google-innlogging er valgfri. Velger du «Fortsett med Google», mottar Raden via
+                Supabase navnet ditt, e-postadressen din og en unik Google-konto-ID. Vi bruker
+                opplysningene bare til å opprette eller finne Raden-kontoen din og logge deg inn.
+              </p>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Opplysningene brukes ikke til annonsering. Raden ber ikke om tilgang til Gmail,
+                Google Drive, Google Kalender eller Google-kontaktene dine. Du kan trekke tilbake
+                tilgangen i Google-kontoen din og slette Raden-kontoen fra innstillingene.
               </p>
             </section>
 
