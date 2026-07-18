@@ -15,9 +15,17 @@ test.describe('D1 public routes render', () => {
     const pageErrors: string[] = [];
     page.on('pageerror', (err) => pageErrors.push(err.message));
 
+    const response = await page.request.get('/');
+    const rawHomepage = await response.text();
+    expect(rawHomepage).toContain('<meta name="application-name" content="Raden"');
+    expect(rawHomepage).toContain('Raden er en norsk påmeldings- og betalingsplattform');
+
     await page.goto('/');
 
-    await expect(page.locator('h1').first()).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Raden – påmelding og betaling for kurs.' }),
+    ).toBeVisible();
+    await expect(page.getByText(/hold oversikt over deltakerne på ett sted/i)).toBeVisible();
     await expect(page.getByText('Noe gikk galt')).not.toBeVisible();
     expect(pageErrors).toEqual([]);
   });
