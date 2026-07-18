@@ -24,13 +24,13 @@ import {
 import { COMPANY } from '@/lib/company';
 import { toast } from 'sonner';
 
-const STEP_1_TITLE = 'Bekreft virksomheten';
-const STEP_2_TITLE = 'Vi kontrollerer opplysningene';
+const STEP_1_TITLE = 'Bekreft identiteten din';
+const STEP_2_TITLE = 'Vi sjekker opplysningene';
 const STEP_3_TITLE = 'Motta utbetalinger';
 
 /**
  * Payments page — a single "payout account" surface: a 3-step horizontal
- * segmented progress bar (Bekreft virksomheten → Vi kontrollerer opplysningene
+ * segmented progress bar (Bekreft identiteten din → Vi sjekker opplysningene
  * → Motta utbetalinger) with the current step's detail card below, plus a FAQ
  * accordion underneath. No status badge next to
  * the page title — progress is entirely conveyed by which step is current
@@ -355,7 +355,7 @@ const PaymentsPage = () => {
           title: STEP_2_TITLE,
           status: 'current',
           tone: 'warning',
-          statusLabel: 'Krever handling',
+          statusLabel: 'Venter på deg',
           description: 'Fyll inn det som mangler, så aktiverer vi utbetalinger.',
           action: continueButton,
         };
@@ -363,7 +363,7 @@ const PaymentsPage = () => {
         // Couldn't ask Stripe what (if anything) is missing — neutral copy
         // that neither promises "nothing to do" nor demands action, with the
         // button as an escape hatch.
-        h2 = 'Vi kontrollerer opplysningene';
+        h2 = 'Vi sjekker opplysningene';
         step2 = {
           title: STEP_2_TITLE,
           status: 'current',
@@ -374,13 +374,13 @@ const PaymentsPage = () => {
         // Nothing due (or the check is still loading): Stripe is verifying —
         // per their docs "no action needed", so no CTA to a form with nothing
         // to fill in. The webhook flips the status when verification lands.
-        h2 = 'Vi kontrollerer opplysningene';
+        h2 = 'Vi sjekker opplysningene';
         step2 = {
           title: STEP_2_TITLE,
           status: 'current',
           tone: 'info',
           statusLabel: 'Pågår',
-          description: 'Stripe kontrollerer opplysningene dine. Du trenger ikke gjøre noe nå.',
+          description: 'Stripe sjekker opplysningene dine. Du trenger ikke gjøre noe nå.',
         };
       }
       steps = [{ title: STEP_1_TITLE, status: 'done' }, step2, { title: STEP_3_TITLE, status: 'upcoming' }];
@@ -393,7 +393,7 @@ const PaymentsPage = () => {
         {
           title: STEP_1_TITLE,
           status: 'current',
-          statusLabel: 'Påbegynt',
+          statusLabel: 'Startet',
           description: 'Du er ikke helt ferdig hos Stripe. Fortsett der du slapp.',
           action: continueButton,
         },
@@ -415,7 +415,7 @@ const PaymentsPage = () => {
         title: STEP_3_TITLE,
         status: 'current',
         tone: 'warning',
-        statusLabel: 'Krever handling',
+        statusLabel: 'Venter på deg',
         description: 'Kortbetalinger virker, men Stripe trenger noe mer før pengene kan overføres til deg.',
         action: <Button onClick={handleOpenStripeDashboard}>Åpne Stripe</Button>,
       },

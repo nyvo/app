@@ -20,8 +20,8 @@ import { DevPage, PreviewSection } from './_kit';
  * reviewed without a real Stripe Connect account.
  */
 
-const STEP_1_TITLE = 'Bekreft virksomheten';
-const STEP_2_TITLE = 'Vi kontrollerer opplysningene';
+const STEP_1_TITLE = 'Bekreft identiteten din';
+const STEP_2_TITLE = 'Vi sjekker opplysningene';
 const STEP_3_TITLE = 'Motta utbetalinger';
 
 function noop() {
@@ -51,14 +51,14 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
     id: 'pending',
     label: '2 — Påbegynt, ikke fullført',
     description:
-      'Selgeren forlot Stripe-skjemaet før alt var sendt inn (details_submitted = false). Ingenting er til kontroll, så steg 1 står fortsatt som deres — aldri «vi kontrollerer».',
+      'Selgeren forlot Stripe-skjemaet før alt var sendt inn (details_submitted = false). Ingenting er til sjekk, så steg 1 står fortsatt som deres — aldri «vi sjekker».',
     viewModel: {
       h2: 'Fullfør oppsettet',
       steps: [
         {
           title: STEP_1_TITLE,
           status: 'current',
-          statusLabel: 'Påbegynt',
+          statusLabel: 'Startet',
           description: 'Du er ikke helt ferdig hos Stripe. Fortsett der du slapp.',
           action: <Button onClick={noop}>Fortsett oppsettet</Button>,
         },
@@ -71,9 +71,9 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
     id: 'restricted-verifying',
     label: '3 — Under kontroll',
     description:
-      'restricted med tom requirements_due — alt er sendt inn og Stripe kontrollerer. Ingen handling kreves, derfor ingen knapp.',
+      'restricted med tom requirements_due — alt er sendt inn og Stripe sjekker. Ingen handling kreves, derfor ingen knapp.',
     viewModel: {
-      h2: 'Vi kontrollerer opplysningene',
+      h2: 'Vi sjekker opplysningene',
       steps: [
         { title: STEP_1_TITLE, status: 'done' },
         {
@@ -81,7 +81,7 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
           status: 'current',
           tone: 'info',
           statusLabel: 'Pågår',
-          description: 'Stripe kontrollerer opplysningene dine. Du trenger ikke gjøre noe nå.',
+          description: 'Stripe sjekker opplysningene dine. Du trenger ikke gjøre noe nå.',
         },
         { title: STEP_3_TITLE, status: 'upcoming' },
       ],
@@ -99,7 +99,7 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
           title: STEP_2_TITLE,
           status: 'current',
           tone: 'warning',
-          statusLabel: 'Krever handling',
+          statusLabel: 'Venter på deg',
           description: 'Fyll inn det som mangler, så aktiverer vi utbetalinger.',
           action: <Button onClick={noop}>Fortsett oppsettet</Button>,
         },
@@ -113,7 +113,7 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
     description:
       'restricted, men requirements-sjekken mot Stripe feilet — nøytral tekst som verken lover «ingenting å gjøre» eller krever handling, med knappen som fluktrute.',
     viewModel: {
-      h2: 'Vi kontrollerer opplysningene',
+      h2: 'Vi sjekker opplysningene',
       steps: [
         { title: STEP_1_TITLE, status: 'done' },
         {
@@ -165,7 +165,7 @@ const BLOCKED_VIEW_MODEL: PayoutSetupViewModel = {
       title: STEP_3_TITLE,
       status: 'current',
       tone: 'warning',
-      statusLabel: 'Krever handling',
+      statusLabel: 'Venter på deg',
       description: 'Kortbetalinger virker, men Stripe trenger noe mer før pengene kan overføres til deg.',
       action: <Button onClick={noop}>Åpne Stripe</Button>,
     },

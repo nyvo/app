@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 
 /**
  * Presentational progress tracker for the payouts settings page — a 3-step
- * "Bekreft virksomheten → Vi kontrollerer opplysningene → Motta utbetalinger"
+ * "Bekreft identiteten din → Vi sjekker opplysningene → Motta utbetalinger"
  * horizontal segmented bar. Pure view-model in, JSX out, so the real page
  * (auth + Stripe wiring) and the auth-free dev preview can share one
  * rendering without duplicating markup.
@@ -26,11 +27,13 @@ export interface PayoutStepViewModel {
   /** Only meaningful when status === 'current'; tones the bar segment + status sub-label. */
   tone?: StepTone;
   /**
-   * One-word state under the current step's title («Pågår», «Krever handling»,
+   * Short state under the current step's title («Pågår», «Venter på deg»,
    * «Avslått») — the tracker's visible status, adopted from Mercury's
    * application timeline / Airwallex's verification stepper (every step
-   * carries its state in words — colour never stands alone). Done steps
-   * auto-label «Fullført».
+   * carries its state in words — colour never stands alone). Rendered as a
+   * subtle-tint Badge pill, never bare coloured text. Done steps drop the
+   * word: the bright bar + the circled check after the title carry it (with
+   * a sr-only «Fullført» for screen readers).
    */
   statusLabel?: string;
   /** Only rendered on the current step. */
@@ -44,43 +47,64 @@ export interface PayoutSetupViewModel {
   steps: PayoutStepViewModel[];
 }
 
-// Solid thin bars, same treatment as the old rail's solid-jade travelled
-// line — a line of colour, not a saturated fill behind a glyph, so the
-// "status = light tint" rule doesn't apply. Neutral current is ink («your
-// move», not a status), upcoming is the empty grey track.
+// Solid thin bars — a line of colour, not a saturated fill behind a glyph,
+// so the "status = light tint" rule doesn't apply. Done uses the bright
+// marker green (--success-bright is for exactly this scale — TimelineEntry's
+// next-dot uses it too), never the jade text ink as a fill. Neutral current
+// is ink («your move», not a status), upcoming is the empty grey track.
 const toneBarClass: Record<'info' | 'warning' | 'danger' | 'success', string> = {
   info: 'bg-info',
   warning: 'bg-warning',
   danger: 'bg-danger',
-  success: 'bg-success',
+  success: 'bg-success-bright',
 };
 
 function stepBarClass({ status, tone }: Pick<PayoutStepViewModel, 'status' | 'tone'>): string {
-  if (status === 'done') return 'bg-success';
+  if (status === 'done') return 'bg-success-bright';
   if (status === 'current') {
     return tone && tone !== 'neutral' ? toneBarClass[tone] : 'bg-foreground';
   }
   return 'bg-muted';
 }
 
-// The sub-label's ink matches the bar (amber bar + amber word) so segment +
-// word read as one status unit; neutral states stay muted.
-const toneLabelClass: Record<'info' | 'warning' | 'danger' | 'success', string> = {
-  info: 'text-info',
-  warning: 'text-warning',
-  danger: 'text-danger',
-  success: 'text-success',
+// Coloured status text never renders bare — it sits in the shared Badge
+// pill (subtle tint + tone ink), same object as every other status chip.
+const toneBadgeVariant: Record<'info' | 'warning' | 'danger' | 'success', 'info' | 'warning' | 'destructive' | 'success'> = {
+  info: 'info',
+  warning: 'warning',
+  danger: 'destructive',
+  success: 'success',
 };
 
 function StepStatusLabel({ status, tone, statusLabel }: Pick<PayoutStepViewModel, 'status' | 'tone' | 'statusLabel'>) {
-  // Done steps always read «Fullført» — the state in words, not just colour
-  // (Mercury/Airwallex label every resolved step).
-  if (status === 'done') {
-    return <p className="mt-0.5 text-xs text-foreground-muted">Fullført</p>;
-  }
   if (status !== 'current' || !statusLabel) return null;
-  const ink = tone && tone !== 'neutral' ? toneLabelClass[tone] : 'text-foreground-muted';
-  return <p className={`mt-0.5 text-xs ${ink}`}>{statusLabel}</p>;
+  const variant = tone && tone !== 'neutral' ? toneBadgeVariant[tone] : 'neutral';
+  return (
+    <Badge variant={variant} size="xs" className="mt-1.5">
+      {statusLabel}
+    </Badge>
+  );
+}
+
+// Hand-drawn 10px check (not lucide: at this size the app's 1.75 stroke
+// renders thin and mushy — the heavier 1.8 stroke is tuned for it). Sits in
+// a subtle-tint circle after done step titles, replacing a written
+// «Fullført» — bar + check say it; sr-only text keeps it audible.
+function DoneCheck() {
+  return (
+    <span className="inline-flex size-[18px] shrink-0 items-center justify-center rounded-full bg-success-subtle text-success">
+      <svg viewBox="0 0 12 12" width="10" height="10" fill="none" aria-hidden="true">
+        <path
+          d="M2.5 6.5L5 9l4.5-6"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <span className="sr-only">Fullført</span>
+    </span>
+  );
 }
 
 export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel }) {
@@ -100,12 +124,15 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
               aria-hidden="true"
               className={`block h-1 w-full rounded-full transition-colors duration-200 ${stepBarClass(step)}`}
             />
+            {/* Non-active titles stay on the secondary text tier
+                (foreground-muted); only the current step is full ink. */}
             <p
-              className={`mt-2.5 text-sm leading-snug ${
+              className={`mt-2.5 flex items-center gap-1.5 text-sm leading-snug ${
                 step.status === 'current' ? 'font-medium text-foreground' : 'font-normal text-foreground-muted'
               }`}
             >
               {step.title}
+              {step.status === 'done' && <DoneCheck />}
             </p>
             <StepStatusLabel status={step.status} tone={step.tone} statusLabel={step.statusLabel} />
           </li>
