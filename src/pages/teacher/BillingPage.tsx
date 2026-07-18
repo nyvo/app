@@ -1,18 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Check, ExternalLink } from '@/lib/icons'
+import { ExternalLink } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { PageShell } from '@/components/teacher/PageShell'
-import { SegmentedTabs } from '@/components/teacher/SegmentedTabs'
 import { ErrorState } from '@/components/ui/error-state'
+import { Spinner } from '@/components/ui/spinner'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatKroner } from '@/lib/utils'
 import { createStripeCheckoutSession, createStripePortalSession } from '@/services/billing'
 import { toast } from 'sonner'
+import '@/styles/plan-cards.css'
 
 type SubscriptionPlan = string | null | undefined
 type SubscriptionStatus = string | null | undefined
@@ -44,25 +43,9 @@ function formatBillingDate(value: string): string {
   }).format(new Date(value))
 }
 
-const START_FEATURES = [
-  'Påmeldinger og kurslenker',
-  'Kortbetaling ved påmelding',
-  'Automatiske utbetalinger',
-  '5 % plattformgebyr per betaling',
-] as const
-
-const PRO_FEATURES = [
-  'Alt i Start',
-  '0 % plattformgebyr',
-  'Månedlig eller årlig betaling',
-] as const
-
 // Yearly Pro — 4 990 kr vs 12 × 499 kr = 5 988 kr: the 998 kr difference is
-// exactly two monthly payments, so the card nudge says "2 måneder gratis".
-const PRO_YEARLY = {
-  price: formatKroner(4990),
-  priceSub: '/år',
-} as const
+// exactly two monthly payments, so the toggle badge says "2 måneder gratis".
+const PRO_YEARLY = { price: formatKroner(4990) } as const
 
 const BillingPage = () => {
   const { currentSeller, refreshSellers, currentSellerHydrateFailed } = useAuth()
@@ -244,8 +227,8 @@ export function BillingPlanSections({
 }: {
   plan: SubscriptionPlan
   status?: SubscriptionStatus
-  /** When set, free sellers get a Månedlig/Årlig toggle on the Pro card. */
-  yearly?: { price: string; priceSub: string }
+  /** When set, free sellers get the Månedlig/Årlig toggle above the cards. */
+  yearly?: { price: string }
   onUpgrade: (interval: 'month' | 'year') => void
   onManage?: () => void
   checkoutLoading: boolean
@@ -256,72 +239,90 @@ export function BillingPlanSections({
 
   const [interval, setInterval] = useState<'month' | 'year'>('month')
   const showInterval = !!yearly && !isPro
-  const proPrice = showInterval && interval === 'year' ? yearly.price : formatKroner(499)
-  const proPriceSub = showInterval && interval === 'year' ? yearly.priceSub : '/mnd'
+  const yearlySelected = showInterval && interval === 'year'
 
-  // Every card carries a button: the active plan states itself (disabled
-  // "Nåværende plan"), the other plan is the up-/downgrade action. Downgrade
-  // goes through the Stripe portal (cancel at period end) — same as Administrer.
-  const startOption = (
-    <PlanOption
-      name="Start"
-      price="Gratis"
-      description="Alt du trenger for å ta imot påmeldinger og betaling."
-      features={START_FEATURES}
-      active={!isPro}
-      action={
-        isPro ? (
-          <Button
-            type="button"
-            variant="secondary"
-            className="w-full"
-            onClick={onManage}
-            loading={portalLoading}
-            loadingText="Åpner"
-          >
+  // Same cards as the landing pricing section (src/styles/plan-cards.css):
+  // white Start card + chrome featured Pro card, one shared structural
+  // rhythm so dividers and check rows align. Every card carries a button —
+  // the active plan states itself (disabled "Nåværende plan"), the other
+  // plan is the up-/downgrade action. Downgrade goes through the Stripe
+  // portal (cancel at period end) — same as Administrer.
+  const cards = (
+    <div className="pricing-grid">
+      <article className="plan plan-white">
+        <h3 className="plan-name">Start</h3>
+        <p className="plan-price">Gratis</p>
+        <p className="plan-desc">{`Du betaler 5${NBSP}% plattformgebyr per salg.`}</p>
+        <ul className="plan-list">
+          <li>
+            <PlanCheck />
+            Ubegrenset antall kurs og deltakere
+          </li>
+          <li>
+            <PlanCheck />
+            Kortbetaling og automatiske utbetalinger
+          </li>
+          <li>
+            <PlanCheck />
+            Egen studioside
+          </li>
+        </ul>
+        {isPro ? (
+          <PlanCta variant="chrome" onClick={onManage} loading={portalLoading}>
             Bytt til Start
-          </Button>
+          </PlanCta>
         ) : (
           <CurrentPlanButton />
-        )
-      }
-    />
-  )
-  const proOption = (
-    <PlanOption
-      name="Pro"
-      price={proPrice}
-      priceSub={proPriceSub}
-      description="Behold hele kursprisen – uansett hvor mye du selger."
-      features={PRO_FEATURES}
-      active={isPro}
-      action={
-        isPro ? (
+        )}
+      </article>
+
+      <article className="plan plan-featured">
+        <h3 className="plan-name">
+          Pro {!isPro && <span className="plan-tag">Anbefalt</span>}
+        </h3>
+        <p className="plan-price">
+          {yearlySelected && yearly ? yearly.price : formatKroner(499)}
+          <small>{yearlySelected ? ' / år eks. mva.' : ' / mnd eks. mva.'}</small>
+        </p>
+        <p className="plan-desc">
+          {yearlySelected
+            ? 'Fast årspris – ingen plattformgebyr.'
+            : 'Fast månedspris – ingen plattformgebyr.'}
+        </p>
+        <ul className="plan-list">
+          <li>
+            <PlanCheck />
+            Alt i Start
+          </li>
+          <li>
+            <PlanCheck />
+            {`0${NBSP}% plattformgebyr`}
+          </li>
+          <li>
+            <PlanCheck />
+            Ingen bindingstid
+          </li>
+        </ul>
+        <p className="plan-note">
+          Selger du for mer enn {formatKroner(10000)} i måneden, lønner Pro seg.
+        </p>
+        {isPro ? (
           <CurrentPlanButton />
         ) : (
-          <Button
-            type="button"
-            className="w-full"
+          <PlanCta
+            variant="white"
             onClick={() => onUpgrade(showInterval ? interval : 'month')}
             loading={checkoutLoading}
-            loadingText="Åpner"
           >
-            Oppgrader til Pro
-          </Button>
-        )
-      }
-    />
-  )
-
-  const cards = (
-    <div className="grid gap-6 md:grid-cols-2">
-      {startOption}
-      {proOption}
+            Velg Pro
+          </PlanCta>
+        )}
+      </article>
     </div>
   )
 
   return (
-    <div className="space-y-8">
+    <div className="plan-cards space-y-8">
       {isPastDue && onManage && (
         <Alert variant="info">
           <AlertTitle>Betalingen gikk ikke gjennom</AlertTitle>
@@ -351,25 +352,37 @@ export function BillingPlanSections({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-medium text-foreground">Velg plan</h2>
             {showInterval && (
-              // The yearly nudge sits right beside the toggle's Årlig segment
-              // and is always visible (Maze/Cycle pricing-toggle pattern:
-              // "Annual billing [25% OFF]") — the incentive to flip the
-              // toggle must be readable BEFORE the toggle is flipped.
-              <div className="flex items-center gap-2.5">
-                <SegmentedTabs<'month' | 'year'>
-                  value={interval}
-                  onChange={setInterval}
-                  tabs={[
-                    { key: 'month', label: 'Månedlig' },
-                    { key: 'year', label: 'Årlig' },
-                  ]}
-                  ariaLabel="Betalingsintervall"
-                  size="md"
-                  role="radiogroup"
-                />
-                <Badge variant="success" size="sm">
-                  2 måneder gratis
-                </Badge>
+              // Same toggle as the landing pricing section: flanking labels,
+              // grey track on the monthly default, azure when yearly is on,
+              // the incentive badge OUTSIDE the control beside Årlig.
+              <div className="price-toggle">
+                <button
+                  type="button"
+                  className="pt-opt"
+                  data-active={interval === 'month' ? '' : undefined}
+                  onClick={() => setInterval('month')}
+                >
+                  Månedlig
+                </button>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={interval === 'year'}
+                  aria-label="Årlig betaling"
+                  className="pt-switch"
+                  onClick={() => setInterval((v) => (v === 'year' ? 'month' : 'year'))}
+                >
+                  <span className="pt-knob" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="pt-opt"
+                  data-active={interval === 'year' ? '' : undefined}
+                  onClick={() => setInterval('year')}
+                >
+                  Årlig
+                </button>
+                <span className="pt-save">2 måneder gratis</span>
               </div>
             )}
           </div>
@@ -380,79 +393,57 @@ export function BillingPlanSections({
   )
 }
 
-/** The active plan's self-describing, non-interactive slot. Rendered identically
- *  on whichever card is the current plan — a disabled, muted `secondary` — so
- *  "Nåværende plan" reads the same on both cards (the state is consistent, per
- *  Qatalog/Linktree/Kajabi pricing pages) and the filled emphasis is reserved
- *  for the real action (Oppgrader til Pro / Bytt til Start). */
-function CurrentPlanButton() {
+const NBSP = ' '
+
+function PlanCheck() {
   return (
-    <Button
-      type="button"
-      variant="secondary"
-      className="w-full disabled:text-foreground-muted"
-      disabled
-    >
-      Nåværende plan
-    </Button>
+    <span className="check" aria-hidden="true">
+      <svg viewBox="0 0 12 12" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 6.5l2.6 2.6L10 3.5" />
+      </svg>
+    </span>
   )
 }
 
-function PlanOption({
-  name,
-  price,
-  priceSub,
-  description,
-  features,
-  active,
-  action,
+/** Card CTA in the shared plan-card style, with the dashboard loading state. */
+function PlanCta({
+  variant,
+  onClick,
+  loading,
+  children,
 }: {
-  name: string
-  price: string
-  priceSub?: string
-  description: string
-  features: readonly string[]
-  active: boolean
-  action?: ReactNode
+  variant: 'chrome' | 'white'
+  onClick?: () => void
+  loading?: boolean
+  children: ReactNode
 }) {
   return (
-    // rounded-2xl + a step more padding than the stock Card: the plan cards
-    // are the page's focal surfaces, so they get the product-frame radius.
-    // Outlined (white surface + border) rather than the stock panel fill, so
-    // the filled secondary/primary buttons inside separate cleanly from the
-    // card instead of blending into a grey fill.
-    <Card className="h-full rounded-2xl border border-border bg-surface py-7">
-      <CardContent className="flex h-full flex-col gap-5 px-7">
-        <div>
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-base font-medium text-foreground">{name}</h3>
-            {active && (
-              <Badge variant="inverted" size="sm">
-                Aktiv plan
-              </Badge>
-            )}
-          </div>
-          <div className="mt-3 flex items-baseline gap-1.5">
-            <span className="whitespace-nowrap text-2xl font-medium tabular-nums text-foreground">
-              {price}
-            </span>
-            {priceSub && <span className="text-sm text-foreground-muted">{priceSub}</span>}
-          </div>
-          <p className="mt-2 text-sm text-foreground-muted">{description}</p>
-        </div>
+    <button
+      type="button"
+      className={variant === 'white' ? 'pc-btn pc-btn-white' : 'pc-btn pc-btn-chrome'}
+      onClick={onClick}
+      disabled={loading}
+    >
+      {loading ? (
+        <>
+          <Spinner className="size-4" />
+          Åpner
+        </>
+      ) : (
+        children
+      )}
+    </button>
+  )
+}
 
-        <ul className="space-y-2.5 text-sm font-medium text-foreground">
-          {features.map((feature) => (
-            <li key={feature} className="flex gap-2.5">
-              <Check className="mt-0.5 size-4 shrink-0 text-foreground" strokeWidth={2} aria-hidden />
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
-
-        {action && <div className="mt-auto">{action}</div>}
-      </CardContent>
-    </Card>
+/** The active plan states itself: disabled and muted, rendered identically on
+ *  whichever card is current, so the filled emphasis is reserved for the real
+ *  action (Velg Pro / Bytt til Start). */
+function CurrentPlanButton() {
+  return (
+    <button type="button" className="pc-btn pc-btn-current" disabled>
+      Nåværende plan
+    </button>
   )
 }
 
