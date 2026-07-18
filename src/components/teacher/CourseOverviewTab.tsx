@@ -211,7 +211,7 @@ export function CourseOverviewTab({
 
 /** Shared section heading — one style opens every zone in both columns. */
 function SectionHeading({ children }: { children: string }) {
-  return <h2 className="mb-3 text-sm font-semibold text-foreground">{children}</h2>;
+  return <h2 className="mb-3 text-sm font-medium text-foreground">{children}</h2>;
 }
 
 // ─── KPI spine (Nøkkeltall) ───────────────────────────────────────────────

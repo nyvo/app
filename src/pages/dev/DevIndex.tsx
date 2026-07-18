@@ -77,7 +77,7 @@ export default function DevIndex() {
     <div className="min-h-screen bg-background">
       <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6">
         <header className="mb-10 space-y-2">
-          <h1 className="text-2xl font-semibold text-foreground">Previews</h1>
+          <h1 className="text-2xl font-medium text-foreground">Previews</h1>
           <p className="max-w-2xl text-sm text-foreground-muted">
             {total} previews av ekte komponenter i sine standard-, tomme, feil- og lastetilstander.
             Kun live kode — ingen mockups. Bare synlig i utviklingsbygg.
@@ -87,7 +87,7 @@ export default function DevIndex() {
         <div className="space-y-10">
           {GROUPS.map((group) => (
             <section key={group.title} className="space-y-3">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-foreground-muted">
+              <h2 className="text-xs font-medium uppercase tracking-wide text-foreground-muted">
                 {group.title}
               </h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

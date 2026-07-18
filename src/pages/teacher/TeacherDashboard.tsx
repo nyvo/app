@@ -326,8 +326,7 @@ function IncomeChartFallback() {
     <FramedCard title="Inntekt">
       <FramedCardPanel className="px-4 py-5 sm:py-6">
         <div className="flex items-center justify-between gap-3">
-          {/* h-8 ≈ the text-3xl total's 33px line box (tightened 2026-07-18) */}
-          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-9 w-40" />
           <Skeleton className="h-9 w-44 rounded-xl" />
         </div>
         <Skeleton className="mt-6 h-[220px] w-full rounded-lg sm:h-[260px]" />
@@ -380,7 +379,7 @@ export function UpcomingCoursesSection({
 
   return (
     <section className="lg:pr-10">
-      <h2 className="text-lg font-semibold text-foreground">Neste kurs</h2>
+      <h2 className="text-lg font-medium text-foreground">Neste kurs</h2>
       <div className="mt-3">
         {showSkeleton ? (
           <DelayedFallback>
@@ -452,7 +451,7 @@ export function RecentSignupsSection({
     // Root carries the between-sections divider (top hairline stacked, left
     // hairline on lg) so the dev preview reuses the real layout and can't drift.
     <section className="border-t border-border-subtle pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
-      <h2 className="text-lg font-semibold text-foreground">Siste påmeldinger</h2>
+      <h2 className="text-lg font-medium text-foreground">Siste påmeldinger</h2>
       <div className="mt-3">
         {showSkeleton ? (
           <DelayedFallback>

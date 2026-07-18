@@ -41,7 +41,7 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
           <LogoTile organization={organization} />
         </div>
 
-        <h1 className="mt-4 text-2xl font-semibold text-foreground">
+        <h1 className="mt-4 text-2xl font-medium text-foreground">
           {organization.name}
         </h1>
 

@@ -41,5 +41,11 @@ export default defineConfig({
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.PW_PORT,
     timeout: 30_000,
+    // The /dev/* preview routes the visual suite snapshots are gated off by
+    // default (src/lib/devPreviews.ts) — without this flag every preview
+    // renders the 404 page and the suite silently snapshots that instead
+    // (this actually happened: the "12 pre-existing failures" era, and PR
+    // #179's all-identical 14.8 kB baselines).
+    env: { VITE_DEV_PREVIEWS: 'true' },
   },
 });

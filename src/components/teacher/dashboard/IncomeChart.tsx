@@ -216,7 +216,7 @@ export function IncomeChart({
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             {isLoading ? (
-              <Skeleton className="h-8 w-40" />
+              <Skeleton className="h-9 w-40" />
             ) : (
               <span className="text-3xl font-medium text-foreground tabular-nums">
                 {formatKroner(total)}

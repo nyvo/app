@@ -206,7 +206,7 @@ function ConfirmContent({
         {/* Without middle content the header would abut the footer — drop the
             header's border so the seam is a single hairline, not two. */}
         <DrawerHeader className={cn(!middleContent && "border-b-0")}>
-          <DrawerTitle className="text-lg font-semibold text-foreground">
+          <DrawerTitle className="text-lg font-medium text-foreground">
             {title}
           </DrawerTitle>
           {bodyText}
@@ -227,7 +227,7 @@ function ConfirmContent({
   return (
     <>
       <div>
-        <AlertDialogTitle className="mb-2 text-lg font-semibold text-foreground">
+        <AlertDialogTitle className="mb-2 text-lg font-medium text-foreground">
           {title}
         </AlertDialogTitle>
         {bodyText}

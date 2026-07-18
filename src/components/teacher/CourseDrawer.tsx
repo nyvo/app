@@ -448,7 +448,7 @@ function ViewMode({
         {/* Påmeldte — the operational concern */}
         <section className="px-6 py-6 border-b border-border">
           <div className="mb-3 flex items-baseline justify-between gap-3">
-            <h3 className="text-base font-semibold text-foreground">Påmeldte</h3>
+            <h3 className="text-base font-medium text-foreground">Påmeldte</h3>
             <ParticipantCount
               loading={participantsLoading}
               error={participantsError}
@@ -466,7 +466,7 @@ function ViewMode({
         {/* Sessions — only when multi-day. Read-only here; editing on /courses/:id. */}
         {isMultiDay && (
           <section className="px-6 py-6">
-            <h3 className="text-base font-semibold text-foreground mb-3">
+            <h3 className="text-base font-medium text-foreground mb-3">
               Timer ({sessions.length})
             </h3>
             <div className="space-y-1">
@@ -634,7 +634,7 @@ function ScheduleQuickView({
           {/* Heading + count as an aligned pair (schedule-card grammar):
               the word carries hierarchy, the number reads as a datum. */}
           <div className="mb-3 flex items-baseline justify-between gap-3">
-            <h3 className="text-base font-semibold text-foreground">Påmeldte</h3>
+            <h3 className="text-base font-medium text-foreground">Påmeldte</h3>
             <ParticipantCount
               loading={participantsLoading}
               error={participantsError}
