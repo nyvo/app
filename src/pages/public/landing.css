@@ -354,14 +354,17 @@
 .lnd .cta-panel .hero-ctas { margin-top: 28px; }
 
 /* ---- Pricing (equal cards; Pro = near-black chrome, azure rejected) ---- */
-/* Billing-period toggle (Maze pricing pattern): flanking text labels + azure
-   switch (azure = "the choice" job), jade-subtle badge OUTSIDE the control
-   beside Årlig. The track stays azure in both positions — this is a
-   side-selector between two valid choices, not an on/off state. */
+/* Billing-period toggle (Maze pricing pattern): flanking text labels,
+   jade-subtle badge OUTSIDE the control beside Årlig. Standard switch
+   semantics — grey track for the monthly default, azure when yearly is
+   opted in — matching the settings-mock switch (--border → --primary)
+   and the app's checked-toggle convention. Always-azure was tried and
+   rejected 2026-07-18: filled-both-ways reads as a stuck on/off switch. */
 .lnd .price-toggle { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
 .lnd .pt-opt { border: 0; background: none; padding: 0; font: inherit; font-size: 14px; font-weight: 500; color: var(--muted-text); cursor: pointer; transition: color 150ms ease; }
 .lnd .pt-opt[data-active] { color: var(--foreground); }
-.lnd .pt-switch { position: relative; flex-shrink: 0; width: 44px; height: 26px; border: 0; border-radius: var(--r-pill); background: var(--primary); cursor: pointer; padding: 0; transition: transform 160ms var(--ease-out); }
+.lnd .pt-switch { position: relative; flex-shrink: 0; width: 44px; height: 26px; border: 0; border-radius: var(--r-pill); background: var(--border); cursor: pointer; padding: 0; transition: transform 160ms var(--ease-out), background-color 180ms ease; }
+.lnd .pt-switch[aria-checked="true"] { background: var(--primary); }
 .lnd .pt-switch:active { transform: scale(0.95); }
 .lnd .pt-knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #FFFFFF; transition: translate 180ms var(--ease-out); }
 .lnd .pt-switch[aria-checked="true"] .pt-knob { translate: 18px 0; }
@@ -374,7 +377,7 @@
    Radial top highlight + 1px white border + inset edge + grain — all sub-perceptual. */
 .lnd .plan-featured {
   position: relative;
-  padding: 44px 40px 32px;
+  padding: 32px;
   background:
     radial-gradient(120% 90% at 50% -10%, oklch(1 0 0 / 0.07), transparent 62%),
     oklch(0.232 0.006 270);
@@ -394,18 +397,18 @@
   opacity: 0.018;
   pointer-events: none;
 }
-.lnd .plan-name { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 15px; font-weight: 600; }
+.lnd .plan-name { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 28px; font-size: 15px; font-weight: 600; }
 .lnd .plan-tag { font-size: 11.5px; font-weight: 500; letter-spacing: 0.01em; background: oklch(1 0 0 / 0.09); border: 1px solid oklch(1 0 0 / 0.14); border-radius: var(--r-pill); padding: 4px 12px; }
-.lnd .plan-price { margin-top: 14px; font-size: 38px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
-.lnd .plan-featured .plan-price { margin-top: 18px; font-size: 44px; letter-spacing: -0.035em; }
-.lnd .plan-price small { font-size: 14px; font-weight: 400; letter-spacing: 0; }
+.lnd .plan-price { margin-top: 14px; font-size: 38px; font-weight: 600; letter-spacing: -0.03em; line-height: 44px; font-variant-numeric: tabular-nums; }
+.lnd .plan-featured .plan-price { font-size: 44px; letter-spacing: -0.035em; }
+.lnd .plan-price small { font-size: 14px; font-weight: 400; letter-spacing: 0; line-height: 1; }
 .lnd .plan-white .plan-price small { color: var(--muted-text); }
 .lnd .plan-featured .plan-price small { color: oklch(1 0 0 / 0.60); }
 .lnd .plan-desc { margin-top: 10px; font-size: 14px; }
 .lnd .plan-white .plan-desc { color: var(--muted-text); }
-.lnd .plan-featured .plan-desc { margin-top: 12px; color: oklch(1 0 0 / 0.70); }
+.lnd .plan-featured .plan-desc { color: oklch(1 0 0 / 0.70); }
 .lnd .plan-list { list-style: none; margin: 24px 0 28px; padding: 24px 0 0; border-top: 1px solid var(--border-subtle); flex-grow: 1; display: flex; flex-direction: column; gap: 12px; font-size: 14px; }
-.lnd .plan-featured .plan-list { margin: 28px 0 20px; padding-top: 28px; gap: 14px; border-top-color: oklch(1 0 0 / 0.10); color: oklch(1 0 0 / 0.88); }
+.lnd .plan-featured .plan-list { margin: 24px 0 20px; padding-top: 24px; border-top-color: oklch(1 0 0 / 0.10); color: oklch(1 0 0 / 0.88); }
 .lnd .plan-note {
   margin: 0 0 24px; padding: 12px 16px;
   border-radius: 14px;
