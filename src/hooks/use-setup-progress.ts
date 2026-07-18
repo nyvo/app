@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { CreditCard, BookOpen, Image, User } from '@/lib/icons'
-import type { LucideIcon } from '@/lib/icons'
+import type { IconComponent } from '@/lib/icons'
 import type { Seller } from '@/types/database'
 import { routes } from '@/lib/routes'
 
@@ -12,7 +12,7 @@ export interface SetupStep {
   actionLabel: string
   actionHref?: string
   actionOnClick?: () => void
-  icon: LucideIcon
+  icon: IconComponent
   timeEstimate?: string
   /** Polish step — shown on the checklist but not counted in the progress bar. */
   optional?: boolean

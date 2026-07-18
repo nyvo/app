@@ -1,6 +1,6 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { Info, CheckCircle2, AlertTriangle, AlertCircle } from "lucide-react"
+import { Info, CheckCircle2, AlertTriangle, AlertCircle } from "@/lib/icons"
 
 import { cn } from "@/lib/utils"
 

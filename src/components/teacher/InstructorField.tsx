@@ -11,7 +11,7 @@ import {
   createInstructor, deleteInstructor, fetchInstructors, renameInstructor,
 } from '@/services/instructors';
 import type { Instructor } from '@/types/database';
-import { Plus, Settings2 } from 'lucide-react';
+import { Plus, Settings2 } from '@/lib/icons';
 import { toast } from 'sonner';
 
 export interface InstructorRef { id: string; name: string }

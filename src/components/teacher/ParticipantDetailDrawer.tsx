@@ -21,7 +21,7 @@ import {
   Undo2,
   UserCheck,
   UserMinus,
-  type LucideIcon,
+  type IconComponent,
 } from '@/lib/icons';
 import type { SignupWithProfile } from '@/services/signups';
 import type { PaymentStatus, SignupStatus, TicketAudience } from '@/types/database';
@@ -94,7 +94,7 @@ function ticketLabel(
 type ActivityTone = 'success' | 'danger' | 'warning' | 'neutral';
 
 type ActivityEvent = {
-  icon: LucideIcon;
+  icon: IconComponent;
   tone: ActivityTone;
   label: string;
   timestamp: string;
