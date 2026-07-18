@@ -127,6 +127,22 @@
 .plan-cards .plan-white .check svg { stroke: var(--pc-primary); }
 .plan-cards .plan-featured .check svg { stroke: oklch(1 0 0 / 0.95); }
 
+/* ---- Compact variant (dashboard billing). The marketing card sits under a
+   24px page title in-product, so the type steps down one notch to respect
+   the page's hierarchy — a 44px price must not outshout the H1. Structure,
+   surfaces, toggle and alignment rhythm are identical: both cards share
+   the same padding, name-row height and price line box, so dividers and
+   check rows still land on the same y. ---- */
+.plan-cards.plan-cards--compact .plan { padding: 24px; border-radius: 20px; }
+.plan-cards.plan-cards--compact .plan-name { min-height: 26px; font-size: 14px; }
+.plan-cards.plan-cards--compact .plan-tag { padding: 3px 10px; }
+.plan-cards.plan-cards--compact .plan-price { margin-top: 10px; font-size: 26px; line-height: 34px; }
+.plan-cards.plan-cards--compact .plan-featured .plan-price { font-size: 30px; }
+.plan-cards.plan-cards--compact .plan-price small { font-size: 13px; }
+.plan-cards.plan-cards--compact .plan-desc { margin-top: 6px; }
+.plan-cards.plan-cards--compact .plan-list { margin: 18px 0 22px; padding-top: 18px; gap: 10px; }
+.plan-cards.plan-cards--compact .plan-note { margin-bottom: 18px; padding: 10px 14px; }
+
 @media (max-width: 768px) {
   .plan-cards .pricing-grid { grid-template-columns: 1fr; }
 }
