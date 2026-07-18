@@ -217,9 +217,6 @@ const LandingPage = () => {
             <a className="nav-link" href="#pricing">
               Pris
             </a>
-            <Link className="nav-link" to="/personvern">
-              Personvern
-            </Link>
             {!PRELAUNCH && (
               <Link className="btn btn-secondary" to="/auth">
                 Logg inn
@@ -233,13 +230,11 @@ const LandingPage = () => {
         {/* Hero — azure gradient panel, dashboard mock rising from the bottom */}
         <section className="hero container" aria-label="Introduksjon">
           <div className="hero-panel">
-            <span className="eyebrow">Hva Raden gjør</span>
-            <h1>Raden</h1>
-            <p className="hero-lead">Påmelding og betaling for kurs.</p>
+            <span className="eyebrow">For kursholdere, studioer og arrangører</span>
+            <h1>Raden – påmelding og betaling for kurs.</h1>
             <p className="hero-sub">
-              Raden er en norsk kursplattform for kursholdere, studioer og arrangører. Opprett
-              og publiser kurs, ta imot påmeldinger og betaling, og hold oversikt over deltakerne
-              på ett sted.
+              Opprett og publiser kurs, ta imot påmeldinger og betaling, og hold oversikt over
+              deltakerne på ett sted.
             </p>
             <div className="hero-ctas">
               <SignupCta className="btn btn-white" label="Opprett konto" />
@@ -247,12 +242,6 @@ const LandingPage = () => {
                 Se hvordan det fungerer
               </a>
             </div>
-            <p className="hero-disclosure">
-              Google-innlogging er valgfri og brukes bare til å opprette og logge inn på
-              Raden-kontoen din. Raden ber ikke om tilgang til Gmail, Google Drive, Kalender
-              eller kontaktene dine.{' '}
-              <Link to="/personvern">Les personvernerklæringen</Link>.
-            </p>
 
             <div
               className="shot"
