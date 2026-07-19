@@ -122,10 +122,10 @@ export function GoLiveBanner() {
 // flips from the chevron affordance to a green check that only appears once
 // the step is done; no empty-state marker, so text stays on one left edge
 // across rows. Re-skinned in our tokens: bg-muted fill at radius-xl (hover =
-// bg-active, the secondary-button combo), check = the standard subtle-tint
-// status circle sized up. All text stays full text-foreground — muted ink on
-// a muted fill is unreadable (see muted-text-on-muted-fill); done-ness reads
-// from the check alone. Exported for /dev/get-started-preview.
+// bg-active, the secondary-button combo), check = a bare jade glyph. All
+// text stays full text-foreground — muted ink on a muted fill is unreadable
+// (see muted-text-on-muted-fill); done-ness reads from the check alone.
+// Exported for /dev/get-started-preview.
 export function StepCard({ step }: { step: SetupStep }) {
   const hasAction = !!step.actionHref || !!step.actionOnClick
   const cardClass = cn(

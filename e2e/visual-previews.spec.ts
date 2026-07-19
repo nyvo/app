@@ -30,6 +30,7 @@ const PREVIEWS = [
   'courses-list-preview',
   // Money
   'billing-preview',
+  'payout-preview',
   // Buyer / public
   'storefront',
   'detail-t1-preview',
