@@ -118,44 +118,38 @@ export function GoLiveBanner() {
 }
 
 // Reference: Adaline's "Get Started" checklist + Time2book's "Setup guide"
-// (Mobbin) — each step is its own hairline card row, and the trailing slot
+// (Mobbin) — each step is its own filled card row, and the trailing slot
 // flips from the action affordance (time estimate + chevron) to a green check
 // that only appears once the step is done; no empty-state marker, so text
-// stays on one left edge across rows. Re-skinned in our tokens: border-subtle
-// on bg-surface at radius-xl, hover = translucent ink fill, and the check is
-// the payout stepper's bright-green mark (PayoutSetupCard StepMark), not
-// Time2book's solid fill. Exported for /dev/get-started-preview.
+// stays on one left edge across rows. Re-skinned in our tokens: bg-muted fill
+// at radius-xl (hover = bg-active, the secondary-button combo), and the check
+// is a solid bg-success-bright disc à la Time2book. All text stays full
+// text-foreground — muted ink on a muted fill is unreadable (see
+// muted-text-on-muted-fill); done-ness reads from the check alone.
+// Exported for /dev/get-started-preview.
 export function StepCard({ step }: { step: SetupStep }) {
   const hasAction = !!step.actionHref || !!step.actionOnClick
   const cardClass = cn(
-    'group flex w-full items-center gap-4 rounded-xl border border-border-subtle bg-surface px-5 py-4 text-left no-underline',
+    'group flex w-full items-center gap-4 rounded-xl bg-muted px-5 py-4 text-left no-underline',
     hasAction &&
-      'transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+      'transition-colors hover:bg-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
   )
 
   const body = (
     <>
       <div className="min-w-0 flex-1">
-        <p
-          className={cn(
-            'text-base font-medium',
-            step.isComplete ? 'text-foreground-muted' : 'text-foreground',
-          )}
-        >
-          {step.title}
-        </p>
+        <p className="text-base font-medium text-foreground">{step.title}</p>
         {step.description && (
-          <p className="text-base text-foreground-muted">{step.description}</p>
+          <p className="text-base text-foreground">{step.description}</p>
         )}
       </div>
       {step.isComplete ? (
-        // The bright marker green (--success-bright), not the jade text ink;
-        // 15% alpha tint of the same hue — the PayoutSetupCard/TimelineEntry
-        // done-mark precedent.
-        <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-success-bright/15 text-success-bright">
-          {/* Hand-drawn check: at this size the app's 1.75 icon stroke renders
-              thin and mushy — the heavier 1.8 stroke is tuned for it. */}
-          <svg viewBox="0 0 12 12" width="11" height="11" fill="none" aria-hidden="true">
+        // Solid disc in the bright marker green (--success-bright), not the
+        // jade text ink — the sanctioned treatment for solid green marks.
+        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-success-bright text-success-foreground">
+          {/* Hand-drawn check: the app's 1.75 icon stroke renders thin at this
+              size — the heavier stroke is tuned for it. */}
+          <svg viewBox="0 0 12 12" width="13" height="13" fill="none" aria-hidden="true">
             <path
               d="M2.5 6.5L5 9l4.5-6"
               stroke="currentColor"
@@ -169,7 +163,7 @@ export function StepCard({ step }: { step: SetupStep }) {
       ) : (
         <>
           {step.timeEstimate && (
-            <span className="shrink-0 text-sm text-foreground-muted">{step.timeEstimate}</span>
+            <span className="shrink-0 text-sm text-foreground">{step.timeEstimate}</span>
           )}
           {hasAction && (
             <ChevronRight

@@ -63,7 +63,7 @@ export default function GetStartedPreview() {
 
       <PreviewSection
         label="Underveis"
-        description="Fullførte steg får den grønne haken i høyre slot; teksten dempes."
+        description="Fullførte steg får den grønne haken i høyre slot."
       >
         <div className="max-w-3xl space-y-3">
           <StepCard step={{ ...courseStep, isComplete: true }} />
@@ -74,7 +74,7 @@ export default function GetStartedPreview() {
 
       <PreviewSection
         label="Klart"
-        description="Påkrevde steg fullført — banner + gjenstående polering."
+        description="Studioet kan ta imot påmeldinger — banner + stegene som gjenstår."
       >
         <div className="max-w-3xl">
           <GoLiveBanner />
