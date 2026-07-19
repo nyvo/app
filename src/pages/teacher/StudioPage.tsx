@@ -473,7 +473,7 @@ function StudioPublicSettings({
             >
               <div className="grid gap-2">
                 <InputGroup data-disabled={isSaving || undefined}>
-                  <InputGroupAddon align="inline-start">raden.no/</InputGroupAddon>
+                  <InputGroupAddon align="inline-start">upnext.no/</InputGroupAddon>
                   <InputGroupInput
                     id="studio-slug"
                     type="text"

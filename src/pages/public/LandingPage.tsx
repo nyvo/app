@@ -256,7 +256,7 @@ const LandingPage = () => {
                 <span className="shot-dot" />
                 <span className="shot-dot" />
                 <span className="shot-dot" />
-                <span className="shot-url">raden.no</span>
+                <span className="shot-url">upnext.no</span>
               </div>
               <div className="shot-body">
                 <aside className="shot-side">

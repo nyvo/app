@@ -80,7 +80,7 @@ unset reports **SKIP**, not FAIL.
 | `SMOKE_CANCELLABLE_COURSE_ID` / `_TICKET_TYPE_ID` | A10 | a **throwaway** paid course — cancel-course permanently cancels it |
 | `SMOKE_CANCELLABLE_COURSE_ID_A11` / `_TICKET_TYPE_ID_A11` | A11 | a **second, separate** throwaway paid course (same reason, must not collide with A10's) |
 | `SMOKE_SELLER_OWNER_EMAIL` / `SMOKE_SELLER_OWNER_PASSWORD` | A9, A10, A11 | login for the owner of `SMOKE_SELLER_SLUG` (password auth enabled) — `teacher-cancel-signup` / `cancel-course` require a real user JWT, not the anon/service key |
-| `SMOKE_DNS_DOMAIN` | F6 | sending domain to check SPF/DKIM/DMARC for (defaults to `raden.no`) |
+| `SMOKE_DNS_DOMAIN` | F6 | sending domain to check SPF/DKIM/DMARC for (defaults to `upnext.no`) |
 | `SMOKE_DKIM_SELECTOR` | F6 | DKIM selector (defaults to `resend._domainkey` — a guess; override if wrong) |
 | `SMOKE_TARGET_URL` | all edge-function calls | overrides the derived `${VITE_SUPABASE_URL}/functions/v1` base (e.g. to point at a preview deploy) |
 | `CRON_SECRET` | A8 | preferred cred for cron-only functions; falls back to `SUPABASE_SERVICE_ROLE_KEY` if unset |

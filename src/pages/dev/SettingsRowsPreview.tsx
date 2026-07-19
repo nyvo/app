@@ -198,7 +198,7 @@ const SettingsRowsPreview = () => {
                 <FieldLabel htmlFor="preview-slug">Adresse</FieldLabel>
                 <InputGroup>
                   <InputGroupAddon align="inline-start" aria-hidden="true">
-                    raden.no/
+                    upnext.no/
                   </InputGroupAddon>
                   <InputGroupInput
                     id="preview-slug"

@@ -214,7 +214,7 @@ export default function StudioPreview() {
 
           <SettingsRow title="Nettadresse" description="Den offentlige adressen til studiosiden din.">
             <InputGroup>
-              <InputGroupAddon align="inline-start">raden.no/</InputGroupAddon>
+              <InputGroupAddon align="inline-start">upnext.no/</InputGroupAddon>
               <InputGroupInput defaultValue="flow-studio" aria-label="Nettadresse" />
             </InputGroup>
           </SettingsRow>

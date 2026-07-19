@@ -78,7 +78,7 @@ export const fixtures = {
   sellerOwnerPassword: () => required('SMOKE_SELLER_OWNER_PASSWORD', 'password for SMOKE_SELLER_OWNER_EMAIL'),
 
   /** Domain to run F6 DNS checks against. */
-  dnsDomain: () => optional('SMOKE_DNS_DOMAIN') || 'raden.no',
+  dnsDomain: () => optional('SMOKE_DNS_DOMAIN') || 'upnext.no',
 }
 
 let cachedSession = null

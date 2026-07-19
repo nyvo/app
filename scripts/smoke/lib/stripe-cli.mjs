@@ -68,7 +68,7 @@ function parseJsonOutput(result, label) {
 // Confirming server-side with a test card still requires a return_url because
 // the app's PaymentIntents enable automatic_payment_methods with redirect-
 // capable methods (klarna/link). Any valid URL satisfies Stripe in test mode.
-const CONFIRM_RETURN_URL = 'https://raden.no/checkout/success'
+const CONFIRM_RETURN_URL = 'https://upnext.no/checkout/success'
 
 /**
  * Async (non-blocking) CLI invocation — for the ONE thing spawnSync can't do:
