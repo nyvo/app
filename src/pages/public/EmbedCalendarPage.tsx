@@ -112,30 +112,48 @@ const EmbedCalendarPage = () => {
 };
 
 function EmbedSkeleton() {
+  // Mirrors EmbedCalendar's card shell exactly — same container breakpoint,
+  // pane widths, paddings and row heights — so the swap doesn't jump.
   return (
-    <div className="space-y-8" role="status" aria-live="polite">
+    <div className="@container" role="status" aria-live="polite">
       <span className="sr-only">Laster…</span>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-7 w-40" />
-          <div className="flex gap-1">
-            <Skeleton className="size-8 rounded-full" />
-            <Skeleton className="size-8 rounded-full" />
-          </div>
+      <div className="overflow-hidden rounded-2xl border border-border bg-background">
+        <div className="flex flex-col @2xl:flex-row">
+          <section className="shrink-0 p-5 @2xl:w-[328px]">
+            <div className="mx-auto w-full max-w-72 @2xl:mx-0 @2xl:w-fit @2xl:max-w-none">
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <Skeleton className="h-5 w-24" />
+                <div className="flex items-center gap-1">
+                  <Skeleton className="size-10 rounded-full" />
+                  <Skeleton className="size-10 rounded-full" />
+                </div>
+              </div>
+              <div className="grid grid-cols-7 gap-1.5">
+                {/* Weekday-initials row: spacing only, no pulse blocks. */}
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <div key={`w${i}`} className="h-7" aria-hidden />
+                ))}
+                {Array.from({ length: 42 }).map((_, i) => (
+                  <div key={i} className="flex aspect-square w-full items-center justify-center @2xl:size-9">
+                    <Skeleton className="size-full rounded-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+          <section className="min-w-0 flex-1 border-t border-border-subtle p-5 @2xl:border-l @2xl:border-t-0">
+            <div className="mb-3 @2xl:mb-4 @2xl:flex @2xl:h-10 @2xl:items-center">
+              <Skeleton className="h-5 w-36" />
+            </div>
+            <div className="space-y-2">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <Skeleton key={i} className="h-[76px] w-full rounded-xl" />
+              ))}
+            </div>
+          </section>
         </div>
-        <div className="grid grid-cols-7 gap-1.5">
-          {Array.from({ length: 42 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square rounded-md" />
-          ))}
-        </div>
-      </div>
-      {/* Mirrors the real class list: heading mb-3, rows space-y-2 */}
-      <div>
-        <Skeleton className="mb-3 h-5 w-32" />
-        <div className="space-y-2">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-xl" />
-          ))}
+        <div className="border-t border-border-subtle px-5 py-3">
+          <Skeleton className="h-4 w-24" />
         </div>
       </div>
     </div>
