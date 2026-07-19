@@ -74,6 +74,7 @@ const LandingShotStorefrontPreview = lazy(() => import('./pages/dev/LandingShotS
 const OgCardPreview = lazy(() => import('./pages/dev/OgCardPreview'));
 const IncomeChartPreview = lazy(() => import('./pages/dev/IncomeChartPreview'));
 const CoursesListPreview = lazy(() => import('./pages/dev/CoursesListPreview'));
+const CoursesListConceptsPreview = lazy(() => import('./pages/dev/CoursesListConceptsPreview'));
 const CourseBuilderLivePreview = lazy(() => import('./pages/dev/CourseBuilderLivePreview'));
 const CourseBuilderConceptsPreview = lazy(() => import('./pages/dev/CourseBuilderConceptsPreview'));
 const CourseBuilderWizardPreview = lazy(() => import('./pages/dev/CourseBuilderWizardPreview'));
@@ -242,6 +243,7 @@ const router = createBrowserRouter(
             <Route path="/dev/og-card" element={<OgCardPreview />} />
             <Route path="/dev/income-chart-preview" element={<IncomeChartPreview />} />
             <Route path="/dev/courses-list-preview" element={<CoursesListPreview />} />
+            <Route path="/dev/courses-list-concepts" element={<CoursesListConceptsPreview />} />
             <Route path="/dev/course-builder-live" element={<CourseBuilderLivePreview />} />
             <Route path="/dev/course-builder-concepts" element={<CourseBuilderConceptsPreview />} />
             <Route path="/dev/course-builder-wizard" element={<CourseBuilderWizardPreview />} />

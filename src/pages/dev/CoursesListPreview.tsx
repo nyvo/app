@@ -1,8 +1,7 @@
-import { useState } from 'react';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
-import { CourseListView, CourseListSkeleton, type SortDir, type SortKey } from '@/components/teacher/CourseListView';
+import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseListView';
 import type { SessionScheduleRow } from '@/services/courses';
 import { DevPage, PreviewSection } from './_kit';
 
@@ -23,7 +22,7 @@ function mockThumb(hue: number): string {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-const MOCK_COURSES: SessionScheduleRow[] = [
+export const MOCK_COURSES: SessionScheduleRow[] = [
   {
     sessionId: 'a',
     courseId: 'a',
@@ -152,56 +151,13 @@ const MOCK_COURSES: SessionScheduleRow[] = [
   },
 ];
 
-/** "Med kurs" — real CourseListView with interactive header-click sorting,
- * mirroring CoursesPage's own sortKey/sortDir/onSort wiring. */
-function WithCoursesSection() {
-  const [sortKey, setSortKey] = useState<SortKey>('next');
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
-
-  const handleSort = (key: SortKey) => {
-    if (key === sortKey) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-      return;
-    }
-    setSortKey(key);
-    setSortDir(key === 'signups' || key === 'price' ? 'desc' : 'asc');
-  };
-
-  return (
-    <CourseListView
-      courses={MOCK_COURSES}
-      sortKey={sortKey}
-      sortDir={sortDir}
-      onSort={handleSort}
-    />
-  );
-}
-
-/** "Tellinger utilgjengelig" — same interactive list, but the signup-counts
- * RPC failed, so `countsUnavailable` degrades the Påmeldte column to `–`. */
-function CountsUnavailableSection() {
-  const [sortKey, setSortKey] = useState<SortKey>('next');
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
-
-  const handleSort = (key: SortKey) => {
-    if (key === sortKey) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-      return;
-    }
-    setSortKey(key);
-    setSortDir(key === 'signups' || key === 'price' ? 'desc' : 'asc');
-  };
-
-  return (
-    <CourseListView
-      courses={MOCK_COURSES}
-      sortKey={sortKey}
-      sortDir={sortDir}
-      onSort={handleSort}
-      countsUnavailable
-    />
-  );
-}
+// The real page passes rows pre-sorted (next session ascending, drafts
+// last) — mirror that so the preview reads like /courses does.
+const SORTED_COURSES: SessionScheduleRow[] = [...MOCK_COURSES].sort((a, b) => {
+  const byDraft = (a.courseStatus === 'draft' ? 1 : 0) - (b.courseStatus === 'draft' ? 1 : 0);
+  if (byDraft !== 0) return byDraft;
+  return a.sessionDate.localeCompare(b.sessionDate);
+});
 
 export default function CoursesListPreview() {
   return (
@@ -211,33 +167,24 @@ export default function CoursesListPreview() {
     >
       <PreviewSection
         label="Med kurs"
-        description="Klikk kolonneoverskriftene (Navn, Neste økt, Påmeldte, Pris) for å sortere — samme onSort-kobling som CoursesPage."
+        description="Radkort — bilde, tittel + statuspill, ikon-metadata (neste økt, sted, påmeldte), pris ytterst. Fast sortering på neste økt (utkast sist), som på /courses."
       >
-        <WithCoursesSection />
+        <CourseListView courses={SORTED_COURSES} />
       </PreviewSection>
 
       <PreviewSection
         label="Tomt — ingen kurs"
         description="courses={[]} + emptyState — samme CoursesEmptyState som første-gangs-tilstanden på /courses."
       >
-        <CourseListView
-          courses={[]}
-          sortKey="next"
-          sortDir="asc"
-          onSort={() => {}}
-          emptyState={<CoursesEmptyState />}
-        />
+        <CourseListView courses={[]} emptyState={<CoursesEmptyState />} />
       </PreviewSection>
 
       <PreviewSection
         label="Tomt — ingen treff på søk"
-        description="Samme tabell, men emptyState er søkeresultat-varianten CoursesPage viser når et søkeord ikke gir treff."
+        description="emptyState er søkeresultat-varianten CoursesPage viser når et søkeord ikke gir treff."
       >
         <CourseListView
           courses={[]}
-          sortKey="next"
-          sortDir="asc"
-          onSort={() => {}}
           emptyState={
             <EmptyState
               title="Fant ingen kurs for «yin»"
@@ -256,9 +203,9 @@ export default function CoursesListPreview() {
 
       <PreviewSection
         label="Tellinger utilgjengelig"
-        description="signup_counts-RPC-en feilet — Påmeldte-kolonnen viser «–» i stedet for et fabrikkert tall."
+        description="signup_counts-RPC-en feilet — påmeldte-metadataen viser «–» i stedet for et fabrikkert tall."
       >
-        <CountsUnavailableSection />
+        <CourseListView courses={SORTED_COURSES} countsUnavailable />
       </PreviewSection>
 
       <PreviewSection

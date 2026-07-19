@@ -1,21 +1,30 @@
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronRight, ChevronUp } from '@/lib/icons';
-import { cn, formatKroner } from '@/lib/utils';
+import { Calendar, MapPin, Users } from '@/lib/icons';
+import { formatKroner } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge, type CourseStatus } from '@/components/ui/status-badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { MONTHS_SHORT } from '@/lib/calendar-nb';
 import type { SessionScheduleRow } from '@/services/courses';
 import type { CourseFormat, DeliveryMode } from '@/types/database';
 import { routes } from '@/lib/routes';
 
 /**
- * Course-type label — plain muted text. The earlier colored marker pill
- * (--category-* hues) was dropped 2026-07-11: three same-family blue pastels
- * at 8px were indistinguishable, so the pill added noise without carrying
- * information the label doesn't already give.
+ * "Mine kurs" list — filled row cards (2026-07-19 direction, replacing the
+ * sortable table). Each course is one rounded bg-muted card: image, title
+ * with an inline status pill, icon-metadata (next session, location,
+ * påmeldte), price at the far edge. Luma's row anatomy on the repo's
+ * "item directly on the white page" recipe (bg-muted fill, hover:bg-pressed,
+ * full text-foreground inside — docs/design-language.md § Cards).
+ *
+ * Column-header sorting was dropped WITH the table: the page default-sorts
+ * by next session (drafts last), and search + tabs cover retrieval at
+ * realistic catalog sizes. If sorting returns, it comes back as a compact
+ * control, not a header row.
  */
+
+/** Course-type label — shown in the date slot only for drafts, which have
+ * no sessions yet. Dated rows lead with the concrete next session instead. */
 const TYPE_LABEL: Record<'series' | 'single' | 'online', string> = {
   series: 'Kursrekke',
   single: 'Enkelttime',
@@ -32,12 +41,10 @@ function typeLabel(format: CourseFormat, delivery: DeliveryMode): string {
 // note on incompatible abbreviation conventions).
 const WEEKDAYS_SHORT = ['søn.', 'man.', 'tir.', 'ons.', 'tor.', 'fre.', 'lør.'] as const;
 
-/** "tir. 12. aug" for the date column; "–" when the course has no date
- * (drafts have no sessions yet). */
-function formatRowDate(dateStr: string): string {
-  if (!dateStr) return '–';
+function formatRowDate(dateStr: string): string | null {
+  if (!dateStr) return null;
   const d = new Date(`${dateStr}T12:00:00`);
-  if (isNaN(d.getTime())) return '–';
+  if (isNaN(d.getTime())) return null;
   return `${WEEKDAYS_SHORT[d.getDay()]} ${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
 }
 
@@ -45,7 +52,6 @@ function formatRowDate(dateStr: string): string {
  * Publish-state badge — silent on the healthy states (upcoming/active, i.e.
  * Publisert); only renders for states the teacher might need to notice.
  * Sits inline beside the title, so healthy rows carry no pill at all.
- * Label + presentation delegate to StatusBadge so status copy stays centralized.
  *
  * `isFull` is a derived capacity state (signups ≥ capacity), not a
  * course_status value — for the teacher a fully booked course is a win, so
@@ -66,117 +72,25 @@ function StatusBadgeRow({ courseStatus, isFull }: { courseStatus: string; isFull
   return null;
 }
 
-/** 48px course image — same fallback chain as the public storefront lists
- * (course image → seller default → muted square). */
+/** 64px course image — course image → seller default → white inset square
+ * (the card itself is bg-muted, so the empty state inverts to bg-surface). */
 function CourseThumb({ src }: { src: string | null }) {
   const [failed, setFailed] = useState(false);
 
   if (!src || failed) {
-    return <div aria-hidden className="size-12 shrink-0 rounded-lg bg-muted" />;
+    return <div aria-hidden className="size-16 shrink-0 rounded-lg bg-surface" />;
   }
   return (
     <img
       src={src}
       alt=""
-      className="media-outline size-12 shrink-0 rounded-lg object-cover"
+      className="media-outline size-16 shrink-0 rounded-lg object-cover"
       onError={() => setFailed(true)}
     />
   );
 }
 
-// ─── Table primitives ───────────────────────────────────────────────────
-// Borderless flat-table pattern: column headers + hairline-divided rows,
-// no card chrome. Each row is a media object (thumb + title stack) followed
-// by value columns; numeric columns (Påmeldte/Pris) are right-aligned with
-// their headers for scanability. Status is NOT a column — it renders as an
-// inline pill beside the title, only when there is something to notice
-// (Luma/Linear pattern; a dedicated mostly-empty column read as dead space).
-// Sort lives on the column headers themselves (canonical Stripe/Linear/
-// Notion 2025 pattern) — no separate sort dropdown in the toolbar.
-
-export type SortKey = 'name' | 'next' | 'signups' | 'price';
-export type SortDir = 'asc' | 'desc';
-
-// Header and rows share pl-3/pr-8 so their grid tracks stay aligned: pl-3
-// mirrors the -mx-3 table bleed (content sits back on the page edge), pr-8
-// keeps a gutter between the numeric columns and the hover chevron.
-// Below md the date column folds into the row's meta line ("Kursrekke ·
-// ons. 20. mai") so the title keeps its room — two columns on mobile.
-const COLS = 'grid grid-cols-[minmax(0,1fr)_76px] items-center gap-3 sm:gap-6 pl-3 pr-4 sm:pr-8 md:grid-cols-[minmax(0,1fr)_130px_120px_120px]';
-
-interface TableHeaderProps {
-  sortKey: SortKey;
-  sortDir: SortDir;
-  onSort: (key: SortKey) => void;
-  /** Date-column header — "Neste økt" on Aktive, "Avsluttet" on Fullførte. */
-  dateLabel: string;
-}
-
-function SortableHeader({
-  label,
-  columnKey,
-  sortKey,
-  sortDir,
-  onSort,
-  className,
-}: {
-  label: string;
-  columnKey: SortKey;
-  sortKey: SortKey;
-  sortDir: SortDir;
-  onSort: (key: SortKey) => void;
-  className?: string;
-}) {
-  const isActive = sortKey === columnKey;
-  const Arrow = sortDir === 'asc' ? ChevronUp : ChevronDown;
-  return (
-    <div
-      role="columnheader"
-      aria-sort={isActive ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
-      className={className}
-    >
-      <button
-        type="button"
-        onClick={() => onSort(columnKey)}
-        aria-label={`Sorter etter ${label}`}
-        className="group inline-flex items-center gap-1 rounded text-left text-sm text-foreground-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        {label}
-        {isActive ? (
-          <Arrow className="size-3.5 shrink-0" aria-hidden="true" />
-        ) : (
-          // Hover-ghost cue on the inactive sortable columns.
-          <ChevronDown
-            className="size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-            aria-hidden="true"
-          />
-        )}
-      </button>
-    </div>
-  );
-}
-
-function TableHeader({ sortKey, sortDir, onSort, dateLabel }: TableHeaderProps) {
-  return (
-    // The header rule also yields when the FIRST data row is hovered — it's
-    // the divider directly above that row's rounded hover fill.
-    <div
-      role="row"
-      className={cn(
-        COLS,
-        'py-3 border-b border-border-subtle',
-        '[&:has(+div>:first-child:hover)]:border-transparent [&:has(+div>:first-child:focus-visible)]:border-transparent',
-      )}
-    >
-      <SortableHeader label="Navn" columnKey="name" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
-      <SortableHeader label={dateLabel} columnKey="next" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:block" />
-      <SortableHeader label="Påmeldte" columnKey="signups" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="text-right" />
-      <SortableHeader label="Pris" columnKey="price" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:block text-right" />
-    </div>
-  );
-}
-
-function TableRow({
+function CourseRowCard({
   course,
   countsUnavailable,
   fallbackImageUrl,
@@ -185,83 +99,58 @@ function TableRow({
   countsUnavailable?: boolean;
   fallbackImageUrl?: string | null;
 }) {
+  const date = formatRowDate(course.sessionDate);
+  const isFull =
+    !countsUnavailable &&
+    !!course.maxParticipants &&
+    course.signupsCount >= course.maxParticipants;
   // Counts RPC failed — render `–` rather than a fabricated 0 / N.
   const roster = countsUnavailable
     ? '–'
     : course.maxParticipants
-      ? `${course.signupsCount} / ${course.maxParticipants}`
-      : `${course.signupsCount}`;
+      ? `${course.signupsCount} / ${course.maxParticipants} påmeldte`
+      : `${course.signupsCount} påmeldte`;
 
   return (
-    <Link
-      to={routes.course(course.courseId)}
-      role="row"
-      className={cn(
-        COLS,
-        // rounded-lg + the table's -mx-3 bleed keep the hover fill from
-        // reading as a hard-edged band cut off at the content edges.
-        'group relative rounded-lg py-4 no-underline outline-none transition-colors hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle',
-        // Hide the two hairlines touching the hovered row — Linear's
-        // list-hover treatment. v4 divide-y is border-BOTTOM on non-last
-        // children: the row's own border is the divider below it, the
-        // previous sibling's (`:has(+ :hover)`) is the one above it.
-        'hover:border-transparent focus-visible:border-transparent [&:has(+:hover)]:border-transparent [&:has(+:focus-visible)]:border-transparent',
-      )}
-    >
-      <div role="cell" className="flex min-w-0 items-center gap-3">
+    <li>
+      <Link
+        to={routes.course(course.courseId)}
+        className="flex items-center gap-4 rounded-xl bg-muted p-4 no-underline transition-colors hover:bg-pressed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <CourseThumb src={course.imageUrl || fallbackImageUrl || null} />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             <h3 className="truncate text-base font-medium text-foreground">{course.courseTitle}</h3>
-            <StatusBadgeRow
-              courseStatus={course.courseStatus}
-              isFull={
-                !countsUnavailable &&
-                !!course.maxParticipants &&
-                course.signupsCount >= course.maxParticipants
-              }
-            />
+            <StatusBadgeRow courseStatus={course.courseStatus} isFull={isFull} />
           </div>
-          <p className="mt-1 truncate text-sm text-foreground-muted">
-            {typeLabel(course.courseFormat, course.deliveryMode)}
-            {course.sessionDate && (
-              <span className="md:hidden">{` · ${formatRowDate(course.sessionDate)}`}</span>
+          {/* Metadata = icon+text pairs, full text-foreground on the muted
+              fill (never muted-on-muted). One "·" pairs date and time. */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground">
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+              <Calendar aria-hidden className="size-4 shrink-0" />
+              {date
+                ? course.startTime
+                  ? `${date} · ${course.startTime}`
+                  : date
+                : typeLabel(course.courseFormat, course.deliveryMode)}
+            </span>
+            {course.location && (
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <MapPin aria-hidden className="size-4 shrink-0" />
+                <span className="truncate">{course.location}</span>
+              </span>
             )}
-          </p>
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums">
+              <Users aria-hidden className="size-4 shrink-0" />
+              {roster}
+            </span>
+          </div>
         </div>
-      </div>
-      <span role="cell" className="hidden whitespace-nowrap text-base text-foreground md:inline">
-        {formatRowDate(course.sessionDate)}
-      </span>
-      <span role="cell" className="whitespace-nowrap text-right text-base text-foreground tabular-nums">
-        {roster}
-      </span>
-      <span role="cell" className="hidden whitespace-nowrap text-right text-base text-foreground tabular-nums md:inline">
-        {formatKroner(course.price)}
-      </span>
-      <ChevronRight
-        aria-hidden="true"
-        className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-foreground-muted opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
-      />
-    </Link>
-  );
-}
-
-function TableBody({
-  courses,
-  countsUnavailable,
-  fallbackImageUrl,
-}: {
-  courses: SessionScheduleRow[];
-  countsUnavailable?: boolean;
-  fallbackImageUrl?: string | null;
-}) {
-  return (
-    <div className="divide-y divide-border-subtle">
-      {courses.map((c) => (
-        <TableRow key={c.sessionId} course={c} countsUnavailable={countsUnavailable} fallbackImageUrl={fallbackImageUrl} />
-      ))}
-    </div>
+        <span className="hidden shrink-0 text-base text-foreground tabular-nums sm:inline">
+          {formatKroner(course.price)}
+        </span>
+      </Link>
+    </li>
   );
 }
 
@@ -269,72 +158,40 @@ function TableBody({
 
 interface CourseListViewProps {
   courses: SessionScheduleRow[];
-  sortKey: SortKey;
-  sortDir: SortDir;
-  onSort: (key: SortKey) => void;
-  /** Rendered in place of the body when `courses` is empty. The header stays
-   * visible so the table structure doesn't disappear between tab switches. */
+  /** Rendered in place of the list when `courses` is empty. */
   emptyState?: ReactNode;
-  /** When the signup-counts RPC failed, the Påmeldte column reads `–`. */
+  /** When the signup-counts RPC failed, påmeldte reads `–`. */
   countsUnavailable?: boolean;
-  /** Date-column header — defaults to "Neste økt"; the Fullførte tab passes
-   * "Avsluttet" (the page maps sessionDate to the course's end date there). */
-  dateLabel?: string;
   /** Seller-level default course image — thumb fallback when a course has no
    * image of its own, mirroring the public storefront's fallback chain. */
   fallbackImageUrl?: string | null;
 }
 
-export function CourseListView({
-  courses,
-  sortKey,
-  sortDir,
-  onSort,
-  emptyState,
-  countsUnavailable,
-  dateLabel = 'Neste økt',
-  fallbackImageUrl,
-}: CourseListViewProps) {
+export function CourseListView({ courses, emptyState, countsUnavailable, fallbackImageUrl }: CourseListViewProps) {
+  if (courses.length === 0 && emptyState) {
+    return <>{emptyState}</>;
+  }
   return (
-    // -mx-3 lets the rounded row-hover fill bleed past the content edges
-    // (Linear-style) instead of stopping flush against the text columns;
-    // pl-3 inside COLS puts the content back on the page grid.
-    <div role="table" className="-mx-3">
-      <TableHeader sortKey={sortKey} sortDir={sortDir} onSort={onSort} dateLabel={dateLabel} />
-      {courses.length === 0 && emptyState ? (
-        <div className="pl-3 pr-8">{emptyState}</div>
-      ) : (
-        <TableBody courses={courses} countsUnavailable={countsUnavailable} fallbackImageUrl={fallbackImageUrl} />
-      )}
-    </div>
+    <ul className="m-0 flex list-none flex-col gap-2 p-0">
+      {courses.map((c) => (
+        <CourseRowCard
+          key={c.sessionId}
+          course={c}
+          countsUnavailable={countsUnavailable}
+          fallbackImageUrl={fallbackImageUrl}
+        />
+      ))}
+    </ul>
   );
 }
 
+/** Mirrors the row-card stack exactly: p-4 card + 64px thumb → 96px tall. */
 export function CourseListSkeleton() {
   return (
-    <div className="-mx-3">
-      <div className={cn(COLS, 'py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
-        <span>Navn</span>
-        <span className="hidden md:inline">Neste økt</span>
-        <span className="text-right">Påmeldte</span>
-        <span className="hidden text-right md:inline">Pris</span>
-      </div>
-      <div className="divide-y divide-border-subtle">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className={cn(COLS, 'py-4')}>
-            <div className="flex min-w-0 items-center gap-3">
-              <Skeleton className="size-12 shrink-0 rounded-lg" />
-              <div className="min-w-0 flex-1">
-                <Skeleton className="h-6 w-48 max-w-full" />
-                <Skeleton className="mt-1 h-5 w-24 max-w-full" />
-              </div>
-            </div>
-            <Skeleton className="hidden h-4 w-20 md:inline-block" />
-            <Skeleton className="h-4 w-12 justify-self-end" />
-            <Skeleton className="hidden h-4 w-16 justify-self-end md:inline-block" />
-          </div>
-        ))}
-      </div>
+    <div className="flex flex-col gap-2">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="h-24 animate-pulse rounded-xl bg-muted" />
+      ))}
     </div>
   );
 }

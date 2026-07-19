@@ -6,7 +6,7 @@ import CreateCourseDrawer from './CreateCourseDrawer';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageShell } from '@/components/teacher/PageShell';
-import { CourseListView, CourseListSkeleton, type SortKey, type SortDir } from '@/components/teacher/CourseListView';
+import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseListView';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { SearchInput } from '@/components/ui/search-input';
 import { Button } from '@/components/ui/button';
@@ -68,14 +68,6 @@ function mapCourseToRow(
 
 type ViewTab = 'active' | 'past';
 
-// Default sort key + direction per tab — picked for what's most scannable.
-// Active: next session ascending (soonest first). Past: next session descending
-// (most recently ended first).
-const DEFAULT_SORT_FOR_TAB: Record<ViewTab, { key: SortKey; dir: SortDir }> = {
-  active: { key: 'next', dir: 'asc' },
-  past: { key: 'next', dir: 'desc' },
-};
-
 const CoursesPage = () => {
   const { currentSeller, isInitialized } = useAuth();
   const navigate = useNavigate();
@@ -85,8 +77,6 @@ const CoursesPage = () => {
   const isNewRoute = location.pathname === routes.coursesNew;
   const [searchQuery, setSearchQuery] = useState('');
   const [viewTab, setViewTab] = useState<ViewTab>('active');
-  const [sortKey, setSortKey] = useState<SortKey>('next');
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [courses, setCourses] = useState<Course[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
   // The signup-counts RPC failed — the Påmeldte column shows `–`, never a
@@ -211,59 +201,28 @@ const CoursesPage = () => {
         return true;
       })
       .sort((a, b) => {
-        // Drafts always sink to the bottom as a stable group, regardless of
-        // sort key/direction — they have no sessions or signups to compare,
-        // so interleaving them in metric sorts is noise. The active sort
-        // still applies within each group.
+        // Fixed, tab-appropriate order (header sorting left with the table):
+        // Active = soonest next session first; Fullførte = most recently
+        // ended first. Drafts sink to the bottom as a stable group — they
+        // have no sessions to compare. Title tie-breaks for determinism.
         const draftRank = (x: { course: Course }) => (x.course.status === 'draft' ? 1 : 0);
         const byDraft = draftRank(a) - draftRank(b);
         if (byDraft !== 0) return byDraft;
 
-        let result = 0;
-        switch (sortKey) {
-          case 'next':
-            result = a.row.sessionDate.localeCompare(b.row.sessionDate);
-            break;
-          case 'name':
-            result = a.row.courseTitle.localeCompare(b.row.courseTitle, 'nb');
-            break;
-          case 'signups':
-            result = a.row.signupsCount - b.row.signupsCount;
-            break;
-          case 'price':
-            result = (a.row.price ?? 0) - (b.row.price ?? 0);
-            break;
-        }
-        return sortDir === 'asc' ? result : -result;
+        const byDate = a.row.sessionDate.localeCompare(b.row.sessionDate);
+        if (byDate !== 0) return viewTab === 'past' ? -byDate : byDate;
+        return a.row.courseTitle.localeCompare(b.row.courseTitle, 'nb');
       })
       .map(({ row, course }) => {
-        // On the Past tab, the date column reads as a "last session" date.
-        // Swap to the course's end date so the value matches the header.
+        // On the Past tab, the row's date slot reads as a "last session"
+        // date. Swap to the course's end date so the value matches the tab.
         if (viewTab === 'past') {
           const end = course.end_date || course.start_date || row.sessionDate;
           return { ...row, sessionDate: end };
         }
         return row;
       });
-  }, [allRows, viewTab, searchQuery, sortKey, sortDir]);
-
-  // When the user switches tab, reset sort to that tab's most useful default.
-  useEffect(() => {
-    const { key, dir } = DEFAULT_SORT_FOR_TAB[viewTab];
-    setSortKey(key);
-    setSortDir(dir);
-  }, [viewTab]);
-
-  // Click sortable header — same column toggles direction, new column adopts
-  // its sensible default direction (asc for name/next, desc for signups/price).
-  const handleSort = useCallback((key: SortKey) => {
-    if (key === sortKey) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-      return;
-    }
-    setSortKey(key);
-    setSortDir(key === 'signups' || key === 'price' ? 'desc' : 'asc');
-  }, [sortKey]);
+  }, [allRows, viewTab, searchQuery]);
 
   const visibleRows = filteredRows;
 
@@ -318,7 +277,7 @@ const CoursesPage = () => {
             </div>
           }
         >
-          {/* List — each card is its own bordered surface; no outer frame */}
+          {/* List — filled row cards, one per course; no outer frame */}
           {isLoading ? (
             <DelayedFallback>
               <div role="status" aria-live="polite" aria-label="Laster kurs">
@@ -344,11 +303,7 @@ const CoursesPage = () => {
           ) : (
             <CourseListView
               courses={visibleRows}
-              sortKey={sortKey}
-              sortDir={sortDir}
-              onSort={handleSort}
               countsUnavailable={countsFailed}
-              dateLabel={viewTab === 'past' ? 'Avsluttet' : 'Neste økt'}
               fallbackImageUrl={currentSeller?.default_course_image_url ?? null}
               emptyState={
                 searchQuery ? (

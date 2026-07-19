@@ -35,6 +35,7 @@ const GROUPS: PreviewGroup[] = [
       { label: 'Oversikt (dashboard)', to: '/dev/dashboard-preview', blurb: 'Inntektsgraf + kommende kurs + siste påmeldinger. Pro / Start / tomt / laster / feil.' },
       { label: 'Inntektsgraf', to: '/dev/income-chart-preview', blurb: 'IncomeChart med data, tomt og lasting — uke/måned/år.' },
       { label: 'Mine kurs', to: '/dev/courses-list-preview', blurb: 'CourseListView med kurs, tomt, lasting, tellinger utilgjengelig og feil.' },
+      { label: 'Mine kurs — konsepter', to: '/dev/courses-list-concepts', blurb: 'To retninger uten tabell: radkort (Luma) og kortgalleri (Airbnb).' },
       { label: 'Kursbygger', to: '/dev/course-builder-live', blurb: 'Ekte CreateCourseDrawer montert uten innlogging.' },
       { label: 'Kursbygger — konsepter', to: '/dev/course-builder-concepts', blurb: 'Tre retninger: delt live-visning, veiviser, sjekkliste-panel.' },
       { label: 'Kursbygger — drawer', to: '/dev/course-builder-wizard', blurb: 'Opprett kurs i en drawer — seksjonert skjema med skillelinjer, lettvekt.' },
