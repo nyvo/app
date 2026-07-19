@@ -145,7 +145,9 @@ export function StepCard({ step }: { step: SetupStep }) {
       {step.isComplete ? (
         // The standard status treatment: success-subtle tint + jade ink,
         // same hue pair as every other status circle — sized up for weight.
-        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-success-subtle text-success">
+        // The white ring lifts the light tint off the grey card fill (the
+        // tint alone washes into bg-muted; this page only).
+        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-success-subtle text-success ring-4 ring-surface">
           {/* Hand-drawn check: the app's 1.75 icon stroke renders thin at this
               size — the heavier stroke is tuned for it. */}
           <svg viewBox="0 0 12 12" width="13" height="13" fill="none" aria-hidden="true">
