@@ -289,21 +289,29 @@ const SchedulePage = () => {
           <DelayedFallback>
             <div role="status" aria-label="Laster…">
               {/* Mirrors the timeline anatomy: date lines left, rail gutter,
-                  cards (title + one meta line) right. */}
+                  cards (title + one meta line) right. Below `sm` the date
+                  column collapses and a single date line sits above the cards
+                  — same as TimelineDay's stacked layout. */}
               {[1, 2].map((i) => (
-                <div key={i} className="grid grid-cols-[92px_18px_1fr] gap-x-2.5">
-                  <div className="space-y-1.5 pt-3">
+                <div
+                  key={i}
+                  className="grid grid-cols-[92px_18px_1fr] gap-x-2.5 max-sm:grid-cols-[18px_1fr]"
+                >
+                  <div className="space-y-1.5 pt-3 max-sm:hidden">
                     <Skeleton className="h-4 w-14" />
                     <Skeleton className="h-3 w-16" />
                   </div>
                   <div />
-                  <div className="space-y-3 pb-6">
-                    {[1, 2].map((j) => (
-                      <div key={j} className="rounded-xl bg-panel px-5 py-4">
-                        <Skeleton className="h-4 w-48" />
-                        <Skeleton className="mt-1.5 h-3.5 w-72 max-w-full" />
-                      </div>
-                    ))}
+                  <div className="pb-6">
+                    <Skeleton className="mb-2 h-4 w-28 sm:hidden" />
+                    <div className="space-y-3">
+                      {[1, 2].map((j) => (
+                        <div key={j} className="rounded-xl bg-panel px-5 py-4">
+                          <Skeleton className="h-4 w-48" />
+                          <Skeleton className="mt-1.5 h-3.5 w-72 max-w-full" />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -336,7 +344,7 @@ const SchedulePage = () => {
                   primary={label.primary}
                   secondary={label.secondary}
                   rail={groups.length > 1}
-                  // Bright success green marks the day of the actual next session — sessions
+                  // The solid ink dot marks the day of the actual next session — sessions
                   // are date-ascending on the active tab, so it's the first
                   // loaded row (a month filter can hide it; then no highlight).
                   next={rangeFilter === 'active' && date === sessions[0]?.sessionDate}
@@ -377,7 +385,7 @@ export function TimelineDay({
   /** A lone day group needs no timeline — the rail only earns its place
    *  between groups. The grid stays, so labels/cards never shift x. */
   rail?: boolean;
-  /** Bright-success dot — the day of the next upcoming session. */
+  /** Solid ink dot — the day of the next upcoming session. */
   next?: boolean;
   lineAbove?: boolean;
   lineBelow?: boolean;
@@ -401,6 +409,14 @@ export function TimelineDay({
           <p className="text-sm font-medium leading-tight text-foreground">{primary}</p>
           <p className="mt-0.5 text-sm leading-tight text-foreground-muted">{secondary}</p>
         </>
+      }
+      // Below `sm` the date column collapses and this single line sits above
+      // the day's cards instead — the rail stays on the cards' left edge.
+      stackedDate={
+        <p className="text-sm leading-tight">
+          <span className="font-medium text-foreground">{primary}</span>
+          <span className="text-foreground-muted"> · {secondary}</span>
+        </p>
       }
     >
       <div className="space-y-3">{children}</div>

@@ -19,13 +19,13 @@ describe('TimelineEntry', () => {
     expect(columns?.[2]).toHaveTextContent('Course card');
   });
 
-  it('uses the bright success marker for the next session', () => {
+  it('uses the solid ink marker for the next session', () => {
     const { container } = render(
       <TimelineEntry rail next>
         <span>Course card</span>
       </TimelineEntry>,
     );
 
-    expect(container.querySelector('.size-2')).toHaveClass('bg-success-bright');
+    expect(container.querySelector('.size-2')).toHaveClass('bg-foreground');
   });
 });
