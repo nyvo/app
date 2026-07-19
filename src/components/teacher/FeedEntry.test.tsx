@@ -19,15 +19,14 @@ describe('FeedEntry', () => {
     expect(columns?.[1]).toHaveTextContent('Course card');
   });
 
-  it('renders the stacked date above the content when provided', () => {
+  it('keeps last-row content free of trailing padding', () => {
     const { container } = render(
-      <FeedEntry date={<span>14. jul</span>} stackedDate={<span>I dag · 14. jul</span>}>
+      <FeedEntry date={<span>14. jul</span>} isLast>
         <span>Course card</span>
       </FeedEntry>,
     );
 
     const content = container.firstElementChild?.children[1];
-    expect(content?.firstElementChild).toHaveTextContent('I dag · 14. jul');
-    expect(content?.firstElementChild).toHaveClass('sm:hidden');
+    expect(content).not.toHaveClass('pb-3');
   });
 });

@@ -6,20 +6,20 @@ const noop = () => {};
 
 /**
  * Auth-free preview of the schedule agenda — the sign-off surface for the
- * shared feed grammar (FeedEntry date column + agenda cards). Renders the
- * real ScheduleDay + SessionCard exports, so what you see here is production.
+ * day-heading-above-cards grammar. Renders the real ScheduleDay +
+ * SessionCard exports, so what you see here is production.
  */
 const SchedulePreview = () => {
   return (
     <DevPage title="Timeplan">
       <PreviewSection label="Med data">
-        <div>
+        <div className="space-y-8">
           <ScheduleDay primary="I dag" secondary="3. juli">
             {MOCK_SESSIONS.slice(0, 3).map((s) => (
               <SessionCard key={s.id} session={s} />
             ))}
           </ScheduleDay>
-          <ScheduleDay primary="I morgen" secondary="4. juli" isLast>
+          <ScheduleDay primary="I morgen" secondary="4. juli">
             {MOCK_SESSIONS.slice(3).map((s) => (
               <SessionCard key={s.id} session={s} />
             ))}
