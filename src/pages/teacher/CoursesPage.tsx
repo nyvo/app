@@ -348,6 +348,8 @@ const CoursesPage = () => {
               sortDir={sortDir}
               onSort={handleSort}
               countsUnavailable={countsFailed}
+              dateLabel={viewTab === 'past' ? 'Avsluttet' : 'Neste økt'}
+              fallbackImageUrl={currentSeller?.default_course_image_url ?? null}
               emptyState={
                 searchQuery ? (
                   <EmptyState

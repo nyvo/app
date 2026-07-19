@@ -16,6 +16,13 @@ import { DevPage, PreviewSection } from './_kit';
 // ─── Mock data ────────────────────────────────────────────────────────────
 // Shape matches SessionScheduleRow (the real prop type for CourseListView).
 
+// Deterministic inline-SVG thumbnails — no network fetch, so the visual
+// suite's snapshots of this preview stay byte-stable.
+function mockThumb(hue: number): string {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96'><rect width='96' height='96' fill='hsl(${hue} 28% 82%)'/><circle cx='70' cy='28' r='42' fill='hsl(${hue} 32% 72%)'/><circle cx='18' cy='84' r='30' fill='hsl(${hue} 30% 77%)'/></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 const MOCK_COURSES: SessionScheduleRow[] = [
   {
     sessionId: 'a',
@@ -34,7 +41,7 @@ const MOCK_COURSES: SessionScheduleRow[] = [
     courseStartDate: '2026-04-08',
     courseEndDate: '2026-05-27',
     totalWeeks: 8,
-    imageUrl: null,
+    imageUrl: mockThumb(165),
     allowsDropIn: true,
   },
   {
@@ -53,7 +60,7 @@ const MOCK_COURSES: SessionScheduleRow[] = [
     courseStatus: 'active',
     courseStartDate: '2026-03-22',
     totalWeeks: 10,
-    imageUrl: null,
+    imageUrl: mockThumb(25),
   },
   {
     sessionId: 'c',
@@ -89,7 +96,7 @@ const MOCK_COURSES: SessionScheduleRow[] = [
     courseStatus: 'upcoming',
     courseStartDate: '2026-06-01',
     totalWeeks: 6,
-    imageUrl: null,
+    imageUrl: mockThumb(230),
   },
   {
     sessionId: 'e',
@@ -204,7 +211,7 @@ export default function CoursesListPreview() {
     >
       <PreviewSection
         label="Med kurs"
-        description="Klikk kolonneoverskriftene (Navn, Påmeldte, Pris) for å sortere — samme onSort-kobling som CoursesPage."
+        description="Klikk kolonneoverskriftene (Navn, Neste økt, Påmeldte, Pris) for å sortere — samme onSort-kobling som CoursesPage."
       >
         <WithCoursesSection />
       </PreviewSection>
