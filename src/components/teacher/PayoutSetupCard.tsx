@@ -1,24 +1,23 @@
 import type { ReactNode } from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
+import { cn } from '@/lib/utils';
 
 /**
- * Presentational setup module for the payouts settings page — a 3-step
+ * Presentational setup module for the payouts settings page — the 3-step
  * "Bekreft identiteten din → Vi sjekker opplysningene → Motta utbetalinger"
- * tracker. Pure view-model in, JSX out, so the real page (auth + Stripe
+ * journey. Pure view-model in, JSX out, so the real page (auth + Stripe
  * wiring) and the auth-free dev preview can share one rendering without
  * duplicating markup.
  *
- * Composition: ONE FramedCard owns the whole module — the same container
- * family as the PayoutStats modules that replace it once payouts flow, so
- * the page keeps a single surface language across its lifecycle. Inside the
- * white inset, state-first order copied from Docusign's setup panel
- * (heading → support line → progress meter → detail) with the action inside
- * the panel in a hairline-divided footer (Vercel's next-steps card); the
- * footer disappears when a state has nothing to do. The tracker itself keeps
- * Airwallex's per-step title + status word, drawn as equal-width bar
- * segments whose colour carries the step state.
+ * Composition: a centred first-run narrative, not a settings panel — the
+ * seller sees this surface only until payouts flow, then PayoutStats takes
+ * over. Skeleton from Fresha's "set up payment processing" narrative
+ * (display heading → sub-line → steps → one action) with the steps drawn as
+ * Acctual's Payments row of three step cards (status mark, title, one-line
+ * caption; the active card lifted, resolved cards quieted). Status grammar
+ * unchanged: bright-green check = done, tone Badge pill = current state,
+ * numbered chip = position; colour never stands alone.
  */
 
 export type StepStatus = 'done' | 'current' | 'upcoming';
@@ -52,25 +51,14 @@ export interface PayoutSetupViewModel {
   steps: PayoutStepViewModel[];
 }
 
-// Solid thin bars — a line of colour, not a saturated fill behind a glyph,
-// so the "status = light tint" rule doesn't apply. Done uses the bright
-// marker green (--success-bright is for exactly this scale — TimelineEntry's
-// next-dot uses it too), never the jade text ink as a fill. Neutral current
-// is ink («your move», not a status), upcoming is the empty grey track.
-const toneBarClass: Record<'info' | 'warning' | 'danger' | 'success', string> = {
-  info: 'bg-info',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  success: 'bg-success-bright',
-};
-
-function stepBarClass({ status, tone }: Pick<PayoutStepViewModel, 'status' | 'tone'>): string {
-  if (status === 'done') return 'bg-success-bright';
-  if (status === 'current') {
-    return tone && tone !== 'neutral' ? toneBarClass[tone] : 'bg-foreground';
-  }
-  return 'bg-muted';
-}
+// One fixed caption per canonical step — what that step *is*, independent of
+// state (titles can be state-overridden, captions can't). Presentation copy,
+// so it lives here, not in the view model.
+const STEP_CAPTIONS = [
+  'Kontonummer og identitet hos Stripe.',
+  'Skjer automatisk hos Stripe.',
+  'Pengene går rett til bankkontoen din.',
+];
 
 // Coloured status text never renders bare — it sits in the shared Badge
 // pill (subtle tint + tone ink), same object as every other status chip.
@@ -81,36 +69,52 @@ const toneBadgeVariant: Record<'info' | 'warning' | 'danger' | 'success', 'info'
   success: 'success',
 };
 
-function StepStatusLabel({ status, tone, statusLabel }: Pick<PayoutStepViewModel, 'status' | 'tone' | 'statusLabel'>) {
-  if (status !== 'current' || !statusLabel) return null;
-  const variant = tone && tone !== 'neutral' ? toneBadgeVariant[tone] : 'neutral';
-  return (
-    <Badge variant={variant} size="xs" className="mt-1.5">
-      {statusLabel}
-    </Badge>
-  );
-}
+/**
+ * The mark at the top of each step card, all 24px tall so titles align
+ * across cards: bright-green check circle (done, sr-only «Fullført»), tone
+ * Badge pill (current with a status word), inverted ink numeral («you are
+ * here» with nothing to report), muted numeral (upcoming).
+ */
+function StepMark({ step, index }: { step: PayoutStepViewModel; index: number }) {
+  if (step.status === 'done') {
+    return (
+      // The bright marker green (--success-bright), not the jade text ink;
+      // 15% alpha tint of the same hue (TimelineEntry's dot-ring precedent).
+      <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-success-bright/15 text-success-bright">
+        {/* Hand-drawn check: at this size the app's 1.75 icon stroke renders
+            thin and mushy — the heavier 1.8 stroke is tuned for it. */}
+        <svg viewBox="0 0 12 12" width="11" height="11" fill="none" aria-hidden="true">
+          <path
+            d="M2.5 6.5L5 9l4.5-6"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <span className="sr-only">Fullført</span>
+      </span>
+    );
+  }
 
-// Hand-drawn 10px check (not lucide: at this size the app's 1.75 stroke
-// renders thin and mushy — the heavier 1.8 stroke is tuned for it). Sits in
-// a subtle-tint circle after done step titles, replacing a written
-// «Fullført» — bar + check say it; sr-only text keeps it audible.
-function DoneCheck() {
+  if (step.status === 'current' && step.statusLabel) {
+    const variant = step.tone && step.tone !== 'neutral' ? toneBadgeVariant[step.tone] : 'neutral';
+    return <Badge variant={variant} size="sm">{step.statusLabel}</Badge>;
+  }
+
+  const numeralClass =
+    step.status === 'current'
+      ? 'bg-foreground text-background'
+      : 'bg-muted text-foreground';
   return (
-    // Same green as the done bar (--success-bright), not the jade text ink —
-    // the tint is a 15% alpha of the same hue (TimelineEntry's dot-ring
-    // precedent) so bar, circle and check read as one colour.
-    <span className="inline-flex size-[18px] shrink-0 items-center justify-center rounded-full bg-success-bright/15 text-success-bright">
-      <svg viewBox="0 0 12 12" width="10" height="10" fill="none" aria-hidden="true">
-        <path
-          d="M2.5 6.5L5 9l4.5-6"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <span className="sr-only">Fullført</span>
+    <span
+      aria-hidden="true"
+      className={cn(
+        'inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums',
+        numeralClass,
+      )}
+    >
+      {index + 1}
     </span>
   );
 }
@@ -120,51 +124,58 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
   const current = steps.find((step) => step.status === 'current');
 
   return (
-    <FramedCard title="Oppsett">
-      <FramedCardPanel>
-        <div className="p-5 sm:p-6">
-          {/* State first (Docusign's setup panel): the heading answers "what's
-              happening / what do I do", the tracker below is the evidence —
-              so no step counter is repeated anywhere. */}
-          <h2 className="text-base font-medium text-foreground">{h2}</h2>
-          {current?.description && (
-            <p className="mt-1 max-w-prose text-sm text-foreground-muted">{current.description}</p>
-          )}
+    // First-run narrative, centred on the canvas (Fresha's payment-setup
+    // skeleton). This surface is rare — seen only during onboarding — so it
+    // gets a staggered entrance; index.css quiets animate-in globally under
+    // prefers-reduced-motion.
+    <section className="pt-2 sm:pt-6">
+      <div className="mx-auto max-w-xl text-center animate-in fade-in-0 duration-200">
+        <h2 className="text-2xl font-medium text-foreground">{h2}</h2>
+        {current?.description && (
+          <p className="mx-auto mt-2 max-w-lg text-base text-foreground-muted">{current.description}</p>
+        )}
+      </div>
 
-          {/* One equal-width bar segment per step, title + status word under
-              it. The bars are decorative (aria-hidden) — the visible words
-              carry the state, colour never stands alone. */}
-          <ol className="mt-6 grid grid-cols-3 gap-x-3">
-            {steps.map((step, index) => (
-              <li key={step.title + index} className="min-w-0">
-                <span
-                  aria-hidden="true"
-                  className={`block h-1 w-full rounded-full transition-colors duration-200 ${stepBarClass(step)}`}
-                />
-                {/* Non-active titles stay on the secondary text tier
-                    (foreground-muted); only the current step is full ink. */}
-                <p
-                  className={`mt-2.5 flex items-center gap-1.5 text-sm leading-snug ${
-                    step.status === 'current' ? 'font-medium text-foreground' : 'font-normal text-foreground-muted'
-                  }`}
-                >
-                  {step.title}
-                  {step.status === 'done' && <DoneCheck />}
-                </p>
-                <StepStatusLabel status={step.status} tone={step.tone} statusLabel={step.statusLabel} />
-              </li>
-            ))}
-          </ol>
+      {/* Acctual's Payments row: one card per step — status mark, title,
+          one-line caption. The active card lifts with shadow-soft (the focal
+          element of the page); resolved and upcoming cards stay flat with
+          titles on the secondary text tier. */}
+      <ol className="mx-auto mt-8 grid max-w-3xl gap-3 sm:grid-cols-3">
+        {steps.map((step, index) => (
+          <li
+            key={step.title + index}
+            className={cn(
+              'rounded-xl border border-border-subtle bg-surface p-5 text-left',
+              'animate-in fade-in-0 slide-in-from-bottom-1 duration-300 fill-mode-backwards',
+              index === 1 && 'delay-75',
+              index === 2 && 'delay-150',
+              step.status === 'current' && 'shadow-soft',
+            )}
+          >
+            <div className="flex h-6 items-center">
+              <StepMark step={step} index={index} />
+            </div>
+            <p
+              className={cn(
+                'mt-3 text-sm font-medium leading-snug',
+                step.status === 'current' ? 'text-foreground' : 'text-foreground-muted',
+              )}
+            >
+              {step.title}
+            </p>
+            <p className="mt-1 text-sm text-foreground-muted">{STEP_CAPTIONS[index]}</p>
+          </li>
+        ))}
+      </ol>
 
-          {/* Action inside the panel, divided off (Vercel's next-steps card).
-              Waiting states have no button and the footer collapses — no
-              empty zones. */}
-          {current?.action && (
-            <div className="mt-6 border-t border-border-subtle pt-4">{current.action}</div>
-          )}
+      {/* One action, centred under the journey; waiting states have none and
+          the narrative simply ends at the cards. */}
+      {current?.action && (
+        <div className="mt-8 flex justify-center animate-in fade-in-0 duration-300 delay-200 fill-mode-backwards">
+          {current.action}
         </div>
-      </FramedCardPanel>
-    </FramedCard>
+      )}
+    </section>
   );
 }
 

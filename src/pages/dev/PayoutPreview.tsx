@@ -39,7 +39,6 @@ const STATES: { id: string; label: string; description: string; viewModel: Payou
         {
           title: STEP_1_TITLE,
           status: 'current',
-          description: 'Legg inn kontonummer og bekreft identiteten din hos Stripe.',
           action: <Button onClick={noop}>Kom i gang</Button>,
         },
         { title: STEP_2_TITLE, status: 'upcoming' },

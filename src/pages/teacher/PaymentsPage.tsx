@@ -29,9 +29,9 @@ const STEP_2_TITLE = 'Vi sjekker opplysningene';
 const STEP_3_TITLE = 'Motta utbetalinger';
 
 /**
- * Payments page — a single "payout account" surface: a 3-step horizontal
- * segmented progress bar (Bekreft identiteten din → Vi sjekker opplysningene
- * → Motta utbetalinger) with the current step's detail card below, plus a FAQ
+ * Payments page — a single "payout account" surface: a centred 3-step setup
+ * narrative (Bekreft identiteten din → Vi sjekker opplysningene → Motta
+ * utbetalinger) rendered as a row of step cards with one CTA, plus a FAQ
  * accordion underneath. No status badge next to
  * the page title — progress is entirely conveyed by which step is current
  * and its marker tone. The Card matches the other Settings pages (billing,
@@ -309,9 +309,10 @@ const PaymentsPage = () => {
     h2 = 'Sett opp utbetalinger';
     steps = [
       {
+        // No description: the step cards' captions already say what step 1
+        // involves — a sub-line here would restate them.
         title: STEP_1_TITLE,
         status: 'current',
-        description: 'Legg inn kontonummer og bekreft identiteten din hos Stripe.',
         action: (
           <Button
             onClick={handleStartStripe}
@@ -425,12 +426,10 @@ const PaymentsPage = () => {
   const viewModel: PayoutSetupViewModel = { h2, steps };
 
   // Full-width shell like the other dashboard pages — this is a status
-  // surface, not a settings form, so no label-column SettingsRows.
+  // surface, not a settings form, so no label-column SettingsRows. No shell
+  // description: the setup narrative carries its own headline + sub-line.
   return (
-    <PageShell
-      title="Utbetalingskonto"
-      description={showStats ? undefined : 'Slik får du betalt for kursene dine.'}
-    >
+    <PageShell title="Utbetalingskonto">
       {currentSellerHydrateFailed ? (
         // stripe_account_id is a stale safe-default (null) — the timeline
         // would show step 1 to a seller who already started onboarding.
