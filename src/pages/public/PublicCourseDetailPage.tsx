@@ -40,6 +40,9 @@ export default function PublicCourseDetailPage() {
   const { user } = useAuth();
   const navState = (location.state ?? null) as DetailNavState | null;
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  // Lifted out of the hero component: whether an image exists decides the
+  // whole page's layout (two-column vs single-column), not just the hero.
+  const [heroFailed, setHeroFailed] = useState(false);
 
   // One query owns the whole load. Redirect decisions are returned as data
   // (not performed inside the fetch) so the queryFn stays side-effect-free;
@@ -118,6 +121,12 @@ export default function PublicCourseDetailPage() {
     }
   }, [detailQuery.data, navigate, location.state]);
 
+  // The page stays mounted across course navigations — a failed hero on one
+  // course must not collapse the layout of the next.
+  useEffect(() => {
+    setHeroFailed(false);
+  }, [slug, courseSlug]);
+
   const course = detailQuery.data?.kind === 'ok' ? detailQuery.data.course : null;
   const sessions = detailQuery.data?.kind === 'ok' ? detailQuery.data.sessions : [];
   const tiers = detailQuery.data?.kind === 'ok' ? detailQuery.data.tiers : [];
@@ -184,6 +193,13 @@ export default function PublicCourseDetailPage() {
     ?? '';
   const weeksLabel = course ? buildDurationShort(course, sessions.length) : '';
 
+  // No image (or a broken URL) → the 300px image column would be a card
+  // floating over dead white space. The layout reflows to one centered
+  // column instead (ClassPass/Fresha pattern: the slot disappears, no
+  // placeholder art), with the Arrangør card after the content.
+  const heroImg = course ? resolveCourseImage(course) : null;
+  const hasHero = !!heroImg && !heroFailed;
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 pt-8 pb-16">
@@ -193,7 +209,7 @@ export default function PublicCourseDetailPage() {
         {notFound && !loading && <PageState variant="public-course" as="div" />}
 
         {!loading && !loadFailed && !notFound && course && (
-          <>
+          <div className={cn(!hasHero && 'mx-auto w-full max-w-[640px]')}>
             <Link
               to={backHref}
               className="inline-flex items-center gap-1 text-sm text-foreground-muted hover:text-foreground transition-colors"
@@ -202,11 +218,18 @@ export default function PublicCourseDetailPage() {
               Tilbake til kursoversikten
             </Link>
 
-            <div className="mt-6 grid items-start gap-8 md:grid-cols-[300px_minmax(0,1fr)] lg:gap-12">
-              <div>
-                <CourseHeroImage course={course} />
-                <SellerCard course={course} className="mt-4 max-md:hidden" />
-              </div>
+            <div
+              className={cn(
+                'mt-6',
+                hasHero && 'grid items-start gap-8 md:grid-cols-[300px_minmax(0,1fr)] lg:gap-12',
+              )}
+            >
+              {hasHero && (
+                <div>
+                  <CourseHeroImage src={heroImg!} onFailed={() => setHeroFailed(true)} />
+                  <SellerCard course={course} className="mt-4 max-md:hidden" />
+                </div>
+              )}
 
               <div className="min-w-0">
                 <h1 className="text-4xl font-medium text-foreground">{course.title}</h1>
@@ -275,7 +298,7 @@ export default function PublicCourseDetailPage() {
                   </section>
                 )}
 
-                <SellerCard course={course} className="mt-8 md:hidden" />
+                <SellerCard course={course} className={cn('mt-8', hasHero && 'md:hidden')} />
               </div>
             </div>
 
@@ -285,7 +308,7 @@ export default function PublicCourseDetailPage() {
               sessions={sessions}
               duration={course.duration}
             />
-          </>
+          </div>
         )}
       </main>
     </div>
@@ -294,19 +317,16 @@ export default function PublicCourseDetailPage() {
 
 // ── Hero image ──────────────────────────────────────────────────────────
 
-function CourseHeroImage({ course }: { course: PublicCourseWithDetails }) {
-  const img = resolveCourseImage(course);
-  // A broken image URL falls back to the same no-image branch (render
-  // nothing) rather than leaving a broken-image glyph on the page.
-  const [failed, setFailed] = useState(false);
-  if (!img || failed) return null;
+function CourseHeroImage({ src, onFailed }: { src: string; onFailed: () => void }) {
+  // A broken image URL reports up so the page can reflow to the single-column
+  // no-image layout rather than leaving a broken-image glyph on the page.
   return (
     <div className="aspect-square w-full overflow-hidden rounded-2xl bg-muted">
       <img
-        src={img}
+        src={src}
         alt=""
         className="media-outline size-full object-cover"
-        onError={() => setFailed(true)}
+        onError={onFailed}
       />
     </div>
   );

@@ -129,40 +129,60 @@ const PublicCoursesPage = () => {
       }
     : facts.primaryLocation;
 
-  // Course-type filter — only offer types that actually exist on this studio.
+  // Course-type filter — an option earns its place only when it PARTITIONS
+  // the list (matches some courses but not all). An option every course
+  // matches, or none does, can't change the result set and would make the
+  // control decorative — with no partitioning option the pill disappears.
   const typeOptions = useMemo(() => {
     const candidates: { value: CourseTypeFilter; label: string }[] = [
-      { value: 'all', label: 'Alle kurstyper' },
       { value: 'series', label: 'Kursrekker' },
       { value: 'workshop', label: 'Workshops' },
       { value: 'drop-in', label: 'Drop-in' },
       { value: 'online', label: 'Nettkurs' },
     ];
-    return candidates.filter(
-      (option) => option.value === 'all'
-        || visible.some((course) => matchesTypeFilter(course, option.value)),
-    );
+    const partitioning = candidates.filter((option) => {
+      const matches = visible.filter((course) => matchesTypeFilter(course, option.value)).length;
+      return matches > 0 && matches < visible.length;
+    });
+    if (partitioning.length === 0) return [];
+    return [{ value: 'all' as const, label: 'Alle kurstyper' }, ...partitioning];
   }, [visible]);
 
-  // Instructor filter — only when the studio has more than one instructor.
+  // Instructor filter — same partition rule (≥2 instructors alone isn't
+  // enough: if every course lists both names, the filter changes nothing).
   const instructorOptions = useMemo(() => {
     if (facts.instructors.length < 2) return [];
+    const partitioning = facts.instructors.filter((name) => {
+      const matches = visible.filter((course) =>
+        course.instructors.some((i) => i.name === name),
+      ).length;
+      return matches > 0 && matches < visible.length;
+    });
+    if (partitioning.length === 0) return [];
     return [
       { value: 'all', label: 'Alle instruktører' },
-      ...facts.instructors.map((name) => ({ value: name, label: name })),
+      ...partitioning.map((name) => ({ value: name, label: name })),
     ];
-  }, [facts.instructors]);
+  }, [facts.instructors, visible]);
+
+  // A refetch can retire the selected option (e.g. the last workshop closes);
+  // fall back to 'all' rather than filtering on a value the pill can't show.
+  const effectiveTypeFilter = typeOptions.some((o) => o.value === typeFilter) ? typeFilter : 'all';
+  const effectiveInstructorFilter = instructorOptions.some((o) => o.value === instructorFilter)
+    ? instructorFilter
+    : 'all';
 
   const filteredCourses = useMemo(
     () => sorted.filter((course) =>
-      matchesTypeFilter(course, typeFilter)
-      && (instructorFilter === 'all' || course.instructors.some((i) => i.name === instructorFilter)),
+      matchesTypeFilter(course, effectiveTypeFilter)
+      && (effectiveInstructorFilter === 'all'
+        || course.instructors.some((i) => i.name === effectiveInstructorFilter)),
     ),
-    [sorted, typeFilter, instructorFilter],
+    [sorted, effectiveTypeFilter, effectiveInstructorFilter],
   );
 
-  const hasFilters = typeOptions.length > 1 || instructorOptions.length > 0;
-  const filtersActive = typeFilter !== 'all' || instructorFilter !== 'all';
+  const hasFilters = typeOptions.length > 0 || instructorOptions.length > 0;
+  const filtersActive = effectiveTypeFilter !== 'all' || effectiveInstructorFilter !== 'all';
 
   const resetFilters = () => {
     setTypeFilter('all');
@@ -173,9 +193,9 @@ const PublicCoursesPage = () => {
   // only — the date headers in the list are the navigation.
   const filters = hasFilters ? (
     <div className="flex flex-wrap items-center gap-2">
-      {typeOptions.length > 1 && (
+      {typeOptions.length > 0 && (
         <StudioFilterPill
-          value={typeFilter}
+          value={effectiveTypeFilter}
           onChange={setTypeFilter}
           options={typeOptions}
           ariaLabel="Filtrer på kurstype"
@@ -183,7 +203,7 @@ const PublicCoursesPage = () => {
       )}
       {instructorOptions.length > 0 && (
         <StudioFilterPill
-          value={instructorFilter}
+          value={effectiveInstructorFilter}
           onChange={setInstructorFilter}
           options={instructorOptions}
           ariaLabel="Filtrer på instruktør"
@@ -252,6 +272,9 @@ const PublicCoursesPage = () => {
 };
 
 function StudioPageSkeleton() {
+  // Mirrors the no-cover masthead (the common case — a cover band appearing
+  // on swap is rarer than an empty band vanishing) and the text-row agenda
+  // grammar without thumbnails.
   return (
     <div
       className="animate-in fade-in duration-150"
@@ -259,23 +282,20 @@ function StudioPageSkeleton() {
       aria-live="polite"
     >
       <span className="sr-only">Laster…</span>
-      {/* Cover band */}
-      <div className="h-32 sm:h-44 w-full bg-muted" />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        {/* Profile lockup — overlapping logo, name + location stacked under */}
-        <Skeleton className="relative -mt-9 size-18 rounded-full border-[3px] border-background" />
-        <Skeleton className="mt-4 h-7 w-56 max-w-full" />
-        <Skeleton className="mt-2.5 h-4 w-72 max-w-full" />
-        {/* Filter pills + date-grouped agenda rows */}
+        {/* Profile lockup — logo tile, name + location stacked under */}
+        <div className="pt-10 sm:pt-12">
+          <Skeleton className="size-24 rounded-full" />
+        </div>
+        <Skeleton className="mt-4 h-9 w-64 max-w-full" />
+        <Skeleton className="mt-2 h-4 w-72 max-w-full" />
+        {/* Filter pill + date-grouped agenda rows */}
         <div className="pt-8">
-          <div className="flex gap-2">
-            <Skeleton className="h-8 w-32 rounded-full" />
-            <Skeleton className="h-8 w-36 rounded-full" />
-          </div>
+          <Skeleton className="h-8 w-32 rounded-full" />
           <div className="pt-6">
             {/* Date header */}
             <Skeleton className="h-5 w-44" />
-            {/* Mirrors the agenda rows: time stack · thumb · title stack · price */}
+            {/* Mirrors the agenda rows: time stack · title stack · price */}
             <div className="divide-y divide-border-subtle pt-1">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 py-4">
@@ -283,7 +303,6 @@ function StudioPageSkeleton() {
                     <Skeleton className="h-4 w-11" />
                     <Skeleton className="h-3.5 w-12" />
                   </div>
-                  <Skeleton className="size-16 shrink-0 rounded-lg" />
                   <div className="min-w-0 flex-1 space-y-2">
                     <Skeleton className="h-4 w-48 max-w-full" />
                     <Skeleton className="h-3.5 w-64 max-w-full" />

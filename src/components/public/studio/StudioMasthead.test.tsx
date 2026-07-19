@@ -32,6 +32,33 @@ describe('StudioMasthead location', () => {
     expect(screen.getByText('Thorvald Meyers gate 45, 0555 Oslo')).toBeInTheDocument();
   });
 
+  it('drops a venue label that just repeats the studio name', () => {
+    renderLocation({
+      label: 'Fjell Yoga Oslo',
+      address: 'Thorvald Meyers gate 45, 0555 Oslo',
+      lat: 59.923,
+      lon: 10.759,
+      placeId: 'studio-place',
+    });
+
+    // The H1 carries the name; the identity block must not repeat it.
+    expect(screen.getAllByText('Fjell Yoga Oslo')).toHaveLength(1);
+    expect(screen.getByText('Thorvald Meyers gate 45, 0555 Oslo')).toBeInTheDocument();
+  });
+
+  it('renders no cover band when the seller has no cover image', () => {
+    const { container } = renderLocation({
+      label: 'Fjell Yoga',
+      address: 'Thorvald Meyers gate 45, 0555 Oslo',
+      lat: 59.923,
+      lon: 10.759,
+      placeId: 'business-place',
+    });
+
+    expect(container.querySelector('img')).not.toBeInTheDocument();
+    expect(container.querySelector('.bg-muted.h-44')).not.toBeInTheDocument();
+  });
+
   it('keeps a business name above its street address', () => {
     renderLocation({
       label: 'Fjell Yoga',

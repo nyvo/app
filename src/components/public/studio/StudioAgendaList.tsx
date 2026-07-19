@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { cn, formatCoursePrice, formatKroner } from '@/lib/utils';
-import type { PublicCourseWithDetails } from '@/services/publicCourses';
+import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { toLocalDate } from '@/utils/dateUtils';
 import {
   courseBookability,
@@ -28,8 +28,15 @@ interface StudioAgendaListProps {
  * list where the date headers are the navigation — no day strip, days
  * without courses simply don't render. Every course is exactly one row on
  * its display date (a series says «8 økter» on the second line, never one
- * row per session). Row contract, five fixed slots: time/duration stack ·
- * image · title/details·instructor stack · price · scarcity text.
+ * row per session). Row contract, fixed slots: time/duration stack ·
+ * [thumbnail] · title/details·instructor stack · price.
+ *
+ * The thumbnail slot is list-level, all-or-none: it renders only when EVERY
+ * visible course resolves an image (own image or the studio's default course
+ * image). Otherwise the whole list drops to the text-row grammar — the
+ * ClassPass/Fresha schedule pattern — instead of padding gaps with blank
+ * grey squares. A studio closes a gap by uploading the missing image or
+ * setting a default course image, never by us inventing placeholder art.
  */
 export function StudioAgendaList({ courses, viewingSlug, viewingName }: StudioAgendaListProps) {
   const todayKey = useMemo(() => dateKey(new Date()), []);
@@ -38,6 +45,11 @@ export function StudioAgendaList({ courses, viewingSlug, viewingName }: StudioAg
     d.setDate(d.getDate() + 1);
     return dateKey(d);
   }, []);
+
+  const showThumbs = useMemo(
+    () => courses.length > 0 && courses.every((course) => !!resolveCourseImage(course)),
+    [courses],
+  );
 
   const groups = useMemo(() => {
     const map = new Map<string, PublicCourseWithDetails[]>();
@@ -68,6 +80,7 @@ export function StudioAgendaList({ courses, viewingSlug, viewingName }: StudioAg
                 key={course.id}
                 course={course}
                 todayKey={todayKey}
+                showThumb={showThumbs}
                 viewingSlug={viewingSlug}
                 viewingName={viewingName}
               />
@@ -122,11 +135,13 @@ function GroupHeading({
 function AgendaRow({
   course,
   todayKey,
+  showThumb,
   viewingSlug,
   viewingName,
 }: {
   course: PublicCourseWithDetails;
   todayKey: string;
+  showThumb: boolean;
   viewingSlug?: string;
   viewingName?: string | null;
 }) {
@@ -161,7 +176,7 @@ function AgendaRow({
         )}
       </span>
 
-      <CourseThumb course={course} />
+      {showThumb && <CourseThumb course={course} />}
 
       <div className="min-w-0 flex-1">
         <p className="text-base font-medium text-foreground">{course.title}</p>
@@ -260,8 +275,11 @@ function subLabel(course: PublicCourseWithDetails): string {
   return parts.length > 2 ? parts.join(', ') : parts.join(' · ');
 }
 
+/** Only mounted when the whole list qualified for thumbnails, so `src` is
+ * always set. The muted tile remains solely as the runtime error state for a
+ * URL that fails to load — never a designed "no image" placeholder. */
 function CourseThumb({ course }: { course: PublicCourseWithDetails }) {
-  const src = course.image_url || course.seller?.default_course_image_url || null;
+  const src = resolveCourseImage(course);
   const [failed, setFailed] = useState(false);
 
   if (!src || failed) {
