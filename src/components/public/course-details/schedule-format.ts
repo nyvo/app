@@ -164,15 +164,16 @@ export function buildDropInSublabel(sessions: CourseSession[]): string | null {
   return dateLabel || time || null;
 }
 
-/** "Neste økt: tir. 12. aug kl. 18:00" — the checkout Billett constraint
- * line for the drop-in tier. */
+/** "Gjelder tir. 12. aug kl. 18:00" — the buyer-facing drop-in session line
+ * (booking-card sublabel + checkout header meta): states which session the
+ * purchase applies to. */
 export function buildNextSessionLabel(
   session: { session_date: string; start_time: string } | null,
 ): string | null {
   if (!session) return null;
   const dateLabel = formatShortWeekdayDate(session.session_date);
   const time = session.start_time.slice(0, 5);
-  return `Neste økt: ${dateLabel} kl. ${time}`;
+  return `Gjelder ${dateLabel} kl. ${time}`;
 }
 
 /** Distinct weekday names (capitalized first entry only, per `capitalize`)
@@ -253,6 +254,28 @@ export function buildMainTierConstraintLabel(
   }
   const days = singleDayCount(course);
   return days > 1 ? `${days} dager` : null;
+}
+
+/**
+ * Compact duration label for the course-detail booking card's calendar row —
+ * "8 uker" for a series, "3 dager" for a multi-day `single` course, "1 økt"
+ * for everything else. Falls back to the session count when a series has no
+ * `total_weeks` set. Shares `singleDayCount` with `buildMainTierConstraintLabel`
+ * / `buildMetaCardRows` so the three can't drift on grammar.
+ */
+export function buildDurationShort(
+  course: Pick<PublicCourseWithDetails, 'format' | 'total_weeks' | 'start_date' | 'end_date'>,
+  sessionCount: number,
+): string {
+  if (course.format === 'series') {
+    const weeks = course.total_weeks;
+    if (weeks) {
+      return `${weeks} ${weeks === 1 ? 'uke' : 'uker'}`;
+    }
+    return sessionCount > 0 ? `${sessionCount} ${sessionCount === 1 ? 'økt' : 'økter'}` : '1 økt';
+  }
+  const days = singleDayCount(course);
+  return days > 1 ? `${days} dager` : '1 økt';
 }
 
 export interface MetaCardRow {

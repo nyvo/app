@@ -239,7 +239,7 @@ function SessionCard({
 
 // ── Schedule dialog — "Se alle datoer" ────────────────────────────────────
 
-function ScheduleDialog({
+export function ScheduleDialog({
   open,
   onOpenChange,
   sessions,

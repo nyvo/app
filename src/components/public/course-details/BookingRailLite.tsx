@@ -412,8 +412,8 @@ function buildTiles(
   return tiles;
 }
 
-/** Sublabel under the package tile. Series show the week span — "N uker
- * igjen" once the RPC has prorated it down to the remaining weeks. A single
+/** Sublabel under the package tile. Series show the week span — "N av M uker
+ * gjenstår" once the RPC has prorated it down to the remaining weeks. A single
  * spanning consecutive days shows the day span; a one-day class needs none. */
 function mainSublabel(
   course: PublicCourseWithDetails,
@@ -425,7 +425,7 @@ function mainSublabel(
     const unit = weeks === 1 ? 'uke' : 'uker';
     const prorated = course.total_weeks != null && weeks < course.total_weeks;
     return prorated
-      ? { sublabel: `${weeks} ${unit} igjen`, prorated: true }
+      ? { sublabel: `${weeks} av ${course.total_weeks} uker gjenstår`, prorated: true }
       : { sublabel: `${weeks} ${unit}`, prorated: false };
   }
   const days = singleDayCount(course);

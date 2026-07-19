@@ -1,18 +1,31 @@
-import { useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { PageState } from '@/components/page-state/page-state';
-import { CourseDetailContent } from '@/components/public/course-details/CourseDetailContent';
-import { getBookingTiles } from '@/components/public/course-details/BookingRailLite';
-import { buildDropInSublabel } from '@/components/public/course-details/schedule-format';
-import { BookingBar } from '@/components/public/course-details/BookingBar';
-import { StorefrontHeader } from '@/components/public/StorefrontHeader';
-import { fetchPublicCourseBySlug, type PublicCourseWithDetails } from '@/services/publicCourses';
+import { PublicCard } from '@/components/public/PublicCard';
+import { DateBadge } from '@/components/ui/date-badge';
+import { RichTextContent } from '@/components/ui/rich-text-content';
+import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
+import { LocationCard } from '@/components/public/course-details/LocationCard';
+import { ScheduleDialog } from '@/components/public/course-details/CourseDetailContent';
+import { getBookingTiles, type TicketTile, type TicketId } from '@/components/public/course-details/BookingRailLite';
+import {
+  buildDropInSublabel,
+  buildDurationShort,
+  buildMetaCardRows,
+  buildNextSessionLabel,
+} from '@/components/public/course-details/schedule-format';
+import { fetchPublicCourseBySlug, resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug } from '@/services/sellers';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { osloNowKey } from '@/utils/dateUtils';
+import { ChevronLeft } from '@/lib/icons';
+import { formatKroner, cn } from '@/lib/utils';
 import type { AvailableTicketType, CourseSession } from '@/types/database';
 
 interface DetailNavState {
@@ -26,6 +39,7 @@ export default function PublicCourseDetailPage() {
   const location = useLocation();
   const { user } = useAuth();
   const navState = (location.state ?? null) as DetailNavState | null;
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
   // One query owns the whole load. Redirect decisions are returned as data
   // (not performed inside the fetch) so the queryFn stays side-effect-free;
@@ -109,7 +123,7 @@ export default function PublicCourseDetailPage() {
   const tiers = detailQuery.data?.kind === 'ok' ? detailQuery.data.tiers : [];
 
   // "Already enrolled": a signed-in buyer with a confirmed signup gets a
-  // confirmation state in the booking bar instead of a CTA that would only
+  // confirmation state in the booking card instead of a CTA that would only
   // run into the checkout's duplicate guard. Guest bookings not yet claimed
   // by an account have no buyer_id — they keep the normal CTA (fail open:
   // any read hiccup must never block booking).
@@ -151,8 +165,8 @@ export default function PublicCourseDetailPage() {
         ? `/${slug}`
         : '/';
 
-  // Same tile/state derivation the checkout page's BookingRailLite and this
-  // page's BookingBar both render off — one source of truth, no drift.
+  // Same tile/state derivation the checkout page and this page's booking
+  // card both render off — one source of truth, no drift.
   const { tiles, courseFull, soldOut, closed } = course
     ? getBookingTiles(course, tiers, buildDropInSublabel(sessions))
     : { tiles: [], courseFull: false, soldOut: false, closed: false };
@@ -160,37 +174,116 @@ export default function PublicCourseDetailPage() {
   const checkoutHref = course ? `/${slug}/${course.slug}/pamelding` : '';
   const paymentNotReady = tiles.some((t) => t.amount > 0) && !course?.seller?.stripe_onboarding_complete;
 
-  return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* White-label: the viewing storefront's lockup (affiliate name wins
-          over the owner); the owner's logo only when they're the same studio. */}
-      <StorefrontHeader
-        name={navState?.fromName ?? course?.seller?.name}
-        slug={slug}
-        logoUrl={!navState?.fromName || navState.fromName === course?.seller?.name
-          ? course?.seller?.logo_url
-          : null}
-      />
+  // "Tid" line under the calendar tile — falls back to "Start" while a
+  // course has no recurring schedule (e.g. a single-day class with no
+  // resolvable time range).
+  const metaRows = course ? buildMetaCardRows(course, sessions.length) : [];
+  const tidLabel =
+    metaRows.find((r) => r.label === 'Tid')?.value
+    ?? metaRows.find((r) => r.label === 'Start')?.value
+    ?? '';
+  const weeksLabel = course ? buildDurationShort(course, sessions.length) : '';
 
-      <main className="flex-1">
-        {loading && <CourseDetailSkeleton />}
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+        {loading && <CourseDetailSkeletonBody />}
 
         {loadFailed && !loading && <PageState variant="server-error" as="div" />}
         {notFound && !loading && <PageState variant="public-course" as="div" />}
 
         {!loading && !loadFailed && !notFound && course && (
           <>
-            <CourseDetailContent course={course} sessions={sessions} backHref={backHref} />
-            <BookingBar
-              tiles={tiles}
-              coursePrice={course.price}
-              dropInPrice={course.allows_drop_in ? course.drop_in_price : null}
-              courseFull={courseFull}
-              soldOut={soldOut}
-              closed={closed}
-              paymentNotReady={paymentNotReady}
-              checkoutHref={checkoutHref}
-              enrolled={enrolled}
+            <Link
+              to={backHref}
+              className="inline-flex items-center gap-1 text-sm text-foreground-muted hover:text-foreground transition-colors"
+            >
+              <ChevronLeft className="size-4" strokeWidth={1.75} />
+              Tilbake til kursoversikten
+            </Link>
+
+            <div className="mt-6 grid items-start gap-8 md:grid-cols-[300px_minmax(0,1fr)] lg:gap-12">
+              <div>
+                <CourseHeroImage course={course} />
+                <SellerCard course={course} className="mt-4 max-md:hidden" />
+              </div>
+
+              <div className="min-w-0">
+                <h1 className="text-4xl font-medium text-foreground">{course.title}</h1>
+
+                <div className="mt-5 flex items-start gap-3">
+                  <DateBadge dateStr={course.start_date ?? undefined} size="sm" className="bg-muted" />
+                  <div className="min-w-0">
+                    <p className="text-[15px] font-medium text-foreground">{tidLabel}</p>
+                    <p className="mt-0.5 text-sm text-foreground-muted">
+                      {weeksLabel}
+                      {sessions.length > 1 && (
+                        <>
+                          {' · '}
+                          <button
+                            type="button"
+                            onClick={() => setScheduleOpen(true)}
+                            className="cursor-pointer underline underline-offset-2 hover:text-foreground"
+                          >
+                            Se alle datoer
+                          </button>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Who teaches THIS course — distinct from the Arrangør card
+                    (the studio). Suppressed when it would just repeat the
+                    seller name (solo teachers). */}
+                {course.instructor_name && course.instructor_name !== course.seller?.name && (
+                  <p className="mt-2.5 text-sm text-foreground-muted">Med {course.instructor_name}</p>
+                )}
+
+                <BookingCard
+                  course={course}
+                  tiles={tiles}
+                  courseFull={courseFull}
+                  soldOut={soldOut}
+                  closed={closed}
+                  paymentNotReady={paymentNotReady}
+                  enrolled={enrolled}
+                  checkoutHref={checkoutHref}
+                  sessions={sessions}
+                  className="mt-7"
+                />
+
+                {course.description && (
+                  <section className="mt-8 border-t border-border-subtle pt-8">
+                    <h2 className="text-base font-medium mb-3">Om kurset</h2>
+                    <RichTextContent
+                      html={course.description}
+                      className="text-base leading-relaxed text-foreground"
+                    />
+                  </section>
+                )}
+
+                {course.location && (
+                  <section className="mt-8 border-t border-border-subtle pt-8">
+                    <h2 className="text-base font-medium mb-3">Sted</h2>
+                    <LocationCard
+                      location={course.location}
+                      lat={course.location_lat}
+                      lon={course.location_lon}
+                      placeId={course.location_place_id}
+                    />
+                  </section>
+                )}
+
+                <SellerCard course={course} className="mt-8 md:hidden" />
+              </div>
+            </div>
+
+            <ScheduleDialog
+              open={scheduleOpen}
+              onOpenChange={setScheduleOpen}
+              sessions={sessions}
+              duration={course.duration}
             />
           </>
         )}
@@ -199,19 +292,463 @@ export default function PublicCourseDetailPage() {
   );
 }
 
-export function CourseDetailSkeleton() {
+// ── Hero image ──────────────────────────────────────────────────────────
+
+function CourseHeroImage({ course }: { course: PublicCourseWithDetails }) {
+  const img = resolveCourseImage(course);
+  // A broken image URL falls back to the same no-image branch (render
+  // nothing) rather than leaving a broken-image glyph on the page.
+  const [failed, setFailed] = useState(false);
+  if (!img || failed) return null;
   return (
-    <div
-      className="mx-auto w-full max-w-[640px] px-4 pb-16 sm:px-6 animate-in fade-in duration-150"
-      role="status"
-      aria-live="polite"
-    >
+    <div className="aspect-square w-full overflow-hidden rounded-2xl bg-muted">
+      <img
+        src={img}
+        alt=""
+        className="media-outline size-full object-cover"
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
+}
+
+// ── Arrangør card ──────────────────────────────────────────────────────────
+
+function SellerCard({ course, className }: { course: PublicCourseWithDetails; className?: string }) {
+  return (
+    <PublicCard header={<span>Arrangør</span>} className={className} bodyClassName="p-3">
+      <div className="flex items-center gap-3">
+        <UserAvatar name={course.seller?.name} src={course.seller?.logo_url} size="md" />
+        <span className="text-sm font-medium text-foreground">{course.seller?.name}</span>
+      </div>
+    </PublicCard>
+  );
+}
+
+// ── Booking card ───────────────────────────────────────────────────────────
+
+interface BookingCardProps {
+  course: PublicCourseWithDetails;
+  tiles: TicketTile[];
+  courseFull: boolean;
+  soldOut: boolean;
+  closed: boolean;
+  paymentNotReady: boolean;
+  enrolled: { email: string } | null;
+  checkoutHref: string;
+  /** Not read directly — the drop-in next-session lookup below re-queries
+   * live data (mirrors the checkout page's own lookup) rather than deriving
+   * from the page's already-fetched list, so this stays for the caller's
+   * type/prop shape parity with the page's `sessions` state. */
+  sessions: CourseSession[];
+  className?: string;
+}
+
+function BookingCard({
+  course,
+  tiles,
+  courseFull,
+  soldOut,
+  closed,
+  paymentNotReady,
+  enrolled,
+  checkoutHref,
+  className,
+}: BookingCardProps) {
+  const mainTile = tiles.find((t) => t.id === 'main') ?? null;
+  const dropInTile = tiles.find((t) => t.id === 'drop-in') ?? null;
+  const [selected, setSelected] = useState<TicketId>(mainTile ? 'main' : 'drop-in');
+
+  const hasDropInTile = dropInTile != null;
+  // undefined = loading / not applicable, null = no upcoming session.
+  const [dropInSessionId, setDropInSessionId] = useState<string | null | undefined>(undefined);
+  const [dropInNextSession, setDropInNextSession] = useState<
+    { session_date: string; start_time: string } | null | undefined
+  >(undefined);
+  const [dropInLookupFailed, setDropInLookupFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setDropInLookupFailed(false);
+    if (!hasDropInTile) {
+      setDropInSessionId(undefined);
+      setDropInNextSession(undefined);
+      return;
+    }
+    void (async () => {
+      // Session rows store naive Norwegian local times — compare against
+      // "now" in Europe/Oslo ("YYYY-MM-DD HH:mm:ss", lexically ordered).
+      const osloNow = osloNowKey();
+      const { data, error } = await supabase
+        .from('course_sessions')
+        .select('id, session_date, start_time, status')
+        .eq('course_id', course.id)
+        .gte('session_date', osloNow.slice(0, 10))
+        .neq('status', 'cancelled')
+        .order('session_date', { ascending: true })
+        .order('start_time', { ascending: true })
+        .limit(10);
+      if (cancelled) return;
+      if (error) {
+        setDropInSessionId(undefined);
+        setDropInNextSession(undefined);
+        setDropInLookupFailed(true);
+        return;
+      }
+      const next = (data as { id: string; session_date: string; start_time: string }[] | null)?.find(
+        (s) => `${s.session_date} ${s.start_time}` > osloNow,
+      );
+      setDropInSessionId(next?.id ?? null);
+      setDropInNextSession(next ? { session_date: next.session_date, start_time: next.start_time } : null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [hasDropInTile, course.id]);
+
+  const lowStock = mainTile != null && course.spots_available >= 1 && course.spots_available <= 3;
+
+  const header = (
+    <>
+      <span>Påmelding</span>
+      {lowStock && (
+        <span className="text-xs font-normal tabular-nums text-warning">
+          {course.spots_available} {course.spots_available === 1 ? 'plass' : 'plasser'} igjen
+        </span>
+      )}
+    </>
+  );
+
+  /** Drop-in tier's sublabel — the resolved next session when available,
+   * falling back to the tile's own sublabel while the lookup is in flight. */
+  function resolveDropInSublabel(tile: TicketTile): string | null {
+    return buildNextSessionLabel(dropInNextSession ?? null) ?? tile.sublabel;
+  }
+
+  /** CTA for a given tile. A drop-in tile gates on the next-session lookup —
+   * loading, no upcoming session, or a failed query each replace the working
+   * button with a disabled one and an explanatory line. Order matters: a
+   * failed lookup also leaves `dropInSessionId` at `undefined` (mirrors
+   * checkout), so the failure check must run before the loading check. */
+  function renderCta(tile: TicketTile, billett: TicketId) {
+    if (tile.id === 'drop-in') {
+      if (dropInLookupFailed) {
+        return (
+          <>
+            <p className="mt-3 text-sm text-danger text-center">Kunne ikke hente neste time. Prøv igjen.</p>
+            <Button size="cta" disabled className="w-full mt-3">Gå til betaling</Button>
+          </>
+        );
+      }
+      if (dropInSessionId === undefined) {
+        return (
+          <Button size="cta" disabled loading className="w-full mt-4">
+            Gå til betaling
+          </Button>
+        );
+      }
+      if (dropInSessionId === null) {
+        return (
+          <>
+            <p className="mt-3 text-sm text-danger text-center">Ingen kommende timer for drop-in.</p>
+            <Button size="cta" disabled className="w-full mt-3">Gå til betaling</Button>
+          </>
+        );
+      }
+    }
+    return (
+      <Button asChild size="cta" className="w-full mt-4">
+        <Link to={`${checkoutHref}?billett=${billett}`}>
+          {tile.amount === 0 ? 'Gå til påmelding' : 'Gå til betaling'}
+        </Link>
+      </Button>
+    );
+  }
+
+  // 1. Enrolled — wins over every other state. The ticket UI stays exactly
+  // as the normal purchasable state (frozen: tabs disabled, tier row in
+  // normal colors); only the CTA changes — a disabled "Du er påmeldt" button
+  // with a quiet underlined link to the buyer dashboard below it.
+  if (enrolled) {
+    const enrolledTile =
+      mainTile && dropInTile
+        ? (selected === 'drop-in' ? dropInTile : mainTile)
+        : (mainTile ?? dropInTile);
+    return (
+      <PublicCard header={header} className={className}>
+        {mainTile && dropInTile && (
+          <SegmentedTabs<TicketId>
+            role="radiogroup"
+            ariaLabel="Billett"
+            stretch
+            size="lg"
+            disabled
+            value={selected}
+            onChange={setSelected}
+            tabs={[
+              { key: 'main', label: mainTile.label },
+              { key: 'drop-in', label: dropInTile.label },
+            ]}
+          />
+        )}
+        {enrolledTile && (
+          <div className={mainTile && dropInTile ? 'mt-3' : undefined}>
+            <TierRow
+              label={enrolledTile.label}
+              sublabel={
+                enrolledTile.id === 'drop-in' ? resolveDropInSublabel(enrolledTile) : enrolledTile.sublabel
+              }
+              amount={enrolledTile.amount}
+              prorated={enrolledTile.prorated}
+              coursePrice={course.price}
+            />
+          </div>
+        )}
+        <Button size="cta" disabled className={cn('w-full', enrolledTile && 'mt-4')}>
+          Du er påmeldt
+        </Button>
+        <p className="mt-3 text-center">
+          <Link
+            to="/overview"
+            className="text-[13px] text-foreground-muted underline underline-offset-2 hover:text-foreground"
+          >
+            Se påmelding
+          </Link>
+        </p>
+      </PublicCard>
+    );
+  }
+
+  const hasQuietTiles = mainTile != null || dropInTile != null;
+  const quietTiles = (
+    <>
+      {mainTile && (
+        <TierRow
+          label={mainTile.label}
+          sublabel={mainTile.sublabel}
+          amount={mainTile.amount}
+          prorated={mainTile.prorated}
+          coursePrice={course.price}
+          quiet
+        />
+      )}
+      {dropInTile && (
+        <TierRow
+          label={dropInTile.label}
+          sublabel={dropInTile.sublabel}
+          amount={dropInTile.amount}
+          quiet
+          className={mainTile ? 'mt-3' : undefined}
+        />
+      )}
+    </>
+  );
+
+  // 2. Cancelled.
+  if (course.status === 'cancelled') {
+    return (
+      <PublicCard header={header} className={className}>
+        {quietTiles}
+        <Button size="cta" disabled className={cn('w-full', hasQuietTiles && 'mt-4')}>
+          Kurset er avlyst
+        </Button>
+      </PublicCard>
+    );
+  }
+
+  // 3. Sold out.
+  if (soldOut) {
+    return (
+      <PublicCard header={header} className={className}>
+        {quietTiles}
+        <Button size="cta" disabled className={cn('w-full', hasQuietTiles && 'mt-4')}>
+          Kurset er fullt
+        </Button>
+      </PublicCard>
+    );
+  }
+
+  // 4. Closed.
+  if (closed) {
+    return (
+      <PublicCard header={header} className={className}>
+        {quietTiles}
+        <Button size="cta" disabled className={cn('w-full', hasQuietTiles && 'mt-4')}>
+          Påmelding stengt
+        </Button>
+      </PublicCard>
+    );
+  }
+
+  // 5. Payment not ready (seller mid Stripe onboarding).
+  if (paymentNotReady) {
+    return (
+      <PublicCard header={header} className={className}>
+        {quietTiles}
+        <Button size="cta" disabled className={cn('w-full', hasQuietTiles && 'mt-4')}>
+          Påmelding åpner snart
+        </Button>
+      </PublicCard>
+    );
+  }
+
+  // 6. Package full, drop-in still open. The package row stays visible as a
+  // disabled price anchor ("Fullt" sublabel, everything disabled-toned) —
+  // the tier RPC withheld the tile, so the label falls back to the same
+  // "Hele kurset" string the DB tier carries and the amount to course.price.
+  // No SegmentedTabs: there's no real choice, only drop-in is purchasable.
+  if (courseFull && dropInTile) {
+    return (
+      <PublicCard header={header} className={className}>
+        <TierRow
+          label="Hele kurset"
+          sublabel="Fullt"
+          amount={course.price ?? 0}
+          quiet
+          quietSublabel
+        />
+        <div className="mt-3 border-t border-border-subtle pt-3">
+          <TierRow
+            label={dropInTile.label}
+            sublabel={resolveDropInSublabel(dropInTile)}
+            amount={dropInTile.amount}
+          />
+        </div>
+        {renderCta(dropInTile, 'drop-in')}
+      </PublicCard>
+    );
+  }
+
+  // 7. Real choice — main + drop-in.
+  if (mainTile && dropInTile) {
+    const selectedTile = selected === 'drop-in' ? dropInTile : mainTile;
+    return (
+      <PublicCard header={header} className={className}>
+        <SegmentedTabs<TicketId>
+          role="radiogroup"
+          ariaLabel="Billett"
+          stretch
+          size="lg"
+          value={selected}
+          onChange={setSelected}
+          tabs={[
+            { key: 'main', label: mainTile.label },
+            { key: 'drop-in', label: dropInTile.label },
+          ]}
+        />
+        <div className="mt-3">
+          <TierRow
+            label={selectedTile.label}
+            sublabel={selectedTile.id === 'drop-in' ? resolveDropInSublabel(selectedTile) : selectedTile.sublabel}
+            amount={selectedTile.amount}
+            prorated={selectedTile.prorated}
+            coursePrice={course.price}
+          />
+        </div>
+        {renderCta(selectedTile, selected)}
+      </PublicCard>
+    );
+  }
+
+  // 8. Single tile — whichever one survived (main-only, or drop-in-only when
+  // the package is withheld by the tier RPC for a reason other than
+  // courseFull, e.g. late-signup policy).
+  const soleTile = mainTile ?? dropInTile;
+  if (soleTile) {
+    return (
+      <PublicCard header={header} className={className}>
+        <TierRow
+          label={soleTile.label}
+          sublabel={soleTile.id === 'drop-in' ? resolveDropInSublabel(soleTile) : soleTile.sublabel}
+          amount={soleTile.amount}
+          prorated={soleTile.prorated}
+          coursePrice={course.price}
+        />
+        {renderCta(soleTile, soleTile.id)}
+      </PublicCard>
+    );
+  }
+
+  return null;
+}
+
+function TierRow({
+  label,
+  sublabel,
+  amount,
+  prorated = false,
+  coursePrice,
+  quiet = false,
+  quietSublabel = false,
+  className,
+}: {
+  label: string;
+  sublabel: string | null;
+  amount: number;
+  prorated?: boolean;
+  coursePrice?: number | null;
+  quiet?: boolean;
+  /** Also drop the sublabel to the disabled tone (the package-full anchor
+   * row's "Fullt"); plain `quiet` keeps sublabels muted per the base spec. */
+  quietSublabel?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={cn('flex items-baseline justify-between gap-4', className)}>
+      <span className={cn('text-[15px] font-medium', quiet ? 'text-foreground-disabled' : 'text-foreground')}>
+        {label}
+        {sublabel && (
+          <span
+            className={cn(
+              'block text-[13px] font-normal',
+              quietSublabel ? 'text-foreground-disabled' : 'text-foreground-muted',
+            )}
+          >
+            {sublabel}
+          </span>
+        )}
+      </span>
+      <span className={cn('text-[17px] font-medium tabular-nums', quiet ? 'text-foreground-disabled' : 'text-foreground')}>
+        {prorated && coursePrice != null && (
+          <s className="mr-1.5 text-sm font-normal text-foreground-disabled">{formatKroner(coursePrice)}</s>
+        )}
+        {amount === 0 ? 'Gratis' : formatKroner(amount)}
+      </span>
+    </div>
+  );
+}
+
+// ── Skeleton ─────────────────────────────────────────────────────────────
+
+/** Shared body so the page's inline loading branch and the standalone export
+ * (used by dev previews) render identical markup without duplicating it. */
+function CourseDetailSkeletonBody() {
+  return (
+    <div className="animate-in fade-in duration-150" role="status" aria-live="polite">
       <span className="sr-only">Laster…</span>
       <Skeleton className="h-4 w-40" />
-      <Skeleton className="mt-7 aspect-[21/9] w-full rounded-2xl" />
-      <Skeleton className="mt-7 h-10 w-3/4" />
-      <Skeleton className="mt-[22px] h-44 w-full rounded-xl" />
-      <Skeleton className="mt-8 h-32 w-full" />
+      <div className="mt-6 grid items-start gap-8 md:grid-cols-[300px_minmax(0,1fr)] lg:gap-12">
+        <div>
+          <Skeleton className="aspect-square w-full rounded-2xl" />
+          <Skeleton className="mt-4 h-16 w-full rounded-2xl max-md:hidden" />
+        </div>
+        <div className="min-w-0">
+          <Skeleton className="h-10 w-3/4" />
+          <Skeleton className="mt-5 h-10 w-64" />
+          <Skeleton className="mt-7 h-48 w-full rounded-2xl" />
+          <Skeleton className="mt-8 h-32 w-full" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function CourseDetailSkeleton() {
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+        <CourseDetailSkeletonBody />
+      </main>
     </div>
   );
 }
