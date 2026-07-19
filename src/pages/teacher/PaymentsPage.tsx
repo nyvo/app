@@ -356,7 +356,7 @@ const PaymentsPage = () => {
           title: STEP_2_TITLE,
           status: 'current',
           tone: 'warning',
-          statusLabel: 'Venter på deg',
+          statusLabel: 'Noe mangler',
           description: 'Fyll inn det som mangler, så aktiverer vi utbetalinger.',
           action: continueButton,
         };
@@ -416,7 +416,7 @@ const PaymentsPage = () => {
         title: STEP_3_TITLE,
         status: 'current',
         tone: 'warning',
-        statusLabel: 'Venter på deg',
+        statusLabel: 'Noe mangler',
         description: 'Kortbetalinger virker, men Stripe trenger noe mer før pengene kan overføres til deg.',
         action: <Button onClick={handleOpenStripeDashboard}>Åpne Stripe</Button>,
       },
