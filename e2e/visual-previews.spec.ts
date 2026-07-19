@@ -36,6 +36,7 @@ const PREVIEWS = [
   'checkout-t1-preview',
   // Onboarding
   'onboarding-preview',
+  'get-started-preview',
 ];
 
 for (const route of PREVIEWS) {

@@ -1,5 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
-import { Check, ChevronRight } from '@/lib/icons'
+import { ChevronRight } from '@/lib/icons'
 import { PageShell } from '@/components/teacher/PageShell'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -11,17 +11,23 @@ import { cn } from '@/lib/utils'
 
 // Dedicated checklist page — studio-design §16.3.
 // Reachable from the sidebar onboarding card. Three states:
-//   1. Required steps pending → the full checklist (required + optional).
+//   1. Steps pending → the flat checklist.
 //   2. Required done, polish left → a "you're live" state that keeps the
-//      optional steps reachable instead of evicting the user (the old code
+//      remaining steps reachable instead of evicting the user (the old code
 //      redirected the moment required was done, so logo/address were never
 //      seen — that's why they got skipped).
 //   3. Everything done → route back to the dashboard; nothing left to show.
 export default function GetStartedPage() {
-  const { steps, optionalSteps, completedCount, totalCount, isSetupComplete, isLoading, loadFailed, refresh } =
+  const { steps, optionalSteps, isSetupComplete, isLoading, loadFailed, refresh } =
     useSellerSetupStatus()
 
   const remainingOptional = optionalSteps.filter((step) => !step.isComplete)
+
+  // One flat checklist — required and optional carry equal visual weight here
+  // (the optional steps' descriptions already say when they matter), and the
+  // pre-completed account step is dropped: it exists to seed the sidebar
+  // card's progress count, not to be read as a task on a task list.
+  const checklist = [...steps, ...optionalSteps].filter((step) => step.id !== 'account')
 
   // Hold until the first fetch resolves. Deciding before `hasPublishedCourse`
   // is known would paint the incomplete checklist for a frame, then snap to the
@@ -30,8 +36,9 @@ export default function GetStartedPage() {
     return (
       <PageShell narrow="centered" title="Kom i gang">
         <div className="space-y-3" aria-hidden="true">
-          <Skeleton className="h-40 w-full rounded-xl" />
-          <Skeleton className="h-32 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
         </div>
       </PageShell>
     )
@@ -59,104 +66,76 @@ export default function GetStartedPage() {
   const isLive = isSetupComplete
 
   return (
-    <PageShell
-      narrow="centered"
-      title="Kom i gang"
-        action={
-          isLive ? null : (
-            <p className="text-base text-foreground-muted tabular-nums">
-              {completedCount} av {totalCount} fullført
-            </p>
-          )
-        }
-      >
-        {isLive ? (
-          <>
-            {/* Go-live banner — celebratory green panel + emoji, per the
-                approved /get-started preview. Uses the success-subtle (jade-3)
-                tint alone (no border — the opaque tint separates by itself).
-                The dashboard button is the deliberate exit that replaces the
-                old auto-redirect. */}
-            <div className="flex flex-col gap-4 rounded-xl bg-success-subtle px-5 py-4 sm:flex-row sm:items-center animate-in fade-in-0 slide-in-from-bottom-1 duration-200">
-              <span aria-hidden="true" className="shrink-0 text-2xl leading-none">
-                🎉
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-base font-medium text-foreground">
-                  Studioet ditt er klart
-                </p>
-                <p className="text-base text-foreground-muted">
-                  Du kan ta imot påmeldinger og betaling. Gjør gjerne siden ferdig nedenfor.
-                </p>
-              </div>
-              <Button asChild className="w-full shrink-0 sm:w-auto">
-                <Link to={routes.dashboard}>Gå til oversikten</Link>
-              </Button>
-            </div>
+    <PageShell narrow="centered" title="Kom i gang">
+      {isLive ? (
+        <>
+          <GoLiveBanner />
 
-            <p className="mt-12 mb-3 text-base font-medium text-foreground">
-              Gjør studiosiden ferdig
-            </p>
-            <StepList>
-              {optionalSteps.map((step) => (
-                <StepRow key={step.id} step={step} />
-              ))}
-            </StepList>
-          </>
-        ) : (
-          <>
-            <StepList>
-              {steps.map((step) => (
-                <StepRow key={step.id} step={step} />
-              ))}
-            </StepList>
-
-            {optionalSteps.length > 0 && (
-              <>
-                <p className="mt-12 mb-3 text-base font-medium text-foreground">
-                  Valgfritt
-                </p>
-                <StepList>
-                  {optionalSteps.map((step) => (
-                    <StepRow key={step.id} step={step} />
-                  ))}
-                </StepList>
-              </>
-            )}
-          </>
-        )}
-      </PageShell>
+          <p className="mt-12 mb-3 text-base font-medium text-foreground">
+            Gjør studiosiden ferdig
+          </p>
+          <div className="space-y-3">
+            {optionalSteps.map((step) => (
+              <StepCard key={step.id} step={step} />
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="space-y-3">
+          {checklist.map((step) => (
+            <StepCard key={step.id} step={step} />
+          ))}
+        </div>
+      )}
+    </PageShell>
   )
 }
 
-// Steps sit directly on the canvas — hairline dividers between rows, no card
-// chrome. -mx-3/px-3 lets the rounded hover fill bleed past the content edge
-// (same treatment as the /courses table) while the text stays on the page grid.
-function StepList({ children }: { children: React.ReactNode }) {
-  return <div className="-mx-3 divide-y divide-border-subtle">{children}</div>
+// Go-live banner — celebratory green panel + emoji, per the approved
+// /get-started preview. Uses the success-subtle (jade-3) tint alone (no
+// border — the opaque tint separates by itself). The dashboard button is the
+// deliberate exit that replaces the old auto-redirect. Exported for
+// /dev/get-started-preview.
+export function GoLiveBanner() {
+  return (
+    <div className="flex flex-col gap-4 rounded-xl bg-success-subtle px-5 py-4 sm:flex-row sm:items-center animate-in fade-in-0 slide-in-from-bottom-1 duration-200">
+      <span aria-hidden="true" className="shrink-0 text-2xl leading-none">
+        🎉
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-base font-medium text-foreground">
+          Studioet ditt er klart
+        </p>
+        <p className="text-base text-foreground-muted">
+          Du kan ta imot påmeldinger og betaling. Gjør gjerne siden ferdig nedenfor.
+        </p>
+      </div>
+      <Button asChild className="w-full shrink-0 sm:w-auto">
+        <Link to={routes.dashboard}>Gå til oversikten</Link>
+      </Button>
+    </div>
+  )
 }
 
-function StepRow({ step }: { step: SetupStep }) {
+// Reference: Adaline's "Get Started" checklist + Time2book's "Setup guide"
+// (Mobbin) — each step is its own hairline card row, and the trailing slot
+// flips from the action affordance (time estimate + chevron) to a green check
+// that only appears once the step is done; no empty-state marker, so text
+// stays on one left edge across rows. Re-skinned in our tokens: border-subtle
+// on bg-surface at radius-xl, hover = translucent ink fill, and the check is
+// the payout stepper's bright-green mark (PayoutSetupCard StepMark), not
+// Time2book's solid fill. Exported for /dev/get-started-preview.
+export function StepCard({ step }: { step: SetupStep }) {
   const hasAction = !!step.actionHref || !!step.actionOnClick
-  const rowClass = cn(
-    'group flex w-full items-center gap-4 px-3 py-4 text-left no-underline',
+  const cardClass = cn(
+    'group flex w-full items-center gap-4 rounded-xl border border-border-subtle bg-surface px-5 py-4 text-left no-underline',
     hasAction &&
-      // Adjacent hairlines yield to the rounded hover fill (same divider
-      // treatment as the /courses table): own border-bottom + previous sibling's.
-      'rounded-lg transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring hover:border-transparent focus-visible:border-transparent [&:has(+:hover)]:border-transparent [&:has(+:focus-visible)]:border-transparent',
+      'transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
   )
 
   const body = (
     <>
-      <span
-        className={cn(
-          'grid size-5 shrink-0 place-items-center rounded-full',
-          step.isComplete ? 'bg-success-subtle text-success' : 'border-2 border-border',
-        )}
-      >
-        {step.isComplete && <Check className="size-3" strokeWidth={2.5} />}
-      </span>
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <p
           className={cn(
             'text-base font-medium',
@@ -169,29 +148,54 @@ function StepRow({ step }: { step: SetupStep }) {
           <p className="text-base text-foreground-muted">{step.description}</p>
         )}
       </div>
-      {!step.isComplete && step.timeEstimate && (
-        <span className="shrink-0 text-sm text-foreground-muted">{step.timeEstimate}</span>
-      )}
-      {hasAction && (
-        <ChevronRight className="size-4 shrink-0 text-foreground-muted" strokeWidth={1.75} />
+      {step.isComplete ? (
+        // The bright marker green (--success-bright), not the jade text ink;
+        // 15% alpha tint of the same hue — the PayoutSetupCard/TimelineEntry
+        // done-mark precedent.
+        <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-success-bright/15 text-success-bright">
+          {/* Hand-drawn check: at this size the app's 1.75 icon stroke renders
+              thin and mushy — the heavier 1.8 stroke is tuned for it. */}
+          <svg viewBox="0 0 12 12" width="11" height="11" fill="none" aria-hidden="true">
+            <path
+              d="M2.5 6.5L5 9l4.5-6"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="sr-only">Fullført</span>
+        </span>
+      ) : (
+        <>
+          {step.timeEstimate && (
+            <span className="shrink-0 text-sm text-foreground-muted">{step.timeEstimate}</span>
+          )}
+          {hasAction && (
+            <ChevronRight
+              className="size-4 shrink-0 text-foreground-muted transition-transform group-hover:translate-x-0.5"
+              strokeWidth={1.75}
+            />
+          )}
+        </>
       )}
     </>
   )
 
   if (step.actionHref) {
     return (
-      <Link to={step.actionHref} className={rowClass}>
+      <Link to={step.actionHref} className={cardClass}>
         {body}
       </Link>
     )
   }
   if (step.actionOnClick) {
     return (
-      <button type="button" onClick={step.actionOnClick} className={rowClass}>
+      <button type="button" onClick={step.actionOnClick} className={cardClass}>
         {body}
       </button>
     )
   }
-  // No action (the pre-completed account step) — a static row, not a control.
-  return <div className={rowClass}>{body}</div>
+  // No action — a static row, not a control.
+  return <div className={cardClass}>{body}</div>
 }

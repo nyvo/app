@@ -66,6 +66,7 @@ const GROUPS: PreviewGroup[] = [
     title: 'Onboarding',
     items: [
       { label: 'Onboarding', to: '/dev/onboarding-preview', blurb: 'De ekte onboarding-stegene (rollevalg, oppsett) + feiltilstand.' },
+      { label: 'Kom i gang', to: '/dev/get-started-preview', blurb: 'Sjekklisten fra /get-started — stegkort, hake ved fullført, klart-tilstand.' },
     ],
   },
 ];
