@@ -24,14 +24,15 @@ import {
 import { COMPANY } from '@/lib/company';
 import { toast } from 'sonner';
 
-const STEP_1_TITLE = 'Bekreft virksomheten';
-const STEP_2_TITLE = 'Vi kontrollerer opplysningene';
+const STEP_1_TITLE = 'Bekreft identiteten din';
+const STEP_2_TITLE = 'Vi sjekker opplysningene';
 const STEP_3_TITLE = 'Motta utbetalinger';
 
 /**
- * Payments page — a single "payout account" surface: a Card holding a 3-step
- * vertical timeline (Bekreft virksomheten → Vi kontrollerer opplysningene →
- * Motta utbetalinger), plus a FAQ accordion below. No status badge next to
+ * Payments page — a single "payout account" surface: a centred 3-step setup
+ * narrative (Bekreft identiteten din → Vi sjekker opplysningene → Motta
+ * utbetalinger) rendered as a row of step cards with one CTA, plus a FAQ
+ * accordion underneath. No status badge next to
  * the page title — progress is entirely conveyed by which step is current
  * and its marker tone. The Card matches the other Settings pages (billing,
  * get-started) on the dampened canvas. The content is driven by the
@@ -308,9 +309,10 @@ const PaymentsPage = () => {
     h2 = 'Sett opp utbetalinger';
     steps = [
       {
+        // No description: the step cards' captions already say what step 1
+        // involves — a sub-line here would restate them.
         title: STEP_1_TITLE,
         status: 'current',
-        description: 'Legg inn kontonummer og bekreft identiteten din hos Stripe.',
         action: (
           <Button
             onClick={handleStartStripe}
@@ -354,7 +356,7 @@ const PaymentsPage = () => {
           title: STEP_2_TITLE,
           status: 'current',
           tone: 'warning',
-          statusLabel: 'Krever handling',
+          statusLabel: 'Noe mangler',
           description: 'Fyll inn det som mangler, så aktiverer vi utbetalinger.',
           action: continueButton,
         };
@@ -362,7 +364,7 @@ const PaymentsPage = () => {
         // Couldn't ask Stripe what (if anything) is missing — neutral copy
         // that neither promises "nothing to do" nor demands action, with the
         // button as an escape hatch.
-        h2 = 'Vi kontrollerer opplysningene';
+        h2 = 'Vi sjekker opplysningene';
         step2 = {
           title: STEP_2_TITLE,
           status: 'current',
@@ -373,13 +375,13 @@ const PaymentsPage = () => {
         // Nothing due (or the check is still loading): Stripe is verifying —
         // per their docs "no action needed", so no CTA to a form with nothing
         // to fill in. The webhook flips the status when verification lands.
-        h2 = 'Vi kontrollerer opplysningene';
+        h2 = 'Vi sjekker opplysningene';
         step2 = {
           title: STEP_2_TITLE,
           status: 'current',
           tone: 'info',
           statusLabel: 'Pågår',
-          description: 'Stripe kontrollerer opplysningene dine. Du trenger ikke gjøre noe nå.',
+          description: 'Stripe sjekker opplysningene dine. Du trenger ikke gjøre noe nå.',
         };
       }
       steps = [{ title: STEP_1_TITLE, status: 'done' }, step2, { title: STEP_3_TITLE, status: 'upcoming' }];
@@ -392,7 +394,7 @@ const PaymentsPage = () => {
         {
           title: STEP_1_TITLE,
           status: 'current',
-          statusLabel: 'Påbegynt',
+          statusLabel: 'Startet',
           description: 'Du er ikke helt ferdig hos Stripe. Fortsett der du slapp.',
           action: continueButton,
         },
@@ -414,7 +416,7 @@ const PaymentsPage = () => {
         title: STEP_3_TITLE,
         status: 'current',
         tone: 'warning',
-        statusLabel: 'Krever handling',
+        statusLabel: 'Noe mangler',
         description: 'Kortbetalinger virker, men Stripe trenger noe mer før pengene kan overføres til deg.',
         action: <Button onClick={handleOpenStripeDashboard}>Åpne Stripe</Button>,
       },
@@ -424,12 +426,10 @@ const PaymentsPage = () => {
   const viewModel: PayoutSetupViewModel = { h2, steps };
 
   // Full-width shell like the other dashboard pages — this is a status
-  // surface, not a settings form, so no label-column SettingsRows.
+  // surface, not a settings form, so no label-column SettingsRows. No shell
+  // description: the setup narrative carries its own headline + sub-line.
   return (
-    <PageShell
-      title="Utbetalingskonto"
-      description={showStats ? undefined : 'Slik får du betalt for kursene dine.'}
-    >
+    <PageShell title="Utbetalingskonto">
       {currentSellerHydrateFailed ? (
         // stripe_account_id is a stale safe-default (null) — the timeline
         // would show step 1 to a seller who already started onboarding.
