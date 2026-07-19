@@ -293,7 +293,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
             rel="noopener noreferrer"
             className="rounded-sm font-medium text-foreground-muted underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            Raden
+            UpNext
           </a>
         </p>
       </footer>

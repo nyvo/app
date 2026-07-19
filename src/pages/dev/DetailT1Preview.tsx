@@ -75,7 +75,7 @@ const DetailT1Preview = () => {
 
         <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
           <Link to="/" className="flex select-none items-center">
-            <span className="text-base font-medium text-foreground">Raden</span>
+            <span className="text-base font-medium text-foreground">UpNext</span>
           </Link>
         </header>
 

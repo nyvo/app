@@ -104,7 +104,7 @@ function RabatterDemo() {
       <div className="max-w-xl">
         <h2 className="text-base font-medium text-foreground">Student- og pensjonistrabatt</h2>
         <p className="mt-1 max-w-prose text-pretty text-sm text-foreground-muted">
-          Deltakeren velger rabatten selv i kassen. Raden sjekker ikke om deltakeren faktisk
+          Deltakeren velger rabatten selv i kassen. UpNext sjekker ikke om deltakeren faktisk
           er student eller pensjonist — det ansvaret ligger hos deg. Du ser hvem som har valgt
           rabatt i deltakerlisten.
         </p>

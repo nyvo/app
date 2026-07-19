@@ -545,14 +545,14 @@ function StudioPublicSettings({
         >
           {/* Same title/description grammar as the SettingsRow headers on the
               Profil tab. The description carries the facts the cards can't:
-              who checks eligibility (the studio, not Raden) and where the
+              who checks eligibility (the studio, not UpNext) and where the
               claims are visible. */}
           <div className="max-w-xl">
             <h2 className="text-base font-medium text-foreground">
               Student- og pensjonistrabatt
             </h2>
             <p className="mt-1 max-w-prose text-pretty text-sm text-foreground-muted">
-              Deltakeren velger rabatten selv i kassen. Raden sjekker ikke om deltakeren
+              Deltakeren velger rabatten selv i kassen. UpNext sjekker ikke om deltakeren
               faktisk er student eller pensjonist — det ansvaret ligger hos deg. Du ser hvem som
               har valgt rabatt i deltakerlisten.
             </p>

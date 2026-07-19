@@ -529,7 +529,7 @@ const CheckoutSuccessPage = () => {
                     start.setHours(h, m, 0, 0);
                     if (isNaN(start.getTime())) return null;
                     return {
-                      uid: `raden-signup-${displaySignup.id}`,
+                      uid: `upnext-signup-${displaySignup.id}`,
                       summary: displaySignup.course.title,
                       start,
                       end: resolveEventEnd(

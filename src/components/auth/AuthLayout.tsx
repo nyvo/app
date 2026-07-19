@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-import { RadenLogo } from '@/components/ui/raden-logo'
+import { UpNextLogo } from '@/components/ui/upnext-logo'
 
 interface AuthLayoutProps {
   title: string
@@ -29,8 +29,8 @@ export function AuthLayout({
       <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
         <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="mb-6 flex justify-center">
-            <Link to="/" aria-label="Raden">
-              <RadenLogo />
+            <Link to="/" aria-label="UpNext">
+              <UpNextLogo />
             </Link>
           </div>
           {customContent ? (

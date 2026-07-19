@@ -27,7 +27,7 @@ Calm, plainspoken, considerate. Three-word read: **airy, klarspråk, restrained*
 ## Anti-references
 
 - **Generic SaaS templates** (Stripe-blue accents, gradient hero, KPI wall, "TRUSTED BY" eyebrows, identical-card grids). The look most Tailwind starters ship with. Specifically: nothing in the Linear/Vercel/Notion clone pile that's "modern dashboard" without a point of view.
-- **Norwegian banking apps** (DNB, Sbanken's older surfaces). Bureaucratic, dense, formal-Norwegian register, paragraph-long disclosures. Opposite of klarspråk. Raden is calm but warm, not calm-because-corporate-sterile.
+- **Norwegian banking apps** (DNB, Sbanken's older surfaces). Bureaucratic, dense, formal-Norwegian register, paragraph-long disclosures. Opposite of klarspråk. UpNext is calm but warm, not calm-because-corporate-sterile.
 - **Wellness-cliché aesthetics** (sage green, soft serif, sand+terracotta, "your journey awaits" copy). The 2024 wellness-template look. The app serves a wellness audience but doesn't ape the aesthetic — instructors aren't the brand; the calm utility is the brand.
 
 ## Design Principles

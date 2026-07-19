@@ -139,7 +139,7 @@ describe('transactional email copy', () => {
     expect(text).not.toContain('hei hei');
   });
 
-  it('labels the shared contact address as Raden support', async () => {
+  it('labels the shared contact address as UpNext support', async () => {
     const text = await renderText(
       ClassReminder({
         buyerName: 'Marte Hansen',
@@ -149,7 +149,7 @@ describe('transactional email copy', () => {
       }),
     );
 
-    expect(text).toContain('trenger du hjelp med raden? skriv til hei@framio.no');
+    expect(text).toContain('trenger du hjelp med upnext? skriv til hei@framio.no');
   });
 });
 

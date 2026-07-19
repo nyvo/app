@@ -129,7 +129,7 @@ function PreviewBody({ variant }: { variant: Variant }) {
     <>
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
         <Link to="/" className="flex select-none items-center">
-          <span className="text-base font-medium text-foreground">Raden</span>
+          <span className="text-base font-medium text-foreground">UpNext</span>
         </Link>
       </header>
       <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { COMPANY } from '@/lib/company';
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import { RadenLogo } from '@/components/ui/raden-logo';
+import { UpNextLogo } from '@/components/ui/upnext-logo';
 
 /* Legal document layout: single narrow reading column, two text tiers,
    no cards — structure from Unsplash/YouTube terms pages (Mobbin). */
@@ -11,8 +11,8 @@ const TermsPage = () => {
   return (
     <div className="min-h-dvh w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
-        <Link to="/" aria-label="Raden" className="flex select-none items-center">
-          <RadenLogo />
+        <Link to="/" aria-label="UpNext" className="flex select-none items-center">
+          <UpNextLogo />
         </Link>
       </header>
 
@@ -25,12 +25,12 @@ const TermsPage = () => {
             <section className="space-y-4">
               <h2 className="text-base font-medium text-foreground">Om tjenesten</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Raden er en tjeneste for påmelding og betaling til kurs, timer og arrangementer.
+                UpNext er en tjeneste for påmelding og betaling til kurs, timer og arrangementer.
                 Tjenesten leveres av {COMPANY.legalName}, org.nr. {COMPANY.organizationNumber}.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Selve kurset leveres av studioet eller arrangøren som står på kurssiden.
-                Raden leverer den tekniske løsningen for påmelding, betaling og kvittering.
+                UpNext leverer den tekniske løsningen for påmelding, betaling og kvittering.
               </p>
             </section>
 

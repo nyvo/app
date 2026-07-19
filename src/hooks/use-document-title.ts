@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
 /**
- * Sets `document.title` to `"<title> – Raden"` (or bare `"Raden"` when
+ * Sets `document.title` to `"<title> – UpNext"` (or bare `"UpNext"` when
  * no title is given) and restores the previous title on unmount. Dependency-free
  * — no react-helmet. Applied to the public pages only; a null/undefined title
  * (e.g. while data loads) keeps the default so the tab never flashes an empty
@@ -10,7 +10,7 @@ import { useEffect } from 'react'
 export function useDocumentTitle(title?: string | null): void {
   useEffect(() => {
     const previous = document.title
-    document.title = title ? `${title} – Raden` : 'Raden'
+    document.title = title ? `${title} – UpNext` : 'UpNext'
     return () => {
       document.title = previous
     }

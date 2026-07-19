@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { COMPANY } from '@/lib/company';
-import { RadenLogo } from '@/components/ui/raden-logo';
+import { UpNextLogo } from '@/components/ui/upnext-logo';
 
 /* Legal document layout: single narrow reading column, two text tiers,
    no cards — structure from Unsplash/YouTube terms pages (Mobbin). */
@@ -11,8 +11,8 @@ const PrivacyPage = () => {
   return (
     <div className="min-h-dvh w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
-        <Link to="/" aria-label="Raden" className="flex select-none items-center">
-          <RadenLogo />
+        <Link to="/" aria-label="UpNext" className="flex select-none items-center">
+          <UpNextLogo />
         </Link>
       </header>
 
@@ -24,7 +24,7 @@ const PrivacyPage = () => {
           <div className="mt-12 space-y-8 [&_h2]:text-balance [&_p]:text-pretty">
             <section className="space-y-4">
               <p className="text-base text-foreground-muted leading-relaxed">
-                Raden leveres av {COMPANY.legalName}, org.nr. {COMPANY.organizationNumber},
+                UpNext leveres av {COMPANY.legalName}, org.nr. {COMPANY.organizationNumber},
                 som er behandlingsansvarlig for personopplysningene dine. Vi samler inn så lite
                 som mulig og lagrer det ikke lenger enn nødvendig.
               </p>
@@ -76,7 +76,7 @@ const PrivacyPage = () => {
               <h2 className="text-base font-medium text-foreground">Hvem vi deler med</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi selger aldri data. Vi deler kun med tjenestene vi trenger for å drive
-                Raden:
+                UpNext:
               </p>
               <ul className="space-y-2 text-base text-foreground-muted leading-relaxed list-disc pl-5">
                 <li>Supabase – database og innlogging, innenfor EU/EØS</li>
