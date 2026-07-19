@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, MapPin, Monitor, Users } from '@/lib/icons';
 import { PageShell } from '@/components/teacher/PageShell';
-import { FeedEntry } from '@/components/teacher/FeedEntry';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
@@ -287,33 +286,22 @@ const SchedulePage = () => {
         {/* Body */}
         {loading ? (
           <DelayedFallback>
-            <div role="status" aria-label="Laster…">
-              {/* Mirrors the feed anatomy: date lines left, cards (title +
-                  one meta line) right. Below `sm` the date column collapses
-                  and a single date line sits above the cards — same as
-                  ScheduleDay's stacked layout. */}
+            <div role="status" aria-label="Laster…" className="space-y-8">
+              {/* Mirrors ScheduleDay's anatomy: day heading (two lines) above
+                  the day's cards (title + one meta line), every viewport. */}
               {[1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="grid grid-cols-[92px_1fr] gap-x-4 max-sm:grid-cols-[1fr]"
-                >
-                  <div className="space-y-1.5 pt-3 max-sm:hidden">
+                <div key={i}>
+                  <div className="mb-3 space-y-1.5">
                     <Skeleton className="h-5 w-16" />
                     <Skeleton className="h-3 w-14" />
                   </div>
-                  <div className="pb-6">
-                    <div className="mb-2 space-y-1.5 sm:hidden">
-                      <Skeleton className="h-5 w-16" />
-                      <Skeleton className="h-3 w-14" />
-                    </div>
-                    <div className="space-y-3">
-                      {[1, 2].map((j) => (
-                        <div key={j} className="rounded-xl bg-panel px-5 py-4">
-                          <Skeleton className="h-4 w-48" />
-                          <Skeleton className="mt-1.5 h-3.5 w-72 max-w-full" />
-                        </div>
-                      ))}
-                    </div>
+                  <div className="space-y-3">
+                    {[1, 2].map((j) => (
+                      <div key={j} className="rounded-xl bg-panel px-5 py-4">
+                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="mt-1.5 h-3.5 w-72 max-w-full" />
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
@@ -337,16 +325,11 @@ const SchedulePage = () => {
             }
           />
         ) : (
-          <div>
-            {groups.map(([date, daySessions], idx) => {
+          <div className="space-y-8">
+            {groups.map(([date, daySessions]) => {
               const label = formatDayLabel(date);
               return (
-                <ScheduleDay
-                  key={date}
-                  primary={label.primary}
-                  secondary={label.secondary}
-                  isLast={idx === groups.length - 1}
-                >
+                <ScheduleDay key={date} primary={label.primary} secondary={label.secondary}>
                   {daySessions.map((s) => (
                     <SessionCard key={s.id} session={s} />
                   ))}
@@ -359,49 +342,30 @@ const SchedulePage = () => {
   );
 };
 
-/** Two-line day heading: day name over the muted date. */
-function dayLabel(primary: string, secondary: string) {
-  return (
-    <>
-      <p className="text-base font-medium leading-tight text-foreground">{primary}</p>
-      <p className="mt-1 text-sm leading-tight text-foreground-muted">{secondary}</p>
-    </>
-  );
-}
-
 /**
- * One day group on the shared feed grammar (FeedEntry — same as the course
- * Kursplan feed): day + date labels left, the day's cards in the right
- * column. Exported so the /dev/schedule-preview sign-off surface renders
+ * One day group: two-line day heading (day name over the muted date) ABOVE
+ * the day's cards — every viewport, the Time2book schedule grammar. Day name
+ * at text-base — the group heading must not rank below the card titles it
+ * governs. Exported so the /dev/schedule-preview sign-off surface renders
  * the real component.
  */
 export function ScheduleDay({
   primary,
   secondary,
-  isLast = false,
   children,
 }: {
   primary: string;
   secondary: string;
-  isLast?: boolean;
   children: ReactNode;
 }) {
   return (
-    <FeedEntry
-      // Wider date column than the Kursplan feed — "22. september" must fit.
-      className="grid-cols-[92px_1fr]"
-      isLast={isLast}
-      // Deeper padding between day groups (vs pb-3 between feed rows).
-      contentClassName={!isLast ? 'pb-6' : undefined}
-      // Day name at text-base — the group heading must not rank below the
-      // card titles it governs (Time2book's day headers lead the list, too).
-      // The same two-line block serves every viewport: in the date column on
-      // desktop, stacked above the day's cards below `sm`.
-      date={dayLabel(primary, secondary)}
-      stackedDate={dayLabel(primary, secondary)}
-    >
+    <section>
+      <div className="mb-3">
+        <p className="text-base font-medium leading-tight text-foreground">{primary}</p>
+        <p className="mt-1 text-sm leading-tight text-foreground-muted">{secondary}</p>
+      </div>
       <div className="space-y-3">{children}</div>
-    </FeedEntry>
+    </section>
   );
 }
 
