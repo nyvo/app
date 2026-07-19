@@ -140,12 +140,14 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
           one-line caption. The active card lifts with shadow-soft (the focal
           element of the page); resolved and upcoming cards stay flat with
           titles on the secondary text tier. */}
-      <ol className="mx-auto mt-8 grid max-w-3xl gap-3 sm:grid-cols-3">
+      <ol className="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-3">
         {steps.map((step, index) => (
           <li
             key={step.title + index}
             className={cn(
-              'flex flex-col rounded-xl border border-border-subtle bg-surface p-5 text-left',
+              // rounded-2xl = the focal floating-card radius tier; p-6 keeps
+              // the cards airy (friendlier than the tighter panel padding).
+              'flex flex-col rounded-2xl border border-border-subtle bg-surface p-6 text-left',
               'animate-in fade-in-0 slide-in-from-bottom-1 duration-300 fill-mode-backwards',
               index === 1 && 'delay-75',
               index === 2 && 'delay-150',
@@ -157,13 +159,13 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
             </div>
             <p
               className={cn(
-                'mt-3 text-sm font-medium leading-snug',
+                'mt-4 text-sm font-medium leading-snug',
                 step.status === 'current' ? 'text-foreground' : 'text-foreground-muted',
               )}
             >
               {step.title}
             </p>
-            <p className="mt-1 text-sm text-foreground-muted">{STEP_CAPTIONS[index]}</p>
+            <p className="mt-1.5 text-sm text-foreground-muted">{STEP_CAPTIONS[index]}</p>
             {/* The action lives in the card of the step it advances
                 (Time2book's "Connect Stripe" row, Acctual's pending card) —
                 never floating on the canvas. Waiting states have none and
