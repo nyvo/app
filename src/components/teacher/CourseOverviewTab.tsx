@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { MapEmbed } from '@/components/ui/map-embed';
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
-import { TimelineEntry } from '@/components/teacher/TimelineEntry';
+import { FeedEntry } from '@/components/teacher/FeedEntry';
 import { cn, formatKroner } from '@/lib/utils';
 import { osloTodayKey } from '@/utils/dateUtils';
 import { MapPin, Pencil } from '@/lib/icons';
@@ -409,12 +409,7 @@ function SessionFeed({
   const visible = overflow ? upcoming.slice(0, MAX_VISIBLE_SESSIONS - 1) : upcoming;
   const remaining = upcoming.length - visible.length;
   const lastDate = upcoming[upcoming.length - 1].session_date;
-  // The next session actually being taught — first upcoming, non-cancelled.
-  const nextId = upcoming.find((s) => s.status !== 'cancelled')?.id;
   const entryCount = visible.length + (overflow ? 1 : 0);
-  // A lone entry needs no timeline — the rail only earns its place between
-  // entries. The grid columns stay, so the card's x-position never moves.
-  const showRail = entryCount > 1;
 
   /** Card title = the session's identity within its format. */
   function labelFor(session: CourseSession): string {
@@ -429,13 +424,9 @@ function SessionFeed({
         const cancelled = s.status === 'cancelled';
         const label = labelFor(s);
         return (
-          <TimelineEntry
+          <FeedEntry
             key={s.id}
             date={<FeedDateLabel date={s.session_date} />}
-            rail={showRail}
-            next={s.id === nextId}
-            lineAbove={i > 0}
-            lineBelow={i < entryCount - 1}
             isLast={i === entryCount - 1}
           >
             <div
@@ -492,12 +483,12 @@ function SessionFeed({
                 {sessionTimeRange(s)}
               </p>
             </div>
-          </TimelineEntry>
+          </FeedEntry>
         );
       })}
 
       {overflow && (
-        <TimelineEntry rail lineAbove lineBelow={false} isLast>
+        <FeedEntry isLast>
           <div className="flex items-center gap-3 pt-3 text-sm tabular-nums text-foreground-muted">
             <span>
               {remaining === 1 ? '1 time til' : `${remaining} timer til`}, frem til{' '}
@@ -505,7 +496,7 @@ function SessionFeed({
             </span>
             <SeeAllLink onClick={onOpenAll} />
           </div>
-        </TimelineEntry>
+        </FeedEntry>
       )}
     </div>
   );

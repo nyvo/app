@@ -39,7 +39,7 @@ const GROUPS: PreviewGroup[] = [
       { label: 'Kursbygger — konsepter', to: '/dev/course-builder-concepts', blurb: 'Tre retninger: delt live-visning, veiviser, sjekkliste-panel.' },
       { label: 'Kursbygger — drawer', to: '/dev/course-builder-wizard', blurb: 'Opprett kurs i en drawer — seksjonert skjema med skillelinjer, lettvekt.' },
       { label: 'Kursoversikt', to: '/dev/draft-experience-preview', blurb: 'Oversikt-fanen gjennom kursets livssyklus (utkast → publisert).' },
-      { label: 'Timeplan', to: '/dev/schedule-preview', blurb: 'TimelineDay + SessionCard — agenda med data, tomt og feil.' },
+      { label: 'Timeplan', to: '/dev/schedule-preview', blurb: 'ScheduleDay + SessionCard — agenda med data, tomt og feil.' },
       { label: 'Øktdager-editor', to: '/dev/session-days-preview', blurb: 'SessionDaysEditor for kursrekker.' },
     ],
   },
