@@ -24,6 +24,10 @@ interface SegmentedTabsProps<T extends string> {
   /** Control height. 'md' = 36px track; 'lg' (default) = 44px track for
    *  generous, form-first surfaces (e.g. the course builder). */
   size?: 'md' | 'lg';
+  /** `track` is the standard standalone control. `header` removes the outer
+   *  track so the control can sit on a muted FramedCard header without
+   *  introducing a second nested container. */
+  appearance?: 'track' | 'header';
   /** Freeze the control while a selection is being applied — buttons stop
    *  firing onChange and are dimmed + marked aria-disabled. */
   disabled?: boolean;
@@ -47,6 +51,7 @@ export function SegmentedTabs<T extends string>({
   className,
   stretch = false,
   size = 'lg',
+  appearance = 'track',
   disabled = false,
   role = 'tablist',
 }: SegmentedTabsProps<T>) {
@@ -93,8 +98,10 @@ export function SegmentedTabs<T extends string>({
       aria-label={ariaLabel}
       onKeyDown={handleKeyDown}
       className={cn(
-        'items-center rounded-xl bg-muted p-1 gap-1',
-        size === 'lg' ? 'h-10' : 'h-9',
+        'items-center gap-1',
+        appearance === 'track'
+          ? cn('rounded-xl bg-muted p-1', size === 'lg' ? 'h-10' : 'h-9')
+          : 'h-8 rounded-lg',
         stretch === true && 'flex w-full',
         stretch === 'sm' && 'flex w-full sm:inline-flex sm:w-fit',
         stretch === false && 'inline-flex w-fit',
@@ -117,7 +124,9 @@ export function SegmentedTabs<T extends string>({
             onClick={() => { if (!disabled) onChange(t.key); }}
             className={cn(
               'motion-press inline-flex min-w-0 items-center justify-center gap-2 rounded-lg border text-sm font-medium',
-              size === 'lg' ? 'h-9 px-4' : 'h-7 px-3',
+              appearance === 'track'
+                ? (size === 'lg' ? 'h-9 px-4' : 'h-7 px-3')
+                : 'h-8 px-2.5',
               'outline-none focus-visible:ring-2 focus-visible:ring-ring',
               disabled && 'cursor-not-allowed',
               stretch === true && 'flex-1',
@@ -126,7 +135,10 @@ export function SegmentedTabs<T extends string>({
               // shifting 1px when the bordered active state lands.
               active
                 ? 'border-border-subtle bg-surface text-foreground'
-                : 'border-transparent text-foreground-muted hover:text-foreground',
+                : cn(
+                    'border-transparent text-foreground-muted hover:text-foreground',
+                    appearance === 'header' && 'hover:bg-hover',
+                  ),
             )}
           >
             {/* min-w-0 lets this shrink inside the flex button so truncate
