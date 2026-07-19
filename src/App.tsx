@@ -93,6 +93,7 @@ const CheckoutT1Preview = lazy(() => import('./pages/dev/CheckoutT1Preview'));
 const EmbedPreview = lazy(() => import('./pages/dev/EmbedPreview'));
 // Onboarding
 const OnboardingPreview = lazy(() => import('./pages/dev/OnboardingPreview'));
+const GetStartedPreview = lazy(() => import('./pages/dev/GetStartedPreview'));
 
 // Public team page at root: only renders if the slug is NOT a reserved word.
 // Reserved words 404 (since they should hit a literal route higher in the
@@ -260,6 +261,7 @@ const router = createBrowserRouter(
             <Route path="/dev/embed-preview" element={<EmbedPreview />} />
             {/* Onboarding */}
             <Route path="/dev/onboarding-preview" element={<OnboardingPreview />} />
+            <Route path="/dev/get-started-preview" element={<GetStartedPreview />} />
           </>
         )}
 
