@@ -87,7 +87,7 @@ export function buildIcs(event: IcsEvent): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Raden//Checkout//NO',
+    'PRODID:-//UpNext//Checkout//NO',
     'BEGIN:VEVENT',
     `UID:${escapeIcsText(event.uid)}`,
     `DTSTAMP:${formatUtcStamp(new Date())}`,

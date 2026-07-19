@@ -57,7 +57,7 @@ describe('TeacherSidebar desktop collapse', () => {
     const collapsedToggle = within(header!).getByRole('button', { name: 'Vis sidemeny' });
     expect(collapsedToggle).toBe(toggle);
     expect(collapsedToggle.querySelector('svg')).toBe(toggleIcon);
-    expect(screen.getByRole('link', { name: 'Raden' })).toHaveClass(
+    expect(screen.getByRole('link', { name: 'UpNext' })).toHaveClass(
       'group-data-[collapsible=icon]:hidden',
     );
     // Collapse animates (plan 003's snap was superseded 2026-07-18): menu

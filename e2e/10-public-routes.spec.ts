@@ -17,8 +17,8 @@ test.describe('D1 public routes render', () => {
 
     const response = await page.request.get('/');
     const rawHomepage = await response.text();
-    expect(rawHomepage).toContain('<meta name="application-name" content="Raden"');
-    expect(rawHomepage).toContain('Raden er en norsk påmeldings- og betalingsplattform');
+    expect(rawHomepage).toContain('<meta name="application-name" content="UpNext"');
+    expect(rawHomepage).toContain('UpNext er en norsk påmeldings- og betalingsplattform');
 
     await page.goto('/');
 
@@ -74,7 +74,7 @@ test.describe('D1 public routes render', () => {
 
   test('D1 about page renders', async ({ page }) => {
     await page.goto('/om-oss');
-    await expect(page.getByRole('heading', { name: 'Om Raden' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Om UpNext' })).toBeVisible();
   });
 
   test('D1 garbage path renders a clean 404', async ({ page }) => {

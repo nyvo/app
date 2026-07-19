@@ -33,7 +33,7 @@ export function WelcomeBand() {
 export function WelcomeBandCard() {
   return (
     <section aria-label="Velkommen" className="bg-gradient-brand rounded-3xl px-6 py-6 sm:px-7">
-      <h2 className="text-xl font-semibold text-primary-foreground">Velkommen til Raden</h2>
+      <h2 className="text-xl font-semibold text-primary-foreground">Velkommen til UpNext</h2>
       <p className="mt-1.5 max-w-[44ch] text-sm text-primary-foreground">
         Sett opp studioet ditt, opprett første kurs og ta imot påmeldinger.
       </p>

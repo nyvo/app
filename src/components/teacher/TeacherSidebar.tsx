@@ -19,7 +19,7 @@ import { routes } from '@/lib/routes';
 import { DEV_PREVIEWS_ENABLED } from '@/lib/devPreviews';
 import { accountDisplayName, formatKroner } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { RadenLogo } from '@/components/ui/raden-logo';
+import { UpNextLogo } from '@/components/ui/upnext-logo';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import {
   Sidebar,
@@ -115,10 +115,10 @@ export const TeacherSidebar = () => {
       <SidebarHeader className="flex-row items-center justify-between group-data-[collapsible=icon]:px-1">
         <Link
           to={routes.dashboard}
-          aria-label="Raden"
+          aria-label="UpNext"
           className="flex h-12 items-center rounded-md px-3 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:hidden"
         >
-          <RadenLogo size="sm" />
+          <UpNextLogo size="sm" />
         </Link>
         {isMobile && (
           <Button

@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
-import { RadenLogo } from '@/components/ui/raden-logo';
+import { UpNextLogo } from '@/components/ui/upnext-logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { lookupInviteLink, redeemInviteLink } from '@/services/invite-links';
@@ -49,8 +49,8 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh w-full text-foreground antialiased flex flex-col bg-background selection:bg-muted selection:text-foreground">
       <header className="w-full px-4 py-8 sm:px-6 flex items-center justify-center max-w-6xl mx-auto">
-        <Link to="/" aria-label="Raden" className="flex items-center select-none">
-          <RadenLogo />
+        <Link to="/" aria-label="UpNext" className="flex items-center select-none">
+          <UpNextLogo />
         </Link>
       </header>
       <main className="flex-1 flex items-center justify-center px-4 py-12 sm:px-6">

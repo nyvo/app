@@ -143,7 +143,7 @@
   background: var(--chrome);
   display: inline-flex; align-items: center; justify-content: center;
 }
-.lnd .logo-tile svg { width: 56%; height: 56%; }
+.lnd .logo-tile svg { width: 68%; height: 68%; } /* tall UpNext mark needs the larger box to match the app tile's optical size */
 .lnd .logo-tile .lp-m { fill: #FFFFFF; }
 .lnd .logo-tile .lp-c { fill: var(--chrome); }
 .lnd .shot-nav { display: flex; flex-direction: column; gap: 2px; }

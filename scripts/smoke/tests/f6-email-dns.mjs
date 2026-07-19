@@ -2,8 +2,8 @@
 // Checklist: F6 — Email DNS (SPF/DKIM/DMARC) via `dig`. Read-only DNS lookups,
 // no side effects whatsoever.
 //
-// Domain defaults to 'raden.no' (per PRELAUNCH.md / docs/launch-readiness.md
-// — DMARC already exists at _dmarc.raden.no); override with SMOKE_DNS_DOMAIN.
+// Domain defaults to 'upnext.no' (per PRELAUNCH.md / docs/launch-readiness.md
+// — DMARC already exists at _dmarc.upnext.no); override with SMOKE_DNS_DOMAIN.
 // DKIM selector isn't documented in-repo — Resend's default selector is
 // `resend._domainkey`; override with SMOKE_DKIM_SELECTOR if the account uses
 // a different one. A missing/unresolvable DKIM record is reported but doesn't

@@ -74,7 +74,7 @@ export const AccountActionRequired = ({
 AccountActionRequired.PreviewProps = {
   studioName: 'Lys Yoga',
   reason: 'restricted',
-  actionUrl: 'https://raden.no/settings/payouts',
+  actionUrl: 'https://upnext.no/settings/payouts',
 } satisfies AccountActionRequiredProps
 
 export default AccountActionRequired

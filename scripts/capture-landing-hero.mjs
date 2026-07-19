@@ -6,7 +6,7 @@
  * Shots (see src/pages/dev/LandingShot*.tsx for the staged sources):
  *   hero       → /dev/landing-shot            → public/landing-dashboard.webp  (2400×1660)
  *   storefront → /dev/landing-shot-storefront → public/landing-storefront.webp (1600×1356)
- *   og         → /dev/og-card                 → public/og-brand.png            (1200×630)
+ *   og         → /dev/og-card                 → public/og-brand-upnext.png            (1200×630)
  *
  * Re-run whenever the product UI changes so the landing page never shows a
  * stale product. Requires a running dev server. If output dimensions change,
@@ -60,7 +60,7 @@ const SHOTS = {
     path: '/dev/og-card',
     width: 1200,
     height: 630,
-    out: 'public/og-brand.png',
+    out: 'public/og-brand-upnext.png',
     groom: null,
     png: true,
   },
