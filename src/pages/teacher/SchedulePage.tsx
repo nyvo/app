@@ -302,7 +302,10 @@ const SchedulePage = () => {
                     <Skeleton className="h-3 w-14" />
                   </div>
                   <div className="pb-6">
-                    <Skeleton className="mb-2 h-5 w-32 sm:hidden" />
+                    <div className="mb-2 space-y-1.5 sm:hidden">
+                      <Skeleton className="h-5 w-16" />
+                      <Skeleton className="h-3 w-14" />
+                    </div>
                     <div className="space-y-3">
                       {[1, 2].map((j) => (
                         <div key={j} className="rounded-xl bg-panel px-5 py-4">
@@ -356,6 +359,16 @@ const SchedulePage = () => {
   );
 };
 
+/** Two-line day heading: day name over the muted date. */
+function dayLabel(primary: string, secondary: string) {
+  return (
+    <>
+      <p className="text-base font-medium leading-tight text-foreground">{primary}</p>
+      <p className="mt-1 text-sm leading-tight text-foreground-muted">{secondary}</p>
+    </>
+  );
+}
+
 /**
  * One day group on the shared feed grammar (FeedEntry — same as the course
  * Kursplan feed): day + date labels left, the day's cards in the right
@@ -382,20 +395,10 @@ export function ScheduleDay({
       contentClassName={!isLast ? 'pb-6' : undefined}
       // Day name at text-base — the group heading must not rank below the
       // card titles it governs (Time2book's day headers lead the list, too).
-      date={
-        <>
-          <p className="text-base font-medium leading-tight text-foreground">{primary}</p>
-          <p className="mt-1 text-sm leading-tight text-foreground-muted">{secondary}</p>
-        </>
-      }
-      // Below `sm` the date column collapses and this single line sits above
-      // the day's cards instead.
-      stackedDate={
-        <p className="text-base leading-tight">
-          <span className="font-medium text-foreground">{primary}</span>
-          <span className="text-sm text-foreground-muted"> · {secondary}</span>
-        </p>
-      }
+      // The same two-line block serves every viewport: in the date column on
+      // desktop, stacked above the day's cards below `sm`.
+      date={dayLabel(primary, secondary)}
+      stackedDate={dayLabel(primary, secondary)}
     >
       <div className="space-y-3">{children}</div>
     </FeedEntry>
