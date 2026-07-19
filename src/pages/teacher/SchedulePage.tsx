@@ -18,7 +18,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { MONTHS_LONG } from '@/lib/calendar-nb';
+import { MONTHS_LONG, MONTHS_SHORT } from '@/lib/calendar-nb';
 import type { CourseFormat, DeliveryMode } from '@/types/database';
 
 // ---------------------------------------------------------------------------
@@ -83,18 +83,28 @@ function daysBetween(a: string, b: string): number {
   return Math.round((db.getTime() - da.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function formatDayLabel(dateStr: string): { primary: string; secondary: string } {
+function formatDayLabel(dateStr: string): {
+  primary: string;
+  secondary: string;
+  secondaryShort: string;
+} {
   const today = todayKey();
   const diff = daysBetween(today, dateStr);
   const d = new Date(dateStr + 'T00:00:00');
   const weekday = WEEKDAY_NB[d.getDay()];
   const dayNum = d.getDate();
   const month = MONTH_NB[d.getMonth()];
-  const dateText = `${dayNum}. ${month}`;
+  // Year appended only outside the current year — the same disambiguation
+  // rule the month-picker options use below.
+  const yearSuffix = d.getFullYear() === new Date().getFullYear() ? '' : ` ${d.getFullYear()}`;
+  const dateText = `${dayNum}. ${month}${yearSuffix}`;
+  // Short-month variant for the narrow mobile date column ("22. sep").
+  const dateTextShort = `${dayNum}. ${MONTHS_SHORT[d.getMonth()]}${yearSuffix}`;
 
-  if (diff === 0) return { primary: 'I dag', secondary: dateText };
-  if (diff === 1) return { primary: 'I morgen', secondary: dateText };
-  return { primary: weekday, secondary: dateText };
+  if (diff === 0) return { primary: 'I dag', secondary: dateText, secondaryShort: dateTextShort };
+  if (diff === 1)
+    return { primary: 'I morgen', secondary: dateText, secondaryShort: dateTextShort };
+  return { primary: weekday, secondary: dateText, secondaryShort: dateTextShort };
 }
 
 function formatTimeRange(start: string, end: string | null): string {
@@ -256,20 +266,23 @@ const SchedulePage = () => {
         title="Timeplan"
         tabs={
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
-            <PageTabs ariaLabel="Status" className="border-b-0">
+            <PageTabs ariaLabel="Filtrer timer" className="border-b-0">
               {(['active', 'past'] as const).map((key) => (
                 <PageTab
                   key={key}
                   active={rangeFilter === key}
                   onClick={() => setRangeFilter(key)}
                 >
-                  {key === 'active' ? 'Aktive' : 'Fullførte'}
+                  {key === 'active' ? 'Kommende' : 'Fullførte'}
                 </PageTab>
               ))}
             </PageTabs>
 
             <Select value={monthFilter} onValueChange={setMonthFilter}>
-              <SelectTrigger className="w-48 max-sm:w-auto max-sm:min-w-36 mb-2">
+              <SelectTrigger
+                aria-label="Filtrer på måned"
+                className="w-48 max-sm:w-auto max-sm:min-w-36 mb-2"
+              >
                 <SelectValue placeholder="Alle måneder" />
               </SelectTrigger>
               <SelectContent>
@@ -291,7 +304,10 @@ const SchedulePage = () => {
               {/* Mirrors the timeline anatomy: date lines left, rail gutter,
                   cards (title + one meta line) right. */}
               {[1, 2].map((i) => (
-                <div key={i} className="grid grid-cols-[92px_18px_1fr] gap-x-2.5">
+                <div
+                  key={i}
+                  className="grid grid-cols-[68px_18px_1fr] gap-x-2.5 sm:grid-cols-[92px_18px_1fr]"
+                >
                   <div className="space-y-1.5 pt-3">
                     <Skeleton className="h-4 w-14" />
                     <Skeleton className="h-3 w-16" />
@@ -300,8 +316,15 @@ const SchedulePage = () => {
                   <div className="space-y-3 pb-6">
                     {[1, 2].map((j) => (
                       <div key={j} className="rounded-xl bg-panel px-5 py-4">
-                        <Skeleton className="h-4 w-48" />
-                        <Skeleton className="mt-1.5 h-3.5 w-72 max-w-full" />
+                        {/* Skeleton lines sit in the real text line boxes (24px
+                            title, 20px meta) so the card measures the same 82px
+                            as a loaded SessionCard — no jump on swap. */}
+                        <div className="flex h-6 items-center">
+                          <Skeleton className="h-4 w-48" />
+                        </div>
+                        <div className="mt-1.5 flex h-5 items-center">
+                          <Skeleton className="h-3.5 w-72 max-w-full" />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -365,6 +388,7 @@ const SchedulePage = () => {
 export function TimelineDay({
   primary,
   secondary,
+  secondaryShort,
   rail = true,
   next = false,
   lineAbove = false,
@@ -374,6 +398,8 @@ export function TimelineDay({
 }: {
   primary: string;
   secondary: string;
+  /** Short-month variant shown in the narrower mobile date column. */
+  secondaryShort?: string;
   /** A lone day group needs no timeline — the rail only earns its place
    *  between groups. The grid stays, so labels/cards never shift x. */
   rail?: boolean;
@@ -387,7 +413,9 @@ export function TimelineDay({
   return (
     <TimelineEntry
       // Wider date column than the Kursplan feed — "22. september" must fit.
-      className="grid-cols-[92px_18px_1fr]"
+      // On phones the column narrows and the date switches to the short
+      // month ("22. sep") so the card column keeps room for titles.
+      className="grid-cols-[68px_18px_1fr] sm:grid-cols-[92px_18px_1fr]"
       rail={rail}
       next={next}
       lineAbove={lineAbove}
@@ -398,8 +426,23 @@ export function TimelineDay({
       contentClassName={!isLast ? 'pb-6' : undefined}
       date={
         <>
-          <p className="text-sm font-medium leading-tight text-foreground">{primary}</p>
-          <p className="mt-0.5 text-sm leading-tight text-foreground-muted">{secondary}</p>
+          <p className="text-sm font-medium leading-tight text-foreground">
+            {primary}
+            {/* The bright rail dot is aria-hidden — voice the "next session"
+                semantic for screen readers (same pattern as PayoutSetupCard's
+                sr-only «Fullført»). */}
+            {next && <span className="sr-only"> – neste time</span>}
+          </p>
+          <p className="mt-0.5 text-sm leading-tight text-foreground-muted">
+            {secondaryShort ? (
+              <>
+                <span className="sm:hidden">{secondaryShort}</span>
+                <span className="max-sm:hidden">{secondary}</span>
+              </>
+            ) : (
+              secondary
+            )}
+          </p>
         </>
       }
     >
@@ -429,8 +472,12 @@ export function SessionCard({ session }: { session: SessionRow }) {
     <Link
       to={{ search: `?kurs=${session.courseId}&sess=${session.id}&from=schedule` }}
       className={cn(
-        'block rounded-xl bg-panel px-5 py-4 outline-none transition-colors duration-150 hover:bg-hover',
-        'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+        'block rounded-xl bg-panel px-5 py-4 outline-none transition-colors duration-150',
+        // Same interaction grammar as the dashboard's clickable filled rows
+        // (TeacherDashboard/CourseListView): hover fill, pressed fill, focus
+        // fill + inset subtle ring — no offset ring moat around a grey card.
+        'hover:bg-hover active:bg-pressed',
+        'focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle',
       )}
     >
       <p className="truncate text-base font-medium text-foreground">
@@ -456,6 +503,9 @@ export function SessionCard({ session }: { session: SessionRow }) {
         )}
         <span className="inline-flex items-center gap-1.5">
           <Users className="size-3.5 shrink-0" aria-hidden="true" />
+          {/* The Users icon carries the meaning visually; without it "8 / 10"
+              is just numbers to a screen reader. */}
+          <span className="sr-only">Påmeldte: </span>
           <span className="tabular-nums">{countLabel}</span>
         </span>
       </p>

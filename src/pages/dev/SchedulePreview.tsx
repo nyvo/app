@@ -14,12 +14,18 @@ const SchedulePreview = () => {
     <DevPage title="Timeplan">
       <PreviewSection label="Med data">
         <div>
-          <TimelineDay primary="I dag" secondary="3. juli" next lineBelow>
+          <TimelineDay primary="I dag" secondary="3. juli" secondaryShort="3. jul" next lineBelow>
             {MOCK_SESSIONS.slice(0, 3).map((s) => (
               <SessionCard key={s.id} session={s} />
             ))}
           </TimelineDay>
-          <TimelineDay primary="I morgen" secondary="4. juli" lineAbove isLast>
+          <TimelineDay
+            primary="I morgen"
+            secondary="4. juli"
+            secondaryShort="4. jul"
+            lineAbove
+            isLast
+          >
             {MOCK_SESSIONS.slice(3).map((s) => (
               <SessionCard key={s.id} session={s} />
             ))}
