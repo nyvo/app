@@ -291,7 +291,7 @@ const SchedulePage = () => {
                   the day's cards (title + one meta line), every viewport. */}
               {[1, 2].map((i) => (
                 <div key={i}>
-                  <Skeleton className="mb-3 h-5 w-32" />
+                  <Skeleton className="mb-3 h-6 w-36" />
                   <div className="space-y-3">
                     {[1, 2].map((j) => (
                       <div key={j} className="rounded-xl bg-panel px-5 py-4">
@@ -357,9 +357,12 @@ export function ScheduleDay({
 }) {
   return (
     <section>
-      <p className="mb-3 text-base leading-tight">
-        <span className="font-medium text-foreground">{primary}</span>
-        <span className="text-sm text-foreground-muted"> · {secondary}</span>
+      {/* No separator glyph — the tier gap (18px foreground day vs 14px muted
+          date) does the separating, and 18px keeps the heading above the
+          16px card titles it governs. */}
+      <p className="mb-3 flex items-baseline gap-2">
+        <span className="text-lg font-medium leading-tight text-foreground">{primary}</span>
+        <span className="text-sm text-foreground-muted">{secondary}</span>
       </p>
       <div className="space-y-3">{children}</div>
     </section>
