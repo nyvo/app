@@ -89,7 +89,7 @@ export function NotificationsPopover() {
       <span
         aria-hidden="true"
         className={cn(
-          'pointer-events-none absolute right-2 top-2 size-2 rounded-full bg-primary ring-2 ring-background transition-[opacity,transform] duration-[120ms] ease-out',
+          'pointer-events-none absolute right-2 top-2 size-2 rounded-full bg-danger ring-2 ring-background transition-[opacity,transform] duration-[120ms] ease-out',
           hasUnseen ? 'scale-100 opacity-100' : 'scale-50 opacity-0',
         )}
       />

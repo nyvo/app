@@ -191,7 +191,7 @@ export function IncomeChart({
   const hasIncome = points.some((p) => (p.amount ?? 0) > 0)
   // The faint previous-period overlay only renders when the previous period
   // actually carried income — so the both-zero empty state keeps just the
-  // current flat neutral line.
+  // current flat line.
   const hasPrevious = points.some((p) => p.previousAmount > 0)
   // Compute the Y domain explicitly across BOTH series so the overlay is never
   // clipped. (recharts folds every series on the axis into `dataMax`, but the
@@ -307,9 +307,9 @@ export function IncomeChart({
               // and recharts breaks the area on null points (default behaviour,
               // stated explicitly here) rather than bridging to the axis end.
               connectNulls={false}
-              // Flat zero-line stays neutral (reference: Airbnb earnings) —
-              // a saturated line under "no income" reads as data.
-              stroke={hasIncome ? STROKE : 'var(--color-border)'}
+              // Flat zero-line keeps the series colour (user-directed
+              // 2026-07-20, reverses the earlier neutral-when-empty rule).
+              stroke={STROKE}
               strokeWidth={2}
               fill={`url(#${gradientId})`}
               fillOpacity={1}

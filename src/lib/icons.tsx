@@ -85,7 +85,6 @@ import {
   MoreHorizontalIcon,
   MoreVerticalIcon,
   NewTwitterIcon,
-  Notification03Icon,
   PencilEdit02Icon,
   PlusSignIcon,
   Redo02Icon,
@@ -119,6 +118,7 @@ import {
   ViewOffSlashIcon,
   Wallet01Icon,
 } from "@hugeicons/core-free-icons"
+import { Bell as LucideBellIcon } from "lucide-react"
 
 export type IconProps = Omit<HugeiconsIconProps, "icon" | "altIcon" | "ref">
 
@@ -151,7 +151,19 @@ export const ArrowRight = createIcon("ArrowRight", ArrowRight02Icon)
 export const ArrowRightLeft = createIcon("ArrowRightLeft", ArrowDataTransferHorizontalIcon)
 export const ArrowUpDown = createIcon("ArrowUpDown", ArrowDataTransferVerticalIcon)
 export const ArrowUpRight = createIcon("ArrowUpRight", ArrowUpRight01Icon)
-export const Bell = createIcon("Bell", Notification03Icon)
+// Sanctioned kit exception (user-directed 2026-07-20): the notification bell
+// uses lucide's Bell — the Hugeicons free bell reads too rounded next to it.
+// Same barrel path and strokeWidth default, so call sites are unaffected.
+export const Bell: IconComponent = React.forwardRef<SVGSVGElement, IconProps>(
+  (props, ref) => (
+    <LucideBellIcon
+      ref={ref}
+      strokeWidth={DEFAULT_STROKE_WIDTH}
+      {...(props as React.SVGProps<SVGSVGElement>)}
+    />
+  ),
+)
+Bell.displayName = "Bell"
 export const BookOpen = createIcon("BookOpen", BookOpen01Icon)
 export const Building = createIcon("Building", Building02Icon)
 export const Calendar = createIcon("Calendar", Calendar03Icon)
