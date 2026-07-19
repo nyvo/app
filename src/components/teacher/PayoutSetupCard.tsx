@@ -136,47 +136,45 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
         )}
       </div>
 
-      {/* The steps in the dashboard's own card grammar — muted rounded shell
-          with a white inset, columns split by the short inset dividers
-          (FramedCard / Nøkkeltall's stat spine) — so the setup page speaks
-          the same surface language as the rest of the logged-in app and the
-          PayoutStats modules that replace it. Step anatomy is still
-          Acctual's Payments row: status mark, title, one-line caption. */}
-      <div className="mx-auto mt-8 max-w-3xl rounded-2xl bg-muted p-2 animate-in fade-in-0 slide-in-from-bottom-1 duration-300">
-        <ol className="flex flex-col overflow-hidden rounded-xl bg-surface sm:flex-row sm:items-stretch">
-          {steps.map((step, index) => (
-            <li key={step.title + index} className="relative flex flex-1 flex-col p-6 text-left">
-              {index > 0 && (
-                // Short centred inset divider between steps (horizontal when
-                // the columns stack on mobile).
-                <span
-                  aria-hidden="true"
-                  className="absolute left-1/2 top-0 h-px w-12 -translate-x-1/2 bg-border-subtle sm:left-0 sm:top-1/2 sm:h-12 sm:w-px sm:-translate-x-0 sm:-translate-y-1/2"
-                />
+      {/* Acctual's Payments row: one card per step — status mark, title,
+          one-line caption. rounded-3xl matches the dashboard's round cards
+          (sidebar upsell, WelcomeBand). The active card lifts with
+          shadow-soft; resolved and upcoming cards stay flat with titles on
+          the secondary text tier. */}
+      <ol className="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-3">
+        {steps.map((step, index) => (
+          <li
+            key={step.title + index}
+            className={cn(
+              'flex flex-col rounded-3xl border border-border-subtle bg-surface p-6 text-left',
+              'animate-in fade-in-0 slide-in-from-bottom-1 duration-300 fill-mode-backwards',
+              index === 1 && 'delay-75',
+              index === 2 && 'delay-150',
+              step.status === 'current' && 'shadow-soft',
+            )}
+          >
+            <div className="flex h-6 items-center">
+              <StepMark step={step} index={index} />
+            </div>
+            <p
+              className={cn(
+                'mt-4 text-sm font-medium leading-snug',
+                step.status === 'current' ? 'text-foreground' : 'text-foreground-muted',
               )}
-              <div className="flex h-6 items-center">
-                <StepMark step={step} index={index} />
-              </div>
-              <p
-                className={cn(
-                  'mt-4 text-sm font-medium leading-snug',
-                  step.status === 'current' ? 'text-foreground' : 'text-foreground-muted',
-                )}
-              >
-                {step.title}
-              </p>
-              <p className="mt-1.5 text-sm text-foreground-muted">{STEP_CAPTIONS[index]}</p>
-              {/* The action lives in the column of the step it advances
-                  (Time2book's "Connect Stripe" row) — never floating on the
-                  canvas. Waiting states have none and the narrative simply
-                  ends at the cards. */}
-              {step.status === 'current' && step.action && (
-                <div className="mt-auto pt-5">{step.action}</div>
-              )}
-            </li>
-          ))}
-        </ol>
-      </div>
+            >
+              {step.title}
+            </p>
+            <p className="mt-1.5 text-sm text-foreground-muted">{STEP_CAPTIONS[index]}</p>
+            {/* The action lives in the card of the step it advances
+                (Time2book's "Connect Stripe" row) — never floating on the
+                canvas. Waiting states have none and the narrative simply
+                ends at the cards. */}
+            {step.status === 'current' && step.action && (
+              <div className="mt-auto pt-5">{step.action}</div>
+            )}
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
