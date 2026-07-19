@@ -141,7 +141,7 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
           (sidebar upsell, WelcomeBand). The active card lifts with
           shadow-soft; resolved and upcoming cards stay flat with titles on
           the secondary text tier. */}
-      <ol className="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-3">
+      <ol className="mx-auto mt-8 grid max-w-4xl gap-4 sm:grid-cols-3">
         {steps.map((step, index) => (
           <li
             key={step.title + index}
