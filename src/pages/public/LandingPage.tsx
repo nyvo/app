@@ -65,8 +65,10 @@ function SignupCta({ className, label }: { className: string; label: string }) {
       </a>
     );
   }
+  // No ?intent — the landing page is read by buyers too, so signups get the
+  // onboarding role chooser instead of being forced into the seller flow.
   return (
-    <Link className={className} to="/auth?intent=seller">
+    <Link className={className} to="/auth">
       {label}
     </Link>
   );
@@ -781,7 +783,7 @@ const LandingPage = () => {
               </li>
               {!PRELAUNCH && (
                 <li>
-                  <Link to="/auth?intent=seller">Opprett konto</Link>
+                  <Link to="/auth">Opprett konto</Link>
                 </li>
               )}
             </ul>

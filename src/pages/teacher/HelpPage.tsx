@@ -21,7 +21,10 @@ import {
   type SupportSignupOption,
 } from '@/services/support-context';
 
-const SUBJECTS = [
+// /help is shared between buyers and sellers — the subject list follows the
+// role. Sellers get studio/payout topics; buyers get their side of the same
+// world (signups, payments and refunds).
+const SELLER_SUBJECTS = [
   'Kurs og påmeldinger',
   'Betaling og utbetaling',
   'Studio og innstillinger',
@@ -29,10 +32,19 @@ const SUBJECTS = [
   'Annet',
 ] as const;
 
+const BUYER_SUBJECTS = [
+  'Påmelding til kurs',
+  'Betaling og refusjon',
+  'Innlogging og konto',
+  'Annet',
+] as const;
+
 const COURSE_SIGNUP_SUBJECT = 'Kurs og påmeldinger';
 
 export default function HelpPage() {
-  const { currentSeller } = useAuth();
+  const { currentSeller, sellers } = useAuth();
+  // Same seller test as DashboardRouter: membership, not profiles.role.
+  const subjects = sellers.length > 0 ? SELLER_SUBJECTS : BUYER_SUBJECTS;
   const [subject, setSubject] = useState<string>('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -150,7 +162,7 @@ export default function HelpPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {SUBJECTS.map((item) => (
+                    {subjects.map((item) => (
                       <SelectItem key={item} value={item}>
                         {item}
                       </SelectItem>

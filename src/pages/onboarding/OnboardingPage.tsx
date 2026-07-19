@@ -27,10 +27,11 @@ import type { UserRole } from '@/types/database'
  *   profile.role === 'seller' + !completed     → SellerFlow (name + URL)
  *   onboarding_completed_at !== null           → redirect /overview
  *
- * `?intent=buyer|seller` (set by the entry door: seller CTA, invite link,
- * booking surface) pre-sets the role and skips the RoleChooser — the chooser
- * only renders for context-free signups (direct /auth visits). `?next=`
- * preserves a deep-link target (e.g. /join/:code) through completion.
+ * `?intent=buyer|seller` (set by the entry door: invite link, booking
+ * surface) pre-sets the role and skips the RoleChooser — the chooser
+ * renders for context-free signups (direct /auth visits and the landing
+ * page, which buyers read too). `?next=` preserves a deep-link target
+ * (e.g. /join/:code) through completion.
  *
  * Preview iteration history lives at /dev/onboarding-preview. This file
  * is the production wiring. Visual rules: studio-design §16.2 sectioned
