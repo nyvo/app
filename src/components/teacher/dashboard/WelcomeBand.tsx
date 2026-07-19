@@ -14,8 +14,9 @@ import { useSellerSetupStatus } from '@/hooks/use-seller-setup-status'
  * CTA, deliberately NOT a checklist (a dashboard-home setup card was
  * rejected 2026-07).
  *
- * Copy sits in the top half of the band where the gradient holds L ≤ 0.56 —
- * white text is AA there; don't move text below the light bloom.
+ * Copy stays on the darker left side of the gradient; the action moves to the
+ * lighter edge at wider widths so the band reads as a compact dashboard
+ * module rather than a second page hero.
  */
 export function WelcomeBand() {
   const { isSetupComplete, isLoading, loadFailed } = useSellerSetupStatus()
@@ -32,12 +33,17 @@ export function WelcomeBand() {
  *  without auth or setup-status state. */
 export function WelcomeBandCard() {
   return (
-    <section aria-label="Velkommen" className="bg-gradient-brand rounded-3xl px-6 py-6 sm:px-7">
-      <h2 className="text-xl font-semibold text-primary-foreground">Velkommen til UpNext</h2>
-      <p className="mt-1.5 max-w-[44ch] text-sm text-primary-foreground">
-        Sett opp studioet ditt, opprett første kurs og ta imot påmeldinger.
-      </p>
-      <Button asChild className="mt-4">
+    <section
+      aria-label="Velkommen"
+      className="bg-gradient-brand flex flex-col gap-4 rounded-2xl px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+    >
+      <div className="min-w-0">
+        <h2 className="text-lg font-medium text-primary-foreground">Velkommen til UpNext</h2>
+        <p className="mt-1 max-w-[44ch] text-sm text-primary-foreground">
+          Sett opp studioet ditt, opprett første kurs og ta imot påmeldinger.
+        </p>
+      </div>
+      <Button asChild className="w-full sm:w-auto">
         <Link to={routes.getStarted}>Kom i gang</Link>
       </Button>
     </section>

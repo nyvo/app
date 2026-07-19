@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense, type ReactNode } from 'react';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { routes } from '@/lib/routes';
@@ -217,6 +217,9 @@ const TeacherDashboard = () => {
       ? 'Prøv igjen om litt.'
       : null;
   const incomeLoadFailed = incomeQuery.isError && incomeQuery.data === undefined;
+  const platformFeeHint = shouldShowPlatformFeeUpsell(monthPlatformFee, isPro)
+    ? <PlatformFeeHint feeNok={monthPlatformFee} />
+    : undefined;
   const retryDashboardLists = useCallback(() => {
     void nextSessionsQuery.refetch();
     void recentSignupsQuery.refetch();
@@ -239,63 +242,63 @@ const TeacherDashboard = () => {
               <WelcomeBand />
               {/* Chart-first is deliberate here (kept 2026-07-07 after an
                   audit proposed list-first per ui-patterns §2.5). */}
-              <div className="space-y-3">
-                <ErrorBoundary
-                  resetKey={chartRetryCount}
-                  fallback={
-                    <FramedCard title="Inntekt">
-                      <FramedCardPanel className="items-center justify-center p-6">
-                        <ErrorState
-                          variant="inline"
-                          onRetry={() => {
-                            refetchDashboardData();
-                            setChartRetryCount((count) => count + 1);
-                          }}
-                        />
-                      </FramedCardPanel>
-                    </FramedCard>
-                  }
-                >
-                  {incomeLoadFailed ? (
-                    // Query-level failure (not a render crash): the boundary
-                    // never trips, so surface the retryable error card here.
-                    <FramedCard title="Inntekt">
-                      <FramedCardPanel className="items-center justify-center">
-                        <ErrorState
-                          variant="inline"
-                          title="Kunne ikke laste inntekten"
-                          message="Prøv igjen om litt."
-                          onRetry={() => incomeQuery.refetch()}
-                        />
-                      </FramedCardPanel>
-                    </FramedCard>
-                  ) : (
-                    <Suspense fallback={<DelayedFallback><IncomeChartFallback /></DelayedFallback>}>
-                      <IncomeChart
-                        series={incomeSeries}
-                        isLoading={incomeSeries === null}
-                        isFetching={incomeQuery.isFetching && !incomeQuery.isPending}
-                        range={incomeRange}
-                        onRangeChange={setIncomeRange}
+              <ErrorBoundary
+                resetKey={chartRetryCount}
+                fallback={
+                  <FramedCard title="Inntekt">
+                    <FramedCardPanel className="items-center justify-center p-6">
+                      <ErrorState
+                        variant="inline"
+                        onRetry={() => {
+                          refetchDashboardData();
+                          setChartRetryCount((count) => count + 1);
+                        }}
                       />
-                    </Suspense>
-                  )}
-                </ErrorBoundary>
-                {shouldShowPlatformFeeUpsell(monthPlatformFee, isPro) && (
-                  <PlatformFeeHint feeNok={monthPlatformFee} />
+                    </FramedCardPanel>
+                  </FramedCard>
+                }
+              >
+                {incomeLoadFailed ? (
+                  // Query-level failure (not a render crash): the boundary
+                  // never trips, so surface the retryable error card here.
+                  <FramedCard title="Inntekt">
+                    <FramedCardPanel className="items-center justify-center">
+                      <ErrorState
+                        variant="inline"
+                        title="Kunne ikke laste inntekten"
+                        message="Prøv igjen om litt."
+                        onRetry={() => incomeQuery.refetch()}
+                      />
+                    </FramedCardPanel>
+                  </FramedCard>
+                ) : (
+                  <Suspense
+                    fallback={
+                      <DelayedFallback>
+                        <IncomeChartFallback footer={platformFeeHint} />
+                      </DelayedFallback>
+                    }
+                  >
+                    <IncomeChart
+                      series={incomeSeries}
+                      isLoading={incomeSeries === null}
+                      isFetching={incomeQuery.isFetching && !incomeQuery.isPending}
+                      range={incomeRange}
+                      onRangeChange={setIncomeRange}
+                      footer={platformFeeHint}
+                    />
+                  </Suspense>
                 )}
-              </div>
+              </ErrorBoundary>
 
-              {/* Row gap only applies when stacked — on lg the sections meet at
-                  the vertical hairline RecentSignupsSection carries. */}
-              <div className="grid grid-cols-1 gap-y-6 lg:grid-cols-2 lg:gap-y-0">
-                <UpcomingCoursesSection courses={dashboardCourses} isLoading={isLoading} />
-                <RecentSignupsSection
-                  signups={recentSignupsRaw}
-                  isLoading={isLoading}
-                  onSelect={handleSelectSignup}
-                />
-              </div>
+              {/* Equal-status modules share one composition while each keeps
+                  its honest row count and independent interaction model. */}
+              <DashboardActivityGrid
+                courses={dashboardCourses}
+                signups={recentSignupsRaw}
+                isLoading={isLoading}
+                onSelectSignup={handleSelectSignup}
+              />
             </div>
           )}
       </PageShell>
@@ -317,20 +320,20 @@ const TeacherDashboard = () => {
 
 /**
  * Suspense fallback while the IncomeChart chunk (recharts) loads — mirrors the
- * real card anatomy (plain grey header; total + h-9 SegmentedTabs range
- * control on one row INSIDE the panel; then the plot) so the chunk-load swap
- * doesn't jump the layout or teleport the range control between surfaces.
+ * real card anatomy (header action; total; plot; optional consequence footer)
+ * so the chunk-load swap doesn't jump the layout.
  */
-function IncomeChartFallback() {
+function IncomeChartFallback({ footer }: { footer?: ReactNode }) {
   return (
-    <FramedCard title="Inntekt">
+    <FramedCard
+      title="Inntekt"
+      action={<Skeleton className="h-8 w-32 rounded-lg" />}
+    >
       <FramedCardPanel className="px-4 py-5 sm:py-6">
-        <div className="flex items-center justify-between gap-3">
-          <Skeleton className="h-9 w-40" />
-          <Skeleton className="h-9 w-44 rounded-xl" />
-        </div>
+        <Skeleton className="h-9 w-40" />
         <Skeleton className="mt-6 h-[220px] w-full rounded-lg sm:h-[260px]" />
       </FramedCardPanel>
+      {footer}
     </FramedCard>
   );
 }
@@ -338,15 +341,14 @@ function IncomeChartFallback() {
 /**
  * The free tier's upgrade surface: this month's platform take as the lead
  * line, so the crossover math is the seller's own numbers — no salesmanship.
- * Two-tier text (medium lead carries the container, muted value line under)
- * + solid default button, per 2026-07-14 decision: the all-muted one-liner
- * with a secondary CTA read as a footnote.
+ * Two-tier text carries the consequence; the high-contrast action remains
+ * unmistakable while the shared frame keeps the footer subordinate to data.
  * Exported so /dev/dashboard-preview can render it without auth.
  */
 export function PlatformFeeHint({ feeNok }: { feeNok: number }) {
   const month = new Intl.DateTimeFormat('nb-NO', { month: 'long' }).format(new Date());
   return (
-    <div className="flex flex-col gap-3 rounded-xl bg-panel px-5 py-4 sm:flex-row sm:items-center">
+    <div className="flex flex-col gap-3 rounded-xl bg-surface px-4 py-3 sm:flex-row sm:items-center">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium tabular-nums text-foreground">
           {formatKroner(feeNok)} i plattformgebyr så langt i {month}
@@ -354,7 +356,7 @@ export function PlatformFeeHint({ feeNok }: { feeNok: number }) {
         <p className="text-sm text-foreground-muted">Med Pro beholder du alt</p>
       </div>
       <Button asChild className="w-full shrink-0 sm:w-auto">
-        <Link to={routes.settingsBilling}>Se Pro</Link>
+        <Link to={routes.settingsBilling}>Oppgrader</Link>
       </Button>
     </div>
   );
@@ -362,10 +364,32 @@ export function PlatformFeeHint({ feeNok }: { feeNok: number }) {
 
 // ─── Neste kurs ───────────────────────────────────────────────────────────
 //
-// Card-stack lists (2026-07-14): FramedCard here read as a form fieldset and
-// its min-height locked the sections to a three-row look. Per-item bg-panel
-// cards restore the hover affordance FramedCard rows deliberately lack, and
-// the stack shrinks honestly to N items. FramedCard stays for the chart.
+// These are independent data sets, but equal-status dashboard modules. Their
+// shells align on desktop while the inset list keeps the actual row count
+// honest: no filler row, stretched item, or explanatory copy is needed.
+
+export function DashboardActivityGrid({
+  courses,
+  signups,
+  isLoading,
+  onSelectSignup,
+}: {
+  courses: DashboardCourse[] | null;
+  signups: SignupWithDetails[] | null;
+  isLoading: boolean;
+  onSelectSignup: (signupId: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
+      <UpcomingCoursesSection courses={courses} isLoading={isLoading} />
+      <RecentSignupsSection
+        signups={signups}
+        isLoading={isLoading}
+        onSelect={onSelectSignup}
+      />
+    </div>
+  );
+}
 
 export function UpcomingCoursesSection({
   courses,
@@ -378,32 +402,31 @@ export function UpcomingCoursesSection({
   const showSkeleton = isLoading && courses === null;
 
   return (
-    <section className="lg:pr-10">
-      <h2 className="text-lg font-medium text-foreground">Neste kurs</h2>
-      <div className="mt-3">
+    <section className="h-full">
+      <FramedCard title="Neste kurs" className="h-full">
         {showSkeleton ? (
           <DelayedFallback>
             <RowsSkeleton variant="course" />
           </DelayedFallback>
         ) : items.length === 0 ? (
-          <div className="rounded-xl bg-panel">
+          <FramedCardPanel className="items-center justify-center p-6">
             <EmptyState
               variant="compact"
               title="Ingen kommende kurs"
               description="Opprett et kurs for å fylle timeplanen."
             />
-          </div>
+          </FramedCardPanel>
         ) : (
-          <div className="flex flex-col gap-2.5">
+          <FramedCardPanel className="divide-y divide-border-subtle">
             {items.map((course) => (
               <UpcomingCourseCard
                 key={`${course.id}-${course.date}-${course.time}`}
                 course={course}
               />
             ))}
-          </div>
+          </FramedCardPanel>
         )}
-      </div>
+      </FramedCard>
     </section>
   );
 }
@@ -417,9 +440,9 @@ function UpcomingCourseCard({ course }: { course: DashboardCourse }) {
   return (
     <Link
       to={routes.course(course.id)}
-      className="flex items-center gap-3 rounded-xl bg-panel px-4 py-4 no-underline outline-none transition-colors hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="flex items-center gap-3 px-4 py-4 no-underline outline-none transition-colors hover:bg-hover active:bg-pressed focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle motion-reduce:transition-none"
     >
-      <DateBadge dateStr={course.date} size="sm" />
+      <DateBadge dateStr={course.date} size="sm" className="bg-muted" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-foreground">{course.title}</p>
         <p className="truncate text-sm text-foreground-muted">{when || '—'}</p>
@@ -448,31 +471,28 @@ export function RecentSignupsSection({
   const showSkeleton = isLoading && signups === null;
 
   return (
-    // Root carries the between-sections divider (top hairline stacked, left
-    // hairline on lg) so the dev preview reuses the real layout and can't drift.
-    <section className="border-t border-border-subtle pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
-      <h2 className="text-lg font-medium text-foreground">Siste påmeldinger</h2>
-      <div className="mt-3">
+    <section className="h-full">
+      <FramedCard title="Siste påmeldinger" className="h-full">
         {showSkeleton ? (
           <DelayedFallback>
             <RowsSkeleton variant="signup" />
           </DelayedFallback>
         ) : items.length === 0 ? (
-          <div className="rounded-xl bg-panel">
+          <FramedCardPanel className="items-center justify-center p-6">
             <EmptyState
               variant="compact"
               title="Ingen påmeldinger ennå"
               description="Nye påmeldinger vises her."
             />
-          </div>
+          </FramedCardPanel>
         ) : (
-          <div className="flex flex-col gap-2.5">
+          <FramedCardPanel className="divide-y divide-border-subtle">
             {items.map((signup) => (
               <SignupCard key={signup.id} signup={signup} onSelect={onSelect} />
             ))}
-          </div>
+          </FramedCardPanel>
         )}
-      </div>
+      </FramedCard>
     </section>
   );
 }
@@ -494,9 +514,9 @@ function SignupCard({
     <button
       type="button"
       onClick={() => onSelect(signup.id)}
-      className="flex w-full items-center gap-3 rounded-xl bg-panel px-4 py-4 text-left outline-none cursor-pointer transition-colors hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle"
+      className="flex w-full cursor-pointer items-center gap-3 px-4 py-4 text-left outline-none transition-colors hover:bg-hover active:bg-pressed focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle motion-reduce:transition-none"
     >
-      <UserAvatar name={name} size="lg" className="bg-background" />
+      <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-foreground">{name}</p>
         <p className="truncate text-sm text-foreground-muted">
@@ -511,13 +531,12 @@ function SignupCard({
 // ─── Loading skeleton ─────────────────────────────────────────────────────
 
 function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
-  // Mirrors the real card anatomy (leading 40px block + title/sub lines +
-  // trailing meta, one bg-panel card per item) so the stack doesn't jump in
-  // height or shape when data lands.
+  // Mirrors the real inset-list anatomy so loading never swaps between two
+  // different container grammars.
   return (
-    <div className="flex flex-col gap-2.5">
+    <FramedCardPanel className="divide-y divide-border-subtle">
       {Array.from({ length: ROW_LIMIT }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 rounded-xl bg-panel px-4 py-4">
+        <div key={i} className="flex items-center gap-3 px-4 py-4">
           <Skeleton className={variant === 'course' ? 'size-10 rounded-lg' : 'size-10 rounded-full'} />
           <div className="flex h-11 min-w-0 flex-1 flex-col justify-center gap-2">
             <Skeleton className="h-3.5 w-32" />
@@ -526,7 +545,7 @@ function RowsSkeleton({ variant }: { variant: 'course' | 'signup' }) {
           <Skeleton className="h-3.5 w-8 shrink-0" />
         </div>
       ))}
-    </div>
+    </FramedCardPanel>
   );
 }
 

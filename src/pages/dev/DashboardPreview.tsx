@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
 import { WelcomeBandCard } from '@/components/teacher/dashboard/WelcomeBand';
 import {
+  DashboardActivityGrid,
   PlatformFeeHint,
-  RecentSignupsSection,
-  UpcomingCoursesSection,
 } from '@/pages/teacher/TeacherDashboard';
 import { PageState } from '@/components/page-state/page-state';
 import { DevPage, PreviewSection } from './_kit';
@@ -139,35 +138,37 @@ export default function DashboardPreview() {
   return (
     <DevPage title="Oversikt (dashboard)">
       <PreviewSection label="Pro – med data">
-        <div className="space-y-8">
+        <div className="space-y-12">
           <IncomeChart
             series={incomeSeries}
             isLoading={false}
             range={range}
             onRangeChange={setRange}
           />
-          <div className="grid grid-cols-1 gap-y-6 lg:grid-cols-2 lg:gap-y-0">
-            <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
-            <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />
-          </div>
+          <DashboardActivityGrid
+            courses={NEXT_COURSES.slice(0, 2)}
+            signups={RECENT_SIGNUPS}
+            isLoading={false}
+            onSelectSignup={noop}
+          />
         </div>
       </PreviewSection>
 
       <PreviewSection label="Start (gratis) – med plattformgebyr-linje">
-        <div className="space-y-8">
-          <div className="space-y-3">
-            <IncomeChart
-              series={incomeSeries}
-              isLoading={false}
-              range={range}
-              onRangeChange={setRange}
-            />
-            <PlatformFeeHint feeNok={312} />
-          </div>
-          <div className="grid grid-cols-1 gap-y-6 lg:grid-cols-2 lg:gap-y-0">
-            <UpcomingCoursesSection courses={NEXT_COURSES} isLoading={false} />
-            <RecentSignupsSection signups={RECENT_SIGNUPS} isLoading={false} onSelect={noop} />
-          </div>
+        <div className="space-y-12">
+          <IncomeChart
+            series={incomeSeries}
+            isLoading={false}
+            range={range}
+            onRangeChange={setRange}
+            footer={<PlatformFeeHint feeNok={312} />}
+          />
+          <DashboardActivityGrid
+            courses={NEXT_COURSES}
+            signups={RECENT_SIGNUPS}
+            isLoading={false}
+            onSelectSignup={noop}
+          />
         </div>
       </PreviewSection>
 
@@ -180,36 +181,46 @@ export default function DashboardPreview() {
             range={range}
             onRangeChange={setRange}
           />
+          <DashboardActivityGrid
+            courses={[]}
+            signups={[]}
+            isLoading={false}
+            onSelectSignup={noop}
+          />
         </div>
       </PreviewSection>
 
       <PreviewSection label="Tomt – ingen inntekt, kurs eller påmeldinger">
-        <div className="space-y-8">
+        <div className="space-y-12">
           <IncomeChart
             series={buildZeroIncome(range)}
             isLoading={false}
             range={range}
             onRangeChange={setRange}
           />
-          <div className="grid grid-cols-1 gap-y-6 lg:grid-cols-2 lg:gap-y-0">
-            <UpcomingCoursesSection courses={[]} isLoading={false} />
-            <RecentSignupsSection signups={[]} isLoading={false} onSelect={noop} />
-          </div>
+          <DashboardActivityGrid
+            courses={[]}
+            signups={[]}
+            isLoading={false}
+            onSelectSignup={noop}
+          />
         </div>
       </PreviewSection>
 
       <PreviewSection label="Laster">
-        <div className="space-y-8">
+        <div className="space-y-12">
           <IncomeChart
             series={null}
             isLoading
             range={range}
             onRangeChange={setRange}
           />
-          <div className="grid grid-cols-1 gap-y-6 lg:grid-cols-2 lg:gap-y-0">
-            <UpcomingCoursesSection courses={null} isLoading />
-            <RecentSignupsSection signups={null} isLoading onSelect={noop} />
-          </div>
+          <DashboardActivityGrid
+            courses={null}
+            signups={null}
+            isLoading
+            onSelectSignup={noop}
+          />
         </div>
       </PreviewSection>
 

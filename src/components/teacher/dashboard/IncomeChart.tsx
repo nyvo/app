@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ReactElement } from 'react'
+import { useEffect, useId, useState, type ReactElement, type ReactNode } from 'react'
 import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts'
 import { ChartContainer } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -27,6 +27,8 @@ interface IncomeChartProps {
   onRangeChange: (range: IncomeRange) => void
   /** Override the default custom tooltip — used by dev preview to A/B variants. */
   tooltipContent?: ReactElement
+  /** Optional contextual consequence rendered inside the same framed module. */
+  footer?: ReactNode
 }
 
 // Period labels per product decision 2026-07-11 — note the windows are still
@@ -38,11 +40,8 @@ const RANGE_TABS: { key: IncomeRange; label: string }[] = [
 ]
 
 /**
- * Mobile range control — a quiet text dropdown in the FramedCard header
- * (user-directed 2026-07-15). The header ban on SegmentedTabs was about the
- * muted track vanishing against the muted shell; a plain text trigger has no
- * track, so the header placement works — and below sm it frees the panel row
- * so the total stands alone. Desktop keeps the in-panel tabs.
+ * Mobile range control — a quiet text dropdown in the FramedCard header.
+ * It preserves a ~44px touch target while the visible pill stays compact.
  */
 function RangeDropdown({
   value,
@@ -166,6 +165,7 @@ export function IncomeChart({
   range,
   onRangeChange,
   tooltipContent,
+  footer,
 }: IncomeChartProps) {
   const gradientId = useId().replace(/:/g, '')
 
@@ -205,43 +205,44 @@ export function IncomeChart({
   return (
     <FramedCard
       title="Inntekt"
-      action={<RangeDropdown value={range} onChange={onRangeChange} />}
-    >
-      {/* px-4 keeps the total aligned with the FramedCard title above. The
-          SegmentedTabs stay on the white surface beside the total on sm+
-          (re-ratified 2026-07-14 against a header placement — the muted track
-          vanishes on the muted shell). Below sm the range control is the text
-          RangeDropdown in the header instead, so the total owns this row. */}
-      <FramedCardPanel className="px-4 py-5 sm:py-6">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            {isLoading ? (
-              <Skeleton className="h-9 w-40" />
-            ) : (
-              <span className="text-3xl font-medium text-foreground tabular-nums">
-                {formatKroner(total)}
-              </span>
-            )}
-            {hasDelta && (
-              <Badge
-                variant={deltaVariant}
-                size="sm"
-                className="tabular-nums"
-                title="mot forrige periode"
-                aria-label={`${formatPercent(delta)} mot forrige periode`}
-              >
-                {formatPercent(delta)}
-              </Badge>
-            )}
-          </div>
+      action={
+        <>
+          <RangeDropdown value={range} onChange={onRangeChange} />
           <SegmentedTabs
             value={range}
             onChange={onRangeChange}
             tabs={RANGE_TABS}
             ariaLabel="Velg tidsrom"
+            appearance="header"
             size="md"
             className="max-sm:hidden"
           />
+        </>
+      }
+    >
+      {/* px-4 keeps the total aligned with the FramedCard title above. The
+          range control now lives in the header at every width, so the value
+          and plot remain one uninterrupted data surface. */}
+      <FramedCardPanel className="px-4 py-5 sm:py-6">
+        <div className="flex items-center gap-3">
+          {isLoading ? (
+            <Skeleton className="h-9 w-40" />
+          ) : (
+            <span className="text-3xl font-medium text-foreground tabular-nums">
+              {formatKroner(total)}
+            </span>
+          )}
+          {hasDelta && (
+            <Badge
+              variant={deltaVariant}
+              size="sm"
+              className="tabular-nums"
+              title="mot forrige periode"
+              aria-label={`${formatPercent(delta)} mot forrige periode`}
+            >
+              {formatPercent(delta)}
+            </Badge>
+          )}
         </div>
 
         <div className={cn('relative mt-6 transition-opacity', isFetching && 'opacity-60')}>
@@ -321,6 +322,7 @@ export function IncomeChart({
         </ChartContainer>
         </div>
       </FramedCardPanel>
+      {footer}
     </FramedCard>
   )
 }
