@@ -13,7 +13,6 @@ export interface SetupStep {
   actionHref?: string
   actionOnClick?: () => void
   icon: IconComponent
-  timeEstimate?: string
   /** Polish step — shown on the checklist but not counted in the progress bar. */
   optional?: boolean
 }
@@ -77,9 +76,12 @@ export function useSetupProgress({
     }
 
     // Required steps. The pre-completed account step seeds the progress bar
-    // (endowed progress — it never starts at zero), and the first course comes
-    // before payouts: the builder is the quick, motivating task, KYC the slow
-    // one, and only a paid course actually needs Stripe to publish.
+    // (endowed progress — it never starts at zero). When payments is required
+    // it comes BEFORE the course step: required means a paid course exists,
+    // and publishing a paid course is blocked until Stripe onboarding is done
+    // (publishNeedsPaymentSetup + the DB trigger) — the list order mirrors
+    // that dependency. Free-course sellers never hit the gate, so for them
+    // payments stays behind the course step (in optionalSteps).
     const steps: SetupStep[] = [
       {
         id: 'account',
@@ -89,6 +91,7 @@ export function useSetupProgress({
         actionLabel: '',
         icon: User,
       },
+      ...(paymentsRequired ? [paymentsStep] : []),
       {
         id: 'course',
         title: 'Publiser ditt første kurs',
@@ -98,9 +101,7 @@ export function useSetupProgress({
         actionLabel: draftCourseId ? 'Fortsett' : 'Opprett kurs',
         actionHref: draftCourseId ? routes.course(draftCourseId) : routes.coursesNew,
         icon: BookOpen,
-        timeEstimate: 'ca. 3 min',
       },
-      ...(paymentsRequired ? [paymentsStep] : []),
     ]
 
     // Optional polish — improves the storefront but isn't required to take

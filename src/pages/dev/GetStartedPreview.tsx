@@ -27,7 +27,6 @@ const courseStep = step({
   title: 'Publiser ditt første kurs',
   description: 'Legg ut et kurs, så kan elevene melde seg på.',
   icon: BookOpen,
-  timeEstimate: 'ca. 3 min',
 })
 
 const paymentsStep = step({
@@ -52,7 +51,7 @@ export default function GetStartedPreview() {
     >
       <PreviewSection
         label="Nytt studio"
-        description="Alle steg gjenstår — ingen tom-markør, bare tid + chevron."
+        description="Alle steg gjenstår — ingen tom-markør, bare chevron."
       >
         <div className="max-w-3xl space-y-3">
           <StepCard step={courseStep} />
@@ -63,11 +62,11 @@ export default function GetStartedPreview() {
 
       <PreviewSection
         label="Underveis"
-        description="Fullførte steg får den grønne haken i høyre slot."
+        description="Med et betalt kursutkast kommer betalinger først (publisering krever Stripe). Fullførte steg får den grønne haken i høyre slot."
       >
         <div className="max-w-3xl space-y-3">
-          <StepCard step={{ ...courseStep, isComplete: true }} />
-          <StepCard step={paymentsStep} />
+          <StepCard step={{ ...paymentsStep, isComplete: true }} />
+          <StepCard step={courseStep} />
           <StepCard step={logoStep} />
         </div>
       </PreviewSection>

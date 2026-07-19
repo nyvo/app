@@ -119,14 +119,13 @@ export function GoLiveBanner() {
 
 // Reference: Adaline's "Get Started" checklist + Time2book's "Setup guide"
 // (Mobbin) — each step is its own filled card row, and the trailing slot
-// flips from the action affordance (time estimate + chevron) to a green check
-// that only appears once the step is done; no empty-state marker, so text
-// stays on one left edge across rows. Re-skinned in our tokens: bg-muted fill
-// at radius-xl (hover = bg-active, the secondary-button combo), and the check
-// is a solid bg-success-bright disc à la Time2book. All text stays full
-// text-foreground — muted ink on a muted fill is unreadable (see
-// muted-text-on-muted-fill); done-ness reads from the check alone.
-// Exported for /dev/get-started-preview.
+// flips from the chevron affordance to a green check that only appears once
+// the step is done; no empty-state marker, so text stays on one left edge
+// across rows. Re-skinned in our tokens: bg-muted fill at radius-xl (hover =
+// bg-active, the secondary-button combo), check = the standard subtle-tint
+// status circle sized up. All text stays full text-foreground — muted ink on
+// a muted fill is unreadable (see muted-text-on-muted-fill); done-ness reads
+// from the check alone. Exported for /dev/get-started-preview.
 export function StepCard({ step }: { step: SetupStep }) {
   const hasAction = !!step.actionHref || !!step.actionOnClick
   const cardClass = cn(
@@ -144,9 +143,9 @@ export function StepCard({ step }: { step: SetupStep }) {
         )}
       </div>
       {step.isComplete ? (
-        // Solid disc in the bright marker green (--success-bright), not the
-        // jade text ink — the sanctioned treatment for solid green marks.
-        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-success-bright text-success-foreground">
+        // The standard status treatment: success-subtle tint + jade ink,
+        // same hue pair as every other status circle — sized up for weight.
+        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-success-subtle text-success">
           {/* Hand-drawn check: the app's 1.75 icon stroke renders thin at this
               size — the heavier stroke is tuned for it. */}
           <svg viewBox="0 0 12 12" width="13" height="13" fill="none" aria-hidden="true">
@@ -161,17 +160,12 @@ export function StepCard({ step }: { step: SetupStep }) {
           <span className="sr-only">Fullført</span>
         </span>
       ) : (
-        <>
-          {step.timeEstimate && (
-            <span className="shrink-0 text-sm text-foreground">{step.timeEstimate}</span>
-          )}
-          {hasAction && (
-            <ChevronRight
-              className="size-4 shrink-0 text-foreground-muted transition-transform group-hover:translate-x-0.5"
-              strokeWidth={1.75}
-            />
-          )}
-        </>
+        hasAction && (
+          <ChevronRight
+            className="size-4 shrink-0 text-foreground-muted transition-transform group-hover:translate-x-0.5"
+            strokeWidth={1.75}
+          />
+        )
       )}
     </>
   )
