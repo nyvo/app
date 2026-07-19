@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, MapPin, Monitor, Users } from '@/lib/icons';
 import { PageShell } from '@/components/teacher/PageShell';
-import { TimelineEntry } from '@/components/teacher/TimelineEntry';
+import { FeedEntry } from '@/components/teacher/FeedEntry';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
@@ -288,20 +288,19 @@ const SchedulePage = () => {
         {loading ? (
           <DelayedFallback>
             <div role="status" aria-label="Laster…">
-              {/* Mirrors the timeline anatomy: date lines left, rail gutter,
-                  cards (title + one meta line) right. Below `sm` the date
-                  column collapses and a single date line sits above the cards
-                  — same as TimelineDay's stacked layout. */}
+              {/* Mirrors the feed anatomy: date lines left, cards (title +
+                  one meta line) right. Below `sm` the date column collapses
+                  and a single date line sits above the cards — same as
+                  ScheduleDay's stacked layout. */}
               {[1, 2].map((i) => (
                 <div
                   key={i}
-                  className="grid grid-cols-[92px_18px_1fr] gap-x-2.5 max-sm:grid-cols-[18px_1fr]"
+                  className="grid grid-cols-[92px_1fr] gap-x-4 max-sm:grid-cols-[1fr]"
                 >
                   <div className="space-y-1.5 pt-3 max-sm:hidden">
                     <Skeleton className="h-4 w-14" />
                     <Skeleton className="h-3 w-16" />
                   </div>
-                  <div />
                   <div className="pb-6">
                     <Skeleton className="mb-2 h-4 w-28 sm:hidden" />
                     <div className="space-y-3">
@@ -339,23 +338,16 @@ const SchedulePage = () => {
             {groups.map(([date, daySessions], idx) => {
               const label = formatDayLabel(date);
               return (
-                <TimelineDay
+                <ScheduleDay
                   key={date}
                   primary={label.primary}
                   secondary={label.secondary}
-                  rail={groups.length > 1}
-                  // The solid ink dot marks the day of the actual next session — sessions
-                  // are date-ascending on the active tab, so it's the first
-                  // loaded row (a month filter can hide it; then no highlight).
-                  next={rangeFilter === 'active' && date === sessions[0]?.sessionDate}
-                  lineAbove={idx > 0}
-                  lineBelow={idx < groups.length - 1}
                   isLast={idx === groups.length - 1}
                 >
                   {daySessions.map((s) => (
                     <SessionCard key={s.id} session={s} />
                   ))}
-                </TimelineDay>
+                </ScheduleDay>
               );
             })}
           </div>
@@ -365,44 +357,28 @@ const SchedulePage = () => {
 };
 
 /**
- * One day group on the shared timeline grammar (TimelineEntry — the same
- * rail as the course Kursplan feed): day + date labels left, dot + hairline
- * rail, the day's cards in the right column. Exported so the
- * /dev/schedule-preview sign-off surface renders the real component.
+ * One day group on the shared feed grammar (FeedEntry — same as the course
+ * Kursplan feed): day + date labels left, the day's cards in the right
+ * column. Exported so the /dev/schedule-preview sign-off surface renders
+ * the real component.
  */
-export function TimelineDay({
+export function ScheduleDay({
   primary,
   secondary,
-  rail = true,
-  next = false,
-  lineAbove = false,
-  lineBelow = false,
   isLast = false,
   children,
 }: {
   primary: string;
   secondary: string;
-  /** A lone day group needs no timeline — the rail only earns its place
-   *  between groups. The grid stays, so labels/cards never shift x. */
-  rail?: boolean;
-  /** Solid ink dot — the day of the next upcoming session. */
-  next?: boolean;
-  lineAbove?: boolean;
-  lineBelow?: boolean;
   isLast?: boolean;
   children: ReactNode;
 }) {
   return (
-    <TimelineEntry
+    <FeedEntry
       // Wider date column than the Kursplan feed — "22. september" must fit.
-      className="grid-cols-[92px_18px_1fr]"
-      rail={rail}
-      next={next}
-      lineAbove={lineAbove}
-      lineBelow={lineBelow}
+      className="grid-cols-[92px_1fr]"
       isLast={isLast}
-      // Deeper padding between day groups (vs pb-3 between feed rows) — the
-      // rail runs through it, so the spine stays continuous across the gap.
+      // Deeper padding between day groups (vs pb-3 between feed rows).
       contentClassName={!isLast ? 'pb-6' : undefined}
       date={
         <>
@@ -420,8 +396,7 @@ export function TimelineDay({
       }
     >
       <div className="space-y-3">{children}</div>
-    </TimelineEntry>
-
+    </FeedEntry>
   );
 }
 

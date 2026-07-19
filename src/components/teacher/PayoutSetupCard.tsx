@@ -79,7 +79,7 @@ function StepMark({ step, index }: { step: PayoutStepViewModel; index: number })
   if (step.status === 'done') {
     return (
       // The bright marker green (--success-bright), not the jade text ink;
-      // 15% alpha tint of the same hue (TimelineEntry's dot-ring precedent).
+      // 15% alpha tint of the same hue for the circle fill.
       <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-success-bright/15 text-success-bright">
         {/* Hand-drawn check: at this size the app's 1.75 icon stroke renders
             thin and mushy — the heavier 1.8 stroke is tuned for it. */}
