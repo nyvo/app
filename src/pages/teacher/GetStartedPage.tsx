@@ -143,14 +143,10 @@ export function StepCard({ step }: { step: SetupStep }) {
         )}
       </div>
       {step.isComplete ? (
-        // The standard status treatment: success-subtle tint + jade ink,
-        // same hue pair as every other status circle — sized up for weight.
-        // The white ring lifts the light tint off the grey card fill (the
-        // tint alone washes into bg-muted; this page only).
-        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-success-subtle text-success ring-4 ring-surface">
-          {/* Hand-drawn check: the app's 1.75 icon stroke renders thin at this
-              size — the heavier stroke is tuned for it. */}
-          <svg viewBox="0 0 12 12" width="13" height="13" fill="none" aria-hidden="true">
+        // Bare jade check, no disc — the glyph alone at a larger size marks
+        // done (jade --success is the standard status ink).
+        <span className="shrink-0 text-success">
+          <svg viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true">
             <path
               d="M2.5 6.5L5 9l4.5-6"
               stroke="currentColor"
