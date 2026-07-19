@@ -33,8 +33,8 @@ const SIZE_CLASSES: Record<DateBadgeSize, {
 };
 
 /**
- * Calendar-page style date display.
- * Month abbreviation on top, day number below, on a plain white tile.
+ * Calendar-page style date display: outlined tile, month abbreviation on a
+ * muted band, hairline divider, day number on the white leaf below.
  */
 export function DateBadge({
   dateStr,
@@ -51,11 +51,11 @@ export function DateBadge({
     const parts = dateStr.split('-');
     date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   } else {
-    return <div className={cn(sizes.container, 'rounded-lg bg-muted', className)} />;
+    return <div className={cn(sizes.container, 'rounded-lg border border-border-subtle bg-muted', className)} />;
   }
 
   if (isNaN(date.getTime())) {
-    return <div className={cn(sizes.container, 'rounded-lg bg-muted', className)} />;
+    return <div className={cn(sizes.container, 'rounded-lg border border-border-subtle bg-muted', className)} />;
   }
 
   const month = MONTHS[date.getMonth()];
@@ -67,12 +67,18 @@ export function DateBadge({
       role="img"
       aria-label={fullDateLabel}
       className={cn(
-        'flex shrink-0 flex-col overflow-hidden rounded-lg bg-background',
+        'flex shrink-0 flex-col overflow-hidden rounded-lg border border-border-subtle bg-background',
         sizes.container,
         className,
       )}
     >
-      <div aria-hidden="true" className={cn('flex items-center justify-center', sizes.strip)}>
+      <div
+        aria-hidden="true"
+        className={cn(
+          'flex items-center justify-center border-b border-border-subtle bg-muted',
+          sizes.strip,
+        )}
+      >
         <span className={cn('font-medium leading-none text-foreground-muted', sizes.monthText)}>
           {month}
         </span>

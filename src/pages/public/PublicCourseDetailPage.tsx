@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -200,10 +200,24 @@ export default function PublicCourseDetailPage() {
   const heroImg = course ? resolveCourseImage(course) : null;
   const hasHero = !!heroImg && !heroFailed;
 
+  // The skeleton mirrors whichever layout the loaded page will use. Arriving
+  // from the storefront agenda the course is already in that query's cache,
+  // so the answer is known before this page's own fetch resolves; a direct
+  // load guesses single-column (the common case for new studios).
+  const queryClient = useQueryClient();
+  const cachedStorefront = queryClient.getQueryData<{ courses: PublicCourseWithDetails[] }>([
+    'storefront',
+    slug,
+  ]);
+  const cachedCourse = cachedStorefront?.courses.find((c) => c.slug === courseSlug);
+  const skeletonTwoCol = course
+    ? hasHero
+    : !!cachedCourse && !!resolveCourseImage(cachedCourse);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 pt-8 pb-16">
-        {loading && <CourseDetailSkeletonBody />}
+        {loading && <CourseDetailSkeletonBody twoCol={skeletonTwoCol} />}
 
         {loadFailed && !loading && <PageState variant="server-error" as="div" />}
         {notFound && !loading && <PageState variant="public-course" as="div" />}
@@ -234,34 +248,30 @@ export default function PublicCourseDetailPage() {
               <div className="min-w-0">
                 <h1 className="text-4xl font-medium text-foreground">{course.title}</h1>
 
+                <SellerCard course={course} className={cn('mt-5', hasHero && 'md:hidden')} />
+
                 <div className="mt-5 flex items-start gap-3">
-                  <DateBadge dateStr={course.start_date ?? undefined} size="sm" className="bg-muted" />
+                  <DateBadge dateStr={course.start_date ?? undefined} size="sm" />
                   <div className="min-w-0">
                     <p className="text-[15px] font-medium text-foreground">{tidLabel}</p>
-                    <p className="mt-0.5 text-sm text-foreground-muted">
-                      {weeksLabel}
-                      {sessions.length > 1 && (
-                        <>
-                          {' · '}
-                          <button
-                            type="button"
-                            onClick={() => setScheduleOpen(true)}
-                            className="cursor-pointer underline underline-offset-2 hover:text-foreground"
-                          >
-                            Se alle datoer
-                          </button>
-                        </>
-                      )}
-                    </p>
+                    {/* One session = the Tid line says everything; «1 økt»
+                        under it is noise. The line exists for multi-session
+                        courses: count + the full-calendar dialog. */}
+                    {sessions.length > 1 && (
+                      <p className="mt-0.5 text-sm text-foreground-muted">
+                        {weeksLabel}
+                        {' · '}
+                        <button
+                          type="button"
+                          onClick={() => setScheduleOpen(true)}
+                          className="cursor-pointer underline underline-offset-2 hover:text-foreground"
+                        >
+                          Se alle datoer
+                        </button>
+                      </p>
+                    )}
                   </div>
                 </div>
-
-                {/* Who teaches THIS course — distinct from the Arrangør card
-                    (the studio). Suppressed when it would just repeat the
-                    seller name (solo teachers). */}
-                {course.instructor_name && course.instructor_name !== course.seller?.name && (
-                  <p className="mt-2.5 text-sm text-foreground-muted">Med {course.instructor_name}</p>
-                )}
 
                 <BookingCard
                   course={course}
@@ -298,7 +308,6 @@ export default function PublicCourseDetailPage() {
                   </section>
                 )}
 
-                <SellerCard course={course} className={cn('mt-8', hasHero && 'md:hidden')} />
               </div>
             </div>
 
@@ -334,12 +343,20 @@ function CourseHeroImage({ src, onFailed }: { src: string; onFailed: () => void 
 
 // ── Arrangør card ──────────────────────────────────────────────────────────
 
+/** Names who the participant actually meets: the course's instructor when
+ * the studio has picked one, otherwise the studio itself. All attribution
+ * lives in this one card — no floating «Med …» line elsewhere. The studio
+ * logo only backs the avatar when the card shows the studio's own name. */
 function SellerCard({ course, className }: { course: PublicCourseWithDetails; className?: string }) {
+  const instructor = course.instructor_name?.trim() || null;
+  const name = instructor ?? course.seller?.name;
+  const avatarSrc =
+    !instructor || instructor === course.seller?.name ? course.seller?.logo_url : undefined;
   return (
     <PublicCard header={<span>Arrangør</span>} className={className} bodyClassName="p-3">
       <div className="flex items-center gap-3">
-        <UserAvatar name={course.seller?.name} src={course.seller?.logo_url} size="md" />
-        <span className="text-sm font-medium text-foreground">{course.seller?.name}</span>
+        <UserAvatar name={name} src={avatarSrc} size="md" />
+        <span className="text-sm font-medium text-foreground">{name}</span>
       </div>
     </PublicCard>
   );
@@ -741,8 +758,29 @@ function TierRow({
 // ── Skeleton ─────────────────────────────────────────────────────────────
 
 /** Shared body so the page's inline loading branch and the standalone export
- * (used by dev previews) render identical markup without duplicating it. */
-function CourseDetailSkeletonBody() {
+ * (used by dev previews) render identical markup without duplicating it.
+ * Mirrors the loaded page's two layouts: `twoCol` for courses with an image,
+ * otherwise the centered single column. */
+function CourseDetailSkeletonBody({ twoCol = false }: { twoCol?: boolean }) {
+  if (!twoCol) {
+    return (
+      <div
+        className="mx-auto w-full max-w-[640px] animate-in fade-in duration-150"
+        role="status"
+        aria-live="polite"
+      >
+        <span className="sr-only">Laster…</span>
+        <Skeleton className="h-4 w-40" />
+        <div className="mt-6">
+          <Skeleton className="h-10 w-3/4" />
+          <Skeleton className="mt-5 h-16 w-full rounded-2xl" />
+          <Skeleton className="mt-5 h-10 w-64" />
+          <Skeleton className="mt-7 h-48 w-full rounded-2xl" />
+          <Skeleton className="mt-8 h-32 w-full" />
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="animate-in fade-in duration-150" role="status" aria-live="polite">
       <span className="sr-only">Laster…</span>
@@ -763,11 +801,11 @@ function CourseDetailSkeletonBody() {
   );
 }
 
-export function CourseDetailSkeleton() {
+export function CourseDetailSkeleton({ twoCol = false }: { twoCol?: boolean }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 pt-8 pb-16">
-        <CourseDetailSkeletonBody />
+        <CourseDetailSkeletonBody twoCol={twoCol} />
       </main>
     </div>
   );

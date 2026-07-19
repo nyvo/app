@@ -442,7 +442,7 @@ function UpcomingCourseCard({ course }: { course: DashboardCourse }) {
       to={routes.course(course.id)}
       className="flex items-center gap-3 px-4 py-4 no-underline outline-none transition-colors hover:bg-hover active:bg-pressed focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle motion-reduce:transition-none"
     >
-      <DateBadge dateStr={course.date} size="sm" className="bg-muted" />
+      <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium text-foreground">{course.title}</p>
         <p className="truncate text-sm text-foreground-muted">{when || '—'}</p>

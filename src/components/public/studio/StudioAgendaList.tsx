@@ -51,6 +51,18 @@ export function StudioAgendaList({ courses, viewingSlug, viewingName }: StudioAg
     [courses],
   );
 
+  // With a single instructor across the whole studio the name is studio
+  // identity, not row information — repeating it on every row is noise.
+  // It earns the sub-line only when it distinguishes rows (≥2 instructors).
+  const showInstructor = useMemo(() => {
+    const names = new Set<string>();
+    for (const course of courses) {
+      const name = course.instructor_name?.trim();
+      if (name) names.add(name);
+    }
+    return names.size >= 2;
+  }, [courses]);
+
   const groups = useMemo(() => {
     const map = new Map<string, PublicCourseWithDetails[]>();
     for (const course of courses) {
@@ -81,6 +93,7 @@ export function StudioAgendaList({ courses, viewingSlug, viewingName }: StudioAg
                 course={course}
                 todayKey={todayKey}
                 showThumb={showThumbs}
+                showInstructor={showInstructor}
                 viewingSlug={viewingSlug}
                 viewingName={viewingName}
               />
@@ -136,12 +149,14 @@ function AgendaRow({
   course,
   todayKey,
   showThumb,
+  showInstructor,
   viewingSlug,
   viewingName,
 }: {
   course: PublicCourseWithDetails;
   todayKey: string;
   showThumb: boolean;
+  showInstructor: boolean;
   viewingSlug?: string;
   viewingName?: string | null;
 }) {
@@ -164,8 +179,12 @@ function AgendaRow({
 
   const time = extractTime(course.time_schedule);
   const duration = durationLabel(course);
-  const sub = subLabel(course);
+  const sub = subLabel(course, showInstructor);
   const price = entryPrice(course);
+  // Thumb rows center against the 64px image (ClassPass/Luma). Text rows
+  // top-align instead so a one-line title sits on the time's line rather
+  // than floating vertically centered beside the two-line time stack.
+  const rowAlign = showThumb ? 'items-center' : 'items-start';
 
   const body = (
     <>
@@ -224,13 +243,14 @@ function AgendaRow({
       )}
     >
       {isCancelled ? (
-        <div className="flex items-center gap-3 sm:gap-4 py-4 opacity-55">{body}</div>
+        <div className={cn('flex gap-3 sm:gap-4 py-4 opacity-55', rowAlign)}>{body}</div>
       ) : (
         <Link
           to={`/${linkSlug}/${course.slug}`}
           state={{ fromSlug, fromName }}
           className={cn(
-            'group flex items-center gap-3 sm:gap-4 py-4 -mx-3 px-3 rounded-xl transition-colors hover:bg-hover',
+            'group flex gap-3 sm:gap-4 py-4 -mx-3 px-3 rounded-xl transition-colors hover:bg-hover',
+            rowAlign,
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           )}
         >
@@ -260,17 +280,19 @@ function durationLabel(course: PublicCourseWithDetails): string {
 }
 
 /** Second line of the title stack: «8 økter · Ingrid Larsen» for a series,
- * instructor alone for a workshop or drop-in class — no type chips. Online
- * delivery is a detail, so «Nettkurs» lives here, not in the time stack.
- * Copy rule: one «·» may pair two values; with three parts we fall back to
- * commas — more than one interpunct in a string is banned. */
-function subLabel(course: PublicCourseWithDetails): string {
+ * instructor alone for a workshop or drop-in class — no type chips. The
+ * instructor only appears when the list-level rule says it distinguishes
+ * rows (≥2 instructors at the studio). Online delivery is a detail, so
+ * «Nettkurs» lives here, not in the time stack. Copy rule: one «·» may pair
+ * two values; with three parts we fall back to commas — more than one
+ * interpunct in a string is banned. */
+function subLabel(course: PublicCourseWithDetails, showInstructor: boolean): string {
   const parts: string[] = [];
   if (course.format === 'series') {
     const sessions = course.next_session?.total_sessions ?? course.total_weeks;
     if (sessions && sessions > 1) parts.push(`${sessions} økter`);
   }
-  if (course.instructor_name) parts.push(course.instructor_name);
+  if (showInstructor && course.instructor_name) parts.push(course.instructor_name);
   if (course.delivery_mode === 'online') parts.push('Nettkurs');
   return parts.length > 2 ? parts.join(', ') : parts.join(' · ');
 }
