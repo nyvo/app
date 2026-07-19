@@ -145,7 +145,7 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
           <li
             key={step.title + index}
             className={cn(
-              'rounded-xl border border-border-subtle bg-surface p-5 text-left',
+              'flex flex-col rounded-xl border border-border-subtle bg-surface p-5 text-left',
               'animate-in fade-in-0 slide-in-from-bottom-1 duration-300 fill-mode-backwards',
               index === 1 && 'delay-75',
               index === 2 && 'delay-150',
@@ -164,17 +164,16 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
               {step.title}
             </p>
             <p className="mt-1 text-sm text-foreground-muted">{STEP_CAPTIONS[index]}</p>
+            {/* The action lives in the card of the step it advances
+                (Time2book's "Connect Stripe" row, Acctual's pending card) —
+                never floating on the canvas. Waiting states have none and
+                the narrative simply ends at the cards. */}
+            {step.status === 'current' && step.action && (
+              <div className="mt-auto pt-5">{step.action}</div>
+            )}
           </li>
         ))}
       </ol>
-
-      {/* One action, centred under the journey; waiting states have none and
-          the narrative simply ends at the cards. */}
-      {current?.action && (
-        <div className="mt-8 flex justify-center animate-in fade-in-0 duration-300 delay-200 fill-mode-backwards">
-          {current.action}
-        </div>
-      )}
     </section>
   );
 }
