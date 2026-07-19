@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,7 +12,7 @@ import { PageState } from '@/components/page-state/page-state';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { FloatingField } from '@/components/public/FloatingField';
 import { useAuth } from '@/contexts/AuthContext';
-import { StorefrontHeader } from '@/components/public/StorefrontHeader';
+import { PublicCard } from '@/components/public/PublicCard';
 import { Elements, PaymentElement, useStripe as useStripeHook, useElements } from '@stripe/react-stripe-js';
 import type { Stripe } from '@stripe/stripe-js';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
@@ -377,9 +376,9 @@ const CheckoutPage = () => {
   // hasn't started yet. Same model as BookingPanel; no session picker.
   // undefined = loading / not applicable, null = no upcoming session.
   const [dropInSessionId, setDropInSessionId] = useState<string | null | undefined>(undefined);
-  // Same lookup's date/time — feeds the Billett constraint line ("Neste økt:
-  // …"). Kept alongside dropInSessionId rather than re-fetched, since the
-  // query already selects session_date/start_time.
+  // Same lookup's date/time — feeds the header's drop-in session line
+  // ("Gjelder …"). Kept alongside dropInSessionId rather than re-fetched,
+  // since the query already selects session_date/start_time.
   const [dropInNextSession, setDropInNextSession] = useState<
     { session_date: string; start_time: string } | null | undefined
   >(undefined);
@@ -428,25 +427,25 @@ const CheckoutPage = () => {
   // until it resolves, so show a loading button rather than a dead click.
   const dropInResolving = isDropInSelected && dropInSessionId === undefined;
 
-  // ── Billett toggle ───────────────────────────────────────────────────────
-  // Only rendered when there's a real choice — main + drop-in. A single-tier
-  // course skips this section entirely; the receipt already names what's
-  // being bought.
-  const mainTier = tiers.find((t) => t.ticket_kind !== 'drop_in') ?? null;
-  const dropInTier = tiers.find((t) => t.ticket_kind === 'drop_in') ?? null;
-  const showBillett = tiers.length === 2 && !!mainTier && !!dropInTier;
+  // ── Identity header ─────────────────────────────────────────────────────
+  // Tier choice itself was already made on the course-detail page's booking
+  // card — checkout no longer offers a Billett toggle, `?billett=` just seeds
+  // `selectedTierId` above. `billettLowStock` still drives the low-stock
+  // badge in the identity header.
   const billettSpotsLeft = course?.spots_available ?? 0;
   const billettLowStock = billettSpotsLeft > 0 && billettSpotsLeft <= 3;
-  // Drop-in selected → the context row's meta line swaps to the concrete
-  // session being bought. The value updates in an existing slot; nothing
-  // floats under the toggle.
-  const contextMetaOverride = (() => {
-    if (!isDropInSelected || dropInResolving) return undefined;
-    const next = buildNextSessionLabel(dropInNextSession ?? null);
-    if (!next) return undefined;
-    const seller = course?.seller?.name;
-    return seller ? `${next}, ${seller}` : next;
-  })();
+  // Drop-in selected → the header's meta line swaps to the concrete session
+  // being bought; otherwise it's the course's recurring schedule. No seller
+  // name here (unlike buildCheckoutContextMeta's default) — the header
+  // already carries the course thumbnail + title, so the meta line stays a
+  // single schedule fact and the string keeps to one "·" max.
+  const scheduleBit = course
+    ? (isDropInSelected
+        ? buildNextSessionLabel(dropInNextSession ?? null) ?? buildCheckoutContextMeta(course, null)
+        : buildCheckoutContextMeta(course, null))
+    : null;
+  const headerMeta = [selectedTier?.label, scheduleBit].filter(Boolean).join(' · ');
+  const showLowStockBadge = !closed && billettLowStock;
 
   // ── Form validation ─────────────────────────────────────────────────────
   // Blur shows format errors on non-empty fields; a failed submit attempt
@@ -555,15 +554,20 @@ const CheckoutPage = () => {
 
   const backHref = `/${slug}/${courseSlug}`;
   const amountOre = Math.round(total * 100);
+  const img = resolveCourseImage(course);
 
   return (
     <div className="min-h-dvh bg-background text-foreground flex flex-col">
-      <StorefrontHeader
-        name={course.seller?.name}
-        slug={slug}
-        logoUrl={course.seller?.logo_url}
-      />
-      <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">
+      <div className="mx-auto w-full max-w-[568px] px-4 sm:px-6 pt-8 pb-16">
+        <button
+          type="button"
+          onClick={() => navigate(backHref)}
+          className="focus-ring -mb-1 rounded inline-flex items-center gap-1.5 self-start text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+        >
+          <ChevronLeft className="size-4" strokeWidth={1.75} />
+          Tilbake til kurset
+        </button>
+        <CheckoutTitle />
 
         {isCancelled && (
           <Alert variant="warning" className="mb-8">
@@ -586,44 +590,26 @@ const CheckoutPage = () => {
           </Alert>
         )}
 
-        <div className="mx-auto max-w-[520px] space-y-6">
-          <button
-            type="button"
-            onClick={() => navigate(backHref)}
-            className="focus-ring -mb-1 rounded inline-flex items-center gap-1.5 self-start text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
-          >
-            <ChevronLeft className="size-4" strokeWidth={1.75} />
-            Tilbake til kurset
-          </button>
-          <CheckoutTitle />
-          <CheckoutCourseContext
-            course={course}
-            metaOverride={contextMetaOverride}
-            metaLoading={isDropInSelected && dropInResolving}
-            trailing={
-              !closed && !showBillett && billettLowStock ? (
-                <span className="ml-auto whitespace-nowrap text-xs tabular-nums text-warning">
+        <PublicCard
+          className="mt-5"
+          bodyClassName="px-3 pb-3 pt-4"
+          header={
+            <>
+              <div className="size-9 shrink-0 overflow-hidden rounded-lg bg-background">
+                {img && <img src={img} alt="" className="media-outline size-full object-cover" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">{course.title}</p>
+                <p className="truncate text-xs text-foreground">{headerMeta}</p>
+              </div>
+              {showLowStockBadge && (
+                <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-warning">
                   {billettSpotsLeft} {billettSpotsLeft === 1 ? 'plass' : 'plasser'} igjen
                 </span>
-              ) : undefined
-            }
-          />
-
-          {!closed && showBillett && mainTier && dropInTier && (
-            <BillettSection
-              mainTier={mainTier}
-              dropInTier={dropInTier}
-              selectedKind={isDropInSelected ? 'drop-in' : 'main'}
-              onSelect={(kind) => {
-                const tier = kind === 'drop-in' ? dropInTier : mainTier;
-                if (tier) setSelectedTierId(tier.id);
-              }}
-              lowStock={billettLowStock}
-              spotsLeft={billettSpotsLeft}
-              disabled={submitting}
-            />
-          )}
-
+              )}
+            </>
+          }
+        >
           {formReady && (
             isFree ? (
               <form onSubmit={handleFreeFormSubmit} noValidate className="space-y-6">
@@ -724,7 +710,7 @@ const CheckoutPage = () => {
               </Elements>
             )
           )}
-        </div>
+        </PublicCard>
       </div>
     </div>
   );
@@ -1051,10 +1037,16 @@ export function TermsField({
  * phones while the form scrolls; in-flow and unchanged on ≥sm. Flat
  * background + hairline only — checkout is zero-expression chrome. Shared
  * with the dev preview so both render the pinned state identically.
+ *
+ * The negative margin cancels `PublicCard`'s body inset (`px-3`) so the
+ * sticky bar's background spans the card's own width, not the viewport's —
+ * the dock lives inside the card's bordered body now, so bleeding past the
+ * card edge (the old `-mx-4`, sized for the page-level container) would
+ * overlap the card's border instead of aligning with it.
  */
 export function PayButtonDock({ children }: { children: React.ReactNode }) {
   return (
-    <div className="space-y-2 max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:-mx-4 max-sm:px-4 max-sm:bg-background max-sm:pt-3 max-sm:pb-[max(1rem,env(safe-area-inset-bottom))] max-sm:border-t max-sm:border-border-subtle">
+    <div className="space-y-2 max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:-mx-3 max-sm:px-3 max-sm:bg-background max-sm:pt-3 max-sm:pb-[max(1rem,env(safe-area-inset-bottom))] max-sm:border-t max-sm:border-border-subtle">
       {children}
     </div>
   );
@@ -1365,7 +1357,7 @@ export function CheckoutCourseContext({
 }: {
   course: PublicCourseWithDetails;
   trailing?: React.ReactNode;
-  /** Replaces the default meta line, e.g. drop-in's «Neste økt: …». */
+  /** Replaces the default meta line, e.g. drop-in's «Gjelder …». */
   metaOverride?: string | null;
   /** True while the override is being resolved (drop-in session lookup). */
   metaLoading?: boolean;
@@ -1397,8 +1389,8 @@ function ReceiptRow({
   amountClassName,
 }: {
   label: string;
-  /** Usually a formatted kroner string; the proration deduction passes a
-   *  success Badge instead. */
+  /** Usually a formatted kroner string; the proration/discount deductions
+   *  pass a `DeductionAmount` box instead. */
   amount: React.ReactNode;
   amountClassName?: string;
 }) {
@@ -1410,11 +1402,22 @@ function ReceiptRow({
   );
 }
 
+/** Light jade deduction box — the receipt's one tinted element (2026-07-20
+ * mock revision: same light -subtle treatment as status pills, but on a
+ * rounded-xl box; bright green was tried and rejected as too intense). */
+function DeductionAmount({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-xl bg-success-subtle px-2 py-0.5 text-xs font-medium text-success tabular-nums">
+      {children}
+    </span>
+  );
+}
+
 /**
  * Line-by-line price receipt — hairline rows (no card, no bg fill), the tier
  * price (or the started-course proration pair) muted-label / foreground-
- * amount, Tjenestegebyr fully muted, a top hairline, then the emphasized
- * Totalt row. Matches the mock's `.rcpt` grammar exactly.
+ * amount, a top hairline, then the emphasized Totalt row. Labels are the
+ * secondary tier; every amount stays full text-foreground.
  */
 export function CheckoutReceipt({
   course,
@@ -1456,14 +1459,7 @@ export function CheckoutReceipt({
               <ReceiptRow label={`${selectedTier.label}, ordinær pris`} amount={formatKroner(course.price ?? 0)} />
               <ReceiptRow
                 label={`Fratrekk for ${heldCount} holdte ${heldCount === 1 ? 'økt' : 'økter'}`}
-                amount={
-                  // The one tinted element in the receipt — the status-pill
-                  // grammar (subtle fill + matching ink), rect like table
-                  // status badges, so the saving reads as a highlight.
-                  <Badge variant="success" shape="rect" size="sm" className="tabular-nums">
-                    −{formatKroner(deduction)}
-                  </Badge>
-                }
+                amount={<DeductionAmount>−{formatKroner(deduction)}</DeductionAmount>}
               />
             </>
           ) : (
@@ -1472,14 +1468,10 @@ export function CheckoutReceipt({
           {discount && (
             <ReceiptRow
               label={`${discount.label.charAt(0).toUpperCase()}${discount.label.slice(1)}rabatt (−${discount.percent} %)`}
-              amount={
-                <Badge variant="success" shape="rect" size="sm" className="tabular-nums">
-                  −{formatKroner(discount.amount)}
-                </Badge>
-              }
+              amount={<DeductionAmount>−{formatKroner(discount.amount)}</DeductionAmount>}
             />
           )}
-          <ReceiptRow label="Tjenestegebyr" amount={formatKroner(fee)} amountClassName="text-foreground-muted" />
+          <ReceiptRow label="Tjenestegebyr" amount={formatKroner(fee)} />
         </>
       )}
       <div
@@ -1578,16 +1570,17 @@ function MetaLine({ text }: { text: string }) {
 function CheckoutSkeleton() {
   return (
     <div className="min-h-dvh bg-background">
-      <StorefrontHeader />
-      <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="mx-auto max-w-[520px] space-y-6">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-8 w-2/3" />
-          <Skeleton className="h-10 w-full rounded-lg" />
-          <Skeleton className="h-9 w-full" />
-          <Skeleton className="h-9 w-full" />
-          <Skeleton className="h-9 w-full" />
-          <Skeleton className="h-44 w-full rounded-2xl" />
+      <div className="mx-auto w-full max-w-[568px] px-4 sm:px-6 pt-8 pb-16">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="mt-3 h-8 w-2/3" />
+        <div className="mt-5 rounded-2xl border border-border-card bg-surface p-1.5">
+          <Skeleton className="h-11 w-full rounded-lg" />
+          <div className="px-3 pb-3 pt-4 space-y-2.5">
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-44 w-full rounded-2xl" />
+          </div>
         </div>
       </div>
     </div>
