@@ -287,14 +287,11 @@ const SchedulePage = () => {
         {loading ? (
           <DelayedFallback>
             <div role="status" aria-label="Laster…" className="space-y-8">
-              {/* Mirrors ScheduleDay's anatomy: day heading (two lines) above
+              {/* Mirrors ScheduleDay's anatomy: one-line day heading above
                   the day's cards (title + one meta line), every viewport. */}
               {[1, 2].map((i) => (
                 <div key={i}>
-                  <div className="mb-3 space-y-1.5">
-                    <Skeleton className="h-5 w-16" />
-                    <Skeleton className="h-3 w-14" />
-                  </div>
+                  <Skeleton className="mb-3 h-5 w-32" />
                   <div className="space-y-3">
                     {[1, 2].map((j) => (
                       <div key={j} className="rounded-xl bg-panel px-5 py-4">
@@ -343,11 +340,11 @@ const SchedulePage = () => {
 };
 
 /**
- * One day group: two-line day heading (day name over the muted date) ABOVE
- * the day's cards — every viewport, the Time2book schedule grammar. Day name
- * at text-base — the group heading must not rank below the card titles it
- * governs. Exported so the /dev/schedule-preview sign-off surface renders
- * the real component.
+ * One day group: a single-line day heading — day name with the muted date
+ * beside it — ABOVE the day's cards, every viewport (the Time2book schedule
+ * grammar). Day name at text-base — the group heading must not rank below
+ * the card titles it governs. Exported so the /dev/schedule-preview
+ * sign-off surface renders the real component.
  */
 export function ScheduleDay({
   primary,
@@ -360,10 +357,10 @@ export function ScheduleDay({
 }) {
   return (
     <section>
-      <div className="mb-3">
-        <p className="text-base font-medium leading-tight text-foreground">{primary}</p>
-        <p className="mt-1 text-sm leading-tight text-foreground-muted">{secondary}</p>
-      </div>
+      <p className="mb-3 text-base leading-tight">
+        <span className="font-medium text-foreground">{primary}</span>
+        <span className="text-sm text-foreground-muted"> · {secondary}</span>
+      </p>
       <div className="space-y-3">{children}</div>
     </section>
   );
