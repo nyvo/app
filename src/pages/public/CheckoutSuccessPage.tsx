@@ -1,26 +1,21 @@
 import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Check, X, Clock, Mail, CalendarPlus, ArrowUpRight } from '@/lib/icons';
+import { Check, X, Clock, Mail, ArrowUpRight } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { PageState } from '@/components/page-state/page-state';
 import { supabase } from '@/lib/supabase';
 import { claimMySignups } from '@/services/signups';
 import { useAuth } from '@/contexts/AuthContext';
-import { AUTH_ROUTES } from '@/lib/auth-routes';
-import { formatKroner, cn } from '@/lib/utils';
+import { formatKroner } from '@/lib/utils';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { toLocalDate } from '@/utils/dateUtils';
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import { COMPANY } from '@/lib/company';
 import { readFreeReceipt, type FreeReceipt } from '@/lib/free-receipt';
 import { PublicCard } from '@/components/public/PublicCard';
-import { downloadIcs, resolveEventEnd, type IcsEvent } from '@/utils/ics';
 import { directionsUrl } from '@/components/public/studio/studioFacts';
 import { WEEKDAYS_LONG as WEEKDAYS, MONTHS_LONG as MONTHS } from '@/lib/calendar-nb';
-
-const SUPPORT_EMAIL = COMPANY.email;
 
 // Full Norwegian date, e.g. "26. april 2026". Used in the receipt footer.
 function formatBookingDate(d: Date): string {
@@ -460,14 +455,7 @@ const CheckoutSuccessPage = () => {
             Sjekk e-posten din
           </h1>
           <p className="mb-8 text-base text-foreground-muted">
-            Vi fant ingen bekreftelse her – sjekk e-posten din for kvittering, eller kontakt oss på{' '}
-            <a
-              href={`mailto:${SUPPORT_EMAIL}`}
-              className="text-primary underline underline-offset-2 hover:decoration-2"
-            >
-              {SUPPORT_EMAIL}
-            </a>
-            .
+            Vi fant ingen bekreftelse her – sjekk e-posten din for kvittering.
           </p>
           <Button asChild variant="default">
             <Link to={fallbackStudioUrl}>Tilbake</Link>
@@ -493,47 +481,6 @@ const CheckoutSuccessPage = () => {
             const bookedAt = displaySignup?.createdAt ? new Date(displaySignup.createdAt) : new Date();
             const whenLine = [dateLong, time ? `kl. ${time}` : null].filter(Boolean).join(' ');
 
-            // Paid-path startDate is the course's first session, not the
-            // buyer's own next one — a drop-in bought mid-series would offer
-            // an ICS event for a class that's already over. The free path
-            // stashes next_session as its startDate (see free-receipt.ts), so
-            // it never needs this guard. Date-only, local time: a same-day
-            // class that already started should still get the calendar link.
-            const isPaidPastDate =
-              Boolean(signup) && displaySignup?.course.startDate
-                ? (() => {
-                    const d = toLocalDate(displaySignup.course.startDate!);
-                    d.setHours(0, 0, 0, 0);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    return d.getTime() < today.getTime();
-                  })()
-                : false;
-
-            // "Legg til i kalenderen" needs both a date AND a time to build a
-            // meaningful event — a date-only VEVENT would default to midnight,
-            // which is worse than not offering the download. The end comes from
-            // resolveEventEnd: schedule range → course duration → 60-min default.
-            const icsEvent: IcsEvent | null =
-              displaySignup?.course.startDate && time && !isPaidPastDate
-                ? (() => {
-                    const start = toLocalDate(displaySignup.course.startDate!);
-                    const [h, m] = time.split(':').map(Number);
-                    start.setHours(h, m, 0, 0);
-                    if (isNaN(start.getTime())) return null;
-                    return {
-                      uid: `upnext-signup-${displaySignup.id}`,
-                      summary: displaySignup.course.title,
-                      start,
-                      end: resolveEventEnd(
-                        start,
-                        displaySignup.course.timeSchedule,
-                        displaySignup.course.durationMinutes,
-                      ),
-                      location: displaySignup.course.location ?? undefined,
-                    };
-                  })()
-                : null;
             const directionsHref = displaySignup?.course.location
               ? directionsUrl({
                   label: displaySignup.course.location,
@@ -582,44 +529,26 @@ const CheckoutSuccessPage = () => {
                           </>
                         }
                       >
-                        {/* Receipt utilities — add the class to a calendar app and/or
-                            get directions. Shown whenever the underlying data is
-                            known, on both the paid and free receipt. */}
-                        {(icsEvent || directionsHref) && (
-                          <>
-                            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                              {icsEvent && (
-                                <Button
-                                  type="button"
-                                  variant="secondary"
-                                  onClick={() => downloadIcs(displaySignup.course.title, icsEvent)}
-                                >
-                                  <CalendarPlus className="size-4" strokeWidth={1.75} />
-                                  Legg til i kalenderen
-                                </Button>
-                              )}
-                              {directionsHref && (
+                        {/* Receipt rows — one label/value rule on every line.
+                            Sted doubles as the directions link when we can
+                            build one (azure = inline links). */}
+                        <div className="space-y-2.5 text-sm">
+                          {displaySignup.course.location && (
+                            <div className="flex items-start justify-between gap-4">
+                              <span className="text-foreground-muted">Sted</span>
+                              {directionsHref ? (
                                 <a
                                   href={directionsHref}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="focus-ring inline-flex items-center gap-1 rounded text-sm font-medium text-primary underline-offset-4 hover:underline"
+                                  className="focus-ring inline-flex items-center gap-1 rounded text-right font-medium text-primary underline-offset-4 hover:underline"
                                 >
-                                  Få veibeskrivelse
-                                  <ArrowUpRight className="size-3.5" strokeWidth={1.75} />
+                                  {displaySignup.course.location}
+                                  <ArrowUpRight className="size-3.5 shrink-0" strokeWidth={1.75} />
                                 </a>
+                              ) : (
+                                <span className="text-right font-medium text-foreground">{displaySignup.course.location}</span>
                               )}
-                            </div>
-                            <div className="mt-4 border-t border-border-subtle" aria-hidden="true" />
-                          </>
-                        )}
-
-                        {/* Receipt rows — one label/value rule on every line. */}
-                        <div className={cn('space-y-2.5 text-sm', (icsEvent || directionsHref) && 'mt-4')}>
-                          {displaySignup.course.location && (
-                            <div className="flex items-start justify-between gap-4">
-                              <span className="text-foreground-muted">Sted</span>
-                              <span className="text-right font-medium text-foreground">{displaySignup.course.location}</span>
                             </div>
                           )}
                           <div className="flex items-center justify-between gap-4">
@@ -638,31 +567,8 @@ const CheckoutSuccessPage = () => {
                           </div>
                         </div>
                       </PublicCard>
-                      {/* Account offer — logged-in users go straight to the
-                          (auto-claimed) overview. Paid-signup only: claimMySignups
-                          (below) only ever claims the polled Stripe signup, so a free
-                          signup isn't on /overview yet and this would 404-ish otherwise. */}
-                      {user && signup && (
-                        <div className="mt-5">
-                          <Button asChild variant="default" className="w-full">
-                            <Link to={AUTH_ROUTES.dashboard}>Se påmeldingene dine</Link>
-                          </Button>
-                        </div>
-                      )}
                     </>
                   )}
-
-                  {/* Support — use platform support so seller emails stay private. */}
-                  <p className="mt-6 text-sm text-foreground-muted">
-                    Trenger du hjelp? Send en e-post til{' '}
-                    <a
-                      href={`mailto:${SUPPORT_EMAIL}`}
-                      className="text-primary underline underline-offset-2 hover:decoration-2"
-                    >
-                      {SUPPORT_EMAIL}
-                    </a>
-                    .
-                  </p>
               </>
             );
           })()}
