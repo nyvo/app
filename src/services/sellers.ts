@@ -212,6 +212,7 @@ export async function updateSeller(
       subscription_provider: null,
       subscription_customer_id: operational?.subscription_customer_id ?? null,
       subscription_external_id: null,
+      subscription_pending_reprice: false,
       uses_integrated_payments: operational?.uses_integrated_payments ?? false,
       updated_at: operational?.updated_at ?? row.created_at,
     },

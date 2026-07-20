@@ -13,9 +13,11 @@ import type { SellerAffiliation } from '@/types/database';
 /** A guest affiliated with a host, for the host's instructor list. */
 export interface HostAffiliate {
   guest_seller_id: string;
+  created_at: string;
   guest: {
     id: string;
     name: string;
+    slug: string;
     logo_url: string | null;
   };
 }
@@ -23,11 +25,12 @@ export interface HostAffiliate {
 /** The host a guest is affiliated with, for the guest's studio view. */
 export interface GuestHost {
   host_seller_id: string;
+  created_at: string;
   host: {
     id: string;
     slug: string;
     name: string;
-    cover_image_url: string | null;
+    logo_url: string | null;
   };
 }
 
@@ -40,7 +43,8 @@ export async function fetchHostAffiliates(
     .from('seller_affiliations')
     .select(`
       guest_seller_id,
-      guest:sellers!seller_affiliations_guest_fkey(id, name, logo_url)
+      created_at,
+      guest:sellers!seller_affiliations_guest_fkey(id, name, slug, logo_url)
     `)
     .eq('host_seller_id', hostSellerId)
     .order('created_at', { ascending: false });
@@ -57,7 +61,8 @@ export async function fetchGuestHost(
     .from('seller_affiliations')
     .select(`
       host_seller_id,
-      host:sellers!seller_affiliations_host_fkey(id, slug, name, cover_image_url)
+      created_at,
+      host:sellers!seller_affiliations_host_fkey(id, slug, name, logo_url)
     `)
     .eq('guest_seller_id', guestSellerId)
     .limit(1)

@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       course_sessions: {
@@ -244,17 +219,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "courses_seller_id_fkey"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "sellers"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "courses_instructor_id_fkey"
             columns: ["instructor_id"]
             isOneToOne: false
             referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courses_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
         ]
@@ -652,6 +627,60 @@ export type Database = {
           },
         ]
       }
+      seller_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_seller_id: string | null
+          created_at: string
+          created_by: string | null
+          email: string
+          expires_at: string
+          host_seller_id: string
+          id: string
+          status: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_seller_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          email: string
+          expires_at?: string
+          host_seller_id: string
+          id?: string
+          status?: string
+          token: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_seller_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          expires_at?: string
+          host_seller_id?: string
+          id?: string
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_invitations_accepted_seller_id_fkey"
+            columns: ["accepted_seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_invitations_host_seller_id_fkey"
+            columns: ["host_seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seller_invite_links: {
         Row: {
           code: string
@@ -764,18 +793,19 @@ export type Database = {
           name: string
           operating_model: string
           organization_number: string | null
+          senior_discount_percent: number | null
           slug: string
           stripe_account_id: string | null
           stripe_account_status: string | null
           stripe_onboarding_complete: boolean
           stripe_payouts_enabled: boolean
           stripe_requirements_due: boolean
-          senior_discount_percent: number | null
           student_discount_percent: number | null
           subscription_cancel_at_period_end: boolean
           subscription_current_period_end: string | null
           subscription_customer_id: string | null
           subscription_external_id: string | null
+          subscription_pending_reprice: boolean
           subscription_plan: string
           subscription_provider: string | null
           subscription_status: string
@@ -793,18 +823,19 @@ export type Database = {
           name: string
           operating_model?: string
           organization_number?: string | null
+          senior_discount_percent?: number | null
           slug: string
           stripe_account_id?: string | null
           stripe_account_status?: string | null
           stripe_onboarding_complete?: boolean
           stripe_payouts_enabled?: boolean
           stripe_requirements_due?: boolean
-          senior_discount_percent?: number | null
           student_discount_percent?: number | null
           subscription_cancel_at_period_end?: boolean
           subscription_current_period_end?: string | null
           subscription_customer_id?: string | null
           subscription_external_id?: string | null
+          subscription_pending_reprice?: boolean
           subscription_plan?: string
           subscription_provider?: string | null
           subscription_status?: string
@@ -822,18 +853,19 @@ export type Database = {
           name?: string
           operating_model?: string
           organization_number?: string | null
+          senior_discount_percent?: number | null
           slug?: string
           stripe_account_id?: string | null
           stripe_account_status?: string | null
           stripe_onboarding_complete?: boolean
           stripe_payouts_enabled?: boolean
           stripe_requirements_due?: boolean
-          senior_discount_percent?: number | null
           student_discount_percent?: number | null
           subscription_cancel_at_period_end?: boolean
           subscription_current_period_end?: string | null
           subscription_customer_id?: string | null
           subscription_external_id?: string | null
+          subscription_pending_reprice?: boolean
           subscription_plan?: string
           subscription_provider?: string | null
           subscription_status?: string
@@ -860,11 +892,11 @@ export type Database = {
           payment_product: string | null
           payment_status: Database["public"]["Enums"]["payment_status"] | null
           platform_fee_nok: number
-          service_fee_nok: number
           refund_amount: number | null
           refunded_at: string | null
           seller_id: string
           seller_notified_at: string | null
+          service_fee_nok: number
           status: Database["public"]["Enums"]["signup_status"]
           stripe_payment_intent_id: string | null
           ticket_audience_snapshot: Database["public"]["Enums"]["ticket_audience_t"]
@@ -890,11 +922,11 @@ export type Database = {
           payment_product?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           platform_fee_nok?: number
-          service_fee_nok?: number
           refund_amount?: number | null
           refunded_at?: string | null
           seller_id: string
           seller_notified_at?: string | null
+          service_fee_nok?: number
           status?: Database["public"]["Enums"]["signup_status"]
           stripe_payment_intent_id?: string | null
           ticket_audience_snapshot: Database["public"]["Enums"]["ticket_audience_t"]
@@ -920,11 +952,11 @@ export type Database = {
           payment_product?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           platform_fee_nok?: number
-          service_fee_nok?: number
           refund_amount?: number | null
           refunded_at?: string | null
           seller_id?: string
           seller_notified_at?: string | null
+          service_fee_nok?: number
           status?: Database["public"]["Enums"]["signup_status"]
           stripe_payment_intent_id?: string | null
           ticket_audience_snapshot?: Database["public"]["Enums"]["ticket_audience_t"]
@@ -1030,6 +1062,13 @@ export type Database = {
         Args: { p_seller_id: string }
         Returns: boolean
       }
+      accept_seller_invitation: {
+        Args: { p_force_leave?: boolean; p_token: string }
+        Returns: {
+          existing_host_seller_id: string
+          status: string
+        }[]
+      }
       available_ticket_types: {
         Args: { p_course_id: string }
         Returns: {
@@ -1061,6 +1100,7 @@ export type Database = {
         Returns: boolean
       }
       claim_my_signups: { Args: never; Returns: number }
+      cleanup_old_notifications: { Args: never; Returns: undefined }
       cleanup_old_webhook_events: { Args: never; Returns: number }
       cleanup_rate_limit_buckets: { Args: never; Returns: undefined }
       close_and_anonymize_seller: {
@@ -1096,6 +1136,27 @@ export type Database = {
         Args: { p_course_session_id: string }
         Returns: number
       }
+      create_seller_invitation: {
+        Args: { p_email: string; p_host_seller_id: string }
+        Returns: {
+          accepted_at: string | null
+          accepted_seller_id: string | null
+          created_at: string
+          created_by: string | null
+          email: string
+          expires_at: string
+          host_seller_id: string
+          id: string
+          status: string
+          token: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "seller_invitations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_seller_invite_link: {
         Args: { p_host_seller_id: string }
         Returns: {
@@ -1127,14 +1188,15 @@ export type Database = {
           p_payment_product?: string
           p_payment_status?: string
           p_platform_fee_nok?: number
-          p_service_fee_nok?: number
           p_seller_id: string
+          p_service_fee_nok?: number
           p_stripe_payment_intent_id?: string
           p_ticket_label_override?: string
           p_ticket_type_id: string
         }
         Returns: Json
       }
+      decline_seller_invitation: { Args: { p_token: string }; Returns: string }
       delete_course_cascade: {
         Args: { p_course_id: string }
         Returns: undefined
@@ -1154,6 +1216,8 @@ export type Database = {
         }[]
       }
       export_user_data: { Args: { p_user_id: string }; Returns: Json }
+      get_owner_alert_email: { Args: never; Returns: string }
+      get_owner_alert_webhook: { Args: never; Returns: string }
       get_payment_attempt_status: {
         Args: { p_attempt_id: string }
         Returns: string
@@ -1190,6 +1254,15 @@ export type Database = {
         Args: { p_seller_id: string; p_user_id: string }
         Returns: boolean
       }
+      lookup_seller_invitation: {
+        Args: { p_token: string }
+        Returns: {
+          host_seller_id: string
+          name: string
+          slug: string
+          status: string
+        }[]
+      }
       lookup_seller_invite_link: {
         Args: { p_code: string }
         Returns: {
@@ -1222,6 +1295,7 @@ export type Database = {
         }
       }
       ops_health_check: { Args: never; Returns: Json }
+      owner_alert_post: { Args: { payload: Json }; Returns: undefined }
       public_signup_counts: {
         Args: { p_course_ids: string[] }
         Returns: {
@@ -1260,6 +1334,10 @@ export type Database = {
         Args: { p_new_slug: string; p_seller_id: string }
         Returns: string
       }
+      revoke_seller_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: undefined
+      }
       save_course_schedule: {
         Args: {
           p_course: Json
@@ -1271,7 +1349,10 @@ export type Database = {
       }
       seller_income_series: {
         Args: { p_from: string; p_seller_id: string }
-        Returns: { bucket_day: string; net_nok: number }[]
+        Returns: {
+          bucket_day: string
+          net_nok: number
+        }[]
       }
       seller_platform_fee_month: {
         Args: { p_seller_id: string }
@@ -1445,9 +1526,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       course_format: ["single", "series"],

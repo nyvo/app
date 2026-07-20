@@ -41,6 +41,7 @@ const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage
 const BillingPage = lazy(() => import('./pages/teacher/BillingPage'));
 const PaymentsPage = lazy(() => import('./pages/teacher/PaymentsPage'));
 const StudioPage = lazy(() => import('./pages/teacher/StudioPage'));
+const SamarbeidPage = lazy(() => import('./pages/teacher/SamarbeidPage'));
 const PublicCoursesPage = lazy(() => import('./pages/public/PublicCoursesPage'));
 const EmbedCalendarPage = lazy(() => import('./pages/public/EmbedCalendarPage'));
 const EmbedPreviewPage = lazy(() => import('./pages/public/EmbedPreviewPage'));
@@ -84,6 +85,7 @@ const SessionDaysPreview = lazy(() => import('./pages/dev/SessionDaysPreview'));
 const PayoutPreview = lazy(() => import('./pages/dev/PayoutPreview'));
 const BillingPreview = lazy(() => import('./pages/dev/BillingPreview'));
 const StudioPreview = lazy(() => import('./pages/dev/StudioPreview'));
+const SamarbeidPreview = lazy(() => import('./pages/dev/SamarbeidPreview'));
 const EmbedCodePreview = lazy(() => import('./pages/dev/EmbedCodePreview'));
 // Buyer / public
 const BuyerDashboardPreview = lazy(() => import('./pages/dev/BuyerDashboardPreview'));
@@ -190,7 +192,7 @@ const router = createBrowserRouter(
         <Route path="/personvern" element={<PrivacyPage />} />
         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
-        <Route path="/join/:code" element={<JoinPage />} />
+        <Route path="/join/:token" element={<JoinPage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
 
         {/* Authenticated dashboard — slug-less namespace, English URLs,
@@ -213,9 +215,11 @@ const router = createBrowserRouter(
             <Route path="courses/new" element={<CoursesPage />} />
             <Route path="courses/:id" element={<CoursePage />} />
             <Route path="studio" element={<StudioPage />} />
-            {/* Samarbeid moved into the Studio page (2026-06). Old links and
-                stale notification action_urls keep resolving. */}
-            <Route path="collaboration" element={<Navigate to="/studio#samarbeid" replace />} />
+            <Route path="samarbeid" element={<SamarbeidPage />} />
+            {/* Samarbeid history: /collaboration (pre-2026-06) and the Studio
+                tab (/studio#samarbeid, until 2026-07) — old links and stale
+                notification action_urls keep resolving. */}
+            <Route path="collaboration" element={<Navigate to="/samarbeid" replace />} />
             <Route path="settings/billing" element={<BillingPage />} />
             <Route path="settings/payouts" element={<PaymentsPage />} />
           </Route>
@@ -252,6 +256,7 @@ const router = createBrowserRouter(
             <Route path="/dev/payout-preview" element={<PayoutPreview />} />
             <Route path="/dev/billing-preview" element={<BillingPreview />} />
             <Route path="/dev/studio-preview" element={<StudioPreview />} />
+            <Route path="/dev/samarbeid-preview" element={<SamarbeidPreview />} />
             <Route path="/dev/embed-code-preview" element={<EmbedCodePreview />} />
             {/* Buyer / public */}
             <Route path="/dev/buyer-dashboard-preview" element={<BuyerDashboardPreview />} />

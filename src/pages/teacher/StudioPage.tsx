@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ExternalLink } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
@@ -17,13 +17,12 @@ import { PageShell } from '@/components/teacher/PageShell';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import { Switch } from '@/components/ui/switch';
 import { SettingsRows, SettingsRow } from '@/components/teacher/SettingsRows';
-import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
 import { EmbedCodeSection } from '@/components/teacher/studio/EmbedCodeSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { friendlyError } from '@/lib/error-messages';
 import { extractEdgeError } from '@/lib/edge-errors';
+import { routes } from '@/lib/routes';
 import { supabase } from '@/lib/supabase';
-import { fetchGuestHost, type GuestHost } from '@/services/affiliations';
 import {
   fetchStudioAddress,
   renameSellerSlug,
@@ -33,8 +32,6 @@ import {
 } from '@/services/sellers';
 import { deleteSellerLogo, uploadSellerLogo } from '@/services/storage';
 import type { Seller } from '@/types/database';
-
-type HostStudio = GuestHost['host'];
 
 const StudioPage = () => {
   const { currentSeller, refreshSellers, currentSellerHydrateFailed } = useAuth();
@@ -75,28 +72,16 @@ function StudioPublicSettings({
   onSaved: () => Promise<void> | void;
   hydrateFailed: boolean;
 }) {
-  const isStudio = seller.operating_model === 'studio';
-
   const { hash } = useLocation();
+  const navigate = useNavigate();
 
-  // The host storefront this seller's courses show on, if any. Loaded once here
-  // and passed down to the Samarbeid panel. `undefined` while the fetch is in
-  // flight; `'error'` when it failed — distinct from `null` (no host) so the
-  // panel surfaces a retry instead of an empty state.
-  const [host, setHost] = useState<HostStudio | null | undefined | 'error'>(undefined);
-  const loadHost = useCallback(async () => {
-    const { data, error } = await fetchGuestHost(seller.id);
-    setHost(error ? 'error' : (data?.host ?? null));
-  }, [seller.id]);
-  useEffect(() => { void loadHost(); }, [loadHost]);
-
-  const [tab, setTab] = useState<'profil' | 'rabatter' | 'samarbeid'>('profil');
-  // Joining a studio lands at /studio#samarbeid — open that tab. The tab is
-  // always present for both account types (an unaffiliated solo seller gets an
-  // empty state), so navigation chrome never pops in or vanishes under the user.
+  // Samarbeid moved to its own page — forward old deep links (and the join
+  // flow's historical landing target) to /samarbeid.
   useEffect(() => {
-    if (hash === '#samarbeid') setTab('samarbeid');
-  }, [hash]);
+    if (hash === '#samarbeid') navigate(routes.samarbeid, { replace: true });
+  }, [hash, navigate]);
+
+  const [tab, setTab] = useState<'profil' | 'rabatter'>('profil');
 
   const [savingPhoto, setSavingPhoto] = useState(false);
   const [logoUrl, setLogoUrl] = useState(seller.logo_url);
@@ -404,14 +389,6 @@ function StudioPublicSettings({
         >
           Rabatter
         </PageTab>
-        <PageTab
-          active={tab === 'samarbeid'}
-          onClick={() => setTab('samarbeid')}
-          id="studio-tab-samarbeid"
-          ariaControls="studio-panel-samarbeid"
-        >
-          Samarbeid
-        </PageTab>
       </PageTabs>
 
       {tab === 'profil' && (
@@ -558,41 +535,6 @@ function StudioPublicSettings({
               disabled={isSaving}
             />
           </div>
-        </div>
-      )}
-
-      {tab === 'samarbeid' && (
-        <div
-          role="tabpanel"
-          id="studio-panel-samarbeid"
-          aria-labelledby="studio-tab-samarbeid"
-        >
-          {hydrateFailed ? (
-            // operating_model is a stale safe-default — rendering a branch off
-            // it could show a studio the solo panel. Retry instead.
-            <ErrorState
-              title="Kunne ikke hente kontoinformasjon"
-              message="Prøv igjen om litt."
-              onRetry={() => void onSaved()}
-            />
-          ) : !isStudio && host === 'error' ? (
-            // Solo seller: the whole panel is the guest-host card, so a failed
-            // fetch replaces it with a retry.
-            <ErrorState
-              title="Kunne ikke hente info"
-              message=""
-              onRetry={() => void loadHost()}
-            />
-          ) : (
-            // Studio: the invite link + instructor list don't depend on the
-            // guest-host fetch, so a failure only drops the optional "Vises hos"
-            // sub-card (host coerced to null) — the rest stays usable.
-            <AffiliationsSection
-              seller={seller}
-              host={host === 'error' ? null : host}
-              onHostChange={setHost}
-            />
-          )}
         </div>
       )}
 

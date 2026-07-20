@@ -8,41 +8,45 @@ import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { UpNextLogo } from '@/components/ui/upnext-logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { lookupInviteLink, redeemInviteLink } from '@/services/invite-links';
+import { acceptInvitation, lookupInvitation } from '@/services/invitations';
 import { friendlyError } from '@/lib/error-messages';
 import { GENERIC_ERROR } from '@/lib/error-strings';
 import { routes } from '@/lib/routes';
-import type { LookupInviteLinkResult } from '@/types/database';
+import type { LookupInvitationResult } from '@/services/invitations';
 
 // ---------------------------------------------------------------------------
-// /join/:code — public landing for a shareable invite link.
+// /join/:token — accept page for an emailed instructor invitation.
 //
-// Five states:
-//   1. Not in a team       → primary "Bli med"
-//   2. In another team     → "Forlat og bli med" with the leaving team named
-//   3. Logged out          → "Logg inn" + "Opprett konto" (return after auth)
-//   4. Expired / not_found → message, single "Tilbake" ghost
-//   5. Already a member    → message + link to /studio#samarbeid
+// States:
+//   1. Valid, signed in     → "{Studio} har invitert deg" + Godta
+//   2. In another studio    → "Forlat og bli med" with confirm
+//   3. Logged out           → Logg inn (returns here after auth)
+//   4. Expired / not_found  → message only
+//   5. Already used         → "Invitasjonen er allerede brukt" + Min side
+//   6. Wrong account        → no-access / wrong-email / studio-account
 //
-// The join page DOES the "leave current team and switch" confirm — there's no
-// async "pending invite" state in the dashboard, by design.
+// The invitation is bound to the invitee's email and only solo accounts can
+// accept — both enforced in accept_seller_invitation; this page just renders
+// the returned statuses.
 // ---------------------------------------------------------------------------
 
 type LookupState =
   | { status: 'loading' }
-  | { status: 'valid'; team: LookupInviteLinkResult }
+  | { status: 'valid'; team: LookupInvitationResult }
+  | { status: 'accepted'; team: LookupInvitationResult }
   | { status: 'expired' }
   | { status: 'not_found' }
   | { status: 'error' };
 
 type JoinPhase =
   | { kind: 'idle' }
-  | { kind: 'checking_membership' }
-  | { kind: 'redeeming' }
+  | { kind: 'accepting' }
   | { kind: 'need_force_leave'; existingTeamName: string | null }
   | { kind: 'already_member' }
   | { kind: 'own_team' }
-  | { kind: 'no_access' };
+  | { kind: 'no_access' }
+  | { kind: 'wrong_email' }
+  | { kind: 'studio_account' };
 
 function Shell({ children }: { children: React.ReactNode }) {
   // The invitation is from the studio, so the page leads with the studio's
@@ -70,97 +74,45 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 export default function JoinPage() {
-  const { code } = useParams<{ code: string }>();
+  const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, isInitialized, currentSeller } = useAuth();
+  const { user, profile, isInitialized } = useAuth();
 
   const [lookup, setLookup] = useState<LookupState>({ status: 'loading' });
   const [phase, setPhase] = useState<JoinPhase>({ kind: 'idle' });
 
-  // Lookup the link on mount (public-safe RPC).
+  // Lookup the invitation on mount (public-safe RPC).
   useEffect(() => {
-    if (!code) {
+    if (!token) {
       setLookup({ status: 'not_found' });
       return;
     }
     let cancelled = false;
     void (async () => {
-      const { data, error } = await lookupInviteLink(code);
+      const { data, error } = await lookupInvitation(token);
       if (cancelled) return;
       // A network/query failure is retryable — keep it distinct from a genuine
-      // not_found so the buyer doesn't see the terminal "Lenken finnes ikke".
+      // not_found so the invitee doesn't see the terminal "Lenken finnes ikke".
       if (error) {
         setLookup({ status: 'error' });
       } else if (!data || data.status === 'not_found') {
         setLookup({ status: 'not_found' });
       } else if (data.status === 'expired') {
         setLookup({ status: 'expired' });
+      } else if (data.status === 'accepted') {
+        setLookup({ status: 'accepted', team: data });
       } else {
         setLookup({ status: 'valid', team: data });
       }
     })();
     return () => { cancelled = true; };
-  }, [code]);
+  }, [token]);
 
-  // Logged-in preflight: the public lookup only validates the invite code.
-  // Check the current seller's membership before showing the join CTA so an
-  // existing member doesn't see "Bli med" as the default state.
-  useEffect(() => {
-    if (lookup.status !== 'valid' || !user || profile?.role !== 'seller' || !currentSeller) {
-      return;
-    }
-
-    let cancelled = false;
-    const hostSellerId = lookup.team.host_seller_id;
-
-    setPhase({ kind: 'checking_membership' });
-
-    void (async () => {
-      if (currentSeller?.id === hostSellerId) {
-        if (!cancelled) setPhase({ kind: 'own_team' });
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('seller_affiliations')
-        .select('host_seller_id, host:sellers!seller_affiliations_host_fkey(name)')
-        .eq('guest_seller_id', currentSeller.id)
-        .limit(1)
-        .maybeSingle();
-
-      if (cancelled) return;
-
-      if (error || !data) {
-        setPhase({ kind: 'idle' });
-        return;
-      }
-
-      const activeAffiliation = data as {
-        host_seller_id: string;
-        host: { name: string } | null;
-      };
-
-      if (activeAffiliation.host_seller_id === hostSellerId) {
-        setPhase({ kind: 'already_member' });
-        return;
-      }
-
-      setPhase({
-        kind: 'need_force_leave',
-        existingTeamName: activeAffiliation.host?.name ?? null,
-      });
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [lookup, user, profile?.role, currentSeller]);
-
-  const handleJoin = async (forceLeave = false) => {
-    if (!code) return;
-    setPhase({ kind: 'redeeming' });
-    const { data, error } = await redeemInviteLink(code, forceLeave);
+  const handleAccept = async (forceLeave = false) => {
+    if (!token) return;
+    setPhase({ kind: 'accepting' });
+    const { data, error } = await acceptInvitation(token, forceLeave);
     if (error || !data) {
       toast.error(friendlyError(error));
       setPhase({ kind: 'idle' });
@@ -169,9 +121,8 @@ export default function JoinPage() {
 
     switch (data.status) {
       case 'joined':
-        // Land on the Samarbeid section so the join ends with visible
-        // confirmation ("Kursene dine vises på …") instead of a bare page.
-        navigate(routes.studioSamarbeid, { replace: true });
+        // Land on /samarbeid so the accept ends with visible confirmation.
+        navigate(routes.samarbeid, { replace: true });
         return;
       case 'already_affiliated':
         setPhase({ kind: 'already_member' });
@@ -180,10 +131,15 @@ export default function JoinPage() {
         setPhase({ kind: 'own_team' });
         return;
       case 'no_seller':
-        // Authoritative fallback: account isn't an instructor, so it can't
-        // affiliate with a studio. The render below pre-empts this for known
-        // buyers, but a role-less / lagging-profile user lands here.
+        // Authoritative fallback: the account isn't an instructor. The render
+        // below pre-empts this for known buyers; a role-less user lands here.
         setPhase({ kind: 'no_access' });
+        return;
+      case 'wrong_email':
+        setPhase({ kind: 'wrong_email' });
+        return;
+      case 'studio_account':
+        setPhase({ kind: 'studio_account' });
         return;
       case 'has_other_host': {
         // Fetch the leaving studio's name for the confirm copy.
@@ -239,7 +195,7 @@ export default function JoinPage() {
           Lenken finnes ikke
         </h1>
         <p className="text-base text-foreground-muted">
-          Sjekk at du har riktig lenke, eller be studioet om en ny.
+          Sjekk at du har riktig lenke, eller be studioet om en ny invitasjon.
         </p>
       </Shell>
     );
@@ -262,11 +218,24 @@ export default function JoinPage() {
     return (
       <Shell>
         <h1 className="text-3xl font-medium text-foreground mb-3">
-          Lenken er utløpt
+          Invitasjonen er utløpt
         </h1>
         <p className="text-base text-foreground-muted">
-          Be studioet om en ny invitasjonslenke for å bli med.
+          Be studioet om en ny invitasjon for å bli med.
         </p>
+      </Shell>
+    );
+  }
+
+  if (lookup.status === 'accepted') {
+    return (
+      <Shell>
+        <h1 className="text-3xl font-medium text-foreground mb-8">
+          Invitasjonen er allerede brukt
+        </h1>
+        <Button size="cta" className="w-full" onClick={() => navigate(routes.samarbeid)}>
+          Min side
+        </Button>
       </Shell>
     );
   }
@@ -278,7 +247,7 @@ export default function JoinPage() {
     return (
       <Shell>
         <h1 className="text-3xl font-medium text-foreground mb-3">
-          Bli med i {team.name}
+          {team.name} har invitert deg
         </h1>
         <p className="text-base text-foreground-muted mb-8">
           Logg inn eller opprett en konto for å fortsette. Du kommer tilbake hit etterpå.
@@ -286,7 +255,7 @@ export default function JoinPage() {
         <Button
           size="cta"
           className="w-full"
-          // Studio invites are for instructors → seller intent skips the role
+          // Invitations are for instructors → seller intent skips the role
           // chooser; `next` brings the user back here after onboarding.
           onClick={() =>
             navigate(`/auth?intent=seller&next=${encodeURIComponent(location.pathname)}`)
@@ -298,11 +267,8 @@ export default function JoinPage() {
     );
   }
 
-  // No access — studio invites are for instructors. A participant (buyer)
-  // account can't affiliate with a studio, so explain why the link doesn't
-  // apply instead of offering a join it can't complete. We know the account is
-  // a non-instructor when its profile is loaded and the role isn't 'seller';
-  // the 'no_access' phase is the server-authoritative fallback (no_seller).
+  // No access — a participant (buyer) account can't affiliate with a studio.
+  // The 'no_access' phase is the server-authoritative fallback (no_seller).
   if (phase.kind === 'no_access' || (profile !== null && profile.role !== 'seller')) {
     return (
       <Shell>
@@ -316,17 +282,34 @@ export default function JoinPage() {
     );
   }
 
-  if (phase.kind === 'checking_membership') {
+  if (phase.kind === 'wrong_email') {
     return (
       <Shell>
-        <div role="status" aria-live="polite" className="space-y-6">
-          <span className="sr-only">Sjekker medlemskap…</span>
-          <div className="space-y-3">
-            <Skeleton className="mx-auto h-8 w-56" />
-            <Skeleton className="mx-auto h-4 w-72 max-w-full" />
-          </div>
-          <Skeleton className="h-10 w-full rounded-full" />
-        </div>
+        <h1 className="text-3xl font-medium text-foreground mb-3">
+          Invitasjonen gjelder en annen e-postadresse
+        </h1>
+        <p className="text-base text-foreground-muted mb-8">
+          Logg inn med kontoen som mottok e-posten, eller be studioet invitere deg på nytt.
+        </p>
+        <Button size="cta" className="w-full" onClick={() => navigate('/overview')}>
+          Gå til min side
+        </Button>
+      </Shell>
+    );
+  }
+
+  if (phase.kind === 'studio_account') {
+    return (
+      <Shell>
+        <h1 className="text-3xl font-medium text-foreground mb-3">
+          Invitasjonen er for instruktører
+        </h1>
+        <p className="text-base text-foreground-muted mb-8">
+          Kontoen din er et studio og kan ikke vises på et annet studio.
+        </p>
+        <Button size="cta" className="w-full" onClick={() => navigate(routes.samarbeid)}>
+          Til Samarbeid
+        </Button>
       </Shell>
     );
   }
@@ -340,7 +323,7 @@ export default function JoinPage() {
         <p className="text-base text-foreground-muted mb-8">
           Du er allerede medlem av {team.name}.
         </p>
-        <Button size="cta" className="w-full" onClick={() => navigate(routes.studioSamarbeid)}>
+        <Button size="cta" className="w-full" onClick={() => navigate(routes.samarbeid)}>
           Min side
         </Button>
       </Shell>
@@ -364,13 +347,13 @@ export default function JoinPage() {
     );
   }
 
-  // State 2 — in another team, need to confirm leave
+  // State 2 — in another studio, need to confirm leave
   if (phase.kind === 'need_force_leave') {
     const leavingName = phase.existingTeamName ?? 'det forrige studioet';
     return (
       <Shell>
         <h1 className="text-3xl font-medium text-foreground mb-3">
-          Bli med i {team.name}
+          {team.name} har invitert deg
         </h1>
         <p className="text-base text-foreground-muted mb-6">
           Du kan være med i ett studio om gangen. Blir du med her, forlater du:
@@ -381,7 +364,7 @@ export default function JoinPage() {
         <Button
           size="cta"
           className="w-full"
-          onClick={() => void handleJoin(true)}
+          onClick={() => void handleAccept(true)}
         >
           Forlat og bli med
         </Button>
@@ -389,7 +372,7 @@ export default function JoinPage() {
           size="cta"
           variant="secondary"
           className="mt-3 w-full"
-          onClick={() => navigate(routes.studio)}
+          onClick={() => navigate(routes.samarbeid)}
         >
           Avbryt
         </Button>
@@ -397,11 +380,11 @@ export default function JoinPage() {
     );
   }
 
-  // State 1 — clean join (default for logged-in user, idle phase)
+  // State 1 — clean accept (default for logged-in instructor, idle phase)
   return (
     <Shell>
       <h1 className="text-3xl font-medium text-foreground mb-3">
-        Bli med i {team.name}
+        {team.name} har invitert deg
       </h1>
       <p className="text-base text-foreground-muted mb-8">
         Kursene dine vises på studiosiden deres.
@@ -409,11 +392,11 @@ export default function JoinPage() {
       <Button
         size="cta"
         className="w-full"
-        onClick={() => void handleJoin(false)}
-        loading={phase.kind === 'redeeming'}
-        loadingText="Blir med"
+        onClick={() => void handleAccept(false)}
+        loading={phase.kind === 'accepting'}
+        loadingText="Godtar"
       >
-        Bli med
+        Godta
       </Button>
     </Shell>
   );

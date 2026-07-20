@@ -25,6 +25,7 @@ import BookingNotification, { type BookingNotificationProps } from './templates/
 import CourseCancelled, { type CourseCancelledProps } from './templates/course-cancelled.tsx'
 import SignupCancelled, { type SignupCancelledProps } from './templates/signup-cancelled.tsx'
 import AccountActionRequired, { type AccountActionRequiredProps } from './templates/account-action-required.tsx'
+import InstructorInvite, { type InstructorInviteProps } from './templates/instructor-invite.tsx'
 
 const resendApiKey = Deno.env.get('RESEND_API_KEY') || ''
 const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || ''
@@ -43,6 +44,7 @@ type EmailTemplate =
   | 'course-cancelled'
   | 'signup-cancelled'
   | 'account-action-required'
+  | 'instructor-invite'
 
 interface SendEmailRequest {
   template: EmailTemplate
@@ -58,6 +60,7 @@ interface SendEmailRequest {
     | CourseCancelledProps
     | SignupCancelledProps
     | AccountActionRequiredProps
+    | InstructorInviteProps
   /** Optional override for the auto-generated subject line */
   subject?: string
   /** Optional reply-to address passed through to Resend. */
@@ -90,6 +93,8 @@ function defaultSubject(template: EmailTemplate, props: SendEmailRequest['props'
       return (props as AccountActionRequiredProps).reason === 'payouts_paused'
         ? 'Utbetalinger er satt på pause'
         : 'Handling kreves for å ta imot betalinger'
+    case 'instructor-invite':
+      return `${(props as InstructorInviteProps).studioName} har invitert deg`
   }
 }
 
@@ -115,6 +120,8 @@ function renderTemplate(template: EmailTemplate, props: SendEmailRequest['props'
       return SignupCancelled(props as SignupCancelledProps)
     case 'account-action-required':
       return AccountActionRequired(props as AccountActionRequiredProps)
+    case 'instructor-invite':
+      return InstructorInvite(props as InstructorInviteProps)
   }
 }
 
@@ -149,7 +156,7 @@ Deno.serve(async (req: Request) => {
     return errorResponse('Missing required fields: template, to, props', 400, req)
   }
 
-  if (!['order-confirm', 'refund-receipt', 'class-reminder', 'support-message', 'session-rescheduled', 'course-message', 'booking-notification', 'course-cancelled', 'signup-cancelled', 'account-action-required'].includes(template)) {
+  if (!['order-confirm', 'refund-receipt', 'class-reminder', 'support-message', 'session-rescheduled', 'course-message', 'booking-notification', 'course-cancelled', 'signup-cancelled', 'account-action-required', 'instructor-invite'].includes(template)) {
     return errorResponse(`Unknown template: ${template}`, 400, req)
   }
 

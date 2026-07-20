@@ -48,7 +48,8 @@ const GROUPS: PreviewGroup[] = [
     items: [
       { label: 'Utbetalinger', to: '/dev/payout-preview', blurb: 'PayoutSetupCard-tilstander + FAQ.' },
       { label: 'Abonnement', to: '/dev/billing-preview', blurb: 'BillingPlanSections — Pro/Start, forfalt, årlig, feil.' },
-      { label: 'Studio', to: '/dev/studio-preview', blurb: 'AffiliationsSection-tilstander + studio-oppsettets settings-layout.' },
+      { label: 'Studio', to: '/dev/studio-preview', blurb: 'Rabatter-kortene + studio-oppsettets settings-layout.' },
+      { label: 'Samarbeid', to: '/dev/samarbeid-preview', blurb: 'InstructorTable (eier/aktive/ventende/tomt) + gjeste-seksjonene med e-postinvitasjoner.' },
       { label: 'Embed-kode', to: '/dev/embed-code-preview', blurb: 'EmbedCodeSection — kopier-kode-seksjonen på studiosiden.' },
     ],
   },
