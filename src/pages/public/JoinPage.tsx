@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
-import { UpNextLogo } from '@/components/ui/upnext-logo';
+import { BrandFooter } from '@/components/public/BrandFooter';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { acceptInvitation, lookupInvitation } from '@/services/invitations';
@@ -59,16 +58,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </main>
-      <footer className="flex justify-center pb-8">
-        <Link
-          to="/"
-          aria-label="UpNext"
-          className="flex select-none items-center gap-2 opacity-40 transition-opacity duration-150 hover:opacity-70"
-        >
-          <UpNextLogo size="sm" />
-          <span className="text-sm font-medium text-foreground">UpNext</span>
-        </Link>
-      </footer>
+      <BrandFooter />
     </div>
   );
 }

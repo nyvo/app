@@ -12,6 +12,7 @@ import { PageState } from '@/components/page-state/page-state';
 import { DelayedFallback } from '@/components/ui/delayed-fallback';
 import { FloatingField } from '@/components/public/FloatingField';
 import { useAuth } from '@/contexts/AuthContext';
+import { BrandFooter } from '@/components/public/BrandFooter';
 import { PublicCard } from '@/components/public/PublicCard';
 import { Elements, PaymentElement, useStripe as useStripeHook, useElements } from '@stripe/react-stripe-js';
 import type { Stripe } from '@stripe/stripe-js';
@@ -720,6 +721,7 @@ const CheckoutPage = () => {
           )}
         </PublicCard>
       </div>
+      <BrandFooter />
     </div>
   );
 };
@@ -1579,7 +1581,7 @@ function MetaLine({ text }: { text: string }) {
 
 function CheckoutSkeleton() {
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="min-h-dvh bg-background flex flex-col">
       <div className="mx-auto w-full max-w-[568px] px-4 sm:px-6 pt-8 pb-16">
         <Skeleton className="h-4 w-32" />
         <Skeleton className="mt-3 h-8 w-2/3" />
@@ -1593,6 +1595,7 @@ function CheckoutSkeleton() {
           </div>
         </div>
       </div>
+      <BrandFooter />
     </div>
   );
 }

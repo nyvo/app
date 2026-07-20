@@ -26,6 +26,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { osloNowKey } from '@/utils/dateUtils';
+import { BrandFooter } from '@/components/public/BrandFooter';
 import { ChevronLeft } from '@/lib/icons';
 import { formatKroner, cn } from '@/lib/utils';
 import type { AvailableTicketType, CourseSession } from '@/types/database';
@@ -215,8 +216,8 @@ export default function PublicCourseDetailPage() {
     : !!cachedCourse && !!resolveCourseImage(cachedCourse);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <main className="w-full flex-1 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-8 pb-16">
         {loading && <CourseDetailSkeletonBody twoCol={skeletonTwoCol} />}
 
         {loadFailed && !loading && <PageState variant="server-error" as="div" />}
@@ -343,6 +344,7 @@ export default function PublicCourseDetailPage() {
           </div>
         )}
       </main>
+      <BrandFooter />
     </div>
   );
 }
@@ -853,10 +855,11 @@ function CourseDetailSkeletonBody({ twoCol = false }: { twoCol?: boolean }) {
 
 export function CourseDetailSkeleton({ twoCol = false }: { twoCol?: boolean }) {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <main className="w-full flex-1 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-8 pb-16">
         <CourseDetailSkeletonBody twoCol={twoCol} />
       </main>
+      <BrandFooter />
     </div>
   );
 }

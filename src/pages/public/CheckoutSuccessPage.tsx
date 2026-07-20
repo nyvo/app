@@ -13,6 +13,7 @@ import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { toLocalDate } from '@/utils/dateUtils';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { readFreeReceipt, type FreeReceipt } from '@/lib/free-receipt';
+import { BrandFooter } from '@/components/public/BrandFooter';
 import { PublicCard } from '@/components/public/PublicCard';
 import { directionsUrl } from '@/components/public/studio/studioFacts';
 import { WEEKDAYS_LONG as WEEKDAYS, MONTHS_LONG as MONTHS } from '@/lib/calendar-nb';
@@ -279,18 +280,21 @@ const CheckoutSuccessPage = () => {
     const isLongWait = attemptCount > 8;
 
     return (
-      <div className="min-h-dvh w-full bg-surface flex items-center justify-center">
-        <div className="text-center max-w-md px-4" role="status" aria-live="polite" aria-atomic="true">
-          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
-            <Spinner size="lg" className="text-foreground" />
+      <div className="min-h-dvh w-full bg-surface flex flex-col">
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center max-w-md px-4" role="status" aria-live="polite" aria-atomic="true">
+            <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
+              <Spinner size="lg" className="text-foreground" />
+            </div>
+            <p className="mb-3 text-3xl font-medium text-foreground">Bekrefter betaling</p>
+            <p className="text-base text-foreground-muted">
+              {isLongWait
+                ? 'Det tar litt lenger tid enn vanlig. Du får bekreftelsen på e-post om vi ikke blir ferdige her.'
+                : 'Vi bekrefter med banken. Ikke lukk denne siden.'}
+            </p>
           </div>
-          <p className="mb-3 text-3xl font-medium text-foreground">Bekrefter betaling</p>
-          <p className="text-base text-foreground-muted">
-            {isLongWait
-              ? 'Det tar litt lenger tid enn vanlig. Du får bekreftelsen på e-post om vi ikke blir ferdige her.'
-              : 'Vi bekrefter med banken. Ikke lukk denne siden.'}
-          </p>
         </div>
+        <BrandFooter />
       </div>
     );
   }
@@ -353,26 +357,29 @@ const CheckoutSuccessPage = () => {
     const failedStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-dvh w-full bg-surface flex items-center justify-center px-4">
-        <div className="flex flex-col items-center text-center max-w-md">
-          <div
-            aria-hidden="true"
-            className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted text-foreground"
-          >
-            <Clock className="size-6" strokeWidth={2.5} />
+      <div className="min-h-dvh w-full bg-surface flex flex-col px-4">
+        <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-col items-center text-center max-w-md">
+            <div
+              aria-hidden="true"
+              className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted text-foreground"
+            >
+              <Clock className="size-6" strokeWidth={2.5} />
+            </div>
+            <h1 className="mb-3 text-3xl font-medium text-foreground">
+              Vi behandler påmeldingen din
+            </h1>
+            <p className="mb-8 text-base text-foreground-muted">
+              Det tar litt lenger tid enn vanlig. Du får en bekreftelse på e-post så snart betalingen er gjennomført.
+            </p>
+            <Button asChild variant="default">
+              <Link to={failedStudioUrl}>
+                Tilbake
+              </Link>
+            </Button>
           </div>
-          <h1 className="mb-3 text-3xl font-medium text-foreground">
-            Vi behandler påmeldingen din
-          </h1>
-          <p className="mb-8 text-base text-foreground-muted">
-            Det tar litt lenger tid enn vanlig. Du får en bekreftelse på e-post så snart betalingen er gjennomført.
-          </p>
-          <Button asChild variant="default">
-            <Link to={failedStudioUrl}>
-              Tilbake
-            </Link>
-          </Button>
         </div>
+        <BrandFooter />
       </div>
     );
   }
@@ -383,24 +390,27 @@ const CheckoutSuccessPage = () => {
     const failedStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-dvh w-full bg-surface flex items-center justify-center px-4">
-        <div className="flex flex-col items-center text-center max-w-md">
-          <div
-            aria-hidden="true"
-            className="mb-4 flex size-12 items-center justify-center rounded-full bg-danger-subtle text-danger"
-          >
-            <X className="size-6" strokeWidth={2.5} />
+      <div className="min-h-dvh w-full bg-surface flex flex-col px-4">
+        <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-col items-center text-center max-w-md">
+            <div
+              aria-hidden="true"
+              className="mb-4 flex size-12 items-center justify-center rounded-full bg-danger-subtle text-danger"
+            >
+              <X className="size-6" strokeWidth={2.5} />
+            </div>
+            <h1 className="mb-3 text-3xl font-medium text-foreground">
+              Betalingen gikk ikke gjennom
+            </h1>
+            <p className="mb-8 text-base text-foreground-muted">
+              Kurset ble fullt før betalingen ble fullført. Beløpet er ikke trukket.
+            </p>
+            <Button asChild variant="default">
+              <Link to={failedStudioUrl}>Tilbake</Link>
+            </Button>
           </div>
-          <h1 className="mb-3 text-3xl font-medium text-foreground">
-            Betalingen gikk ikke gjennom
-          </h1>
-          <p className="mb-8 text-base text-foreground-muted">
-            Kurset ble fullt før betalingen ble fullført. Beløpet er ikke trukket.
-          </p>
-          <Button asChild variant="default">
-            <Link to={failedStudioUrl}>Tilbake</Link>
-          </Button>
         </div>
+        <BrandFooter />
       </div>
     );
   }
@@ -410,24 +420,27 @@ const CheckoutSuccessPage = () => {
     const failedStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-dvh w-full bg-surface flex items-center justify-center px-4">
-        <div className="flex flex-col items-center text-center max-w-md">
-          <div
-            aria-hidden="true"
-            className="mb-4 flex size-12 items-center justify-center rounded-full bg-danger-subtle text-danger"
-          >
-            <X className="size-6" strokeWidth={2.5} />
+      <div className="min-h-dvh w-full bg-surface flex flex-col px-4">
+        <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-col items-center text-center max-w-md">
+            <div
+              aria-hidden="true"
+              className="mb-4 flex size-12 items-center justify-center rounded-full bg-danger-subtle text-danger"
+            >
+              <X className="size-6" strokeWidth={2.5} />
+            </div>
+            <h1 className="mb-3 text-3xl font-medium text-foreground">
+              Betalingen gikk ikke gjennom
+            </h1>
+            <p className="mb-8 text-base text-foreground-muted">
+              Du er ikke påmeldt ennå – prøv igjen eller kontakt studioet.
+            </p>
+            <Button asChild variant="default">
+              <Link to={failedStudioUrl}>Tilbake</Link>
+            </Button>
           </div>
-          <h1 className="mb-3 text-3xl font-medium text-foreground">
-            Betalingen gikk ikke gjennom
-          </h1>
-          <p className="mb-8 text-base text-foreground-muted">
-            Du er ikke påmeldt ennå – prøv igjen eller kontakt studioet.
-          </p>
-          <Button asChild variant="default">
-            <Link to={failedStudioUrl}>Tilbake</Link>
-          </Button>
         </div>
+        <BrandFooter />
       </div>
     );
   }
@@ -443,24 +456,27 @@ const CheckoutSuccessPage = () => {
     const fallbackStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-dvh w-full bg-surface flex items-center justify-center px-4">
-        <div className="flex flex-col items-center text-center max-w-md">
-          <div
-            aria-hidden="true"
-            className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted text-foreground"
-          >
-            <Mail className="size-6" strokeWidth={2.5} />
+      <div className="min-h-dvh w-full bg-surface flex flex-col px-4">
+        <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-col items-center text-center max-w-md">
+            <div
+              aria-hidden="true"
+              className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted text-foreground"
+            >
+              <Mail className="size-6" strokeWidth={2.5} />
+            </div>
+            <h1 className="mb-3 text-3xl font-medium text-foreground">
+              Sjekk e-posten din
+            </h1>
+            <p className="mb-8 text-base text-foreground-muted">
+              Vi fant ingen bekreftelse her – sjekk e-posten din for kvittering.
+            </p>
+            <Button asChild variant="default">
+              <Link to={fallbackStudioUrl}>Tilbake</Link>
+            </Button>
           </div>
-          <h1 className="mb-3 text-3xl font-medium text-foreground">
-            Sjekk e-posten din
-          </h1>
-          <p className="mb-8 text-base text-foreground-muted">
-            Vi fant ingen bekreftelse her – sjekk e-posten din for kvittering.
-          </p>
-          <Button asChild variant="default">
-            <Link to={fallbackStudioUrl}>Tilbake</Link>
-          </Button>
         </div>
+        <BrandFooter />
       </div>
     );
   }
@@ -470,7 +486,7 @@ const CheckoutSuccessPage = () => {
   // same PublicCard with the course as its header band. The card the buyer
   // just filled in "answers" with the receipt.
   return (
-    <div className="min-h-dvh w-full bg-background text-foreground">
+    <div className="min-h-dvh w-full bg-background text-foreground flex flex-col">
       <main className="mx-auto w-full max-w-[568px] px-4 pt-12 pb-16 sm:px-6 md:pt-20">
         <div className="w-full">
           {(() => {
@@ -574,6 +590,7 @@ const CheckoutSuccessPage = () => {
           })()}
         </div>
       </main>
+      <BrandFooter />
     </div>
   );
 };
