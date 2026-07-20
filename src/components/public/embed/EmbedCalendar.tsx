@@ -52,8 +52,8 @@ function mondayIndex(d: Date): number {
  * app in a new tab (booking happens there). Styled with the app's semantic
  * tokens, so it adapts to theme automatically; azure (`--primary`) marks
  * availability on the calendar — has bookable classes — while selection is
- * solid primary and bookable class rows sit on the same subtle tint; CTAs
- * stay monochrome per the storefront convention.
+ * solid primary; class rows stay monochrome (bg-muted fill) and CTAs stay
+ * monochrome per the storefront convention.
  * Month navigation is clamped to [current month, last month with classes] —
  * there is never content outside that range, so the chevrons disable at the
  * bounds instead of paging into dead months.
@@ -404,23 +404,17 @@ function EmbedClassRow({
       {isCancelled ? (
         // Inert row — same dimmed treatment as the storefront agenda's
         // cancelled rows; the «Avlyst» label carries the state.
-        <div className="flex items-start gap-3 rounded-xl bg-hover p-4 opacity-55 @md:gap-4">
+        <div className="flex items-start gap-3 rounded-xl bg-muted p-4 opacity-55 @md:gap-4">
           {body}
         </div>
       ) : (
+        // bg-muted (neutral-3) — the lightest fill token, same as the
+        // get-started step cards; the ink-overlay hover adapts per theme.
         <a
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className={cn(
-            'group flex items-start gap-3 rounded-xl p-4 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background @md:gap-4',
-            // Azure = bookable, matching the calendar's availability tint
-            // (same rest/hover pair as the day circles); full and closed
-            // rows stay on the neutral fill so the tint keeps its meaning.
-            isDisabled
-              ? 'bg-hover hover:bg-pressed'
-              : 'bg-primary-subtle hover:bg-primary-border',
-          )}
+          className="group flex items-start gap-3 rounded-xl bg-muted p-4 transition-colors hover:bg-pressed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background @md:gap-4"
         >
           {body}
         </a>
