@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ImageIcon } from '@/lib/icons';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,7 +17,7 @@ import type { LookupInviteLinkResult } from '@/types/database';
 // ---------------------------------------------------------------------------
 // /join/:code — public landing for a shareable invite link.
 //
-// Five states (matches preview/samarbeid-split.html "Join page" section):
+// Five states:
 //   1. Not in a team       → primary "Bli med"
 //   2. In another team     → "Forlat og bli med" with the leaving team named
 //   3. Logged out          → "Logg inn" + "Opprett konto" (return after auth)
@@ -46,40 +45,26 @@ type JoinPhase =
   | { kind: 'no_access' };
 
 function Shell({ children }: { children: React.ReactNode }) {
+  // The invitation is from the studio, so the page leads with the studio's
+  // name — the platform mark sits as quiet attribution at the bottom instead
+  // of a header claiming the page.
   return (
     <div className="min-h-dvh w-full text-foreground antialiased flex flex-col bg-background selection:bg-muted selection:text-foreground">
-      <header className="w-full px-4 py-8 sm:px-6 flex items-center justify-center max-w-6xl mx-auto">
-        <Link to="/" aria-label="UpNext" className="flex items-center select-none">
-          <UpNextLogo />
-        </Link>
-      </header>
       <main className="flex-1 flex items-center justify-center px-4 py-12 sm:px-6">
         <div className="w-full max-w-md text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
           {children}
         </div>
       </main>
-    </div>
-  );
-}
-
-function Cover({ url }: { url: string | null }) {
-  // A broken cover URL falls back to the same placeholder as no cover at all.
-  const [failed, setFailed] = useState(false);
-  if (url && !failed) {
-    return (
-      <div className="aspect-[3/1] w-full overflow-hidden rounded-md bg-muted mb-6">
-        <img
-          src={url}
-          alt=""
-          className="media-outline size-full object-cover"
-          onError={() => setFailed(true)}
-        />
-      </div>
-    );
-  }
-  return (
-    <div className="aspect-[3/1] w-full rounded-md bg-muted mb-6 flex items-center justify-center">
-      <ImageIcon className="size-10 text-foreground-muted" aria-hidden="true" />
+      <footer className="flex justify-center pb-8">
+        <Link
+          to="/"
+          aria-label="UpNext"
+          className="flex select-none items-center gap-2 opacity-40 transition-opacity duration-150 hover:opacity-70"
+        >
+          <UpNextLogo size="sm" />
+          <span className="text-sm font-medium text-foreground">UpNext</span>
+        </Link>
+      </footer>
     </div>
   );
 }
@@ -236,7 +221,6 @@ export default function JoinPage() {
         <DelayedFallback>
           <div role="status" aria-live="polite" className="space-y-6">
             <span className="sr-only">Laster…</span>
-            <Skeleton className="aspect-[3/1] w-full rounded-md" />
             <div className="space-y-3">
               <Skeleton className="mx-auto h-8 w-56" />
               <Skeleton className="mx-auto h-4 w-72 max-w-full" />
@@ -296,7 +280,6 @@ export default function JoinPage() {
   if (!user) {
     return (
       <Shell>
-        <Cover url={team.cover_image_url} />
         <h1 className="text-3xl font-medium text-foreground mb-3">
           Bli med i {team.name}
         </h1>
@@ -326,7 +309,6 @@ export default function JoinPage() {
   if (phase.kind === 'no_access' || (profile !== null && profile.role !== 'seller')) {
     return (
       <Shell>
-        <Cover url={team.cover_image_url} />
         <h1 className="text-3xl font-medium text-foreground mb-3">
           Denne lenken er for kursholdere
         </h1>
@@ -343,7 +325,6 @@ export default function JoinPage() {
   if (phase.kind === 'checking_membership') {
     return (
       <Shell>
-        <Cover url={team.cover_image_url} />
         <div role="status" aria-live="polite" className="space-y-6">
           <span className="sr-only">Sjekker medlemskap…</span>
           <div className="space-y-3">
@@ -359,7 +340,6 @@ export default function JoinPage() {
   if (phase.kind === 'already_member') {
     return (
       <Shell>
-        <Cover url={team.cover_image_url} />
         <h1 className="text-3xl font-medium text-foreground mb-3">
           Du er allerede med
         </h1>
@@ -395,7 +375,6 @@ export default function JoinPage() {
     const leavingName = phase.existingTeamName ?? 'det forrige studioet';
     return (
       <Shell>
-        <Cover url={team.cover_image_url} />
         <h1 className="text-3xl font-medium text-foreground mb-3">
           Bli med i {team.name}
         </h1>
@@ -427,7 +406,6 @@ export default function JoinPage() {
   // State 1 — clean join (default for logged-in user, idle phase)
   return (
     <Shell>
-      <Cover url={team.cover_image_url} />
       <h1 className="text-3xl font-medium text-foreground mb-3">
         Bli med i {team.name}
       </h1>
