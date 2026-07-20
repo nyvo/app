@@ -1161,9 +1161,11 @@ const CoursePage = () => {
                     {/* Section toolbar — count on the left, actions on the
                         right. Borderless row sitting directly above the table;
                         the buttons carry their own weight, so the summary reads
-                        as a heading rather than a boxed surface. */}
+                        as a heading rather than a boxed surface. On mobile the
+                        count takes its own row (basis-full) so the two buttons
+                        pair up evenly below it instead of wrapping unevenly. */}
                     <div className="mb-4 flex flex-wrap items-center gap-3">
-                      <span className="text-lg font-medium text-foreground tabular-nums mr-auto">
+                      <span className="text-lg font-medium text-foreground tabular-nums mr-auto max-sm:basis-full">
                         {participantsLoading || participantsError
                           ? // Don't fabricate a count before the roster loads (or when it failed).
                             courseData.capacity > 0
