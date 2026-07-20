@@ -231,7 +231,7 @@ export function RoleChooser({ onAdvance }: { onAdvance: () => void }) {
                 key={opt.value}
                 className={cn(
                   'flex items-start gap-3 min-h-[7.5rem] rounded-xl bg-muted p-6 cursor-pointer transition-colors duration-150 focus-within:ring-2 focus-within:ring-foreground',
-                  isSelected ? 'bg-pressed ring-2 ring-foreground' : 'hover:bg-hover',
+                  isSelected ? 'ring-2 ring-foreground' : 'hover:bg-hover',
                 )}
               >
                 <input
