@@ -27,6 +27,10 @@ function Inert({ children }: { children: ReactNode }) {
   return (
     <div
       onSubmitCapture={(e) => {
+        // Forms marked data-preview-safe submit pure local state (e.g.
+        // SellerFlow's kontotype → navn step navigation) — let those through
+        // so the preview stays navigable; block everything else.
+        if ((e.target as HTMLElement).hasAttribute('data-preview-safe')) return
         e.preventDefault()
         e.stopPropagation()
       }}
@@ -81,7 +85,7 @@ export default function OnboardingPreview() {
 
       <PreviewSection
         label="Selger-flyt"
-        description="SellerFlow — navnefeltet starter tomt her fordi det leser fra live (utlogget) konto-kontekst; i appen forhåndsutfylt fra visningsnavnet. Fullfør ville normalt kalt ensureSeller() + markOnboardingComplete()."
+        description="SellerFlow — starter på kontotype-steget; Fortsett går videre til navnefeltet (tomt her fordi det leser fra live utlogget konto-kontekst; i appen forhåndsutfylt fra visningsnavnet). Fullfør ville normalt kalt ensureSeller() + markOnboardingComplete()."
       >
         <Frame>
           <Inert>
