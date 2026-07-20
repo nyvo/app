@@ -9,7 +9,6 @@ import {
   extractTime,
   extractTimeValue,
   formatLongDay,
-  formatTimeRange,
 } from '@/components/public/studio/studioFacts';
 import { BOOKABILITY_LABELS } from '@/lib/bookability-labels';
 
@@ -53,7 +52,8 @@ function mondayIndex(d: Date): number {
  * app in a new tab (booking happens there). Styled with the app's semantic
  * tokens, so it adapts to theme automatically; azure (`--primary`) marks
  * availability on the calendar — has bookable classes — while selection is
- * solid primary; CTAs stay monochrome per the storefront convention.
+ * solid primary and bookable class rows sit on the same subtle tint; CTAs
+ * stay monochrome per the storefront convention.
  * Month navigation is clamped to [current month, last month with classes] —
  * there is never content outside that range, so the chevrons disable at the
  * bounds instead of paging into dead months.
@@ -334,7 +334,9 @@ function EmbedClassRow({
   slug: string;
 }) {
   const time = extractTime(course.time_schedule);
-  const timeRange = formatTimeRange(time, course.duration);
+  // Start time over duration — the same compact stack the storefront agenda
+  // and dashboard schedule use; a full range made the column twice as wide.
+  const duration = course.duration && course.duration > 0 ? `${course.duration} min` : '';
   const bookability = courseBookability(course, todayKey);
   const isDisabled = bookability !== 'open';
   // Cancelled courses stay listed through the 30-day grace window, but the
@@ -352,17 +354,22 @@ function EmbedClassRow({
 
   const body = (
     <>
-      <span className="w-16 shrink-0 text-sm font-normal leading-5 tabular-nums text-foreground @md:w-24">
-        {timeRange || '—'}
+      <span className="flex w-12 shrink-0 flex-col gap-0.5 @md:w-14">
+        <span className="text-sm font-medium leading-5 tabular-nums text-foreground">
+          {time || '—'}
+        </span>
+        {duration && (
+          <span className="text-[0.8125rem] leading-5 text-foreground">{duration}</span>
+        )}
       </span>
 
       <div className="min-w-0 flex-1">
         <h4 className="text-sm font-medium leading-5 text-foreground">
           {course.title}
         </h4>
-        {/* Full text-foreground, not -muted: the row sits on a bg-hover fill,
-            and muted ink on a muted fill drops below AA (same rule as the
-            get-started StepCard). Hierarchy comes from size + weight. */}
+        {/* Full text-foreground, not -muted: the row sits on a tinted fill,
+            and muted ink on a filled container drops below AA (same rule as
+            the get-started StepCard). Hierarchy comes from size + weight. */}
         {(course.instructor_name || placeLabel) && (
           <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.8125rem] text-foreground">
             {course.instructor_name && (
@@ -405,7 +412,15 @@ function EmbedClassRow({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex items-start gap-3 rounded-xl bg-hover p-4 transition-colors hover:bg-pressed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background @md:gap-4"
+          className={cn(
+            'group flex items-start gap-3 rounded-xl p-4 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background @md:gap-4',
+            // Azure = bookable, matching the calendar's availability tint
+            // (same rest/hover pair as the day circles); full and closed
+            // rows stay on the neutral fill so the tint keeps its meaning.
+            isDisabled
+              ? 'bg-hover hover:bg-pressed'
+              : 'bg-primary-subtle hover:bg-primary-border',
+          )}
         >
           {body}
         </a>
