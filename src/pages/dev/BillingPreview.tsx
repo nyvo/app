@@ -62,6 +62,36 @@ export default function BillingPreview() {
         />
       </PreviewSection>
 
+      <PreviewSection
+        label="Retur fra checkout — venter på aktivering"
+        description="?stripe=success før webhooken har flippet free→pro: interimlinje som beskrivelse, Pro-CTA deaktivert som «Aktiveres»."
+      >
+        <BillingPagePreview
+          plan={null}
+          status={null}
+          renewsAt={null}
+          cancel={false}
+          onUpgrade={noop}
+          yearly={{ price: '4 990 kr' }}
+          awaitingActivation
+        />
+      </PreviewSection>
+
+      <PreviewSection
+        label="Retur fra checkout — aktivering forsinket"
+        description="Aktiverings-pollen utløp (60 s) uten at Pro landet: info-varsel i stedet for stille tilbakefall til gratisvisningen."
+      >
+        <BillingPagePreview
+          plan={null}
+          status={null}
+          renewsAt={null}
+          cancel={false}
+          onUpgrade={noop}
+          yearly={{ price: '4 990 kr' }}
+          activationDelayed
+        />
+      </PreviewSection>
+
       <PreviewSection label="Statuslinje — alle varianter (kontrollsjekk)">
         <div className="divide-y divide-border-subtle rounded-xl border border-border bg-surface px-5">
           {STATUS_VARIANTS.map((v) => (
@@ -101,6 +131,8 @@ function BillingPagePreview({
   cancel,
   onUpgrade,
   yearly,
+  awaitingActivation,
+  activationDelayed,
 }: {
   plan: string | null
   status: string | null
@@ -108,6 +140,8 @@ function BillingPagePreview({
   cancel: boolean
   onUpgrade: () => void
   yearly?: { price: string }
+  awaitingActivation?: boolean
+  activationDelayed?: boolean
 }) {
   const isPro = plan === 'pro'
   const isPastDue = isPro && status === 'past_due'
@@ -118,7 +152,13 @@ function BillingPagePreview({
       narrow="centered"
       className="px-0 pb-0 pt-0 sm:px-0 lg:px-0 lg:pt-0 md:pb-0"
       title="Abonnement"
-      description={isPro && !isPastDue ? statusLine : undefined}
+      description={
+        isPro && !isPastDue
+          ? statusLine
+          : awaitingActivation
+            ? 'Betalingen er mottatt. Abonnementet aktiveres om et øyeblikk.'
+            : undefined
+      }
       action={
         isPro && !isPastDue ? (
           <Button type="button" variant="secondary" onClick={() => {}}>
@@ -136,6 +176,8 @@ function BillingPagePreview({
         checkoutLoading={false}
         portalLoading={false}
         yearly={yearly}
+        awaitingActivation={awaitingActivation}
+        activationDelayed={activationDelayed}
       />
     </PageShell>
   )

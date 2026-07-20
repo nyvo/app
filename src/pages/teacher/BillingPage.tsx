@@ -69,44 +69,60 @@ const BillingPage = () => {
   const stripeResultHandled = useRef(false)
   const pollTimer = useRef<number | null>(null)
   const pollDeadline = useRef(0)
+  // Which redirect the running poll serves: the checkout poll waits for Pro to
+  // land (cancelled by the isPro effect); the portal poll has no target state
+  // and always runs its bounded window.
+  const pollKind = useRef<'checkout' | 'portal' | null>(null)
   // success seen but the plan is still free — the webhook hasn't landed yet.
   const [awaitingActivation, setAwaitingActivation] = useState(false)
+  // the activation poll expired without Pro landing — payment is in, webhook
+  // is slow. Rendered as an info alert instead of silently reverting.
+  const [activationDelayed, setActivationDelayed] = useState(false)
 
   const clearPoll = useCallback(() => {
     if (pollTimer.current !== null) {
       clearTimeout(pollTimer.current)
       pollTimer.current = null
     }
+    pollKind.current = null
   }, [])
 
-  // The webhook that flips free→pro can land seconds after the redirect. Poll
-  // the seller on a widening backoff, capped at ~60s so it can't run forever;
-  // the isPro effect below cancels it the moment Pro lands.
-  const startActivationPoll = useCallback(() => {
-    clearPoll()
-    pollDeadline.current = Date.now() + 60000
-    let delay = 2000
-    const tick = () => {
-      void refreshSellers()
-      if (Date.now() >= pollDeadline.current) {
-        pollTimer.current = null
-        setAwaitingActivation(false)
-        return
+  // Webhook-written state (free→pro, cancel, payment fix) can land seconds
+  // after a Stripe redirect. Poll the seller on a widening backoff until the
+  // bounded deadline so it can't run forever.
+  const startPoll = useCallback(
+    (kind: 'checkout' | 'portal', durationMs: number, onExpire?: () => void) => {
+      clearPoll()
+      pollKind.current = kind
+      pollDeadline.current = Date.now() + durationMs
+      let delay = 2000
+      const tick = () => {
+        void refreshSellers()
+        if (Date.now() >= pollDeadline.current) {
+          pollTimer.current = null
+          pollKind.current = null
+          onExpire?.()
+          return
+        }
+        delay = Math.min(Math.round(delay * 1.5), 10000)
+        pollTimer.current = window.setTimeout(tick, delay)
       }
-      delay = Math.min(Math.round(delay * 1.5), 10000)
       pollTimer.current = window.setTimeout(tick, delay)
-    }
-    pollTimer.current = window.setTimeout(tick, delay)
-  }, [clearPoll, refreshSellers])
+    },
+    [clearPoll, refreshSellers],
+  )
 
   // Stop the poll on unmount.
   useEffect(() => clearPoll, [clearPoll])
 
-  // Pro landed — drop the interim line and stop polling.
+  // Pro landed — drop the interim/delayed notices and stop the checkout poll.
+  // A portal poll is left alone: Pro being active is not what it waits for
+  // (cancel_at_period_end etc. can land later in its window).
   useEffect(() => {
     if (isPro) {
       setAwaitingActivation(false)
-      clearPoll()
+      setActivationDelayed(false)
+      if (pollKind.current !== 'portal') clearPoll()
     }
   }, [isPro, clearPoll])
 
@@ -120,16 +136,25 @@ const BillingPage = () => {
       void refreshSellers()
       if (!isPro) {
         setAwaitingActivation(true)
-        startActivationPoll()
+        startPoll('checkout', 60000, () => {
+          setAwaitingActivation(false)
+          setActivationDelayed(true)
+        })
       }
     } else if (stripeResult === 'cancelled') {
       toast('Abonnementet ble ikke fullført')
+    } else if (stripeResult === 'portal') {
+      // Back from the Stripe portal. Whatever changed there (cancel,
+      // reactivation, new payment method) arrives via webhook — poll briefly
+      // so the page converges instead of sitting on pre-portal state. No
+      // toast and no expiry notice: there is no known target state.
+      startPoll('portal', 20000)
     }
 
     const next = new URLSearchParams(searchParams)
     next.delete('stripe')
     setSearchParams(next, { replace: true })
-  }, [isPro, refreshSellers, searchParams, setSearchParams, startActivationPoll])
+  }, [isPro, refreshSellers, searchParams, setSearchParams, startPoll])
 
   const handleUpgrade = useCallback(async (interval: 'month' | 'year') => {
     if (!currentSeller?.id) return
@@ -206,6 +231,8 @@ const BillingPage = () => {
             onManage={handleManage}
             checkoutLoading={checkoutLoading}
             portalLoading={portalLoading}
+            awaitingActivation={awaitingActivation}
+            activationDelayed={activationDelayed}
           />
         )}
       </PageShell>
@@ -224,6 +251,8 @@ export function BillingPlanSections({
   onManage,
   checkoutLoading,
   portalLoading,
+  awaitingActivation,
+  activationDelayed,
 }: {
   plan: SubscriptionPlan
   status?: SubscriptionStatus
@@ -233,9 +262,16 @@ export function BillingPlanSections({
   onManage?: () => void
   checkoutLoading: boolean
   portalLoading?: boolean
+  /** Checkout succeeded, webhook pending — the Pro CTA disables itself. */
+  awaitingActivation?: boolean
+  /** Activation poll expired without Pro landing — renders the info alert. */
+  activationDelayed?: boolean
 }) {
   const isPro = plan === 'pro'
   const isPastDue = isPro && status === 'past_due'
+  // Both post-checkout waits (interim line AND the delayed-webhook alert) keep
+  // the CTA disabled — the alert must never sit above a clickable «Velg Pro».
+  const activationPending = awaitingActivation || activationDelayed
 
   const [interval, setInterval] = useState<'month' | 'year'>('month')
   const showInterval = !!yearly && !isPro
@@ -321,8 +357,9 @@ export function BillingPlanSections({
             variant="white"
             onClick={() => onUpgrade(showInterval ? interval : 'month')}
             loading={checkoutLoading}
+            disabled={activationPending}
           >
-            Velg Pro
+            {activationPending ? 'Aktiveres' : 'Velg Pro'}
           </PlanCta>
         )}
       </article>
@@ -331,6 +368,18 @@ export function BillingPlanSections({
 
   return (
     <div className="plan-cards plan-cards--compact space-y-8">
+      {!isPro && activationDelayed && (
+        // Payment went through but the webhook still hasn't flipped the plan —
+        // name the delay instead of silently reverting to the free view right
+        // after the success toast.
+        <Alert variant="info">
+          <AlertTitle>Betalingen er mottatt</AlertTitle>
+          <AlertDescription>
+            Aktiveringen tar lengre tid enn vanlig. Oppdater siden om et par minutter.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {isPastDue && onManage && (
         <Alert variant="info">
           <AlertTitle>Betalingen gikk ikke gjennom</AlertTitle>
@@ -418,11 +467,13 @@ function PlanCta({
   variant,
   onClick,
   loading,
+  disabled,
   children,
 }: {
   variant: 'chrome' | 'white'
   onClick?: () => void
   loading?: boolean
+  disabled?: boolean
   children: ReactNode
 }) {
   return (
@@ -430,7 +481,7 @@ function PlanCta({
       type="button"
       className={variant === 'white' ? 'pc-btn pc-btn-white' : 'pc-btn pc-btn-chrome'}
       onClick={onClick}
-      disabled={loading}
+      disabled={loading || disabled}
     >
       {loading ? (
         <>
