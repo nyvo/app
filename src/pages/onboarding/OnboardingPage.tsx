@@ -414,7 +414,7 @@ export function BuyerSetupForm({
 }
 
 // ---------------------------------------------------------------------------
-// Step 2b — Seller flow (single screen: name → slug)
+// Step 2b — Seller flow (single screen: kontotype + name → slug)
 // ---------------------------------------------------------------------------
 
 export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () => void }) {
@@ -428,8 +428,24 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
   const [name, setName] = useState(
     () => sellers[0]?.name ?? resolveDisplayName(profile?.name, profile?.email),
   )
+  // Kontotype (sellers.operating_model). No pre-selection for a fresh setup —
+  // same reasoning as RoleChooser: an explicit pick, so studio owners don't
+  // sail past a solo default and have to dig it out of settings later. An
+  // interrupted-onboarding retry prefills from the existing seller row.
+  const [model, setModel] = useState<'solo' | 'studio' | null>(() =>
+    sellers[0] ? (sellers[0].operating_model === 'studio' ? 'studio' : 'solo') : null,
+  )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+
+  const clearError = (key: string) => {
+    setErrors((prev) => {
+      if (!(key in prev)) return prev
+      const rest = { ...prev }
+      delete rest[key]
+      return rest
+    })
+  }
 
   // Live address preview — the name silently becomes a public URL, so show
   // it. Without this, the "opptatt" collision error is inexplicable.
@@ -448,18 +464,17 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
     e.preventDefault()
     const trimmed = name.trim()
     const slug = generateSlug(trimmed)
-    if (!trimmed) {
-      setErrors({ name: 'Skriv inn et navn' })
-      return
-    }
-    if (slug.length < 3) {
-      setErrors({ name: 'Bruk minst 3 bokstaver' })
+    const next: Record<string, string> = {}
+    if (!model) next.model = 'Velg kontotype'
+    if (!trimmed) next.name = 'Skriv inn et navn'
+    else if (slug.length < 3) next.name = 'Bruk minst 3 bokstaver'
+    if (Object.keys(next).length > 0) {
+      setErrors(next)
       return
     }
 
     setSaving(true)
-    // Third arg omitted — the default 'solo' model applies; changed later in settings.
-    const { seller, error } = await ensureSeller(trimmed, slug)
+    const { seller, error } = await ensureSeller(trimmed, slug, model ?? 'solo')
     if (error || !seller) {
       logger.error('Onboarding: ensureSeller failed', error)
       const msg = error?.message ?? ''
@@ -492,8 +507,65 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
         <BackLink onClick={() => { void handleBack() }} disabled={saving} />
         <h1 className="mb-8 text-2xl font-medium text-foreground">
-          Hva skal siden din hete?
+          Sett opp kontoen din
         </h1>
+
+        {/* Kontotype — sets sellers.operating_model up front instead of
+            defaulting to solo and hiding the switch in studio settings.
+            Structure from Time2book's "Set up your account" (Mobbin
+            671b3370): compact account-type cards above the form fields on
+            the same screen. Cards reuse the RoleChooser anatomy (ring-only
+            selection); labels/helpers reuse StudioPage's AccountTypeSection
+            copy so this reads as the same setting the user finds later. */}
+        <fieldset className="mb-6">
+          <legend className="mb-2 text-sm font-medium text-foreground">Kontotype</legend>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {([
+              {
+                value: 'solo' as const,
+                title: 'Jeg underviser selv',
+                body: 'Egen side med kursene dine.',
+              },
+              {
+                value: 'studio' as const,
+                title: 'Jeg driver et studio',
+                body: 'Studioside med egne og tilknyttede instruktører.',
+              },
+            ]).map((opt) => {
+              const isSelected = model === opt.value
+              return (
+                <label
+                  key={opt.value}
+                  className={cn(
+                    'flex items-start gap-3 rounded-xl bg-muted p-4 cursor-pointer transition-colors duration-150 focus-within:ring-2 focus-within:ring-foreground',
+                    isSelected ? 'ring-2 ring-foreground' : 'hover:bg-hover',
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="operating-model"
+                    value={opt.value}
+                    checked={isSelected}
+                    onChange={() => {
+                      setModel(opt.value)
+                      clearError('model')
+                    }}
+                    className="sr-only"
+                    aria-describedby={errors.model ? 'seller-model-error' : undefined}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">{opt.title}</p>
+                    <p className="mt-1 text-sm text-foreground-muted leading-relaxed">{opt.body}</p>
+                  </div>
+                  {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
+                </label>
+              )
+            })}
+          </div>
+          {errors.model && (
+            <FieldError id="seller-model-error" className="mt-2">{errors.model}</FieldError>
+          )}
+        </fieldset>
 
         <div className="grid gap-2">
           <Label htmlFor="seller-name">Navn</Label>
@@ -502,7 +574,7 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
             value={name}
             onChange={(e) => {
               setName(e.target.value)
-              if (errors.name) setErrors({})
+              clearError('name')
             }}
             autoFocus
             aria-invalid={!!errors.name || undefined}
