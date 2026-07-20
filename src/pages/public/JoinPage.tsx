@@ -309,12 +309,9 @@ export default function JoinPage() {
   if (phase.kind === 'no_access' || (profile !== null && profile.role !== 'seller')) {
     return (
       <Shell>
-        <h1 className="text-3xl font-medium text-foreground mb-3">
+        <h1 className="text-3xl font-medium text-foreground mb-8">
           Denne lenken er for kursholdere
         </h1>
-        <p className="text-base text-foreground-muted mb-8">
-          Invitasjonen lar kursholdere vise kursene sine på siden til {team.name}. Kontoen din er en deltakerkonto.
-        </p>
         <Button size="cta" className="w-full" onClick={() => navigate('/overview')}>
           Gå til min side
         </Button>
