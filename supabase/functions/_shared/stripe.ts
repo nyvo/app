@@ -38,6 +38,9 @@ export interface StripeSubscription {
   // Recent API versions report current_period_end on the item, not the sub.
   current_period_end?: number
   cancel_at_period_end?: boolean
+  // Portal cancellations on flexible billing mode set cancel_at (a timestamp)
+  // while leaving cancel_at_period_end false.
+  cancel_at?: number | null
   items?: { data?: Array<{ current_period_end?: number }> }
   metadata?: Record<string, string>
 }
