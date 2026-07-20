@@ -1,7 +1,8 @@
 import { PageTab, PageTabs } from '@/components/ui/page-tabs'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { PageShell } from '@/components/teacher/PageShell'
-import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab'
+import { CourseOverviewTab, CourseOverviewSkeleton } from '@/components/teacher/CourseOverviewTab'
 import { DevPage, PreviewSection } from './_kit'
 import type { MappedCourse } from '@/hooks/use-course-detail'
 import type { CourseSession } from '@/types/database'
@@ -159,11 +160,30 @@ function State({
   )
 }
 
+/** Mirrors CoursePage's isLoading return so the page-level skeleton is
+ *  reviewable here (the real one only shows during the course fetch). */
+function PageSkeletonState() {
+  return (
+    <PreviewSection label="Laster side — sideskjelett">
+      <div className="bg-canvas pb-12">
+        <PageShell
+          className="px-0 pb-0 pt-0 sm:px-0 lg:px-0 lg:pt-0 md:pb-0"
+          title={<Skeleton className="h-7 w-64" />}
+          badge={<Skeleton className="h-4 w-32" />}
+          tabs={<Skeleton className="h-10 w-full max-w-md" />}
+        >
+          <CourseOverviewSkeleton />
+        </PageShell>
+      </div>
+    </PreviewSection>
+  )
+}
+
 export default function DraftExperiencePreview() {
   return (
     <DevPage title="Kursoversikt (Oversikt-fane)">
       <State
-        label="Ukentlig serie, i gang — neste-prikk (azure), avlyst time, hale «x timer til»"
+        label="Ukentlig serie, i gang — avlyst time, maks 3 kort + «Se hele kursplan»"
         course={course({ status: 'active', format: 'series', totalWeeks: 10, endDate: '2026-08-25' })}
         sessions={WEEKLY}
         paymentSetupRequired
@@ -176,7 +196,7 @@ export default function DraftExperiencePreview() {
       />
 
       <State
-        label="Enkeltkurs, én dag — kursnavn som korttittel, ingen rail"
+        label="Enkeltkurs, én dag — kursnavn som korttittel, ett kort"
         course={course({ status: 'upcoming', title: 'Workshop: Yin og pust', price: 590 })}
         sessions={ONE_DAY}
         paymentSetupRequired
@@ -186,7 +206,7 @@ export default function DraftExperiencePreview() {
       />
 
       <State
-        label="Enkeltkurs, tre dager — Dag x/x, full rail, ingen hale"
+        label="Enkeltkurs, tre dager — Dag x/x, tre kort"
         course={course({ status: 'upcoming', endDate: '2026-07-26' })}
         sessions={MULTI_DAY}
         paymentSetupRequired
@@ -218,7 +238,7 @@ export default function DraftExperiencePreview() {
       />
 
       <State
-        label="Ferdig — KPI-spine, «Ingen kommende timer» + Se alle timer"
+        label="Ferdig — KPI-spine, «Ingen kommende timer», historikk via «Se hele kursplan»"
         course={course({ status: 'completed', format: 'series', totalWeeks: 8, enrolled: 8, endDate: '2026-06-23' })}
         sessions={FINISHED}
         paymentSetupRequired
@@ -247,6 +267,8 @@ export default function DraftExperiencePreview() {
         enrolledCount={5}
         revenue={1750}
       />
+
+      <PageSkeletonState />
 
       <State
         label="Feil — inline-feil i feeden"

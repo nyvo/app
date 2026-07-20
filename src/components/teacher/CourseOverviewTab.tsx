@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { MapEmbed } from '@/components/ui/map-embed';
 import { FramedCard, FramedCardPanel } from '@/components/teacher/FramedCard';
-import { FeedEntry } from '@/components/teacher/FeedEntry';
 import { cn, formatKroner } from '@/lib/utils';
 import { osloTodayKey } from '@/utils/dateUtils';
 import { MapPin, Pencil } from '@/lib/icons';
@@ -65,9 +64,9 @@ interface CourseOverviewTabProps {
 
 const WAITING_STATUSES = new Set(['pending', 'restricted']);
 
-/** Feed cap — matched to the right column's height (Sted tile + settings).
- *  At the cap, the overflow collapses into the "x timer til" tail entry. */
-const MAX_VISIBLE_SESSIONS = 4;
+/** Feed cap — at most three session cards render; the rest live behind the
+ *  heading row's «Se hele kursplan» link (the sessions modal). */
+const MAX_VISIBLE_SESSIONS = 3;
 
 /** Parse a YYYY-MM-DD key as a *local* date (avoids the UTC off-by-one that
  *  `new Date('2026-07-07')` causes in negative-offset timezones). */
@@ -224,9 +223,11 @@ function StatRow({ stats }: { stats: [string, string][] }) {
           <Fragment key={label}>
             {/* Short inset divider — subtle, not a full-height border. */}
             {i > 0 && <div className="my-auto h-12 w-px shrink-0 bg-border-subtle" />}
-            <div className="flex-1 px-3 py-4 text-center sm:px-5 sm:py-5">
+            {/* px/text step down below sm — three nowrap values (e.g.
+                «123 450 kr») overflow the panel at 390px on the sm sizes. */}
+            <div className="flex-1 px-2 py-4 text-center sm:px-5 sm:py-5">
               <p className="text-sm text-foreground-muted">{label}</p>
-              <p className="mt-1.5 text-xl font-medium whitespace-nowrap tabular-nums text-foreground sm:text-2xl">{value}</p>
+              <p className="mt-1.5 text-lg font-medium whitespace-nowrap tabular-nums text-foreground sm:text-2xl">{value}</p>
             </div>
           </Fragment>
         ))}
@@ -345,12 +346,7 @@ function KursplanSection({
       </div>
     );
   } else if (loading) {
-    body = (
-      <div className="space-y-3" role="status" aria-label="Laster timer">
-        <Skeleton className="h-16 w-full rounded-xl" />
-        <Skeleton className="h-16 w-full rounded-xl" />
-      </div>
-    );
+    body = <FeedSkeleton />;
   } else if (sessions.length === 0) {
     body = (
       <div className="rounded-xl bg-muted px-4 py-3">
@@ -369,9 +365,17 @@ function KursplanSection({
     );
   }
 
+  // The heading row carries the section's one action — «Se hele kursplan»
+  // (the sessions modal). Hidden while loading/on error/with zero sessions,
+  // where the modal would open empty.
+  const showPlanLink = !loading && !error && sessions.length > 0;
+
   return (
     <section>
-      <SectionHeading>Kursplan</SectionHeading>
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h2 className="text-sm font-medium text-foreground">Kursplan</h2>
+        {showPlanLink && <SeeAllLink onClick={onOpenAll} />}
+      </div>
       {body}
     </section>
   );
@@ -394,22 +398,13 @@ function SessionFeed({
   const total = sessions.length;
   const upcoming = sessions.filter((s) => s.session_date >= today);
 
-  // Everything is in the past (finished/cancelled course) — one honest line,
-  // the modal keeps the history.
+  // Everything is in the past (finished/cancelled course) — one honest line;
+  // the heading row's «Se hele kursplan» link keeps the history reachable.
   if (upcoming.length === 0) {
-    return (
-      <div className="flex flex-col items-start gap-1.5 py-1">
-        <p className="text-sm text-foreground-muted">Ingen kommende timer</p>
-        <SeeAllLink onClick={onOpenAll}>Se fullførte timer</SeeAllLink>
-      </div>
-    );
+    return <p className="py-1 text-sm text-foreground-muted">Ingen kommende timer</p>;
   }
 
-  const overflow = upcoming.length > MAX_VISIBLE_SESSIONS;
-  const visible = overflow ? upcoming.slice(0, MAX_VISIBLE_SESSIONS - 1) : upcoming;
-  const remaining = upcoming.length - visible.length;
-  const lastDate = upcoming[upcoming.length - 1].session_date;
-  const entryCount = visible.length + (overflow ? 1 : 0);
+  const visible = upcoming.slice(0, MAX_VISIBLE_SESSIONS);
 
   /** Card title = the session's identity within its format. */
   function labelFor(session: CourseSession): string {
@@ -418,103 +413,128 @@ function SessionFeed({
     return isSeries ? `Uke ${index}/${total}` : `Dag ${index}/${total}`;
   }
 
+  // Individual bordered cards (Luma/Cal.com row anatomy: date block →
+  // identity → action), one per session, capped at MAX_VISIBLE_SESSIONS —
+  // the overflow lives behind the heading row's «Se hele kursplan».
   return (
-    <div>
-      {visible.map((s, i) => {
+    <div className="space-y-3">
+      {visible.map((s) => {
         const cancelled = s.status === 'cancelled';
         const label = labelFor(s);
         return (
-          <FeedEntry
+          // Card anatomy: a real stretched <button> owns the open-action
+          // (ARIA forbids interactive descendants inside role="button"),
+          // content sits above it with pointer-events-none, and the pencil
+          // is a positioned sibling that paints/clicks over the stretch.
+          <div
             key={s.id}
-            date={<FeedDateLabel date={s.session_date} />}
-            isLast={i === entryCount - 1}
+            className="relative rounded-xl border border-border-subtle bg-surface transition-colors hover:bg-hover"
           >
-            <div
-              role="button"
-              tabIndex={0}
+            <button
+              type="button"
               onClick={onOpenAll}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onOpenAll();
-                }
-              }}
-              aria-label={`Se alle timer – ${label}`}
-              className="cursor-pointer rounded-xl bg-muted px-4 py-3 outline-none transition-colors hover:bg-hover focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <div className="flex items-center gap-2.5">
+              aria-label={`Se hele kursplan – ${label}`}
+              className="absolute inset-0 cursor-pointer rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <div className="pointer-events-none flex items-center gap-4 px-4 py-3">
+              <div className="w-14 shrink-0">
+                <p className="text-sm font-medium tabular-nums text-foreground">
+                  {dayMonthShort(s.session_date)}
+                </p>
+                <p className="mt-0.5 text-sm leading-tight text-foreground-muted">
+                  {weekdayLong(s.session_date)}
+                </p>
+              </div>
+              <div className="min-w-0 flex-1">
                 <p
                   className={cn(
-                    'min-w-0 truncate text-base font-medium tabular-nums',
+                    'truncate text-base font-medium tabular-nums',
                     cancelled ? 'text-foreground-muted line-through' : 'text-foreground',
                   )}
                 >
                   {label}
                 </p>
-                <span className="min-w-0 flex-1" />
-                {/* The right slot is always the row's status/action: the edit
-                    button normally, the Avlyst pill when cancelled. */}
-                {cancelled ? (
-                  <Badge variant="warning" shape="pill" size="sm" className="shrink-0">
-                    Avlyst
-                  </Badge>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      // The whole card opens the modal — the pencil targets
-                      // reschedule for this session, so it must not bubble.
-                      e.stopPropagation();
-                      onEditSession(s.id);
-                    }}
-                    aria-label={`Endre ${label}, ${dayMonth(s.session_date)}`}
-                    className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-surface text-foreground-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <Pencil className="size-3.5" aria-hidden="true" />
-                  </button>
-                )}
+                <p
+                  className={cn(
+                    'mt-0.5 text-sm tabular-nums',
+                    cancelled ? 'text-foreground-muted' : 'text-foreground',
+                  )}
+                >
+                  {sessionTimeRange(s)}
+                </p>
               </div>
-              <p
-                className={cn(
-                  'mt-0.5 text-sm tabular-nums',
-                  cancelled ? 'text-foreground-muted' : 'text-foreground',
-                )}
-              >
-                {sessionTimeRange(s)}
-              </p>
+              {/* The right slot is always the row's status/action: the edit
+                  button normally, the Avlyst pill when cancelled. */}
+              {cancelled ? (
+                <Badge variant="warning" shape="pill" size="sm" className="shrink-0">
+                  Avlyst
+                </Badge>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onEditSession(s.id)}
+                  aria-label={`Endre ${label}, ${dayMonth(s.session_date)}`}
+                  // after:-inset-2 lifts the 28px chip to a 44px target
+                  // without growing it visually (InfoTooltip/PageTab
+                  // convention); motion-press + scale matches Button. The
+                  // chip is bg-muted on the white card so it reads at rest;
+                  // hover stays an icon-ink shift.
+                  className="pointer-events-auto relative flex size-7 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground-muted outline-none motion-press after:absolute after:-inset-2 hover:text-foreground active:scale-[0.96] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Pencil className="size-3.5" aria-hidden="true" />
+                </button>
+              )}
             </div>
-          </FeedEntry>
+          </div>
         );
       })}
-
-      {overflow && (
-        <FeedEntry isLast>
-          <div className="flex items-center gap-3 pt-3 text-sm tabular-nums text-foreground-muted">
-            <span>
-              {remaining === 1 ? '1 time til' : `${remaining} timer til`}, frem til{' '}
-              {dayMonth(lastDate)}
-            </span>
-            <SeeAllLink onClick={onOpenAll} />
-          </div>
-        </FeedEntry>
-      )}
     </div>
   );
 }
 
-/** Date-column lines for a feed row: "14. jul" over the weekday. */
-function FeedDateLabel({ date }: { date: string }) {
+/** Loading mirror of the session feed — same stacked-card footprint
+ *  (rounded-xl, 72px incl. border, 12px gaps) as the loaded cards. */
+function FeedSkeleton() {
   return (
-    <>
-      <p className="text-sm font-medium tabular-nums text-foreground">{dayMonthShort(date)}</p>
-      <p className="mt-0.5 text-sm leading-tight text-foreground-muted">{weekdayLong(date)}</p>
-    </>
+    <div className="space-y-3" role="status" aria-label="Laster timer">
+      <Skeleton className="h-[72px] w-full rounded-xl" />
+      <Skeleton className="h-[72px] w-full rounded-xl" />
+    </div>
+  );
+}
+
+/**
+ * Loading mirror of the whole Oversikt tab — KPI band + the Kursplan/Sted
+ * column pair at their real heights, radii and gaps (CLAUDE.md: skeletons
+ * track layout). Used by CoursePage's page-level loading state.
+ */
+export function CourseOverviewSkeleton() {
+  return (
+    <div className="space-y-6" role="status" aria-label="Laster kurs">
+      {/* Nøkkeltall/Publisering band — FramedCard footprint (p-2 shell +
+          header row + panel ≈ 150px). */}
+      <Skeleton className="h-[150px] w-full rounded-2xl" />
+      <div className="grid items-start gap-6 lg:grid-cols-[1.55fr_1fr]">
+        <div>
+          {/* Heading row mirrors title + the «Se hele kursplan» link. */}
+          <div className="mb-3 flex items-baseline justify-between">
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-5 w-28" />
+          </div>
+          <FeedSkeleton />
+        </div>
+        <div>
+          <Skeleton className="mb-3 h-5 w-12" />
+          <Skeleton className="h-[222px] w-full rounded-xl" />
+        </div>
+      </div>
+    </div>
   );
 }
 
 function SeeAllLink({
   onClick,
-  children = 'Se alle timer',
+  children = 'Se hele kursplan',
 }: {
   onClick: () => void;
   children?: React.ReactNode;
@@ -569,8 +589,11 @@ function StedSection({ course }: { course: MappedCourse }) {
           size="md"
           // max-w caps the pill so a long address truncates instead of
           // overflowing the tile; truncate adds text-overflow (the base
-          // badge already has overflow-hidden + whitespace-nowrap).
-          className="pointer-events-none absolute right-3 top-3 z-10 max-w-[calc(100%-1.5rem)] truncate border-border-subtle bg-surface"
+          // badge already has overflow-hidden + whitespace-nowrap). The pill
+          // takes pointer events (unlike before) so a truncated name is
+          // recoverable via its title — the map stays clickable elsewhere.
+          title={course.location || undefined}
+          className="absolute right-3 top-3 z-10 max-w-[calc(100%-1.5rem)] cursor-default truncate border-border-subtle bg-surface"
         >
           {course.location || 'Ikke lagt til ennå'}
         </Badge>
