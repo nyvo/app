@@ -99,6 +99,23 @@ Deno.test('subscription.deleted with live canceled → seller back to free', asy
   } finally { restore() }
 })
 
+Deno.test('portal cancel via cancel_at (flexible billing) → cancel flag set despite cancel_at_period_end false', async () => {
+  const { calls, restore } = installRouter([
+    { method: 'GET', match: '/v1/subscriptions/sub_test_1', status: 200, body: { ...liveSubscription('active'), cancel_at: 1793577600 } },
+    { method: 'PATCH', match: '/rest/v1/sellers', status: 204, headers: { 'Content-Range': '0-0/1' } },
+  ])
+  try {
+    const res = await handleStripeBillingWebhook(
+      await signedRequest(subscriptionEvent('customer.subscription.updated')),
+    )
+    assertEquals(res.status, 200)
+    const patch = sellerPatch(calls)
+    assert(patch, 'sellers row must be updated')
+    assert(patch!.body.includes('"subscription_cancel_at_period_end":true'), 'cancel_at must map to the cancel flag')
+    assert(patch!.body.includes('"subscription_plan":"pro"'), 'still Pro until the period ends')
+  } finally { restore() }
+})
+
 Deno.test('past_due first-invoice-unpaid guard: incomplete live status maps to none/free', async () => {
   const { calls, restore } = installRouter([
     { method: 'GET', match: '/v1/subscriptions/sub_test_1', status: 200, body: liveSubscription('incomplete') },

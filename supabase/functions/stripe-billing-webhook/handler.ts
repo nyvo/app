@@ -39,7 +39,8 @@ async function syncSubscription(
     subscription_plan: nextPlan,
     subscription_status: sellerStatus,
     subscription_current_period_end: currentPeriodEnd,
-    subscription_cancel_at_period_end: subscription.cancel_at_period_end ?? false,
+    subscription_cancel_at_period_end:
+      (subscription.cancel_at_period_end ?? false) || subscription.cancel_at != null,
     subscription_provider: 'stripe',
     subscription_customer_id: subscription.customer,
     subscription_external_id: subscription.id,
