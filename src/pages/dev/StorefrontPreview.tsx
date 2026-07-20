@@ -302,9 +302,12 @@ function StudioPageSkeleton() {
           <Skeleton className="h-8 w-32 rounded-full" />
           <div className="pt-6">
             <Skeleton className="h-5 w-44" />
-            <div className="divide-y divide-border-subtle pt-1">
+            <div className="mt-3 space-y-2">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 py-4">
+                <div
+                  key={i}
+                  className="flex items-start gap-4 rounded-xl border border-border-subtle px-4 py-3.5"
+                >
                   <div className="w-14 shrink-0 space-y-1.5">
                     <Skeleton className="h-4 w-11" />
                     <Skeleton className="h-3.5 w-12" />

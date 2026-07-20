@@ -80,13 +80,10 @@ export function StudioAgendaList({ courses, viewingSlug, viewingName }: StudioAg
 
   return (
     <div>
-      {groups.map(([key, groupCourses], index) => (
-        <section
-          key={key}
-          className={cn('pt-6', index > 0 && 'mt-4 border-t border-border-subtle')}
-        >
+      {groups.map(([key, groupCourses]) => (
+        <section key={key} className="pt-6">
           <GroupHeading groupKey={key} todayKey={todayKey} tomorrowKey={tomorrowKey} />
-          <ul className="mt-1">
+          <ul className="mt-3 space-y-2">
             {groupCourses.map((course) => (
               <AgendaRow
                 key={course.id}
@@ -230,25 +227,22 @@ function AgendaRow({
     </>
   );
 
+  // Each course is its own bordered card (Fresha service-row grammar; same
+  // shell as the landing hero mock's «Neste kurs» rows) — the card is the
+  // click target, day headings group the stack.
+  const cardShell = 'flex gap-3 sm:gap-4 rounded-xl border border-border-subtle bg-background px-4 py-3.5';
+
   return (
-    <li
-      className={cn(
-        'border-t border-border-subtle first:border-t-0 transition-colors duration-150',
-        // The rounded hover fill overlaps the hairlines above and below the
-        // row — fade out the two that touch it: the row's own top border and
-        // the next row's. Keyed on a:hover so inert (cancelled) rows keep
-        // their dividers.
-        '[&:has(>a:hover)]:border-transparent [li:has(>a:hover)+&]:border-transparent',
-      )}
-    >
+    <li>
       {isCancelled ? (
-        <div className={cn('flex gap-3 sm:gap-4 py-4 opacity-55', rowAlign)}>{body}</div>
+        <div className={cn(cardShell, rowAlign, 'opacity-55')}>{body}</div>
       ) : (
         <Link
           to={`/${linkSlug}/${course.slug}`}
           state={{ fromSlug, fromName }}
           className={cn(
-            'group flex gap-3 sm:gap-4 py-4 -mx-3 px-3 rounded-xl transition-colors hover:bg-hover',
+            'group transition-colors hover:bg-hover',
+            cardShell,
             rowAlign,
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           )}
