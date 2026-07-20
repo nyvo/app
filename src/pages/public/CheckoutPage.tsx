@@ -59,11 +59,16 @@ export function deriveIsFree(
   return (tierPrice ?? coursePrice ?? 0) === 0 && coursePrice === 0;
 }
 
-/** First invalid contact field, focus-order — shared by the free and paid submit handlers. */
-function firstInvalidField(form: FormState): 'name' | 'email' | 'phone' | 'terms' | null {
+/**
+ * First invalid contact field, focus-order — shared by the free and paid
+ * submit handlers. Phone is OPTIONAL (the server accepts signups without one),
+ * so an empty phone must never block submit; only a filled-but-malformed
+ * value does. Exported for the regression test.
+ */
+export function firstInvalidField(form: FormState): 'name' | 'email' | 'phone' | 'terms' | null {
   if (form.name.trim().length === 0) return 'name';
   if (!isValidEmail(form.email.trim())) return 'email';
-  if (!isValidPhone(form.phone)) return 'phone';
+  if (form.phone.trim().length > 0 && !isValidPhone(form.phone)) return 'phone';
   if (!form.terms) return 'terms';
   return null;
 }
@@ -449,12 +454,13 @@ const CheckoutPage = () => {
 
   // ── Form validation ─────────────────────────────────────────────────────
   // Blur shows format errors on non-empty fields; a failed submit attempt
-  // (`attempted`) surfaces every invalid field, empty ones included.
+  // (`attempted`) surfaces every invalid field, empty ones included — except
+  // phone, which is optional and only format-checked when filled.
   const nameError =
     attempted && form.name.trim().length === 0 ? 'Skriv inn navnet ditt.' : null;
 
   const phoneError =
-    !isValidPhone(form.phone) && (attempted || (phoneTouched && form.phone.trim().length > 0))
+    form.phone.trim().length > 0 && !isValidPhone(form.phone) && (attempted || phoneTouched)
       ? 'Skriv inn et gyldig telefonnummer.'
       : null;
 

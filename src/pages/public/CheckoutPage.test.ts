@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveIsFree } from './CheckoutPage';
+import { deriveIsFree, firstInvalidField, type FormState } from './CheckoutPage';
 
 // Strict semantics (user-ratified): the free path requires BOTH the resolved
 // tier price and the course price to be zero. The free-signup edge function
@@ -28,5 +28,36 @@ describe('deriveIsFree', () => {
   it('is paid for any strictly positive resolved price', () => {
     expect(deriveIsFree(1, 0)).toBe(false);
     expect(deriveIsFree(1, undefined)).toBe(false);
+  });
+});
+
+// Regression for the launch smoke find (2026-07-20): an empty phone used to
+// fail isValidPhone and silently block EVERY booking, even though the field
+// is optional and the server accepts signups without a phone.
+describe('firstInvalidField', () => {
+  const valid: FormState = {
+    name: 'Kari Nordmann',
+    email: 'kari@example.com',
+    phone: '',
+    note: '',
+    terms: true,
+  };
+
+  it('accepts a fully valid form with EMPTY phone (phone is optional)', () => {
+    expect(firstInvalidField(valid)).toBe(null);
+  });
+
+  it('accepts a valid filled phone', () => {
+    expect(firstInvalidField({ ...valid, phone: '+47 99 88 77 66' })).toBe(null);
+  });
+
+  it('rejects a filled-but-malformed phone', () => {
+    expect(firstInvalidField({ ...valid, phone: 'ikke-et-nummer' })).toBe('phone');
+  });
+
+  it('still enforces the required fields in focus order', () => {
+    expect(firstInvalidField({ ...valid, name: ' ' })).toBe('name');
+    expect(firstInvalidField({ ...valid, email: 'ugyldig' })).toBe('email');
+    expect(firstInvalidField({ ...valid, terms: false })).toBe('terms');
   });
 });
