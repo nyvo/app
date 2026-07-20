@@ -252,7 +252,9 @@ export default function PublicCourseDetailPage() {
                     small row wedged between two bordered cards read as
                     squeezed, so the cards follow it instead. */}
                 <div className="mt-5 flex items-start gap-3">
-                  <DateBadge dateStr={course.start_date ?? undefined} size="sm" />
+                  {/* Default 48px tile — the sm 40px one read undersized
+                      next to the two-line date/time lockup. */}
+                  <DateBadge dateStr={course.start_date ?? undefined} />
                   <div className="min-w-0">
                     <p className="text-[15px] font-medium text-foreground">
                       {dateLine ?? tidLabel}
