@@ -59,7 +59,10 @@ Deno.serve(async (req: Request) => {
 
     const session = await createStripePortalSession({
       customerId: seller.subscription_customer_id,
-      returnUrl: `${baseUrl}/settings/billing`,
+      // ?stripe=portal makes the billing page poll briefly on return, so a
+      // cancel/reactivation done in the portal converges without a manual
+      // reload even when the webhook loses the redirect race.
+      returnUrl: `${baseUrl}/settings/billing?stripe=portal`,
     })
 
     return successResponse({ url: session.url }, 200, req)
