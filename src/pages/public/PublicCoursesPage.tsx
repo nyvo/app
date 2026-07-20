@@ -9,6 +9,7 @@ import { fetchPublicStudioLocation, fetchSellerBySlug, type PublicSeller } from 
 import { toLocalDate } from '@/utils/dateUtils';
 import { StudioMasthead } from '@/components/public/studio/StudioMasthead';
 import { StudioAgendaList } from '@/components/public/studio/StudioAgendaList';
+import { BrandFooter } from '@/components/public/BrandFooter';
 import { StudioFilterPill } from '@/components/public/studio/StudioFilterPill';
 import { deriveStudioFacts, type StudioLocation } from '@/components/public/studio/studioFacts';
 import { useDocumentTitle } from '@/hooks/use-document-title';
@@ -267,6 +268,7 @@ const PublicCoursesPage = () => {
           </div>
         )}
       </main>
+      <BrandFooter />
     </div>
   );
 };
