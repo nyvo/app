@@ -16,7 +16,7 @@ interface CreateFreeSignupRequest {
   courseId: string
   participantName: string
   participantEmail: string
-  participantPhone: string
+  participantPhone?: string
   participantNote?: string
 }
 
@@ -28,7 +28,9 @@ Deno.serve(async (req: Request) => {
     const body: CreateFreeSignupRequest = await req.json()
     const { courseId, participantName, participantEmail, participantPhone, participantNote } = body
 
-    if (!courseId || !participantName || !participantEmail || !participantPhone) {
+    // Phone is optional — the checkout form treats it as such, and the paid
+    // path (create-stripe-checkout-session) has never required it.
+    if (!courseId || !participantName || !participantEmail) {
       return errorResponse('Missing required fields', 400, req)
     }
 
@@ -133,7 +135,7 @@ Deno.serve(async (req: Request) => {
       p_ticket_type_id: tier.id,
       p_participant_name: participantName.trim(),
       p_participant_email: participantEmail.trim(),
-      p_participant_phone: participantPhone.trim(),
+      p_participant_phone: participantPhone?.trim() || null,
       p_amount_paid: 0,
       p_note: participantNote?.trim() || null,
     })
