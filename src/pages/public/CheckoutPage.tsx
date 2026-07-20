@@ -595,9 +595,11 @@ const CheckoutPage = () => {
           bodyClassName="px-3 pb-3 pt-4"
           header={
             <>
-              <div className="size-9 shrink-0 overflow-hidden rounded-lg bg-background">
-                {img && <img src={img} alt="" className="media-outline size-full object-cover" />}
-              </div>
+              {img && (
+                <div className="size-9 shrink-0 overflow-hidden rounded-lg bg-background">
+                  <img src={img} alt="" className="media-outline size-full object-cover" />
+                </div>
+              )}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{course.title}</p>
                 <p className="truncate text-xs text-foreground">{headerMeta}</p>
@@ -1367,9 +1369,11 @@ export function CheckoutCourseContext({
 
   return (
     <div className="mt-[18px] flex items-center gap-3">
-      <div className="size-11 shrink-0 overflow-hidden rounded-xl bg-muted">
-        {img && <img src={img} alt="" className="media-outline size-full object-cover" />}
-      </div>
+      {img && (
+        <div className="size-11 shrink-0 overflow-hidden rounded-xl bg-muted">
+          <img src={img} alt="" className="media-outline size-full object-cover" />
+        </div>
+      )}
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14.5px] font-medium text-foreground">{course.title}</p>
         {metaLoading ? (

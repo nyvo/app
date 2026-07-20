@@ -55,7 +55,10 @@ const MOCK_SELLER_EMBED = {
   slug: MOCK_SELLER.slug,
   logo_url: null,
   stripe_onboarding_complete: true,
-  default_course_image_url: null,
+  // Studio default course image — fills the gaps for the imageless mock
+  // courses so the «Med kurs» section keeps the thumbnail grammar
+  // (StudioAgendaList only shows thumbs when EVERY course resolves one).
+  default_course_image_url: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800',
   student_discount_percent: null,
     senior_discount_percent: null,
 };
@@ -289,35 +292,19 @@ function StudioPageSkeleton() {
   return (
     <div className="animate-in fade-in duration-150" role="status" aria-live="polite">
       <span className="sr-only">Laster…</span>
-      <div className="h-32 sm:h-44 w-full bg-muted" />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <Skeleton className="relative -mt-9 size-18 rounded-full border-[3px] border-background" />
-        <Skeleton className="mt-4 h-7 w-56 max-w-full" />
-        <Skeleton className="mt-2.5 h-4 w-72 max-w-full" />
+        <div className="pt-10 sm:pt-12">
+          <Skeleton className="size-24 rounded-full" />
+        </div>
+        <Skeleton className="mt-4 h-9 w-64 max-w-full" />
+        <Skeleton className="mt-2 h-4 w-72 max-w-full" />
         <div className="pt-8">
-          <div className="flex gap-2">
-            <Skeleton className="h-8 w-32 rounded-full" />
-            <Skeleton className="h-8 w-36 rounded-full" />
-          </div>
+          <Skeleton className="h-8 w-32 rounded-full" />
           <div className="pt-6">
             <Skeleton className="h-5 w-44" />
-            <div className="divide-y divide-border-subtle pt-1">
+            <div className="mt-3 space-y-2">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 py-4">
-                  <div className="w-14 shrink-0 space-y-1.5">
-                    <Skeleton className="h-4 w-11" />
-                    <Skeleton className="h-3.5 w-12" />
-                  </div>
-                  <Skeleton className="size-16 shrink-0 rounded-lg" />
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <Skeleton className="h-4 w-48 max-w-full" />
-                    <Skeleton className="h-3.5 w-64 max-w-full" />
-                  </div>
-                  <div className="shrink-0 flex flex-col items-end gap-1.5">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-8 w-20 rounded-full" />
-                  </div>
-                </div>
+                <Skeleton key={i} className="h-18 w-full rounded-xl" />
               ))}
             </div>
           </div>
@@ -335,9 +322,45 @@ export default function StorefrontPreview() {
     >
       <PreviewSection
         label="Med kurs"
-        description="Kursrekke med fra-pris, utsolgt enkeltverksted, nettkurs, en stengt kursrekke og et avlyst kurs — filteret over lista er en ekte, koblet StudioFilterPill."
+        description="Kursrekke med fra-pris, utsolgt enkeltverksted, nettkurs, en stengt kursrekke og et avlyst kurs — filteret over lista er en ekte, koblet StudioFilterPill. Alle kursene løser et bilde (studio-default fyller hullene), så miniatyrspalten vises."
       >
         <WithCoursesSection />
+      </PreviewSection>
+
+      <PreviewSection
+        label="Uten bilder — tekstrader"
+        description="Ingen av kursene løser et bilde → hele lista faller til tekstrad-grammatikken (ClassPass/Fresha-mønsteret). Aldri tomme grå firkanter."
+      >
+        <Frame>
+          <StudioMasthead organization={MOCK_SELLER} location={MOCK_LOCATION} />
+          <div className="px-4 pb-8 pt-6 sm:px-6">
+            <StudioAgendaList
+              courses={MOCK_COURSES.map((course) => ({
+                ...course,
+                image_url: null,
+                seller: { ...MOCK_SELLER_EMBED, default_course_image_url: null },
+              }))}
+              viewingSlug={MOCK_SELLER.slug}
+              viewingName={MOCK_SELLER.name}
+            />
+          </div>
+        </Frame>
+      </PreviewSection>
+
+      <PreviewSection
+        label="Med cover-bilde"
+        description="Selger med cover: båndet vises (h-44/h-60) med logoen overlappende nederkanten. Uten cover finnes det ikke noe bånd i det hele tatt — headeren starter rett på logo-lockupen (Luma/Airbnb-mønsteret)."
+      >
+        <Frame>
+          <StudioMasthead
+            organization={{
+              ...MOCK_SELLER,
+              cover_image_url: 'https://images.unsplash.com/photo-1545389336-cf090694435e?w=1600',
+            }}
+            location={MOCK_LOCATION}
+          />
+          <div className="pb-8" />
+        </Frame>
       </PreviewSection>
 
       <PreviewSection

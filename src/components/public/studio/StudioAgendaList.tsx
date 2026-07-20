@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { cn, formatCoursePrice, formatKroner } from '@/lib/utils';
-import type { PublicCourseWithDetails } from '@/services/publicCourses';
+import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { toLocalDate } from '@/utils/dateUtils';
 import {
   courseBookability,
@@ -28,8 +28,15 @@ interface StudioAgendaListProps {
  * list where the date headers are the navigation — no day strip, days
  * without courses simply don't render. Every course is exactly one row on
  * its display date (a series says «8 økter» on the second line, never one
- * row per session). Row contract, five fixed slots: time/duration stack ·
- * image · title/details·instructor stack · price · scarcity text.
+ * row per session). Card contract, fixed slots: centered time · [thumbnail]
+ * · title with a metadata second line · stacked price + state pill.
+ *
+ * The thumbnail slot is list-level, all-or-none: it renders only when EVERY
+ * visible course resolves an image (own image or the studio's default course
+ * image). Otherwise the whole list drops to the text-row grammar — the
+ * ClassPass/Fresha schedule pattern — instead of padding gaps with blank
+ * grey squares. A studio closes a gap by uploading the missing image or
+ * setting a default course image, never by us inventing placeholder art.
  */
 export function StudioAgendaList({ courses, viewingSlug, viewingName }: StudioAgendaListProps) {
   const todayKey = useMemo(() => dateKey(new Date()), []);
@@ -38,6 +45,23 @@ export function StudioAgendaList({ courses, viewingSlug, viewingName }: StudioAg
     d.setDate(d.getDate() + 1);
     return dateKey(d);
   }, []);
+
+  const showThumbs = useMemo(
+    () => courses.length > 0 && courses.every((course) => !!resolveCourseImage(course)),
+    [courses],
+  );
+
+  // With a single instructor across the whole studio the name is studio
+  // identity, not row information — repeating it on every row is noise.
+  // It earns the sub-line only when it distinguishes rows (≥2 instructors).
+  const showInstructor = useMemo(() => {
+    const names = new Set<string>();
+    for (const course of courses) {
+      const name = course.instructor_name?.trim();
+      if (name) names.add(name);
+    }
+    return names.size >= 2;
+  }, [courses]);
 
   const groups = useMemo(() => {
     const map = new Map<string, PublicCourseWithDetails[]>();
@@ -56,18 +80,17 @@ export function StudioAgendaList({ courses, viewingSlug, viewingName }: StudioAg
 
   return (
     <div>
-      {groups.map(([key, groupCourses], index) => (
-        <section
-          key={key}
-          className={cn('pt-6', index > 0 && 'mt-4 border-t border-border-subtle')}
-        >
+      {groups.map(([key, groupCourses]) => (
+        <section key={key} className="pt-6">
           <GroupHeading groupKey={key} todayKey={todayKey} tomorrowKey={tomorrowKey} />
-          <ul className="mt-1">
+          <ul className="mt-3 space-y-2">
             {groupCourses.map((course) => (
               <AgendaRow
                 key={course.id}
                 course={course}
                 todayKey={todayKey}
+                showThumb={showThumbs}
+                showInstructor={showInstructor}
                 viewingSlug={viewingSlug}
                 viewingName={viewingName}
               />
@@ -122,11 +145,15 @@ function GroupHeading({
 function AgendaRow({
   course,
   todayKey,
+  showThumb,
+  showInstructor,
   viewingSlug,
   viewingName,
 }: {
   course: PublicCourseWithDetails;
   todayKey: string;
+  showThumb: boolean;
+  showInstructor: boolean;
   viewingSlug?: string;
   viewingName?: string | null;
 }) {
@@ -148,35 +175,34 @@ function AgendaRow({
   const isCancelled = bookability === 'cancelled';
 
   const time = extractTime(course.time_schedule);
-  const duration = durationLabel(course);
-  const sub = subLabel(course);
+  const sub = subLabel(course, showInstructor);
   const price = entryPrice(course);
 
+  // Card anatomy mirrors the landing hero mock's «Neste kurs» rows: centered
+  // time slot · title with its metadata on the second line · right meta.
+  // All text full text-foreground — muted ink on the muted fill is
+  // unreadable (see GetStartedPage's StepCard, the ratified filled card).
   const body = (
     <>
-      <span className="w-12 sm:w-14 shrink-0 flex flex-col gap-0.5">
-        <span className="text-base font-medium tabular-nums text-foreground">{time || '—'}</span>
-        {duration && (
-          <span className="text-sm text-foreground-muted whitespace-nowrap">{duration}</span>
-        )}
+      <span className="w-12 sm:w-14 shrink-0 text-base font-medium tabular-nums text-foreground">
+        {time || '—'}
       </span>
 
-      <CourseThumb course={course} />
+      {showThumb && <CourseThumb course={course} />}
 
       <div className="min-w-0 flex-1">
         <p className="text-base font-medium text-foreground">{course.title}</p>
-        {sub && <p className="mt-0.5 text-sm text-foreground-muted truncate">{sub}</p>}
+        {sub && <p className="mt-0.5 text-sm text-foreground truncate">{sub}</p>}
       </div>
 
-      {/* Fixed right column: price always renders (also on full/cancelled
-        * rows), the pill under it carries the bookable state. Scarcity is
-        * deliberately NOT shown here — urgency copy lives on the detail
-        * page only. */}
+      {/* Fixed right slot: price stacked over the state pill on every row
+        * (ratified over an inline variant). Scarcity is deliberately NOT
+        * shown here — urgency copy lives on the detail page only. */}
       <div className="shrink-0 flex flex-col items-end gap-1.5">
         <span className="text-base font-medium tabular-nums whitespace-nowrap text-foreground">
           {price.from && price.amount ? (
             <>
-              <span className="font-normal text-foreground-muted">fra </span>
+              <span className="font-normal">fra </span>
               {formatKroner(price.amount)}
             </>
           ) : (
@@ -187,8 +213,8 @@ function AgendaRow({
           className={cn(
             'inline-flex h-8 items-center rounded-full px-3 text-sm font-medium transition-colors duration-150',
             bookability === 'open'
-              ? 'bg-muted text-foreground group-hover:bg-foreground group-hover:text-background'
-              : 'bg-muted text-foreground-muted',
+              ? 'bg-background text-foreground group-hover:bg-foreground group-hover:text-background'
+              : 'bg-background text-foreground-muted',
           )}
         >
           {BOOKABILITY_LABELS[bookability]}
@@ -197,26 +223,23 @@ function AgendaRow({
     </>
   );
 
+  // Each course is its own filled bg-muted card (the landing hero mock's
+  // «Neste kurs» rows / GetStartedPage StepCard grammar) — the card is the
+  // click target, day headings group the stack.
+  const cardShell = 'flex items-center gap-3 sm:gap-4 rounded-xl bg-muted px-4 py-3.5';
+
   return (
-    <li
-      className={cn(
-        'border-t border-border-subtle first:border-t-0 transition-colors duration-150',
-        // The rounded hover fill overlaps the hairlines above and below the
-        // row — fade out the two that touch it: the row's own top border and
-        // the next row's. Keyed on a:hover so inert (cancelled) rows keep
-        // their dividers.
-        '[&:has(>a:hover)]:border-transparent [li:has(>a:hover)+&]:border-transparent',
-      )}
-    >
+    <li>
       {isCancelled ? (
-        <div className="flex items-center gap-3 sm:gap-4 py-4 opacity-55">{body}</div>
+        <div className={cn(cardShell, 'opacity-55')}>{body}</div>
       ) : (
         <Link
           to={`/${linkSlug}/${course.slug}`}
           state={{ fromSlug, fromName }}
           className={cn(
-            'group flex items-center gap-3 sm:gap-4 py-4 -mx-3 px-3 rounded-xl transition-colors hover:bg-hover',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+            'group transition-colors hover:bg-active',
+            cardShell,
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
           )}
         >
           {body}
@@ -244,24 +267,30 @@ function durationLabel(course: PublicCourseWithDetails): string {
   return '';
 }
 
-/** Second line of the title stack: «8 økter · Ingrid Larsen» for a series,
- * instructor alone for a workshop or drop-in class — no type chips. Online
- * delivery is a detail, so «Nettkurs» lives here, not in the time stack.
- * Copy rule: one «·» may pair two values; with three parts we fall back to
- * commas — more than one interpunct in a string is banned. */
-function subLabel(course: PublicCourseWithDetails): string {
+/** Metadata line under the title (the hero mock's second row): duration
+ * first («90 min», «2 dager»), session count for a series, then instructor —
+ * only when the list-level rule says it distinguishes rows (≥2 instructors
+ * at the studio) — and «Nettkurs» for online delivery. Copy rule: one «·»
+ * may pair two values; with three parts we fall back to commas — more than
+ * one interpunct in a string is banned. */
+function subLabel(course: PublicCourseWithDetails, showInstructor: boolean): string {
   const parts: string[] = [];
+  const duration = durationLabel(course);
+  if (duration) parts.push(duration);
   if (course.format === 'series') {
     const sessions = course.next_session?.total_sessions ?? course.total_weeks;
     if (sessions && sessions > 1) parts.push(`${sessions} økter`);
   }
-  if (course.instructor_name) parts.push(course.instructor_name);
+  if (showInstructor && course.instructor_name) parts.push(course.instructor_name);
   if (course.delivery_mode === 'online') parts.push('Nettkurs');
   return parts.length > 2 ? parts.join(', ') : parts.join(' · ');
 }
 
+/** Only mounted when the whole list qualified for thumbnails, so `src` is
+ * always set. The muted tile remains solely as the runtime error state for a
+ * URL that fails to load — never a designed "no image" placeholder. */
 function CourseThumb({ course }: { course: PublicCourseWithDetails }) {
-  const src = course.image_url || course.seller?.default_course_image_url || null;
+  const src = resolveCourseImage(course);
   const [failed, setFailed] = useState(false);
 
   if (!src || failed) {

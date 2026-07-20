@@ -11,12 +11,14 @@ interface StudioMastheadProps {
 }
 
 /**
- * Profile masthead (Time2book profile pattern, mockup Q2A): the page opens
- * with a cover header band — the seller's cover image when set, a quiet
- * muted fill when not — with the logo overlapping the band's bottom edge on
- * its own line, and the name + identity lines stacked under it. The identity
- * block is quiet plain text — place name on its own line, street address +
- * a standalone «Få veibeskrivelse» link under it — no icons.
+ * Profile masthead (Time2book profile pattern, mockup Q2A): with a cover
+ * image set, the page opens with a cover band and the logo overlapping the
+ * band's bottom edge on its own line, name + identity lines stacked under.
+ * Without a cover (or when it fails to load) the band is GONE, not a grey
+ * placeholder — the header starts directly at the logo lockup on the plain
+ * canvas (Luma profile / Airbnb host pattern: nobody reserves an empty image
+ * box). The identity block is quiet plain text — place name on its own line,
+ * street address + a standalone «Få veibeskrivelse» link under it — no icons.
  */
 export function StudioMasthead({ organization, location }: StudioMastheadProps) {
   const [coverFailed, setCoverFailed] = useState(false);
@@ -25,27 +27,27 @@ export function StudioMasthead({ organization, location }: StudioMastheadProps) 
 
   return (
     <header>
-      <div className="h-32 sm:h-44 w-full overflow-hidden bg-muted">
-        {showCoverImage && (
+      {showCoverImage && (
+        <div className="h-44 sm:h-60 w-full overflow-hidden bg-muted">
           <img
             src={coverUrl}
             alt=""
             className="media-outline size-full object-cover"
             onError={() => setCoverFailed(true)}
           />
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="relative -mt-9">
+        <div className={showCoverImage ? 'relative -mt-12' : 'pt-10 sm:pt-12'}>
           <LogoTile organization={organization} />
         </div>
 
-        <h1 className="mt-4 text-2xl font-medium text-foreground">
+        <h1 className="mt-4 text-3xl font-medium text-foreground">
           {organization.name}
         </h1>
 
-        {location && <LocationIdentity location={location} />}
+        {location && <LocationIdentity location={location} organizationName={organization.name} />}
       </div>
     </header>
   );
@@ -60,8 +62,20 @@ function hasDistinctPlaceName(location: StudioLocation): boolean {
   return label !== addressLead;
 }
 
-function LocationIdentity({ location }: { location: StudioLocation }) {
-  const showPlaceName = hasDistinctPlaceName(location);
+function LocationIdentity({
+  location,
+  organizationName,
+}: {
+  location: StudioLocation;
+  organizationName: string;
+}) {
+  // A venue label that just repeats the studio name (course locations are
+  // often saved as "<studio name>, <street>") would render the name twice in
+  // a row under the H1 — drop it and keep the address line alone.
+  const repeatsStudioName =
+    location.label.trim().toLocaleLowerCase('nb-NO')
+    === organizationName.trim().toLocaleLowerCase('nb-NO');
+  const showPlaceName = hasDistinctPlaceName(location) && !repeatsStudioName;
   const address = location.address || location.label;
 
   return (
@@ -98,7 +112,7 @@ function LogoTile({ organization }: { organization: PublicSeller }) {
   const logoUrl = organization.logo_url;
 
   const frame =
-    'size-18 shrink-0 rounded-full overflow-hidden flex items-center justify-center border-[3px] border-background';
+    'size-24 shrink-0 rounded-full overflow-hidden flex items-center justify-center border-[3px] border-background';
 
   if (logoUrl && !logoFailed) {
     return (
@@ -115,7 +129,7 @@ function LogoTile({ organization }: { organization: PublicSeller }) {
 
   return (
     <div className={cn(frame, 'bg-muted')} aria-label={organization.name}>
-      <span className="text-xl font-medium text-foreground-muted">
+      <span className="text-2xl font-medium text-foreground-muted">
         {initials(organization.name)}
       </span>
     </div>

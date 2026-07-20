@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -17,6 +17,8 @@ import {
   buildDurationShort,
   buildMetaCardRows,
   buildNextSessionLabel,
+  capitalize,
+  formatFullDate,
 } from '@/components/public/course-details/schedule-format';
 import { fetchPublicCourseBySlug, resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug } from '@/services/sellers';
@@ -40,6 +42,9 @@ export default function PublicCourseDetailPage() {
   const { user } = useAuth();
   const navState = (location.state ?? null) as DetailNavState | null;
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  // Lifted out of the hero component: whether an image exists decides the
+  // whole page's layout (two-column vs single-column), not just the hero.
+  const [heroFailed, setHeroFailed] = useState(false);
 
   // One query owns the whole load. Redirect decisions are returned as data
   // (not performed inside the fetch) so the queryFn stays side-effect-free;
@@ -118,6 +123,12 @@ export default function PublicCourseDetailPage() {
     }
   }, [detailQuery.data, navigate, location.state]);
 
+  // The page stays mounted across course navigations — a failed hero on one
+  // course must not collapse the layout of the next.
+  useEffect(() => {
+    setHeroFailed(false);
+  }, [slug, courseSlug]);
+
   const course = detailQuery.data?.kind === 'ok' ? detailQuery.data.course : null;
   const sessions = detailQuery.data?.kind === 'ok' ? detailQuery.data.sessions : [];
   const tiers = detailQuery.data?.kind === 'ok' ? detailQuery.data.tiers : [];
@@ -174,26 +185,45 @@ export default function PublicCourseDetailPage() {
   const checkoutHref = course ? `/${slug}/${course.slug}/pamelding` : '';
   const paymentNotReady = tiles.some((t) => t.amount > 0) && !course?.seller?.stripe_onboarding_complete;
 
-  // "Tid" line under the calendar tile — falls back to "Start" while a
-  // course has no recurring schedule (e.g. a single-day class with no
-  // resolvable time range).
+  // Date lockup next to the calendar tile: the written date is the primary
+  // line (the tile alone reads naked — Luma writes the date out too), the
+  // time under it. Without a start date the time line is promoted.
   const metaRows = course ? buildMetaCardRows(course, sessions.length) : [];
-  const tidLabel =
-    metaRows.find((r) => r.label === 'Tid')?.value
-    ?? metaRows.find((r) => r.label === 'Start')?.value
-    ?? '';
+  const tidLabel = metaRows.find((r) => r.label === 'Tid')?.value ?? '';
+  const dateLine = course?.start_date ? capitalize(formatFullDate(course.start_date)) : null;
   const weeksLabel = course ? buildDurationShort(course, sessions.length) : '';
+
+  // No image (or a broken URL) → the 300px image column would be a card
+  // floating over dead white space. The layout reflows to one centered
+  // column instead (ClassPass/Fresha pattern: the slot disappears, no
+  // placeholder art), with the Arrangør card after the content.
+  const heroImg = course ? resolveCourseImage(course) : null;
+  const hasHero = !!heroImg && !heroFailed;
+
+  // The skeleton mirrors whichever layout the loaded page will use. Arriving
+  // from the storefront agenda the course is already in that query's cache,
+  // so the answer is known before this page's own fetch resolves; a direct
+  // load guesses single-column (the common case for new studios).
+  const queryClient = useQueryClient();
+  const cachedStorefront = queryClient.getQueryData<{ courses: PublicCourseWithDetails[] }>([
+    'storefront',
+    slug,
+  ]);
+  const cachedCourse = cachedStorefront?.courses.find((c) => c.slug === courseSlug);
+  const skeletonTwoCol = course
+    ? hasHero
+    : !!cachedCourse && !!resolveCourseImage(cachedCourse);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 pt-8 pb-16">
-        {loading && <CourseDetailSkeletonBody />}
+        {loading && <CourseDetailSkeletonBody twoCol={skeletonTwoCol} />}
 
         {loadFailed && !loading && <PageState variant="server-error" as="div" />}
         {notFound && !loading && <PageState variant="public-course" as="div" />}
 
         {!loading && !loadFailed && !notFound && course && (
-          <>
+          <div className={cn(!hasHero && 'mx-auto w-full max-w-[640px]')}>
             <Link
               to={backHref}
               className="inline-flex items-center gap-1 text-sm text-foreground-muted hover:text-foreground transition-colors"
@@ -202,23 +232,48 @@ export default function PublicCourseDetailPage() {
               Tilbake til kursoversikten
             </Link>
 
-            <div className="mt-6 grid items-start gap-8 md:grid-cols-[300px_minmax(0,1fr)] lg:gap-12">
-              <div>
-                <CourseHeroImage course={course} />
-                <SellerCard course={course} className="mt-4 max-md:hidden" />
-              </div>
+            <div
+              className={cn(
+                'mt-6',
+                hasHero && 'grid items-start gap-8 md:grid-cols-[300px_minmax(0,1fr)] lg:gap-12',
+              )}
+            >
+              {hasHero && (
+                <div>
+                  <CourseHeroImage src={heroImg!} onFailed={() => setHeroFailed(true)} />
+                  <SellerCard course={course} className="mt-4 max-md:hidden" />
+                </div>
+              )}
 
               <div className="min-w-0">
                 <h1 className="text-4xl font-medium text-foreground">{course.title}</h1>
 
-                <div className="mt-5 flex items-start gap-3">
-                  <DateBadge dateStr={course.start_date ?? undefined} size="sm" className="bg-muted" />
-                  <div className="min-w-0">
-                    <p className="text-[15px] font-medium text-foreground">{tidLabel}</p>
-                    <p className="mt-0.5 text-sm text-foreground-muted">
-                      {weeksLabel}
+                {/* Metadata band directly under the title: two parallel
+                    outlined tiles stretched across the column — calendar
+                    tile + date/time, avatar + arrangør (name primary, role
+                    label muted under, same anatomy in both). The arrangør
+                    tile stands in for the bordered rail card wherever that
+                    card isn't shown (no-image layout + mobile); with an
+                    image on desktop the rail card stays and the date tile
+                    spans alone. Stacks on narrow screens. */}
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-stretch">
+                  <div className="flex flex-1 items-center gap-3 rounded-xl border border-border-subtle px-4 py-3">
+                    {/* Default 48px tile — the sm 40px one read undersized
+                        next to the two-line date/time lockup. */}
+                    <DateBadge dateStr={course.start_date ?? undefined} />
+                    <div className="min-w-0">
+                      <p className="text-[15px] font-medium text-foreground">
+                        {dateLine ?? tidLabel}
+                      </p>
+                      {dateLine && tidLabel && (
+                        <p className="mt-0.5 text-sm text-foreground-muted">{tidLabel}</p>
+                      )}
+                      {/* One session = date + time say everything; «1 økt»
+                          is noise. Multi-session courses get count +
+                          calendar. */}
                       {sessions.length > 1 && (
-                        <>
+                        <p className="mt-0.5 text-sm text-foreground-muted">
+                          {weeksLabel}
                           {' · '}
                           <button
                             type="button"
@@ -227,18 +282,19 @@ export default function PublicCourseDetailPage() {
                           >
                             Se alle datoer
                           </button>
-                        </>
+                        </p>
                       )}
-                    </p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Who teaches THIS course — distinct from the Arrangør card
-                    (the studio). Suppressed when it would just repeat the
-                    seller name (solo teachers). */}
-                {course.instructor_name && course.instructor_name !== course.seller?.name && (
-                  <p className="mt-2.5 text-sm text-foreground-muted">Med {course.instructor_name}</p>
-                )}
+                  <SellerLockup
+                    course={course}
+                    className={cn(
+                      'flex-1 rounded-xl border border-border-subtle px-4 py-3',
+                      hasHero && 'md:hidden',
+                    )}
+                  />
+                </div>
 
                 <BookingCard
                   course={course}
@@ -275,7 +331,6 @@ export default function PublicCourseDetailPage() {
                   </section>
                 )}
 
-                <SellerCard course={course} className="mt-8 md:hidden" />
               </div>
             </div>
 
@@ -285,7 +340,7 @@ export default function PublicCourseDetailPage() {
               sessions={sessions}
               duration={course.duration}
             />
-          </>
+          </div>
         )}
       </main>
     </div>
@@ -294,34 +349,63 @@ export default function PublicCourseDetailPage() {
 
 // ── Hero image ──────────────────────────────────────────────────────────
 
-function CourseHeroImage({ course }: { course: PublicCourseWithDetails }) {
-  const img = resolveCourseImage(course);
-  // A broken image URL falls back to the same no-image branch (render
-  // nothing) rather than leaving a broken-image glyph on the page.
-  const [failed, setFailed] = useState(false);
-  if (!img || failed) return null;
+function CourseHeroImage({ src, onFailed }: { src: string; onFailed: () => void }) {
+  // A broken image URL reports up so the page can reflow to the single-column
+  // no-image layout rather than leaving a broken-image glyph on the page.
   return (
     <div className="aspect-square w-full overflow-hidden rounded-2xl bg-muted">
       <img
-        src={img}
+        src={src}
         alt=""
         className="media-outline size-full object-cover"
-        onError={() => setFailed(true)}
+        onError={onFailed}
       />
     </div>
   );
 }
 
-// ── Arrangør card ──────────────────────────────────────────────────────────
+// ── Arrangør ───────────────────────────────────────────────────────────────
 
+/** Names who the participant actually meets: the course's instructor when
+ * the studio has picked one, otherwise the studio itself. All attribution
+ * lives in this one slot — no floating «Med …» line elsewhere. The studio
+ * logo only backs the avatar when the slot shows the studio's own name. */
+function sellerIdentity(course: PublicCourseWithDetails): {
+  name: string | undefined;
+  avatarSrc: string | null | undefined;
+} {
+  const instructor = course.instructor_name?.trim() || null;
+  const name = instructor ?? course.seller?.name;
+  const avatarSrc =
+    !instructor || instructor === course.seller?.name ? course.seller?.logo_url : undefined;
+  return { name, avatarSrc };
+}
+
+/** Bordered Arrangør card — the image rail's variant (desktop with image). */
 function SellerCard({ course, className }: { course: PublicCourseWithDetails; className?: string }) {
+  const { name, avatarSrc } = sellerIdentity(course);
   return (
     <PublicCard header={<span>Arrangør</span>} className={className} bodyClassName="p-3">
       <div className="flex items-center gap-3">
-        <UserAvatar name={course.seller?.name} src={course.seller?.logo_url} size="md" />
-        <span className="text-sm font-medium text-foreground">{course.seller?.name}</span>
+        <UserAvatar name={name} src={avatarSrc} size="md" />
+        <span className="text-sm font-medium text-foreground">{name}</span>
       </div>
     </PublicCard>
+  );
+}
+
+/** Containerless Arrangør lockup for the metadata band — same anatomy as the
+ * date lockup beside it: 48px icon, name primary, muted role label under. */
+function SellerLockup({ course, className }: { course: PublicCourseWithDetails; className?: string }) {
+  const { name, avatarSrc } = sellerIdentity(course);
+  return (
+    <div className={cn('flex min-w-0 items-center gap-3', className)}>
+      <UserAvatar name={name} src={avatarSrc} className="size-12" />
+      <div className="min-w-0">
+        <p className="truncate text-[15px] font-medium text-foreground">{name}</p>
+        <p className="mt-0.5 text-sm text-foreground-muted">Arrangør</p>
+      </div>
+    </div>
   );
 }
 
@@ -721,8 +805,32 @@ function TierRow({
 // ── Skeleton ─────────────────────────────────────────────────────────────
 
 /** Shared body so the page's inline loading branch and the standalone export
- * (used by dev previews) render identical markup without duplicating it. */
-function CourseDetailSkeletonBody() {
+ * (used by dev previews) render identical markup without duplicating it.
+ * Mirrors the loaded page's two layouts: `twoCol` for courses with an image,
+ * otherwise the centered single column. */
+function CourseDetailSkeletonBody({ twoCol = false }: { twoCol?: boolean }) {
+  if (!twoCol) {
+    return (
+      <div
+        className="mx-auto w-full max-w-[640px] animate-in fade-in duration-150"
+        role="status"
+        aria-live="polite"
+      >
+        <span className="sr-only">Laster…</span>
+        <Skeleton className="h-4 w-40" />
+        <div className="mt-6">
+          <Skeleton className="h-10 w-3/4" />
+          {/* Metadata band: two stretched outlined tiles */}
+          <div className="mt-5 flex gap-3">
+            <Skeleton className="h-18 flex-1 rounded-xl" />
+            <Skeleton className="h-18 flex-1 rounded-xl" />
+          </div>
+          <Skeleton className="mt-7 h-48 w-full rounded-2xl" />
+          <Skeleton className="mt-8 h-32 w-full" />
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="animate-in fade-in duration-150" role="status" aria-live="polite">
       <span className="sr-only">Laster…</span>
@@ -743,11 +851,11 @@ function CourseDetailSkeletonBody() {
   );
 }
 
-export function CourseDetailSkeleton() {
+export function CourseDetailSkeleton({ twoCol = false }: { twoCol?: boolean }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 pt-8 pb-16">
-        <CourseDetailSkeletonBody />
+        <CourseDetailSkeletonBody twoCol={twoCol} />
       </main>
     </div>
   );

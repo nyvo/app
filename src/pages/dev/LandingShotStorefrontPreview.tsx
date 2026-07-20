@@ -58,10 +58,14 @@ const FLYT_COURSES = MOCK_COURSES.map((course) => {
   const rebranded = {
     ...course,
     location: course.location ? 'Flyt Studio, Markveien 12' : null,
+    // The agenda's thumbnail column is all-or-none (StudioAgendaList): every
+    // course needs a resolvable image or the whole list drops to text rows.
+    // The two local webp shots cover the imageless mocks too so the marketing
+    // capture keeps the photo grammar.
     image_url:
-      course.id === 'mock-yoga-series'
+      course.id === 'mock-yoga-series' || course.id === 'mock-closed-series'
         ? yogaClassImg
-        : course.id === 'mock-online'
+        : course.id === 'mock-online' || course.id === 'mock-cancelled'
           ? pilatesGroupImg
           : course.image_url,
   };
