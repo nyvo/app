@@ -3,10 +3,11 @@
 // owner_event_alerts migration); we format a plain-text email and send it to
 // the platform owner via Resend.
 //
-// Destination resolution: the OPS_ALERT_EMAIL function secret if set, else
-// the `owner_alert_email` Vault secret via public.get_owner_alert_email().
-// Fully gated like ops-health-alert: with no destination or Resend env it
-// logs and no-ops — an alert must never surface an error to the caller.
+// Destination resolution: the `owner_alert_webhook` Vault secret (Slack
+// incoming webhook) when set; else email — OPS_ALERT_EMAIL function secret
+// or the `owner_alert_email` Vault secret. Fully gated like ops-health-alert:
+// with no destination it logs and no-ops — an alert must never surface an
+// error to the caller.
 //
 // Auth mirrors the cron functions: x-cron-secret (CRON_SECRET) or a
 // service-role bearer. Self-contained (no ../_shared imports) so it can be
@@ -14,7 +15,7 @@
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { formatOwnerAlert, type OwnerEventPayload } from './format.ts'
+import { formatOwnerAlert, formatSlackMessage, type OwnerEventPayload } from './format.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -57,7 +58,15 @@ Deno.serve(async (req: Request) => {
     return new Response(`Unknown event type: ${payload.type ?? '(none)'}`, { status: 400 })
   }
 
-  const to = alertEmail || (await vaultAlertEmail())
+  // Slack first — the owner's primary alert channel. Email is the fallback
+  // when no webhook is configured.
+  const webhook = await vaultSecret('get_owner_alert_webhook')
+  if (webhook) {
+    const sent = await postToSlack(webhook, formatSlackMessage(payload)!)
+    return json({ alerted: sent, channel: 'slack' })
+  }
+
+  const to = alertEmail || (await vaultSecret('get_owner_alert_email'))
   if (!to || !resendApiKey || !resendFrom) {
     console.warn('owner-event-alert: event received but alerting not configured', payload.type)
     return json({ alerted: false })
@@ -80,23 +89,45 @@ Deno.serve(async (req: Request) => {
     })
     if (!res.ok) {
       console.error('owner-event-alert: Resend send failed', res.status, await res.text())
-      return json({ alerted: false })
+      return json({ alerted: false, channel: 'email' })
     }
-    return json({ alerted: true })
+    return json({ alerted: true, channel: 'email' })
   } catch (err) {
     console.error('owner-event-alert: Resend send errored', err)
-    return json({ alerted: false })
+    return json({ alerted: false, channel: 'email' })
   }
 })
 
-/** Owner address from Vault (service-role RPC). Empty string when unset. */
-async function vaultAlertEmail(): Promise<string> {
+/** POST a mrkdwn message to a Slack incoming webhook. */
+async function postToSlack(webhook: string, text: string): Promise<boolean> {
+  try {
+    const res = await fetch(webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (!res.ok) {
+      console.error('owner-event-alert: Slack post failed', res.status, await res.text())
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error('owner-event-alert: Slack post errored', err)
+    return false
+  }
+}
+
+/** Owner alert destination from Vault (service-role RPC). '' when unset. */
+async function vaultSecret(
+  rpc: 'get_owner_alert_webhook' | 'get_owner_alert_email',
+): Promise<string> {
   if (!supabaseUrl || !supabaseServiceKey) return ''
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
-    const { data, error } = await supabase.rpc('get_owner_alert_email')
+    const { data, error } = await supabase.rpc(rpc)
     if (error) {
-      console.error('owner-event-alert: get_owner_alert_email failed', error.message)
+      console.error(`owner-event-alert: ${rpc} failed`, error.message)
       return ''
     }
     return typeof data === 'string' ? data : ''

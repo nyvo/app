@@ -68,6 +68,24 @@ export function formatOwnerAlert(payload: OwnerEventPayload): OwnerAlertContent 
   }
 }
 
+// One emoji per event type so the Slack feed scans at a glance.
+const TYPE_EMOJI: Record<string, string> = {
+  booking: '🎟️',
+  new_seller: '✨',
+  new_user: '👤',
+}
+
+/**
+ * Slack mrkdwn message for an event: emoji + bold subject line, detail lines
+ * under it. Null for unknown types, same contract as formatOwnerAlert.
+ */
+export function formatSlackMessage(payload: OwnerEventPayload): string | null {
+  const content = formatOwnerAlert(payload)
+  if (!content) return null
+  const emoji = TYPE_EMOJI[payload.type ?? '']
+  return `${emoji ? `${emoji} ` : ''}*${content.subject}*\n${content.text}`
+}
+
 function amountLine(payload: OwnerEventPayload): string {
   const amount = Number(payload.amount_paid ?? 0)
   if (!amount) return 'Gratis'

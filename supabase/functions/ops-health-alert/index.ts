@@ -1,11 +1,11 @@
 // Cron-triggered ops health alert.
 //
 // Runs public.ops_health_check() and, if any money-state anomaly count is
-// non-zero, emails a summary via Resend. Destination: the OPS_ALERT_EMAIL
-// function secret if set, else the `owner_alert_email` Vault secret via
-// public.get_owner_alert_email() (shared with owner-event-alert). Fully
-// gated: with no destination (or Resend env) it still runs the check and
-// returns the summary, but sends nothing.
+// non-zero, sends a summary to the owner. Destination mirrors
+// owner-event-alert: the `owner_alert_webhook` Vault secret (Slack) when
+// set, else email via Resend (OPS_ALERT_EMAIL function secret or the
+// `owner_alert_email` Vault secret). Fully gated: with no destination it
+// still runs the check and returns the summary, but sends nothing.
 //
 // Auth mirrors the other cron functions: x-cron-secret (CRON_SECRET) or a
 // service-role bearer.
@@ -45,8 +45,16 @@ Deno.serve(async (req: Request) => {
     const failing = Object.entries(checks).filter(([, count]) => Number(count) > 0)
     const total = failing.reduce((sum, [, count]) => sum + Number(count), 0)
 
-    const to = alertEmail || (await vaultAlertEmail(supabase))
-    const alerted = total > 0 ? await sendAlert(checks, failing, to) : false
+    let alerted = false
+    if (total > 0) {
+      const webhook = await vaultSecret(supabase, 'get_owner_alert_webhook')
+      if (webhook) {
+        alerted = await postToSlack(webhook, `🚨 *Ops health: pengestatus-avvik*\n${anomalyLines(failing)}`)
+      } else {
+        const to = alertEmail || (await vaultSecret(supabase, 'get_owner_alert_email'))
+        alerted = await sendAlert(checks, failing, to)
+      }
+    }
 
     return new Response(
       JSON.stringify({ checks, total_anomalies: total, alerted }),
@@ -58,16 +66,41 @@ Deno.serve(async (req: Request) => {
   }
 })
 
-// Owner address from Vault (service-role RPC). Empty string when unset.
-async function vaultAlertEmail(
+// Owner alert destination from Vault (service-role RPC). '' when unset.
+async function vaultSecret(
   supabase: ReturnType<typeof createClient>,
+  rpc: 'get_owner_alert_webhook' | 'get_owner_alert_email',
 ): Promise<string> {
-  const { data, error } = await supabase.rpc('get_owner_alert_email')
+  const { data, error } = await supabase.rpc(rpc)
   if (error) {
-    console.error('ops-health-alert: get_owner_alert_email failed', error.message)
+    console.error(`ops-health-alert: ${rpc} failed`, error.message)
     return ''
   }
   return typeof data === 'string' ? data : ''
+}
+
+function anomalyLines(failing: [string, number][]): string {
+  return failing.map(([name, count]) => `- ${name}: ${count}`).join('\n')
+}
+
+// POST a mrkdwn message to a Slack incoming webhook.
+async function postToSlack(webhook: string, text: string): Promise<boolean> {
+  try {
+    const res = await fetch(webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (!res.ok) {
+      console.error('ops-health-alert: Slack post failed', res.status, await res.text())
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error('ops-health-alert: Slack post errored', (err as Error).message)
+    return false
+  }
 }
 
 // Email a plain-text anomaly summary via the Resend REST API. Optional: with no
@@ -83,7 +116,7 @@ async function sendAlert(
     return false
   }
 
-  const lines = failing.map(([name, count]) => `- ${name}: ${count}`).join('\n')
+  const lines = anomalyLines(failing)
   const text =
     'Ops health check found money-state anomalies in the UpNext database:\n\n' +
     `${lines}\n\n` +

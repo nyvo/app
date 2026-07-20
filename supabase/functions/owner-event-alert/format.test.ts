@@ -1,7 +1,7 @@
 // deno test --allow-env supabase/functions/owner-event-alert/
 
 import { assert, assertEquals } from 'jsr:@std/assert@1'
-import { formatOwnerAlert } from './format.ts'
+import { formatOwnerAlert, formatSlackMessage } from './format.ts'
 
 Deno.test('booking alert includes course, seller and formatted amount', () => {
   const content = formatOwnerAlert({
@@ -67,4 +67,21 @@ Deno.test('new user alert', () => {
 Deno.test('unknown event type returns null', () => {
   assertEquals(formatOwnerAlert({ type: 'nonsense' }), null)
   assertEquals(formatOwnerAlert({}), null)
+})
+
+Deno.test('slack message has emoji, bold subject and detail lines', () => {
+  const text = formatSlackMessage({
+    type: 'booking',
+    course_title: 'Yoga nybegynner',
+    seller_name: 'Studio Test',
+    amount_paid: 2200,
+    payment_status: 'paid',
+  })
+  assert(text)
+  assert(text.startsWith('🎟️ *Ny påmelding: Yoga nybegynner*\n'))
+  assert(text.includes('Arrangør: Studio Test'))
+})
+
+Deno.test('slack message is null for unknown types', () => {
+  assertEquals(formatSlackMessage({ type: 'nonsense' }), null)
 })
