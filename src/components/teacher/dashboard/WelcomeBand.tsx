@@ -43,7 +43,13 @@ export function WelcomeBandCard() {
           Sett opp studioet ditt, opprett første kurs og ta imot påmeldinger.
         </p>
       </div>
-      <Button asChild className="w-full sm:w-auto">
+      {/* White CTA mirrors the landing hero's .btn-white; the band is
+          theme-stable (see .bg-gradient-brand), so the button stays white
+          with dark ink in dark mode too. */}
+      <Button
+        asChild
+        className="w-full bg-white text-foreground shadow-[0_6px_18px_oklch(0.35_0.05_250_/_0.18)] sm:w-auto dark:text-background"
+      >
         <Link to={routes.getStarted}>Kom i gang</Link>
       </Button>
     </section>
