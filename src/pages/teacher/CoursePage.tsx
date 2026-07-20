@@ -19,7 +19,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
 import { ShareCoursePopover } from '@/components/ui/share-course-popover';
 import { CourseSettingsTab } from '@/components/teacher/CourseSettingsTab';
-import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
+import { CourseOverviewTab, CourseOverviewSkeleton } from '@/components/teacher/CourseOverviewTab';
 import { SessionsModal } from '@/components/teacher/SessionsModal';
 import { PageTabs, PageTab } from '@/components/ui/page-tabs';
 import { SendCourseMessageDrawer } from '@/components/teacher/SendCourseMessageDrawer';
@@ -905,13 +905,15 @@ const CoursePage = () => {
   }
 
   if (isLoading) {
+    // Content skeleton mirrors the Oversikt layout (the tab everyone lands
+    // on) — KPI band + Kursplan/Sted pair — so the swap doesn't jump.
     return (
       <PageShell
         title={<Skeleton className="h-7 w-64" />}
         badge={<Skeleton className="h-4 w-32" />}
         tabs={<Skeleton className="h-10 w-full max-w-md" />}
       >
-        <Skeleton className="h-72 w-full" />
+        <CourseOverviewSkeleton />
       </PageShell>
     );
   }
@@ -1228,15 +1230,28 @@ const CoursePage = () => {
                     ) : (
                       <div role="table" className="-mx-3">
                         {/* Column header — anchored at the leading edge so the
-                            "Navn" label sits above the avatar+name unit. */}
-                        <div role="row" className={cn(PARTICIPANT_COLS, 'hidden md:grid py-3 border-b border-border-subtle text-sm text-foreground-muted', '[&:has(+div>:first-child:hover)]:border-transparent [&:has(+div>:first-child:focus-visible)]:border-transparent')}>
-                          <span role="columnheader">Navn</span>
-                          <span role="columnheader">Notat</span>
-                          <span role="columnheader">Status</span>
-                          <span role="columnheader" aria-hidden />
+                            "Navn" label sits above the avatar+name unit. The
+                            rowgroup wrappers complete the required
+                            table→rowgroup→row ownership chain for AT. */}
+                        {/* The :has() selectors hide the header's hairline when
+                            the first body row is hovered/focused (rounded fill
+                            vs divider collision) — they live here because the
+                            body rowgroup is this element's next sibling. */}
+                        <div
+                          role="rowgroup"
+                          className="hidden md:block [&:has(+div>:first-child:hover)>div]:border-transparent [&:has(+div>:first-child:focus-visible)>div]:border-transparent"
+                        >
+                          <div role="row" className={cn(PARTICIPANT_COLS, 'md:grid py-3 border-b border-border-subtle text-sm text-foreground-muted')}>
+                            <span role="columnheader">Navn</span>
+                            <span role="columnheader">Notat</span>
+                            <span role="columnheader">Status</span>
+                            <span role="columnheader">
+                              <span className="sr-only">Detaljer</span>
+                            </span>
+                          </div>
                         </div>
 
-                        <div className="divide-y divide-border-subtle">
+                        <div role="rowgroup" className="divide-y divide-border-subtle">
                           {sortedParticipants.map((p) => {
                             const name = p.participant_name || p.profile?.name || 'Ukjent';
                             const email = p.participant_email || p.profile?.email || '';
@@ -1274,7 +1289,11 @@ const CoursePage = () => {
                                   PARTICIPANT_COLS,
                                   'w-full text-left rounded-lg py-4 transition-colors cursor-pointer',
                                   'hover:bg-hover focus-visible:bg-hover outline-none',
-                                  'focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-subtle',
+                                  // Full-strength ring (matches the Kursplan
+                                  // cards' focus grammar) — the 15%-alpha
+                                  // subtle ring was below the 3:1 non-text
+                                  // contrast target for a keyboard indicator.
+                                  'focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
                                   // Hide the hairlines touching the hovered row so the
                                   // rounded fill doesn't collide with the dividers
                                   // (own border-bottom + previous sibling's).
@@ -1317,12 +1336,16 @@ const CoursePage = () => {
                                 <div role="cell" className="hidden md:flex min-w-0">
                                   {statusBadge}
                                 </div>
-                                {/* Chevron — indicates the row opens a drawer */}
-                                <ChevronRight
-                                  role="cell"
-                                  className="size-4 text-foreground-muted shrink-0"
-                                  aria-hidden="true"
-                                />
+                                {/* Chevron — indicates the row opens a drawer.
+                                    The cell itself stays in the a11y tree (a
+                                    row's cell count must match the header);
+                                    only the glyph is hidden. */}
+                                <span role="cell" className="flex shrink-0 items-center">
+                                  <ChevronRight
+                                    className="size-4 text-foreground-muted"
+                                    aria-hidden="true"
+                                  />
+                                </span>
                               </button>
                             );
                           })}
