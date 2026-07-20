@@ -205,13 +205,11 @@ const TeacherProfilePage = () => {
               title="Slett konto"
               description="Kontoen og innloggingen din slettes permanent."
             >
-              {/* Plain row — the destructive button carries the danger signal
-                  by itself; no tinted container. */}
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-base font-medium text-foreground">Slett kontoen din</span>
+              {/* Single-control section — the section title + description
+                  already say what this does, so no repeated row label. */}
+              <div>
                 <Button
                   variant="destructive"
-                  className="shrink-0"
                   onClick={() => setDeleteOpen(true)}
                 >
                   Slett konto
