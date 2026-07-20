@@ -637,9 +637,6 @@ const CheckoutSuccessPage = () => {
                             <span className="font-medium text-foreground tabular-nums">{shortRef(displaySignup.id)}</span>
                           </div>
                         </div>
-                        {!isFree && (
-                          <p className="mt-2 text-xs text-foreground-muted">Ingen mva. kommer i tillegg.</p>
-                        )}
                       </PublicCard>
                       {/* Account offer — logged-in users go straight to the
                           (auto-claimed) overview. Paid-signup only: claimMySignups
