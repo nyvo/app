@@ -38,3 +38,8 @@ verify_jwt = false
 # cron before it runs, silently taking monitoring offline.
 [functions.ops-health-alert]
 verify_jwt = false
+
+# Trigger-only owner alerts (new booking / seller / user). The DB triggers POST
+# x-cron-secret with no JWT — same posture and rationale as ops-health-alert.
+[functions.owner-event-alert]
+verify_jwt = false
