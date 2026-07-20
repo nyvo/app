@@ -11,6 +11,7 @@ import {
   HelpCircleIcon,
   Logout03Icon,
   SourceCodeIcon,
+  UserMultiple02Icon,
 } from '@hugeicons/core-free-icons';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,7 +54,8 @@ interface NavItem {
 }
 
 // Seller sidebar — single-level items: home, schedule, courses, the
-// storefront (Studio — Samarbeid lives there as a section), payouts.
+// storefront (Studio), collaboration (Samarbeid — both account types; the
+// page renders host or guest content by operating_model), payouts.
 // Personal account settings (Innstillinger) live in the footer account
 // menu, not here — they're low-frequency and belong under the user's
 // identity. No nested groups.
@@ -62,6 +64,7 @@ const SELLER_NAV_ITEMS: NavItem[] = [
   { icon: Calendar03Icon, label: 'Timeplan', href: routes.schedule },
   { icon: Folder01Icon, label: 'Kurs', href: routes.courses },
   { icon: Home01Icon, label: 'Studio', href: routes.studio },
+  { icon: UserMultiple02Icon, label: 'Samarbeid', href: routes.samarbeid },
   { icon: CreditCardIcon, label: 'Utbetalingskonto', href: routes.settingsPayouts },
 ];
 

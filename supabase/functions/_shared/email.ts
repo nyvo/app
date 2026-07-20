@@ -146,6 +146,12 @@ export interface AccountActionRequiredEmailProps {
   actionUrl: string
 }
 
+export interface InstructorInviteEmailProps {
+  studioName: string
+  /** Absolute link to /join/:token. */
+  acceptUrl: string
+}
+
 export type SendEmailInput =
   | { template: 'order-confirm'; to: string; props: OrderConfirmEmailProps; subject?: string; replyTo?: string }
   | { template: 'refund-receipt'; to: string; props: RefundReceiptEmailProps; subject?: string; replyTo?: string }
@@ -157,6 +163,7 @@ export type SendEmailInput =
   | { template: 'course-cancelled'; to: string; props: CourseCancelledEmailProps; subject?: string; replyTo?: string }
   | { template: 'signup-cancelled'; to: string; props: SignupCancelledEmailProps; subject?: string; replyTo?: string }
   | { template: 'account-action-required'; to: string; props: AccountActionRequiredEmailProps; subject?: string; replyTo?: string }
+  | { template: 'instructor-invite'; to: string; props: InstructorInviteEmailProps; subject?: string; replyTo?: string }
 
 export interface SendEmailResult {
   id?: string

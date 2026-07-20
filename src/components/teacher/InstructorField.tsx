@@ -46,7 +46,7 @@ export function InstructorField({
   const load = useCallback(async () => {
     const { data, error } = await fetchInstructors(sellerId);
     // A failed fetch must not read as "no instructors yet" — null the list
-    // and show the error line instead (AffiliationsSection convention).
+    // and show the error line instead (SamarbeidPage convention).
     if (error) { setInstructors(null); setLoadError(true); return; }
     setInstructors(data); setLoadError(false);
   }, [sellerId]);

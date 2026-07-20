@@ -168,6 +168,7 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
       subscription_provider: null,
       subscription_customer_id: null,
       subscription_external_id: null,
+      subscription_pending_reprice: false,
       uses_integrated_payments: false,
       created_at: (s.created_at ?? null) as string | null,
       updated_at: (s.created_at ?? null) as string | null,
@@ -450,7 +451,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (currentSellerRef.current) {
       // Update currentSeller with fresh data (e.g. after Stripe onboarding).
       // Hydrate operational fields via the member-gated RPC so consumers
-      // (PaymentsPage, AffiliationsSection) see fresh operating_model.
+      // (PaymentsPage, SamarbeidPage) see fresh operating_model.
       const freshSeller = loadedSellers.find((s) => s.id === currentSellerRef.current?.id)
       if (freshSeller) {
         const { seller: hydrated, failed: hydrateFailed } = await hydrateSellerOperational(freshSeller)
@@ -617,6 +618,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription_provider: null,
       subscription_customer_id: null,
       subscription_external_id: null,
+      subscription_pending_reprice: false,
       uses_integrated_payments: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
