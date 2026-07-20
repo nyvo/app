@@ -310,7 +310,7 @@ export default function JoinPage() {
     return (
       <Shell>
         <h1 className="text-3xl font-medium text-foreground mb-8">
-          Denne lenken er for kursholdere
+          Du har ikke tilgang
         </h1>
         <Button size="cta" className="w-full" onClick={() => navigate('/overview')}>
           Gå til min side
