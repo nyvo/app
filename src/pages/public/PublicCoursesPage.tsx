@@ -295,26 +295,12 @@ function StudioPageSkeleton() {
           <div className="pt-6">
             {/* Date header */}
             <Skeleton className="h-5 w-44" />
-            {/* Mirrors the agenda cards: time stack · title stack · price */}
+            {/* Mirrors the agenda cards — filled bg-muted tiles, so the
+                skeleton is the empty card shape itself (72px = py-3.5 pair
+                + two text lines). */}
             <div className="mt-3 space-y-2">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-4 rounded-xl border border-border-subtle px-4 py-3.5"
-                >
-                  <div className="w-14 shrink-0 space-y-1.5">
-                    <Skeleton className="h-4 w-11" />
-                    <Skeleton className="h-3.5 w-12" />
-                  </div>
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <Skeleton className="h-4 w-48 max-w-full" />
-                    <Skeleton className="h-3.5 w-64 max-w-full" />
-                  </div>
-                  <div className="shrink-0 flex flex-col items-end gap-1.5">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-8 w-20 rounded-full" />
-                  </div>
-                </div>
+                <Skeleton key={i} className="h-18 w-full rounded-xl" />
               ))}
             </div>
           </div>

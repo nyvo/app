@@ -28,8 +28,8 @@ interface StudioAgendaListProps {
  * list where the date headers are the navigation — no day strip, days
  * without courses simply don't render. Every course is exactly one row on
  * its display date (a series says «8 økter» on the second line, never one
- * row per session). Row contract, fixed slots: time/duration stack ·
- * [thumbnail] · title/details·instructor stack · price.
+ * row per session). Card contract, fixed slots: centered time · [thumbnail]
+ * · title with a metadata second line · stacked price + state pill.
  *
  * The thumbnail slot is list-level, all-or-none: it renders only when EVERY
  * visible course resolves an image (own image or the studio's default course
@@ -175,28 +175,24 @@ function AgendaRow({
   const isCancelled = bookability === 'cancelled';
 
   const time = extractTime(course.time_schedule);
-  const duration = durationLabel(course);
   const sub = subLabel(course, showInstructor);
   const price = entryPrice(course);
-  // Thumb rows center against the 64px image (ClassPass/Luma). Text rows
-  // top-align instead so a one-line title sits on the time's line rather
-  // than floating vertically centered beside the two-line time stack.
-  const rowAlign = showThumb ? 'items-center' : 'items-start';
 
+  // Card anatomy mirrors the landing hero mock's «Neste kurs» rows: centered
+  // time slot · title with its metadata on the second line · right meta.
+  // All text full text-foreground — muted ink on the muted fill is
+  // unreadable (see GetStartedPage's StepCard, the ratified filled card).
   const body = (
     <>
-      <span className="w-12 sm:w-14 shrink-0 flex flex-col gap-0.5">
-        <span className="text-base font-medium tabular-nums text-foreground">{time || '—'}</span>
-        {duration && (
-          <span className="text-sm text-foreground-muted whitespace-nowrap">{duration}</span>
-        )}
+      <span className="w-12 sm:w-14 shrink-0 text-base font-medium tabular-nums text-foreground">
+        {time || '—'}
       </span>
 
       {showThumb && <CourseThumb course={course} />}
 
       <div className="min-w-0 flex-1">
         <p className="text-base font-medium text-foreground">{course.title}</p>
-        {sub && <p className="mt-0.5 text-sm text-foreground-muted truncate">{sub}</p>}
+        {sub && <p className="mt-0.5 text-sm text-foreground truncate">{sub}</p>}
       </div>
 
       {/* Fixed right slot: price stacked over the state pill on every row
@@ -206,7 +202,7 @@ function AgendaRow({
         <span className="text-base font-medium tabular-nums whitespace-nowrap text-foreground">
           {price.from && price.amount ? (
             <>
-              <span className="font-normal text-foreground-muted">fra </span>
+              <span className="font-normal">fra </span>
               {formatKroner(price.amount)}
             </>
           ) : (
@@ -217,8 +213,8 @@ function AgendaRow({
           className={cn(
             'inline-flex h-8 items-center rounded-full px-3 text-sm font-medium transition-colors duration-150',
             bookability === 'open'
-              ? 'bg-muted text-foreground group-hover:bg-foreground group-hover:text-background'
-              : 'bg-muted text-foreground-muted',
+              ? 'bg-background text-foreground group-hover:bg-foreground group-hover:text-background'
+              : 'bg-background text-foreground-muted',
           )}
         >
           {BOOKABILITY_LABELS[bookability]}
@@ -227,24 +223,23 @@ function AgendaRow({
     </>
   );
 
-  // Each course is its own bordered card (Fresha service-row grammar; same
-  // shell as the landing hero mock's «Neste kurs» rows) — the card is the
+  // Each course is its own filled bg-muted card (the landing hero mock's
+  // «Neste kurs» rows / GetStartedPage StepCard grammar) — the card is the
   // click target, day headings group the stack.
-  const cardShell = 'flex gap-3 sm:gap-4 rounded-xl border border-border-subtle bg-background px-4 py-3.5';
+  const cardShell = 'flex items-center gap-3 sm:gap-4 rounded-xl bg-muted px-4 py-3.5';
 
   return (
     <li>
       {isCancelled ? (
-        <div className={cn(cardShell, rowAlign, 'opacity-55')}>{body}</div>
+        <div className={cn(cardShell, 'opacity-55')}>{body}</div>
       ) : (
         <Link
           to={`/${linkSlug}/${course.slug}`}
           state={{ fromSlug, fromName }}
           className={cn(
-            'group transition-colors hover:bg-hover',
+            'group transition-colors hover:bg-active',
             cardShell,
-            rowAlign,
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
           )}
         >
           {body}
@@ -272,15 +267,16 @@ function durationLabel(course: PublicCourseWithDetails): string {
   return '';
 }
 
-/** Second line of the title stack: «8 økter · Ingrid Larsen» for a series,
- * instructor alone for a workshop or drop-in class — no type chips. The
- * instructor only appears when the list-level rule says it distinguishes
- * rows (≥2 instructors at the studio). Online delivery is a detail, so
- * «Nettkurs» lives here, not in the time stack. Copy rule: one «·» may pair
- * two values; with three parts we fall back to commas — more than one
- * interpunct in a string is banned. */
+/** Metadata line under the title (the hero mock's second row): duration
+ * first («90 min», «2 dager»), session count for a series, then instructor —
+ * only when the list-level rule says it distinguishes rows (≥2 instructors
+ * at the studio) — and «Nettkurs» for online delivery. Copy rule: one «·»
+ * may pair two values; with three parts we fall back to commas — more than
+ * one interpunct in a string is banned. */
 function subLabel(course: PublicCourseWithDetails, showInstructor: boolean): string {
   const parts: string[] = [];
+  const duration = durationLabel(course);
+  if (duration) parts.push(duration);
   if (course.format === 'series') {
     const sessions = course.next_session?.total_sessions ?? course.total_weeks;
     if (sessions && sessions > 1) parts.push(`${sessions} økter`);
