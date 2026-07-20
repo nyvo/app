@@ -202,11 +202,17 @@ function AgendaRow({
         {sub && <p className="mt-0.5 text-sm text-foreground-muted truncate">{sub}</p>}
       </div>
 
-      {/* Fixed right column: price always renders (also on full/cancelled
-        * rows), the pill under it carries the bookable state. Scarcity is
-        * deliberately NOT shown here — urgency copy lives on the detail
-        * page only. */}
-      <div className="shrink-0 flex flex-col items-end gap-1.5">
+      {/* Fixed right slot: price always renders (also on full/cancelled
+        * rows), the pill carries the bookable state. Thumb rows stack them
+        * against the 64px image; text rows lay them on one line so the pill
+        * doesn't sink the row bottom-heavy. Scarcity is deliberately NOT
+        * shown here — urgency copy lives on the detail page only. */}
+      <div
+        className={cn(
+          'shrink-0 flex',
+          showThumb ? 'flex-col items-end gap-1.5' : 'items-center gap-3',
+        )}
+      >
         <span className="text-base font-medium tabular-nums whitespace-nowrap text-foreground">
           {price.from && price.amount ? (
             <>

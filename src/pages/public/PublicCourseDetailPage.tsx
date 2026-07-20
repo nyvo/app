@@ -17,6 +17,8 @@ import {
   buildDurationShort,
   buildMetaCardRows,
   buildNextSessionLabel,
+  capitalize,
+  formatFullDate,
 } from '@/components/public/course-details/schedule-format';
 import { fetchPublicCourseBySlug, resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug } from '@/services/sellers';
@@ -183,14 +185,12 @@ export default function PublicCourseDetailPage() {
   const checkoutHref = course ? `/${slug}/${course.slug}/pamelding` : '';
   const paymentNotReady = tiles.some((t) => t.amount > 0) && !course?.seller?.stripe_onboarding_complete;
 
-  // "Tid" line under the calendar tile — falls back to "Start" while a
-  // course has no recurring schedule (e.g. a single-day class with no
-  // resolvable time range).
+  // Date lockup next to the calendar tile: the written date is the primary
+  // line (the tile alone reads naked — Luma writes the date out too), the
+  // time under it. Without a start date the time line is promoted.
   const metaRows = course ? buildMetaCardRows(course, sessions.length) : [];
-  const tidLabel =
-    metaRows.find((r) => r.label === 'Tid')?.value
-    ?? metaRows.find((r) => r.label === 'Start')?.value
-    ?? '';
+  const tidLabel = metaRows.find((r) => r.label === 'Tid')?.value ?? '';
+  const dateLine = course?.start_date ? capitalize(formatFullDate(course.start_date)) : null;
   const weeksLabel = course ? buildDurationShort(course, sessions.length) : '';
 
   // No image (or a broken URL) → the 300px image column would be a card
@@ -248,15 +248,20 @@ export default function PublicCourseDetailPage() {
               <div className="min-w-0">
                 <h1 className="text-4xl font-medium text-foreground">{course.title}</h1>
 
-                <SellerCard course={course} className={cn('mt-5', hasHero && 'md:hidden')} />
-
+                {/* Date lockup directly under the title (Luma order) — a
+                    small row wedged between two bordered cards read as
+                    squeezed, so the cards follow it instead. */}
                 <div className="mt-5 flex items-start gap-3">
                   <DateBadge dateStr={course.start_date ?? undefined} size="sm" />
                   <div className="min-w-0">
-                    <p className="text-[15px] font-medium text-foreground">{tidLabel}</p>
-                    {/* One session = the Tid line says everything; «1 økt»
-                        under it is noise. The line exists for multi-session
-                        courses: count + the full-calendar dialog. */}
+                    <p className="text-[15px] font-medium text-foreground">
+                      {dateLine ?? tidLabel}
+                    </p>
+                    {dateLine && tidLabel && (
+                      <p className="mt-0.5 text-sm text-foreground-muted">{tidLabel}</p>
+                    )}
+                    {/* One session = date + time say everything; «1 økt» is
+                        noise. Multi-session courses get count + calendar. */}
                     {sessions.length > 1 && (
                       <p className="mt-0.5 text-sm text-foreground-muted">
                         {weeksLabel}
@@ -272,6 +277,8 @@ export default function PublicCourseDetailPage() {
                     )}
                   </div>
                 </div>
+
+                <SellerCard course={course} className={cn('mt-6', hasHero && 'md:hidden')} />
 
                 <BookingCard
                   course={course}
