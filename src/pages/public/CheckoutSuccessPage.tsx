@@ -1,26 +1,21 @@
 import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ImageIcon, Check, X, Clock, Mail, CalendarPlus, ArrowUpRight } from '@/lib/icons';
+import { Check, X, Clock, Mail, ArrowUpRight } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { PageState } from '@/components/page-state/page-state';
 import { supabase } from '@/lib/supabase';
 import { claimMySignups } from '@/services/signups';
 import { useAuth } from '@/contexts/AuthContext';
-import { AUTH_ROUTES } from '@/lib/auth-routes';
 import { formatKroner } from '@/lib/utils';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { toLocalDate } from '@/utils/dateUtils';
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import { COMPANY } from '@/lib/company';
 import { readFreeReceipt, type FreeReceipt } from '@/lib/free-receipt';
-import { StorefrontHeader } from '@/components/public/StorefrontHeader';
-import { downloadIcs, resolveEventEnd, type IcsEvent } from '@/utils/ics';
+import { PublicCard } from '@/components/public/PublicCard';
 import { directionsUrl } from '@/components/public/studio/studioFacts';
 import { WEEKDAYS_LONG as WEEKDAYS, MONTHS_LONG as MONTHS } from '@/lib/calendar-nb';
-
-const SUPPORT_EMAIL = COMPANY.email;
 
 // Full Norwegian date, e.g. "26. april 2026". Used in the receipt footer.
 function formatBookingDate(d: Date): string {
@@ -301,14 +296,9 @@ const CheckoutSuccessPage = () => {
   }
 
   if (error) {
-    return (
-      <div className="min-h-dvh w-full bg-surface">
-        <StorefrontHeader />
-        <div>
-          <PageState variant="server-error" description={error} />
-        </div>
-      </div>
-    );
+    // Bare full-page state — the checkout this page continues from has no
+    // StorefrontHeader, so its terminal states don't grow one either.
+    return <PageState variant="server-error" description={error} />;
   }
 
   // Single shape the recap pane renders from — paid (polled) or free
@@ -397,7 +387,7 @@ const CheckoutSuccessPage = () => {
         <div className="flex flex-col items-center text-center max-w-md">
           <div
             aria-hidden="true"
-            className="mb-4 flex size-12 items-center justify-center rounded-full bg-danger text-danger-foreground"
+            className="mb-4 flex size-12 items-center justify-center rounded-full bg-danger-subtle text-danger"
           >
             <X className="size-6" strokeWidth={2.5} />
           </div>
@@ -424,7 +414,7 @@ const CheckoutSuccessPage = () => {
         <div className="flex flex-col items-center text-center max-w-md">
           <div
             aria-hidden="true"
-            className="mb-4 flex size-12 items-center justify-center rounded-full bg-danger text-danger-foreground"
+            className="mb-4 flex size-12 items-center justify-center rounded-full bg-danger-subtle text-danger"
           >
             <X className="size-6" strokeWidth={2.5} />
           </div>
@@ -465,14 +455,7 @@ const CheckoutSuccessPage = () => {
             Sjekk e-posten din
           </h1>
           <p className="mb-8 text-base text-foreground-muted">
-            Vi fant ingen bekreftelse her – sjekk e-posten din for kvittering, eller kontakt oss på{' '}
-            <a
-              href={`mailto:${SUPPORT_EMAIL}`}
-              className="text-primary underline underline-offset-2 hover:decoration-2"
-            >
-              {SUPPORT_EMAIL}
-            </a>
-            .
+            Vi fant ingen bekreftelse her – sjekk e-posten din for kvittering.
           </p>
           <Button asChild variant="default">
             <Link to={fallbackStudioUrl}>Tilbake</Link>
@@ -482,16 +465,14 @@ const CheckoutSuccessPage = () => {
     );
   }
 
+  // Direction A ("kvittering i kortet", 2026-07-20): the receipt continues the
+  // checkout's own shell — same 568px column, no StorefrontHeader, and the
+  // same PublicCard with the course as its header band. The card the buyer
+  // just filled in "answers" with the receipt.
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-background">
-      <StorefrontHeader
-        name={displaySignup?.course.sellerName}
-        slug={displaySignup?.course.sellerSlug ?? orgSlugFromUrl}
-        logoUrl={displaySignup?.course.sellerLogoUrl}
-      />
-
-      <main className="flex flex-1 items-start justify-center px-4 pb-16 sm:px-6 lg:px-8 md:items-center">
-        <div className="w-full max-w-md">
+    <div className="min-h-dvh w-full bg-background text-foreground">
+      <main className="mx-auto w-full max-w-[568px] px-4 pt-12 pb-16 sm:px-6 md:pt-20">
+        <div className="w-full">
           {(() => {
             const dateLong = formatDate(displaySignup?.course.startDate ?? null);
             const time = extractTimeFromSchedule(displaySignup?.course.timeSchedule)?.time ?? null;
@@ -500,47 +481,6 @@ const CheckoutSuccessPage = () => {
             const bookedAt = displaySignup?.createdAt ? new Date(displaySignup.createdAt) : new Date();
             const whenLine = [dateLong, time ? `kl. ${time}` : null].filter(Boolean).join(' ');
 
-            // Paid-path startDate is the course's first session, not the
-            // buyer's own next one — a drop-in bought mid-series would offer
-            // an ICS event for a class that's already over. The free path
-            // stashes next_session as its startDate (see free-receipt.ts), so
-            // it never needs this guard. Date-only, local time: a same-day
-            // class that already started should still get the calendar link.
-            const isPaidPastDate =
-              Boolean(signup) && displaySignup?.course.startDate
-                ? (() => {
-                    const d = toLocalDate(displaySignup.course.startDate!);
-                    d.setHours(0, 0, 0, 0);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    return d.getTime() < today.getTime();
-                  })()
-                : false;
-
-            // "Legg til i kalenderen" needs both a date AND a time to build a
-            // meaningful event — a date-only VEVENT would default to midnight,
-            // which is worse than not offering the download. The end comes from
-            // resolveEventEnd: schedule range → course duration → 60-min default.
-            const icsEvent: IcsEvent | null =
-              displaySignup?.course.startDate && time && !isPaidPastDate
-                ? (() => {
-                    const start = toLocalDate(displaySignup.course.startDate!);
-                    const [h, m] = time.split(':').map(Number);
-                    start.setHours(h, m, 0, 0);
-                    if (isNaN(start.getTime())) return null;
-                    return {
-                      uid: `upnext-signup-${displaySignup.id}`,
-                      summary: displaySignup.course.title,
-                      start,
-                      end: resolveEventEnd(
-                        start,
-                        displaySignup.course.timeSchedule,
-                        displaySignup.course.durationMinutes,
-                      ),
-                      location: displaySignup.course.location ?? undefined,
-                    };
-                  })()
-                : null;
             const directionsHref = displaySignup?.course.location
               ? directionsUrl({
                   label: displaySignup.course.location,
@@ -573,94 +513,62 @@ const CheckoutSuccessPage = () => {
 
                   {displaySignup && (
                     <>
-                      {/* Course pane — image + title + date/time. */}
-                      <div className="mt-8 flex items-center gap-4 rounded-2xl bg-muted p-5 animate-in fade-in-0 slide-in-from-bottom-1 duration-300 delay-160 fill-mode-backwards">
-                        <CourseThumb src={courseImage} />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-base font-medium text-foreground">{displaySignup.course.title}</p>
-                          {whenLine && (
-                            <p className="mt-0.5 text-sm text-foreground tabular-nums">{whenLine}</p>
-                          )}
+                      {/* Receipt card — the same PublicCard grammar as checkout:
+                          course band on bg-muted, receipt content in the body. */}
+                      <PublicCard
+                        className="mt-8 animate-in fade-in-0 slide-in-from-bottom-1 duration-300 delay-160 fill-mode-backwards"
+                        header={
+                          <>
+                            {courseImage && <ReceiptThumb src={courseImage} />}
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-foreground">{displaySignup.course.title}</p>
+                              {whenLine && (
+                                <p className="truncate text-xs text-foreground tabular-nums">{whenLine}</p>
+                              )}
+                            </div>
+                          </>
+                        }
+                      >
+                        {/* Receipt rows — one label/value rule on every line.
+                            Sted doubles as the directions link when we can
+                            build one (azure = inline links). */}
+                        <div className="space-y-2.5 text-sm">
                           {displaySignup.course.location && (
-                            <p className="mt-0.5 text-sm text-foreground truncate">{displaySignup.course.location}</p>
+                            <div className="flex items-start justify-between gap-4">
+                              <span className="text-foreground-muted">Sted</span>
+                              {directionsHref ? (
+                                <a
+                                  href={directionsHref}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="focus-ring inline-flex items-center gap-1 rounded text-right font-medium text-primary underline-offset-4 hover:underline"
+                                >
+                                  {displaySignup.course.location}
+                                  <ArrowUpRight className="size-3.5 shrink-0" strokeWidth={1.75} />
+                                </a>
+                              ) : (
+                                <span className="text-right font-medium text-foreground">{displaySignup.course.location}</span>
+                              )}
+                            </div>
                           )}
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-foreground-muted">Påmeldt</span>
+                            <span className="font-medium text-foreground">{formatBookingDate(bookedAt)}</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-foreground-muted">{isFree ? 'Pris' : 'Betalt'}</span>
+                            <span className="font-medium text-foreground tabular-nums">
+                              {isFree ? 'Gratis' : formatKroner(displaySignup.amountPaid)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-foreground-muted">Referanse</span>
+                            <span className="font-medium text-foreground tabular-nums">{shortRef(displaySignup.id)}</span>
+                          </div>
                         </div>
-                      </div>
-
-                      {/* Receipt utilities — add the class to a calendar app and/or get
-                          directions. Shown whenever the underlying data is known, on
-                          both the paid and free receipt. */}
-                      {(icsEvent || directionsHref) && (
-                        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
-                          {icsEvent && (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={() => downloadIcs(displaySignup.course.title, icsEvent)}
-                            >
-                              <CalendarPlus className="size-4" strokeWidth={1.75} />
-                              Legg til i kalenderen
-                            </Button>
-                          )}
-                          {directionsHref && (
-                            <a
-                              href={directionsHref}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="focus-ring inline-flex items-center gap-1 rounded text-sm font-medium text-primary underline-offset-4 hover:underline"
-                            >
-                              Få veibeskrivelse
-                              <ArrowUpRight className="size-3.5" strokeWidth={1.75} />
-                            </a>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Discreet meta row — booking date + paid amount */}
-                      <div className="mt-6 border-t border-border pt-6 space-y-2.5 text-base">
-                        <div className="flex items-center justify-between">
-                          <span className="text-foreground-muted">Påmeldt</span>
-                          <span className="font-medium text-foreground">{formatBookingDate(bookedAt)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-foreground-muted">{isFree ? 'Pris' : 'Betalt'}</span>
-                          <span className="font-medium text-foreground tabular-nums">
-                            {isFree ? 'Gratis' : formatKroner(displaySignup.amountPaid)}
-                          </span>
-                        </div>
-                        {!isFree && (
-                          <p className="text-xs text-foreground-muted">Ingen mva. kommer i tillegg.</p>
-                        )}
-                        <div className="flex items-center justify-between">
-                          <span className="text-foreground-muted">Referanse</span>
-                          <span className="font-medium text-foreground tabular-nums">{shortRef(displaySignup.id)}</span>
-                        </div>
-                      </div>
-                      {/* Account offer — logged-in users go straight to the
-                          (auto-claimed) overview. Paid-signup only: claimMySignups
-                          (below) only ever claims the polled Stripe signup, so a free
-                          signup isn't on /overview yet and this would 404-ish otherwise. */}
-                      {user && signup && (
-                        <div className="mt-8">
-                          <Button asChild variant="default" className="w-full">
-                            <Link to={AUTH_ROUTES.dashboard}>Se påmeldingene dine</Link>
-                          </Button>
-                        </div>
-                      )}
+                      </PublicCard>
                     </>
                   )}
-
-                  {/* Support — use platform support so seller emails stay private. */}
-                  <p className="mt-6 text-base text-foreground-muted">
-                    Trenger du hjelp? Send en e-post til{' '}
-                    <a
-                      href={`mailto:${SUPPORT_EMAIL}`}
-                      className="text-primary underline underline-offset-2 hover:decoration-2"
-                    >
-                      {SUPPORT_EMAIL}
-                    </a>
-                    .
-                  </p>
               </>
             );
           })()}
@@ -670,24 +578,20 @@ const CheckoutSuccessPage = () => {
   );
 };
 
-/** Receipt course thumbnail — falls back to the ImageIcon placeholder both
- * when there's no image and when the image URL fails to load. */
-function CourseThumb({ src }: { src: string | null }) {
+/** Course thumb in the receipt card's header band — same size-9 anatomy as the
+ * checkout band. Reflow, never a placeholder (PR #225 rule): with no image the
+ * band renders text-only, and a failed load removes the thumb entirely. */
+function ReceiptThumb({ src }: { src: string }) {
   const [failed, setFailed] = useState(false);
+  if (failed) return null;
   return (
-    <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-      {src && !failed ? (
-        <img
-          src={src}
-          alt=""
-          className="media-outline absolute inset-0 size-full object-cover"
-          onError={() => setFailed(true)}
-        />
-      ) : (
-        <div className="flex size-full items-center justify-center text-foreground-muted">
-          <ImageIcon className="size-5" />
-        </div>
-      )}
+    <div className="size-9 shrink-0 overflow-hidden rounded-lg bg-background">
+      <img
+        src={src}
+        alt=""
+        className="media-outline size-full object-cover"
+        onError={() => setFailed(true)}
+      />
     </div>
   );
 }
