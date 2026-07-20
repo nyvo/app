@@ -1,9 +1,11 @@
 // Cron-triggered ops health alert.
 //
 // Runs public.ops_health_check() and, if any money-state anomaly count is
-// non-zero, emails a summary to OPS_ALERT_EMAIL via Resend. Fully gated: with no
-// OPS_ALERT_EMAIL (or Resend env) set it still runs the check and returns the
-// summary, but sends nothing — a safe no-op until the destination is wired.
+// non-zero, emails a summary via Resend. Destination: the OPS_ALERT_EMAIL
+// function secret if set, else the `owner_alert_email` Vault secret via
+// public.get_owner_alert_email() (shared with owner-event-alert). Fully
+// gated: with no destination (or Resend env) it still runs the check and
+// returns the summary, but sends nothing.
 //
 // Auth mirrors the other cron functions: x-cron-secret (CRON_SECRET) or a
 // service-role bearer.
@@ -43,7 +45,8 @@ Deno.serve(async (req: Request) => {
     const failing = Object.entries(checks).filter(([, count]) => Number(count) > 0)
     const total = failing.reduce((sum, [, count]) => sum + Number(count), 0)
 
-    const alerted = total > 0 ? await sendAlert(checks, failing) : false
+    const to = alertEmail || (await vaultAlertEmail(supabase))
+    const alerted = total > 0 ? await sendAlert(checks, failing, to) : false
 
     return new Response(
       JSON.stringify({ checks, total_anomalies: total, alerted }),
@@ -55,14 +58,27 @@ Deno.serve(async (req: Request) => {
   }
 })
 
+// Owner address from Vault (service-role RPC). Empty string when unset.
+async function vaultAlertEmail(
+  supabase: ReturnType<typeof createClient>,
+): Promise<string> {
+  const { data, error } = await supabase.rpc('get_owner_alert_email')
+  if (error) {
+    console.error('ops-health-alert: get_owner_alert_email failed', error.message)
+    return ''
+  }
+  return typeof data === 'string' ? data : ''
+}
+
 // Email a plain-text anomaly summary via the Resend REST API. Optional: with no
 // destination or Resend config we log and return false (the caller still reports
 // the anomaly counts in its response).
 async function sendAlert(
   checks: Record<string, number>,
   failing: [string, number][],
+  to: string,
 ): Promise<boolean> {
-  if (!alertEmail || !resendApiKey || !resendFrom) {
+  if (!to || !resendApiKey || !resendFrom) {
     console.warn('ops-health-alert: anomalies found but alerting not configured', checks)
     return false
   }
@@ -84,7 +100,7 @@ async function sendAlert(
       },
       body: JSON.stringify({
         from: `${resendFromName} <${resendFrom}>`,
-        to: [alertEmail],
+        to: [to],
         subject: `UpNext ops: ${failing.length} payment anomaly type(s) detected`,
         text,
       }),
