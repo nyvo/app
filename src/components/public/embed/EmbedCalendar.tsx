@@ -9,7 +9,6 @@ import {
   extractTime,
   extractTimeValue,
   formatLongDay,
-  formatTimeRange,
 } from '@/components/public/studio/studioFacts';
 import { BOOKABILITY_LABELS } from '@/lib/bookability-labels';
 
@@ -53,7 +52,11 @@ function mondayIndex(d: Date): number {
  * app in a new tab (booking happens there). Styled with the app's semantic
  * tokens, so it adapts to theme automatically; azure (`--primary`) marks
  * availability on the calendar — has bookable classes — while selection is
- * solid primary; CTAs stay monochrome per the storefront convention.
+ * solid primary; class rows stay monochrome (bg-muted fill) and CTAs stay
+ * monochrome per the storefront convention.
+ * Month navigation is clamped to [current month, last month with classes] —
+ * there is never content outside that range, so the chevrons disable at the
+ * bounds instead of paging into dead months.
  */
 export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps) {
   const today = useMemo(() => {
@@ -131,6 +134,20 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
 
   const monthLabel = `${MONTHS_NB[cursor.getMonth()]} ${cursor.getFullYear()}`;
 
+  // Navigation is clamped to where content can exist: from the current month
+  // (buckets never contain past days) to the last month with classes. Both
+  // chevrons disabled = only this month has anything to show.
+  const minMonthIndex = today.getFullYear() * 12 + today.getMonth();
+  const maxMonthIndex = useMemo(() => {
+    let max = minMonthIndex;
+    for (const key of buckets.keys()) {
+      const [y, m] = key.split('-').map(Number);
+      max = Math.max(max, y * 12 + (m - 1));
+    }
+    return max;
+  }, [buckets, minMonthIndex]);
+  const cursorMonthIndex = cursor.getFullYear() * 12 + cursor.getMonth();
+
   const goMonth = (delta: number) => {
     setCursor(prev => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
   };
@@ -170,6 +187,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
                   variant="outline"
                   size="icon"
                   onClick={() => goMonth(-1)}
+                  disabled={cursorMonthIndex <= minMonthIndex}
                   className="text-foreground-muted"
                   aria-label="Forrige måned"
                 >
@@ -180,6 +198,7 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
                   variant="outline"
                   size="icon"
                   onClick={() => goMonth(1)}
+                  disabled={cursorMonthIndex >= maxMonthIndex}
                   className="text-foreground-muted"
                   aria-label="Neste måned"
                 >
@@ -234,7 +253,8 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
                       aria-pressed={isSelected}
                       aria-label={`${cell.getDate()}. ${MONTHS_NB[cell.getMonth()]}${hasClasses ? ', har kurs' : ''}`}
                       className={cn(
-                        'flex size-full items-center justify-center rounded-full text-sm tabular-nums transition-colors',
+                        'motion-press flex size-full items-center justify-center rounded-full text-sm tabular-nums',
+                        'active:scale-[0.96] motion-reduce:active:scale-100',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                         isSelected
                           ? 'bg-primary font-medium text-primary-foreground'
@@ -255,11 +275,14 @@ export function EmbedCalendar({ courses, slug, sellerName }: EmbedCalendarProps)
 
         {/* ── Classes pane ──────────────────────────────────────────── */}
         <section className="min-w-0 flex-1 border-t border-border-subtle p-5 @2xl:border-l @2xl:border-t-0">
-          <h3 className="mb-3 text-[0.9375rem] font-medium text-foreground">
+          {/* At @2xl the heading centers inside the same 40px line the month
+              header's icon buttons define, so both panes share one optical
+              top line and the class rows align with the weekday row. */}
+          <h3 className="mb-3 text-[0.9375rem] font-medium text-foreground @2xl:mb-4 @2xl:flex @2xl:h-10 @2xl:items-center">
             {sentenceCase(formatLongDay(selectedDate))}
           </h3>
 
-          <div key={effectiveKey} className="animate-in fade-in duration-200">
+          <div key={effectiveKey} className="animate-in fade-in-0 slide-in-from-bottom-1 duration-200">
             {selectedCourses.length === 0 ? (
               <p className="py-12 text-center text-sm text-foreground-muted">
                 {effectiveKey === todayKey
@@ -311,7 +334,9 @@ function EmbedClassRow({
   slug: string;
 }) {
   const time = extractTime(course.time_schedule);
-  const timeRange = formatTimeRange(time, course.duration);
+  // Start time over duration — the same compact stack the storefront agenda
+  // and dashboard schedule use; a full range made the column twice as wide.
+  const duration = course.duration && course.duration > 0 ? `${course.duration} min` : '';
   const bookability = courseBookability(course, todayKey);
   const isDisabled = bookability !== 'open';
   // Cancelled courses stay listed through the 30-day grace window, but the
@@ -329,16 +354,24 @@ function EmbedClassRow({
 
   const body = (
     <>
-      <span className="w-16 shrink-0 text-sm font-normal leading-5 tabular-nums text-foreground @md:w-24">
-        {timeRange || '—'}
+      <span className="flex w-12 shrink-0 flex-col gap-0.5 @md:w-14">
+        <span className="text-sm font-medium leading-5 tabular-nums text-foreground">
+          {time || '—'}
+        </span>
+        {duration && (
+          <span className="text-[0.8125rem] leading-5 text-foreground">{duration}</span>
+        )}
       </span>
 
       <div className="min-w-0 flex-1">
         <h4 className="text-sm font-medium leading-5 text-foreground">
           {course.title}
         </h4>
+        {/* Full text-foreground, not -muted: the row sits on a tinted fill,
+            and muted ink on a filled container drops below AA (same rule as
+            the get-started StepCard). Hierarchy comes from size + weight. */}
         {(course.instructor_name || placeLabel) && (
-          <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.8125rem] text-foreground-muted">
+          <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.8125rem] text-foreground">
             {course.instructor_name && (
               <span className="truncate">{course.instructor_name}</span>
             )}
@@ -352,13 +385,13 @@ function EmbedClassRow({
       <div className="flex shrink-0 flex-col items-end gap-1">
         <span className="text-sm font-medium leading-5 tabular-nums whitespace-nowrap text-foreground">
           {price.from && price.amount
-            ? <><span className="font-normal text-foreground-muted">fra </span>{formatKroner(price.amount)}</>
+            ? <><span className="font-normal">fra </span>{formatKroner(price.amount)}</>
             : formatCoursePrice(price.amount)}
         </span>
         {/* The whole card is the link; a state label appears only when the
             course can't be booked. */}
         {isDisabled && (
-          <span className="text-[0.8125rem] leading-5 text-foreground-muted">
+          <span className="text-[0.8125rem] leading-5 text-foreground">
             {BOOKABILITY_LABELS[bookability]}
           </span>
         )}
@@ -369,15 +402,19 @@ function EmbedClassRow({
   return (
     <li>
       {isCancelled ? (
-        <div className="flex items-start gap-3 rounded-xl bg-hover p-4 @md:gap-4">
+        // Inert row — same dimmed treatment as the storefront agenda's
+        // cancelled rows; the «Avlyst» label carries the state.
+        <div className="flex items-start gap-3 rounded-xl bg-muted p-4 opacity-55 @md:gap-4">
           {body}
         </div>
       ) : (
+        // bg-muted (neutral-3) — the lightest fill token, same as the
+        // get-started step cards; the ink-overlay hover adapts per theme.
         <a
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex items-start gap-3 rounded-xl bg-hover p-4 transition-colors hover:bg-pressed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background @md:gap-4"
+          className="group flex items-start gap-3 rounded-xl bg-muted p-4 transition-colors hover:bg-pressed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background @md:gap-4"
         >
           {body}
         </a>
