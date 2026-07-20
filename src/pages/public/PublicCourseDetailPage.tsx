@@ -248,39 +248,53 @@ export default function PublicCourseDetailPage() {
               <div className="min-w-0">
                 <h1 className="text-4xl font-medium text-foreground">{course.title}</h1>
 
-                {/* Date lockup directly under the title (Luma order) — a
-                    small row wedged between two bordered cards read as
-                    squeezed, so the cards follow it instead. */}
-                <div className="mt-5 flex items-start gap-3">
-                  {/* Default 48px tile — the sm 40px one read undersized
-                      next to the two-line date/time lockup. */}
-                  <DateBadge dateStr={course.start_date ?? undefined} />
-                  <div className="min-w-0">
-                    <p className="text-[15px] font-medium text-foreground">
-                      {dateLine ?? tidLabel}
-                    </p>
-                    {dateLine && tidLabel && (
-                      <p className="mt-0.5 text-sm text-foreground-muted">{tidLabel}</p>
-                    )}
-                    {/* One session = date + time say everything; «1 økt» is
-                        noise. Multi-session courses get count + calendar. */}
-                    {sessions.length > 1 && (
-                      <p className="mt-0.5 text-sm text-foreground-muted">
-                        {weeksLabel}
-                        {' · '}
-                        <button
-                          type="button"
-                          onClick={() => setScheduleOpen(true)}
-                          className="cursor-pointer underline underline-offset-2 hover:text-foreground"
-                        >
-                          Se alle datoer
-                        </button>
+                {/* Metadata band directly under the title: two parallel
+                    outlined tiles stretched across the column — calendar
+                    tile + date/time, avatar + arrangør (name primary, role
+                    label muted under, same anatomy in both). The arrangør
+                    tile stands in for the bordered rail card wherever that
+                    card isn't shown (no-image layout + mobile); with an
+                    image on desktop the rail card stays and the date tile
+                    spans alone. Stacks on narrow screens. */}
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-stretch">
+                  <div className="flex flex-1 items-center gap-3 rounded-xl border border-border-subtle px-4 py-3">
+                    {/* Default 48px tile — the sm 40px one read undersized
+                        next to the two-line date/time lockup. */}
+                    <DateBadge dateStr={course.start_date ?? undefined} />
+                    <div className="min-w-0">
+                      <p className="text-[15px] font-medium text-foreground">
+                        {dateLine ?? tidLabel}
                       </p>
-                    )}
+                      {dateLine && tidLabel && (
+                        <p className="mt-0.5 text-sm text-foreground-muted">{tidLabel}</p>
+                      )}
+                      {/* One session = date + time say everything; «1 økt»
+                          is noise. Multi-session courses get count +
+                          calendar. */}
+                      {sessions.length > 1 && (
+                        <p className="mt-0.5 text-sm text-foreground-muted">
+                          {weeksLabel}
+                          {' · '}
+                          <button
+                            type="button"
+                            onClick={() => setScheduleOpen(true)}
+                            className="cursor-pointer underline underline-offset-2 hover:text-foreground"
+                          >
+                            Se alle datoer
+                          </button>
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <SellerCard course={course} className={cn('mt-6', hasHero && 'md:hidden')} />
+                  <SellerLockup
+                    course={course}
+                    className={cn(
+                      'flex-1 rounded-xl border border-border-subtle px-4 py-3',
+                      hasHero && 'md:hidden',
+                    )}
+                  />
+                </div>
 
                 <BookingCard
                   course={course}
@@ -350,17 +364,26 @@ function CourseHeroImage({ src, onFailed }: { src: string; onFailed: () => void 
   );
 }
 
-// ── Arrangør card ──────────────────────────────────────────────────────────
+// ── Arrangør ───────────────────────────────────────────────────────────────
 
 /** Names who the participant actually meets: the course's instructor when
  * the studio has picked one, otherwise the studio itself. All attribution
- * lives in this one card — no floating «Med …» line elsewhere. The studio
- * logo only backs the avatar when the card shows the studio's own name. */
-function SellerCard({ course, className }: { course: PublicCourseWithDetails; className?: string }) {
+ * lives in this one slot — no floating «Med …» line elsewhere. The studio
+ * logo only backs the avatar when the slot shows the studio's own name. */
+function sellerIdentity(course: PublicCourseWithDetails): {
+  name: string | undefined;
+  avatarSrc: string | null | undefined;
+} {
   const instructor = course.instructor_name?.trim() || null;
   const name = instructor ?? course.seller?.name;
   const avatarSrc =
     !instructor || instructor === course.seller?.name ? course.seller?.logo_url : undefined;
+  return { name, avatarSrc };
+}
+
+/** Bordered Arrangør card — the image rail's variant (desktop with image). */
+function SellerCard({ course, className }: { course: PublicCourseWithDetails; className?: string }) {
+  const { name, avatarSrc } = sellerIdentity(course);
   return (
     <PublicCard header={<span>Arrangør</span>} className={className} bodyClassName="p-3">
       <div className="flex items-center gap-3">
@@ -368,6 +391,21 @@ function SellerCard({ course, className }: { course: PublicCourseWithDetails; cl
         <span className="text-sm font-medium text-foreground">{name}</span>
       </div>
     </PublicCard>
+  );
+}
+
+/** Containerless Arrangør lockup for the metadata band — same anatomy as the
+ * date lockup beside it: 48px icon, name primary, muted role label under. */
+function SellerLockup({ course, className }: { course: PublicCourseWithDetails; className?: string }) {
+  const { name, avatarSrc } = sellerIdentity(course);
+  return (
+    <div className={cn('flex min-w-0 items-center gap-3', className)}>
+      <UserAvatar name={name} src={avatarSrc} className="size-12" />
+      <div className="min-w-0">
+        <p className="truncate text-[15px] font-medium text-foreground">{name}</p>
+        <p className="mt-0.5 text-sm text-foreground-muted">Arrangør</p>
+      </div>
+    </div>
   );
 }
 
@@ -782,8 +820,11 @@ function CourseDetailSkeletonBody({ twoCol = false }: { twoCol?: boolean }) {
         <Skeleton className="h-4 w-40" />
         <div className="mt-6">
           <Skeleton className="h-10 w-3/4" />
-          <Skeleton className="mt-5 h-16 w-full rounded-2xl" />
-          <Skeleton className="mt-5 h-10 w-64" />
+          {/* Metadata band: two stretched outlined tiles */}
+          <div className="mt-5 flex gap-3">
+            <Skeleton className="h-18 flex-1 rounded-xl" />
+            <Skeleton className="h-18 flex-1 rounded-xl" />
+          </div>
           <Skeleton className="mt-7 h-48 w-full rounded-2xl" />
           <Skeleton className="mt-8 h-32 w-full" />
         </div>
