@@ -42,7 +42,8 @@ import type { SellerInviteLink } from '@/types/database';
 //   - Instructors whose courses show on this studio page.
 //
 // Solo teacher (guest side):
-//   - The studio page their courses show on.
+//   - The studio page their courses show on, or an empty state explaining how
+//     affiliation works (the tab is always visible for both account types).
 //   - "Stopp visning" action.
 //
 // Joining via /join/:code lands here at /studio#samarbeid — the section
@@ -231,10 +232,14 @@ function IndividualView({
       {host === undefined ? (
         <ConnectionSkeleton />
       ) : host === null ? (
-        // No host: this view is only mounted once a real affiliation exists (the
-        // Samarbeid tab hides otherwise), so there is no reachable empty state
-        // to render here.
-        null
+        // Unaffiliated solo seller — the tab stays visible, so explain how
+        // affiliation starts (the studio shares an invite link; there is no
+        // way to initiate from this side).
+        <EmptyState
+          variant="compact"
+          title="Ikke tilknyttet et studio ennå"
+          description="Får du en invitasjonslenke fra et studio, kan du vise kursene dine på studiosiden deres."
+        />
       ) : (
         <Card>
           <CardContent>

@@ -146,7 +146,7 @@ export default function StudioPreview() {
 
       <PreviewSection
         label="Samarbeid — tomt"
-        description="host=null: raden vises (tittel + beskrivelse), men tilkoblingskortet uteblir. I appen er denne kombinasjonen i praksis ikke nåbar (fanen skjules helt før dette), men vist her for fullstendighet."
+        description="host=null: det en utilknyttet solo-instruktør ser — fanen er alltid synlig, og tomtilstanden forklarer at studioet deler en invitasjonslenke."
       >
         <AffiliationsSection seller={mockSeller()} host={null} onHostChange={() => {}} />
       </PreviewSection>

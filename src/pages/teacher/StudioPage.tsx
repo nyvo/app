@@ -80,10 +80,9 @@ function StudioPublicSettings({
   const { hash } = useLocation();
 
   // The host storefront this seller's courses show on, if any. Loaded once here
-  // because it gates the Samarbeid tab's visibility (a solo seller only sees the
-  // tab while an affiliation is active). `undefined` while the fetch is in
-  // flight; `'error'` when it failed — distinct from `null` (no host) so a
-  // fetch failure surfaces a retry instead of silently hiding the tab.
+  // and passed down to the Samarbeid panel. `undefined` while the fetch is in
+  // flight; `'error'` when it failed — distinct from `null` (no host) so the
+  // panel surfaces a retry instead of an empty state.
   const [host, setHost] = useState<HostStudio | null | undefined | 'error'>(undefined);
   const loadHost = useCallback(async () => {
     const { data, error } = await fetchGuestHost(seller.id);
@@ -91,25 +90,13 @@ function StudioPublicSettings({
   }, [seller.id]);
   useEffect(() => { void loadHost(); }, [loadHost]);
 
-  // Studios keep the tab always; solo sellers only while an affiliation exists.
-  // On a host-fetch error keep it reachable when the seller is a studio or
-  // deep-linked to #samarbeid, so the failure shows a retry rather than vanishing.
-  // A stale-default hydrate can't be trusted to tell studio from solo, so the
-  // tab is withheld until a refresh succeeds.
-  const hasHost = host != null && host !== 'error';
-  const showSamarbeid =
-    !hydrateFailed && (isStudio || hasHost || (host === 'error' && hash === '#samarbeid'));
-
   const [tab, setTab] = useState<'profil' | 'rabatter' | 'samarbeid'>('profil');
-  // Joining a studio lands at /studio#samarbeid — open that tab once it renders.
+  // Joining a studio lands at /studio#samarbeid — open that tab. The tab is
+  // always present for both account types (an unaffiliated solo seller gets an
+  // empty state), so navigation chrome never pops in or vanishes under the user.
   useEffect(() => {
-    if (hash === '#samarbeid' && showSamarbeid) setTab('samarbeid');
-  }, [hash, showSamarbeid]);
-  // The tab can vanish (solo revoke, or a studio switching to solo with no host)
-  // — don't strand the user on a hidden panel.
-  useEffect(() => {
-    if (!showSamarbeid && tab === 'samarbeid') setTab('profil');
-  }, [showSamarbeid, tab]);
+    if (hash === '#samarbeid') setTab('samarbeid');
+  }, [hash]);
 
   const [savingPhoto, setSavingPhoto] = useState(false);
   const [logoUrl, setLogoUrl] = useState(seller.logo_url);
@@ -417,16 +404,14 @@ function StudioPublicSettings({
         >
           Rabatter
         </PageTab>
-        {showSamarbeid && (
-          <PageTab
-            active={tab === 'samarbeid'}
-            onClick={() => setTab('samarbeid')}
-            id="studio-tab-samarbeid"
-            ariaControls="studio-panel-samarbeid"
-          >
-            Samarbeid
-          </PageTab>
-        )}
+        <PageTab
+          active={tab === 'samarbeid'}
+          onClick={() => setTab('samarbeid')}
+          id="studio-tab-samarbeid"
+          ariaControls="studio-panel-samarbeid"
+        >
+          Samarbeid
+        </PageTab>
       </PageTabs>
 
       {tab === 'profil' && (
@@ -525,7 +510,6 @@ function StudioPublicSettings({
             <AccountTypeSection
               seller={seller}
               onChanged={onSaved}
-              onBecameSolo={() => setTab('profil')}
               hydrateFailed={hydrateFailed}
             />
 
@@ -577,13 +561,21 @@ function StudioPublicSettings({
         </div>
       )}
 
-      {tab === 'samarbeid' && showSamarbeid && (
+      {tab === 'samarbeid' && (
         <div
           role="tabpanel"
           id="studio-panel-samarbeid"
           aria-labelledby="studio-tab-samarbeid"
         >
-          {!isStudio && host === 'error' ? (
+          {hydrateFailed ? (
+            // operating_model is a stale safe-default — rendering a branch off
+            // it could show a studio the solo panel. Retry instead.
+            <ErrorState
+              title="Kunne ikke hente kontoinformasjon"
+              message="Prøv igjen om litt."
+              onRetry={() => void onSaved()}
+            />
+          ) : !isStudio && host === 'error' ? (
             // Solo seller: the whole panel is the guest-host card, so a failed
             // fetch replaces it with a retry.
             <ErrorState
@@ -750,12 +742,10 @@ export function DiscountCard({
 function AccountTypeSection({
   seller,
   onChanged,
-  onBecameSolo,
   hydrateFailed,
 }: {
   seller: Seller;
   onChanged: () => Promise<void> | void;
-  onBecameSolo: () => void;
   hydrateFailed: boolean;
 }) {
   const [pending, setPending] = useState(false);
@@ -787,7 +777,6 @@ function AccountTypeSection({
     }
     await onChanged();
     toast.success('Kontotypen er oppdatert');
-    if (picked === 'solo') onBecameSolo();
     setPending(false);
     setConfirmTarget(null);
   };
