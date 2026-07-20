@@ -248,12 +248,9 @@ export default function JoinPage() {
   if (lookup.status === 'error') {
     return (
       <Shell>
-        <h1 className="text-3xl font-medium text-foreground mb-3">
+        <h1 className="text-3xl font-medium text-foreground mb-8">
           Noe gikk galt
         </h1>
-        <p className="text-base text-foreground-muted mb-8">
-          Prøv igjen.
-        </p>
         <Button size="cta" className="w-full" onClick={() => window.location.reload()}>
           Prøv igjen
         </Button>
