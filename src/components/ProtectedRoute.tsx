@@ -36,7 +36,15 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // transient boot failure kept the session — see AuthContext), the old `null`
   // was a permanent white screen; surface a retry instead.
   if (!profile) {
-    if (isLoading) return null
+    // Same delayed loader as the init hold — a bare null here blanks the
+    // screen between two spinner phases during login.
+    if (isLoading) {
+      return (
+        <DelayedFallback>
+          <PageLoader />
+        </DelayedFallback>
+      )
+    }
     return <PageState variant="server-error" />
   }
 

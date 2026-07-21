@@ -17,7 +17,16 @@ export default function DashboardRouter() {
   const { isInitialized, isLoading, sellers, sellersLoadFailed } = useAuth()
   // Hold while loading — mid-login, sellers can land after profile; picking
   // BuyerDashboard in that window flashes the wrong dashboard for sellers.
-  if (!isInitialized || isLoading) return null
+  // Delayed loader, not bare null: this hold sits between two spinner phases
+  // (auth init before, chunk load after), and a null here blanks the screen
+  // mid-wait — the DelayedFallback handoff keeps the spinner continuous.
+  if (!isInitialized || isLoading) {
+    return (
+      <DelayedFallback>
+        <PageLoader />
+      </DelayedFallback>
+    )
+  }
 
   // Failed fetch is "unknown", not "buyer" — show a retryable error instead
   // of confidently rendering the wrong dashboard.
