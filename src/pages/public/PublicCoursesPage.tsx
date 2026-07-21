@@ -13,6 +13,8 @@ import { BrandFooter } from '@/components/public/BrandFooter';
 import { StudioFilterPill } from '@/components/public/studio/StudioFilterPill';
 import { deriveStudioFacts, type StudioLocation } from '@/components/public/studio/studioFacts';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { useCanonical, useJsonLd } from '@/hooks/use-page-meta';
+import { buildStorefrontJsonLd } from '@/lib/structured-data';
 
 type ErrorKind = 'not-found' | 'load-failed';
 type CourseTypeFilter = 'all' | 'series' | 'workshop' | 'drop-in' | 'online';
@@ -129,6 +131,16 @@ const PublicCoursesPage = () => {
         placeId: addressQuery.data.placeId,
       }
     : facts.primaryLocation;
+
+  useCanonical(organization ? `/${organization.slug}` : null);
+  // JSON-LD address comes from the canonical row only — never the
+  // course-venue fallback used for display (see buildStorefrontJsonLd).
+  useJsonLd(
+    'jsonld-storefront',
+    organization && !errorKind
+      ? buildStorefrontJsonLd(organization, addressQuery.data ?? null)
+      : null,
+  );
 
   // Course-type filter — an option earns its place only when it PARTITIONS
   // the list (matches some courses but not all). An option every course

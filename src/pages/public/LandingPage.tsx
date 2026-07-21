@@ -57,7 +57,22 @@ function AvatarGlyph() {
 }
 
 /** Signup CTA — mailto during prelaunch, auth link when open. */
-function SignupCta({ className, label }: { className: string; label: string }) {
+function SignupCta({
+  className,
+  label,
+  intent,
+}: {
+  className: string;
+  label: string;
+  /**
+   * Entry-context role intent (auth-routes.ts § 21.3a). The hero CTA omits it —
+   * the landing page is read by buyers too, so top-of-page signups get the
+   * onboarding role chooser. CTAs under the pricing cards and the final band
+   * sit in unambiguous seller context and carry `seller` so onboarding skips
+   * the chooser.
+   */
+  intent?: 'seller';
+}) {
   if (PRELAUNCH) {
     return (
       <a className={className} href={`mailto:${COMPANY.email}`}>
@@ -65,10 +80,8 @@ function SignupCta({ className, label }: { className: string; label: string }) {
       </a>
     );
   }
-  // No ?intent — the landing page is read by buyers too, so signups get the
-  // onboarding role chooser instead of being forced into the seller flow.
   return (
-    <Link className={className} to="/auth">
+    <Link className={className} to={intent ? `/auth?intent=${intent}` : '/auth'}>
       {label}
     </Link>
   );
@@ -244,7 +257,7 @@ const LandingPage = () => {
             </p>
             <div className="hero-ctas">
               <SignupCta className="btn btn-white" label="Opprett konto" />
-              <a className="btn btn-glass-azure" href="#platforms">
+              <a className="btn btn-glass-azure" href="#product">
                 Se hvordan det fungerer
               </a>
             </div>
@@ -625,7 +638,7 @@ const LandingPage = () => {
                     <div className="set-price">
                       <small>Pris per time</small>
                       <span className="field">
-                        250 <em>kr</em>
+                        {formatKroner(250).replace(/ kr$/, '')} <em>kr</em>
                       </span>
                     </div>
                   </div>
@@ -701,7 +714,7 @@ const LandingPage = () => {
                   Egen studioside
                 </li>
               </ul>
-              <SignupCta className="btn btn-chrome btn-full" label="Kom i gang" />
+              <SignupCta className="btn btn-chrome btn-full" label="Kom i gang" intent="seller" />
             </article>
             <article className="plan plan-featured" data-reveal="">
               <h3 className="plan-name">
@@ -739,7 +752,7 @@ const LandingPage = () => {
               <p className="plan-note">
                 Selger du for mer enn {formatKroner(10000)} i måneden, lønner Pro seg.
               </p>
-              <SignupCta className="btn btn-white btn-full" label="Velg Pro" />
+              <SignupCta className="btn btn-white btn-full" label="Velg Pro" intent="seller" />
             </article>
           </div>
         </section>
@@ -750,7 +763,7 @@ const LandingPage = () => {
             <h2>Start med neste kurs.</h2>
             <p>Opprett konto, legg inn kurset og del studiosiden din.</p>
             <div className="hero-ctas">
-              <SignupCta className="btn btn-white" label="Opprett konto" />
+              <SignupCta className="btn btn-white" label="Opprett konto" intent="seller" />
             </div>
           </div>
         </section>

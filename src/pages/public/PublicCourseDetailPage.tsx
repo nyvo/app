@@ -25,6 +25,8 @@ import { fetchSellerBySlug } from '@/services/sellers';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { useCanonical, useJsonLd } from '@/hooks/use-page-meta';
+import { buildCourseJsonLd } from '@/lib/structured-data';
 import { osloNowKey } from '@/utils/dateUtils';
 import { BrandFooter } from '@/components/public/BrandFooter';
 import { ChevronLeft } from '@/lib/icons';
@@ -164,6 +166,9 @@ export default function PublicCourseDetailPage() {
   const notFound = detailQuery.data?.kind === 'not-found';
 
   useDocumentTitle(course?.title);
+  // Canonical uses the DB slugs (route params may differ in casing/legacy form).
+  useCanonical(course?.seller?.slug ? `/${course.seller.slug}/${course.slug}` : null);
+  useJsonLd('jsonld-course', course ? buildCourseJsonLd(course, sessions) : null);
 
   // Back link target: prefer the viewing storefront (state) over the
   // canonical owner — an affiliate storefront visitor should land back where
@@ -241,7 +246,11 @@ export default function PublicCourseDetailPage() {
             >
               {hasHero && (
                 <div>
-                  <CourseHeroImage src={heroImg!} onFailed={() => setHeroFailed(true)} />
+                  <CourseHeroImage
+                    src={heroImg!}
+                    alt={course.title}
+                    onFailed={() => setHeroFailed(true)}
+                  />
                   <SellerCard course={course} className="mt-4 max-md:hidden" />
                 </div>
               )}
@@ -351,14 +360,22 @@ export default function PublicCourseDetailPage() {
 
 // ── Hero image ──────────────────────────────────────────────────────────
 
-function CourseHeroImage({ src, onFailed }: { src: string; onFailed: () => void }) {
+function CourseHeroImage({
+  src,
+  alt,
+  onFailed,
+}: {
+  src: string;
+  alt: string;
+  onFailed: () => void;
+}) {
   // A broken image URL reports up so the page can reflow to the single-column
   // no-image layout rather than leaving a broken-image glyph on the page.
   return (
     <div className="aspect-square w-full overflow-hidden rounded-2xl bg-muted">
       <img
         src={src}
-        alt=""
+        alt={alt}
         className="media-outline size-full object-cover"
         onError={onFailed}
       />

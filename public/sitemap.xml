@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Static marketing routes only. Seller storefronts (/:slug) and course pages
+     are dynamic — extend via a build-time script once that's wanted. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.upnext.no/</loc>
+  </url>
+  <url>
+    <loc>https://www.upnext.no/om-oss</loc>
+  </url>
+  <url>
+    <loc>https://www.upnext.no/terms</loc>
+  </url>
+  <url>
+    <loc>https://www.upnext.no/personvern</loc>
+  </url>
+</urlset>

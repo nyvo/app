@@ -119,7 +119,7 @@ function LogoTile({ organization }: { organization: PublicSeller }) {
       <div className={cn(frame, 'bg-surface')}>
         <img
           src={logoUrl}
-          alt={`${organization.name}-logo`}
+          alt={`${organization.name} logo`}
           className="media-outline size-full object-cover"
           onError={() => setLogoFailed(true)}
         />

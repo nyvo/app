@@ -25,12 +25,35 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "UpNext",
-        "url": "https://www.upnext.no/",
-        "description": "UpNext er en norsk påmeldings- og betalingsplattform for kursholdere, studioer og arrangører.",
-        "applicationCategory": "BusinessApplication",
-        "operatingSystem": "Web"
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://www.upnext.no/#organization",
+            "name": "UpNext",
+            "legalName": "Framio AS",
+            "url": "https://www.upnext.no/",
+            "logo": "https://www.upnext.no/apple-touch-icon.png",
+            "email": "hei@framio.no",
+            "taxID": "935967511"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://www.upnext.no/#website",
+            "url": "https://www.upnext.no/",
+            "name": "UpNext",
+            "publisher": { "@id": "https://www.upnext.no/#organization" },
+            "inLanguage": "nb-NO"
+          },
+          {
+            "@type": "WebApplication",
+            "name": "UpNext",
+            "url": "https://www.upnext.no/",
+            "description": "UpNext er en norsk påmeldings- og betalingsplattform for kursholdere, studioer og arrangører.",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "publisher": { "@id": "https://www.upnext.no/#organization" }
+          }
+        ]
       }
     </script>
     <style>
