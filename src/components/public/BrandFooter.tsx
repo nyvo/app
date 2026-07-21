@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * Quiet platform attribution at the bottom of public pages — the logo +
- * wordmark lockup at 40 % opacity, centered. Public pages belong to the
+ * wordmark lockup at 60 % opacity, centered. Public pages belong to the
  * studio (no platform header); UpNext signs the page discreetly instead.
  * Ratified on the join page 2026-07-20, extended to the whole public funnel
  * (storefront → course detail → checkout → receipt).
@@ -18,7 +18,7 @@ export function BrandFooter({ className }: { className?: string }) {
       <Link
         to="/"
         aria-label="UpNext"
-        className="flex select-none items-center gap-2 opacity-40 transition-opacity duration-150 hover:opacity-70"
+        className="flex select-none items-center gap-2 opacity-60 transition-opacity duration-150 hover:opacity-100"
       >
         <UpNextLogo size="sm" />
         <span className="text-sm font-medium text-foreground">UpNext</span>
