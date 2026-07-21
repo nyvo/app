@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { PageSkeleton } from '@/components/ui/page-skeleton'
+import { PageLoader } from '@/components/ui/page-loader'
 import { DelayedFallback } from '@/components/ui/delayed-fallback'
 import { PageState } from '@/components/page-state/page-state'
 
@@ -28,7 +28,7 @@ export default function DashboardRouter() {
   const Dashboard = sellers.length > 0 ? TeacherDashboard : BuyerDashboard
 
   return (
-    <Suspense fallback={<DelayedFallback><PageSkeleton /></DelayedFallback>}>
+    <Suspense fallback={<DelayedFallback><PageLoader /></DelayedFallback>}>
       <Dashboard />
     </Suspense>
   )

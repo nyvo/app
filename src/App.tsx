@@ -17,7 +17,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DelayedFallback } from './components/ui/delayed-fallback';
-import { PageSkeleton } from './components/ui/page-skeleton';
+import { PageLoader } from './components/ui/page-loader';
 import { RESERVED_SLUGS } from '@/lib/reservedSlugs';
 import { DEV_PREVIEWS_ENABLED } from '@/lib/devPreviews';
 import { useAuth } from '@/contexts/AuthContext';
@@ -115,10 +115,10 @@ function FlatTeamRoute({ children }: { children: React.ReactNode }) {
  */
 function RootRoute() {
   const { isInitialized, user } = useAuth();
-  // Auth init is cached and usually <200ms. A delayed skeleton renders nothing
+  // Auth init is cached and usually <200ms. A delayed spinner renders nothing
   // for fast loads (Studio § 10) but keeps a slow init distinguishable from a
   // crash rather than an indefinite blank.
-  if (!isInitialized) return <DelayedFallback><PageSkeleton /></DelayedFallback>;
+  if (!isInitialized) return <DelayedFallback><PageLoader /></DelayedFallback>;
   if (user) return <Navigate to="/overview" replace />;
   return <LandingPage />;
 }
@@ -165,7 +165,7 @@ function RootChrome() {
       {/* resetKeys by pathname: after a crash, navigating (incl. browser-back)
           clears the error state so the user isn't stuck on the error page. */}
       <ErrorBoundary resetKeys={[location.pathname]}>
-        <Suspense fallback={<DelayedFallback><PageSkeleton /></DelayedFallback>}>
+        <Suspense fallback={<DelayedFallback><PageLoader /></DelayedFallback>}>
           <Outlet />
         </Suspense>
       </ErrorBoundary>

@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AUTH_ROUTES, resolvePostAuthDestination } from '@/lib/auth-routes'
 import { DelayedFallback } from '@/components/ui/delayed-fallback'
-import { PageSkeleton } from '@/components/ui/page-skeleton'
+import { PageLoader } from '@/components/ui/page-loader'
 import { PageState } from '@/components/page-state/page-state'
 
 interface ProtectedRouteProps {
@@ -17,12 +17,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // true and never flips back, so later background refreshes (which toggle
   // `isLoading`) no longer unmount the layout — otherwise a click landing
   // between mousedown and mouseup gets dropped as the sidebar disappears.
-  // Hold with a delayed skeleton (nothing for fast loads) so a slow init isn't
+  // Hold with a delayed spinner (nothing for fast loads) so a slow init isn't
   // indistinguishable from a crash.
   if (!isInitialized) {
     return (
       <DelayedFallback>
-        <PageSkeleton />
+        <PageLoader />
       </DelayedFallback>
     )
   }

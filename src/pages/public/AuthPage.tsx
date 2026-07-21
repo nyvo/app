@@ -9,7 +9,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { FieldError } from '@/components/ui/field-error'
 import { Spinner } from '@/components/ui/spinner'
 import { DelayedFallback } from '@/components/ui/delayed-fallback'
-import { PageSkeleton } from '@/components/ui/page-skeleton'
+import { PageLoader } from '@/components/ui/page-loader'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFormValidation } from '@/hooks/use-form-validation'
@@ -400,12 +400,12 @@ const AuthPage = () => {
   }
 
   // A session exists but the profile is still loading — a redirect is imminent.
-  // Hold with a delayed skeleton (nothing for fast loads) instead of flashing
+  // Hold with a delayed spinner (nothing for fast loads) instead of flashing
   // the form.
   if (authLoading && user) {
     return (
       <DelayedFallback>
-        <PageSkeleton />
+        <PageLoader />
       </DelayedFallback>
     )
   }

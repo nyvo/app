@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
 import { PageState } from '@/components/page-state/page-state'
 import { DelayedFallback } from '@/components/ui/delayed-fallback'
-import { PageSkeleton } from '@/components/ui/page-skeleton'
+import { PageLoader } from '@/components/ui/page-loader'
 
 type Role = 'buyer' | 'seller'
 
@@ -26,12 +26,12 @@ export function RoleRoute({ allow }: RoleRouteProps) {
   const { isInitialized, isLoading, sellers, sellersLoadFailed } = useAuth()
   // Hold while auth data is loading — mid-login, profile can land before
   // sellers, and routing on that window would bounce a seller deep-link. A
-  // delayed skeleton (nothing for fast loads) keeps a slow init distinguishable
+  // delayed spinner (nothing for fast loads) keeps a slow init distinguishable
   // from a crash.
   if (!isInitialized || isLoading) {
     return (
       <DelayedFallback>
-        <PageSkeleton />
+        <PageLoader />
       </DelayedFallback>
     )
   }

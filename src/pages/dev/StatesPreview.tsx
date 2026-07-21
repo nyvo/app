@@ -9,7 +9,7 @@ import {
   SkeletonTableRow,
   SkeletonTableRows,
 } from '@/components/ui/skeleton';
-import { PageSkeleton } from '@/components/ui/page-skeleton';
+import { PageLoader } from '@/components/ui/page-loader';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
@@ -126,7 +126,7 @@ export default function StatesPreview() {
 
       <PreviewSection
         label="Lastetilstander"
-        description="Skeleton-primitiver, PageSkeleton (Suspense-fallback) og Spinner."
+        description="Skeleton-primitiver, PageLoader (Suspense-fallback) og Spinner."
       >
         <div className="space-y-8">
           <div>
@@ -183,10 +183,10 @@ export default function StatesPreview() {
 
           <div>
             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-foreground-muted">
-              PageSkeleton (Suspense-fallback)
+              PageLoader (Suspense-fallback)
             </p>
-            <div className="overflow-hidden rounded-xl border border-border-subtle">
-              <PageSkeleton />
+            <div className="overflow-hidden rounded-xl border border-border-subtle [&>div]:min-h-64">
+              <PageLoader />
             </div>
           </div>
 
