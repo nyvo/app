@@ -208,7 +208,7 @@ export function RoleChooser({ onAdvance }: { onAdvance: () => void }) {
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-2xl">
         <h1 className="mb-8 text-2xl font-medium text-foreground">
-          Hva vil du gjøre?
+          Hva skal du bruke kontoen til?
         </h1>
 
         <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -216,13 +216,13 @@ export function RoleChooser({ onAdvance }: { onAdvance: () => void }) {
           {([
             {
               value: 'buyer' as const,
-              title: 'Jeg vil melde meg på kurs',
-              body: 'Finn kurs og klasser hos lærere og studioer.',
+              title: 'Melde meg på kurs',
+              body: 'Finn kurs og hold oversikt over alle påmeldingene dine.',
             },
             {
               value: 'seller' as const,
-              title: 'Jeg tilbyr kurs',
-              body: 'Lag kurs og ta imot påmeldinger.',
+              title: 'Arrangere kurs',
+              body: 'Opprett kurs, ta imot betaling og hold oversikt over deltakerne.',
             },
           ]).map((opt) => {
             const isSelected = pick === opt.value
@@ -372,12 +372,12 @@ export function BuyerSetupForm({
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
         <BackLink onClick={() => { void handleBack() }} disabled={saving} />
         <h1 className="mb-8 text-2xl font-medium text-foreground">
-          Litt om deg
+          Bekreft opplysningene dine
         </h1>
 
         <div className="space-y-5">
           <div className="grid gap-2">
-            <Label htmlFor="buyer-name">Navn</Label>
+            <Label htmlFor="buyer-name">Fullt navn</Label>
             <Input
               id="buyer-name"
               autoComplete="name"
@@ -406,7 +406,7 @@ export function BuyerSetupForm({
         </div>
 
         <Button type="submit" size="cta" loading={saving} className="mt-8 w-full">
-          Fullfør
+          Lagre og fortsett
         </Button>
       </form>
     </div>
@@ -471,11 +471,11 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
     const trimmed = name.trim()
     const slug = generateSlug(trimmed)
     if (!trimmed) {
-      setErrors({ name: 'Skriv inn et navn' })
+      setErrors({ name: 'Skriv inn navnet på siden' })
       return
     }
     if (slug.length < 3) {
-      setErrors({ name: 'Bruk minst 3 bokstaver' })
+      setErrors({ name: 'Bruk minst 3 bokstaver eller tall' })
       return
     }
 
@@ -485,9 +485,9 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
       logger.error('Onboarding: ensureSeller failed', error)
       const msg = error?.message ?? ''
       if (msg.includes('already taken') || msg.includes('reserved')) {
-        setErrors({ name: 'Dette navnet er opptatt. Velg et annet.' })
+        setErrors({ name: 'Dette sidenavnet er opptatt. Velg et annet.' })
       } else if (msg.includes('Slug')) {
-        setErrors({ name: 'Velg et gyldig navn' })
+        setErrors({ name: 'Navnet må inneholde bokstaver eller tall' })
       } else {
         toast.error('Kunne ikke fullføre oppsettet – prøv igjen')
       }
@@ -535,7 +535,7 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
             <form data-preview-safe onSubmit={handleModelContinue} className="mx-auto w-full max-w-2xl">
               <BackLink onClick={() => { void handleBack() }} />
               <h1 className="mb-8 text-2xl font-medium text-foreground">
-                Hvordan jobber du?
+                Hvilken kontotype passer deg?
               </h1>
 
               <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -543,13 +543,13 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
                 {([
                   {
                     value: 'solo' as const,
-                    title: 'Jeg underviser selv',
-                    body: 'Du får en egen side med kursene du holder selv.',
+                    title: 'Jeg jobber selvstendig',
+                    body: 'Du holder egne kurs og mottar betalingene selv.',
                   },
                   {
                     value: 'studio' as const,
-                    title: 'Jeg driver et studio',
-                    body: 'Studioet får en felles side, og du kan invitere flere instruktører.',
+                    title: 'Jeg driver et yogastudio',
+                    body: 'Yogalærere kan vise kurs på studiosiden. Alle betalinger går til studioet.',
                   },
                 ]).map((opt) => {
                   const isSelected = model === opt.value
@@ -571,7 +571,7 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground">{opt.title}</p>
-                        <p className="mt-1 text-sm text-foreground-muted leading-relaxed">{opt.body}</p>
+                        <p className="mt-1 text-sm leading-relaxed text-foreground-muted">{opt.body}</p>
                       </div>
                       {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
                     </label>
@@ -610,12 +610,17 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
                 }}
                 disabled={saving}
               />
-              <h1 className="mb-8 text-2xl font-medium text-foreground">
-                Hva skal siden din hete?
-              </h1>
+              <div className="mb-8">
+                <h1 className="text-2xl font-medium text-foreground">
+                  Gi siden din et navn
+                </h1>
+                <p className="mt-2 text-sm leading-relaxed text-foreground-muted">
+                  Navnet vises til deltakerne og brukes i den offentlige lenken din.
+                </p>
+              </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="seller-name">Navn</Label>
+                <Label htmlFor="seller-name">Navn på siden</Label>
                 <Input
                   id="seller-name"
                   value={name}
@@ -629,10 +634,10 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
                 />
                 <p id="seller-name-hint" className="text-sm text-foreground-muted">
                   {slugPreview.length >= 3
-                    ? `Adressen blir ${window.location.host}/${slugPreview}`
+                    ? `Lenken til siden blir ${window.location.host}/${slugPreview}`
                     : model === 'studio'
-                      ? 'Bruk navnet på studioet.'
-                      : 'Bruk ditt eget navn.'}
+                      ? 'Bruk navnet deltakerne kjenner studioet under.'
+                      : 'Bruk navnet deltakerne kjenner deg igjen på.'}
                 </p>
                 {errors.name && (
                   <FieldError id="seller-name-error" className="mt-0">{errors.name}</FieldError>
@@ -640,7 +645,7 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
               </div>
 
               <Button type="submit" size="cta" loading={saving} className="mt-8 w-full">
-                Fullfør
+                Opprett siden
               </Button>
             </form>
           </motion.div>

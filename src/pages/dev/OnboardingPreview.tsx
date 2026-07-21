@@ -14,7 +14,7 @@ import { RoleChooser, BuyerSetupForm, SellerFlow } from '@/pages/onboarding/Onbo
  * All three sub-steps call useAuth() *inside themselves* for their submit
  * mutations (setRole / completeBuyerOnboarding / ensureSeller +
  * markOnboardingComplete) rather than taking them as props — so a plain
- * no-op onAdvance/onBack alone would not stop a real Fortsett/Fullfør click
+ * no-op onAdvance/onBack alone would not stop a real submit click
  * from reaching the live Supabase RPCs. This repo's dev environment points at
  * one shared remote Supabase (see CLAUDE.md), and `ensureSeller` in
  * particular has no client-side "not logged in" guard before it fires.
@@ -54,11 +54,11 @@ export default function OnboardingPreview() {
   return (
     <DevPage
       title="Onboarding"
-      description="De ekte onboarding-stegene fra src/pages/onboarding/OnboardingPage.tsx (ruten /onboarding) — rollevalg, kjøper- og selger-oppsett, pluss feiltilstanden uten profil."
+      description="Forhåndsvisning av hele onboardingflyten: valg av brukstype, deltakerprofil, kontotype og feiltilstand."
     >
       <PreviewSection
-        label="Velg rolle"
-        description="RoleChooser — vises når profile.role er null. Fortsett er koblet fra her (se filens toppkommentar)."
+        label="Velg brukstype"
+        description="Første steg for brukere som kommer til UpNext uten en forhåndsvalgt rolle."
       >
         <Frame>
           <Inert>
@@ -68,8 +68,8 @@ export default function OnboardingPreview() {
       </PreviewSection>
 
       <PreviewSection
-        label="Kjøper-oppsett"
-        description="BuyerSetupForm med mock-forhåndsutfylling (claimedName/claimedPhone). Fullfør ville normalt kalt completeBuyerOnboarding()."
+        label="Deltakerprofil"
+        description="Navn og valgfritt telefonnummer kan forhåndsutfylles fra en tidligere påmelding."
       >
         <Frame>
           <Inert>
@@ -84,8 +84,8 @@ export default function OnboardingPreview() {
       </PreviewSection>
 
       <PreviewSection
-        label="Selger-flyt"
-        description="SellerFlow — starter på kontotype-steget; Fortsett går videre til navnefeltet (tomt her fordi det leser fra live utlogget konto-kontekst; i appen forhåndsutfylt fra visningsnavnet). Fullfør ville normalt kalt ensureSeller() + markOnboardingComplete()."
+        label="Kontotype"
+        description="Velg ut fra hvem som holder kursene og hvilken konto som mottar betalingene. Fortsett viser sidenavnet og den offentlige lenken."
       >
         <Frame>
           <Inert>
@@ -95,8 +95,8 @@ export default function OnboardingPreview() {
       </PreviewSection>
 
       <PreviewSection
-        label="Feil (ingen profil)"
-        description="PageState variant=server-error — den ekte fallbacken når en innlogget bruker mangler profil (OnboardingPage.tsx)."
+        label="Profilen kunne ikke lastes"
+        description="Vises når brukeren er logget inn, men profilen ikke kunne hentes."
       >
         <Frame>
           <PageState variant="server-error" as="div" />
