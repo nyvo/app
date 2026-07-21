@@ -24,7 +24,6 @@ Deno.test('multi-session course keeps the session copy', async () => {
   const html = await render(React.createElement(SessionRescheduled, baseProps))
   assert(html.includes('Ny tid for en kursøkt'))
   assert(html.includes('har flyttet en kursøkt i'))
-  assert(html.includes('Resten av kurset står som planlagt.'))
 })
 
 Deno.test('single-session course gets whole-course copy, no "resten av kurset"', async () => {
@@ -33,9 +32,17 @@ Deno.test('single-session course gets whole-course copy, no "resten av kurset"',
   )
   assert(html.includes('Ny tid for kurset'))
   assert(html.includes('har flyttet Helgeworkshop til ny tid.'))
-  assert(html.includes('Påmeldingen din gjelder den nye tiden.'))
   assert(!html.includes('kursøkt'))
-  assert(!html.includes('Resten av kurset'))
+})
+
+Deno.test('no filler footer line in either variant', async () => {
+  for (const isSingleSession of [true, false]) {
+    const html = await render(
+      React.createElement(SessionRescheduled, { ...baseProps, isSingleSession }),
+    )
+    assert(!html.includes('Resten av kurset'))
+    assert(!html.includes('Påmeldingen din gjelder'))
+  }
 })
 
 Deno.test('both variants show new and old time', async () => {

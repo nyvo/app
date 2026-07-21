@@ -16,10 +16,9 @@ export interface SessionRescheduledProps {
   newTime: string
   courseLocation?: string
   /**
-   * The course has exactly one session, so "en kursøkt i …" / "resten av
-   * kurset" would imply siblings that don't exist. Switches to whole-course
-   * copy. Multi-day single events (2+ sessions) keep the session copy — one
-   * of their days moved and the rest do stand as planned.
+   * The course has exactly one session, so "en kursøkt i …" would imply
+   * siblings that don't exist. Switches heading/intro to whole-course copy.
+   * Multi-day single events (2+ sessions) keep the session copy.
    */
   isSingleSession?: boolean
 }
@@ -56,12 +55,6 @@ export const SessionRescheduled = ({
       />
       {courseLocation ? <DetailRow label="Sted" value={courseLocation} last /> : null}
     </DetailBlock>
-
-    <Text style={styles.paragraphMuted}>
-      {isSingleSession
-        ? 'Påmeldingen din gjelder den nye tiden.'
-        : 'Resten av kurset står som planlagt.'}
-    </Text>
   </EmailLayout>
 )
 
