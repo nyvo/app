@@ -3,7 +3,7 @@ import {
   androidBrowserEscapeUrl,
   isAndroid,
   isMetaInAppBrowser,
-  metaBrowserLabel,
+  metaAppLabel,
 } from './in-app-browser'
 
 // Real UA captured from a production session (Facebook app on iPad, 2026-07-21).
@@ -15,6 +15,10 @@ const SAFARI_UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5.2 Safari/605.1.15'
 const CHROME_ANDROID_UA =
   'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36'
+const MESSENGER_IOS_UA =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/MessengerForiOS;FBAV/470.0.0.30.107;FBBV/610076605;FBDV/iPhone15,2;FBMD/iPhone;FBSN/iOS;FBSV/18.5;FBSS/3;FBID/phone;FBLC/nb_NO;FBOP/5]'
+const MESSENGER_ANDROID_UA =
+  'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/126.0.0.0 Mobile Safari/537.36 FB_IAB/Orca-Android;FBAV/470.0.0.30.107;'
 
 describe('isMetaInAppBrowser', () => {
   it('detects the Facebook iOS webview', () => {
@@ -25,16 +29,23 @@ describe('isMetaInAppBrowser', () => {
     expect(isMetaInAppBrowser(IG_ANDROID_UA)).toBe(true)
   })
 
+  it('detects Messenger webviews on both platforms', () => {
+    expect(isMetaInAppBrowser(MESSENGER_IOS_UA)).toBe(true)
+    expect(isMetaInAppBrowser(MESSENGER_ANDROID_UA)).toBe(true)
+  })
+
   it('does not flag real browsers', () => {
     expect(isMetaInAppBrowser(SAFARI_UA)).toBe(false)
     expect(isMetaInAppBrowser(CHROME_ANDROID_UA)).toBe(false)
   })
 })
 
-describe('metaBrowserLabel', () => {
+describe('metaAppLabel', () => {
   it('names the owning app', () => {
-    expect(metaBrowserLabel(FB_IOS_UA)).toBe('Facebook-nettleseren')
-    expect(metaBrowserLabel(IG_ANDROID_UA)).toBe('Instagram-nettleseren')
+    expect(metaAppLabel(FB_IOS_UA)).toBe('Facebook-appen')
+    expect(metaAppLabel(IG_ANDROID_UA)).toBe('Instagram-appen')
+    expect(metaAppLabel(MESSENGER_IOS_UA)).toBe('Messenger-appen')
+    expect(metaAppLabel(MESSENGER_ANDROID_UA)).toBe('Messenger-appen')
   })
 })
 

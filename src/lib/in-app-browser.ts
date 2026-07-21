@@ -15,9 +15,12 @@ export function isMetaInAppBrowser(ua: string = navigator.userAgent): boolean {
   return META_WEBVIEW_RE.test(ua)
 }
 
-/** Which Meta app owns the webview — for user-facing copy. */
-export function metaBrowserLabel(ua: string = navigator.userAgent): string {
-  return ua.includes('Instagram') ? 'Instagram-nettleseren' : 'Facebook-nettleseren'
+/** Which Meta app owns the webview — for user-facing copy. Messenger's UA
+ * carries `MessengerForiOS` (iOS) / `Orca` (Android) alongside FBAN/FBAV. */
+export function metaAppLabel(ua: string = navigator.userAgent): string {
+  if (ua.includes('Instagram')) return 'Instagram-appen'
+  if (/Messenger|Orca/.test(ua)) return 'Messenger-appen'
+  return 'Facebook-appen'
 }
 
 export function isAndroid(ua: string = navigator.userAgent): boolean {
