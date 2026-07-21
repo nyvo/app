@@ -29,7 +29,7 @@ Whenever you implement — or plan/discuss implementing — new or restyled UI, 
 
 ## Loading skeletons track layout
 
-Any change to a screen's layout or structure (rows added/removed, spacing, reordered sections, new cards/columns) MUST update that screen's loading skeleton in the same change — the inline `<Skeleton>` block in the page/component and/or the shared `PageSkeleton` (`src/components/ui/page-skeleton.tsx`). Skeletons mirror the real layout's paddings and gaps exactly or the swap jumps (`docs/design-language.md` § Feedback states). Before finishing UI work, check whether the file (or its route) renders a skeleton and verify it still matches.
+Any change to a screen's layout or structure (rows added/removed, spacing, reordered sections, new cards/columns) MUST update that screen's loading skeleton in the same change — the inline `<Skeleton>` block in the page/component. Skeletons mirror the real layout's paddings and gaps exactly or the swap jumps (`docs/design-language.md` § Feedback states). Before finishing UI work, check whether the file (or its route) renders a skeleton and verify it still matches. Route-level fallbacks (Suspense chunks, auth init) where the destination layout is unknown use the shared `PageLoader` spinner (`src/components/ui/page-loader.tsx`) instead — never a generic content-shaped skeleton that can't match what mounts next.
 
 ## Design tokens
 

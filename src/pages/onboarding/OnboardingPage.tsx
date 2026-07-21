@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { DelayedFallback } from '@/components/ui/delayed-fallback'
-import { PageSkeleton } from '@/components/ui/page-skeleton'
+import { PageLoader } from '@/components/ui/page-loader'
 import { PageState } from '@/components/page-state/page-state'
 import { UpNextLogo } from '@/components/ui/upnext-logo'
 import { Label } from '@/components/ui/label'
@@ -111,13 +111,13 @@ export default function OnboardingPage() {
     return <Navigate to={authQuery ? `${AUTH_ROUTES.auth}?${authQuery}` : AUTH_ROUTES.auth} replace />
   }
 
-  // Auth init is cached and typically <200ms. Hold with a delayed skeleton
+  // Auth init is cached and typically <200ms. Hold with a delayed spinner
   // (nothing for fast loads, Studio § 10) rather than a bare blank that's
   // indistinguishable from a crash on a slow init.
   if (isLoading || !isInitialized) {
     return (
       <DelayedFallback>
-        <PageSkeleton />
+        <PageLoader />
       </DelayedFallback>
     )
   }

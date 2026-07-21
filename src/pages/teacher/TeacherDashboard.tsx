@@ -321,7 +321,9 @@ const TeacherDashboard = () => {
 /**
  * Suspense fallback while the IncomeChart chunk (recharts) loads — mirrors the
  * real card anatomy (header action; total; plot; optional consequence footer)
- * so the chunk-load swap doesn't jump the layout.
+ * so the chunk-load swap doesn't jump the layout. Only the data slots shimmer;
+ * the plot is a quiet hairline-framed reservation, not a solid pulsing slab —
+ * a 260px animated rectangle dominated the whole page while loading.
  */
 function IncomeChartFallback({ footer }: { footer?: ReactNode }) {
   return (
@@ -331,7 +333,10 @@ function IncomeChartFallback({ footer }: { footer?: ReactNode }) {
     >
       <FramedCardPanel className="px-4 py-5 sm:py-6">
         <Skeleton className="h-9 w-40" />
-        <Skeleton className="mt-6 h-[220px] w-full rounded-lg sm:h-[260px]" />
+        <div
+          aria-hidden="true"
+          className="mt-6 h-[220px] w-full rounded-lg border border-border-subtle sm:h-[260px]"
+        />
       </FramedCardPanel>
       {footer}
     </FramedCard>

@@ -214,7 +214,7 @@ Label
 | Banded/bordered page-header bars | Plain title + actions on the page |
 | Badges/pills for every status everywhere | `StatusBadge`/status dot + muted text; pills only for filters/categories |
 | Toast for form validation | Inline `FieldError` under the field |
-| Skeleton screens with heavy shimmer everywhere | `Skeleton`/`PageSkeleton` — simple muted bars, content-shaped |
+| Skeleton screens with heavy shimmer everywhere | `Skeleton` — simple muted bars, content-shaped; route-level fallbacks use the `PageLoader` spinner |
 | A second persistent onboarding surface | The sidebar setup card is the single anchor (2.5) |
 
 ---
