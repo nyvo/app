@@ -63,7 +63,7 @@ describe('OnboardingPage intent handling', () => {
         profile: { role: null, onboarding_completed_at: null, name: null, email: 'a@b.no', phone: null },
       }),
     )
-    expect(screen.getByText('Hva vil du gjøre?')).toBeInTheDocument()
+    expect(screen.getByText('Hva skal du bruke kontoen til?')).toBeInTheDocument()
   })
 
   it('pre-sets the role from intent and skips the chooser', async () => {
@@ -76,7 +76,7 @@ describe('OnboardingPage intent handling', () => {
       }),
     )
     // Chooser must not flash while the intent write is in flight.
-    expect(screen.queryByText('Hva vil du gjøre?')).not.toBeInTheDocument()
+    expect(screen.queryByText('Hva skal du bruke kontoen til?')).not.toBeInTheDocument()
     await waitFor(() => expect(setRole).toHaveBeenCalledWith('seller'))
     expect(setRole).toHaveBeenCalledTimes(1)
   })
@@ -93,8 +93,21 @@ describe('OnboardingPage intent handling', () => {
       }),
     )
     // Buyer setup renders; setRole is never called.
-    await waitFor(() => expect(screen.getByText('Litt om deg')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Bekreft opplysningene dine')).toBeInTheDocument())
     expect(setRole).not.toHaveBeenCalled()
+  })
+
+  it('shows concise seller account differences', () => {
+    renderOnboarding(
+      '/onboarding',
+      authState({
+        sellers: [],
+        profile: { role: 'seller', onboarding_completed_at: null, name: 'Kari', email: 'a@b.no', phone: null },
+      }),
+    )
+
+    expect(screen.getByText('Du holder egne kurs og mottar betalingene selv.')).toBeInTheDocument()
+    expect(screen.getByText('Yogalærere kan vise kurs på studiosiden. Alle betalinger går til studioet.')).toBeInTheDocument()
   })
 
   it('redirects already-onboarded users to next instead of onboarding', () => {

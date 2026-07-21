@@ -208,7 +208,7 @@ export function RoleChooser({ onAdvance }: { onAdvance: () => void }) {
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-2xl">
         <h1 className="mb-8 text-2xl font-medium text-foreground">
-          Hva vil du gjøre?
+          Hva skal du bruke kontoen til?
         </h1>
 
         <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -216,13 +216,13 @@ export function RoleChooser({ onAdvance }: { onAdvance: () => void }) {
           {([
             {
               value: 'buyer' as const,
-              title: 'Jeg vil melde meg på kurs',
-              body: 'Finn kurs og klasser hos lærere og studioer.',
+              title: 'Melde meg på kurs',
+              body: 'Finn kurs og hold oversikt over alle påmeldingene dine.',
             },
             {
               value: 'seller' as const,
-              title: 'Jeg tilbyr kurs',
-              body: 'Lag kurs og ta imot påmeldinger.',
+              title: 'Arrangere kurs',
+              body: 'Opprett kurs, ta imot betaling og hold oversikt over deltakerne.',
             },
           ]).map((opt) => {
             const isSelected = pick === opt.value
@@ -231,7 +231,7 @@ export function RoleChooser({ onAdvance }: { onAdvance: () => void }) {
                 key={opt.value}
                 className={cn(
                   'flex items-start gap-3 min-h-[7.5rem] rounded-xl bg-muted p-6 cursor-pointer transition-colors duration-150 focus-within:ring-2 focus-within:ring-foreground',
-                  isSelected ? 'bg-pressed ring-2 ring-foreground' : 'hover:bg-hover',
+                  isSelected ? 'ring-2 ring-foreground' : 'hover:bg-hover',
                 )}
               >
                 <input
@@ -372,12 +372,12 @@ export function BuyerSetupForm({
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
         <BackLink onClick={() => { void handleBack() }} disabled={saving} />
         <h1 className="mb-8 text-2xl font-medium text-foreground">
-          Litt om deg
+          Bekreft opplysningene dine
         </h1>
 
         <div className="space-y-5">
           <div className="grid gap-2">
-            <Label htmlFor="buyer-name">Navn</Label>
+            <Label htmlFor="buyer-name">Fullt navn</Label>
             <Input
               id="buyer-name"
               autoComplete="name"
@@ -406,7 +406,7 @@ export function BuyerSetupForm({
         </div>
 
         <Button type="submit" size="cta" loading={saving} className="mt-8 w-full">
-          Fullfør
+          Lagre og fortsett
         </Button>
       </form>
     </div>
@@ -414,12 +414,20 @@ export function BuyerSetupForm({
 }
 
 // ---------------------------------------------------------------------------
-// Step 2b — Seller flow (single screen: name → slug)
+// Step 2b — Seller flow (two screens: kontotype → name/slug)
 // ---------------------------------------------------------------------------
 
 export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () => void }) {
   const { profile, sellers, ensureSeller, markOnboardingComplete, setRole } = useAuth()
   const navigate = useNavigate()
+
+  // Kontotype gets its own full screen (Ghost's "What describes you best?" /
+  // Melio's account chooser on Mobbin — the choice IS the step, not a field
+  // squeezed above the name input). Sub-steps animate with the same
+  // stepVariants as the page-level role transition so the flow reads as one
+  // continuous stepper.
+  const [step, setStep] = useState<'model' | 'name'>('model')
+  const [direction, setDirection] = useState(1)
 
   // If a membership already exists (interrupted onboarding created the studio
   // before the completion stamp), prefill from the existing studio name so the
@@ -427,6 +435,13 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
   // mismatched name. Fall back to the display name for a fresh setup.
   const [name, setName] = useState(
     () => sellers[0]?.name ?? resolveDisplayName(profile?.name, profile?.email),
+  )
+  // Kontotype (sellers.operating_model). No pre-selection for a fresh setup —
+  // same reasoning as RoleChooser: an explicit pick enables Fortsett, so
+  // studio owners don't sail past a solo default and have to dig it out of
+  // settings later. An interrupted-onboarding retry prefills from the row.
+  const [model, setModel] = useState<'solo' | 'studio' | null>(() =>
+    sellers[0] ? (sellers[0].operating_model === 'studio' ? 'studio' : 'solo') : null,
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
@@ -444,29 +459,35 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
     }
   }
 
+  const handleModelContinue = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!model) return
+    setDirection(1)
+    setStep('name')
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = name.trim()
     const slug = generateSlug(trimmed)
     if (!trimmed) {
-      setErrors({ name: 'Skriv inn et navn' })
+      setErrors({ name: 'Skriv inn navnet på siden' })
       return
     }
     if (slug.length < 3) {
-      setErrors({ name: 'Bruk minst 3 bokstaver' })
+      setErrors({ name: 'Bruk minst 3 bokstaver eller tall' })
       return
     }
 
     setSaving(true)
-    // Third arg omitted — the default 'solo' model applies; changed later in settings.
-    const { seller, error } = await ensureSeller(trimmed, slug)
+    const { seller, error } = await ensureSeller(trimmed, slug, model ?? 'solo')
     if (error || !seller) {
       logger.error('Onboarding: ensureSeller failed', error)
       const msg = error?.message ?? ''
       if (msg.includes('already taken') || msg.includes('reserved')) {
-        setErrors({ name: 'Dette navnet er opptatt. Velg et annet.' })
+        setErrors({ name: 'Dette sidenavnet er opptatt. Velg et annet.' })
       } else if (msg.includes('Slug')) {
-        setErrors({ name: 'Velg et gyldig navn' })
+        setErrors({ name: 'Navnet må inneholde bokstaver eller tall' })
       } else {
         toast.error('Kunne ikke fullføre oppsettet – prøv igjen')
       }
@@ -489,39 +510,147 @@ export function SellerFlow({ nextPath, onBack }: { nextPath: string; onBack: () 
 
   return (
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
-      <form onSubmit={handleSubmit} className="w-full max-w-lg">
-        <BackLink onClick={() => { void handleBack() }} disabled={saving} />
-        <h1 className="mb-8 text-2xl font-medium text-foreground">
-          Hva skal siden din hete?
-        </h1>
+      {/* mode="wait" keeps the sub-steps in normal flow (no absolute inset) so
+          the component also lays out standalone in /dev/onboarding-preview. */}
+      <AnimatePresence mode="wait" custom={direction} initial={false}>
+        {step === 'model' ? (
+          <motion.div
+            key="model"
+            custom={direction}
+            variants={stepVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            className="w-full"
+          >
+            {/* Kontotype as its own step — sets sellers.operating_model up
+                front instead of defaulting to solo and hiding the switch in
+                studio settings. Full-page chooser per Ghost/Melio account-type
+                screens (Mobbin); cards reuse the RoleChooser anatomy, copy
+                aligns with StudioPage's AccountTypeSection so it reads as the
+                same setting the user finds later. */}
+            {/* data-preview-safe: submit is pure local step-navigation (no
+                RPC), so /dev/onboarding-preview's Inert wrapper lets it
+                through and the preview stays navigable. */}
+            <form data-preview-safe onSubmit={handleModelContinue} className="mx-auto w-full max-w-2xl">
+              <BackLink onClick={() => { void handleBack() }} />
+              <h1 className="mb-8 text-2xl font-medium text-foreground">
+                Hvilken kontotype passer deg?
+              </h1>
 
-        <div className="grid gap-2">
-          <Label htmlFor="seller-name">Navn</Label>
-          <Input
-            id="seller-name"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value)
-              if (errors.name) setErrors({})
-            }}
-            autoFocus
-            aria-invalid={!!errors.name || undefined}
-            aria-describedby={`seller-name-hint${errors.name ? ' seller-name-error' : ''}`}
-          />
-          <p id="seller-name-hint" className="text-sm text-foreground-muted">
-            {slugPreview.length >= 3
-              ? `Adressen blir ${window.location.host}/${slugPreview}`
-              : 'Bruk ditt eget navn eller navnet på studioet.'}
-          </p>
-          {errors.name && (
-            <FieldError id="seller-name-error" className="mt-0">{errors.name}</FieldError>
-          )}
-        </div>
+              <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <legend className="sr-only">Kontotype</legend>
+                {([
+                  {
+                    value: 'solo' as const,
+                    title: 'Jeg jobber selvstendig',
+                    body: 'Du holder egne kurs og mottar betalingene selv.',
+                  },
+                  {
+                    value: 'studio' as const,
+                    title: 'Jeg driver et yogastudio',
+                    body: 'Yogalærere kan vise kurs på studiosiden. Alle betalinger går til studioet.',
+                  },
+                ]).map((opt) => {
+                  const isSelected = model === opt.value
+                  return (
+                    <label
+                      key={opt.value}
+                      className={cn(
+                        'flex items-start gap-3 min-h-[7.5rem] rounded-xl bg-muted p-6 cursor-pointer transition-colors duration-150 focus-within:ring-2 focus-within:ring-foreground',
+                        isSelected ? 'ring-2 ring-foreground' : 'hover:bg-hover',
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="operating-model"
+                        value={opt.value}
+                        checked={isSelected}
+                        onChange={() => setModel(opt.value)}
+                        className="sr-only"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground">{opt.title}</p>
+                        <p className="mt-1 text-sm leading-relaxed text-foreground-muted">{opt.body}</p>
+                      </div>
+                      {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
+                    </label>
+                  )
+                })}
+              </fieldset>
+              <p className="mt-4 text-sm text-foreground-muted">
+                Du kan endre dette senere i innstillingene.
+              </p>
 
-        <Button type="submit" size="cta" loading={saving} className="mt-8 w-full">
-          Fullfør
-        </Button>
-      </form>
+              <Button
+                type="submit"
+                size="cta"
+                disabled={model === null}
+                className="mt-8 w-full"
+              >
+                Fortsett
+              </Button>
+            </form>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="name"
+            custom={direction}
+            variants={stepVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            className="w-full"
+          >
+            <form onSubmit={handleSubmit} className="mx-auto w-full max-w-lg">
+              <BackLink
+                onClick={() => {
+                  setDirection(-1)
+                  setStep('model')
+                }}
+                disabled={saving}
+              />
+              <div className="mb-8">
+                <h1 className="text-2xl font-medium text-foreground">
+                  Gi siden din et navn
+                </h1>
+                <p className="mt-2 text-sm leading-relaxed text-foreground-muted">
+                  Navnet vises til deltakerne og brukes i den offentlige lenken din.
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="seller-name">Navn på siden</Label>
+                <Input
+                  id="seller-name"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value)
+                    if (errors.name) setErrors({})
+                  }}
+                  autoFocus
+                  aria-invalid={!!errors.name || undefined}
+                  aria-describedby={`seller-name-hint${errors.name ? ' seller-name-error' : ''}`}
+                />
+                <p id="seller-name-hint" className="text-sm text-foreground-muted">
+                  {slugPreview.length >= 3
+                    ? `Lenken til siden blir ${window.location.host}/${slugPreview}`
+                    : model === 'studio'
+                      ? 'Bruk navnet deltakerne kjenner studioet under.'
+                      : 'Bruk navnet deltakerne kjenner deg igjen på.'}
+                </p>
+                {errors.name && (
+                  <FieldError id="seller-name-error" className="mt-0">{errors.name}</FieldError>
+                )}
+              </div>
+
+              <Button type="submit" size="cta" loading={saving} className="mt-8 w-full">
+                Opprett siden
+              </Button>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
