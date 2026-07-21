@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { isMetaInAppBrowser } from '@/lib/in-app-browser'
 
 interface GoogleAuthButtonProps {
   redirectTo?: string
@@ -50,6 +51,13 @@ export function GoogleAuthButton({
   }, [])
 
   const handleClick = async () => {
+    // Google returns 403 disallowed_useragent inside Meta webviews — enforced
+    // on Google's side. Explain instead of bouncing the user off Google's
+    // English error page.
+    if (isMetaInAppBrowser()) {
+      toast.error('Google-innlogging virker ikke her – åpne siden i nettleseren din.')
+      return
+    }
     setIsLoading(true)
     const { error } = await signInWithGoogle(redirectTo)
     if (error) {

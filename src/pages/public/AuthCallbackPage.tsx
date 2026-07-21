@@ -16,9 +16,15 @@ import {
 import { COMPANY } from '@/lib/company'
 
 // The generic "link failed" error (expired / already redeemed / silently
-// absent token). Cancellation of an OAuth consent is a distinct, non-error
-// case handled separately below.
-const LINK_ERROR = { title: 'Lenken virker ikke', description: 'Den er utløpt eller allerede brukt.' } as const
+// absent token). The most common way here is a confirmation link that already
+// worked (second device, email scanner pre-fetch), so the copy reassures that
+// the account likely exists instead of reading as a failed signup.
+// Cancellation of an OAuth consent is a distinct, non-error case handled
+// separately below.
+const LINK_ERROR = {
+  title: 'Lenken er allerede brukt',
+  description: 'Har du bekreftet e-posten din, er kontoen klar – logg inn for å fortsette.',
+} as const
 
 // How long a session may take to materialize after auth init reports "no
 // user" before we declare the link dead. The PKCE exchange normally lands
@@ -165,7 +171,7 @@ const AuthCallbackPage = () => {
 
         <div className="w-full">
           <Button asChild size="lg" className="w-full">
-            <Link to={AUTH_ROUTES.auth}>Tilbake til innlogging</Link>
+            <Link to={AUTH_ROUTES.auth}>Logg inn</Link>
           </Button>
         </div>
       </AuthLayout>

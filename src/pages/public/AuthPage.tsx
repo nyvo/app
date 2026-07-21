@@ -22,6 +22,7 @@ import {
 } from '@/lib/auth-routes'
 import { AUTH_VALIDATION, AUTH_ERRORS } from '@/lib/auth-messages'
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
+import { InAppBrowserNotice } from '@/components/auth/InAppBrowserNotice'
 import { PasswordRules, isPasswordValid } from '@/components/auth/PasswordRules'
 import { supabase } from '@/lib/supabase'
 import { isValidEmail } from '@/lib/utils'
@@ -413,7 +414,7 @@ const AuthPage = () => {
   if (step === 'code') {
     const isConfirm = codeCtx.reason === 'confirm'
     return (
-      <AuthLayout title="" customContent>
+      <AuthLayout title="" customContent banner={<InAppBrowserNotice className="mb-6" />}>
         <div className="mb-8 space-y-2 text-center">
           <h1 className="text-balance text-2xl font-medium text-foreground">
             {isConfirm ? 'Bekreft e-posten din' : 'Logg inn med kode'}
@@ -516,7 +517,7 @@ const AuthPage = () => {
   if (step === 'password') {
     const isSignup = accountMode === 'signup'
     return (
-      <AuthLayout title="" customContent>
+      <AuthLayout title="" customContent banner={<InAppBrowserNotice className="mb-6" />}>
         <Button
           type="button"
           variant="ghost"
@@ -605,7 +606,7 @@ const AuthPage = () => {
 
   // ── Identify screen (step 1) ───────────────────────────────────────────────
   return (
-    <AuthLayout title="" customContent>
+    <AuthLayout title="" customContent banner={<InAppBrowserNotice className="mb-6" />}>
       <div className="mb-8 text-center">
         <h1 className="text-balance text-2xl font-medium text-foreground">Logg inn eller opprett konto</h1>
       </div>
