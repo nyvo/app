@@ -157,6 +157,19 @@ Deno.serve(async (req: Request) => {
     if (signupsError) {
       console.error('[update-session] signups query error', signupsError)
     } else if (signups && signups.length > 0) {
+      // Single-session courses get whole-course copy ("Ny tid for kurset") —
+      // "en kursøkt i …" / "resten av kurset" implies sibling sessions that
+      // don't exist. Count failures fall back to the session copy, which is
+      // safe for every real course shape.
+      const { count: sessionCount, error: countError } = await supabase
+        .from('course_sessions')
+        .select('id', { count: 'exact', head: true })
+        .eq('course_id', course.id)
+      if (countError) {
+        console.error('[update-session] session count error', countError)
+      }
+      const isSingleSession = sessionCount === 1
+
       const newDateLabel = weekdayDate(body.new_date)
       const newStartLabel = shortTime(body.new_start_time)
       const oldDateLabel = weekdayDate(oldDate)
@@ -181,6 +194,7 @@ Deno.serve(async (req: Request) => {
             newDate: newDateLabel,
             newTime: newStartLabel,
             courseLocation: course.location ?? undefined,
+            isSingleSession,
           },
         })
         if (result.error) {

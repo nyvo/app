@@ -77,6 +77,8 @@ export interface SessionRescheduledEmailProps {
   newDate: string
   newTime: string
   courseLocation?: string
+  /** Course has exactly one session — template drops the "resten av kurset" copy. */
+  isSingleSession?: boolean
 }
 
 export interface BookingNotificationEmailProps {
