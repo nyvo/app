@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { COMPANY } from '@/lib/company';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { useCanonical } from '@/hooks/use-page-meta';
 import { UpNextLogo } from '@/components/ui/upnext-logo';
 
 /* Legal document layout: single narrow reading column, two text tiers,
@@ -8,6 +9,7 @@ import { UpNextLogo } from '@/components/ui/upnext-logo';
 
 const TermsPage = () => {
   useDocumentTitle('Vilkår');
+  useCanonical('/terms');
   return (
     <div className="min-h-dvh w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">

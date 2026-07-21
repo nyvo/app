@@ -25,6 +25,8 @@ import { fetchSellerBySlug } from '@/services/sellers';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { useCanonical, useJsonLd } from '@/hooks/use-page-meta';
+import { buildCourseJsonLd } from '@/lib/structured-data';
 import { osloNowKey } from '@/utils/dateUtils';
 import { BrandFooter } from '@/components/public/BrandFooter';
 import { ChevronLeft } from '@/lib/icons';
@@ -164,6 +166,9 @@ export default function PublicCourseDetailPage() {
   const notFound = detailQuery.data?.kind === 'not-found';
 
   useDocumentTitle(course?.title);
+  // Canonical uses the DB slugs (route params may differ in casing/legacy form).
+  useCanonical(course?.seller?.slug ? `/${course.seller.slug}/${course.slug}` : null);
+  useJsonLd('jsonld-course', course ? buildCourseJsonLd(course, sessions) : null);
 
   // Back link target: prefer the viewing storefront (state) over the
   // canonical owner — an affiliate storefront visitor should land back where
