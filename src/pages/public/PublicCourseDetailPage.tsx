@@ -241,7 +241,11 @@ export default function PublicCourseDetailPage() {
             >
               {hasHero && (
                 <div>
-                  <CourseHeroImage src={heroImg!} onFailed={() => setHeroFailed(true)} />
+                  <CourseHeroImage
+                    src={heroImg!}
+                    alt={course.title}
+                    onFailed={() => setHeroFailed(true)}
+                  />
                   <SellerCard course={course} className="mt-4 max-md:hidden" />
                 </div>
               )}
@@ -351,14 +355,22 @@ export default function PublicCourseDetailPage() {
 
 // ── Hero image ──────────────────────────────────────────────────────────
 
-function CourseHeroImage({ src, onFailed }: { src: string; onFailed: () => void }) {
+function CourseHeroImage({
+  src,
+  alt,
+  onFailed,
+}: {
+  src: string;
+  alt: string;
+  onFailed: () => void;
+}) {
   // A broken image URL reports up so the page can reflow to the single-column
   // no-image layout rather than leaving a broken-image glyph on the page.
   return (
     <div className="aspect-square w-full overflow-hidden rounded-2xl bg-muted">
       <img
         src={src}
-        alt=""
+        alt={alt}
         className="media-outline size-full object-cover"
         onError={onFailed}
       />
