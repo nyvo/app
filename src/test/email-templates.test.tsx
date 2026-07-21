@@ -149,7 +149,7 @@ describe('transactional email copy', () => {
       }),
     );
 
-    expect(text).toContain('trenger du hjelp med upnext? skriv til hei@framio.no');
+    expect(text).toContain('trenger du hjelp med upnext? skriv til hei@upnext.no');
   });
 });
 
@@ -160,7 +160,7 @@ describe('auth email reference templates', () => {
   it.each(templateFiles)('%s points to the current support address', (file) => {
     const template = readFileSync(`${templateDirectory}/${file}`, 'utf8');
 
-    expect(template).toContain('mailto:hei@framio.no');
+    expect(template).toContain('mailto:hei@upnext.no');
     expect(template).not.toContain('mailto:hei@raden.no');
   });
 });

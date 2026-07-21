@@ -81,8 +81,8 @@ export const EmailLayout = ({ preview, children }: EmailLayoutProps) => (
         </Section>
         <Text style={footer}>
           Trenger du hjelp med UpNext? Skriv til{' '}
-          <Link href="mailto:hei@framio.no" style={footerLink}>
-            hei@framio.no
+          <Link href="mailto:hei@upnext.no" style={footerLink}>
+            hei@upnext.no
           </Link>
           .
         </Text>
