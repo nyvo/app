@@ -9,6 +9,8 @@ interface AuthLayoutProps {
   footer?: React.ReactNode
   /** Replace the default heading + motion wrapper with a custom content block */
   customContent?: boolean
+  /** Notice slot rendered above the logo (e.g. in-app-browser nudge) */
+  banner?: React.ReactNode
   children: React.ReactNode
 }
 
@@ -22,12 +24,14 @@ export function AuthLayout({
   subtitle,
   footer,
   customContent,
+  banner,
   children,
 }: AuthLayoutProps) {
   return (
     <div className="flex min-h-dvh w-full flex-col bg-background text-foreground antialiased selection:bg-muted selection:text-foreground">
       <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
         <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-300">
+          {banner}
           <div className="mb-6 flex justify-center">
             <Link to="/" aria-label="UpNext">
               <UpNextLogo />

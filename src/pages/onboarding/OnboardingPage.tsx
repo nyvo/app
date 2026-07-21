@@ -17,6 +17,8 @@ import { stepVariants } from '@/lib/motion'
 import { toast } from 'sonner'
 import { AUTH_ROUTES, parseAuthIntent, sanitizeNextPath } from '@/lib/auth-routes'
 import { claimMySignups, fetchLatestClaimedContact } from '@/services/signups'
+import { InAppBrowserNotice } from '@/components/auth/InAppBrowserNotice'
+import { isMetaInAppBrowser } from '@/lib/in-app-browser'
 import type { UserRole } from '@/types/database'
 
 /**
@@ -138,6 +140,13 @@ export default function OnboardingPage() {
           <UpNextLogo />
         </Link>
       </header>
+      {/* Meta-webview nudge — this flow is where webview reloads cost the most
+          (sub-step state is local and resets on every reload). */}
+      {isMetaInAppBrowser() && (
+        <div className="px-4 sm:px-6">
+          <InAppBrowserNotice className="mx-auto max-w-lg" />
+        </div>
+      )}
       <div className="flex-1 relative overflow-hidden">
         <AnimatePresence mode="wait" custom={direction} initial={false}>
           <motion.div
