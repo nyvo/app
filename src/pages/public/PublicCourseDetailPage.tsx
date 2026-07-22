@@ -168,13 +168,13 @@ export default function PublicCourseDetailPage() {
   useDocumentTitle(course?.title);
   // Canonical uses the DB slugs (route params may differ in casing/legacy form).
   useCanonical(course?.seller?.slug ? `/${course.seller.slug}/${course.slug}` : null);
-  // The course's own description makes the snippet; courses without one get a
-  // generic booking line so the homepage pitch never leaks onto course pages.
+  // The course's own description makes the snippet; courses without one (or
+  // with only empty rich-text markup) get a generic booking line so the
+  // homepage pitch never leaks onto course pages.
   useMetaDescription(
     course
-      ? course.description
-        ? toMetaDescription(stripHtml(course.description))
-        : `Påmelding til ${course.title}${course.seller?.name ? ` hos ${course.seller.name}` : ''} – se datoer, pris og ledige plasser.`
+      ? toMetaDescription(stripHtml(course.description ?? '')) ||
+          `Påmelding til ${course.title}${course.seller?.name ? ` hos ${course.seller.name}` : ''} – se datoer, pris og ledige plasser.`
       : null,
   );
   useJsonLd('jsonld-course', course ? buildCourseJsonLd(course, sessions) : null);
