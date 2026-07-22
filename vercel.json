@@ -14,6 +14,18 @@
       ]
     },
     {
+      "source": "/:path(auth|checkout|join|onboarding|overview|help|get-started|schedule|courses|studio|samarbeid|collaboration|settings|dev)/:rest*",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    },
+    {
+      "source": "/:slug/:courseSlug/pamelding",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    },
+    {
       "source": "/((?!embed/).*)",
       "headers": [
         { "key": "Content-Security-Policy", "value": "frame-ancestors 'none'" },

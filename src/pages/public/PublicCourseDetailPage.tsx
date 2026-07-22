@@ -25,8 +25,8 @@ import { fetchSellerBySlug } from '@/services/sellers';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import { useCanonical, useJsonLd } from '@/hooks/use-page-meta';
-import { buildCourseJsonLd } from '@/lib/structured-data';
+import { useCanonical, useJsonLd, useMetaDescription, toMetaDescription } from '@/hooks/use-page-meta';
+import { buildCourseJsonLd, stripHtml } from '@/lib/structured-data';
 import { osloNowKey } from '@/utils/dateUtils';
 import { BrandFooter } from '@/components/public/BrandFooter';
 import { ChevronLeft } from '@/lib/icons';
@@ -168,6 +168,15 @@ export default function PublicCourseDetailPage() {
   useDocumentTitle(course?.title);
   // Canonical uses the DB slugs (route params may differ in casing/legacy form).
   useCanonical(course?.seller?.slug ? `/${course.seller.slug}/${course.slug}` : null);
+  // The course's own description makes the snippet; courses without one get a
+  // generic booking line so the homepage pitch never leaks onto course pages.
+  useMetaDescription(
+    course
+      ? course.description
+        ? toMetaDescription(stripHtml(course.description))
+        : `Påmelding til ${course.title}${course.seller?.name ? ` hos ${course.seller.name}` : ''} – se datoer, pris og ledige plasser.`
+      : null,
+  );
   useJsonLd('jsonld-course', course ? buildCourseJsonLd(course, sessions) : null);
 
   // Back link target: prefer the viewing storefront (state) over the

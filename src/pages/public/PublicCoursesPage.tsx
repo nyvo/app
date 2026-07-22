@@ -13,7 +13,7 @@ import { BrandFooter } from '@/components/public/BrandFooter';
 import { StudioFilterPill } from '@/components/public/studio/StudioFilterPill';
 import { deriveStudioFacts, type StudioLocation } from '@/components/public/studio/studioFacts';
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import { useCanonical, useJsonLd } from '@/hooks/use-page-meta';
+import { useCanonical, useJsonLd, useMetaDescription } from '@/hooks/use-page-meta';
 import { buildStorefrontJsonLd } from '@/lib/structured-data';
 
 type ErrorKind = 'not-found' | 'load-failed';
@@ -133,6 +133,11 @@ const PublicCoursesPage = () => {
     : facts.primaryLocation;
 
   useCanonical(organization ? `/${organization.slug}` : null);
+  useMetaDescription(
+    organization
+      ? `Kurs og påmelding hos ${organization.name}. Se timeplan, priser og ledige plasser, og meld deg på nett.`
+      : null,
+  );
   // JSON-LD address comes from the canonical row only — never the
   // course-venue fallback used for display (see buildStorefrontJsonLd).
   useJsonLd(

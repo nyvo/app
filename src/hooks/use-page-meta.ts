@@ -25,6 +25,35 @@ export function useCanonical(path: string | null): void {
 }
 
 /**
+ * Points `<meta name="description">` at page-specific copy and restores the
+ * previous content on unmount. Without this, index.html's static description
+ * (the platform pitch) applies to every route — duplicate descriptions
+ * site-wide and no control over the SERP snippet for storefronts and course
+ * pages. Same pattern as useCanonical: null text (data still loading) keeps
+ * the current description untouched.
+ */
+export function useMetaDescription(text?: string | null): void {
+  useEffect(() => {
+    if (!text) return
+    const meta = document.head.querySelector<HTMLMetaElement>('meta[name="description"]')
+    if (!meta) return
+    const previous = meta.getAttribute('content')
+    meta.setAttribute('content', text)
+    return () => {
+      if (previous) meta.setAttribute('content', previous)
+    }
+  }, [text])
+}
+
+/** Google truncates snippets around 155–160 chars; cut at a word boundary. */
+export function toMetaDescription(text: string, max = 155): string {
+  const clean = text.replace(/\s+/g, ' ').trim()
+  if (clean.length <= max) return clean
+  const cut = clean.slice(0, max)
+  return `${cut.slice(0, cut.lastIndexOf(' '))} …`
+}
+
+/**
  * Injects a `<script type="application/ld+json">` into <head> and removes it
  * on unmount — critical in this SPA so a stale course's markup never lingers
  * into the next route. Keyed on the serialized payload, so the tag is only
