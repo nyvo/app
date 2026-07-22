@@ -246,7 +246,10 @@ compile. Arbitrary sizes only below 12px (`text-[11px]` etc.) — never in the
   close ×, kebab, share), `outline` (special-case emphasis on filled/photo
   surfaces — default to `secondary` instead), `destructive`, `link`, `plain`.
 - ALL buttons are pills (`rounded-full`) — text and icon-only alike.
-- Heights: 44px default/cta, 40px `lg` (modal footers). Touch surfaces: minimum 44px.
+- Heights: 40px `default`/`lg` (app chrome, shares rows with 40px fields);
+  44px `cta` — public/mobile primary CTAs and ALL auth controls. On /auth every
+  input and button is 44px (`h-11` inputs, `size="cta"` buttons, OTP slots
+  already `size-11`). Touch surfaces: minimum 44px.
 - No hover scale/lift; the default variant deliberately has no hover darken
   (near-black + darken reads as noise).
 

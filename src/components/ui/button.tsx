@@ -45,10 +45,12 @@ import { Spinner } from "./spinner"
  *   lg       40px   px-5     text-sm    Legacy alias of default (wider padding,
  *                                       same height since the 40px shift);
  *                                       prefer `default` in new code
- *   cta      40px   px-6     text-sm    Public/mobile primary CTAs (wider
- *                                       padding only — 14px text everywhere
- *                                       since 2026-07-11; 16px text-base was
- *                                       the pre-hierarchy exception)
+ *   cta      44px   px-6     text-sm    Public/mobile primary CTAs + auth
+ *                                       controls (2026-07-22: 40 → 44 — the
+ *                                       conversion surfaces get the full touch
+ *                                       target; text stays 14px. Auth inputs
+ *                                       are h-11 to match — buttons share rows
+ *                                       with fields)
  *   sm       32px   px-3     text-sm    RESERVED — only for contexts that are
  *                                       naturally small-scale and don't have
  *                                       room for the 40px button (e.g. compact
@@ -92,7 +94,7 @@ const buttonVariants = cva(
       size: {
         default: "h-10 gap-1.5 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
         lg: "h-10 gap-1.5 px-5 has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
-        cta: "h-10 gap-2 px-6 has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5",
+        cta: "h-11 gap-2 px-6 has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5",
         sm: "h-8 gap-1 px-3 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
         icon: "size-10",
         "icon-lg": "size-10",

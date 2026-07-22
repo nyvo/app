@@ -350,17 +350,19 @@
 .lnd .p-row > div { min-width: 0; flex: 1; }
 .lnd .chip-paid { flex: none; background: var(--success-subtle); color: var(--success); border-radius: var(--r-pill); font-size: 9px; font-weight: 600; padding: 3px 8px; }
 
-/* ---- CTA band (chrome) ---- */
+/* ---- CTA band (chrome) ----
+   Single-row strip (2026-07-22): the heading IS the copy — no sub-line —
+   with the button on the same row. Stacks again under 768px. */
 .lnd .cta-panel {
   position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: space-between; gap: 32px;
   border-radius: var(--r-hero);
   background: var(--chrome);
-  padding: 72px 48px;
-  text-align: center; color: var(--chrome-fg);
+  padding: 52px 48px;
+  color: var(--chrome-fg);
 }
 .lnd .cta-panel h2 { font-size: clamp(28px, 2.8vw, 36px); font-weight: 600; letter-spacing: -0.03em; }
-.lnd .cta-panel p { margin: 16px auto 0; max-width: 480px; font-size: 17px; color: oklch(1 0 0 / 0.85); }
-.lnd .cta-panel .hero-ctas { margin-top: 28px; }
+.lnd .cta-panel .hero-ctas { margin-top: 0; flex: none; }
 
 /* ---- Pricing ----
    Card + toggle component styles are shared with the dashboard billing
@@ -461,6 +463,7 @@
   .lnd { --section: 72px; }
   .lnd .nav-link { display: none; }
   .lnd .hero-panel, .lnd .cta-panel { padding-inline: 28px; }
+  .lnd .cta-panel { flex-direction: column; align-items: flex-start; gap: 24px; padding-block: 44px; }
   /* Hero compression: the stacked mock is the page's tallest block on
      mobile — tighten the panel's own air and crop the mock to the income
      card + "Neste kurs" (the second list column doubles its height). */
