@@ -319,25 +319,37 @@ export default function PublicCourseDetailPage() {
                   className="mt-7"
                 />
 
+                {/* Section headings reuse PublicCard's header-band anatomy
+                    (bg-muted rounded-lg, 14px medium) without the outer card,
+                    so every section on the page carries the same voice. Band
+                    text stays full foreground (muted-on-muted rule); content
+                    indents px-3 to align with the band's inner text, and the
+                    bands replace the old border-t dividers. */}
                 {course.description && (
-                  <section className="mt-8 border-t border-border-subtle pt-8">
-                    <h2 className="text-sm font-medium text-foreground-muted mb-3">Om kurset</h2>
+                  <section className="mt-8">
+                    <h2 className="flex items-center rounded-lg bg-muted px-3 py-2 text-sm font-medium text-foreground">
+                      Om kurset
+                    </h2>
                     <RichTextContent
                       html={course.description}
-                      className="text-base leading-relaxed text-foreground"
+                      className="px-3 pt-4 text-base leading-relaxed text-foreground"
                     />
                   </section>
                 )}
 
                 {course.location && (
-                  <section className="mt-8 border-t border-border-subtle pt-8">
-                    <h2 className="text-sm font-medium text-foreground-muted mb-3">Sted</h2>
-                    <LocationCard
-                      location={course.location}
-                      lat={course.location_lat}
-                      lon={course.location_lon}
-                      placeId={course.location_place_id}
-                    />
+                  <section className="mt-8">
+                    <h2 className="flex items-center rounded-lg bg-muted px-3 py-2 text-sm font-medium text-foreground">
+                      Sted
+                    </h2>
+                    <div className="px-3 pt-4">
+                      <LocationCard
+                        location={course.location}
+                        lat={course.location_lat}
+                        lon={course.location_lon}
+                        placeId={course.location_place_id}
+                      />
+                    </div>
                   </section>
                 )}
 
@@ -845,7 +857,11 @@ function CourseDetailSkeletonBody({ twoCol = false }: { twoCol?: boolean }) {
             <Skeleton className="h-18 flex-1 rounded-xl" />
           </div>
           <Skeleton className="mt-7 h-48 w-full rounded-2xl" />
-          <Skeleton className="mt-8 h-32 w-full" />
+          {/* Section: header band + indented content */}
+          <div className="mt-8">
+            <Skeleton className="h-9 w-full rounded-lg" />
+            <Skeleton className="mx-3 mt-4 h-24" />
+          </div>
         </div>
       </div>
     );
@@ -863,7 +879,11 @@ function CourseDetailSkeletonBody({ twoCol = false }: { twoCol?: boolean }) {
           <Skeleton className="h-10 w-3/4" />
           <Skeleton className="mt-5 h-10 w-64" />
           <Skeleton className="mt-7 h-48 w-full rounded-2xl" />
-          <Skeleton className="mt-8 h-32 w-full" />
+          {/* Section: header band + indented content */}
+          <div className="mt-8">
+            <Skeleton className="h-9 w-full rounded-lg" />
+            <Skeleton className="mx-3 mt-4 h-24" />
+          </div>
         </div>
       </div>
     </div>
