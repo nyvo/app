@@ -321,7 +321,7 @@ export default function PublicCourseDetailPage() {
 
                 {course.description && (
                   <section className="mt-8 border-t border-border-subtle pt-8">
-                    <h2 className="text-base font-medium mb-3">Om kurset</h2>
+                    <h2 className="text-sm font-medium text-foreground-muted mb-3">Om kurset</h2>
                     <RichTextContent
                       html={course.description}
                       className="text-base leading-relaxed text-foreground"
@@ -331,7 +331,7 @@ export default function PublicCourseDetailPage() {
 
                 {course.location && (
                   <section className="mt-8 border-t border-border-subtle pt-8">
-                    <h2 className="text-base font-medium mb-3">Sted</h2>
+                    <h2 className="text-sm font-medium text-foreground-muted mb-3">Sted</h2>
                     <LocationCard
                       location={course.location}
                       lat={course.location_lat}
