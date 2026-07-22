@@ -12,8 +12,8 @@ import { CANONICAL_ORIGIN } from '@/hooks/use-page-meta'
  * the data can't support valid markup.
  */
 
-/** Rich-text course descriptions are stored as HTML; JSON-LD wants plain text. */
-function stripHtml(html: string): string {
+/** Rich-text course descriptions are stored as HTML; JSON-LD and meta descriptions want plain text. */
+export function stripHtml(html: string): string {
   return html
     .replace(/<[^>]*>/g, ' ')
     .replace(/&nbsp;/g, ' ')

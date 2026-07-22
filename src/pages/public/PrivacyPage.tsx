@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import { useCanonical } from '@/hooks/use-page-meta';
+import { useCanonical, useMetaDescription } from '@/hooks/use-page-meta';
 import { COMPANY } from '@/lib/company';
 import { UpNextLogo } from '@/components/ui/upnext-logo';
 
@@ -10,6 +10,9 @@ import { UpNextLogo } from '@/components/ui/upnext-logo';
 const PrivacyPage = () => {
   useDocumentTitle('Personvern');
   useCanonical('/personvern');
+  useMetaDescription(
+    'Hvordan UpNext behandler personopplysningene dine – hva vi samler inn, hvorfor, og hvilke rettigheter du har.',
+  );
   return (
     <div className="min-h-dvh w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
       <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
