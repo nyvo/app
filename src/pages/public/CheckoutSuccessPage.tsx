@@ -286,7 +286,7 @@ const CheckoutSuccessPage = () => {
             <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
               <Spinner size="lg" className="text-foreground" />
             </div>
-            <p className="mb-3 text-3xl font-medium text-foreground">Bekrefter betaling</p>
+            <h1 className="mb-3 text-3xl font-medium text-foreground">Bekrefter betaling</h1>
             <p className="text-base text-foreground-muted">
               {isLongWait
                 ? 'Det tar litt lenger tid enn vanlig. Du får bekreftelsen på e-post om vi ikke blir ferdige her.'
