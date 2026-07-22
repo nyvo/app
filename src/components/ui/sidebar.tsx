@@ -378,7 +378,7 @@ function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="sidebar-header"
       data-sidebar="header"
       // px-4 matches SidebarGroup so header content shares the nav items' left edge
-      className={cn("flex flex-col gap-2 px-4 py-2 group-data-[collapsible=icon]:px-2", className)}
+      className={cn("flex flex-col gap-2 px-4 py-2 group-data-[collapsible=icon]:px-1.5", className)}
       {...props}
     />
   )
@@ -391,7 +391,7 @@ function SidebarFooter({ className, ...props }: React.ComponentProps<"div">) {
       data-sidebar="footer"
       // px-4 matches SidebarGroup so footer content shares the nav items' left edge;
       // pb clears the home indicator inside the full-height mobile drawer (env()=0 on desktop)
-      className={cn("flex flex-col gap-2 px-4 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] group-data-[collapsible=icon]:px-2", className)}
+      className={cn("flex flex-col gap-2 px-4 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] group-data-[collapsible=icon]:px-1.5", className)}
       {...props}
     />
   )
@@ -430,7 +430,7 @@ function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sidebar-group"
       data-sidebar="group"
-      className={cn("relative flex w-full min-w-0 flex-col px-4 py-2 group-data-[collapsible=icon]:px-2", className)}
+      className={cn("relative flex w-full min-w-0 flex-col px-4 py-2 group-data-[collapsible=icon]:px-1.5", className)}
       {...props}
     />
   )
@@ -513,7 +513,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button group/menu-button flex w-full items-center gap-2.5 overflow-hidden rounded-lg px-3 py-2 text-left text-sm font-medium text-sidebar-foreground-muted outline-hidden transition-[color,background-color,width,height,padding] duration-150 ease motion-reduce:transition-none group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring active:bg-sidebar-accent active:text-sidebar-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-foreground data-active:bg-sidebar-active data-active:text-sidebar-active-foreground [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate",
+  "peer/menu-button group/menu-button flex w-full items-center gap-2.5 overflow-hidden rounded-lg px-3 py-2 text-left text-sm font-medium text-sidebar-foreground-muted outline-hidden transition-[color,background-color,width,height,padding] duration-150 ease motion-reduce:transition-none group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-9! group-data-[collapsible=icon]:p-2! hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring active:bg-sidebar-accent active:text-sidebar-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-foreground data-active:bg-sidebar-active data-active:text-sidebar-active-foreground [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate",
   {
     variants: {
       variant: {
@@ -526,7 +526,7 @@ const sidebarMenuButtonVariants = cva(
         // drawer (Drawer.Content sets data-mobile="true") so touch rows get a
         // 44px floor without changing the desktop rail's density. min-height
         // (not height) so it never clips taller custom content.
-        default: "h-9 text-sm in-data-[mobile=true]:min-h-11!",
+        default: "h-10 text-sm [&_svg]:size-[18px] in-data-[mobile=true]:min-h-11!",
         sm: "h-8 text-xs in-data-[mobile=true]:min-h-11!",
         lg: "h-12 text-sm group-data-[collapsible=icon]:p-0!",
       },
@@ -630,12 +630,12 @@ function SidebarMenuSkeleton({
     <div
       data-slot="sidebar-menu-skeleton"
       data-sidebar="menu-skeleton"
-      className={cn("flex h-8 items-center gap-2 rounded-md px-2", className)}
+      className={cn("flex h-10 items-center gap-2.5 rounded-md px-3", className)}
       {...props}
     >
       {showIcon && (
         <Skeleton
-          className="size-4 rounded-md"
+          className="size-[18px] rounded-md"
           data-sidebar="menu-skeleton-icon"
         />
       )}
