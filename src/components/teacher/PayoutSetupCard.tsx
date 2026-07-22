@@ -130,7 +130,9 @@ export function PayoutSetupCard({ viewModel }: { viewModel: PayoutSetupViewModel
     // prefers-reduced-motion.
     <section className="pt-2 sm:pt-6">
       <div className="mx-auto max-w-xl text-center animate-in fade-in-0 duration-200">
-        <h2 className="text-2xl font-medium text-foreground">{h2}</h2>
+        {/* text-xl, one step below the 24px page h1 — same-size stacked headings
+            read as a hierarchy tie */}
+        <h2 className="text-xl font-medium text-foreground">{h2}</h2>
         {current?.description && (
           <p className="mx-auto mt-2 max-w-lg text-base text-foreground-muted">{current.description}</p>
         )}

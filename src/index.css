@@ -439,12 +439,14 @@
     @apply font-sans;
   }
 
-  /* Display face (Open Sauce One) on semantic headings — page titles, section
-     headings, card titles, dialog/sheet/drawer titles (Radix *Title renders h2).
-     Weights unchanged: headings stay `font-medium` per ratified convention.
-     Landing (.lnd) opts its h3s back out in landing.css; plan-cards.css keeps
-     `.plan-name` on the base face. Ratified 2026-07-22. */
-  h1, h2, h3 {
+  /* Display face (Open Sauce One) on page-level headlines ONLY — every app/public
+     page title is an h1 at text-2xl+ and nothing smaller is an h1, so `h1` IS the
+     size threshold. Section/card/dialog titles (h2/h3, 14–18px) stay on Inter:
+     below ~24px the display face is indistinguishable and only creates drift.
+     Landing's large marketing h2s opt in via landing.css. Weights unchanged:
+     headings stay `font-medium` in-app. Ratified 2026-07-22 (narrowed same day
+     from the initial h1–h3 rule). */
+  h1 {
     @apply font-display;
   }
 

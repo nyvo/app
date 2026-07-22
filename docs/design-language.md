@@ -198,11 +198,14 @@ Faces (ratified 2026-07-22 — supersedes the 2026-07-15 all-Geist decision):
   body, labels, table headers, badges, buttons, nav items, form labels, helper
   text, stat figures.
 - **Open Sauce One** (`--font-display`, weights 500/600 only) is the display
-  face — page titles, section headings, card titles, dialog/sheet/drawer
-  titles. Applied via ONE mechanism: the `@layer base` rule on `h1–h3` in
-  `src/index.css`, plus the `font-display` utility on shared title components
-  that render div/span. Never sprinkle raw `font-family` per page. Headings
-  keep their existing weights (`font-medium` in-app; 600 on landing display).
+  face — page-level headlines ONLY (the `h1` per screen, `text-2xl`+) plus the
+  landing's large marketing h2s. Section headings, card titles, and
+  dialog/sheet/drawer titles (14–18px) stay on Inter: below ~24px the display
+  face is indistinguishable from the base face and only creates drift. Applied
+  via ONE mechanism: the `@layer base` rule on `h1` in `src/index.css`
+  (landing.css opts its big h2s in). Never sprinkle raw `font-family` or the
+  `font-display` utility per page. Headings keep their existing weights
+  (`font-medium` in-app; 600 on landing display).
 - **Geist Mono** (`--font-mono`) is unchanged — code surfaces only (embed-code
   snippet, /dev pages).
 
