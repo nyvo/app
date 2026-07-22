@@ -1,4 +1,4 @@
-import { lazy, Suspense, use } from 'react'
+import { lazy, use } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { PageLoader } from '@/components/ui/page-loader'
 import { DelayedFallback } from '@/components/ui/delayed-fallback'
@@ -37,9 +37,11 @@ export default function DashboardRouter() {
 
   const Dashboard = sellers.length > 0 ? TeacherDashboard : BuyerDashboard
 
-  return (
-    <Suspense fallback={<DelayedFallback><PageLoader /></DelayedFallback>}>
-      <Dashboard />
-    </Suspense>
-  )
+  // No Suspense boundary of our own — deliberately. On first boot the lazy
+  // chunk suspends up to RootChrome's boundary, so the full-screen loader
+  // stays put until sidebar AND dashboard commit together (an inner boundary
+  // here made the spinner remount and shift right when the sidebar appeared).
+  // On in-app navigations React Router wraps the update in startTransition,
+  // so React holds the previous page instead of showing any fallback.
+  return <Dashboard />
 }
