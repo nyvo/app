@@ -258,16 +258,18 @@ export default function PublicCourseDetailPage() {
               <div className="min-w-0">
                 <h1 className="text-4xl font-medium text-foreground">{course.title}</h1>
 
-                {/* Metadata band directly under the title: two parallel
-                    outlined tiles stretched across the column — calendar
-                    tile + date/time, avatar + arrangør (name primary, role
-                    label muted under, same anatomy in both). The arrangør
-                    tile stands in for the bordered rail card wherever that
-                    card isn't shown (no-image layout + mobile); with an
-                    image on desktop the rail card stays and the date tile
-                    spans alone. Stacks on narrow screens. */}
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-stretch">
-                  <div className="flex flex-1 items-center gap-3 rounded-xl border border-border-subtle px-4 py-3">
+                {/* Metadata band directly under the title: two containerless
+                    lockups — calendar tile + date/time, avatar + arrangør
+                    (name primary, role label muted under, same anatomy in
+                    both). No boxes: the DateBadge/avatar are the anchors, so
+                    the Påmelding card below stays the page's only carded
+                    surface above the fold (see LocationCard's border-card
+                    note). The arrangør lockup stands in for the bordered rail
+                    card wherever that card isn't shown (no-image layout +
+                    mobile); with an image on desktop the rail card stays and
+                    the date lockup spans alone. Stacks on narrow screens. */}
+                <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+                  <div className="flex flex-1 items-center gap-3">
                     {/* Default 48px tile — the sm 40px one read undersized
                         next to the two-line date/time lockup. */}
                     <DateBadge dateStr={course.start_date ?? undefined} />
@@ -299,10 +301,7 @@ export default function PublicCourseDetailPage() {
 
                   <SellerLockup
                     course={course}
-                    className={cn(
-                      'flex-1 rounded-xl border border-border-subtle px-4 py-3',
-                      hasHero && 'md:hidden',
-                    )}
+                    className={cn('flex-1', hasHero && 'md:hidden')}
                   />
                 </div>
 
@@ -321,7 +320,7 @@ export default function PublicCourseDetailPage() {
 
                 {course.description && (
                   <section className="mt-8 border-t border-border-subtle pt-8">
-                    <h2 className="text-base font-medium mb-3">Om kurset</h2>
+                    <h2 className="text-sm font-medium text-foreground-muted mb-3">Om kurset</h2>
                     <RichTextContent
                       html={course.description}
                       className="text-base leading-relaxed text-foreground"
@@ -331,7 +330,7 @@ export default function PublicCourseDetailPage() {
 
                 {course.location && (
                   <section className="mt-8 border-t border-border-subtle pt-8">
-                    <h2 className="text-base font-medium mb-3">Sted</h2>
+                    <h2 className="text-sm font-medium text-foreground-muted mb-3">Sted</h2>
                     <LocationCard
                       location={course.location}
                       lat={course.location_lat}
@@ -839,10 +838,22 @@ function CourseDetailSkeletonBody({ twoCol = false }: { twoCol?: boolean }) {
         <Skeleton className="h-4 w-40" />
         <div className="mt-6">
           <Skeleton className="h-10 w-3/4" />
-          {/* Metadata band: two stretched outlined tiles */}
-          <div className="mt-5 flex gap-3">
-            <Skeleton className="h-18 flex-1 rounded-xl" />
-            <Skeleton className="h-18 flex-1 rounded-xl" />
+          {/* Metadata band: two containerless lockups (48px anchor + text) */}
+          <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <div className="flex flex-1 items-center gap-3">
+              <Skeleton className="size-12 rounded-lg" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3.5 w-24" />
+              </div>
+            </div>
+            <div className="flex flex-1 items-center gap-3">
+              <Skeleton className="size-12 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3.5 w-20" />
+              </div>
+            </div>
           </div>
           <Skeleton className="mt-7 h-48 w-full rounded-2xl" />
           <Skeleton className="mt-8 h-32 w-full" />
@@ -861,7 +872,14 @@ function CourseDetailSkeletonBody({ twoCol = false }: { twoCol?: boolean }) {
         </div>
         <div className="min-w-0">
           <Skeleton className="h-10 w-3/4" />
-          <Skeleton className="mt-5 h-10 w-64" />
+          {/* Date lockup (arrangør lockup is md:hidden in this layout) */}
+          <div className="mt-5 flex items-center gap-3">
+            <Skeleton className="size-12 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-44" />
+              <Skeleton className="h-3.5 w-24" />
+            </div>
+          </div>
           <Skeleton className="mt-7 h-48 w-full rounded-2xl" />
           <Skeleton className="mt-8 h-32 w-full" />
         </div>
