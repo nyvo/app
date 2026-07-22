@@ -761,7 +761,6 @@ const LandingPage = () => {
         <section className="section container" aria-label="Kom i gang">
           <div className="cta-panel" data-reveal="">
             <h2>Start med neste kurs.</h2>
-            <p>Opprett konto, legg inn kurset og del studiosiden din.</p>
             <div className="hero-ctas">
               <SignupCta className="btn btn-white" label="Opprett konto" intent="seller" />
             </div>
