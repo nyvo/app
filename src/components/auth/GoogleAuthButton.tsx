@@ -74,7 +74,7 @@ export function GoogleAuthButton({
       onClick={handleClick}
       loading={isLoading}
       loadingText={label}
-      size="lg"
+      size="cta"
       className={cn('w-full gap-3 rounded-xl', className)}
     >
       <svg className="size-4" viewBox="0 0 24 24" aria-hidden="true">

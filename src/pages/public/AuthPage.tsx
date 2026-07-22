@@ -550,7 +550,7 @@ const AuthPage = () => {
                 autoComplete={isSignup ? 'new-password' : 'current-password'}
                 value={password}
                 onChange={(e) => setPasswordValue(e.target.value)}
-                className="pr-10"
+                className="h-11 pr-10"
                 autoFocus
                 aria-invalid={!!passwordError || undefined}
                 aria-describedby={passwordError ? 'password-error' : undefined}
@@ -581,7 +581,7 @@ const AuthPage = () => {
             )}
           </div>
 
-          <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
+          <Button type="submit" loading={isSubmitting} size="cta" className="w-full rounded-xl">
             {isSignup ? 'Opprett konto' : 'Logg inn'}
           </Button>
         </form>
@@ -627,6 +627,7 @@ const AuthPage = () => {
             type="email"
             placeholder="E-post"
             autoComplete="email"
+            className="h-11"
             value={formData.email}
             onChange={(e) => handleChange('email', e.target.value)}
             onBlur={() => handleBlur('email')}
@@ -640,7 +641,7 @@ const AuthPage = () => {
           )}
         </div>
 
-        <Button type="submit" loading={isSubmitting} size="lg" className="w-full rounded-xl">
+        <Button type="submit" loading={isSubmitting} size="cta" className="w-full rounded-xl">
           Fortsett
         </Button>
       </form>
