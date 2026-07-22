@@ -212,7 +212,9 @@ export const TeacherSidebar = () => {
                     <span className="truncate text-sidebar-foreground">{displayName || 'Konto'}</span>
                     {isPro && <span className="text-xs">Pro</span>}
                   </div>
-                  <ChevronsUpDown className="ml-auto size-4 shrink-0 group-data-[collapsible=icon]:hidden" />
+                  {/* size-4! — the menu-button variant's [&_svg]:size-[18px] out-specifies a
+    plain size-4 here; the caret is an ornament and stays 16px. */}
+<ChevronsUpDown className="ml-auto size-4! shrink-0 group-data-[collapsible=icon]:hidden" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
