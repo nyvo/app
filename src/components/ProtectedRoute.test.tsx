@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
@@ -14,24 +15,30 @@ type AuthState = {
   isLoading: boolean
   user: { id: string } | null
   profile: { onboarding_completed_at: string | null } | null
+  initPromise?: Promise<void>
 }
 
 function renderGuarded(state: AuthState) {
-  mockUseAuth.mockReturnValue(state)
+  // The real initPromise settles when auth boot finishes; before init the
+  // guard suspends on it, so tests default to a promise that never settles.
+  mockUseAuth.mockReturnValue({ initPromise: new Promise<void>(() => {}), ...state })
   return render(
     <MemoryRouter initialEntries={['/protected']}>
-      <Routes>
-        <Route
-          path="/protected"
-          element={
-            <ProtectedRoute>
-              <div>protected content</div>
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/auth" element={<div>auth page</div>} />
-        <Route path="/onboarding" element={<div>onboarding page</div>} />
-      </Routes>
+      {/* Mirrors the RootChrome boundary the guard suspends into. */}
+      <Suspense fallback={<div>route fallback</div>}>
+        <Routes>
+          <Route
+            path="/protected"
+            element={
+              <ProtectedRoute>
+                <div>protected content</div>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/auth" element={<div>auth page</div>} />
+          <Route path="/onboarding" element={<div>onboarding page</div>} />
+        </Routes>
+      </Suspense>
     </MemoryRouter>,
   )
 }
@@ -58,8 +65,11 @@ describe('ProtectedRoute', () => {
     expect(screen.getByText('protected content')).toBeInTheDocument()
   })
 
-  it('holds (renders nothing) before auth is initialized', () => {
+  // Before init the guard suspends on initPromise so the route-level loader
+  // stays up (one continuous indicator across chunk + auth phases, #249).
+  it('suspends into the route boundary before auth is initialized', () => {
     renderGuarded({ isInitialized: false, isLoading: true, user: null, profile: null })
+    expect(screen.getByText('route fallback')).toBeInTheDocument()
     expect(screen.queryByText('protected content')).not.toBeInTheDocument()
     expect(screen.queryByText('auth page')).not.toBeInTheDocument()
     expect(screen.queryByText('onboarding page')).not.toBeInTheDocument()
