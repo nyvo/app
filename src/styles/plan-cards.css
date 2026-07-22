@@ -89,7 +89,7 @@
   opacity: 0.018;
   pointer-events: none;
 }
-.plan-cards .plan-name { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 28px; font-size: 15px; font-weight: 600; }
+.plan-cards .plan-name { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 28px; font-size: 15px; font-weight: 600; font-family: inherit; /* stays on the base face (it's an h3, but a 15px card label — not a display title); keeps landing + billing identical */ }
 .plan-cards .plan-tag { font-size: 11.5px; font-weight: 500; letter-spacing: 0.01em; background: oklch(1 0 0 / 0.09); border: 1px solid oklch(1 0 0 / 0.14); border-radius: var(--pc-pill); padding: 4px 12px; }
 .plan-cards .plan-price { margin: 14px 0 0; font-size: 38px; font-weight: 600; letter-spacing: -0.03em; line-height: 44px; font-variant-numeric: tabular-nums; }
 .plan-cards .plan-featured .plan-price { font-size: 44px; letter-spacing: -0.035em; }

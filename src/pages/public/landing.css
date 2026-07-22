@@ -34,6 +34,10 @@
   --r-hero: 32px;
   --r-card: 28px;
   --r-pill: 999px;
+  /* mirrors the app's display token (src/index.css --font-display) — @theme
+     inline doesn't emit a :root custom property, so the stack is mirrored
+     here like the color tokens above */
+  --font-display: 'Open Sauce One', 'Inter Variable', sans-serif;
   /* mirrors the app's shared motion vocabulary (src/index.css --ease-out) */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --sh-card: 0 12px 36px oklch(0.3 0.02 250 / 0.08);
@@ -49,6 +53,11 @@
 
 .lnd .container { width: min(1200px, calc(100% - 48px)); margin-inline: auto; }
 .lnd :is(h1, h2, h3) { margin: 0; text-wrap: balance; }
+/* Type roles (2026-07-22): display face on the big marketing headings only;
+   h3s (step titles, settings card, footer column labels) stay on the base
+   body face — overrides the app-wide h1–h3 display rule in @layer base. */
+.lnd h3 { font-family: inherit; }
+.lnd .hero h1, .lnd .section h2, .lnd .cta-panel h2 { font-family: var(--font-display); }
 .lnd p { margin: 0; }
 .lnd a { color: inherit; }
 .lnd svg { display: block; }
