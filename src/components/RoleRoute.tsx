@@ -1,3 +1,4 @@
+import { use } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
@@ -23,12 +24,17 @@ interface RoleRouteProps {
  * TeacherLayout guarantees onboarding is complete.
  */
 export function RoleRoute({ allow }: RoleRouteProps) {
-  const { isInitialized, isLoading, sellers, sellersLoadFailed } = useAuth()
-  // Hold while auth data is loading — mid-login, profile can land before
-  // sellers, and routing on that window would bounce a seller deep-link. A
-  // delayed spinner (nothing for fast loads) keeps a slow init distinguishable
-  // from a crash.
-  if (!isInitialized || isLoading) {
+  const { isInitialized, isLoading, sellers, sellersLoadFailed, initPromise } = useAuth()
+  // First boot: suspend into the surrounding Suspense boundary instead of
+  // rendering a second fallback — keeps the loader as one continuous mount
+  // (see ProtectedRoute). On cold loads isInitialized and isLoading settle
+  // in the same batch, so the isLoading hold below never adds a phase then.
+  if (!isInitialized) use(initPromise)
+  // Mid-login refresh (SIGNED_IN reload): profile can land before sellers,
+  // and routing on that window would bounce a seller deep-link. A delayed
+  // spinner (nothing for fast loads) keeps a slow load distinguishable from
+  // a crash.
+  if (isLoading) {
     return (
       <DelayedFallback>
         <PageLoader />

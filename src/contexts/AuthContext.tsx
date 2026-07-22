@@ -20,6 +20,12 @@ export interface AuthContextType {
   session: Session | null
   isLoading: boolean
   isInitialized: boolean // true once initial auth check is complete
+  // Promise twin of `isInitialized` — resolves exactly when it latches true.
+  // Route guards `use()` this to suspend into the same Suspense boundary that
+  // covers their lazy route chunk, so ONE fallback instance spans chunk load
+  // + auth init instead of consecutive loaders unmounting/remounting the
+  // indicator between phases.
+  initPromise: Promise<void>
 
   currentSeller: Seller | null
   sellers: Seller[]
@@ -221,6 +227,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isInitialized, setIsInitialized] = useState(false)
+  // Created once; resolved wherever setIsInitialized(true) is called. Must be
+  // referentially stable — a suspended `use()` retries against this instance.
+  const [init] = useState(() => {
+    let resolve!: () => void
+    const promise = new Promise<void>((r) => { resolve = r })
+    return { promise, resolve }
+  })
 
   const [currentSeller, setCurrentSeller] = useState<Seller | null>(null)
   const [sellers, setSellers] = useState<Seller[]>([])
@@ -351,12 +364,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (mounted) {
               setIsLoading(false)
               setIsInitialized(true)
+              init.resolve()
             }
           }
         })
       } else {
         setIsLoading(false)
         setIsInitialized(true)
+        init.resolve()
       }
     }).catch((err) => {
       // getSession can reject (corrupted persisted token, storage access
@@ -367,6 +382,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!mounted) return
       setIsLoading(false)
       setIsInitialized(true)
+      init.resolve()
     })
 
     // Listen for auth changes
@@ -425,7 +441,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [loadUserData])
+  }, [loadUserData, init])
 
   // Refresh sellers
   const refreshSellers = useCallback(async () => {
@@ -730,6 +746,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     isLoading,
     isInitialized,
+    initPromise: init.promise,
     currentSeller,
     sellers,
     userRole,
@@ -754,6 +771,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session?.access_token,
     isLoading,
     isInitialized,
+    init.promise,
     currentSeller,
     sellersKey,
     userRole,

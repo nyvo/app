@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, use } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { PageLoader } from '@/components/ui/page-loader'
 import { DelayedFallback } from '@/components/ui/delayed-fallback'
@@ -14,13 +14,14 @@ const BuyerDashboard = lazy(() => import('./BuyerDashboard'))
  * is the authoritative seller test — `profiles.role` is a UX hint only.
  */
 export default function DashboardRouter() {
-  const { isInitialized, isLoading, sellers, sellersLoadFailed } = useAuth()
-  // Hold while loading — mid-login, sellers can land after profile; picking
+  const { isInitialized, isLoading, sellers, sellersLoadFailed, initPromise } = useAuth()
+  // First boot: suspend into the surrounding boundary — one continuous
+  // loader mount instead of a fallback of our own (see ProtectedRoute).
+  if (!isInitialized) use(initPromise)
+  // Mid-login (SIGNED_IN reload): sellers can land after profile; picking
   // BuyerDashboard in that window flashes the wrong dashboard for sellers.
-  // Delayed loader, not bare null: this hold sits between two spinner phases
-  // (auth init before, chunk load after), and a null here blanks the screen
-  // mid-wait — the DelayedFallback handoff keeps the spinner continuous.
-  if (!isInitialized || isLoading) {
+  // Delayed loader, not bare null — null blanks the screen mid-wait.
+  if (isLoading) {
     return (
       <DelayedFallback>
         <PageLoader />

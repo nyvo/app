@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { use, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Check, ChevronLeft, LogOut } from '@/lib/icons'
@@ -68,7 +68,7 @@ function generateSlug(name: string): string {
 }
 
 export default function OnboardingPage() {
-  const { user, profile, isInitialized, isLoading, signOut, setRole } = useAuth()
+  const { user, profile, isInitialized, isLoading, initPromise, signOut, setRole } = useAuth()
   const [searchParams] = useSearchParams()
   // Direction-aware step transitions: +1 on advance (role chooser → setup),
   // -1 on Tilbake (setup → role chooser). Set BEFORE the role-changing async
@@ -111,10 +111,13 @@ export default function OnboardingPage() {
     return <Navigate to={authQuery ? `${AUTH_ROUTES.auth}?${authQuery}` : AUTH_ROUTES.auth} replace />
   }
 
-  // Auth init is cached and typically <200ms. Hold with a delayed spinner
-  // (nothing for fast loads, Studio § 10) rather than a bare blank that's
-  // indistinguishable from a crash on a slow init.
-  if (isLoading || !isInitialized) {
+  // First boot: suspend into RootChrome's boundary — the same fallback that
+  // covered this route's chunk, one continuous loader mount (see
+  // ProtectedRoute). Mid-login (SIGNED_IN reload) holds with a delayed
+  // spinner: nothing for fast loads (Studio § 10), a loader rather than a
+  // bare blank on slow ones.
+  if (!isInitialized) use(initPromise)
+  if (isLoading) {
     return (
       <DelayedFallback>
         <PageLoader />

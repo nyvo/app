@@ -1,3 +1,4 @@
+import { use } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AUTH_ROUTES, resolvePostAuthDestination } from '@/lib/auth-routes'
@@ -10,22 +11,18 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, profile, isInitialized, isLoading } = useAuth()
+  const { user, profile, isInitialized, isLoading, initPromise } = useAuth()
   const location = useLocation()
 
-  // Only blank the shell on the very first load. `isInitialized` latches
-  // true and never flips back, so later background refreshes (which toggle
-  // `isLoading`) no longer unmount the layout — otherwise a click landing
-  // between mousedown and mouseup gets dropped as the sidebar disappears.
-  // Hold with a delayed spinner (nothing for fast loads) so a slow init isn't
-  // indistinguishable from a crash.
-  if (!isInitialized) {
-    return (
-      <DelayedFallback>
-        <PageLoader />
-      </DelayedFallback>
-    )
-  }
+  // Suspend until the initial auth check completes — this joins the SAME
+  // Suspense boundary (RootChrome) that just covered this route's lazy chunk,
+  // so the full-screen loader mounts once and simply stays up. Returning our
+  // own delayed fallback here instead would unmount/remount the indicator
+  // between the chunk phase and the auth phase (the spinner flash).
+  // `isInitialized` latches true and never flips back, so this can only
+  // suspend during first boot — later background refreshes (which toggle
+  // `isLoading`) never unmount the layout.
+  if (!isInitialized) use(initPromise)
 
   if (!user) {
     return <Navigate to={AUTH_ROUTES.auth} state={{ from: location }} replace />
