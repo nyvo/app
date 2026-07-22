@@ -33,8 +33,9 @@
    ============================================================ */
 
 @theme inline {
-  --font-sans: 'Geist Variable', sans-serif;
-  --font-serif: Georgia, serif; /* RETIRED 2026-07-15 — landing went all-Geist (tight sans display); EB Garamond removed from the bundle. Token kept so `font-serif` can't break, but nothing should use it. */
+  --font-sans: 'Inter Variable', sans-serif;
+  --font-display: 'Open Sauce One', 'Inter Variable', sans-serif; /* display role — page/section/card/dialog titles (h1–h3 via @layer base + `font-display` utility). Ratified 2026-07-22; supersedes the 2026-07-15 all-Geist decision. */
+  --font-serif: Georgia, serif; /* RETIRED 2026-07-15 — landing went all-sans (tight display); EB Garamond removed from the bundle. Token kept so `font-serif` can't break, but nothing should use it. */
   --font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace; /* code snippets only (embed code etc.) */
 
   /* Surfaces — `--background` (page canvas) and `--surface` (cards/panels)
@@ -429,13 +430,22 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Geist Variable', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter Variable', system-ui, -apple-system, sans-serif;
     font-weight: 400;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   html {
     @apply font-sans;
+  }
+
+  /* Display face (Open Sauce One) on semantic headings — page titles, section
+     headings, card titles, dialog/sheet/drawer titles (Radix *Title renders h2).
+     Weights unchanged: headings stay `font-medium` per ratified convention.
+     Landing (.lnd) opts its h3s back out in landing.css; plan-cards.css keeps
+     `.plan-name` on the base face. Ratified 2026-07-22. */
+  h1, h2, h3 {
+    @apply font-display;
   }
 
   /* Tailwind v4 preflight sets `cursor: default` on buttons (v3 used pointer).
@@ -445,7 +455,7 @@
     cursor: pointer;
   }
 
-  /* Default lucide icon stroke — 1.75 pairs visually with Geist at weight 400–500
+  /* Default lucide icon stroke — 1.75 pairs visually with the sans at weight 400–500
      and stays crisp at small sizes (size-3.5 / size-4). Override with `stroke-[2]`
      when pairing with a `font-semibold` heading; only drop to `stroke-[1.5]`
      on large decorative icons (size-8+) where crispness isn't at risk. */

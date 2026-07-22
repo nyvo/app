@@ -126,10 +126,10 @@ function getStripeAppearance() {
     labels: 'floating',
     variables: {
       // Stripe loads its PaymentElement in a cross-origin iframe, so it can't
-      // inherit the page's @font-face — 'Geist Variable' is self-hosted with
+      // inherit the page's @font-face — 'Inter Variable' is self-hosted with
       // no public URL to pass via Stripe's `fonts` config, so this falls back
       // to system-ui in every browser.
-      fontFamily: "'Geist Variable', system-ui, sans-serif",
+      fontFamily: "'Inter Variable', system-ui, sans-serif",
       colorPrimary: tokenToHex('--primary', '#0074bf'),
       colorText: foreground,
       colorDanger: tokenToHex('--danger', '#bd3838'),

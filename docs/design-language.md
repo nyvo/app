@@ -192,6 +192,20 @@ shrinking rows. Err generous.
 
 ### Typography
 
+Faces (ratified 2026-07-22 — supersedes the 2026-07-15 all-Geist decision):
+
+- **Inter** (`--font-sans`, `@fontsource-variable/inter`) is the base sans —
+  body, labels, table headers, badges, buttons, nav items, form labels, helper
+  text, stat figures.
+- **Open Sauce One** (`--font-display`, weights 500/600 only) is the display
+  face — page titles, section headings, card titles, dialog/sheet/drawer
+  titles. Applied via ONE mechanism: the `@layer base` rule on `h1–h3` in
+  `src/index.css`, plus the `font-display` utility on shared title components
+  that render div/span. Never sprinkle raw `font-family` per page. Headings
+  keep their existing weights (`font-medium` in-app; 600 on landing display).
+- **Geist Mono** (`--font-mono`) is unchanged — code surfaces only (embed-code
+  snippet, /dev pages).
+
 Use the built-in scale (`text-xs` … `text-5xl`) — per-size letter-spacing is part
 of the token; **never add `tracking-*` on top**. One sanctioned exception:
 uppercase micro-labels at 12px or below (table headers, tiny badges) may add
