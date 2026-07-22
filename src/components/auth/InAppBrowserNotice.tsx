@@ -20,8 +20,8 @@ export function InAppBrowserNotice({ className }: { className?: string }) {
   const escapeUrl = isAndroid() ? androidBrowserEscapeUrl() : null
 
   return (
-    <div className={cn('rounded-xl bg-info-subtle px-3.5 py-2.5 text-sm leading-relaxed text-info', className)}>
-      Siden virker best utenfor {metaAppLabel()}.
+    <div className={cn('rounded-xl bg-info-subtle px-3.5 py-2.5 text-center text-sm leading-relaxed text-info', className)}>
+      Skal du opprette konto, virker siden best utenfor {metaAppLabel()}.
       {escapeUrl && (
         <>
           {' '}
