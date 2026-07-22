@@ -50,6 +50,7 @@ const MOCK_AUTH = {
   session: null,
   isLoading: false,
   isInitialized: true,
+  initPromise: Promise.resolve(),
   currentSeller: MOCK_SELLER,
   sellers: [MOCK_SELLER],
   userRole: 'owner',

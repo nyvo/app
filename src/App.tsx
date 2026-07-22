@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, use } from 'react';
 import {
   createBrowserRouter,
   createRoutesFromElements,
@@ -114,11 +114,11 @@ function FlatTeamRoute({ children }: { children: React.ReactNode }) {
  * Auth init shows a fullscreen loader to avoid flicker.
  */
 function RootRoute() {
-  const { isInitialized, user } = useAuth();
-  // Auth init is cached and usually <200ms. A delayed spinner renders nothing
-  // for fast loads (Studio § 10) but keeps a slow init distinguishable from a
-  // crash rather than an indefinite blank.
-  if (!isInitialized) return <DelayedFallback><PageLoader /></DelayedFallback>;
+  const { isInitialized, user, initPromise } = useAuth();
+  // Suspend into RootChrome's boundary until the initial auth check completes
+  // — the same fallback that covers the LandingPage chunk, so a slow init and
+  // a slow chunk read as one wait (see ProtectedRoute for the full rationale).
+  if (!isInitialized) use(initPromise);
   if (user) return <Navigate to="/overview" replace />;
   return <LandingPage />;
 }
